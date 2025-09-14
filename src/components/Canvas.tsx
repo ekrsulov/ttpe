@@ -113,9 +113,18 @@ export const Canvas: React.FC<CanvasProps> = () => {
   }, [activePlugin, screenToCanvas]);
 
   // Handle element mouse down for drag
-  const handleElementMouseDown = useCallback((e: React.MouseEvent) => {
+  const handleElementMouseDown = useCallback((elementId: string, e: React.MouseEvent) => {
     if (activePlugin === 'select') {
       e.stopPropagation(); // Prevent handleMouseDown from starting selection rectangle
+      
+      const selectedIds = useCanvasStore.getState().selectedIds;
+      const isElementSelected = selectedIds.includes(elementId);
+      
+      // If element is not selected, select it first
+      if (!isElementSelected) {
+        useCanvasStore.getState().selectElement(elementId, false);
+      }
+      
       const point = screenToCanvas(e.clientX, e.clientY);
       setIsDragging(true);
       setDragStart(point);
@@ -369,7 +378,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
               strokeLinejoin="round"
               opacity={pathData.opacity}
               onClick={(e) => handleElementClick(element.id, e)}
-              onMouseDown={(e) => handleElementMouseDown(e)}
+              onMouseDown={(e) => handleElementMouseDown(element.id, e)}
               style={{ 
                 cursor: activePlugin === 'select' ? (isSelected ? 'move' : 'pointer') : 'default',
                 filter: isSelected ? 'drop-shadow(0 0 4px rgba(0, 123, 255, 0.5))' : 'none'
@@ -400,7 +409,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
                 textDecoration: textData.textDecoration !== 'none' ? textData.textDecoration : undefined
               }}
               onClick={(e) => handleElementClick(element.id, e)}
-              onMouseDown={(e) => handleElementMouseDown(e)}
+              onMouseDown={(e) => handleElementMouseDown(element.id, e)}
             >
               {textData.text}
             </text>
