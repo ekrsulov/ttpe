@@ -93,15 +93,15 @@ export const Sidebar: React.FC = () => {
         gap: '8px'
       }}>
         <HistoryPanel />
-        <SelectPanel />
-        <PanPanel />
-        <ZoomPanel />
         <PencilPanel />
         <TextPanel />
         <ShapePanel />
         <DeletePanel />
+        <SelectPanel />
+        <ZoomPanel />
         <OrderPanel />
         <ArrangePanel />
+        <PanPanel />
       </div>
     </div>
   );

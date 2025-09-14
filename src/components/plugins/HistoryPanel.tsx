@@ -22,9 +22,22 @@ export const HistoryPanel: React.FC = () => {
 
   return (
     <div style={{ padding: '8px', border: '1px solid #ddd', borderRadius: '4px', backgroundColor: '#fff' }}>
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-        <Undo2 size={16} style={{ marginRight: '6px', color: '#666' }} />
-        <span style={{ fontSize: '12px', fontWeight: '500', color: '#333' }}>History</span>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <Undo2 size={16} style={{ marginRight: '6px', color: '#666' }} />
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#333' }}>History</span>
+        </div>
+        <div style={{
+          fontSize: '10px',
+          color: '#666',
+          backgroundColor: '#f8f9fa',
+          border: '1px solid #dee2e6',
+          borderRadius: '12px',
+          padding: '2px 6px',
+          fontWeight: '500'
+        }}>
+          Past: {pastStates.length} | Future: {futureStates.length}
+        </div>
       </div>
 
       <div style={{ display: 'flex', gap: '4px' }}>
@@ -73,10 +86,6 @@ export const HistoryPanel: React.FC = () => {
           <Redo2 size={14} />
           Redo
         </button>
-      </div>
-
-      <div style={{ marginTop: '8px', fontSize: '10px', color: '#666', textAlign: 'center' }}>
-        Past: {pastStates.length} | Future: {futureStates.length}
       </div>
     </div>
   );

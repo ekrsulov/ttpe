@@ -10,11 +10,21 @@ export const SelectPanel: React.FC = () => {
 
   return (
     <div style={{ padding: '8px', border: '1px solid #ddd', borderRadius: '4px', backgroundColor: '#fff' }}>
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-        <MousePointer size={16} style={{ marginRight: '6px', color: '#666' }} />
-        <span style={{ fontSize: '12px', fontWeight: '500', color: '#333' }}>Select</span>
-        <span style={{ fontSize: '10px', color: '#007bff', marginLeft: '6px' }}>
-          ({selectedElements.length})
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <MousePointer size={16} style={{ marginRight: '6px', color: '#666' }} />
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#333' }}>Select</span>
+        </div>
+        <span style={{
+          fontSize: '10px',
+          color: '#666',
+          backgroundColor: '#f8f9fa',
+          border: '1px solid #dee2e6',
+          borderRadius: '12px',
+          padding: '2px 6px',
+          fontWeight: '500'
+        }}>
+          {selectedElements.length}
         </span>
       </div>
 
