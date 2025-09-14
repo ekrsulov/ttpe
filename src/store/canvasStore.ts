@@ -255,7 +255,7 @@ export const useCanvasStore = create<CanvasStore>()(
           id: `${textElement.id}-path`,
           type: 'path' as const,
           data: {
-            d: `M ${textData.x} ${textData.y} ${pathD}`,
+            d: pathD, // textToPath already includes proper positioning
             strokeWidth: 1,
             strokeColor: textData.color,
             opacity: textData.opacity,

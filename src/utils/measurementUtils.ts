@@ -20,7 +20,7 @@ export const textToPath = (
   fontWeight: string = 'normal',
   fontStyle: string = 'normal',
   textDecoration: string = 'none',
-  resolution: number = 2.5
+  resolution: number = 10
 ): string => {
   const cacheKey = `text2path-${text}-${x}-${y}-${fontSize}-${fontFamily}-${fontWeight}-${fontStyle}-${textDecoration}-${resolution}`;
 
@@ -256,6 +256,106 @@ const filterAndMergeContours = (contours: number[][]): number[][] => {
   return filteredContours.slice(0, Math.min(3, filteredContours.length)); // Reduced from 8 to 3
 };
 
+// Clean SVG path by removing unnecessary elements
+const cleanSVGPath = (path: string): string => {
+  if (!path) return path;
+
+  // First, fix multiple M commands at the beginning
+  let cleanedPath = path.replace(/^M\s+[\d.-]+\s+M\s+/, 'M ');
+
+  // Split path into individual commands
+  const commands = cleanedPath.trim().split(/\s+/);
+  const cleanedSubpaths: string[] = [];
+  let currentSubpath: string[] = [];
+
+  // Process commands and group them into subpaths
+  for (let i = 0; i < commands.length; i++) {
+    const command = commands[i];
+
+    // If we encounter a new 'M' command and we have a current subpath, process it
+    if (command === 'M' && currentSubpath.length > 0) {
+      const processedSubpath = processSubpath(currentSubpath);
+      if (processedSubpath) {
+        cleanedSubpaths.push(processedSubpath);
+      }
+      currentSubpath = [command];
+    } else {
+      currentSubpath.push(command);
+    }
+  }
+
+  // Process the last subpath
+  if (currentSubpath.length > 0) {
+    const processedSubpath = processSubpath(currentSubpath);
+    if (processedSubpath) {
+      cleanedSubpaths.push(processedSubpath);
+    }
+  }
+
+  // Join all cleaned subpaths and clean up any double M commands
+  let result = cleanedSubpaths.join(' ');
+
+  // Clean up any double M commands anywhere in the path (more robust pattern)
+  result = result.replace(/M\s+[\d.-]+\s+M/g, 'M');
+
+  return result;
+};
+
+// Process a single subpath and apply cleaning rules
+const processSubpath = (subpathCommands: string[]): string | null => {
+  if (subpathCommands.length < 3) return subpathCommands.join(' ');
+
+  const commands = [...subpathCommands]; // Copy to avoid modifying original
+
+  // Case 0: Remove subpaths that are just a single M command (meaningless)
+  if (commands.length === 3 && commands[0] === 'M' && !isNaN(parseFloat(commands[1])) && !isNaN(parseFloat(commands[2]))) {
+    return null; // Skip this meaningless subpath (just M x y)
+  }
+
+  // Case 1: EXACT M-L-Z pattern (single line - meaningless)
+  // Pattern: M x y L x y Z (exactly 7 commands)
+  if (commands.length === 7 &&
+      commands[0] === 'M' &&
+      commands[3] === 'L' &&
+      commands[6] === 'Z') {
+    // This is a meaningless subpath that just draws a single straight line and closes
+    return null; // Skip this meaningless subpath completely
+  }
+
+  // Case 2: Remove redundant end points before Z (close to start point)
+  const zIndex = commands.indexOf('Z');
+  if (zIndex !== -1 && zIndex > 0 && commands[0] === 'M') {
+    const startX = parseFloat(commands[1]);
+    const startY = parseFloat(commands[2]);
+
+    // Find the last L command before Z
+    let lastLIndex = -1;
+    for (let j = zIndex - 1; j >= 0; j--) {
+      if (commands[j] === 'L') {
+        lastLIndex = j;
+        break;
+      }
+    }
+
+    if (lastLIndex !== -1 && lastLIndex + 3 <= zIndex) {
+      const lastLX = parseFloat(commands[lastLIndex + 1]);
+      const lastLY = parseFloat(commands[lastLIndex + 2]);
+
+      const distance = Math.sqrt(
+        Math.pow(startX - lastLX, 2) + Math.pow(startY - lastLY, 2)
+      );
+
+      // Remove if distance to start point is less than 1.0 units
+      if (distance < 1.0) {
+        commands.splice(lastLIndex, 3); // Remove L x y
+      }
+    }
+  }
+
+  // If not meaningless pattern, keep the subpath as is
+  return commands.join(' ');
+};
+
 // Convert contours to SVG path string with proper positioning
 const contoursToSVGPath = (contours: number[][], resolution: number, offsetX: number, offsetY: number): string => {
   if (contours.length === 0) return '';
@@ -303,7 +403,10 @@ const contoursToSVGPath = (contours: number[][], resolution: number, offsetX: nu
     }
   }
 
-  return pathParts.join(' ');
+  const rawPath = pathParts.join(' ');
+
+  // Apply cleaning to remove unnecessary elements
+  return cleanSVGPath(rawPath);
 };
 
 // Simplify contour using Douglas-Peucker algorithm to reduce points
@@ -411,7 +514,7 @@ export const debugCharToPath = (
   y: number,
   fontSize: number,
   fontFamily: string,
-  resolution: number = 3.0
+  resolution: number = 10
 ): { path: string; contours: number[][]; debug: any } => {
   // Create canvas for this character
   const charCanvas = document.createElement('canvas');
