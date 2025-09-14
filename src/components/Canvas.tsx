@@ -4,16 +4,11 @@ import { measureText, measurePath } from '../utils/measurementUtils';
 import type { Point } from '../types';
 
 interface CanvasProps {
-  width: number;
-  height: number;
+  width?: number;
+  height?: number;
 }
 
-interface CanvasProps {
-  width: number;
-  height: number;
-}
-
-export const Canvas: React.FC<CanvasProps> = ({ width, height }) => {
+export const Canvas: React.FC<CanvasProps> = () => {
   const svgRef = useRef<SVGSVGElement>(null);
   const { elements, viewport, activePlugin, plugins } = useCanvasStore();
 
@@ -23,6 +18,18 @@ export const Canvas: React.FC<CanvasProps> = ({ width, height }) => {
   const [selectionEnd, setSelectionEnd] = useState<Point | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<Point | null>(null);
+  const [canvasSize, setCanvasSize] = useState({ width: window.innerWidth, height: window.innerHeight });
+  const [justSelected, setJustSelected] = useState(false);
+
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => {
+      setCanvasSize({ width: window.innerWidth, height: window.innerHeight });
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Handle keyboard events
   useEffect(() => {
@@ -75,10 +82,10 @@ export const Canvas: React.FC<CanvasProps> = ({ width, height }) => {
     const target = e.target as Element;
     const isCanvasClick = target.tagName === 'svg' || target === e.currentTarget;
 
-    if (activePlugin === 'select' && isCanvasClick) {
+    if (activePlugin === 'select' && isCanvasClick && !justSelected) {
       useCanvasStore.getState().clearSelection();
     }
-  }, [activePlugin]);
+  }, [activePlugin, justSelected]);
 
   // Handle element click
   const handleElementClick = useCallback((elementId: string, e: React.MouseEvent) => {
@@ -139,7 +146,7 @@ export const Canvas: React.FC<CanvasProps> = ({ width, height }) => {
       // Pan the canvas
       const deltaX = e.movementX;
       const deltaY = e.movementY;
-      useCanvasStore.getState().pan(-deltaX / viewport.zoom, -deltaY / viewport.zoom);
+      useCanvasStore.getState().pan(deltaX / viewport.zoom, deltaY / viewport.zoom);
       return;
     }
 
@@ -161,7 +168,7 @@ export const Canvas: React.FC<CanvasProps> = ({ width, height }) => {
     }
   }, [activePlugin, screenToCanvas, isSpacePressed, isSelecting, selectionStart, viewport.zoom, isDragging, dragStart]);
 
-  const handleMouseUp = useCallback(() => {
+  const handleMouseUp = useCallback((e: React.MouseEvent) => {
     if (isDragging) {
       setIsDragging(false);
       setDragStart(null);
@@ -169,27 +176,72 @@ export const Canvas: React.FC<CanvasProps> = ({ width, height }) => {
     }
 
     if (isSelecting && selectionStart && selectionEnd) {
-      // Calculate selection box
-      const minX = Math.min(selectionStart.x, selectionEnd.x);
-      const maxX = Math.max(selectionStart.x, selectionEnd.x);
-      const minY = Math.min(selectionStart.y, selectionEnd.y);
-      const maxY = Math.max(selectionStart.y, selectionEnd.y);
+      // Prevent the click event from firing after selection
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Calculate selection box in canvas coordinates
+      const selectionMinX = Math.min(selectionStart.x, selectionEnd.x);
+      const selectionMaxX = Math.max(selectionStart.x, selectionEnd.x);
+      const selectionMinY = Math.min(selectionStart.y, selectionEnd.y);
+      const selectionMaxY = Math.max(selectionStart.y, selectionEnd.y);
 
       // Find elements within the box
       const selectedIds = elements
         .filter(el => {
           if (el.type === 'path') {
             const pathData = el.data as import('../types').PathData;
-            return pathData.points.some(p => p.x >= minX && p.x <= maxX && p.y >= minY && p.y <= maxY);
+            // Check if the path bounds intersect with the selection box
+            const pathBounds = measurePath(pathData.points, pathData.strokeWidth, viewport.zoom);
+
+            // Check for intersection between path bounds and selection bounds
+            const intersects = !(pathBounds.maxX < selectionMinX ||
+                     pathBounds.minX > selectionMaxX ||
+                     pathBounds.maxY < selectionMinY ||
+                     pathBounds.minY > selectionMaxY);
+
+            return intersects;
           } else if (el.type === 'text') {
             const textData = el.data as import('../types').TextData;
-            return textData.x >= minX && textData.x <= maxX && textData.y >= minY && textData.y <= maxY;
+
+            // Get text dimensions in screen pixels
+            const { width: textWidth, height: textHeight } = measureText(
+              textData.text,
+              textData.fontSize,
+              textData.fontFamily,
+              textData.fontWeight,
+              textData.fontStyle,
+              textData.textDecoration,
+              1 // Use zoom=1 to get base dimensions
+            );
+
+            // Convert text dimensions to canvas coordinates
+            const canvasTextWidth = textWidth / viewport.zoom;
+            const canvasTextHeight = textHeight / viewport.zoom;
+
+            // Calculate text bounding box in canvas coordinates
+            const textMinX = textData.x;
+            const textMaxX = textData.x + canvasTextWidth;
+            const textMinY = textData.y - canvasTextHeight;
+            const textMaxY = textData.y;
+
+            // Check for intersection between text bounds and selection bounds
+            const intersects = !(textMaxX < selectionMinX ||
+                     textMinX > selectionMaxX ||
+                     textMaxY < selectionMinY ||
+                     textMinY > selectionMaxY);
+
+            return intersects;
           }
           return false;
         })
         .map(el => el.id);
 
       useCanvasStore.getState().selectElements(selectedIds);
+      
+      // Mark that we just made a selection to prevent immediate clearing
+      setJustSelected(true);
+      setTimeout(() => setJustSelected(false), 100);
     }
 
     setIsSelecting(false);
@@ -197,16 +249,27 @@ export const Canvas: React.FC<CanvasProps> = ({ width, height }) => {
     setSelectionEnd(null);
   }, [isDragging, isSelecting, selectionStart, selectionEnd, elements]);
 
-  const handleWheel = useCallback((e: React.WheelEvent) => {
-    e.preventDefault();
-    const rect = svgRef.current?.getBoundingClientRect();
-    if (!rect) return;
+  // Handle wheel events with passive: false to allow preventDefault
+  useEffect(() => {
+    const svgElement = svgRef.current;
+    if (!svgElement) return;
 
-    const centerX = e.clientX - rect.left;
-    const centerY = e.clientY - rect.top;
-    const factor = e.deltaY > 0 ? 0.9 : 1.1;
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const rect = svgElement.getBoundingClientRect();
 
-    useCanvasStore.getState().zoom(factor, centerX, centerY);
+      const centerX = e.clientX - rect.left;
+      const centerY = e.clientY - rect.top;
+      const factor = e.deltaY > 0 ? 0.9 : 1.1;
+
+      useCanvasStore.getState().zoom(factor, centerX, centerY);
+    };
+
+    svgElement.addEventListener('wheel', handleWheel, { passive: false });
+
+    return () => {
+      svgElement.removeEventListener('wheel', handleWheel);
+    };
   }, []);
 
   // Render selection box for selected elements
@@ -331,15 +394,19 @@ export const Canvas: React.FC<CanvasProps> = ({ width, height }) => {
   return (
     <svg
       ref={svgRef}
-      width={width}
-      height={height}
-      viewBox={`${-viewport.panX / viewport.zoom} ${-viewport.panY / viewport.zoom} ${width / viewport.zoom} ${height / viewport.zoom}`}
-      style={{ border: '1px solid #ccc', cursor: (isSpacePressed || activePlugin === 'pan') ? 'grabbing' : activePlugin === 'select' ? 'crosshair' : 'crosshair' }}
+      width={canvasSize.width}
+      height={canvasSize.height}
+      viewBox={`${-viewport.panX / viewport.zoom} ${-viewport.panY / viewport.zoom} ${canvasSize.width / viewport.zoom} ${canvasSize.height / viewport.zoom}`}
+      style={{
+        width: '100%',
+        height: '100%',
+        border: 'none',
+        cursor: (isSpacePressed || activePlugin === 'pan') ? 'grabbing' : activePlugin === 'select' ? 'crosshair' : 'crosshair'
+      }}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
+      onMouseUp={(e) => handleMouseUp(e)}
       onClick={(e) => handleCanvasClick(e)}
-      onWheel={handleWheel}
     >
       {sortedElements.map(renderElement)}
       {isSelecting && selectionStart && selectionEnd && (

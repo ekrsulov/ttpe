@@ -35,20 +35,28 @@ export const Sidebar: React.FC = () => {
 
   return (
     <div style={{
+      position: 'absolute',
+      top: 0,
+      right: 0,
       width: '280px',
       height: '100vh',
+      backgroundColor: 'rgba(249, 249, 249, 0.95)',
+      backdropFilter: 'blur(10px)',
       borderLeft: '1px solid #ccc',
-      padding: '8px',
-      overflowY: 'auto',
-      backgroundColor: '#f9f9f9'
+      zIndex: 1000,
+      display: 'flex',
+      flexDirection: 'column'
     }}>
-      <div style={{ marginBottom: '12px' }}>
-        <h3 style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#333' }}>Tools</h3>
+      {/* Fixed tools section */}
+      <div style={{
+        padding: '8px',
+        borderBottom: '1px solid #ddd',
+        backgroundColor: '#f9f9f9'
+      }}>
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(4, 1fr)',
-          gap: '4px',
-          marginBottom: '12px'
+          gap: '4px'
         }}>
           {plugins.map((plugin) => {
             const IconComponent = plugin.icon;
@@ -80,7 +88,15 @@ export const Sidebar: React.FC = () => {
         </div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      {/* Scrollable panels section */}
+      <div style={{
+        flex: 1,
+        padding: '8px',
+        overflowY: 'auto',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px'
+      }}>
         <PanPanel />
         <ZoomPanel />
         <PencilPanel />
