@@ -343,6 +343,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
               fill="none"
               strokeLinecap="round"
               strokeLinejoin="round"
+              opacity={pathData.opacity}
               onClick={(e) => handleElementClick(element.id, e)}
               onMouseDown={(e) => handleElementMouseDown(element.id, e)}
               style={{ 
@@ -367,6 +368,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
               fontWeight={textData.fontWeight}
               fontStyle={textData.fontStyle}
               fill={textData.color}
+              opacity={textData.opacity}
               style={{ 
                 userSelect: 'none', 
                 cursor: activePlugin === 'select' ? (isSelected ? 'move' : 'pointer') : 'default',

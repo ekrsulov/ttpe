@@ -18,7 +18,7 @@ export const OrderPanel: React.FC = () => {
         )}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px' }}>
+      <div style={{ display: 'flex', gap: '2px' }}>
         <button
           onClick={bringToFront}
           disabled={selectedCount === 0}
@@ -29,16 +29,13 @@ export const OrderPanel: React.FC = () => {
             border: '1px solid #dee2e6',
             borderRadius: '3px',
             cursor: selectedCount > 0 ? 'pointer' : 'not-allowed',
-            fontSize: '10px',
             display: 'flex',
-            flexDirection: 'column',
             alignItems: 'center',
-            gap: '2px'
+            justifyContent: 'center'
           }}
           title="Bring to Front"
         >
           <Triangle size={12} style={{ transform: 'rotate(180deg)' }} />
-          <span>Front</span>
         </button>
 
         <button
@@ -51,16 +48,13 @@ export const OrderPanel: React.FC = () => {
             border: '1px solid #dee2e6',
             borderRadius: '3px',
             cursor: selectedCount > 0 ? 'pointer' : 'not-allowed',
-            fontSize: '10px',
             display: 'flex',
-            flexDirection: 'column',
             alignItems: 'center',
-            gap: '2px'
+            justifyContent: 'center'
           }}
           title="Send Forward"
         >
           <ChevronUp size={12} />
-          <span>Forward</span>
         </button>
 
         <button
@@ -73,16 +67,13 @@ export const OrderPanel: React.FC = () => {
             border: '1px solid #dee2e6',
             borderRadius: '3px',
             cursor: selectedCount > 0 ? 'pointer' : 'not-allowed',
-            fontSize: '10px',
             display: 'flex',
-            flexDirection: 'column',
             alignItems: 'center',
-            gap: '2px'
+            justifyContent: 'center'
           }}
           title="Send Backward"
         >
           <ChevronDown size={12} />
-          <span>Back</span>
         </button>
 
         <button
@@ -95,16 +86,13 @@ export const OrderPanel: React.FC = () => {
             border: '1px solid #dee2e6',
             borderRadius: '3px',
             cursor: selectedCount > 0 ? 'pointer' : 'not-allowed',
-            fontSize: '10px',
             display: 'flex',
-            flexDirection: 'column',
             alignItems: 'center',
-            gap: '2px'
+            justifyContent: 'center'
           }}
           title="Send to Back"
         >
           <Triangle size={12} />
-          <span>Bottom</span>
         </button>
       </div>
     </div>

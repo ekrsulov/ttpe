@@ -41,199 +41,174 @@ export const ArrangePanel: React.FC = () => {
         )}
       </div>
 
-      {/* Alignment Section */}
-      <div style={{ marginBottom: '12px' }}>
-        <div style={{ fontSize: '11px', color: '#666', marginBottom: '6px', fontWeight: '500' }}>Align</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '3px' }}>
-          <button
-            onClick={alignLeft}
-            disabled={!canAlign}
-            style={{
-              padding: '6px',
-              backgroundColor: canAlign ? '#007bff' : '#f8f9fa',
-              color: canAlign ? '#fff' : '#6c757d',
-              border: '1px solid #dee2e6',
-              borderRadius: '3px',
-              cursor: canAlign ? 'pointer' : 'not-allowed',
-              fontSize: '10px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '2px'
-            }}
-            title="Align Left"
-          >
-            <AlignLeft size={12} />
-            <span>Left</span>
-          </button>
+      {/* Alignment and Distribution controls */}
+      <div style={{ display: 'flex', gap: '2px' }}>
+        {/* Align Left */}
+        <button
+          onClick={alignLeft}
+          disabled={!canAlign}
+          style={{
+            padding: '6px',
+            backgroundColor: canAlign ? '#007bff' : '#f8f9fa',
+            color: canAlign ? '#fff' : '#6c757d',
+            border: '1px solid #dee2e6',
+            borderRadius: '3px',
+            cursor: canAlign ? 'pointer' : 'not-allowed',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          title="Align Left"
+        >
+          <AlignLeft size={12} />
+        </button>
 
-          <button
-            onClick={alignCenter}
-            disabled={!canAlign}
-            style={{
-              padding: '6px',
-              backgroundColor: canAlign ? '#28a745' : '#f8f9fa',
-              color: canAlign ? '#fff' : '#6c757d',
-              border: '1px solid #dee2e6',
-              borderRadius: '3px',
-              cursor: canAlign ? 'pointer' : 'not-allowed',
-              fontSize: '10px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '2px'
-            }}
-            title="Align Center"
-          >
-            <AlignHorizontalJustifyCenter size={12} />
-            <span>Center</span>
-          </button>
+        {/* Align Center */}
+        <button
+          onClick={alignCenter}
+          disabled={!canAlign}
+          style={{
+            padding: '6px',
+            backgroundColor: canAlign ? '#28a745' : '#f8f9fa',
+            color: canAlign ? '#fff' : '#6c757d',
+            border: '1px solid #dee2e6',
+            borderRadius: '3px',
+            cursor: canAlign ? 'pointer' : 'not-allowed',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          title="Align Center"
+        >
+          <AlignHorizontalJustifyCenter size={12} />
+        </button>
 
-          <button
-            onClick={alignRight}
-            disabled={!canAlign}
-            style={{
-              padding: '6px',
-              backgroundColor: canAlign ? '#dc3545' : '#f8f9fa',
-              color: canAlign ? '#fff' : '#6c757d',
-              border: '1px solid #dee2e6',
-              borderRadius: '3px',
-              cursor: canAlign ? 'pointer' : 'not-allowed',
-              fontSize: '10px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '2px'
-            }}
-            title="Align Right"
-          >
-            <AlignRight size={12} />
-            <span>Right</span>
-          </button>
+        {/* Align Right */}
+        <button
+          onClick={alignRight}
+          disabled={!canAlign}
+          style={{
+            padding: '6px',
+            backgroundColor: canAlign ? '#dc3545' : '#f8f9fa',
+            color: canAlign ? '#fff' : '#6c757d',
+            border: '1px solid #dee2e6',
+            borderRadius: '3px',
+            cursor: canAlign ? 'pointer' : 'not-allowed',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          title="Align Right"
+        >
+          <AlignRight size={12} />
+        </button>
 
-          <button
-            onClick={alignTop}
-            disabled={!canAlign}
-            style={{
-              padding: '6px',
-              backgroundColor: canAlign ? '#ffc107' : '#f8f9fa',
-              color: canAlign ? '#000' : '#6c757d',
-              border: '1px solid #dee2e6',
-              borderRadius: '3px',
-              cursor: canAlign ? 'pointer' : 'not-allowed',
-              fontSize: '10px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '2px'
-            }}
-            title="Align Top"
-          >
-            <AlignVerticalJustifyStart size={12} />
-            <span>Top</span>
-          </button>
+        {/* Align Top */}
+        <button
+          onClick={alignTop}
+          disabled={!canAlign}
+          style={{
+            padding: '6px',
+            backgroundColor: canAlign ? '#ffc107' : '#f8f9fa',
+            color: canAlign ? '#000' : '#6c757d',
+            border: '1px solid #dee2e6',
+            borderRadius: '3px',
+            cursor: canAlign ? 'pointer' : 'not-allowed',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          title="Align Top"
+        >
+          <AlignVerticalJustifyStart size={12} />
+        </button>
 
-          <button
-            onClick={alignMiddle}
-            disabled={!canAlign}
-            style={{
-              padding: '6px',
-              backgroundColor: canAlign ? '#17a2b8' : '#f8f9fa',
-              color: canAlign ? '#fff' : '#6c757d',
-              border: '1px solid #dee2e6',
-              borderRadius: '3px',
-              cursor: canAlign ? 'pointer' : 'not-allowed',
-              fontSize: '10px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '2px'
-            }}
-            title="Align Middle"
-          >
-            <AlignVerticalJustifyCenter size={12} />
-            <span>Middle</span>
-          </button>
+        {/* Align Middle */}
+        <button
+          onClick={alignMiddle}
+          disabled={!canAlign}
+          style={{
+            padding: '6px',
+            backgroundColor: canAlign ? '#17a2b8' : '#f8f9fa',
+            color: canAlign ? '#fff' : '#6c757d',
+            border: '1px solid #dee2e6',
+            borderRadius: '3px',
+            cursor: canAlign ? 'pointer' : 'not-allowed',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          title="Align Middle"
+        >
+          <AlignVerticalJustifyCenter size={12} />
+        </button>
 
-          <button
-            onClick={alignBottom}
-            disabled={!canAlign}
-            style={{
-              padding: '6px',
-              backgroundColor: canAlign ? '#6f42c1' : '#f8f9fa',
-              color: canAlign ? '#fff' : '#6c757d',
-              border: '1px solid #dee2e6',
-              borderRadius: '3px',
-              cursor: canAlign ? 'pointer' : 'not-allowed',
-              fontSize: '10px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '2px'
-            }}
-            title="Align Bottom"
-          >
-            <AlignVerticalJustifyEnd size={12} />
-            <span>Bottom</span>
-          </button>
-        </div>
+        {/* Align Bottom */}
+        <button
+          onClick={alignBottom}
+          disabled={!canAlign}
+          style={{
+            padding: '6px',
+            backgroundColor: canAlign ? '#6f42c1' : '#f8f9fa',
+            color: canAlign ? '#fff' : '#6c757d',
+            border: '1px solid #dee2e6',
+            borderRadius: '3px',
+            cursor: canAlign ? 'pointer' : 'not-allowed',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          title="Align Bottom"
+        >
+          <AlignVerticalJustifyEnd size={12} />
+        </button>
+
+        {/* Distribute Horizontally */}
+        <button
+          onClick={distributeHorizontally}
+          disabled={!canDistribute}
+          style={{
+            padding: '6px',
+            backgroundColor: canDistribute ? '#fd7e14' : '#f8f9fa',
+            color: canDistribute ? '#fff' : '#6c757d',
+            border: '1px solid #dee2e6',
+            borderRadius: '3px',
+            cursor: canDistribute ? 'pointer' : 'not-allowed',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          title="Distribute Horizontally"
+        >
+          <MoveHorizontal size={12} />
+        </button>
+
+        {/* Distribute Vertically */}
+        <button
+          onClick={distributeVertically}
+          disabled={!canDistribute}
+          style={{
+            padding: '6px',
+            backgroundColor: canDistribute ? '#e83e8c' : '#f8f9fa',
+            color: canDistribute ? '#fff' : '#6c757d',
+            border: '1px solid #dee2e6',
+            borderRadius: '3px',
+            cursor: canDistribute ? 'pointer' : 'not-allowed',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          title="Distribute Vertically"
+        >
+          <MoveVertical size={12} />
+        </button>
       </div>
 
-      {/* Distribution Section */}
-      <div>
-        <div style={{ fontSize: '11px', color: '#666', marginBottom: '6px', fontWeight: '500' }}>Distribute</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3px' }}>
-          <button
-            onClick={distributeHorizontally}
-            disabled={!canDistribute}
-            style={{
-              padding: '6px',
-              backgroundColor: canDistribute ? '#fd7e14' : '#f8f9fa',
-              color: canDistribute ? '#fff' : '#6c757d',
-              border: '1px solid #dee2e6',
-              borderRadius: '3px',
-              cursor: canDistribute ? 'pointer' : 'not-allowed',
-              fontSize: '10px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '2px'
-            }}
-            title="Distribute Horizontally"
-          >
-            <MoveHorizontal size={12} />
-            <span>Horizontal</span>
-          </button>
-
-          <button
-            onClick={distributeVertically}
-            disabled={!canDistribute}
-            style={{
-              padding: '6px',
-              backgroundColor: canDistribute ? '#e83e8c' : '#f8f9fa',
-              color: canDistribute ? '#fff' : '#6c757d',
-              border: '1px solid #dee2e6',
-              borderRadius: '3px',
-              cursor: canDistribute ? 'pointer' : 'not-allowed',
-              fontSize: '10px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '2px'
-            }}
-            title="Distribute Vertically"
-          >
-            <MoveVertical size={12} />
-            <span>Vertical</span>
-          </button>
+      {!canDistribute && (
+        <div style={{ fontSize: '10px', color: '#999', marginTop: '4px', textAlign: 'center' }}>
+          Select 3+ elements
         </div>
-
-        {!canDistribute && (
-          <div style={{ fontSize: '10px', color: '#999', marginTop: '4px', textAlign: 'center' }}>
-            Select 3+ elements
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 };

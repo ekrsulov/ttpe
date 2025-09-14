@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { Pen, Palette } from 'lucide-react';
+import { Pen, Palette, Eye } from 'lucide-react';
 
 export const PencilPanel: React.FC = () => {
   const { plugins, updatePluginState, getSelectedPathsCount, updateSelectedPaths } = useCanvasStore();
@@ -19,6 +19,14 @@ export const PencilPanel: React.FC = () => {
       updateSelectedPaths({ strokeColor: value });
     } else {
       updatePluginState('pencil', { strokeColor: value });
+    }
+  };
+
+  const handleOpacityChange = (value: number) => {
+    if (selectedPathsCount > 0) {
+      updateSelectedPaths({ opacity: value });
+    } else {
+      updatePluginState('pencil', { opacity: value });
     }
   };
 
@@ -47,6 +55,18 @@ export const PencilPanel: React.FC = () => {
     return plugins.pencil.strokeColor;
   };
 
+  const getCurrentOpacity = () => {
+    if (selectedPathsCount > 0) {
+      const selectedElements = useCanvasStore.getState().getSelectedElements();
+      const pathElements = selectedElements.filter(el => el.type === 'path');
+      if (pathElements.length > 0) {
+        // Return the opacity of the first selected path
+        return (pathElements[0].data as any).opacity;
+      }
+    }
+    return plugins.pencil.opacity;
+  };
+
   return (
     <div style={{ padding: '8px', border: '1px solid #ddd', borderRadius: '4px', backgroundColor: '#fff' }}>
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
@@ -59,7 +79,7 @@ export const PencilPanel: React.FC = () => {
         )}
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
         <input
           type="number"
           value={getCurrentStrokeWidth()}
@@ -94,6 +114,29 @@ export const PencilPanel: React.FC = () => {
             }}
           />
         </div>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+        <Eye size={14} style={{ color: '#666' }} />
+        <input
+          type="range"
+          min="0"
+          max="1"
+          step="0.1"
+          value={getCurrentOpacity()}
+          onChange={(e) => handleOpacityChange(parseFloat(e.target.value))}
+          style={{
+            width: '60px',
+            height: '4px',
+            borderRadius: '2px',
+            background: '#ddd',
+            outline: 'none',
+            cursor: 'pointer'
+          }}
+        />
+        <span style={{ fontSize: '10px', color: '#666', minWidth: '20px' }}>
+          {Math.round(getCurrentOpacity() * 100)}%
+        </span>
       </div>
     </div>
   );

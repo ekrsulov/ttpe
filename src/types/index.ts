@@ -7,6 +7,7 @@ export interface PathData {
   points: Point[];
   strokeWidth: number;
   strokeColor: string;
+  opacity: number;
 }
 
 export interface TextData {
@@ -19,6 +20,7 @@ export interface TextData {
   fontWeight: 'normal' | 'bold';
   fontStyle: 'normal' | 'italic';
   textDecoration: 'none' | 'underline' | 'line-through';
+  opacity: number;
 }
 
 export type ElementType = 'path' | 'text';
@@ -47,6 +49,7 @@ export interface PluginState {
   pencil: {
     strokeWidth: number;
     strokeColor: string;
+    opacity: number;
   };
   text: {
     text: string;
@@ -56,6 +59,7 @@ export interface PluginState {
     fontWeight: 'normal' | 'bold';
     fontStyle: 'normal' | 'italic';
     textDecoration: 'none' | 'underline' | 'line-through';
+    opacity: number;
   };
   select: {
     selectedIds: string[];

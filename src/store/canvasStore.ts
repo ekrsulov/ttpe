@@ -76,8 +76,8 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
   plugins: {
     pan: { offsetX: 0, offsetY: 0 },
     zoom: { level: 1 },
-    pencil: { strokeWidth: 20, strokeColor: '#000000' },
-    text: { text: 'New Text', fontSize: 72, fontFamily: 'Arial', color: '#000000', fontWeight: 'normal', fontStyle: 'normal', textDecoration: 'none' },
+    pencil: { strokeWidth: 20, strokeColor: '#000000', opacity: 1 },
+    text: { text: 'New Text', fontSize: 72, fontFamily: 'Arial', color: '#000000', fontWeight: 'normal', fontStyle: 'normal', textDecoration: 'none', opacity: 1 },
     select: { selectedIds: [] },
     delete: {},
   },
@@ -310,13 +310,14 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
 
   // Pencil specific
   startPath: (point) => {
-    const { strokeWidth, strokeColor } = get().plugins.pencil;
+    const { strokeWidth, strokeColor, opacity } = get().plugins.pencil;
     get().addElement({
       type: 'path',
       data: {
         points: [point],
         strokeWidth,
         strokeColor,
+        opacity,
       },
     });
   },
@@ -340,7 +341,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
   },
 
   addText: (x, y, text) => {
-    const { fontSize, fontFamily, color, fontWeight, fontStyle, textDecoration } = get().plugins.text;
+    const { fontSize, fontFamily, color, fontWeight, fontStyle, textDecoration, opacity } = get().plugins.text;
     get().addElement({
       type: 'text',
       data: {
@@ -353,6 +354,7 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
         fontWeight,
         fontStyle,
         textDecoration,
+        opacity,
       },
     });
   },

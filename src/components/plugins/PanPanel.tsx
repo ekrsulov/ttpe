@@ -13,110 +13,105 @@ export const PanPanel: React.FC = () => {
         <span style={{ fontSize: '12px', fontWeight: '500', color: '#333' }}>Pan</span>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-        {/* Pan controls */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '2px', width: 'fit-content' }}>
-          <div></div>
-          <button
-            onClick={() => pan(0, -panAmount)}
-            style={{
-              padding: '6px',
-              backgroundColor: '#f8f9fa',
-              border: '1px solid #dee2e6',
-              borderRadius: '3px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-            title="Pan Up"
-          >
-            <ChevronUp size={14} />
-          </button>
-          <div></div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+        {/* Pan Left */}
+        <button
+          onClick={() => pan(-panAmount, 0)}
+          style={{
+            padding: '6px',
+            backgroundColor: '#f8f9fa',
+            border: '1px solid #dee2e6',
+            borderRadius: '3px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          title="Pan Left"
+        >
+          <ChevronLeft size={14} />
+        </button>
 
-          <button
-            onClick={() => pan(-panAmount, 0)}
-            style={{
-              padding: '6px',
-              backgroundColor: '#f8f9fa',
-              border: '1px solid #dee2e6',
-              borderRadius: '3px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-            title="Pan Left"
-          >
-            <ChevronLeft size={14} />
-          </button>
-          <div></div>
-          <button
-            onClick={() => pan(panAmount, 0)}
-            style={{
-              padding: '6px',
-              backgroundColor: '#f8f9fa',
-              border: '1px solid #dee2e6',
-              borderRadius: '3px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-            title="Pan Right"
-          >
-            <ChevronRight size={14} />
-          </button>
+        {/* Pan Up */}
+        <button
+          onClick={() => pan(0, -panAmount)}
+          style={{
+            padding: '6px',
+            backgroundColor: '#f8f9fa',
+            border: '1px solid #dee2e6',
+            borderRadius: '3px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          title="Pan Up"
+        >
+          <ChevronUp size={14} />
+        </button>
 
-          <div></div>
-          <button
-            onClick={() => pan(0, panAmount)}
-            style={{
-              padding: '6px',
-              backgroundColor: '#f8f9fa',
-              border: '1px solid #dee2e6',
-              borderRadius: '3px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-            title="Pan Down"
-          >
-            <ChevronDown size={14} />
-          </button>
-          <div></div>
-        </div>
+        {/* Pan Down */}
+        <button
+          onClick={() => pan(0, panAmount)}
+          style={{
+            padding: '6px',
+            backgroundColor: '#f8f9fa',
+            border: '1px solid #dee2e6',
+            borderRadius: '3px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          title="Pan Down"
+        >
+          <ChevronDown size={14} />
+        </button>
+
+        {/* Pan Right */}
+        <button
+          onClick={() => pan(panAmount, 0)}
+          style={{
+            padding: '6px',
+            backgroundColor: '#f8f9fa',
+            border: '1px solid #dee2e6',
+            borderRadius: '3px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          title="Pan Right"
+        >
+          <ChevronRight size={14} />
+        </button>
 
         {/* Reset button */}
         <button
           onClick={resetPan}
           style={{
-            padding: '4px 8px',
+            padding: '6px',
             backgroundColor: '#dc3545',
             color: '#fff',
             border: '1px solid #dc3545',
             borderRadius: '3px',
             cursor: 'pointer',
-            fontSize: '11px',
             display: 'flex',
             alignItems: 'center',
-            gap: '4px',
-            marginTop: '4px'
+            justifyContent: 'center'
           }}
-          title="Reset Pan"
+          title="Reset Pan Position"
         >
           <RotateCcw size={12} />
-          Reset
         </button>
 
         {/* Current position */}
         <div style={{
           fontSize: '10px',
           color: '#666',
-          marginTop: '4px',
-          textAlign: 'center'
+          minWidth: '60px',
+          textAlign: 'center',
+          marginLeft: '8px'
         }}>
           ({Math.round(useCanvasStore.getState().viewport.panX)}, {Math.round(useCanvasStore.getState().viewport.panY)})
         </div>

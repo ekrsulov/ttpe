@@ -13,44 +13,40 @@ export const ZoomPanel: React.FC = () => {
         <span style={{ fontSize: '12px', fontWeight: '500', color: '#333' }}>Zoom</span>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
         {/* Zoom controls */}
-        <div style={{ display: 'flex', gap: '4px' }}>
+        <div style={{ display: 'flex', gap: '2px' }}>
           <button
             onClick={() => zoom(1 / zoomFactor)}
             style={{
-              padding: '6px 8px',
+              padding: '6px',
               backgroundColor: '#f8f9fa',
               border: '1px solid #dee2e6',
               borderRadius: '3px',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '4px',
-              fontSize: '11px'
+              justifyContent: 'center'
             }}
-            title="Zoom Out"
+            title="Zoom Out (20%)"
           >
             <ZoomOut size={14} />
-            Out
           </button>
           <button
             onClick={() => zoom(zoomFactor)}
             style={{
-              padding: '6px 8px',
+              padding: '6px',
               backgroundColor: '#f8f9fa',
               border: '1px solid #dee2e6',
               borderRadius: '3px',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '4px',
-              fontSize: '11px'
+              justifyContent: 'center'
             }}
-            title="Zoom In"
+            title="Zoom In (20%)"
           >
             <ZoomIn size={14} />
-            In
           </button>
         </div>
 
@@ -58,27 +54,26 @@ export const ZoomPanel: React.FC = () => {
         <button
           onClick={resetZoom}
           style={{
-            padding: '4px 8px',
+            padding: '6px',
             backgroundColor: '#dc3545',
             color: '#fff',
             border: '1px solid #dc3545',
             borderRadius: '3px',
             cursor: 'pointer',
-            fontSize: '11px',
             display: 'flex',
             alignItems: 'center',
-            gap: '4px'
+            justifyContent: 'center'
           }}
-          title="Reset Zoom"
+          title="Reset Zoom (100%)"
         >
           <RotateCcw size={12} />
-          Reset
         </button>
 
         {/* Current zoom level */}
         <div style={{
           fontSize: '10px',
           color: '#666',
+          minWidth: '35px',
           textAlign: 'center'
         }}>
           {Math.round(useCanvasStore.getState().viewport.zoom * 100)}%

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { Type, Palette, Bold, Italic } from 'lucide-react';
+import { Type, Palette, Bold, Italic, Eye } from 'lucide-react';
 
 export const TextPanel: React.FC = () => {
   const { plugins, updatePluginState, getSelectedTextsCount, updateSelectedTexts } = useCanvasStore();
@@ -59,6 +59,14 @@ export const TextPanel: React.FC = () => {
       updateSelectedTexts({ textDecoration: value });
     } else {
       updatePluginState('text', { textDecoration: value });
+    }
+  };
+
+  const handleOpacityChange = (value: number) => {
+    if (selectedTextsCount > 0) {
+      updateSelectedTexts({ opacity: value });
+    } else {
+      updatePluginState('text', { opacity: value });
     }
   };
 
@@ -142,6 +150,17 @@ export const TextPanel: React.FC = () => {
       }
     }
     return plugins.text.textDecoration;
+  };
+
+  const getCurrentOpacity = () => {
+    if (selectedTextsCount > 0) {
+      const selectedElements = useCanvasStore.getState().getSelectedElements();
+      const textElements = selectedElements.filter(el => el.type === 'text');
+      if (textElements.length > 0) {
+        return (textElements[0].data as any).opacity;
+      }
+    }
+    return plugins.text.opacity;
   };
 
   return (
@@ -288,6 +307,26 @@ export const TextPanel: React.FC = () => {
               }}
             />
           </div>
+        </div>
+
+        {/* Opacity Control */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <Eye size={14} style={{ color: '#666' }} />
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.01"
+            value={getCurrentOpacity()}
+            onChange={(e) => handleOpacityChange(parseFloat(e.target.value))}
+            style={{
+              flex: 1,
+              cursor: 'pointer'
+            }}
+          />
+          <span style={{ fontSize: '12px', minWidth: '35px' }}>
+            {Math.round(getCurrentOpacity() * 100)}%
+          </span>
         </div>
       </div>
     </div>
