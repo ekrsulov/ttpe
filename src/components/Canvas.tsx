@@ -92,15 +92,15 @@ export const Canvas: React.FC<CanvasProps> = () => {
     }
   }, [activePlugin, justSelected]);
 
-  // Handle element click
+    // Handle element click
   const handleElementClick = useCallback((elementId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (activePlugin === 'select') {
+    if (activePlugin === 'select' && !isDragging) {
       const selectedIds = useCanvasStore.getState().selectedIds;
       const isElementSelected = selectedIds.includes(elementId);
       const hasMultipleSelection = selectedIds.length > 1;
       
-      // If clicking on an already selected element within a multi-selection, keep the multi-selection
+      // If clicking on an already selected element within a multi-selection and no shift, keep the multi-selection
       if (isElementSelected && hasMultipleSelection && !e.shiftKey) {
         // Don't change selection, just prepare for dragging
         const point = screenToCanvas(e.clientX, e.clientY);
@@ -108,14 +108,20 @@ export const Canvas: React.FC<CanvasProps> = () => {
         return;
       }
       
-      // Otherwise, use normal selection logic
-      useCanvasStore.getState().selectElement(elementId, e.shiftKey);
-
+      // Handle selection logic
+      if (e.shiftKey) {
+        // Shift+click: toggle selection
+        useCanvasStore.getState().selectElement(elementId, true);
+      } else if (!isElementSelected) {
+        // Normal click on unselected element: select it
+        useCanvasStore.getState().selectElement(elementId, false);
+      }
+      
       // Set drag start for the clicked element (it should be selected now)
       const point = screenToCanvas(e.clientX, e.clientY);
       setDragStart(point);
     }
-  }, [activePlugin, screenToCanvas]);
+  }, [activePlugin, screenToCanvas, isDragging]);
 
   // Handle element mouse down for drag
   const handleElementMouseDown = useCallback((elementId: string, e: React.MouseEvent) => {
@@ -125,8 +131,9 @@ export const Canvas: React.FC<CanvasProps> = () => {
       const selectedIds = useCanvasStore.getState().selectedIds;
       const isElementSelected = selectedIds.includes(elementId);
       
-      // If element is not selected, select it first
-      if (!isElementSelected) {
+      // If element is not selected and shift is not pressed, select it for dragging
+      // (if shift is pressed, let handleElementClick handle the selection)
+      if (!isElementSelected && !e.shiftKey) {
         useCanvasStore.getState().selectElement(elementId, false);
       }
       
