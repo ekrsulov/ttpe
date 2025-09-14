@@ -91,6 +91,19 @@ export const Canvas: React.FC<CanvasProps> = () => {
   const handleElementClick = useCallback((elementId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (activePlugin === 'select') {
+      const selectedIds = useCanvasStore.getState().selectedIds;
+      const isElementSelected = selectedIds.includes(elementId);
+      const hasMultipleSelection = selectedIds.length > 1;
+      
+      // If clicking on an already selected element within a multi-selection, keep the multi-selection
+      if (isElementSelected && hasMultipleSelection && !e.shiftKey) {
+        // Don't change selection, just prepare for dragging
+        const point = screenToCanvas(e.clientX, e.clientY);
+        setDragStart(point);
+        return;
+      }
+      
+      // Otherwise, use normal selection logic
       useCanvasStore.getState().selectElement(elementId, e.shiftKey);
 
       // Set drag start for the clicked element (it should be selected now)
@@ -100,7 +113,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
   }, [activePlugin, screenToCanvas]);
 
   // Handle element mouse down for drag
-  const handleElementMouseDown = useCallback((elementId: string, e: React.MouseEvent) => {
+  const handleElementMouseDown = useCallback((e: React.MouseEvent) => {
     if (activePlugin === 'select') {
       e.stopPropagation(); // Prevent handleMouseDown from starting selection rectangle
       const point = screenToCanvas(e.clientX, e.clientY);
@@ -356,7 +369,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
               strokeLinejoin="round"
               opacity={pathData.opacity}
               onClick={(e) => handleElementClick(element.id, e)}
-              onMouseDown={(e) => handleElementMouseDown(element.id, e)}
+              onMouseDown={(e) => handleElementMouseDown(e)}
               style={{ 
                 cursor: activePlugin === 'select' ? (isSelected ? 'move' : 'pointer') : 'default',
                 filter: isSelected ? 'drop-shadow(0 0 4px rgba(0, 123, 255, 0.5))' : 'none'
@@ -387,7 +400,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
                 textDecoration: textData.textDecoration !== 'none' ? textData.textDecoration : undefined
               }}
               onClick={(e) => handleElementClick(element.id, e)}
-              onMouseDown={(e) => handleElementMouseDown(element.id, e)}
+              onMouseDown={(e) => handleElementMouseDown(e)}
             >
               {textData.text}
             </text>
