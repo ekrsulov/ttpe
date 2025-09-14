@@ -10,27 +10,19 @@ import { OrderPanel } from './plugins/OrderPanel';
 import { ArrangePanel } from './plugins/ArrangePanel';
 import {
   Move,
-  ZoomIn,
   Pen,
   Type,
   MousePointer,
-  Trash2,
-  Layers,
-  AlignCenter
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
   const { activePlugin, setActivePlugin } = useCanvasStore();
 
   const plugins = [
+    { name: 'select', label: 'Select', icon: MousePointer },
     { name: 'pan', label: 'Pan', icon: Move },
-    { name: 'zoom', label: 'Zoom', icon: ZoomIn },
     { name: 'pencil', label: 'Pencil', icon: Pen },
     { name: 'text', label: 'Text', icon: Type },
-    { name: 'select', label: 'Select', icon: MousePointer },
-    { name: 'delete', label: 'Delete', icon: Trash2 },
-    { name: 'order', label: 'Order', icon: Layers },
-    { name: 'arrange', label: 'Arrange', icon: AlignCenter },
   ];
 
   return (
@@ -38,7 +30,7 @@ export const Sidebar: React.FC = () => {
       position: 'absolute',
       top: 0,
       right: 0,
-      width: '280px',
+      width: '250px',
       height: '100vh',
       backgroundColor: 'rgba(249, 249, 249, 0.95)',
       backdropFilter: 'blur(10px)',
@@ -74,14 +66,13 @@ export const Sidebar: React.FC = () => {
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  gap: '2px',
+                  justifyContent: 'center',
                   fontSize: '10px',
                   minHeight: '50px'
                 }}
                 title={plugin.label}
               >
-                <IconComponent size={16} />
-                <span style={{ fontSize: '9px', textAlign: 'center' }}>{plugin.label}</span>
+                <IconComponent size={20} />
               </button>
             );
           })}
@@ -97,11 +88,11 @@ export const Sidebar: React.FC = () => {
         flexDirection: 'column',
         gap: '8px'
       }}>
+        <SelectPanel />
         <PanPanel />
         <ZoomPanel />
         <PencilPanel />
         <TextPanel />
-        <SelectPanel />
         <DeletePanel />
         <OrderPanel />
         <ArrangePanel />

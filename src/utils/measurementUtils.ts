@@ -1,9 +1,9 @@
 // Measurement utilities for text and path elements
 // Cache for text measurements to improve performance
-const textMeasurementCache = new Map<string, { width: number; height: number }>();
+const textMeasurementCache = new (globalThis as any).Map();
 
 // Cache for path measurements to improve performance
-const pathMeasurementCache = new Map<string, { minX: number; minY: number; maxX: number; maxY: number }>();
+const pathMeasurementCache = new (globalThis as any).Map();
 
 // Function to measure text using a ghost canvas
 export const measureText = (

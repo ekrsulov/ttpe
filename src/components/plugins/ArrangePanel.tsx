@@ -14,7 +14,7 @@ import {
 
 export const ArrangePanel: React.FC = () => {
   const {
-    plugins,
+    selectedIds,
     alignLeft,
     alignCenter,
     alignRight,
@@ -25,7 +25,7 @@ export const ArrangePanel: React.FC = () => {
     distributeVertically
   } = useCanvasStore();
 
-  const selectedCount = plugins.select.selectedIds.length;
+  const selectedCount = selectedIds.length;
   const canAlign = selectedCount >= 2;
   const canDistribute = selectedCount >= 3;
 
@@ -49,8 +49,7 @@ export const ArrangePanel: React.FC = () => {
           disabled={!canAlign}
           style={{
             padding: '6px',
-            backgroundColor: canAlign ? '#007bff' : '#f8f9fa',
-            color: canAlign ? '#fff' : '#6c757d',
+            backgroundColor: canAlign ? '#f8f9fa' : '#f8f9fa',
             border: '1px solid #dee2e6',
             borderRadius: '3px',
             cursor: canAlign ? 'pointer' : 'not-allowed',
@@ -69,8 +68,7 @@ export const ArrangePanel: React.FC = () => {
           disabled={!canAlign}
           style={{
             padding: '6px',
-            backgroundColor: canAlign ? '#28a745' : '#f8f9fa',
-            color: canAlign ? '#fff' : '#6c757d',
+            backgroundColor: canAlign ? '#f8f9fa' : '#f8f9fa',
             border: '1px solid #dee2e6',
             borderRadius: '3px',
             cursor: canAlign ? 'pointer' : 'not-allowed',
@@ -89,8 +87,7 @@ export const ArrangePanel: React.FC = () => {
           disabled={!canAlign}
           style={{
             padding: '6px',
-            backgroundColor: canAlign ? '#dc3545' : '#f8f9fa',
-            color: canAlign ? '#fff' : '#6c757d',
+            backgroundColor: canAlign ? '#f8f9fa' : '#f8f9fa',
             border: '1px solid #dee2e6',
             borderRadius: '3px',
             cursor: canAlign ? 'pointer' : 'not-allowed',
@@ -109,8 +106,7 @@ export const ArrangePanel: React.FC = () => {
           disabled={!canAlign}
           style={{
             padding: '6px',
-            backgroundColor: canAlign ? '#ffc107' : '#f8f9fa',
-            color: canAlign ? '#000' : '#6c757d',
+            backgroundColor: canAlign ? '#f8f9fa' : '#f8f9fa',
             border: '1px solid #dee2e6',
             borderRadius: '3px',
             cursor: canAlign ? 'pointer' : 'not-allowed',
@@ -129,8 +125,7 @@ export const ArrangePanel: React.FC = () => {
           disabled={!canAlign}
           style={{
             padding: '6px',
-            backgroundColor: canAlign ? '#17a2b8' : '#f8f9fa',
-            color: canAlign ? '#fff' : '#6c757d',
+            backgroundColor: canAlign ? '#f8f9fa' : '#f8f9fa',
             border: '1px solid #dee2e6',
             borderRadius: '3px',
             cursor: canAlign ? 'pointer' : 'not-allowed',
@@ -149,8 +144,7 @@ export const ArrangePanel: React.FC = () => {
           disabled={!canAlign}
           style={{
             padding: '6px',
-            backgroundColor: canAlign ? '#6f42c1' : '#f8f9fa',
-            color: canAlign ? '#fff' : '#6c757d',
+            backgroundColor: canAlign ? '#f8f9fa' : '#f8f9fa',
             border: '1px solid #dee2e6',
             borderRadius: '3px',
             cursor: canAlign ? 'pointer' : 'not-allowed',
@@ -169,8 +163,7 @@ export const ArrangePanel: React.FC = () => {
           disabled={!canDistribute}
           style={{
             padding: '6px',
-            backgroundColor: canDistribute ? '#fd7e14' : '#f8f9fa',
-            color: canDistribute ? '#fff' : '#6c757d',
+            backgroundColor: canDistribute ? '#f8f9fa' : '#f8f9fa',
             border: '1px solid #dee2e6',
             borderRadius: '3px',
             cursor: canDistribute ? 'pointer' : 'not-allowed',
@@ -189,8 +182,7 @@ export const ArrangePanel: React.FC = () => {
           disabled={!canDistribute}
           style={{
             padding: '6px',
-            backgroundColor: canDistribute ? '#e83e8c' : '#f8f9fa',
-            color: canDistribute ? '#fff' : '#6c757d',
+            backgroundColor: canDistribute ? '#f8f9fa' : '#f8f9fa',
             border: '1px solid #dee2e6',
             borderRadius: '3px',
             cursor: canDistribute ? 'pointer' : 'not-allowed',

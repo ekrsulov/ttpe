@@ -11,6 +11,9 @@ export const PanPanel: React.FC = () => {
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
         <Move size={16} style={{ marginRight: '6px', color: '#666' }} />
         <span style={{ fontSize: '12px', fontWeight: '500', color: '#333' }}>Pan</span>
+        <span style={{ fontSize: '10px', color: '#666', marginLeft: '8px' }}>
+          ({Math.round(useCanvasStore.getState().viewport.panX)}, {Math.round(useCanvasStore.getState().viewport.panY)})
+        </span>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -91,9 +94,8 @@ export const PanPanel: React.FC = () => {
           onClick={resetPan}
           style={{
             padding: '6px',
-            backgroundColor: '#dc3545',
-            color: '#fff',
-            border: '1px solid #dc3545',
+            backgroundColor: '#f8f9fa',
+            border: '1px solid #dee2e6',
             borderRadius: '3px',
             cursor: 'pointer',
             display: 'flex',
@@ -104,17 +106,6 @@ export const PanPanel: React.FC = () => {
         >
           <RotateCcw size={12} />
         </button>
-
-        {/* Current position */}
-        <div style={{
-          fontSize: '10px',
-          color: '#666',
-          minWidth: '60px',
-          textAlign: 'center',
-          marginLeft: '8px'
-        }}>
-          ({Math.round(useCanvasStore.getState().viewport.panX)}, {Math.round(useCanvasStore.getState().viewport.panY)})
-        </div>
       </div>
     </div>
   );

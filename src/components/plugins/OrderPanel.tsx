@@ -3,8 +3,8 @@ import { useCanvasStore } from '../../store/canvasStore';
 import { Layers, ChevronUp, ChevronDown, Triangle } from 'lucide-react';
 
 export const OrderPanel: React.FC = () => {
-  const { plugins, bringToFront, sendForward, sendBackward, sendToBack } = useCanvasStore();
-  const selectedCount = plugins.select.selectedIds.length;
+  const { selectedIds, bringToFront, sendForward, sendBackward, sendToBack } = useCanvasStore();
+  const selectedCount = selectedIds.length;
 
   return (
     <div style={{ padding: '8px', border: '1px solid #ddd', borderRadius: '4px', backgroundColor: '#fff' }}>
@@ -24,8 +24,7 @@ export const OrderPanel: React.FC = () => {
           disabled={selectedCount === 0}
           style={{
             padding: '6px',
-            backgroundColor: selectedCount > 0 ? '#007bff' : '#f8f9fa',
-            color: selectedCount > 0 ? '#fff' : '#6c757d',
+            backgroundColor: selectedCount > 0 ? '#f8f9fa' : '#f8f9fa',
             border: '1px solid #dee2e6',
             borderRadius: '3px',
             cursor: selectedCount > 0 ? 'pointer' : 'not-allowed',
@@ -43,8 +42,7 @@ export const OrderPanel: React.FC = () => {
           disabled={selectedCount === 0}
           style={{
             padding: '6px',
-            backgroundColor: selectedCount > 0 ? '#28a745' : '#f8f9fa',
-            color: selectedCount > 0 ? '#fff' : '#6c757d',
+            backgroundColor: selectedCount > 0 ? '#f8f9fa' : '#f8f9fa',
             border: '1px solid #dee2e6',
             borderRadius: '3px',
             cursor: selectedCount > 0 ? 'pointer' : 'not-allowed',
@@ -62,8 +60,7 @@ export const OrderPanel: React.FC = () => {
           disabled={selectedCount === 0}
           style={{
             padding: '6px',
-            backgroundColor: selectedCount > 0 ? '#ffc107' : '#f8f9fa',
-            color: selectedCount > 0 ? '#000' : '#6c757d',
+            backgroundColor: selectedCount > 0 ? '#f8f9fa' : '#f8f9fa',
             border: '1px solid #dee2e6',
             borderRadius: '3px',
             cursor: selectedCount > 0 ? 'pointer' : 'not-allowed',
@@ -81,8 +78,7 @@ export const OrderPanel: React.FC = () => {
           disabled={selectedCount === 0}
           style={{
             padding: '6px',
-            backgroundColor: selectedCount > 0 ? '#dc3545' : '#f8f9fa',
-            color: selectedCount > 0 ? '#fff' : '#6c757d',
+            backgroundColor: selectedCount > 0 ? '#f8f9fa' : '#f8f9fa',
             border: '1px solid #dee2e6',
             borderRadius: '3px',
             cursor: selectedCount > 0 ? 'pointer' : 'not-allowed',

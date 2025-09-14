@@ -114,29 +114,28 @@ export const PencilPanel: React.FC = () => {
             }}
           />
         </div>
-      </div>
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-        <Eye size={14} style={{ color: '#666' }} />
-        <input
-          type="range"
-          min="0"
-          max="1"
-          step="0.1"
-          value={getCurrentOpacity()}
-          onChange={(e) => handleOpacityChange(parseFloat(e.target.value))}
-          style={{
-            width: '60px',
-            height: '4px',
-            borderRadius: '2px',
-            background: '#ddd',
-            outline: 'none',
-            cursor: 'pointer'
-          }}
-        />
-        <span style={{ fontSize: '10px', color: '#666', minWidth: '20px' }}>
-          {Math.round(getCurrentOpacity() * 100)}%
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+          <Eye size={14} style={{ color: '#666' }} />
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.1"
+            value={getCurrentOpacity()}
+            onChange={(e) => handleOpacityChange(parseFloat(e.target.value))}
+            style={{
+              width: '60px',
+              height: '4px',
+              borderRadius: '2px',
+              background: '#ddd',
+              outline: 'none',
+              cursor: 'pointer'
+            }}
+          />
+          <span style={{ fontSize: '10px', color: '#666', minWidth: '20px' }}>
+            {Math.round(getCurrentOpacity() * 100)}%
+          </span>
+        </div>
       </div>
     </div>
   );

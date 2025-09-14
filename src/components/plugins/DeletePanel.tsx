@@ -3,7 +3,7 @@ import { useCanvasStore } from '../../store/canvasStore';
 import { Trash2 } from 'lucide-react';
 
 export const DeletePanel: React.FC = () => {
-  const { plugins, deleteSelectedElements } = useCanvasStore();
+  const { plugins, deleteSelectedElements, selectedIds } = useCanvasStore();
 
   return (
     <div style={{ padding: '8px', border: '1px solid #ddd', borderRadius: '4px', backgroundColor: '#fff' }}>
@@ -14,15 +14,15 @@ export const DeletePanel: React.FC = () => {
 
       <button
         onClick={deleteSelectedElements}
-        disabled={plugins.select.selectedIds.length === 0}
+        disabled={selectedIds.length === 0}
         style={{
           width: '100%',
-          backgroundColor: plugins.select.selectedIds.length > 0 ? '#dc3545' : '#f8f9fa',
-          color: plugins.select.selectedIds.length > 0 ? '#fff' : '#6c757d',
+          backgroundColor: selectedIds.length > 0 ? '#dc3545' : '#f8f9fa',
+          color: selectedIds.length > 0 ? '#fff' : '#6c757d',
           border: '1px solid #dee2e6',
           padding: '6px 8px',
           borderRadius: '4px',
-          cursor: plugins.select.selectedIds.length > 0 ? 'pointer' : 'not-allowed',
+          cursor: selectedIds.length > 0 ? 'pointer' : 'not-allowed',
           fontSize: '12px',
           display: 'flex',
           alignItems: 'center',
@@ -31,7 +31,7 @@ export const DeletePanel: React.FC = () => {
         }}
       >
         <Trash2 size={14} />
-        Delete ({plugins.select.selectedIds.length})
+        Delete ({selectedIds.length})
       </button>
     </div>
   );

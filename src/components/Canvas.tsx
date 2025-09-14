@@ -10,7 +10,7 @@ interface CanvasProps {
 
 export const Canvas: React.FC<CanvasProps> = () => {
   const svgRef = useRef<SVGSVGElement>(null);
-  const { elements, viewport, activePlugin, plugins } = useCanvasStore();
+  const { elements, viewport, activePlugin, plugins, selectedIds } = useCanvasStore();
 
   const [isSpacePressed, setIsSpacePressed] = useState(false);
   const [isSelecting, setIsSelecting] = useState(false);
@@ -93,23 +93,21 @@ export const Canvas: React.FC<CanvasProps> = () => {
     if (activePlugin === 'select') {
       useCanvasStore.getState().selectElement(elementId, e.shiftKey);
 
-      // Only set drag start if the element is selected (for potential drag)
-      if (useCanvasStore.getState().plugins.select.selectedIds.includes(elementId)) {
-        const point = screenToCanvas(e.clientX, e.clientY);
-        setDragStart(point);
-      }
+      // Set drag start for the clicked element (it should be selected now)
+      const point = screenToCanvas(e.clientX, e.clientY);
+      setDragStart(point);
     }
   }, [activePlugin, screenToCanvas]);
 
   // Handle element mouse down for drag
   const handleElementMouseDown = useCallback((elementId: string, e: React.MouseEvent) => {
-    if (activePlugin === 'select' && plugins.select.selectedIds.includes(elementId)) {
+    if (activePlugin === 'select') {
       e.stopPropagation(); // Prevent handleMouseDown from starting selection rectangle
       const point = screenToCanvas(e.clientX, e.clientY);
       setIsDragging(true);
       setDragStart(point);
     }
-  }, [activePlugin, plugins.select.selectedIds, screenToCanvas]);
+  }, [activePlugin, screenToCanvas]);
 
   // Handle mouse events
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -142,8 +140,16 @@ export const Canvas: React.FC<CanvasProps> = () => {
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     const point = screenToCanvas(e.clientX, e.clientY);
 
-    if (isSpacePressed || activePlugin === 'pan') {
-      // Pan the canvas
+    if (isSpacePressed && e.buttons === 1) {
+      // Pan the canvas with spacebar + mouse button
+      const deltaX = e.movementX;
+      const deltaY = e.movementY;
+      useCanvasStore.getState().pan(deltaX / viewport.zoom, deltaY / viewport.zoom);
+      return;
+    }
+
+    if (activePlugin === 'pan' && e.buttons === 1) {
+      // Pan the canvas with pan tool + mouse button
       const deltaX = e.movementX;
       const deltaY = e.movementY;
       useCanvasStore.getState().pan(deltaX / viewport.zoom, deltaY / viewport.zoom);
@@ -173,6 +179,11 @@ export const Canvas: React.FC<CanvasProps> = () => {
       setIsDragging(false);
       setDragStart(null);
       return;
+    }
+
+    // Auto-switch to select mode after drawing with pencil
+    if (activePlugin === 'pencil') {
+      useCanvasStore.getState().setActivePlugin('select');
     }
 
     if (isSelecting && selectionStart && selectionEnd) {
@@ -325,7 +336,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
   // Render elements
   const renderElement = (element: typeof elements[0]) => {
     const { data, type } = element;
-    const isSelected = plugins.select.selectedIds.includes(element.id);
+    const isSelected = selectedIds.includes(element.id);
 
     switch (type) {
       case 'path': {
