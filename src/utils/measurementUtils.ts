@@ -26,14 +26,14 @@ export const measureText = (
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
   if (!ctx) {
-    // Fallback approximation
-    const approxWidth = text.length * (fontSize / 2);
-    const approxHeight = fontSize;
+    // Fallback approximation with zoom consideration
+    const approxWidth = text.length * (fontSize * zoom / 2);
+    const approxHeight = fontSize * zoom;
     return { width: approxWidth, height: approxHeight };
   }
 
   // Set font with zoom consideration and text decorations
-  const scaledFontSize = fontSize / zoom;
+  const scaledFontSize = fontSize * zoom;
   ctx.font = `${fontStyle} ${fontWeight} ${scaledFontSize}px ${fontFamily}`;
 
   // Measure text
@@ -81,7 +81,7 @@ export const measurePath = (
   // Use the provided path data string
   pathElement.setAttribute('d', d);
   pathElement.setAttribute('stroke', '#000000');
-  pathElement.setAttribute('stroke-width', strokeWidth.toString());
+  pathElement.setAttribute('stroke-width', (strokeWidth * zoom).toString());
   pathElement.setAttribute('stroke-linecap', 'round');
   pathElement.setAttribute('stroke-linejoin', 'round');
   pathElement.setAttribute('fill', 'none');

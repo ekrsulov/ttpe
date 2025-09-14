@@ -271,7 +271,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
               textData.fontWeight,
               textData.fontStyle,
               textData.textDecoration,
-              1 // Use zoom=1 to get base dimensions
+              viewport.zoom // Use current zoom for consistent measurements
             );
 
             // Convert text dimensions to canvas coordinates
@@ -392,7 +392,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
             <path
               d={pathData.d}
               stroke={pathData.strokeColor}
-              strokeWidth={pathData.strokeWidth / viewport.zoom}
+              strokeWidth={pathData.strokeWidth * viewport.zoom}
               fill="none"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -400,8 +400,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
               onClick={(e) => handleElementClick(element.id, e)}
               onMouseDown={(e) => handleElementMouseDown(element.id, e)}
               style={{ 
-                cursor: activePlugin === 'select' ? (isSelected ? 'move' : 'pointer') : 'default',
-                filter: isSelected ? 'drop-shadow(0 0 4px rgba(0, 123, 255, 0.5))' : 'none'
+                cursor: activePlugin === 'select' ? (isSelected ? 'move' : 'pointer') : 'default'
               }}
             />
             {isSelected && renderSelectionBox(element)}
@@ -416,7 +415,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
             <text
               x={textData.x}
               y={textData.y}
-              fontSize={textData.fontSize / viewport.zoom}
+              fontSize={textData.fontSize * viewport.zoom}
               fontFamily={textData.fontFamily}
               fontWeight={textData.fontWeight}
               fontStyle={textData.fontStyle}
@@ -425,7 +424,6 @@ export const Canvas: React.FC<CanvasProps> = () => {
               style={{ 
                 userSelect: 'none', 
                 cursor: activePlugin === 'select' ? (isSelected ? 'move' : 'pointer') : 'default',
-                filter: isSelected ? 'drop-shadow(0 0 4px rgba(0, 123, 255, 0.5))' : 'none',
                 textDecoration: textData.textDecoration !== 'none' ? textData.textDecoration : undefined
               }}
               onClick={(e) => handleElementClick(element.id, e)}
