@@ -104,7 +104,7 @@ export const PanPanel: React.FC = () => {
           }}
           title="Reset Pan Position"
         >
-          <RotateCcw size={12} />
+          <RotateCcw size={14} />
         </button>
       </div>
     </div>

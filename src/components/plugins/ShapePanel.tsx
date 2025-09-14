@@ -4,7 +4,7 @@ import { Square, Circle, Triangle, Shapes } from 'lucide-react';
 import type { ShapeType } from '../../store/slices/plugins/shapePluginSlice';
 
 export const ShapePanel: React.FC = () => {
-  const { plugins, updatePluginState, setActivePlugin } = useCanvasStore();
+  const { plugins, updatePluginState, setActivePlugin, activePlugin } = useCanvasStore();
 
   const shapes: { type: ShapeType; label: string; icon: React.ComponentType<any> }[] = [
     { type: 'square', label: 'Square', icon: Square },
@@ -29,7 +29,9 @@ export const ShapePanel: React.FC = () => {
       <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
         {shapes.map((shape) => {
           const IconComponent = shape.icon;
-          const isSelected = plugins.shape.selectedShape === shape.type;
+          const isShapeSelected = plugins.shape.selectedShape === shape.type;
+          const isShapeModeActive = activePlugin === 'shape';
+          const shouldHighlight = isShapeModeActive && isShapeSelected;
 
           return (
             <button
@@ -37,9 +39,9 @@ export const ShapePanel: React.FC = () => {
               onClick={() => handleShapeSelect(shape.type)}
               style={{
                 padding: '6px',
-                backgroundColor: isSelected ? '#007bff' : '#f8f9fa',
-                color: isSelected ? '#fff' : '#333',
-                border: '1px solid #dee2e6',
+                backgroundColor: shouldHighlight ? '#007bff' : '#f8f9fa',
+                color: shouldHighlight ? '#fff' : '#333',
+                border: isShapeSelected ? '2px solid #007bff' : '1px solid #dee2e6',
                 borderRadius: '3px',
                 cursor: 'pointer',
                 display: 'flex',
@@ -47,8 +49,8 @@ export const ShapePanel: React.FC = () => {
                 justifyContent: 'center',
                 fontSize: '12px',
                 transition: 'all 0.2s ease',
-                minWidth: '32px',
-                minHeight: '32px'
+                minWidth: '28px',
+                minHeight: '28px'
               }}
               title={`${shape.label} - Click and drag to create`}
             >

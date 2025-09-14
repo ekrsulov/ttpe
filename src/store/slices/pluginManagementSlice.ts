@@ -17,6 +17,7 @@ type PluginState = {
   shape: { selectedShape: 'square' | 'circle' | 'triangle' | 'rectangle' };
   select: Record<string, never>;
   delete: Record<string, never>;
+  history: { canUndo: boolean; canRedo: boolean; historyStack: any[]; currentIndex: number };
 };
 
 export interface PluginManagementSlice {
@@ -40,6 +41,7 @@ export const createPluginManagementSlice: StateCreator<PluginManagementSlice> = 
     shape: { selectedShape: 'square' },
     select: {},
     delete: {},
+    history: { canUndo: false, canRedo: false, historyStack: [], currentIndex: -1 },
   },
 
   // Actions

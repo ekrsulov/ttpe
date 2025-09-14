@@ -68,7 +68,7 @@ export const ZoomPanel: React.FC = () => {
           }}
           title="Reset Zoom (100%)"
         >
-          <RotateCcw size={12} />
+          <RotateCcw size={14} />
         </button>
       </div>
     </div>

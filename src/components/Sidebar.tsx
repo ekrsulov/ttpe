@@ -9,6 +9,7 @@ import { DeletePanel } from './plugins/DeletePanel';
 import { OrderPanel } from './plugins/OrderPanel';
 import { ArrangePanel } from './plugins/ArrangePanel';
 import { ShapePanel } from './plugins/ShapePanel';
+import { HistoryPanel } from './plugins/HistoryPanel';
 import {
   Move,
   Pen,
@@ -71,7 +72,7 @@ export const Sidebar: React.FC = () => {
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: '10px',
-                  minHeight: '50px'
+                  minHeight: '37.5px'
                 }}
                 title={plugin.label}
               >
@@ -91,6 +92,7 @@ export const Sidebar: React.FC = () => {
         flexDirection: 'column',
         gap: '8px'
       }}>
+        <HistoryPanel />
         <SelectPanel />
         <PanPanel />
         <ZoomPanel />

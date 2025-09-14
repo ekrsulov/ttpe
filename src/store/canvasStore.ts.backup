@@ -12,33 +12,6 @@ import { createPluginManagementSlice, type PluginManagementSlice } from './slice
 import { createShapePluginSlice, type ShapePluginSlice } from './slices/plugins/shapePluginSlice';
 import { createHistoryPluginSlice, type HistoryPluginSlice } from './slices/plugins/historyPluginSlice';
 
-// Throttle function to implement cool-off period
-function throttle<T extends (...args: any[]) => any>(
-  func: T,
-  delay: number
-): T {
-  let timeoutId: number | null = null;
-  let lastExecTime = 0;
-
-  return ((...args: Parameters<T>) => {
-    const currentTime = Date.now();
-
-    if (currentTime - lastExecTime > delay) {
-      func(...args);
-      lastExecTime = currentTime;
-    } else {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-
-      timeoutId = setTimeout(() => {
-        func(...args);
-        lastExecTime = Date.now();
-      }, delay - (currentTime - lastExecTime));
-    }
-  }) as T;
-}
-
 // Combine all slice types
 type CanvasStore = BaseSlice &
   ViewportSlice &
@@ -133,11 +106,11 @@ export const useCanvasStore = create<CanvasStore>()(
             fontStyle,
             textDecoration,
             opacity,
-          },
-        });
-        // Auto-switch to select mode after adding text
-        get().setActivePlugin('select');
       },
+    });
+    // Auto-switch to select mode after adding text
+    get().setActivePlugin('select');
+  },
 
   deleteSelectedElements: () => {
     const selectedIds = get().selectedIds;
@@ -236,12 +209,5 @@ export const useCanvasStore = create<CanvasStore>()(
     },
     activePlugin: state.activePlugin,
   }),
-  // Cool-off period: throttle state changes to prevent too many history entries
-  // during rapid events like drawing or moving
-  handleSet: (handleSet) =>
-    throttle<typeof handleSet>((state) => {
-      handleSet(state);
-    }, 500), // 500ms cool-off period
 }
-)
-);
+);)

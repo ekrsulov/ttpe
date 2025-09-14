@@ -195,12 +195,6 @@ export const ArrangePanel: React.FC = () => {
           <MoveVertical size={12} />
         </button>
       </div>
-
-      {!canDistribute && (
-        <div style={{ fontSize: '10px', color: '#999', marginTop: '4px', textAlign: 'center' }}>
-          Select 3+ elements
-        </div>
-      )}
     </div>
   );
 };
