@@ -1,6 +1,41 @@
 import type { StateCreator } from 'zustand';
 import type { CanvasElement } from '../../../types';
 
+// Helper function to transform SVG path commands by applying a translation
+const transformSvgPath = (d: string, deltaX: number, deltaY: number): string => {
+  // Split the path into commands and coordinates
+  const commands = d.split(/([MLHVCSQTAZmlhvcsqtaz])/).filter(cmd => cmd.trim() !== '');
+  let result = '';
+  let i = 0;
+  
+  while (i < commands.length) {
+    const command = commands[i];
+    result += command;
+    
+    // If this is a command that takes coordinates, process the next values
+    if ('MLHVCSQTAZmlhvcsqtaz'.indexOf(command) !== -1) {
+      i++;
+      // Collect all numeric values until the next command
+      while (i < commands.length && 'MLHVCSQTAZmlhvcsqtaz'.indexOf(commands[i]) === -1) {
+        const coords = commands[i].trim().split(/[\s,]+/).map(parseFloat);
+        if (coords.length >= 2) {
+          // Apply translation to coordinate pairs
+          for (let j = 0; j < coords.length; j += 2) {
+            coords[j] += deltaX;     // x coordinate
+            coords[j + 1] += deltaY; // y coordinate
+          }
+          result += ' ' + coords.join(' ');
+        }
+        i++;
+      }
+    } else {
+      i++;
+    }
+  }
+  
+  return result;
+};
+
 export interface SelectionSlice {
   // State
   selectedIds: string[];
@@ -66,10 +101,7 @@ export const createSelectionSlice: StateCreator<SelectionSlice> = (set, get, _ap
               ...el,
               data: {
                 ...pathData,
-                points: pathData.points.map(point => ({
-                  x: point.x + deltaX,
-                  y: point.y + deltaY,
-                })),
+                d: transformSvgPath(pathData.d, deltaX, deltaY),
               },
             };
           } else if (el.type === 'text') {

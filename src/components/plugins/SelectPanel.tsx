@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
-import type { PathData, TextData } from '../../types';
+import type { TextData } from '../../types';
 import { MousePointer, Pen, Type } from 'lucide-react';
 
 export const SelectPanel: React.FC = () => {
@@ -33,10 +33,10 @@ export const SelectPanel: React.FC = () => {
             }}>
               {el.type === 'path' ? <Pen size={12} /> : <Type size={12} />}
               <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: '500' }}>{el.type}</div>
+                <div style={{ fontWeight: '500' }}>{el.type} (z: {el.zIndex})</div>
                 {el.type === 'path' && (
                   <div style={{ fontSize: '10px', color: '#666' }}>
-                    {(el.data as PathData).points.length} points
+                    SVG path
                   </div>
                 )}
                 {el.type === 'text' && (

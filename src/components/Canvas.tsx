@@ -251,7 +251,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
           if (el.type === 'path') {
             const pathData = el.data as import('../types').PathData;
             // Check if the path bounds intersect with the selection box
-            const pathBounds = measurePath(pathData.points, pathData.strokeWidth, viewport.zoom);
+            const pathBounds = measurePath(pathData.d, pathData.strokeWidth, viewport.zoom);
 
             // Check for intersection between path bounds and selection bounds
             const intersects = !(pathBounds.maxX < selectionMinX ||
@@ -337,11 +337,8 @@ export const Canvas: React.FC<CanvasProps> = () => {
 
     if (element.type === 'path') {
       const pathData = element.data as import('../types').PathData;
-      const points = pathData.points;
-      if (points.length > 0) {
-        // Use precise path measurement with ghost canvas (considering stroke width)
-        bounds = measurePath(points, pathData.strokeWidth, viewport.zoom);
-      }
+      // Use precise path measurement with ghost canvas (considering stroke width)
+      bounds = measurePath(pathData.d, pathData.strokeWidth, viewport.zoom);
     } else if (element.type === 'text') {
       const textData = element.data as import('../types').TextData;
 
@@ -389,14 +386,11 @@ export const Canvas: React.FC<CanvasProps> = () => {
     switch (type) {
       case 'path': {
         const pathData = data as import('../types').PathData;
-        const pathString = pathData.points
-          .map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`)
-          .join(' ');
 
         return (
           <g key={element.id}>
             <path
-              d={pathString}
+              d={pathData.d}
               stroke={pathData.strokeColor}
               strokeWidth={pathData.strokeWidth / viewport.zoom}
               fill="none"
@@ -496,29 +490,41 @@ export const Canvas: React.FC<CanvasProps> = () => {
         switch (selectedShape) {
           case 'square':
             const halfSize = Math.min(width, height) / 2;
-            pathData = `M ${centerX - halfSize} ${centerY - halfSize} L ${centerX + halfSize} ${centerY - halfSize} L ${centerX + halfSize} ${centerY + halfSize} L ${centerX - halfSize} ${centerY + halfSize} L ${centerX - halfSize} ${centerY - halfSize}`;
+            pathData = `M ${centerX - halfSize} ${centerY - halfSize} L ${centerX + halfSize} ${centerY - halfSize} L ${centerX + halfSize} ${centerY + halfSize} L ${centerX - halfSize} ${centerY + halfSize} Z`;
             break;
             
           case 'rectangle':
-            pathData = `M ${shapeStart.x} ${shapeStart.y} L ${shapeEnd.x} ${shapeStart.y} L ${shapeEnd.x} ${shapeEnd.y} L ${shapeStart.x} ${shapeEnd.y} L ${shapeStart.x} ${shapeStart.y}`;
+            pathData = `M ${shapeStart.x} ${shapeStart.y} L ${shapeEnd.x} ${shapeStart.y} L ${shapeEnd.x} ${shapeEnd.y} L ${shapeStart.x} ${shapeEnd.y} Z`;
             break;
             
           case 'circle':
+            // Create a circle using C commands (Bézier curves)
             const radius = Math.min(width, height) / 2;
-            const segments = 16;
-            pathData = `M ${centerX + radius} ${centerY}`;
-            for (let i = 1; i <= segments; i++) {
-              const angle = (i / segments) * 2 * Math.PI;
-              const x = centerX + radius * Math.cos(angle);
-              const y = centerY + radius * Math.sin(angle);
-              pathData += ` L ${x} ${y}`;
-            }
-            // Close the circle
-            pathData += ` L ${centerX + radius} ${centerY}`;
+            const kappa = 0.552284749831; // Control point constant for circle approximation
+            
+            // Calculate control points
+            const cx1 = centerX - radius;
+            const cy1 = centerY - radius * kappa;
+            const cx2 = centerX - radius * kappa;
+            const cy2 = centerY - radius;
+            const cx3 = centerX + radius * kappa;
+            const cy3 = centerY - radius;
+            const cx4 = centerX + radius;
+            const cy4 = centerY - radius * kappa;
+            const cx5 = centerX + radius;
+            const cy5 = centerY + radius * kappa;
+            const cx6 = centerX + radius * kappa;
+            const cy6 = centerY + radius;
+            const cx7 = centerX - radius * kappa;
+            const cy7 = centerY + radius;
+            const cx8 = centerX - radius;
+            const cy8 = centerY + radius * kappa;
+            
+            pathData = `M ${centerX - radius} ${centerY} C ${cx1} ${cy1} ${cx2} ${cy2} ${centerX} ${centerY - radius} C ${cx3} ${cy3} ${cx4} ${cy4} ${centerX + radius} ${centerY} C ${cx5} ${cy5} ${cx6} ${cy6} ${centerX} ${centerY + radius} C ${cx7} ${cy7} ${cx8} ${cy8} ${centerX - radius} ${centerY} Z`;
             break;
             
           case 'triangle':
-            pathData = `M ${centerX} ${shapeStart.y} L ${shapeEnd.x} ${shapeEnd.y} L ${shapeStart.x} ${shapeEnd.y} L ${centerX} ${shapeStart.y}`;
+            pathData = `M ${centerX} ${shapeStart.y} L ${shapeEnd.x} ${shapeEnd.y} L ${shapeStart.x} ${shapeEnd.y} Z`;
             break;
         }
         

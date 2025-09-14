@@ -31,20 +31,28 @@ export const createOrderSlice: StateCreator<OrderSlice> = (set, get, _api) => ({
     if (selectedIds.length === 0) return;
 
     (set as any)((state: any) => {
-      const elements = [...state.elements].sort((a: CanvasElement, b: CanvasElement) => a.zIndex - b.zIndex);
-      const newElements = [...elements];
-
+      const elements = [...state.elements];
+      
       selectedIds.forEach((selectedId: string) => {
-        const currentIndex = (newElements as any).findIndex((el: CanvasElement) => el.id === selectedId);
-        if (currentIndex < newElements.length - 1) {
-          // Swap with next element
-          const temp = newElements[currentIndex];
-          newElements[currentIndex] = newElements[currentIndex + 1];
-          newElements[currentIndex + 1] = temp;
+        const currentElement = elements.find((el: CanvasElement) => el.id === selectedId);
+        if (!currentElement) return;
+
+        // Find the element immediately above (higher z-index)
+        const elementsAbove = elements
+          .filter((el: CanvasElement) => el.zIndex > currentElement.zIndex)
+          .sort((a: CanvasElement, b: CanvasElement) => a.zIndex - b.zIndex);
+        
+        if (elementsAbove.length > 0) {
+          const nextElement = elementsAbove[0];
+          
+          // Swap z-index values
+          const tempZIndex = currentElement.zIndex;
+          currentElement.zIndex = nextElement.zIndex;
+          nextElement.zIndex = tempZIndex;
         }
       });
 
-      return { elements: newElements };
+      return { elements };
     });
   },
 
@@ -53,20 +61,28 @@ export const createOrderSlice: StateCreator<OrderSlice> = (set, get, _api) => ({
     if (selectedIds.length === 0) return;
 
     (set as any)((state: any) => {
-      const elements = [...state.elements].sort((a: CanvasElement, b: CanvasElement) => a.zIndex - b.zIndex);
-      const newElements = [...elements];
-
+      const elements = [...state.elements];
+      
       selectedIds.forEach((selectedId: string) => {
-        const currentIndex = (newElements as any).findIndex((el: CanvasElement) => el.id === selectedId);
-        if (currentIndex > 0) {
-          // Swap with previous element
-          const temp = newElements[currentIndex];
-          newElements[currentIndex] = newElements[currentIndex - 1];
-          newElements[currentIndex - 1] = temp;
+        const currentElement = elements.find((el: CanvasElement) => el.id === selectedId);
+        if (!currentElement) return;
+
+        // Find the element immediately below (lower z-index)
+        const elementsBelow = elements
+          .filter((el: CanvasElement) => el.zIndex < currentElement.zIndex)
+          .sort((a: CanvasElement, b: CanvasElement) => b.zIndex - a.zIndex);
+        
+        if (elementsBelow.length > 0) {
+          const prevElement = elementsBelow[0];
+          
+          // Swap z-index values
+          const tempZIndex = currentElement.zIndex;
+          currentElement.zIndex = prevElement.zIndex;
+          prevElement.zIndex = tempZIndex;
         }
       });
 
-      return { elements: newElements };
+      return { elements };
     });
   },
 

@@ -56,7 +56,7 @@ export const useCanvasStore = create<CanvasStore>((set, get, api) => ({
     get().addElement({
       type: 'path',
       data: {
-        points: [point],
+        d: `M ${point.x} ${point.y}`,
         strokeWidth,
         strokeColor,
         opacity,
@@ -69,10 +69,11 @@ export const useCanvasStore = create<CanvasStore>((set, get, api) => ({
     const lastElement = state.elements[state.elements.length - 1];
     if (lastElement?.type === 'path') {
       const pathData = lastElement.data as import('../types').PathData;
+      const newD = `${pathData.d} L ${point.x} ${point.y}`;
       get().updateElement(lastElement.id, {
         data: {
           ...pathData,
-          points: [...pathData.points, point],
+          d: newD,
         },
       });
     }
@@ -121,76 +122,62 @@ export const useCanvasStore = create<CanvasStore>((set, get, api) => ({
     const centerX = (startPoint.x + endPoint.x) / 2;
     const centerY = (startPoint.y + endPoint.y) / 2;
     
-    let points: Point[] = [];
+    let d = '';
     
     switch (selectedShape) {
       case 'square':
         // Create a square using path commands
         const halfSize = Math.min(width, height) / 2;
-        points = [
-          { x: centerX - halfSize, y: centerY - halfSize },
-          { x: centerX + halfSize, y: centerY - halfSize },
-          { x: centerX + halfSize, y: centerY + halfSize },
-          { x: centerX - halfSize, y: centerY + halfSize },
-          { x: centerX - halfSize, y: centerY - halfSize }, // Close the square
-        ];
+        d = `M ${centerX - halfSize} ${centerY - halfSize} L ${centerX + halfSize} ${centerY - halfSize} L ${centerX + halfSize} ${centerY + halfSize} L ${centerX - halfSize} ${centerY + halfSize} Z`;
         break;
         
       case 'rectangle':
         // Create a rectangle using path commands
-        points = [
-          { x: startPoint.x, y: startPoint.y },
-          { x: endPoint.x, y: startPoint.y },
-          { x: endPoint.x, y: endPoint.y },
-          { x: startPoint.x, y: endPoint.y },
-          { x: startPoint.x, y: startPoint.y }, // Close the rectangle
-        ];
+        d = `M ${startPoint.x} ${startPoint.y} L ${endPoint.x} ${startPoint.y} L ${endPoint.x} ${endPoint.y} L ${startPoint.x} ${endPoint.y} Z`;
         break;
         
       case 'circle':
-        // Create a circle approximation using path commands
+        // Create a circle using C commands (Bézier curves)
         const radius = Math.min(width, height) / 2;
-        const segments = 16;
-        for (let i = 0; i < segments; i++) {
-          const angle = (i / segments) * 2 * Math.PI;
-          points.push({
-            x: centerX + radius * Math.cos(angle),
-            y: centerY + radius * Math.sin(angle),
-          });
-        }
-        // Close the circle by adding the first point again
-        if (points.length > 0) {
-          points.push(points[0]);
-        }
+        const kappa = 0.552284749831; // Control point constant for circle approximation
+        
+        // Calculate control points
+        const cx1 = centerX - radius;
+        const cy1 = centerY - radius * kappa;
+        const cx2 = centerX - radius * kappa;
+        const cy2 = centerY - radius;
+        const cx3 = centerX + radius * kappa;
+        const cy3 = centerY - radius;
+        const cx4 = centerX + radius;
+        const cy4 = centerY - radius * kappa;
+        const cx5 = centerX + radius;
+        const cy5 = centerY + radius * kappa;
+        const cx6 = centerX + radius * kappa;
+        const cy6 = centerY + radius;
+        const cx7 = centerX - radius * kappa;
+        const cy7 = centerY + radius;
+        const cx8 = centerX - radius;
+        const cy8 = centerY + radius * kappa;
+        
+        d = `M ${centerX - radius} ${centerY} C ${cx1} ${cy1} ${cx2} ${cy2} ${centerX} ${centerY - radius} C ${cx3} ${cy3} ${cx4} ${cy4} ${centerX + radius} ${centerY} C ${cx5} ${cy5} ${cx6} ${cy6} ${centerX} ${centerY + radius} C ${cx7} ${cy7} ${cx8} ${cy8} ${centerX - radius} ${centerY} Z`;
         break;
         
       case 'triangle':
         // Create a triangle using path commands
-        points = [
-          { x: centerX, y: startPoint.y },
-          { x: endPoint.x, y: endPoint.y },
-          { x: startPoint.x, y: endPoint.y },
-          { x: centerX, y: startPoint.y }, // Close the triangle
-        ];
+        d = `M ${centerX} ${startPoint.y} L ${endPoint.x} ${endPoint.y} L ${startPoint.x} ${endPoint.y} Z`;
         break;
         
       default:
         // Default to square if unknown shape
         const defaultHalfSize = Math.min(width, height) / 2;
-        points = [
-          { x: centerX - defaultHalfSize, y: centerY - defaultHalfSize },
-          { x: centerX + defaultHalfSize, y: centerY - defaultHalfSize },
-          { x: centerX + defaultHalfSize, y: centerY + defaultHalfSize },
-          { x: centerX - defaultHalfSize, y: centerY + defaultHalfSize },
-          { x: centerX - defaultHalfSize, y: centerY - defaultHalfSize },
-        ];
+        d = `M ${centerX - defaultHalfSize} ${centerY - defaultHalfSize} L ${centerX + defaultHalfSize} ${centerY - defaultHalfSize} L ${centerX + defaultHalfSize} ${centerY + defaultHalfSize} L ${centerX - defaultHalfSize} ${centerY + defaultHalfSize} Z`;
         break;
     }
     
     get().addElement({
       type: 'path',
       data: {
-        points,
+        d,
         strokeWidth,
         strokeColor,
         opacity,

@@ -55,11 +55,11 @@ export const measureText = (
 
 // Function to measure path bounds using a ghost SVG (considering stroke width)
 export const measurePath = (
-  points: Array<{ x: number; y: number }>,
+  d: string,
   strokeWidth: number,
   zoom: number
 ): { minX: number; minY: number; maxX: number; maxY: number } => {
-  const cacheKey = `${JSON.stringify(points)}-${strokeWidth}-${zoom}`;
+  const cacheKey = `${d}-${strokeWidth}-${zoom}`;
 
   // Check cache first
   if (pathMeasurementCache.has(cacheKey)) {
@@ -78,12 +78,8 @@ export const measurePath = (
   // Create path element
   const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
 
-  // Create path data string with original coordinates
-  const pathData = points.map((point, index) =>
-    `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`
-  ).join(' ');
-
-  pathElement.setAttribute('d', pathData);
+  // Use the provided path data string
+  pathElement.setAttribute('d', d);
   pathElement.setAttribute('stroke', '#000000');
   pathElement.setAttribute('stroke-width', strokeWidth.toString());
   pathElement.setAttribute('stroke-linecap', 'round');

@@ -34,7 +34,7 @@ export const OrderPanel: React.FC = () => {
           }}
           title="Bring to Front"
         >
-          <Triangle size={12} style={{ transform: 'rotate(180deg)' }} />
+          <Triangle size={12} />
         </button>
 
         <button
@@ -88,7 +88,7 @@ export const OrderPanel: React.FC = () => {
           }}
           title="Send to Back"
         >
-          <Triangle size={12} />
+          <Triangle size={12} style={{ transform: 'rotate(180deg)' }} />
         </button>
       </div>
     </div>
