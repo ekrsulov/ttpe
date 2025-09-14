@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { temporal } from 'zundo';
 import type { Point } from '../types';
+import { textToPath } from '../utils/measurementUtils';
 
 // Import all slices
 import { createBaseSlice, type BaseSlice } from './slices/baseSlice';
@@ -55,6 +56,7 @@ type CanvasStore = BaseSlice &
     addText: (x: number, y: number, text: string) => void;
     deleteSelectedElements: () => void;
     createShape: (startPoint: Point, endPoint: Point) => void;
+    convertTextToPath: () => void;
   };
 
 // Create the store with all slices combined and temporal middleware
@@ -221,6 +223,53 @@ export const useCanvasStore = create<CanvasStore>()(
     
     // Auto-switch to select mode after creating shape
     get().setActivePlugin('select');
+  },
+
+  convertTextToPath: () => {
+    const state = get();
+    const selectedElements = state.elements.filter(el => state.selectedIds.includes(el.id));
+    const textElements = selectedElements.filter(el => el.type === 'text');
+
+    if (textElements.length === 0) return;
+
+    // Process each selected text element
+    textElements.forEach(textElement => {
+      const textData = textElement.data as import('../types').TextData;
+
+      // Convert text to path using the utility function
+      const pathD = textToPath(
+        textData.text,
+        textData.x,
+        textData.y,
+        textData.fontSize,
+        textData.fontFamily,
+        textData.fontWeight,
+        textData.fontStyle,
+        textData.textDecoration,
+        1.5 // Reduced resolution for cleaner contours
+      );
+
+      if (pathD) {
+        // Create new path element
+        const pathElement = {
+          id: `${textElement.id}-path`,
+          type: 'path' as const,
+          data: {
+            d: `M ${textData.x} ${textData.y} ${pathD}`,
+            strokeWidth: 1,
+            strokeColor: textData.color,
+            opacity: textData.opacity,
+          },
+          zIndex: textElement.zIndex,
+        };
+
+        // Add the new path element
+        get().addElement(pathElement);
+
+        // Remove the original text element
+        get().deleteElement(textElement.id);
+      }
+    });
   },
 }),
 {

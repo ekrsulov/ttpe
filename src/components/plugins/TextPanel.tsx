@@ -1,9 +1,9 @@
 import React from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { Type, Palette, Bold, Italic, Eye } from 'lucide-react';
+import { Type, Palette, Bold, Italic, Eye, Wand2 } from 'lucide-react';
 
 export const TextPanel: React.FC = () => {
-  const { plugins, updatePluginState, getSelectedTextsCount, updateSelectedTexts } = useCanvasStore();
+  const { plugins, updatePluginState, getSelectedTextsCount, updateSelectedTexts, convertTextToPath } = useCanvasStore();
   const selectedTextsCount = getSelectedTextsCount();
 
   const handleFontSizeChange = (value: number) => {
@@ -338,6 +338,38 @@ export const TextPanel: React.FC = () => {
             {Math.round(getCurrentOpacity() * 100)}%
           </span>
         </div>
+
+        {/* Convert to Path Button */}
+        {selectedTextsCount > 0 && (
+          <button
+            onClick={convertTextToPath}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 12px',
+              backgroundColor: '#4CAF50',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '12px',
+              fontWeight: 'bold',
+              width: '100%',
+              justifyContent: 'center',
+              marginTop: '8px'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.backgroundColor = '#45a049';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.backgroundColor = '#4CAF50';
+            }}
+          >
+            <Wand2 size={14} />
+            Convert to Path
+          </button>
+        )}
       </div>
     </div>
   );
