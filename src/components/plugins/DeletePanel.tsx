@@ -1,25 +1,37 @@
 import React from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
+import { Trash2 } from 'lucide-react';
 
 export const DeletePanel: React.FC = () => {
   const { plugins, deleteSelectedElements } = useCanvasStore();
 
   return (
-    <div style={{ marginBottom: '20px', padding: '10px', border: '1px solid #ddd', borderRadius: '4px' }}>
-      <h4>Delete</h4>
+    <div style={{ padding: '8px', border: '1px solid #ddd', borderRadius: '4px', backgroundColor: '#fff' }}>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+        <Trash2 size={16} style={{ marginRight: '6px', color: '#666' }} />
+        <span style={{ fontSize: '12px', fontWeight: '500', color: '#333' }}>Delete</span>
+      </div>
+
       <button
         onClick={deleteSelectedElements}
         disabled={plugins.select.selectedIds.length === 0}
         style={{
-          backgroundColor: plugins.select.selectedIds.length > 0 ? '#dc3545' : '#ccc',
-          color: 'white',
-          border: 'none',
-          padding: '5px 10px',
+          width: '100%',
+          backgroundColor: plugins.select.selectedIds.length > 0 ? '#dc3545' : '#f8f9fa',
+          color: plugins.select.selectedIds.length > 0 ? '#fff' : '#6c757d',
+          border: '1px solid #dee2e6',
+          padding: '6px 8px',
           borderRadius: '4px',
-          cursor: plugins.select.selectedIds.length > 0 ? 'pointer' : 'not-allowed'
+          cursor: plugins.select.selectedIds.length > 0 ? 'pointer' : 'not-allowed',
+          fontSize: '12px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '4px'
         }}
       >
-        Delete Selected ({plugins.select.selectedIds.length})
+        <Trash2 size={14} />
+        Delete ({plugins.select.selectedIds.length})
       </button>
     </div>
   );

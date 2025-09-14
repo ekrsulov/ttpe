@@ -1,5 +1,6 @@
 import React, { useRef, useCallback, useState, useEffect } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
+import { measureText, measurePath } from '../utils/measurementUtils';
 import type { Point } from '../types';
 
 interface CanvasProps {
@@ -7,61 +8,10 @@ interface CanvasProps {
   height: number;
 }
 
-// Cache for text measurements to improve performance
-const textMeasurementCache = new Map<string, { width: number; height: number }>();
-
-// Function to clear text measurement cache (useful for memory management)
-const clearTextMeasurementCache = () => {
-  textMeasurementCache.clear();
-};
-
-// Function to measure text using a ghost canvas
-const measureText = (
-  text: string,
-  fontSize: number,
-  fontFamily: string,
-  zoom: number,
-  fontWeight: 'normal' | 'bold' = 'normal',
-  fontStyle: 'normal' | 'italic' = 'normal'
-): { width: number; height: number } => {
-  const cacheKey = `${text}-${fontSize}-${fontFamily}-${zoom}-${fontWeight}-${fontStyle}`;
-
-  // Check cache first
-  if (textMeasurementCache.has(cacheKey)) {
-    return textMeasurementCache.get(cacheKey)!;
-  }
-
-  // Create ghost canvas
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-
-  if (!ctx) {
-    // Fallback to approximate calculation if canvas is not available
-    const approxWidth = text.length * (fontSize / zoom) * 0.6;
-    const approxHeight = fontSize / zoom;
-    return { width: approxWidth, height: approxHeight };
-  }
-
-  // Set font with zoom consideration and text decorations
-  const scaledFontSize = fontSize / zoom;
-  ctx.font = `${fontStyle} ${fontWeight} ${scaledFontSize}px ${fontFamily}`;
-
-  // Measure text
-  const metrics = ctx.measureText(text);
-  const width = metrics.width;
-
-  // Get more precise height if available
-  const actualHeight = metrics.actualBoundingBoxAscent && metrics.actualBoundingBoxDescent
-    ? metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent
-    : scaledFontSize;
-
-  const result = { width, height: actualHeight };
-
-  // Cache the result
-  textMeasurementCache.set(cacheKey, result);
-
-  return result;
-};
+interface CanvasProps {
+  width: number;
+  height: number;
+}
 
 export const Canvas: React.FC<CanvasProps> = ({ width, height }) => {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -120,8 +70,12 @@ export const Canvas: React.FC<CanvasProps> = ({ width, height }) => {
   }, [viewport]);
 
   // Handle canvas click (empty space)
-  const handleCanvasClick = useCallback(() => {
-    if (activePlugin === 'select') {
+  const handleCanvasClick = useCallback((e: React.MouseEvent) => {
+    // Only clear selection if clicking on the SVG canvas itself, not on elements
+    const target = e.target as Element;
+    const isCanvasClick = target.tagName === 'svg' || target === e.currentTarget;
+
+    if (activePlugin === 'select' && isCanvasClick) {
       useCanvasStore.getState().clearSelection();
     }
   }, [activePlugin]);
@@ -130,16 +84,20 @@ export const Canvas: React.FC<CanvasProps> = ({ width, height }) => {
   const handleElementClick = useCallback((elementId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (activePlugin === 'select') {
-      const point = screenToCanvas(e.clientX, e.clientY);
-      setDragStart(point);
-      useCanvasStore.getState().selectElement(elementId, e.ctrlKey || e.metaKey);
+      useCanvasStore.getState().selectElement(elementId, e.shiftKey);
+
+      // Only set drag start if the element is selected (for potential drag)
+      if (useCanvasStore.getState().plugins.select.selectedIds.includes(elementId)) {
+        const point = screenToCanvas(e.clientX, e.clientY);
+        setDragStart(point);
+      }
     }
   }, [activePlugin, screenToCanvas]);
 
   // Handle element mouse down for drag
   const handleElementMouseDown = useCallback((elementId: string, e: React.MouseEvent) => {
     if (activePlugin === 'select' && plugins.select.selectedIds.includes(elementId)) {
-      e.stopPropagation();
+      e.stopPropagation(); // Prevent handleMouseDown from starting selection rectangle
       const point = screenToCanvas(e.clientX, e.clientY);
       setIsDragging(true);
       setDragStart(point);
@@ -149,6 +107,7 @@ export const Canvas: React.FC<CanvasProps> = ({ width, height }) => {
   // Handle mouse events
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     const point = screenToCanvas(e.clientX, e.clientY);
+    const target = e.target as Element;
 
     if (isSpacePressed || activePlugin === 'pan') {
       // Start panning
@@ -163,12 +122,15 @@ export const Canvas: React.FC<CanvasProps> = ({ width, height }) => {
         useCanvasStore.getState().addText(point.x, point.y, plugins.text.text);
         break;
       case 'select':
-        setIsSelecting(true);
-        setSelectionStart(point);
-        setSelectionEnd(point);
+        // Only start selection rectangle if clicking on SVG canvas, not on elements
+        if (target.tagName === 'svg') {
+          setIsSelecting(true);
+          setSelectionStart(point);
+          setSelectionEnd(point);
+        }
         break;
     }
-  }, [activePlugin, screenToCanvas, isSpacePressed]);
+  }, [activePlugin, screenToCanvas, isSpacePressed, plugins.text.text]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     const point = screenToCanvas(e.clientX, e.clientY);
@@ -255,21 +217,8 @@ export const Canvas: React.FC<CanvasProps> = ({ width, height }) => {
       const pathData = element.data as import('../types').PathData;
       const points = pathData.points;
       if (points.length > 0) {
-        bounds = points.reduce(
-          (acc, point) => ({
-            minX: Math.min(acc.minX, point.x),
-            minY: Math.min(acc.minY, point.y),
-            maxX: Math.max(acc.maxX, point.x),
-            maxY: Math.max(acc.maxY, point.y),
-          }),
-          { minX: points[0].x, minY: points[0].y, maxX: points[0].x, maxY: points[0].y }
-        );
-        // Add some padding
-        const padding = 5 / viewport.zoom;
-        bounds.minX -= padding;
-        bounds.minY -= padding;
-        bounds.maxX += padding;
-        bounds.maxY += padding;
+        // Use precise path measurement with ghost canvas (considering stroke width)
+        bounds = measurePath(points, pathData.strokeWidth, viewport.zoom);
       }
     } else if (element.type === 'text') {
       const textData = element.data as import('../types').TextData;
@@ -279,9 +228,10 @@ export const Canvas: React.FC<CanvasProps> = ({ width, height }) => {
         textData.text,
         textData.fontSize,
         textData.fontFamily,
-        viewport.zoom,
         textData.fontWeight,
-        textData.fontStyle
+        textData.fontStyle,
+        textData.textDecoration,
+        viewport.zoom
       );
 
       bounds = {
@@ -388,7 +338,7 @@ export const Canvas: React.FC<CanvasProps> = ({ width, height }) => {
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
-      onClick={handleCanvasClick}
+      onClick={(e) => handleCanvasClick(e)}
       onWheel={handleWheel}
     >
       {sortedElements.map(renderElement)}

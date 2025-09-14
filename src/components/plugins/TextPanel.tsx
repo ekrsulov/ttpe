@@ -1,5 +1,6 @@
 import React from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
+import { Type, Palette, Bold, Italic } from 'lucide-react';
 
 export const TextPanel: React.FC = () => {
   const { plugins, updatePluginState, getSelectedTextsCount, updateSelectedTexts } = useCanvasStore();
@@ -144,101 +145,150 @@ export const TextPanel: React.FC = () => {
   };
 
   return (
-    <div style={{ marginBottom: '20px', padding: '10px', border: '1px solid #ddd', borderRadius: '4px' }}>
-      <h4>Text</h4>
-      {selectedTextsCount > 0 && (
-        <p style={{ fontSize: '12px', color: '#007bff', marginBottom: '10px' }}>
-          Editing {selectedTextsCount} selected text{selectedTextsCount > 1 ? 's' : ''}
-        </p>
-      )}
-      <div style={{ marginBottom: '10px' }}>
-        <label>Font Size: </label>
-        <input
-          type="number"
-          value={getCurrentFontSize()}
-          onChange={(e) => handleFontSizeChange(parseInt(e.target.value) || 12)}
-          onKeyDown={(e) => {
-            if (e.code === 'Space') {
-              e.stopPropagation();
-            }
-          }}
-          min="8"
-          max="72"
-        />
-      </div>
-      <div style={{ marginBottom: '10px' }}>
-        <label>Font Family: </label>
-        <select
-          value={getCurrentFontFamily()}
-          onChange={(e) => handleFontFamilyChange(e.target.value)}
-        >
-          <option value="Arial">Arial</option>
-          <option value="Helvetica">Helvetica</option>
-          <option value="Times New Roman">Times New Roman</option>
-          <option value="Courier New">Courier New</option>
-          <option value="Georgia">Georgia</option>
-        </select>
-      </div>
-      <div style={{ marginBottom: '10px' }}>
-        <label>Text: </label>
-        <input
-          type="text"
-          value={getCurrentText()}
-          onChange={(e) => handleTextChange(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.code === 'Space') {
-              e.stopPropagation();
-            }
-          }}
-          placeholder="Enter text here"
-          disabled={selectedTextsCount > 1}
-        />
-        {selectedTextsCount > 1 && (
-          <p style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>
-            Select only one text to edit content
-          </p>
+    <div style={{ padding: '8px', border: '1px solid #ddd', borderRadius: '4px', backgroundColor: '#fff' }}>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+        <Type size={16} style={{ marginRight: '6px', color: '#666' }} />
+        <span style={{ fontSize: '12px', fontWeight: '500', color: '#333' }}>Text</span>
+        {selectedTextsCount > 0 && (
+          <span style={{ fontSize: '10px', color: '#007bff', marginLeft: '6px' }}>
+            ({selectedTextsCount})
+          </span>
         )}
       </div>
-      <div>
-        <label>Color: </label>
-        <input
-          type="color"
-          value={getCurrentColor()}
-          onChange={(e) => handleColorChange(e.target.value)}
-        />
-      </div>
-      <div style={{ marginTop: '10px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-        <div>
-          <label>
-            <input
-              type="checkbox"
-              checked={getCurrentFontWeight() === 'bold'}
-              onChange={(e) => handleFontWeightChange(e.target.checked ? 'bold' : 'normal')}
-            />
-            Bold
-          </label>
+
+      <div style={{ display: 'grid', gap: '6px' }}>
+        {/* Text Input */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <input
+            type="text"
+            value={getCurrentText()}
+            onChange={(e) => handleTextChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.code === 'Space') {
+                e.stopPropagation();
+              }
+            }}
+            placeholder="Enter text"
+            disabled={selectedTextsCount > 1}
+            style={{
+              flex: 1,
+              padding: '4px 6px',
+              border: '1px solid #ccc',
+              borderRadius: '3px',
+              fontSize: '12px'
+            }}
+          />
         </div>
-        <div>
-          <label>
-            <input
-              type="checkbox"
-              checked={getCurrentFontStyle() === 'italic'}
-              onChange={(e) => handleFontStyleChange(e.target.checked ? 'italic' : 'normal')}
-            />
-            Italic
-          </label>
+
+        {selectedTextsCount > 1 && (
+          <div style={{ fontSize: '10px', color: '#666' }}>
+            Select one text to edit
+          </div>
+        )}
+
+        {/* Font Size and Family */}
+        <div style={{ display: 'flex', gap: '4px' }}>
+          <input
+            type="number"
+            value={getCurrentFontSize()}
+            onChange={(e) => handleFontSizeChange(parseInt(e.target.value) || 12)}
+            onKeyDown={(e) => {
+              if (e.code === 'Space') {
+                e.stopPropagation();
+              }
+            }}
+            min="8"
+            max="72"
+            style={{
+              width: '50px',
+              padding: '4px',
+              border: '1px solid #ccc',
+              borderRadius: '3px',
+              fontSize: '12px'
+            }}
+          />
+          <select
+            value={getCurrentFontFamily()}
+            onChange={(e) => handleFontFamilyChange(e.target.value)}
+            style={{
+              flex: 1,
+              padding: '4px',
+              border: '1px solid #ccc',
+              borderRadius: '3px',
+              fontSize: '12px'
+            }}
+          >
+            <option value="Arial">Arial</option>
+            <option value="Helvetica">Helvetica</option>
+            <option value="Times New Roman">Times</option>
+            <option value="Courier New">Courier</option>
+            <option value="Georgia">Georgia</option>
+          </select>
         </div>
-      </div>
-      <div style={{ marginTop: '10px' }}>
-        <label>Decoration: </label>
-        <select
-          value={getCurrentTextDecoration()}
-          onChange={(e) => handleTextDecorationChange(e.target.value as 'none' | 'underline' | 'line-through')}
-        >
-          <option value="none">None</option>
-          <option value="underline">Underline</option>
-          <option value="line-through">Strikethrough</option>
-        </select>
+
+        {/* Style Controls */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+          <button
+            onClick={() => handleFontWeightChange(getCurrentFontWeight() === 'bold' ? 'normal' : 'bold')}
+            style={{
+              padding: '4px',
+              border: '1px solid #ccc',
+              borderRadius: '3px',
+              backgroundColor: getCurrentFontWeight() === 'bold' ? '#007bff' : '#fff',
+              color: getCurrentFontWeight() === 'bold' ? '#fff' : '#333',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center'
+            }}
+          >
+            <Bold size={14} />
+          </button>
+          <button
+            onClick={() => handleFontStyleChange(getCurrentFontStyle() === 'italic' ? 'normal' : 'italic')}
+            style={{
+              padding: '4px',
+              border: '1px solid #ccc',
+              borderRadius: '3px',
+              backgroundColor: getCurrentFontStyle() === 'italic' ? '#007bff' : '#fff',
+              color: getCurrentFontStyle() === 'italic' ? '#fff' : '#333',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center'
+            }}
+          >
+            <Italic size={14} />
+          </button>
+          <select
+            value={getCurrentTextDecoration()}
+            onChange={(e) => handleTextDecorationChange(e.target.value as 'none' | 'underline' | 'line-through')}
+            style={{
+              flex: 1,
+              padding: '4px',
+              border: '1px solid #ccc',
+              borderRadius: '3px',
+              fontSize: '12px'
+            }}
+          >
+            <option value="none">-</option>
+            <option value="underline">U</option>
+            <option value="line-through">S</option>
+          </select>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+            <Palette size={14} style={{ color: '#666' }} />
+            <input
+              type="color"
+              value={getCurrentColor()}
+              onChange={(e) => handleColorChange(e.target.value)}
+              style={{
+                width: '24px',
+                height: '24px',
+                border: '1px solid #ccc',
+                borderRadius: '3px',
+                cursor: 'pointer'
+              }}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

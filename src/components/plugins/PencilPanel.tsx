@@ -1,5 +1,6 @@
 import React from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
+import { Pen, Palette } from 'lucide-react';
 
 export const PencilPanel: React.FC = () => {
   const { plugins, updatePluginState, getSelectedPathsCount, updateSelectedPaths } = useCanvasStore();
@@ -47,15 +48,18 @@ export const PencilPanel: React.FC = () => {
   };
 
   return (
-    <div style={{ marginBottom: '20px', padding: '10px', border: '1px solid #ddd', borderRadius: '4px' }}>
-      <h4>Pencil</h4>
-      {selectedPathsCount > 0 && (
-        <p style={{ fontSize: '12px', color: '#007bff', marginBottom: '10px' }}>
-          Editing {selectedPathsCount} selected path{selectedPathsCount > 1 ? 's' : ''}
-        </p>
-      )}
-      <div style={{ marginBottom: '10px' }}>
-        <label>Stroke Width: </label>
+    <div style={{ padding: '8px', border: '1px solid #ddd', borderRadius: '4px', backgroundColor: '#fff' }}>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+        <Pen size={16} style={{ marginRight: '6px', color: '#666' }} />
+        <span style={{ fontSize: '12px', fontWeight: '500', color: '#333' }}>Pencil</span>
+        {selectedPathsCount > 0 && (
+          <span style={{ fontSize: '10px', color: '#007bff', marginLeft: '6px' }}>
+            ({selectedPathsCount})
+          </span>
+        )}
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
         <input
           type="number"
           value={getCurrentStrokeWidth()}
@@ -67,15 +71,29 @@ export const PencilPanel: React.FC = () => {
           }}
           min="1"
           max="20"
+          style={{
+            width: '50px',
+            padding: '4px',
+            border: '1px solid #ccc',
+            borderRadius: '3px',
+            fontSize: '12px'
+          }}
         />
-      </div>
-      <div>
-        <label>Stroke Color: </label>
-        <input
-          type="color"
-          value={getCurrentStrokeColor()}
-          onChange={(e) => handleStrokeColorChange(e.target.value)}
-        />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+          <Palette size={14} style={{ color: '#666' }} />
+          <input
+            type="color"
+            value={getCurrentStrokeColor()}
+            onChange={(e) => handleStrokeColorChange(e.target.value)}
+            style={{
+              width: '24px',
+              height: '24px',
+              border: '1px solid #ccc',
+              borderRadius: '3px',
+              cursor: 'pointer'
+            }}
+          />
+        </div>
       </div>
     </div>
   );

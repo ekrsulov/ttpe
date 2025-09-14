@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { CanvasState, CanvasElement, Point, Viewport } from '../types';
+import { measureText, measurePath } from '../utils/measurementUtils';
 
 interface CanvasActions {
   // Element management
@@ -75,8 +76,8 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
   plugins: {
     pan: { offsetX: 0, offsetY: 0 },
     zoom: { level: 1 },
-    pencil: { strokeWidth: 2, strokeColor: '#000000' },
-    text: { text: 'New Text', fontSize: 16, fontFamily: 'Arial', color: '#000000', fontWeight: 'normal', fontStyle: 'normal', textDecoration: 'none' },
+    pencil: { strokeWidth: 20, strokeColor: '#000000' },
+    text: { text: 'New Text', fontSize: 72, fontFamily: 'Arial', color: '#000000', fontWeight: 'normal', fontStyle: 'normal', textDecoration: 'none' },
     select: { selectedIds: [] },
     delete: {},
   },
@@ -436,12 +437,15 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     const selectedElements = get().getSelectedElements();
     if (selectedElements.length < 2) return;
 
+    const state = get();
     const minX = Math.min(...selectedElements.map(el => {
       if (el.type === 'path') {
-        const points = (el.data as import('../types').PathData).points;
-        return Math.min(...points.map(p => p.x));
+        const pathData = el.data as import('../types').PathData;
+        const bounds = measurePath(pathData.points, pathData.strokeWidth, state.viewport.zoom);
+        return bounds.minX;
       } else if (el.type === 'text') {
-        return (el.data as import('../types').TextData).x;
+        const textData = el.data as import('../types').TextData;
+        return textData.x;
       }
       return 0;
     }));
@@ -451,8 +455,8 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
         if (get().plugins.select.selectedIds.includes(el.id)) {
           if (el.type === 'path') {
             const pathData = el.data as import('../types').PathData;
-            const currentMinX = Math.min(...pathData.points.map(p => p.x));
-            const deltaX = minX - currentMinX;
+            const currentBounds = measurePath(pathData.points, pathData.strokeWidth, state.viewport.zoom);
+            const deltaX = minX - currentBounds.minX;
             return {
               ...el,
               data: {
@@ -480,14 +484,24 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     const selectedElements = get().getSelectedElements();
     if (selectedElements.length < 2) return;
 
+    const state = get();
     const centers = selectedElements.map(el => {
       if (el.type === 'path') {
-        const points = (el.data as import('../types').PathData).points;
-        const minX = Math.min(...points.map(p => p.x));
-        const maxX = Math.max(...points.map(p => p.x));
-        return (minX + maxX) / 2;
+        const pathData = el.data as import('../types').PathData;
+        const bounds = measurePath(pathData.points, pathData.strokeWidth, state.viewport.zoom);
+        return (bounds.minX + bounds.maxX) / 2;
       } else if (el.type === 'text') {
-        return (el.data as import('../types').TextData).x;
+        const textData = el.data as import('../types').TextData;
+        const dimensions = measureText(
+          textData.text,
+          textData.fontSize,
+          textData.fontFamily,
+          textData.fontWeight,
+          textData.fontStyle,
+          textData.textDecoration,
+          state.viewport.zoom
+        );
+        return textData.x + dimensions.width / 2;
       }
       return 0;
     });
@@ -529,13 +543,24 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     const selectedElements = get().getSelectedElements();
     if (selectedElements.length < 2) return;
 
+    const state = get();
     const maxX = Math.max(...selectedElements.map(el => {
       if (el.type === 'path') {
-        const points = (el.data as import('../types').PathData).points;
-        return Math.max(...points.map(p => p.x));
+        const pathData = el.data as import('../types').PathData;
+        const bounds = measurePath(pathData.points, pathData.strokeWidth, state.viewport.zoom);
+        return bounds.maxX;
       } else if (el.type === 'text') {
         const textData = el.data as import('../types').TextData;
-        return textData.x + textData.text.length * textData.fontSize * 0.6;
+        const dimensions = measureText(
+          textData.text,
+          textData.fontSize,
+          textData.fontFamily,
+          textData.fontWeight,
+          textData.fontStyle,
+          textData.textDecoration,
+          state.viewport.zoom
+        );
+        return textData.x + dimensions.width;
       }
       return 0;
     }));
@@ -545,8 +570,8 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
         if (get().plugins.select.selectedIds.includes(el.id)) {
           if (el.type === 'path') {
             const pathData = el.data as import('../types').PathData;
-            const currentMaxX = Math.max(...pathData.points.map(p => p.x));
-            const deltaX = maxX - currentMaxX;
+            const currentBounds = measurePath(pathData.points, pathData.strokeWidth, state.viewport.zoom);
+            const deltaX = maxX - currentBounds.maxX;
             return {
               ...el,
               data: {
@@ -556,7 +581,16 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
             };
           } else if (el.type === 'text') {
             const textData = el.data as import('../types').TextData;
-            const currentMaxX = textData.x + textData.text.length * textData.fontSize * 0.6;
+            const dimensions = measureText(
+              textData.text,
+              textData.fontSize,
+              textData.fontFamily,
+              textData.fontWeight,
+              textData.fontStyle,
+              textData.textDecoration,
+              state.viewport.zoom
+            );
+            const currentMaxX = textData.x + dimensions.width;
             const deltaX = maxX - currentMaxX;
             return {
               ...el,
@@ -576,12 +610,24 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     const selectedElements = get().getSelectedElements();
     if (selectedElements.length < 2) return;
 
+    const state = get();
     const minY = Math.min(...selectedElements.map(el => {
       if (el.type === 'path') {
-        const points = (el.data as import('../types').PathData).points;
-        return Math.min(...points.map(p => p.y));
+        const pathData = el.data as import('../types').PathData;
+        const bounds = measurePath(pathData.points, pathData.strokeWidth, state.viewport.zoom);
+        return bounds.minY;
       } else if (el.type === 'text') {
-        return (el.data as import('../types').TextData).y - (el.data as import('../types').TextData).fontSize;
+        const textData = el.data as import('../types').TextData;
+        const dimensions = measureText(
+          textData.text,
+          textData.fontSize,
+          textData.fontFamily,
+          textData.fontWeight,
+          textData.fontStyle,
+          textData.textDecoration,
+          state.viewport.zoom
+        );
+        return textData.y - dimensions.height;
       }
       return 0;
     }));
@@ -591,8 +637,8 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
         if (get().plugins.select.selectedIds.includes(el.id)) {
           if (el.type === 'path') {
             const pathData = el.data as import('../types').PathData;
-            const currentMinY = Math.min(...pathData.points.map(p => p.y));
-            const deltaY = minY - currentMinY;
+            const currentBounds = measurePath(pathData.points, pathData.strokeWidth, state.viewport.zoom);
+            const deltaY = minY - currentBounds.minY;
             return {
               ...el,
               data: {
@@ -602,7 +648,16 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
             };
           } else if (el.type === 'text') {
             const textData = el.data as import('../types').TextData;
-            const currentMinY = textData.y - textData.fontSize;
+            const dimensions = measureText(
+              textData.text,
+              textData.fontSize,
+              textData.fontFamily,
+              textData.fontWeight,
+              textData.fontStyle,
+              textData.textDecoration,
+              state.viewport.zoom
+            );
+            const currentMinY = textData.y - dimensions.height;
             const deltaY = minY - currentMinY;
             return {
               ...el,
@@ -622,14 +677,24 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     const selectedElements = get().getSelectedElements();
     if (selectedElements.length < 2) return;
 
+    const state = get();
     const centers = selectedElements.map(el => {
       if (el.type === 'path') {
-        const points = (el.data as import('../types').PathData).points;
-        const minY = Math.min(...points.map(p => p.y));
-        const maxY = Math.max(...points.map(p => p.y));
-        return (minY + maxY) / 2;
+        const pathData = el.data as import('../types').PathData;
+        const bounds = measurePath(pathData.points, pathData.strokeWidth, state.viewport.zoom);
+        return (bounds.minY + bounds.maxY) / 2;
       } else if (el.type === 'text') {
-        return (el.data as import('../types').TextData).y - (el.data as import('../types').TextData).fontSize / 2;
+        const textData = el.data as import('../types').TextData;
+        const dimensions = measureText(
+          textData.text,
+          textData.fontSize,
+          textData.fontFamily,
+          textData.fontWeight,
+          textData.fontStyle,
+          textData.textDecoration,
+          state.viewport.zoom
+        );
+        return textData.y - dimensions.height / 2;
       }
       return 0;
     });
@@ -671,12 +736,15 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     const selectedElements = get().getSelectedElements();
     if (selectedElements.length < 2) return;
 
+    const state = get();
     const maxY = Math.max(...selectedElements.map(el => {
       if (el.type === 'path') {
-        const points = (el.data as import('../types').PathData).points;
-        return Math.max(...points.map(p => p.y));
+        const pathData = el.data as import('../types').PathData;
+        const bounds = measurePath(pathData.points, pathData.strokeWidth, state.viewport.zoom);
+        return bounds.maxY;
       } else if (el.type === 'text') {
-        return (el.data as import('../types').TextData).y;
+        const textData = el.data as import('../types').TextData;
+        return textData.y;
       }
       return 0;
     }));
@@ -686,8 +754,8 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
         if (get().plugins.select.selectedIds.includes(el.id)) {
           if (el.type === 'path') {
             const pathData = el.data as import('../types').PathData;
-            const currentMaxY = Math.max(...pathData.points.map(p => p.y));
-            const deltaY = maxY - currentMaxY;
+            const currentBounds = measurePath(pathData.points, pathData.strokeWidth, state.viewport.zoom);
+            const deltaY = maxY - currentBounds.maxY;
             return {
               ...el,
               data: {
@@ -716,41 +784,69 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     const selectedElements = get().getSelectedElements();
     if (selectedElements.length < 3) return;
 
+    const state = get();
     // Sort elements by their leftmost x position
     const sortedElements = [...selectedElements].sort((a, b) => {
-      const aX = a.type === 'path' 
-        ? Math.min(...(a.data as import('../types').PathData).points.map(p => p.x))
-        : (a.data as import('../types').TextData).x;
-      const bX = b.type === 'path' 
-        ? Math.min(...(b.data as import('../types').PathData).points.map(p => p.x))
-        : (b.data as import('../types').TextData).x;
-      return aX - bX;
+      const aBounds = a.type === 'path'
+        ? measurePath((a.data as import('../types').PathData).points, (a.data as import('../types').PathData).strokeWidth, state.viewport.zoom)
+        : { minX: (a.data as import('../types').TextData).x, maxX: (a.data as import('../types').TextData).x };
+      const bBounds = b.type === 'path'
+        ? measurePath((b.data as import('../types').PathData).points, (b.data as import('../types').PathData).strokeWidth, state.viewport.zoom)
+        : { minX: (b.data as import('../types').TextData).x, maxX: (b.data as import('../types').TextData).x };
+      return aBounds.minX - bBounds.minX;
     });
 
     const firstElement = sortedElements[0];
     const lastElement = sortedElements[sortedElements.length - 1];
 
-    const startX = firstElement.type === 'path' 
-      ? Math.min(...(firstElement.data as import('../types').PathData).points.map(p => p.x))
-      : (firstElement.data as import('../types').TextData).x;
+    const firstBounds = firstElement.type === 'path'
+      ? measurePath((firstElement.data as import('../types').PathData).points, (firstElement.data as import('../types').PathData).strokeWidth, state.viewport.zoom)
+      : (() => {
+          const textData = firstElement.data as import('../types').TextData;
+          const dimensions = measureText(
+            textData.text,
+            textData.fontSize,
+            textData.fontFamily,
+            textData.fontWeight,
+            textData.fontStyle,
+            textData.textDecoration,
+            state.viewport.zoom
+          );
+          return { minX: textData.x, maxX: textData.x + dimensions.width };
+        })();
 
-    const endX = lastElement.type === 'path' 
-      ? Math.max(...(lastElement.data as import('../types').PathData).points.map(p => p.x))
-      : (lastElement.data as import('../types').TextData).x + (lastElement.data as import('../types').TextData).text.length * (lastElement.data as import('../types').TextData).fontSize * 0.6;
+    const lastBounds = lastElement.type === 'path'
+      ? measurePath((lastElement.data as import('../types').PathData).points, (lastElement.data as import('../types').PathData).strokeWidth, state.viewport.zoom)
+      : (() => {
+          const textData = lastElement.data as import('../types').TextData;
+          const dimensions = measureText(
+            textData.text,
+            textData.fontSize,
+            textData.fontFamily,
+            textData.fontWeight,
+            textData.fontStyle,
+            textData.textDecoration,
+            state.viewport.zoom
+          );
+          return { minX: textData.x, maxX: textData.x + dimensions.width };
+        })();
 
-    const totalWidth = endX - startX;
+    const startCenterX = (firstBounds.minX + firstBounds.maxX) / 2;
+    const endCenterX = (lastBounds.minX + lastBounds.maxX) / 2;
+    const totalWidth = endCenterX - startCenterX;
     const spacing = totalWidth / (sortedElements.length - 1);
 
     set((state) => ({
       elements: state.elements.map(el => {
         const index = sortedElements.findIndex(sortedEl => sortedEl.id === el.id);
         if (index !== -1 && index > 0 && index < sortedElements.length - 1) {
-          const targetX = startX + spacing * index;
-          
+          const targetCenterX = startCenterX + spacing * index;
+
           if (el.type === 'path') {
             const pathData = el.data as import('../types').PathData;
-            const currentMinX = Math.min(...pathData.points.map(p => p.x));
-            const deltaX = targetX - currentMinX;
+            const currentBounds = measurePath(pathData.points, pathData.strokeWidth, state.viewport.zoom);
+            const currentCenterX = (currentBounds.minX + currentBounds.maxX) / 2;
+            const deltaX = targetCenterX - currentCenterX;
             return {
               ...el,
               data: {
@@ -760,11 +856,22 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
             };
           } else if (el.type === 'text') {
             const textData = el.data as import('../types').TextData;
+            const dimensions = measureText(
+              textData.text,
+              textData.fontSize,
+              textData.fontFamily,
+              textData.fontWeight,
+              textData.fontStyle,
+              textData.textDecoration,
+              state.viewport.zoom
+            );
+            const currentCenterX = textData.x + dimensions.width / 2;
+            const deltaX = targetCenterX - currentCenterX;
             return {
               ...el,
               data: {
                 ...textData,
-                x: targetX,
+                x: textData.x + deltaX,
               },
             };
           }
@@ -778,41 +885,93 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
     const selectedElements = get().getSelectedElements();
     if (selectedElements.length < 3) return;
 
+    const state = get();
     // Sort elements by their topmost y position
     const sortedElements = [...selectedElements].sort((a, b) => {
-      const aY = a.type === 'path' 
-        ? Math.min(...(a.data as import('../types').PathData).points.map(p => p.y))
-        : (a.data as import('../types').TextData).y - (a.data as import('../types').TextData).fontSize;
-      const bY = b.type === 'path' 
-        ? Math.min(...(b.data as import('../types').PathData).points.map(p => p.y))
-        : (b.data as import('../types').TextData).y - (b.data as import('../types').TextData).fontSize;
-      return aY - bY;
+      const aBounds = a.type === 'path'
+        ? measurePath((a.data as import('../types').PathData).points, (a.data as import('../types').PathData).strokeWidth, state.viewport.zoom)
+        : (() => {
+            const textData = a.data as import('../types').TextData;
+            const dimensions = measureText(
+              textData.text,
+              textData.fontSize,
+              textData.fontFamily,
+              textData.fontWeight,
+              textData.fontStyle,
+              textData.textDecoration,
+              state.viewport.zoom
+            );
+            return { minY: textData.y - dimensions.height, maxY: textData.y };
+          })();
+      const bBounds = b.type === 'path'
+        ? measurePath((b.data as import('../types').PathData).points, (b.data as import('../types').PathData).strokeWidth, state.viewport.zoom)
+        : (() => {
+            const textData = b.data as import('../types').TextData;
+            const dimensions = measureText(
+              textData.text,
+              textData.fontSize,
+              textData.fontFamily,
+              textData.fontWeight,
+              textData.fontStyle,
+              textData.textDecoration,
+              state.viewport.zoom
+            );
+            return { minY: textData.y - dimensions.height, maxY: textData.y };
+          })();
+      return aBounds.minY - bBounds.minY;
     });
 
     const firstElement = sortedElements[0];
     const lastElement = sortedElements[sortedElements.length - 1];
 
-    const startY = firstElement.type === 'path' 
-      ? Math.min(...(firstElement.data as import('../types').PathData).points.map(p => p.y))
-      : (firstElement.data as import('../types').TextData).y - (firstElement.data as import('../types').TextData).fontSize;
+    const firstBounds = firstElement.type === 'path'
+      ? measurePath((firstElement.data as import('../types').PathData).points, (firstElement.data as import('../types').PathData).strokeWidth, state.viewport.zoom)
+      : (() => {
+          const textData = firstElement.data as import('../types').TextData;
+          const dimensions = measureText(
+            textData.text,
+            textData.fontSize,
+            textData.fontFamily,
+            textData.fontWeight,
+            textData.fontStyle,
+            textData.textDecoration,
+            state.viewport.zoom
+          );
+          return { minY: textData.y - dimensions.height, maxY: textData.y };
+        })();
 
-    const endY = lastElement.type === 'path' 
-      ? Math.max(...(lastElement.data as import('../types').PathData).points.map(p => p.y))
-      : (lastElement.data as import('../types').TextData).y;
+    const lastBounds = lastElement.type === 'path'
+      ? measurePath((lastElement.data as import('../types').PathData).points, (lastElement.data as import('../types').PathData).strokeWidth, state.viewport.zoom)
+      : (() => {
+          const textData = lastElement.data as import('../types').TextData;
+          const dimensions = measureText(
+            textData.text,
+            textData.fontSize,
+            textData.fontFamily,
+            textData.fontWeight,
+            textData.fontStyle,
+            textData.textDecoration,
+            state.viewport.zoom
+          );
+          return { minY: textData.y - dimensions.height, maxY: textData.y };
+        })();
 
-    const totalHeight = endY - startY;
+    const startCenterY = (firstBounds.minY + firstBounds.maxY) / 2;
+    const endCenterY = (lastBounds.minY + lastBounds.maxY) / 2;
+    const totalHeight = endCenterY - startCenterY;
     const spacing = totalHeight / (sortedElements.length - 1);
 
     set((state) => ({
       elements: state.elements.map(el => {
         const index = sortedElements.findIndex(sortedEl => sortedEl.id === el.id);
         if (index !== -1 && index > 0 && index < sortedElements.length - 1) {
-          const targetY = startY + spacing * index;
-          
+          const targetCenterY = startCenterY + spacing * index;
+
           if (el.type === 'path') {
             const pathData = el.data as import('../types').PathData;
-            const currentMinY = Math.min(...pathData.points.map(p => p.y));
-            const deltaY = targetY - currentMinY;
+            const currentBounds = measurePath(pathData.points, pathData.strokeWidth, state.viewport.zoom);
+            const currentCenterY = (currentBounds.minY + currentBounds.maxY) / 2;
+            const deltaY = targetCenterY - currentCenterY;
             return {
               ...el,
               data: {
@@ -822,8 +981,17 @@ export const useCanvasStore = create<CanvasStore>((set, get) => ({
             };
           } else if (el.type === 'text') {
             const textData = el.data as import('../types').TextData;
-            const currentMinY = textData.y - textData.fontSize;
-            const deltaY = targetY - currentMinY;
+            const dimensions = measureText(
+              textData.text,
+              textData.fontSize,
+              textData.fontFamily,
+              textData.fontWeight,
+              textData.fontStyle,
+              textData.textDecoration,
+              state.viewport.zoom
+            );
+            const currentCenterY = textData.y - dimensions.height / 2;
+            const deltaY = targetCenterY - currentCenterY;
             return {
               ...el,
               data: {
