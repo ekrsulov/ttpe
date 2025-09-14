@@ -3,7 +3,7 @@ import { useCanvasStore } from '../../store/canvasStore';
 import { Trash2 } from 'lucide-react';
 
 export const DeletePanel: React.FC = () => {
-  const { plugins, deleteSelectedElements, selectedIds } = useCanvasStore();
+  const { deleteSelectedElements, selectedIds } = useCanvasStore();
 
   return (
     <div style={{ padding: '8px', border: '1px solid #ddd', borderRadius: '4px', backgroundColor: '#fff' }}>

@@ -4,7 +4,7 @@ import type { PathData, TextData } from '../../types';
 import { MousePointer, Pen, Type } from 'lucide-react';
 
 export const SelectPanel: React.FC = () => {
-  const { plugins, elements, selectedIds } = useCanvasStore();
+  const { elements, selectedIds } = useCanvasStore();
 
   const selectedElements = elements.filter(el => (selectedIds as any).includes(el.id));
 

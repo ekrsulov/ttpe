@@ -9,11 +9,6 @@ export interface OrderSlice {
   sendToBack: () => void;
 }
 
-type OrderState = {
-  elements: CanvasElement[];
-  selectedIds: string[];
-};
-
 export const createOrderSlice: StateCreator<OrderSlice> = (set, get, _api) => ({
   // Actions
   bringToFront: () => {

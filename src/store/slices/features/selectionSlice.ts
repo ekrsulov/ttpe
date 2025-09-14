@@ -17,11 +17,6 @@ export interface SelectionSlice {
   updateSelectedTexts: (properties: Partial<import('../../../types').TextData>) => void;
 }
 
-type SelectionState = {
-  selectedIds: string[];
-  elements: CanvasElement[];
-};
-
 export const createSelectionSlice: StateCreator<SelectionSlice> = (set, get, _api) => ({
   // Initial state
   selectedIds: [],
@@ -62,7 +57,6 @@ export const createSelectionSlice: StateCreator<SelectionSlice> = (set, get, _ap
 
   moveSelectedElements: (deltaX, deltaY) => {
     const selectedIds = get().selectedIds;
-    const state = get() as any;
     (set as any)((currentState: any) => ({
       elements: currentState.elements.map((el: CanvasElement) => {
         if ((selectedIds as any).includes(el.id)) {
@@ -97,7 +91,6 @@ export const createSelectionSlice: StateCreator<SelectionSlice> = (set, get, _ap
 
   updateSelectedPaths: (properties) => {
     const selectedIds = get().selectedIds;
-    const state = get() as any;
     (set as any)((currentState: any) => ({
       elements: currentState.elements.map((el: CanvasElement) => {
         if ((selectedIds as any).includes(el.id) && el.type === 'path') {

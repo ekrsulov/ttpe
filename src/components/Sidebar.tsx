@@ -8,11 +8,13 @@ import { SelectPanel } from './plugins/SelectPanel';
 import { DeletePanel } from './plugins/DeletePanel';
 import { OrderPanel } from './plugins/OrderPanel';
 import { ArrangePanel } from './plugins/ArrangePanel';
+import { ShapePanel } from './plugins/ShapePanel';
 import {
   Move,
   Pen,
   Type,
   MousePointer,
+  Shapes,
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -23,6 +25,7 @@ export const Sidebar: React.FC = () => {
     { name: 'pan', label: 'Pan', icon: Move },
     { name: 'pencil', label: 'Pencil', icon: Pen },
     { name: 'text', label: 'Text', icon: Type },
+    { name: 'shape', label: 'Shape', icon: Shapes },
   ];
 
   return (
@@ -47,7 +50,7 @@ export const Sidebar: React.FC = () => {
       }}>
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
+          gridTemplateColumns: 'repeat(5, 1fr)',
           gap: '4px'
         }}>
           {plugins.map((plugin) => {
@@ -93,6 +96,7 @@ export const Sidebar: React.FC = () => {
         <ZoomPanel />
         <PencilPanel />
         <TextPanel />
+        <ShapePanel />
         <DeletePanel />
         <OrderPanel />
         <ArrangePanel />

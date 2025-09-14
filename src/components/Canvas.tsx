@@ -20,6 +20,11 @@ export const Canvas: React.FC<CanvasProps> = () => {
   const [dragStart, setDragStart] = useState<Point | null>(null);
   const [canvasSize, setCanvasSize] = useState({ width: window.innerWidth, height: window.innerHeight });
   const [justSelected, setJustSelected] = useState(false);
+  
+  // State for shape creation
+  const [shapeStart, setShapeStart] = useState<Point | null>(null);
+  const [shapeEnd, setShapeEnd] = useState<Point | null>(null);
+  const [isCreatingShape, setIsCreatingShape] = useState(false);
 
   // Handle window resize
   useEffect(() => {
@@ -148,6 +153,12 @@ export const Canvas: React.FC<CanvasProps> = () => {
       case 'text':
         useCanvasStore.getState().addText(point.x, point.y, plugins.text.text);
         break;
+      case 'shape':
+        // Start creating a shape
+        setIsCreatingShape(true);
+        setShapeStart(point);
+        setShapeEnd(point);
+        break;
       case 'select':
         // Only start selection rectangle if clicking on SVG canvas, not on elements
         if (target.tagName === 'svg') {
@@ -194,7 +205,11 @@ export const Canvas: React.FC<CanvasProps> = () => {
     if (isSelecting && selectionStart) {
       setSelectionEnd(point);
     }
-  }, [activePlugin, screenToCanvas, isSpacePressed, isSelecting, selectionStart, viewport.zoom, isDragging, dragStart]);
+
+    if (isCreatingShape && shapeStart) {
+      setShapeEnd(point);
+    }
+  }, [activePlugin, screenToCanvas, isSpacePressed, isSelecting, selectionStart, viewport.zoom, isDragging, dragStart, isCreatingShape, shapeStart]);
 
   const handleMouseUp = useCallback((e: React.MouseEvent) => {
     if (isDragging) {
@@ -206,6 +221,17 @@ export const Canvas: React.FC<CanvasProps> = () => {
     // Auto-switch to select mode after drawing with pencil
     if (activePlugin === 'pencil') {
       useCanvasStore.getState().setActivePlugin('select');
+    }
+
+    if (isCreatingShape && shapeStart && shapeEnd) {
+      // Create the shape
+      useCanvasStore.getState().createShape(shapeStart, shapeEnd);
+      
+      // Reset shape creation state
+      setIsCreatingShape(false);
+      setShapeStart(null);
+      setShapeEnd(null);
+      return;
     }
 
     if (isSelecting && selectionStart && selectionEnd) {
@@ -280,7 +306,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
     setIsSelecting(false);
     setSelectionStart(null);
     setSelectionEnd(null);
-  }, [isDragging, isSelecting, selectionStart, selectionEnd, elements]);
+  }, [isDragging, isSelecting, selectionStart, selectionEnd, elements, activePlugin, isCreatingShape, shapeStart, shapeEnd]);
 
   // Handle wheel events with passive: false to allow preventDefault
   useEffect(() => {
@@ -436,7 +462,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
         width: '100%',
         height: '100%',
         border: 'none',
-        cursor: (isSpacePressed || activePlugin === 'pan') ? 'grabbing' : activePlugin === 'select' ? 'crosshair' : 'crosshair'
+        cursor: (isSpacePressed || activePlugin === 'pan') ? 'grabbing' : activePlugin === 'select' ? 'crosshair' : activePlugin === 'shape' ? 'crosshair' : 'default'
       }}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
@@ -456,6 +482,57 @@ export const Canvas: React.FC<CanvasProps> = () => {
           strokeDasharray={`${2 / viewport.zoom} ${2 / viewport.zoom}`}
         />
       )}
+      {isCreatingShape && shapeStart && shapeEnd && (() => {
+        const selectedShape = plugins.shape.selectedShape;
+        
+        // Calculate shape dimensions
+        const width = Math.abs(shapeEnd.x - shapeStart.x);
+        const height = Math.abs(shapeEnd.y - shapeStart.y);
+        const centerX = (shapeStart.x + shapeEnd.x) / 2;
+        const centerY = (shapeStart.y + shapeEnd.y) / 2;
+        
+        let pathData = '';
+        
+        switch (selectedShape) {
+          case 'square':
+            const halfSize = Math.min(width, height) / 2;
+            pathData = `M ${centerX - halfSize} ${centerY - halfSize} L ${centerX + halfSize} ${centerY - halfSize} L ${centerX + halfSize} ${centerY + halfSize} L ${centerX - halfSize} ${centerY + halfSize} L ${centerX - halfSize} ${centerY - halfSize}`;
+            break;
+            
+          case 'rectangle':
+            pathData = `M ${shapeStart.x} ${shapeStart.y} L ${shapeEnd.x} ${shapeStart.y} L ${shapeEnd.x} ${shapeEnd.y} L ${shapeStart.x} ${shapeEnd.y} L ${shapeStart.x} ${shapeStart.y}`;
+            break;
+            
+          case 'circle':
+            const radius = Math.min(width, height) / 2;
+            const segments = 16;
+            pathData = `M ${centerX + radius} ${centerY}`;
+            for (let i = 1; i <= segments; i++) {
+              const angle = (i / segments) * 2 * Math.PI;
+              const x = centerX + radius * Math.cos(angle);
+              const y = centerY + radius * Math.sin(angle);
+              pathData += ` L ${x} ${y}`;
+            }
+            // Close the circle
+            pathData += ` L ${centerX + radius} ${centerY}`;
+            break;
+            
+          case 'triangle':
+            pathData = `M ${centerX} ${shapeStart.y} L ${shapeEnd.x} ${shapeEnd.y} L ${shapeStart.x} ${shapeEnd.y} L ${centerX} ${shapeStart.y}`;
+            break;
+        }
+        
+        return (
+          <path
+            d={pathData}
+            stroke="#007bff"
+            strokeWidth={1 / viewport.zoom}
+            fill="none"
+            strokeOpacity={0.7}
+            strokeDasharray={`${2 / viewport.zoom} ${2 / viewport.zoom}`}
+          />
+        );
+      })()}
     </svg>
   );
 };

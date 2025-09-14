@@ -14,12 +14,6 @@ export interface ArrangeSlice {
   distributeVertically: () => void;
 }
 
-type ArrangeState = {
-  elements: CanvasElement[];
-  selectedIds: string[];
-  viewport: { zoom: number; panX: number; panY: number };
-};
-
 export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) => ({
   // Actions
   alignLeft: () => {

@@ -14,7 +14,9 @@ type PluginState = {
     textDecoration: 'none' | 'underline' | 'line-through';
     opacity: number;
   };
+  shape: { selectedShape: 'square' | 'circle' | 'triangle' | 'rectangle' };
   select: Record<string, never>;
+  delete: Record<string, never>;
 };
 
 export interface PluginManagementSlice {
@@ -35,6 +37,7 @@ export const createPluginManagementSlice: StateCreator<PluginManagementSlice> = 
     zoom: { level: 1 },
     pencil: { strokeWidth: 20, strokeColor: '#000000', opacity: 1 },
     text: { text: 'New Text', fontSize: 72, fontFamily: 'Arial', color: '#000000', fontWeight: 'normal', fontStyle: 'normal', textDecoration: 'none', opacity: 1 },
+    shape: { selectedShape: 'square' },
     select: {},
     delete: {},
   },
