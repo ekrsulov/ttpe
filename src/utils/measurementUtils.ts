@@ -20,7 +20,7 @@ export const textToPath = (
   fontWeight: string = 'normal',
   fontStyle: string = 'normal',
   textDecoration: string = 'none',
-  resolution: number = 10
+  resolution: number = 1
 ): string => {
   const cacheKey = `text2path-${text}-${x}-${y}-${fontSize}-${fontFamily}-${fontWeight}-${fontStyle}-${textDecoration}-${resolution}`;
 
@@ -120,12 +120,12 @@ const findContours = (pixels: Uint8ClampedArray, width: number, height: number):
       if (visited.has(key)) continue;
 
       const alpha = pixels[(y * width + x) * 4 + 3];
-      if (alpha > 80) { // If pixel is part of text (reduced threshold for better curve detection)
+      if (alpha > 120) { // Increased threshold for cleaner contours
         // Check if this is an edge pixel (has transparent neighbors)
         if (isEdgePixel(pixels, width, height, x, y)) {
           const contour = traceContour(pixels, width, height, x, y, visited);
-          // Only add contours with meaningful length (at least 4 points = 2 coordinate pairs)
-          if (contour.length >= 4) {
+          // Only add contours with meaningful length (at least 6 points = 3 coordinate pairs)
+          if (contour.length >= 6) {
             contours.push(contour);
           }
         }
@@ -139,7 +139,7 @@ const findContours = (pixels: Uint8ClampedArray, width: number, height: number):
 // Check if a pixel is on the edge (has at least one transparent neighbor)
 const isEdgePixel = (pixels: Uint8ClampedArray, width: number, height: number, x: number, y: number): boolean => {
   const alpha = pixels[(y * width + x) * 4 + 3];
-  if (alpha <= 100) return false; // Not a text pixel (reduced threshold)
+  if (alpha <= 120) return false; // Not a text pixel (consistent threshold)
 
   // Check all 8 neighbors
   const neighbors = [
@@ -151,7 +151,7 @@ const isEdgePixel = (pixels: Uint8ClampedArray, width: number, height: number, x
   for (const [nx, ny] of neighbors) {
     if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
       const neighborAlpha = pixels[(ny * width + nx) * 4 + 3];
-      if (neighborAlpha <= 100) { // Reduced threshold for better edge detection
+      if (neighborAlpha <= 120) { // Consistent threshold for better edge detection
         return true; // Has transparent neighbor = edge pixel
       }
     } else {
@@ -185,11 +185,11 @@ const traceContour = (
   contour.push(x, y);
   visited.add(currentKey);
 
-  do {
-    if (steps++ > maxSteps) break; // Safety check
+  // Continue tracing until we return to start or hit limits
+  while (steps++ < maxSteps) {
+    let found = false;
 
     // Find next boundary pixel using 8-connectivity
-    let found = false;
     for (let i = 0; i < 8; i++) {
       const newDirection = (direction + i) % 8;
       const [dx, dy] = getDirectionOffset(newDirection);
@@ -202,7 +202,7 @@ const traceContour = (
         // Check if this pixel is part of the text (not visited and has alpha > threshold)
         if (!visited.has(neighborKey)) {
           const neighborAlpha = pixels[(ny * width + nx) * 4 + 3];
-          if (neighborAlpha > 100) { // Reduced threshold for better curve detection
+          if (neighborAlpha > 120) { // Consistent threshold
             // Check if this is a boundary pixel
             if (isEdgePixel(pixels, width, height, nx, ny)) {
               x = nx;
@@ -219,9 +219,14 @@ const traceContour = (
       }
     }
 
+    // If no valid neighbor found, stop tracing
     if (!found) break;
 
-  } while (currentKey !== startKey || contour.length < 8);
+    // If we've returned to the start and have enough points, close the contour
+    if (currentKey === startKey && contour.length >= 6) {
+      break;
+    }
+  }
 
   return contour;
 };
@@ -246,14 +251,14 @@ const filterAndMergeContours = (contours: number[][]): number[][] => {
   if (contours.length === 0) return contours;
 
   // Filter out very small contours - be more aggressive for cleaner paths
-  let filteredContours = contours.filter(contour => contour.length >= 8); // Increased threshold for cleaner paths
+  let filteredContours = contours.filter(contour => contour.length >= 12); // Increased threshold for cleaner paths
 
   // Sort contours by size (larger first) to prioritize main shapes
   filteredContours = filteredContours.sort((a, b) => b.length - a.length);
 
-  // For most letters, we only need 1-2 main contours (outer shape and hole)
-  // Keep only the largest contours to avoid noise
-  return filteredContours.slice(0, Math.min(3, filteredContours.length)); // Reduced from 8 to 3
+  // For characters with holes (like 'e', 'o', 'a'), we need to keep separate contours
+  // Keep only the largest contours to avoid noise, but allow up to 3 for holes
+  return filteredContours.slice(0, Math.min(4, filteredContours.length)); // Allow up to 4 contours for complex characters
 };
 
 // Clean SVG path by removing unnecessary elements
@@ -374,8 +379,8 @@ const contoursToSVGPath = (contours: number[][], resolution: number, offsetX: nu
     if (contour.length < 4) continue;
 
     // Simplify contour with adjusted tolerance for curves
-    const simplifiedContour = simplifyContour(contour, 1.0);
-    const lineSimplifiedContour = simplifyColinearPoints(simplifiedContour, 1.5);
+    const simplifiedContour = simplifyContour(contour, 2.0);
+    const lineSimplifiedContour = simplifyColinearPoints(simplifiedContour, 2.0);
 
     if (lineSimplifiedContour.length < 4) continue;
 
@@ -568,6 +573,11 @@ export const debugCharToPath = (
   };
 };
 
+// Test function specifically for the problematic "e" character
+export const testECharVectorization = (): { path: string; debug: any } => {
+  return debugCharToPath('e', 0, 0, 100, 'Georgia', 15);
+};
+
 // Function to measure text using a ghost canvas
 export const measureText = (
   text: string,
@@ -644,7 +654,7 @@ export const measurePath = (
   // Use the provided path data string
   pathElement.setAttribute('d', d);
   pathElement.setAttribute('stroke', '#000000');
-  pathElement.setAttribute('stroke-width', (strokeWidth * zoom).toString());
+  pathElement.setAttribute('stroke-width', (strokeWidth / zoom).toString());
   pathElement.setAttribute('stroke-linecap', 'round');
   pathElement.setAttribute('stroke-linejoin', 'round');
   pathElement.setAttribute('fill', 'none');
@@ -660,7 +670,7 @@ export const measurePath = (
     const bbox = pathElement.getBBox();
 
     // Add stroke width to get the visual bounds
-    const halfStroke = strokeWidth / 2;
+    const halfStroke = (strokeWidth / zoom) / 2;
     const result = {
       minX: bbox.x - halfStroke,
       minY: bbox.y - halfStroke,

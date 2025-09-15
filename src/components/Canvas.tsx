@@ -399,10 +399,11 @@ export const Canvas: React.FC<CanvasProps> = () => {
             <path
               d={pathData.d}
               stroke={pathData.strokeColor}
-              strokeWidth={pathData.strokeWidth * viewport.zoom}
+              strokeWidth={pathData.strokeWidth}
               fill="none"
               strokeLinecap="round"
               strokeLinejoin="round"
+              vectorEffect="non-scaling-stroke"
               opacity={pathData.opacity}
               onClick={(e) => handleElementClick(element.id, e)}
               onMouseDown={(e) => handleElementMouseDown(element.id, e)}
