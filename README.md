@@ -1,69 +1,86 @@
-# React + TypeScript + Vite
+# TTPE - Aplicación de Canvas Interactiva
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+TTPE es una aplicación web interactiva de canvas construida con React, TypeScript y Vite. Proporciona una interfaz de dibujo con múltiples herramientas y plugins para crear y editar gráficos de manera eficiente.
 
-Currently, two official plugins are available:
+## Características
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Herramientas de Dibujo**: Incluye herramientas como lápiz, formas geométricas, texto y selección.
+- **Plugins Modulares**: Sistema de plugins para funcionalidades como pan, zoom, historial, eliminación y organización.
+- **Interfaz de Usuario**: Sidebar con paneles para cada herramienta y plugin.
+- **Gestión de Estado**: Utiliza Zustand para una gestión eficiente del estado de la aplicación.
+- **Canvas Interactivo**: Soporte para operaciones de dibujo, selección y manipulación de elementos.
 
-## Expanding the ESLint configuration
+### Plugins Disponibles
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **PencilPanel**: Herramienta de dibujo a mano alzada.
+- **ShapePanel**: Creación de formas geométricas.
+- **TextPanel**: Inserción y edición de texto.
+- **SelectPanel**: Selección y manipulación de elementos.
+- **PanPanel**: Navegación por el canvas.
+- **ZoomPanel**: Control de zoom.
+- **HistoryPanel**: Deshacer y rehacer acciones.
+- **DeletePanel**: Eliminación de elementos.
+- **ArrangePanel**: Organización de elementos.
+- **OrderPanel**: Cambio de orden de capas.
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Tecnologías Utilizadas
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+- **React**: Biblioteca para la construcción de interfaces de usuario.
+- **TypeScript**: Superset de JavaScript con tipado estático.
+- **Vite**: Herramienta de construcción rápida para desarrollo web.
+- **Zustand**: Biblioteca de gestión de estado ligera.
+- **ESLint**: Herramienta de linting para mantener la calidad del código.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Instalación
+
+1. Clona el repositorio:
+   ```bash
+   git clone https://github.com/ekrsulov/ttpe.git
+   cd ttpe
+   ```
+
+2. Instala las dependencias:
+   ```bash
+   npm install
+   ```
+
+3. Inicia el servidor de desarrollo:
+   ```bash
+   npm run dev
+   ```
+
+4. Abre tu navegador y ve a `http://localhost:5173` (o el puerto que indique Vite).
+
+## Uso
+
+- Selecciona herramientas desde la barra lateral para dibujar, crear formas o agregar texto.
+- Utiliza los plugins para navegar, hacer zoom y gestionar el historial de acciones.
+- Guarda tu trabajo exportando el canvas como imagen o archivo.
+
+## Construcción para Producción
+
+Para construir la aplicación para producción:
+
+```bash
+npm run build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Los archivos generados estarán en el directorio `dist`.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Contribución
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Las contribuciones son bienvenidas. Por favor, sigue estos pasos:
+
+1. Haz un fork del proyecto.
+2. Crea una rama para tu feature (`git checkout -b feature/nueva-funcionalidad`).
+3. Haz commit de tus cambios (`git commit -am 'Agrega nueva funcionalidad'`).
+4. Haz push a la rama (`git push origin feature/nueva-funcionalidad`).
+5. Abre un Pull Request.
+
+## Licencia
+
+Este proyecto está bajo la Licencia MIT. Consulta el archivo `LICENSE` para más detalles.
+
+## Contacto
+
+Para preguntas o soporte, contacta al mantenedor del proyecto.
