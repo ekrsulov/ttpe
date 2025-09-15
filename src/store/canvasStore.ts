@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { temporal } from 'zundo';
 import type { Point } from '../types';
-import { textToPath } from '../utils/measurementUtils';
+import { textToPath } from '../utils/textVectorizationUtils';
 
 // Import all slices
 import { createBaseSlice, type BaseSlice } from './slices/baseSlice';
