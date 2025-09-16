@@ -10,7 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "esm-potrace-wasm": "^0.4.1",
     "lucide-react": "^0.544.0",
+    "path-data-parser": "^0.1.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "zundo": "^2.3.0",

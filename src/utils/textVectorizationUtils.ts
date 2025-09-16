@@ -1,14 +1,26 @@
-// Text vectorization utilities for converting text to SVG paths
+// Text vectorization utilities for converting text to SVG paths using esm-potrace-wasm
+import { potrace, init } from 'esm-potrace-wasm';
+import { parsePath, serialize, absolutize, normalize } from 'path-data-parser';
+
 // Cache for text vectorization to improve performance
 const textVectorizationCache = new (globalThis as any).Map();
+
+// Initialize potrace once
+let potraceInitialized = false;
+const initPotrace = async () => {
+  if (!potraceInitialized) {
+    await init();
+    potraceInitialized = true;
+  }
+};
 
 // Utility function to round coordinates to 2 decimal places
 const roundTo2Decimals = (num: number): number => {
   return Math.round(num * 100) / 100;
 };
 
-// Function to convert text to SVG path using canvas vectorization
-export const textToPath = (
+// Function to convert text to SVG path using esm-potrace-wasm
+export const textToPath = async (
   text: string,
   x: number,
   y: number,
@@ -16,490 +28,320 @@ export const textToPath = (
   fontFamily: string,
   fontWeight: string = 'normal',
   fontStyle: string = 'normal',
-  textDecoration: string = 'none',
-  resolution: number = 1
-): string => {
-  const cacheKey = `text2path-${text}-${x}-${y}-${fontSize}-${fontFamily}-${fontWeight}-${fontStyle}-${textDecoration}-${resolution}`;
+  textDecoration: string = 'none'
+): Promise<string> => {
+  const cacheKey = `text2path-${text}-${x}-${y}-${fontSize}-${fontFamily}-${fontWeight}-${fontStyle}-${textDecoration}`;
 
   // Check cache first
   if (textVectorizationCache.has(cacheKey)) {
     return textVectorizationCache.get(cacheKey)!;
   }
 
-  // Create ghost canvas for measuring
-  const measureCanvas = document.createElement('canvas');
-  const measureCtx = measureCanvas.getContext('2d');
-  if (!measureCtx) {
+  console.log('Converting text to path:', { text, x, y, fontSize, fontFamily });
+
+  // Initialize potrace if not already done
+  await initPotrace();
+
+  // Create canvas for rendering text
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    console.error('Could not get canvas context');
     return '';
   }
 
   // Set font for measurement
-  measureCtx.font = `${fontStyle} ${fontWeight} ${fontSize}px ${fontFamily}`;
+  const font = `${fontStyle} ${fontWeight} ${fontSize}px ${fontFamily}`;
+  ctx.font = font;
+  
+  // Measure text to determine canvas size
+  const textMetrics = ctx.measureText(text);
+  const textWidth = Math.ceil(textMetrics.width);
+  
+  // Use font metrics for more accurate height calculation
+  const actualAscent = textMetrics.actualBoundingBoxAscent || fontSize * 0.8;
+  const actualDescent = textMetrics.actualBoundingBoxDescent || fontSize * 0.2;
+  const textHeight = Math.ceil(actualAscent + actualDescent);
+  
+  // Add padding
+  const padding = Math.ceil(fontSize * 0.1);
+  const canvasWidth = textWidth + (padding * 2);
+  const canvasHeight = textHeight + (padding * 2);
+  
+  console.log('Canvas dimensions:', { canvasWidth, canvasHeight, textWidth, textHeight });
+  
+  // Set canvas size (no resolution scaling - 1:1)
+  canvas.width = canvasWidth;
+  canvas.height = canvasHeight;
+  
+  // Set font again after canvas resize
+  ctx.font = font;
+  ctx.textBaseline = 'alphabetic';
+  ctx.textAlign = 'left';
+  
+  // Clear canvas with white background
+  ctx.fillStyle = 'white';
+  ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+  
+  // Draw text in black at the correct baseline position
+  // textBaseline = 'alphabetic' means the y coordinate is the alphabetic baseline
+  // Position the baseline at a specific distance from the top of the canvas
+  ctx.fillStyle = 'black';
+  const baselineY = actualAscent + padding; // Position baseline based on actual ascent
+  ctx.fillText(text, padding, baselineY);
 
-  // Calculate vertical adjustment to match text baseline positioning
-  const ascentAdjustment = fontSize * 0.8; // Approximate ascent for most fonts
-  const adjustedOffsetY = y - ascentAdjustment;
+  try {
+    // Use potrace to convert canvas to SVG with pathonly option
+    const svgResult = await potrace(canvas, {
+      turdsize: 2,
+      turnpolicy: 4,
+      alphamax: 1,
+      opticurve: 1,
+      opttolerance: 0.2,
+      pathonly: false,  // Set back to false to get full SVG, then extract paths
+      extractcolors: false,
+    });
 
-  const allPaths: string[] = [];
-  let currentX = x;
-
-  // Process each character individually
-  for (let i = 0; i < text.length; i++) {
-    const char = text[i];
-
-    // Skip spaces
-    if (char === ' ') {
-      const spaceWidth = measureCtx.measureText(' ').width;
-      currentX += spaceWidth;
-      continue;
+    // Extract path data from SVG result and position it correctly
+    console.log('SVG result type:', typeof svgResult);
+    console.log('SVG result:', svgResult);
+    
+    let pathData = extractPathFromSVGResult(svgResult, x, y, fontSize, padding, actualAscent, actualDescent);
+    
+    // Cache the result only if we got valid path data
+    if (pathData) {
+      textVectorizationCache.set(cacheKey, pathData);
     }
-
-    // Measure character width
-    const charWidth = measureCtx.measureText(char).width;
-
-    // Create canvas for this character
-    const charCanvas = document.createElement('canvas');
-    const charCtx = charCanvas.getContext('2d');
-    if (!charCtx) continue;
-
-    // Set canvas size for this character
-    const charCanvasWidth = Math.ceil(charWidth * resolution);
-    const charCanvasHeight = Math.ceil(fontSize * 1.2 * resolution);
-
-    charCanvas.width = charCanvasWidth;
-    charCanvas.height = charCanvasHeight;
-
-    // Scale context for higher resolution
-    charCtx.scale(resolution, resolution);
-    charCtx.font = `${fontStyle} ${fontWeight} ${fontSize}px ${fontFamily}`;
-    charCtx.textBaseline = 'top';
-
-    // Draw character at (0, 0)
-    charCtx.fillText(char, 0, 0);
-
-    // Get image data for this character
-    const imageData = charCtx.getImageData(0, 0, charCanvas.width, charCanvas.height);
-    const pixels = imageData.data;
-
-    // Find contours for this character
-    const contours = findContours(pixels, charCanvas.width, charCanvas.height);
-
-    // Convert contours to SVG path for this character
-    if (contours.length > 0) {
-      const charPaths = contoursToSVGPath(contours, resolution, currentX, adjustedOffsetY);
-      if (charPaths) {
-        allPaths.push(charPaths);
-      }
-    }
-
-    // Move to next character position
-    currentX += charWidth;
-  }
-
-  // Combine all character paths into a single path
-  const finalPath = allPaths.join(' ');
-
-  // Cache the result
-  textVectorizationCache.set(cacheKey, finalPath);
-
-  return finalPath;
-};
-
-// Helper function to find contours in pixel data (edge detection)
-const findContours = (pixels: Uint8ClampedArray, width: number, height: number): number[][] => {
-  const contours: number[][] = [];
-  const visited = new Set<string>();
-
-  // Edge detection algorithm - find pixels that are on the boundary
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const key = `${x},${y}`;
-      if (visited.has(key)) continue;
-
-      const alpha = pixels[(y * width + x) * 4 + 3];
-      if (alpha > 120) { // Increased threshold for cleaner contours
-        // Check if this is an edge pixel (has transparent neighbors)
-        if (isEdgePixel(pixels, width, height, x, y)) {
-          const contour = traceContour(pixels, width, height, x, y, visited);
-          // Only add contours with meaningful length (at least 6 points = 3 coordinate pairs)
-          if (contour.length >= 6) {
-            contours.push(contour);
-          }
-        }
-      }
-    }
-  }
-
-  return contours;
-};
-
-// Check if a pixel is on the edge (has at least one transparent neighbor)
-const isEdgePixel = (pixels: Uint8ClampedArray, width: number, height: number, x: number, y: number): boolean => {
-  const alpha = pixels[(y * width + x) * 4 + 3];
-  if (alpha <= 120) return false; // Not a text pixel (consistent threshold)
-
-  // Check all 8 neighbors
-  const neighbors = [
-    [x-1, y-1], [x, y-1], [x+1, y-1],
-    [x-1, y],             [x+1, y],
-    [x-1, y+1], [x, y+1], [x+1, y+1]
-  ];
-
-  for (const [nx, ny] of neighbors) {
-    if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
-      const neighborAlpha = pixels[(ny * width + nx) * 4 + 3];
-      if (neighborAlpha <= 120) { // Consistent threshold for better edge detection
-        return true; // Has transparent neighbor = edge pixel
-      }
-    } else {
-      return true; // Edge of canvas = edge pixel
-    }
-  }
-
-  return false;
-};
-
-// Trace a single contour using improved boundary tracing
-const traceContour = (
-  pixels: Uint8ClampedArray,
-  width: number,
-  height: number,
-  startX: number,
-  startY: number,
-  visited: Set<string>
-): number[] => {
-  const contour: number[] = [];
-  let x = startX;
-  let y = startY;
-  let direction = 0;
-
-  const startKey = `${startX},${startY}`;
-  let currentKey = startKey;
-  let steps = 0;
-  const maxSteps = width * height; // Prevent infinite loops
-
-  // Add starting point
-  contour.push(x, y);
-  visited.add(currentKey);
-
-  // Continue tracing until we return to start or hit limits
-  while (steps++ < maxSteps) {
-    let found = false;
-
-    // Find next boundary pixel using 8-connectivity
-    for (let i = 0; i < 8; i++) {
-      const newDirection = (direction + i) % 8;
-      const [dx, dy] = getDirectionOffset(newDirection);
-      const nx = x + dx;
-      const ny = y + dy;
-
-      if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
-        const neighborKey = `${nx},${ny}`;
-
-        // Check if this pixel is part of the text (not visited and has alpha > threshold)
-        if (!visited.has(neighborKey)) {
-          const neighborAlpha = pixels[(ny * width + nx) * 4 + 3];
-          if (neighborAlpha > 120) { // Consistent threshold
-            // Check if this is a boundary pixel
-            if (isEdgePixel(pixels, width, height, nx, ny)) {
-              x = nx;
-              y = ny;
-              direction = (newDirection + 6) % 8; // Prepare for next iteration
-              currentKey = neighborKey;
-              contour.push(x, y);
-              visited.add(currentKey);
-              found = true;
-              break;
-            }
-          }
-        }
-      }
-    }
-
-    // If no valid neighbor found, stop tracing
-    if (!found) break;
-
-    // If we've returned to the start and have enough points, close the contour
-    if (currentKey === startKey && contour.length >= 6) {
-      break;
-    }
-  }
-
-  return contour;
-};
-
-// Get direction offset for Moore-Neighbor tracing
-const getDirectionOffset = (direction: number): [number, number] => {
-  const offsets: [number, number][] = [
-    [1, 0],   // right
-    [1, 1],   // down-right
-    [0, 1],   // down
-    [-1, 1],  // down-left
-    [-1, 0],  // left
-    [-1, -1], // up-left
-    [0, -1],  // up
-    [1, -1]   // up-right
-  ];
-  return offsets[direction];
-};
-
-// Filter and merge nearby contours to create more continuous paths
-const filterAndMergeContours = (contours: number[][]): number[][] => {
-  if (contours.length === 0) return contours;
-
-  // Filter out very small contours - be more aggressive for cleaner paths
-  let filteredContours = contours.filter(contour => contour.length >= 12); // Increased threshold for cleaner paths
-
-  // Sort contours by size (larger first) to prioritize main shapes
-  filteredContours = filteredContours.sort((a, b) => b.length - a.length);
-
-  // For characters with holes (like 'e', 'o', 'a'), we need to keep separate contours
-  // Keep only the largest contours to avoid noise, but allow up to 3 for holes
-  return filteredContours.slice(0, Math.min(4, filteredContours.length)); // Allow up to 4 contours for complex characters
-};
-
-// Convert contours to SVG path string with proper positioning
-const contoursToSVGPath = (contours: number[][], resolution: number, offsetX: number, offsetY: number): string => {
-  if (contours.length === 0) return '';
-
-  // Filter and merge nearby contours
-  const filteredContours = filterAndMergeContours(contours);
-
-  if (filteredContours.length === 0) return '';
-
-  const pathParts: string[] = [];
-
-  // For cleaner paths, process contours separately but more efficiently
-  for (let contourIndex = 0; contourIndex < filteredContours.length; contourIndex++) {
-    const contour = filteredContours[contourIndex];
-
-    if (contour.length < 4) continue;
-
-    // Simplify contour with adjusted tolerance for curves
-    const simplifiedContour = simplifyContour(contour, 2.0);
-    const lineSimplifiedContour = simplifyColinearPoints(simplifiedContour, 2.0);
-
-    if (lineSimplifiedContour.length < 4) continue;
-
-    // Start new subpath for each contour (this is correct for SVG)
-    let contourPath = '';
-
-    // Process each point in the contour
-    for (let i = 0; i < lineSimplifiedContour.length; i += 2) {
-      const x = roundTo2Decimals((lineSimplifiedContour[i] / resolution) + offsetX);
-      const y = roundTo2Decimals((lineSimplifiedContour[i + 1] / resolution) + offsetY);
-
-      if (contourPath === '') {
-        // First point of this contour
-        contourPath = `M ${x} ${y}`;
-      } else {
-        // Subsequent points use line commands
-        contourPath += ` L ${x} ${y}`;
-      }
-    }
-
-    // Close this contour
-    if (contourPath !== '') {
-      contourPath += ' Z';
-      pathParts.push(contourPath);
-    }
-  }
-
-  const rawPath = pathParts.join(' ');
-
-  // Apply cleaning to remove unnecessary elements
-  return cleanSVGPath(rawPath);
-};
-
-// Simplify contour using Douglas-Peucker algorithm to reduce points
-const simplifyContour = (contour: number[], tolerance: number): number[] => {
-  if (contour.length <= 4) return contour;
-
-  let maxDistance = 0;
-  let index = 0;
-
-  // Find point with maximum distance from line
-  const startX = contour[0];
-  const startY = contour[1];
-  const endX = contour[contour.length - 2];
-  const endY = contour[contour.length - 1];
-
-  for (let i = 2; i < contour.length - 2; i += 2) {
-    const pointX = contour[i];
-    const pointY = contour[i + 1];
-
-    const distance = pointToLineDistance(pointX, pointY, startX, startY, endX, endY);
-    if (distance > maxDistance) {
-      maxDistance = distance;
-      index = i;
-    }
-  }
-
-  // If max distance is greater than tolerance, recursively simplify
-  if (maxDistance > tolerance) {
-    const leftContour = simplifyContour(contour.slice(0, index + 2), tolerance);
-    const rightContour = simplifyContour(contour.slice(index), tolerance);
-
-    return [...leftContour.slice(0, -2), ...rightContour];
-  } else {
-    return [startX, startY, endX, endY];
+    
+    return pathData;
+  } catch (error) {
+    console.error('Error converting text to path:', error);
+    return '';
   }
 };
 
-// Additional simplification to remove colinear points and create straighter lines
-const simplifyColinearPoints = (contour: number[], angleTolerance: number = 1.0): number[] => {
-  if (contour.length <= 6) return contour;
+// Helper function to extract and normalize path data from SVG result
+const extractPathFromSVGResult = (
+  svgString: string, 
+  targetX: number, 
+  targetY: number, 
+  fontSize: number,
+  canvasPadding: number,
+  actualAscent: number,
+  actualDescent: number
+): string => {
+  console.log('extractPathFromSVGResult - svgString type:', typeof svgString);
+  
+  if (!svgString || typeof svgString !== 'string') {
+    console.log('No valid SVG string provided');
+    return '';
+  }
 
-  const simplified: number[] = [contour[0], contour[1]]; // Always keep first point
+  console.log('Processing SVG string:', svgString.substring(0, 200) + '...'); // Debug logging
 
-  for (let i = 2; i < contour.length - 2; i += 2) {
-    const prevX = simplified[simplified.length - 2];
-    const prevY = simplified[simplified.length - 1];
-    const currX = contour[i];
-    const currY = contour[i + 1];
-    const nextX = contour[i + 2];
-    const nextY = contour[i + 3];
+  // Parse SVG to extract path data
+  const parser = new DOMParser();
+  const svgDoc = parser.parseFromString(svgString, 'image/svg+xml');
+  
+  // Check for parsing errors
+  const parserError = svgDoc.querySelector('parsererror');
+  if (parserError) {
+    console.error('SVG parsing error:', parserError.textContent);
+    return '';
+  }
+  
+  // Extract path elements
+  const pathElements = svgDoc.querySelectorAll('path');
+  console.log('Found', pathElements.length, 'path elements');
+  
+  if (pathElements.length === 0) {
+    return '';
+  }
 
-    // Calculate angle between three points
-    const angle = calculateAngle(prevX, prevY, currX, currY, nextX, nextY);
-
-    // If angle is close to 180 degrees (straight line), skip current point
-    if (Math.abs(angle - 180) > angleTolerance) {
-      simplified.push(currX, currY);
+  const allNormalizedSegments: any[][] = [];
+  
+  // First pass: Process each path element using path-data-parser
+  for (const pathElement of pathElements) {
+    const pathData = pathElement.getAttribute('d');
+    console.log('Processing path data:', pathData);
+    
+    if (!pathData) continue;
+    
+    try {
+      // Parse the path string using path-data-parser
+      const segments = parsePath(pathData);
+      console.log('Parsed segments:', segments.length);
+      
+      // Convert relative commands to absolute
+      const absoluteSegments = absolutize(segments);
+      console.log('Absolutized segments:', absoluteSegments.length);
+      
+      // Normalize to only M, L, C, Z commands
+      const normalizedSegments = normalize(absoluteSegments);
+      console.log('Normalized segments:', normalizedSegments.length);
+      
+      allNormalizedSegments.push(normalizedSegments);
+    } catch (error) {
+      console.error('Error processing path data:', error);
     }
   }
-
-  // Always keep last point
-  simplified.push(contour[contour.length - 2], contour[contour.length - 1]);
-
-  return simplified;
-};
-
-// Calculate angle between three points in degrees
-const calculateAngle = (x1: number, y1: number, x2: number, y2: number, x3: number, y3: number): number => {
-  const dx1 = x2 - x1;
-  const dy1 = y2 - y1;
-  const dx2 = x3 - x2;
-  const dy2 = y3 - y2;
-
-  const dot = dx1 * dx2 + dy1 * dy2;
-  const mag1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
-  const mag2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
-
-  if (mag1 === 0 || mag2 === 0) return 0;
-
-  const cosAngle = dot / (mag1 * mag2);
-  const angle = Math.acos(Math.max(-1, Math.min(1, cosAngle))) * (180 / Math.PI);
-
-  return angle;
-};
-
-// Calculate distance from point to line
-const pointToLineDistance = (px: number, py: number, x1: number, y1: number, x2: number, y2: number): number => {
-  const dx = x2 - x1;
-  const dy = y2 - y1;
-  const length = Math.sqrt(dx * dx + dy * dy);
-
-  if (length === 0) return Math.sqrt((px - x1) ** 2 + (py - y1) ** 2);
-
-  const t = Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / (length * length)));
-  const closestX = x1 + t * dx;
-  const closestY = y1 + t * dy;
-
-  return Math.sqrt((px - closestX) ** 2 + (py - closestY) ** 2);
-};
-
-// Clean SVG path by removing unnecessary elements
-const cleanSVGPath = (path: string): string => {
-  if (!path) return path;
-
-  // First, fix multiple M commands at the beginning
-  let cleanedPath = path.replace(/^M\s+[\d.-]+\s+M\s+/, 'M ');
-
-  // Split path into individual commands
-  const commands = cleanedPath.trim().split(/\s+/);
-  const cleanedSubpaths: string[] = [];
-  let currentSubpath: string[] = [];
-
-  // Process commands and group them into subpaths
-  for (let i = 0; i < commands.length; i++) {
-    const command = commands[i];
-
-    // If we encounter a new 'M' command and we have a current subpath, process it
-    if (command === 'M' && currentSubpath.length > 0) {
-      const processedSubpath = processSubpath(currentSubpath);
-      if (processedSubpath) {
-        cleanedSubpaths.push(processedSubpath);
-      }
-      currentSubpath = [command];
-    } else {
-      currentSubpath.push(command);
-    }
+  
+  if (allNormalizedSegments.length === 0) {
+    return '';
   }
-
-  // Process the last subpath
-  if (currentSubpath.length > 0) {
-    const processedSubpath = processSubpath(currentSubpath);
-    if (processedSubpath) {
-      cleanedSubpaths.push(processedSubpath);
-    }
-  }
-
-  return cleanedSubpaths.join(' ');
-};
-
-// Process a single subpath and apply cleaning rules
-const processSubpath = (subpathCommands: string[]): string | null => {
-  if (subpathCommands.length < 3) return subpathCommands.join(' ');
-
-  const commands = [...subpathCommands]; // Copy to avoid modifying original
-
-  // Case 0: Remove subpaths that are just a single M command (meaningless)
-  if (commands.length === 3 && commands[0] === 'M' && !isNaN(parseFloat(commands[1])) && !isNaN(parseFloat(commands[2]))) {
-    return null; // Skip this meaningless subpath (just M x y)
-  }
-
-  // Case 1: EXACT M-L-Z pattern (single line - meaningless)
-  // Pattern: M x y L x y Z (exactly 7 commands)
-  if (commands.length === 7 &&
-      commands[0] === 'M' &&
-      commands[3] === 'L' &&
-      commands[6] === 'Z') {
-    // This is a meaningless subpath that just draws a single straight line and closes
-    return null; // Skip this meaningless subpath completely
-  }
-
-  // Case 2: Remove redundant end points before Z (close to start point)
-  const zIndex = commands.indexOf('Z');
-  if (zIndex !== -1 && zIndex > 0 && commands[0] === 'M') {
-    const startX = parseFloat(commands[1]);
-    const startY = parseFloat(commands[2]);
-
-    // Find the last L command before Z
-    let lastLIndex = -1;
-    for (let j = zIndex - 1; j >= 0; j--) {
-      if (commands[j] === 'L') {
-        lastLIndex = j;
-        break;
-      }
-    }
-
-    if (lastLIndex !== -1 && lastLIndex + 3 <= zIndex) {
-      const lastLX = parseFloat(commands[lastLIndex + 1]);
-      const lastLY = parseFloat(commands[lastLIndex + 2]);
-
-      const distance = Math.sqrt(
-        Math.pow(startX - lastLX, 2) + Math.pow(startY - lastLY, 2)
+  
+  // Calculate global bounds for all paths together
+  const globalBounds = calculateGlobalBounds(allNormalizedSegments);
+  console.log('Global bounds:', globalBounds);
+  
+  // Transform all paths using the same scale and offset to preserve relative positions
+  const allTransformedPaths: string[] = [];
+  
+  for (const normalizedSegments of allNormalizedSegments) {
+    try {
+      // Transform coordinates to target position using global bounds
+      const transformedSegments = transformSegmentsWithGlobalBounds(
+        normalizedSegments,
+        targetX,
+        targetY,
+        fontSize,
+        canvasPadding,
+        globalBounds,
+        actualAscent,
+        actualDescent
       );
+      
+      // Serialize back to path string
+      const transformedPath = serialize(transformedSegments);
+      console.log('Transformed path:', transformedPath);
+      
+      if (transformedPath) {
+        allTransformedPaths.push(transformedPath);
+      }
+    } catch (error) {
+      console.error('Error transforming path data:', error);
+    }
+  }
+  
+  const result = allTransformedPaths.join(' ');
+  console.log('Final combined path:', result);
+  
+  return result;
+};
 
-      // Remove if distance to start point is less than 1.0 units
-      if (distance < 1.0) {
-        commands.splice(lastLIndex, 3); // Remove L x y
+// Calculate global bounds for all paths to preserve relative positions
+const calculateGlobalBounds = (allSegments: any[][]): { minX: number, minY: number, maxX: number, maxY: number, width: number, height: number } => {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  
+  for (const segments of allSegments) {
+    for (const segment of segments) {
+      const { key, data } = segment;
+      
+      if (key === 'M' || key === 'L') {
+        // Move and Line commands have x,y coordinates
+        for (let i = 0; i < data.length; i += 2) {
+          const x = data[i];
+          const y = data[i + 1];
+          minX = Math.min(minX, x);
+          minY = Math.min(minY, y);
+          maxX = Math.max(maxX, x);
+          maxY = Math.max(maxY, y);
+        }
+      } else if (key === 'C') {
+        // Curve commands have multiple control points and end point
+        for (let i = 0; i < data.length; i += 2) {
+          const x = data[i];
+          const y = data[i + 1];
+          minX = Math.min(minX, x);
+          minY = Math.min(minY, y);
+          maxX = Math.max(maxX, x);
+          maxY = Math.max(maxY, y);
+        }
       }
     }
   }
-
-  // If not meaningless pattern, keep the subpath as is
-  return commands.join(' ');
+  
+  return {
+    minX,
+    minY,
+    maxX,
+    maxY,
+    width: maxX - minX,
+    height: maxY - minY
+  };
 };
+
+// Transform segments using global bounds to preserve relative positions between paths
+const transformSegmentsWithGlobalBounds = (
+  segments: any[],
+  targetX: number,
+  targetY: number,
+  fontSize: number,
+  canvasPadding: number,
+  globalBounds: { minX: number, minY: number, maxX: number, maxY: number, width: number, height: number },
+  actualAscent: number,
+  actualDescent: number
+): any[] => {
+  if (!segments || segments.length === 0) {
+    return [];
+  }
+
+  console.log('Transforming segments with global bounds:', { targetX, targetY, fontSize, canvasPadding, globalBounds, actualAscent, actualDescent });
+
+  // Usar las métricas reales del texto para cálculos más precisos
+  const realTextHeight = actualAscent + actualDescent;
+  
+  // Factor de escala basado en la altura real del texto
+  const scaleFactor = realTextHeight / globalBounds.height;
+  
+  // Posicionamiento más preciso usando las métricas reales
+  // targetY es la baseline, la esquina superior izquierda está en targetY - actualAscent
+  const textTopLeftX = targetX;
+  const textTopLeftY = targetY - actualAscent;
+  
+  // Offset para mover el path a la esquina superior izquierda exacta del texto
+  const offsetX = textTopLeftX - (globalBounds.minX * scaleFactor);
+  const offsetY = textTopLeftY - (globalBounds.minY * scaleFactor);
+  
+  console.log('Precise transform parameters:', { 
+    scaleFactor, 
+    offsetX, 
+    offsetY,
+    realTextHeight,
+    textTopLeft: { x: textTopLeftX, y: textTopLeftY },
+    actualAscent,
+    actualDescent,
+    globalBounds
+  });
+  
+  // Transform coordinates
+  const transformedSegments = segments.map(segment => {
+    const { key, data } = segment;
+    
+    if (key === 'Z') {
+      // Close path command has no data
+      return { key, data };
+    }
+    
+    const transformedData = [];
+    for (let i = 0; i < data.length; i += 2) {
+      let x = data[i];
+      let y = data[i + 1];
+      
+      // Aplicar escala y offset
+      x = (x * scaleFactor) + offsetX;
+      // Restaurar la inversión Y para manejar diferencia de coordenadas Canvas/SVG
+      y = offsetY + (globalBounds.maxY - y) * scaleFactor;
+      
+      transformedData.push(roundTo2Decimals(x));
+      transformedData.push(roundTo2Decimals(y));
+    }
+    
+    return { key, data: transformedData };
+  });
+  
+  return transformedSegments;
+};
+
+
 

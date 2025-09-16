@@ -357,7 +357,11 @@ export const TextPanel: React.FC = () => {
         {/* Convert to Path Button */}
         {selectedTextsCount > 0 && (
           <button
-            onPointerUp={convertTextToPath}
+            onPointerUp={() => {
+              convertTextToPath().catch(error => {
+                console.error('Error converting text to path:', error);
+              });
+            }}
             style={{
               display: 'flex',
               alignItems: 'center',

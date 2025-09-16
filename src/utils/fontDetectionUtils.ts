@@ -14,7 +14,7 @@ export const FONTS_TO_CHECK = [
   'MV Boli', 'Myanmar Text', 'Nirmala UI', 'Palatino Linotype', 'Segoe MDL2 Assets',
   'Segoe Print', 'Segoe Script', 'Segoe UI', 'Segoe UI Historic', 'Segoe UI Emoji',
   'Segoe UI Symbol', 'SimSun', 'Sitka', 'Sylfaen', 'Symbol', 'Tahoma', 'Times New Roman',
-  'Trebuchet MS', 'Verdana', 'Webdings', 'Wingdings', 'Yu Gothic',
+  'Trebuchet MS', 'Verdana', 'Yu Gothic',
   // macOS
   'American Typewriter', 'Andale Mono', 'Apple Chancery', 'AppleGothic', 'Arial Narrow',
   'Arial Rounded MT Bold', 'Avenir', 'Avenir Next', 'Baskerville', 'Big Caslon', 'Bodoni 72',
