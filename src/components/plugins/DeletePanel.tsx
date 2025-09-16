@@ -13,7 +13,7 @@ export const DeletePanel: React.FC = () => {
       </div>
 
       <button
-        onClick={deleteSelectedElements}
+        onPointerUp={deleteSelectedElements}
         disabled={selectedIds.length === 0}
         style={{
           width: '100%',

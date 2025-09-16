@@ -30,7 +30,7 @@ export const OrderPanel: React.FC = () => {
 
       <div style={{ display: 'flex', gap: '2px' }}>
         <button
-          onClick={bringToFront}
+          onPointerUp={bringToFront}
           disabled={selectedCount === 0}
           style={{
             padding: '6px',
@@ -48,7 +48,7 @@ export const OrderPanel: React.FC = () => {
         </button>
 
         <button
-          onClick={sendForward}
+          onPointerUp={sendForward}
           disabled={selectedCount === 0}
           style={{
             padding: '6px',
@@ -66,7 +66,7 @@ export const OrderPanel: React.FC = () => {
         </button>
 
         <button
-          onClick={sendBackward}
+          onPointerUp={sendBackward}
           disabled={selectedCount === 0}
           style={{
             padding: '6px',
@@ -84,7 +84,7 @@ export const OrderPanel: React.FC = () => {
         </button>
 
         <button
-          onClick={sendToBack}
+          onPointerUp={sendToBack}
           disabled={selectedCount === 0}
           style={{
             padding: '6px',

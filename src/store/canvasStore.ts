@@ -12,6 +12,7 @@ import { createArrangeSlice, type ArrangeSlice } from './slices/features/arrange
 import { createPluginManagementSlice, type PluginManagementSlice } from './slices/pluginManagementSlice';
 import { createShapePluginSlice, type ShapePluginSlice } from './slices/plugins/shapePluginSlice';
 import { createHistoryPluginSlice, type HistoryPluginSlice } from './slices/plugins/historyPluginSlice';
+import { createTransformationPluginSlice, type TransformationPluginSlice } from './slices/plugins/transformationPluginSlice';
 
 // Throttle function to implement cool-off period
 function throttle<T extends (...args: any[]) => any>(
@@ -48,7 +49,8 @@ type CanvasStore = BaseSlice &
   ArrangeSlice &
   PluginManagementSlice &
   ShapePluginSlice &
-  HistoryPluginSlice & {
+  HistoryPluginSlice &
+  TransformationPluginSlice & {
     // Additional actions that need cross-slice functionality
     startPath: (point: Point) => void;
     addPointToPath: (point: Point) => void;
@@ -86,6 +88,9 @@ export const useCanvasStore = create<CanvasStore>()(
 
       // History plugin slice
       ...createHistoryPluginSlice(set, get, api),
+
+      // Transformation plugin slice
+      ...createTransformationPluginSlice(set, get, api),
 
       // Cross-slice actions
       startPath: (point) => {

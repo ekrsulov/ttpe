@@ -97,23 +97,50 @@ export const createSelectionSlice: StateCreator<SelectionSlice> = (set, get, _ap
         if ((selectedIds as any).includes(el.id)) {
           if (el.type === 'path') {
             const pathData = el.data as import('../../../types').PathData;
-            return {
-              ...el,
-              data: {
-                ...pathData,
-                d: transformSvgPath(pathData.d, deltaX, deltaY),
-              },
-            };
+            
+            // If element has transform, move the path coordinates directly to avoid confusion with transform origins
+            if (pathData.transform && (pathData.transform.scaleX !== 1 || pathData.transform.scaleY !== 1 || pathData.transform.rotation !== 0)) {
+              return {
+                ...el,
+                data: {
+                  ...pathData,
+                  d: transformSvgPath(pathData.d, deltaX, deltaY),
+                },
+              };
+            } else {
+              // No significant transform, move the path coordinates directly
+              return {
+                ...el,
+                data: {
+                  ...pathData,
+                  d: transformSvgPath(pathData.d, deltaX, deltaY),
+                },
+              };
+            }
           } else if (el.type === 'text') {
             const textData = el.data as import('../../../types').TextData;
-            return {
-              ...el,
-              data: {
-                ...textData,
-                x: textData.x + deltaX,
-                y: textData.y + deltaY,
-              },
-            };
+            
+            // If element has transform, move the text coordinates directly to avoid confusion with transform origins
+            if (textData.transform && (textData.transform.scaleX !== 1 || textData.transform.scaleY !== 1 || textData.transform.rotation !== 0)) {
+              return {
+                ...el,
+                data: {
+                  ...textData,
+                  x: textData.x + deltaX,
+                  y: textData.y + deltaY,
+                },
+              };
+            } else {
+              // No significant transform, move the coordinates directly
+              return {
+                ...el,
+                data: {
+                  ...textData,
+                  x: textData.x + deltaX,
+                  y: textData.y + deltaY,
+                },
+              };
+            }
           }
         }
         return el;

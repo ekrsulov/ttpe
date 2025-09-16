@@ -5,3 +5,10 @@ export { measureText, measurePath } from './measurementUtils';
 export {
   textToPath
 } from './textVectorizationUtils';
+
+// Export font detection utilities
+export {
+  getAvailableFonts,
+  clearFontCache,
+  FONTS_TO_CHECK
+} from './fontDetectionUtils';

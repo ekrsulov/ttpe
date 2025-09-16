@@ -18,6 +18,16 @@ type PluginState = {
   select: Record<string, never>;
   delete: Record<string, never>;
   history: { canUndo: boolean; canRedo: boolean; historyStack: any[]; currentIndex: number };
+  transformation: {
+    isTransforming: boolean;
+    activeHandler: string | null;
+    scaleX: number;
+    scaleY: number;
+    rotation: number;
+    transformOrigin: { x: number; y: number } | null;
+    showCoordinates: boolean;
+    showRulers: boolean;
+  };
 };
 
 export interface PluginManagementSlice {
@@ -42,6 +52,16 @@ export const createPluginManagementSlice: StateCreator<PluginManagementSlice> = 
     select: {},
     delete: {},
     history: { canUndo: false, canRedo: false, historyStack: [], currentIndex: -1 },
+    transformation: {
+      isTransforming: false,
+      activeHandler: null,
+      scaleX: 1,
+      scaleY: 1,
+      rotation: 0,
+      transformOrigin: null,
+      showCoordinates: true,
+      showRulers: true,
+    },
   },
 
   // Actions

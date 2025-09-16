@@ -8,6 +8,13 @@ export interface PathData {
   strokeWidth: number;
   strokeColor: string;
   opacity: number;
+  transform?: {
+    scaleX: number;
+    scaleY: number;
+    rotation: number;
+    translateX: number;
+    translateY: number;
+  };
 }
 
 export interface TextData {
@@ -21,6 +28,13 @@ export interface TextData {
   fontStyle: 'normal' | 'italic';
   textDecoration: 'none' | 'underline' | 'line-through';
   opacity: number;
+  transform?: {
+    scaleX: number;
+    scaleY: number;
+    rotation: number;
+    translateX: number;
+    translateY: number;
+  };
 }
 
 export type ElementType = 'path' | 'text';

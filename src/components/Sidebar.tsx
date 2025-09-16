@@ -10,12 +10,14 @@ import { OrderPanel } from './plugins/OrderPanel';
 import { ArrangePanel } from './plugins/ArrangePanel';
 import { ShapePanel } from './plugins/ShapePanel';
 import { HistoryPanel } from './plugins/HistoryPanel';
+import { TransformationPanel } from './plugins/TransformationPanel';
 import {
   Move,
   Pen,
   Type,
   MousePointer,
   Shapes,
+  RotateCcw,
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -27,6 +29,7 @@ export const Sidebar: React.FC = () => {
     { name: 'pencil', label: 'Pencil', icon: Pen },
     { name: 'text', label: 'Text', icon: Type },
     { name: 'shape', label: 'Shape', icon: Shapes },
+    { name: 'transformation', label: 'Transform', icon: RotateCcw },
   ];
 
   return (
@@ -59,7 +62,7 @@ export const Sidebar: React.FC = () => {
             return (
               <button
                 key={plugin.name}
-                onClick={() => setActivePlugin(activePlugin === plugin.name ? null : plugin.name)}
+                onPointerUp={() => setActivePlugin(activePlugin === plugin.name ? null : plugin.name)}
                 style={{
                   padding: '8px',
                   backgroundColor: activePlugin === plugin.name ? '#007bff' : '#fff',
@@ -96,6 +99,7 @@ export const Sidebar: React.FC = () => {
         <PencilPanel />
         <TextPanel />
         <ShapePanel />
+        <TransformationPanel />
         <DeletePanel />
         <SelectPanel />
         <ZoomPanel />

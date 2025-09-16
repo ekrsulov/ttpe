@@ -17,5 +17,8 @@ export default defineConfig(() => {
   return {
     base: normalizedBase,
     plugins: [react()],
+    server: {
+      host: '0.0.0.0'
+    }
   }
 })

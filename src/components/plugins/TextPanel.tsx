@@ -1,10 +1,35 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Type, Palette, Bold, Italic, Eye, Wand2 } from 'lucide-react';
+import { getAvailableFonts } from '../../utils';
+import { FontSelector } from '../FontSelector';
 
 export const TextPanel: React.FC = () => {
   const { plugins, updatePluginState, getSelectedTextsCount, updateSelectedTexts, convertTextToPath } = useCanvasStore();
   const selectedTextsCount = getSelectedTextsCount();
+
+  // Font detection state
+  const [availableFonts, setAvailableFonts] = useState<string[]>([]);
+  const [isScanningFonts, setIsScanningFonts] = useState(true);
+
+  // Load available fonts on component mount
+  useEffect(() => {
+    const loadFonts = async () => {
+      setIsScanningFonts(true);
+      try {
+        const fonts = getAvailableFonts();
+        setAvailableFonts(fonts);
+      } catch (error) {
+        console.error('Error detecting fonts:', error);
+        // Fallback to basic fonts if detection fails
+        setAvailableFonts(['Arial', 'Helvetica', 'Times New Roman', 'Courier New', 'Georgia']);
+      } finally {
+        setIsScanningFonts(false);
+      }
+    };
+
+    loadFonts();
+  }, []);
 
   const handleFontSizeChange = (value: number) => {
     if (selectedTextsCount > 0) {
@@ -236,29 +261,19 @@ export const TextPanel: React.FC = () => {
               fontSize: '12px'
             }}
           />
-          <select
+          <FontSelector
             value={getCurrentFontFamily()}
-            onChange={(e) => handleFontFamilyChange(e.target.value)}
-            style={{
-              flex: 1,
-              padding: '4px',
-              border: '1px solid #ccc',
-              borderRadius: '3px',
-              fontSize: '12px'
-            }}
-          >
-            <option value="Arial">Arial</option>
-            <option value="Helvetica">Helvetica</option>
-            <option value="Times New Roman">Times</option>
-            <option value="Courier New">Courier</option>
-            <option value="Georgia">Georgia</option>
-          </select>
+            onChange={handleFontFamilyChange}
+            fonts={availableFonts}
+            disabled={isScanningFonts}
+            loading={isScanningFonts}
+          />
         </div>
 
         {/* Style Controls */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
           <button
-            onClick={() => handleFontWeightChange(getCurrentFontWeight() === 'bold' ? 'normal' : 'bold')}
+            onPointerUp={() => handleFontWeightChange(getCurrentFontWeight() === 'bold' ? 'normal' : 'bold')}
             style={{
               padding: '4px',
               border: '1px solid #ccc',
@@ -273,7 +288,7 @@ export const TextPanel: React.FC = () => {
             <Bold size={14} />
           </button>
           <button
-            onClick={() => handleFontStyleChange(getCurrentFontStyle() === 'italic' ? 'normal' : 'italic')}
+            onPointerUp={() => handleFontStyleChange(getCurrentFontStyle() === 'italic' ? 'normal' : 'italic')}
             style={{
               padding: '4px',
               border: '1px solid #ccc',
@@ -342,7 +357,7 @@ export const TextPanel: React.FC = () => {
         {/* Convert to Path Button */}
         {selectedTextsCount > 0 && (
           <button
-            onClick={convertTextToPath}
+            onPointerUp={convertTextToPath}
             style={{
               display: 'flex',
               alignItems: 'center',
