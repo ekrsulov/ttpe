@@ -196,18 +196,20 @@ export const useCanvasStore = create<CanvasStore>()(
           let d = '';
 
           switch (selectedShape) {
-            case 'square':
+            case 'square': {
               // Create a square using path commands
               const halfSize = Math.min(width, height) / 2;
               d = `M ${formatToPrecision(centerX - halfSize, PATH_DECIMAL_PRECISION)} ${formatToPrecision(centerY - halfSize, PATH_DECIMAL_PRECISION)} L ${formatToPrecision(centerX + halfSize, PATH_DECIMAL_PRECISION)} ${formatToPrecision(centerY - halfSize, PATH_DECIMAL_PRECISION)} L ${formatToPrecision(centerX + halfSize, PATH_DECIMAL_PRECISION)} ${formatToPrecision(centerY + halfSize, PATH_DECIMAL_PRECISION)} L ${formatToPrecision(centerX - halfSize, PATH_DECIMAL_PRECISION)} ${formatToPrecision(centerY + halfSize, PATH_DECIMAL_PRECISION)} Z`;
               break;
+            }
 
-            case 'rectangle':
+            case 'rectangle': {
               // Create a rectangle using path commands
               d = `M ${formatToPrecision(startPoint.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(startPoint.y, PATH_DECIMAL_PRECISION)} L ${formatToPrecision(endPoint.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(startPoint.y, PATH_DECIMAL_PRECISION)} L ${formatToPrecision(endPoint.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(endPoint.y, PATH_DECIMAL_PRECISION)} L ${formatToPrecision(startPoint.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(endPoint.y, PATH_DECIMAL_PRECISION)} Z`;
               break;
+            }
 
-            case 'circle':
+            case 'circle': {
               // Create a circle using C commands (Bézier curves)
               const radius = Math.min(width, height) / 2;
               const kappa = 0.552284749831; // Control point constant for circle approximation
@@ -232,17 +234,20 @@ export const useCanvasStore = create<CanvasStore>()(
 
               d = `M ${formatToPrecision(centerX - radius, PATH_DECIMAL_PRECISION)} ${formatToPrecision(centerY, PATH_DECIMAL_PRECISION)} C ${formatToPrecision(cx1, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cy1, PATH_DECIMAL_PRECISION)}, ${formatToPrecision(cx2, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cy2, PATH_DECIMAL_PRECISION)}, ${formatToPrecision(centerX, PATH_DECIMAL_PRECISION)} ${formatToPrecision(centerY - radius, PATH_DECIMAL_PRECISION)} C ${formatToPrecision(cx3, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cy3, PATH_DECIMAL_PRECISION)}, ${formatToPrecision(cx4, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cy4, PATH_DECIMAL_PRECISION)}, ${formatToPrecision(centerX + radius, PATH_DECIMAL_PRECISION)} ${formatToPrecision(centerY, PATH_DECIMAL_PRECISION)} C ${formatToPrecision(cx5, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cy5, PATH_DECIMAL_PRECISION)}, ${formatToPrecision(cx6, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cy6, PATH_DECIMAL_PRECISION)}, ${formatToPrecision(centerX, PATH_DECIMAL_PRECISION)} ${formatToPrecision(centerY + radius, PATH_DECIMAL_PRECISION)} C ${formatToPrecision(cx7, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cy7, PATH_DECIMAL_PRECISION)}, ${formatToPrecision(cx8, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cy8, PATH_DECIMAL_PRECISION)}, ${formatToPrecision(centerX - radius, PATH_DECIMAL_PRECISION)} ${formatToPrecision(centerY, PATH_DECIMAL_PRECISION)} Z`;
               break;
+            }
 
-            case 'triangle':
+            case 'triangle': {
               // Create a triangle using path commands
               d = `M ${formatToPrecision(centerX, PATH_DECIMAL_PRECISION)} ${formatToPrecision(startPoint.y, PATH_DECIMAL_PRECISION)} L ${formatToPrecision(endPoint.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(endPoint.y, PATH_DECIMAL_PRECISION)} L ${formatToPrecision(startPoint.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(endPoint.y, PATH_DECIMAL_PRECISION)} Z`;
               break;
+            }
 
-            default:
+            default: {
               // Default to square if unknown shape
               const defaultHalfSize = Math.min(width, height) / 2;
               d = `M ${formatToPrecision(centerX - defaultHalfSize, PATH_DECIMAL_PRECISION)} ${formatToPrecision(centerY - defaultHalfSize, PATH_DECIMAL_PRECISION)} L ${formatToPrecision(centerX + defaultHalfSize, PATH_DECIMAL_PRECISION)} ${formatToPrecision(centerY - defaultHalfSize, PATH_DECIMAL_PRECISION)} L ${formatToPrecision(centerX + defaultHalfSize, PATH_DECIMAL_PRECISION)} ${formatToPrecision(centerY + defaultHalfSize, PATH_DECIMAL_PRECISION)} L ${formatToPrecision(centerX - defaultHalfSize, PATH_DECIMAL_PRECISION)} ${formatToPrecision(centerY + defaultHalfSize, PATH_DECIMAL_PRECISION)} Z`;
               break;
+            }
           }
 
           get().addElement({
@@ -280,7 +285,7 @@ export const useCanvasStore = create<CanvasStore>()(
     ), { 
       name: 'canvas-app-state',
       partialize: (state: any) => {
-        const { editor, history, ...rest } = state;
+        const { ...rest } = state;
         return rest;
       }
     }

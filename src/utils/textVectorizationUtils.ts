@@ -98,7 +98,7 @@ export const textToPath = async (
     });
 
     // Extract path data from SVG result and position it correctly
-    let pathData = extractPathFromSVGResult(svgResult, x, y, actualAscent, actualDescent);
+    const pathData = extractPathFromSVGResult(svgResult, x, y, actualAscent, actualDescent);
     
     // Cache the result only if we got valid path data
     if (pathData) {
@@ -106,7 +106,7 @@ export const textToPath = async (
     }
     
     return pathData;
-  } catch (error) {
+  } catch {
     return '';
   }
 };
@@ -159,7 +159,7 @@ const extractPathFromSVGResult = (
       const normalizedSegments = normalize(absoluteSegments);
       
       allNormalizedSegments.push(normalizedSegments);
-    } catch (error) {
+    } catch {
       // Error processing path data
     }
   }
@@ -192,7 +192,7 @@ const extractPathFromSVGResult = (
       if (transformedPath) {
         allTransformedPaths.push(transformedPath);
       }
-    } catch (error) {
+    } catch {
       // Error transforming path data
     }
   }
