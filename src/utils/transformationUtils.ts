@@ -104,7 +104,7 @@ export function rebuildPathString(commands: Array<{ command: string; points: Poi
   for (let i = 0; i < commands.length; i++) {
     const { command, points } = commands[i];
     if (i > 0) pathString += ' ';
-    pathString += command;
+    pathString += command + ' ';
     
     switch (command.toUpperCase()) {
       case 'M':
@@ -116,8 +116,8 @@ export function rebuildPathString(commands: Array<{ command: string; points: Poi
       case 'C':
         for (let i = 0; i < points.length; i += 3) {
           if (i + 2 < points.length) {
-            const separator = i > 0 ? ' C ' : '';
-            pathString += `${separator}${formatToPrecision(points[i].x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i].y, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i + 1].x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i + 1].y, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i + 2].x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i + 2].y, PATH_DECIMAL_PRECISION)}`;
+            if (i > 0) pathString += ' ';
+            pathString += `${formatToPrecision(points[i].x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i].y, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i + 1].x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i + 1].y, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i + 2].x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i + 2].y, PATH_DECIMAL_PRECISION)}`;
           }
         }
         break;
