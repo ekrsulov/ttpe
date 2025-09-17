@@ -15,3 +15,11 @@ export {
 
 // Export path parser utilities
 export * from './pathParserUtils';
+
+// Utility function to format numbers to at most N decimal places
+export function formatToPrecision(num: number, precision: number = 2): number {
+  return parseFloat(num.toFixed(precision));
+}
+
+// Export precision utilities
+export { PATH_DECIMAL_PRECISION } from '../types';

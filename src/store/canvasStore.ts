@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { temporal } from 'zundo';
 import { textToPath } from '../utils/textVectorizationUtils';
+import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../utils';
 import type { Point } from '../types';
 import isDeepEqual from 'fast-deep-equal';
 
@@ -104,7 +105,7 @@ export const useCanvasStore = create<CanvasStore>()(
           get().addElement({
             type: 'path',
             data: {
-              d: `M ${point.x} ${point.y}`,
+              d: `M ${formatToPrecision(point.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(point.y, PATH_DECIMAL_PRECISION)}`,
               strokeWidth,
               strokeColor: effectiveStrokeColor,
               strokeOpacity,
@@ -120,7 +121,7 @@ export const useCanvasStore = create<CanvasStore>()(
           const lastElement = state.elements[state.elements.length - 1];
           if (lastElement?.type === 'path') {
             const pathData = lastElement.data as import('../types').PathData;
-            const newD = `${pathData.d} L ${point.x} ${point.y}`;
+            const newD = `${pathData.d} L ${formatToPrecision(point.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(point.y, PATH_DECIMAL_PRECISION)}`;
             get().updateElement(lastElement.id, {
               data: {
                 ...pathData,
@@ -198,12 +199,12 @@ export const useCanvasStore = create<CanvasStore>()(
             case 'square':
               // Create a square using path commands
               const halfSize = Math.min(width, height) / 2;
-              d = `M ${centerX - halfSize} ${centerY - halfSize} L ${centerX + halfSize} ${centerY - halfSize} L ${centerX + halfSize} ${centerY + halfSize} L ${centerX - halfSize} ${centerY + halfSize} Z`;
+              d = `M ${formatToPrecision(centerX - halfSize, PATH_DECIMAL_PRECISION)} ${formatToPrecision(centerY - halfSize, PATH_DECIMAL_PRECISION)} L ${formatToPrecision(centerX + halfSize, PATH_DECIMAL_PRECISION)} ${formatToPrecision(centerY - halfSize, PATH_DECIMAL_PRECISION)} L ${formatToPrecision(centerX + halfSize, PATH_DECIMAL_PRECISION)} ${formatToPrecision(centerY + halfSize, PATH_DECIMAL_PRECISION)} L ${formatToPrecision(centerX - halfSize, PATH_DECIMAL_PRECISION)} ${formatToPrecision(centerY + halfSize, PATH_DECIMAL_PRECISION)} Z`;
               break;
 
             case 'rectangle':
               // Create a rectangle using path commands
-              d = `M ${startPoint.x} ${startPoint.y} L ${endPoint.x} ${startPoint.y} L ${endPoint.x} ${endPoint.y} L ${startPoint.x} ${endPoint.y} Z`;
+              d = `M ${formatToPrecision(startPoint.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(startPoint.y, PATH_DECIMAL_PRECISION)} L ${formatToPrecision(endPoint.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(startPoint.y, PATH_DECIMAL_PRECISION)} L ${formatToPrecision(endPoint.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(endPoint.y, PATH_DECIMAL_PRECISION)} L ${formatToPrecision(startPoint.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(endPoint.y, PATH_DECIMAL_PRECISION)} Z`;
               break;
 
             case 'circle':
@@ -229,18 +230,18 @@ export const useCanvasStore = create<CanvasStore>()(
               const cx8 = centerX - radius;
               const cy8 = centerY + radius * kappa;
 
-              d = `M ${centerX - radius} ${centerY} C ${cx1} ${cy1} ${cx2} ${cy2} ${centerX} ${centerY - radius} C ${cx3} ${cy3} ${cx4} ${cy4} ${centerX + radius} ${centerY} C ${cx5} ${cy5} ${cx6} ${cy6} ${centerX} ${centerY + radius} C ${cx7} ${cy7} ${cx8} ${cy8} ${centerX - radius} ${centerY} Z`;
+              d = `M ${formatToPrecision(centerX - radius, PATH_DECIMAL_PRECISION)} ${formatToPrecision(centerY, PATH_DECIMAL_PRECISION)} C ${formatToPrecision(cx1, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cy1, PATH_DECIMAL_PRECISION)}, ${formatToPrecision(cx2, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cy2, PATH_DECIMAL_PRECISION)}, ${formatToPrecision(centerX, PATH_DECIMAL_PRECISION)} ${formatToPrecision(centerY - radius, PATH_DECIMAL_PRECISION)} C ${formatToPrecision(cx3, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cy3, PATH_DECIMAL_PRECISION)}, ${formatToPrecision(cx4, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cy4, PATH_DECIMAL_PRECISION)}, ${formatToPrecision(centerX + radius, PATH_DECIMAL_PRECISION)} ${formatToPrecision(centerY, PATH_DECIMAL_PRECISION)} C ${formatToPrecision(cx5, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cy5, PATH_DECIMAL_PRECISION)}, ${formatToPrecision(cx6, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cy6, PATH_DECIMAL_PRECISION)}, ${formatToPrecision(centerX, PATH_DECIMAL_PRECISION)} ${formatToPrecision(centerY + radius, PATH_DECIMAL_PRECISION)} C ${formatToPrecision(cx7, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cy7, PATH_DECIMAL_PRECISION)}, ${formatToPrecision(cx8, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cy8, PATH_DECIMAL_PRECISION)}, ${formatToPrecision(centerX - radius, PATH_DECIMAL_PRECISION)} ${formatToPrecision(centerY, PATH_DECIMAL_PRECISION)} Z`;
               break;
 
             case 'triangle':
               // Create a triangle using path commands
-              d = `M ${centerX} ${startPoint.y} L ${endPoint.x} ${endPoint.y} L ${startPoint.x} ${endPoint.y} Z`;
+              d = `M ${formatToPrecision(centerX, PATH_DECIMAL_PRECISION)} ${formatToPrecision(startPoint.y, PATH_DECIMAL_PRECISION)} L ${formatToPrecision(endPoint.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(endPoint.y, PATH_DECIMAL_PRECISION)} L ${formatToPrecision(startPoint.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(endPoint.y, PATH_DECIMAL_PRECISION)} Z`;
               break;
 
             default:
               // Default to square if unknown shape
               const defaultHalfSize = Math.min(width, height) / 2;
-              d = `M ${centerX - defaultHalfSize} ${centerY - defaultHalfSize} L ${centerX + defaultHalfSize} ${centerY - defaultHalfSize} L ${centerX + defaultHalfSize} ${centerY + defaultHalfSize} L ${centerX - defaultHalfSize} ${centerY + defaultHalfSize} Z`;
+              d = `M ${formatToPrecision(centerX - defaultHalfSize, PATH_DECIMAL_PRECISION)} ${formatToPrecision(centerY - defaultHalfSize, PATH_DECIMAL_PRECISION)} L ${formatToPrecision(centerX + defaultHalfSize, PATH_DECIMAL_PRECISION)} ${formatToPrecision(centerY - defaultHalfSize, PATH_DECIMAL_PRECISION)} L ${formatToPrecision(centerX + defaultHalfSize, PATH_DECIMAL_PRECISION)} ${formatToPrecision(centerY + defaultHalfSize, PATH_DECIMAL_PRECISION)} L ${formatToPrecision(centerX - defaultHalfSize, PATH_DECIMAL_PRECISION)} ${formatToPrecision(centerY + defaultHalfSize, PATH_DECIMAL_PRECISION)} Z`;
               break;
           }
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import { measurePath } from '../utils/measurementUtils';
 import { parsePathD, extractEditablePoints, getCommandStartPoint, updatePathD } from '../utils/pathParserUtils';
+import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../utils';
 import type { Point } from '../types';
 
 interface CanvasRendererProps {
@@ -95,10 +96,10 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           const canvasY = (svgY - viewport.panY) / viewport.zoom;
           
           // Update local drag position for smooth visualization
-          setDragPosition({ x: canvasX, y: canvasY });
+          setDragPosition({ x: formatToPrecision(canvasX, PATH_DECIMAL_PRECISION), y: formatToPrecision(canvasY, PATH_DECIMAL_PRECISION) });
           
           // Update store position
-          onUpdateDraggingPoint(canvasX, canvasY);
+          onUpdateDraggingPoint(formatToPrecision(canvasX, PATH_DECIMAL_PRECISION), formatToPrecision(canvasY, PATH_DECIMAL_PRECISION));
 
           // Throttled path update for real-time feedback
           const now = Date.now();
@@ -118,8 +119,8 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
               );
 
               if (pointToUpdate) {
-                pointToUpdate.x = canvasX;
-                pointToUpdate.y = canvasY;
+                pointToUpdate.x = formatToPrecision(canvasX, PATH_DECIMAL_PRECISION);
+                pointToUpdate.y = formatToPrecision(canvasY, PATH_DECIMAL_PRECISION);
 
                 const newPathD = updatePathD(commands, [pointToUpdate]);
                 onUpdateElement(editingPoint.elementId, {
@@ -146,8 +147,8 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           const svgX = e.clientX - svgRect.left;
           const svgY = e.clientY - svgRect.top;
           finalPosition = {
-            x: (svgX - viewport.panX) / viewport.zoom,
-            y: (svgY - viewport.panY) / viewport.zoom
+            x: formatToPrecision((svgX - viewport.panX) / viewport.zoom, PATH_DECIMAL_PRECISION),
+            y: formatToPrecision((svgY - viewport.panY) / viewport.zoom, PATH_DECIMAL_PRECISION)
           };
         }
 
@@ -165,8 +166,8 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
             );
 
             if (pointToUpdate) {
-              pointToUpdate.x = finalPosition.x;
-              pointToUpdate.y = finalPosition.y;
+              pointToUpdate.x = formatToPrecision(finalPosition.x, PATH_DECIMAL_PRECISION);
+              pointToUpdate.y = formatToPrecision(finalPosition.y, PATH_DECIMAL_PRECISION);
 
               const newPathD = updatePathD(commands, [pointToUpdate]);
               onUpdateElement(editingPoint.elementId, {

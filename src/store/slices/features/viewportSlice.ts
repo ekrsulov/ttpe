@@ -1,5 +1,6 @@
 import type { StateCreator } from 'zustand';
 import type { Viewport } from '../../../types';
+import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../../utils';
 
 export interface ViewportSlice {
   // State
@@ -32,8 +33,8 @@ export const createViewportSlice: StateCreator<ViewportSlice> = (set, _get, _api
     set((state) => ({
       viewport: {
         ...state.viewport,
-        panX: state.viewport.panX + deltaX,
-        panY: state.viewport.panY + deltaY,
+        panX: formatToPrecision(state.viewport.panX + deltaX, PATH_DECIMAL_PRECISION),
+        panY: formatToPrecision(state.viewport.panY + deltaY, PATH_DECIMAL_PRECISION),
       },
     }));
   },
@@ -47,8 +48,8 @@ export const createViewportSlice: StateCreator<ViewportSlice> = (set, _get, _api
         viewport: {
           ...state.viewport,
           zoom: newZoom,
-          panX: centerX - (centerX - state.viewport.panX) * zoomRatio,
-          panY: centerY - (centerY - state.viewport.panY) * zoomRatio,
+          panX: formatToPrecision(centerX - (centerX - state.viewport.panX) * zoomRatio, PATH_DECIMAL_PRECISION),
+          panY: formatToPrecision(centerY - (centerY - state.viewport.panY) * zoomRatio, PATH_DECIMAL_PRECISION),
         },
       };
     });

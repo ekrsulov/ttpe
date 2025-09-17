@@ -1,5 +1,6 @@
 import type { StateCreator } from 'zustand';
 import type { CanvasElement } from '../../../types';
+import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../../utils';
 
 // Helper function to transform SVG path commands by applying a translation
 const transformSvgPath = (d: string, deltaX: number, deltaY: number): string => {
@@ -10,6 +11,7 @@ const transformSvgPath = (d: string, deltaX: number, deltaY: number): string => 
   
   while (i < commands.length) {
     const command = commands[i];
+    if (result) result += ' ';
     result += command;
     
     // If this is a command that takes coordinates, process the next values
@@ -21,8 +23,8 @@ const transformSvgPath = (d: string, deltaX: number, deltaY: number): string => 
         if (coords.length >= 2) {
           // Apply translation to coordinate pairs
           for (let j = 0; j < coords.length; j += 2) {
-            coords[j] += deltaX;     // x coordinate
-            coords[j + 1] += deltaY; // y coordinate
+            coords[j] = formatToPrecision(coords[j] + deltaX, PATH_DECIMAL_PRECISION);     // x coordinate
+            coords[j + 1] = formatToPrecision(coords[j + 1] + deltaY, PATH_DECIMAL_PRECISION); // y coordinate
           }
           result += ' ' + coords.join(' ');
         }

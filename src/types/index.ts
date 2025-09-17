@@ -3,6 +3,9 @@ export interface Point {
   y: number;
 }
 
+// Configurable decimal precision for path coordinates
+export const PATH_DECIMAL_PRECISION = 2;
+
 export interface PathData {
   d: string; // SVG path commands (M, L, C, Z.)
   strokeWidth: number;

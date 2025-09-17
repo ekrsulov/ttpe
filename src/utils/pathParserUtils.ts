@@ -1,11 +1,13 @@
-export interface PathCommand {
-  type: 'M' | 'L' | 'C' | 'Z';
-  points: Point[];
-}
+import { formatToPrecision, PATH_DECIMAL_PRECISION } from './index';
 
 export interface Point {
   x: number;
   y: number;
+}
+
+export interface PathCommand {
+  type: 'M' | 'L' | 'C' | 'Z';
+  points: Point[];
 }
 
 export interface ControlPoint {
@@ -38,8 +40,8 @@ export function parsePathD(d: string): PathCommand[] {
       const points: Point[] = [];
       i++;
       while (i < tokens.length && !isNaN(parseFloat(tokens[i]))) {
-        const x = parseFloat(tokens[i]);
-        const y = parseFloat(tokens[i + 1]);
+        const x = formatToPrecision(parseFloat(tokens[i]), PATH_DECIMAL_PRECISION);
+        const y = formatToPrecision(parseFloat(tokens[i + 1]), PATH_DECIMAL_PRECISION);
         points.push({ x, y });
         i += 2;
       }
@@ -48,8 +50,8 @@ export function parsePathD(d: string): PathCommand[] {
       const points: Point[] = [];
       i++;
       while (i < tokens.length && !isNaN(parseFloat(tokens[i]))) {
-        const x = parseFloat(tokens[i]);
-        const y = parseFloat(tokens[i + 1]);
+        const x = formatToPrecision(parseFloat(tokens[i]), PATH_DECIMAL_PRECISION);
+        const y = formatToPrecision(parseFloat(tokens[i + 1]), PATH_DECIMAL_PRECISION);
         points.push({ x, y });
         i += 2;
       }
@@ -58,8 +60,8 @@ export function parsePathD(d: string): PathCommand[] {
       const points: Point[] = [];
       i++;
       while (i < tokens.length && !isNaN(parseFloat(tokens[i]))) {
-        const x = parseFloat(tokens[i]);
-        const y = parseFloat(tokens[i + 1]);
+        const x = formatToPrecision(parseFloat(tokens[i]), PATH_DECIMAL_PRECISION);
+        const y = formatToPrecision(parseFloat(tokens[i + 1]), PATH_DECIMAL_PRECISION);
         points.push({ x, y });
         i += 2;
       }
@@ -195,7 +197,16 @@ export function updatePathD(commands: PathCommand[], updatedPoints: ControlPoint
   // Convert back to path string
   return updatedCommands.map(cmd => {
     if (cmd.type === 'Z') return 'Z';
-    const pointStr = cmd.points.map(p => `${p.x} ${p.y}`).join(' ');
+    
+    let pointStr = '';
+    if (cmd.type === 'C' && cmd.points.length >= 3) {
+      // For C commands, join all points with spaces
+      pointStr = cmd.points.map(p => `${formatToPrecision(p.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(p.y, PATH_DECIMAL_PRECISION)}`).join(' ');
+    } else {
+      // For other commands, just join with spaces
+      pointStr = cmd.points.map(p => `${formatToPrecision(p.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(p.y, PATH_DECIMAL_PRECISION)}`).join(' ');
+    }
+    
     return `${cmd.type} ${pointStr}`;
   }).join(' ');
 }

@@ -1,6 +1,7 @@
 // Text vectorization utilities for converting text to SVG paths using esm-potrace-wasm
 import { potrace, init } from 'esm-potrace-wasm';
 import { parsePath, serialize, absolutize, normalize } from 'path-data-parser';
+import { PATH_DECIMAL_PRECISION, formatToPrecision } from './index';
 
 // Cache for text vectorization to improve performance
 const textVectorizationCache = new (globalThis as any).Map();
@@ -14,9 +15,9 @@ const initPotrace = async () => {
   }
 };
 
-// Utility function to round coordinates to 2 decimal places
-const roundTo2Decimals = (num: number): number => {
-  return Math.round(num * 100) / 100;
+// Utility function to round coordinates to configurable decimal places
+const roundToPrecision = (num: number): number => {
+  return formatToPrecision(num, PATH_DECIMAL_PRECISION);
 };
 
 // Function to convert text to SVG path using esm-potrace-wasm
@@ -290,8 +291,8 @@ const transformSegmentsWithGlobalBounds = (
       // Restaurar la inversión Y para manejar diferencia de coordenadas Canvas/SVG
       y = offsetY + (globalBounds.maxY - y) * scaleFactor;
       
-      transformedData.push(roundTo2Decimals(x));
-      transformedData.push(roundTo2Decimals(y));
+      transformedData.push(roundToPrecision(x));
+      transformedData.push(roundToPrecision(y));
     }
     
     return { key, data: transformedData };

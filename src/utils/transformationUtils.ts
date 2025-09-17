@@ -1,4 +1,5 @@
 import type { PathData, Point } from '../types';
+import { formatToPrecision, PATH_DECIMAL_PRECISION } from './index';
 
 /**
  * Parses an SVG path string and extracts coordinate points for transformation
@@ -100,8 +101,8 @@ export function transformPoint(point: Point, scaleX: number, scaleY: number, ori
   const scaledY = translatedY * scaleY;
   
   return {
-    x: scaledX + originX,
-    y: scaledY + originY
+    x: formatToPrecision(scaledX + originX, PATH_DECIMAL_PRECISION),
+    y: formatToPrecision(scaledY + originY, PATH_DECIMAL_PRECISION)
   };
 }
 
@@ -123,8 +124,8 @@ export function rotatePoint(point: Point, angleDegrees: number, originX: number,
   
   // Translate back
   return {
-    x: rotatedX + originX,
-    y: rotatedY + originY
+    x: formatToPrecision(rotatedX + originX, PATH_DECIMAL_PRECISION),
+    y: formatToPrecision(rotatedY + originY, PATH_DECIMAL_PRECISION)
   };
 }
 
@@ -134,7 +135,9 @@ export function rotatePoint(point: Point, angleDegrees: number, originX: number,
 export function rebuildPathString(commands: Array<{ command: string; points: Point[] }>): string {
   let pathString = '';
   
-  for (const { command, points } of commands) {
+  for (let i = 0; i < commands.length; i++) {
+    const { command, points } = commands[i];
+    if (i > 0) pathString += ' ';
     pathString += command;
     
     switch (command.toUpperCase()) {
@@ -142,23 +145,24 @@ export function rebuildPathString(commands: Array<{ command: string; points: Poi
       case 'L':
       case 'T':
         for (const point of points) {
-          pathString += ` ${point.x} ${point.y}`;
+          pathString += ` ${formatToPrecision(point.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(point.y, PATH_DECIMAL_PRECISION)}`;
         }
         break;
       case 'H':
         for (const point of points) {
-          pathString += ` ${point.x}`;
+          pathString += ` ${formatToPrecision(point.x, PATH_DECIMAL_PRECISION)}`;
         }
         break;
       case 'V':
         for (const point of points) {
-          pathString += ` ${point.y}`;
+          pathString += ` ${formatToPrecision(point.y, PATH_DECIMAL_PRECISION)}`;
         }
         break;
       case 'C':
         for (let i = 0; i < points.length; i += 3) {
           if (i + 2 < points.length) {
-            pathString += ` ${points[i].x} ${points[i].y} ${points[i + 1].x} ${points[i + 1].y} ${points[i + 2].x} ${points[i + 2].y}`;
+            const separator = i > 0 ? ' C ' : '';
+            pathString += `${separator}${formatToPrecision(points[i].x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i].y, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i + 1].x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i + 1].y, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i + 2].x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i + 2].y, PATH_DECIMAL_PRECISION)}`;
           }
         }
         break;
@@ -166,7 +170,8 @@ export function rebuildPathString(commands: Array<{ command: string; points: Poi
       case 'Q':
         for (let i = 0; i < points.length; i += 2) {
           if (i + 1 < points.length) {
-            pathString += ` ${points[i].x} ${points[i].y} ${points[i + 1].x} ${points[i + 1].y}`;
+            const separator = i > 0 ? ` ${command} ` : '';
+            pathString += `${separator}${formatToPrecision(points[i].x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i].y, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i + 1].x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i + 1].y, PATH_DECIMAL_PRECISION)}`;
           }
         }
         break;
@@ -174,7 +179,8 @@ export function rebuildPathString(commands: Array<{ command: string; points: Poi
         for (let i = 0; i < points.length; i += 4) {
           if (i + 3 < points.length) {
             // rx ry x-axis-rotation large-arc-flag sweep-flag x y
-            pathString += ` ${points[i].x} ${points[i].y} ${points[i + 1].x} ${points[i + 2].x} ${points[i + 2].y} ${points[i + 3].x} ${points[i + 3].y}`;
+            const separator = i > 0 ? ' A ' : '';
+            pathString += `${separator}${formatToPrecision(points[i].x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i].y, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i + 1].x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i + 2].x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i + 2].y, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i + 3].x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i + 3].y, PATH_DECIMAL_PRECISION)}`;
           }
         }
         break;
@@ -213,7 +219,7 @@ export function transformPathData(
         transformedPoint = { x: 0, y: point.y };
       } else if (command.toUpperCase() === 'A' && points.indexOf(point) < 2) {
         // For arc commands, the first two points are rx, ry which should be scaled but not translated
-        return { x: point.x * scaleX, y: point.y * scaleY };
+        return { x: formatToPrecision(point.x * scaleX, PATH_DECIMAL_PRECISION), y: formatToPrecision(point.y * scaleY, PATH_DECIMAL_PRECISION) };
       }
       
       // Apply scale and translation
@@ -234,7 +240,7 @@ export function transformPathData(
     ...pathData,
     d: newPathString,
     // Scale stroke width proportionally
-    strokeWidth: pathData.strokeWidth * Math.min(scaleX, scaleY),
+    strokeWidth: formatToPrecision(pathData.strokeWidth * Math.min(scaleX, scaleY), PATH_DECIMAL_PRECISION),
     // Remove transform since we've applied it directly
     transform: undefined
   };

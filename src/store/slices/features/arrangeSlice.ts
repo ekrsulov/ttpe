@@ -1,6 +1,7 @@
 import type { StateCreator } from 'zustand';
 import type { CanvasElement } from '../../../types';
 import { measurePath } from '../../../utils/measurementUtils';
+import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../../utils';
 
 // Helper function to transform SVG path commands by applying a translation
 const transformSvgPath = (d: string, deltaX: number, deltaY: number): string => {
@@ -11,6 +12,7 @@ const transformSvgPath = (d: string, deltaX: number, deltaY: number): string => 
   
   while (i < commands.length) {
     const command = commands[i];
+    if (result) result += ' ';
     result += command;
     
     // If this is a command that takes coordinates, process the next values
@@ -22,8 +24,8 @@ const transformSvgPath = (d: string, deltaX: number, deltaY: number): string => 
         if (coords.length >= 2) {
           // Apply translation to coordinate pairs
           for (let j = 0; j < coords.length; j += 2) {
-            coords[j] += deltaX;     // x coordinate
-            coords[j + 1] += deltaY; // y coordinate
+            coords[j] = formatToPrecision(coords[j] + deltaX, PATH_DECIMAL_PRECISION);     // x coordinate
+            coords[j + 1] = formatToPrecision(coords[j + 1] + deltaY, PATH_DECIMAL_PRECISION); // y coordinate
           }
           result += ' ' + coords.join(' ');
         }
@@ -80,7 +82,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
           if (el.type === 'path') {
             const pathData = el.data as import('../../../types').PathData;
             const currentBounds = measurePath(pathData.d, pathData.strokeWidth, fullState.viewport.zoom);
-            const deltaX = minX - currentBounds.minX;
+            const deltaX = formatToPrecision(minX - currentBounds.minX, PATH_DECIMAL_PRECISION);
             return {
               ...el,
               data: {
@@ -115,7 +117,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
       elements: state.elements.map((el: CanvasElement, index: number) => {
         if (fullState.selectedIds.includes(el.id)) {
           const currentCenter = centers[index];
-          const deltaX = targetCenter - currentCenter;
+          const deltaX = formatToPrecision(targetCenter - currentCenter, PATH_DECIMAL_PRECISION);
 
           if (el.type === 'path') {
             const pathData = el.data as import('../../../types').PathData;
@@ -153,7 +155,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
           if (el.type === 'path') {
             const pathData = el.data as import('../../../types').PathData;
             const currentBounds = measurePath(pathData.d, pathData.strokeWidth, fullState.viewport.zoom);
-            const deltaX = maxX - currentBounds.maxX;
+            const deltaX = formatToPrecision(maxX - currentBounds.maxX, PATH_DECIMAL_PRECISION);
             return {
               ...el,
               data: {
@@ -188,7 +190,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
           if (el.type === 'path') {
             const pathData = el.data as import('../../../types').PathData;
             const currentBounds = measurePath(pathData.d, pathData.strokeWidth, fullState.viewport.zoom);
-            const deltaY = minY - currentBounds.minY;
+            const deltaY = formatToPrecision(minY - currentBounds.minY, PATH_DECIMAL_PRECISION);
             return {
               ...el,
               data: {
@@ -223,7 +225,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
       elements: state.elements.map((el: CanvasElement, index: number) => {
         if (fullState.selectedIds.includes(el.id)) {
           const currentCenter = centers[index];
-          const deltaY = targetCenter - currentCenter;
+          const deltaY = formatToPrecision(targetCenter - currentCenter, PATH_DECIMAL_PRECISION);
 
           if (el.type === 'path') {
             const pathData = el.data as import('../../../types').PathData;
@@ -261,7 +263,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
           if (el.type === 'path') {
             const pathData = el.data as import('../../../types').PathData;
             const currentBounds = measurePath(pathData.d, pathData.strokeWidth, fullState.viewport.zoom);
-            const deltaY = maxY - currentBounds.maxY;
+            const deltaY = formatToPrecision(maxY - currentBounds.maxY, PATH_DECIMAL_PRECISION);
             return {
               ...el,
               data: {
@@ -330,7 +332,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
           const boundItem = elementBounds[boundItemIndex];
           const targetLeftX = positions[boundItemIndex];
           const currentLeftX = boundItem.bounds.minX;
-          const deltaX = targetLeftX - currentLeftX;
+          const deltaX = formatToPrecision(targetLeftX - currentLeftX, PATH_DECIMAL_PRECISION);
 
           if (el.type === 'path') {
             const pathData = el.data as import('../../../types').PathData;
@@ -410,7 +412,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
           const boundItem = elementBounds[boundItemIndex];
           const targetTopY = positions[boundItemIndex];
           const currentTopY = boundItem.bounds.minY;
-          const deltaY = targetTopY - currentTopY;
+          const deltaY = formatToPrecision(targetTopY - currentTopY, PATH_DECIMAL_PRECISION);
 
           if (el.type === 'path') {
             const pathData = el.data as import('../../../types').PathData;
