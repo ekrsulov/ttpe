@@ -599,6 +599,81 @@ export const Canvas: React.FC<CanvasProps> = () => {
     const isTransformationMode = activePlugin === 'transformation';
     const handlerSize = 8 / viewport.zoom;
 
+    // Calculate contrasting selection color based on element's stroke color
+    const getContrastingColor = (strokeColor: string) => {
+      if (!strokeColor || strokeColor === 'none') return '#ff6b35'; // Default orange-red
+      
+      // Convert hex to RGB
+      const hexToRgb = (hex: string) => {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16)
+        } : null;
+      };
+
+      // Calculate relative luminance
+      const getLuminance = (r: number, g: number, b: number) => {
+        const [rs, gs, bs] = [r, g, b].map(c => {
+          c = c / 255;
+          return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+        });
+        return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+      };
+
+      const rgb = hexToRgb(strokeColor);
+      if (!rgb) return '#ff6b35'; // Fallback if not a valid hex color
+
+      const luminance = getLuminance(rgb.r, rgb.g, rgb.b);
+      const isDark = luminance < 0.5;
+
+      // High contrast color palette based on luminance
+      if (isDark) {
+        // For dark colors, use bright contrasting colors
+        const brightColors = [
+          '#ff6b35', // Orange-red
+          '#f7931e', // Orange
+          '#00ff88', // Bright green
+          '#00d4ff', // Bright cyan
+          '#ff44ff', // Magenta
+          '#ffff00', // Yellow
+          '#ff4444', // Red
+        ];
+        
+        // Select color based on hue to ensure good contrast
+        const hue = Math.atan2(Math.sqrt(3) * (rgb.g - rgb.b), 2 * rgb.r - rgb.g - rgb.b) * 180 / Math.PI;
+        const colorIndex = Math.floor((hue + 180) / (360 / brightColors.length)) % brightColors.length;
+        return brightColors[colorIndex];
+      } else {
+        // For light colors, use dark contrasting colors
+        const darkColors = [
+          '#8b0000', // Dark red
+          '#006400', // Dark green
+          '#00008b', // Dark blue
+          '#8b008b', // Dark magenta
+          '#8b4513', // Saddle brown
+          '#2f4f4f', // Dark slate gray
+          '#000000', // Black
+        ];
+        
+        // Select color based on saturation and value
+        const max = Math.max(rgb.r, rgb.g, rgb.b);
+        const min = Math.min(rgb.r, rgb.g, rgb.b);
+        const saturation = max === 0 ? 0 : (max - min) / max;
+        
+        if (saturation < 0.3) {
+          return '#8b0000'; // Dark red for desaturated colors
+        } else {
+          const colorIndex = Math.floor((rgb.r * 2 + rgb.g + rgb.b) / (255 * 4) * darkColors.length) % darkColors.length;
+          return darkColors[colorIndex];
+        }
+      }
+    };
+
+    const elementStrokeColor = element.type === 'path' ? (element.data as any).strokeColor : '#000000';
+    const selectionColor = getContrastingColor(elementStrokeColor);
+
     return (
       <g>
         {/* Selection rectangle */}
@@ -608,9 +683,9 @@ export const Canvas: React.FC<CanvasProps> = () => {
           width={bounds.maxX - bounds.minX}
           height={bounds.maxY - bounds.minY}
           fill="none"
-          stroke="#007bff"
-          strokeWidth={1 / viewport.zoom}
-          strokeDasharray={`${3 / viewport.zoom} ${3 / viewport.zoom}`}
+          stroke={selectionColor}
+          strokeWidth={3 / viewport.zoom}
+          strokeDasharray={`${6 / viewport.zoom} ${4 / viewport.zoom}`}
           pointerEvents="none"
         />
 
@@ -624,7 +699,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
               y={bounds.minY - handlerSize / 2}
               width={handlerSize}
               height={handlerSize}
-              fill="#007bff"
+              fill={selectionColor}
               stroke="#fff"
               strokeWidth={1 / viewport.zoom}
               style={{ cursor: 'nw-resize' }}
@@ -638,7 +713,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
               y={bounds.minY - handlerSize / 2}
               width={handlerSize}
               height={handlerSize}
-              fill="#007bff"
+              fill={selectionColor}
               stroke="#fff"
               strokeWidth={1 / viewport.zoom}
               style={{ cursor: 'ne-resize' }}
@@ -652,7 +727,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
               y={bounds.maxY - handlerSize / 2}
               width={handlerSize}
               height={handlerSize}
-              fill="#007bff"
+              fill={selectionColor}
               stroke="#fff"
               strokeWidth={1 / viewport.zoom}
               style={{ cursor: 'sw-resize' }}
@@ -666,7 +741,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
               y={bounds.maxY - handlerSize / 2}
               width={handlerSize}
               height={handlerSize}
-              fill="#007bff"
+              fill={selectionColor}
               stroke="#fff"
               strokeWidth={1 / viewport.zoom}
               style={{ cursor: 'se-resize' }}
@@ -681,7 +756,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
               y={bounds.minY - handlerSize / 2}
               width={handlerSize}
               height={handlerSize}
-              fill="#007bff"
+              fill={selectionColor}
               stroke="#fff"
               strokeWidth={1 / viewport.zoom}
               style={{ cursor: 'n-resize' }}
@@ -695,7 +770,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
               y={bounds.minY + (bounds.maxY - bounds.minY) / 2 - handlerSize / 2}
               width={handlerSize}
               height={handlerSize}
-              fill="#007bff"
+              fill={selectionColor}
               stroke="#fff"
               strokeWidth={1 / viewport.zoom}
               style={{ cursor: 'e-resize' }}
@@ -709,7 +784,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
               y={bounds.maxY - handlerSize / 2}
               width={handlerSize}
               height={handlerSize}
-              fill="#007bff"
+              fill={selectionColor}
               stroke="#fff"
               strokeWidth={1 / viewport.zoom}
               style={{ cursor: 's-resize' }}
@@ -723,7 +798,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
               y={bounds.minY + (bounds.maxY - bounds.minY) / 2 - handlerSize / 2}
               width={handlerSize}
               height={handlerSize}
-              fill="#007bff"
+              fill={selectionColor}
               stroke="#fff"
               strokeWidth={1 / viewport.zoom}
               style={{ cursor: 'w-resize' }}
@@ -745,7 +820,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
                     y1={centerY - xSize / 2}
                     x2={centerX + xSize / 2}
                     y2={centerY + xSize / 2}
-                    stroke="red"
+                    stroke={selectionColor}
                     strokeWidth={2 / viewport.zoom}
                     pointerEvents="none"
                   />
@@ -754,7 +829,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
                     y1={centerY + xSize / 2}
                     x2={centerX + xSize / 2}
                     y2={centerY - xSize / 2}
-                    stroke="red"
+                    stroke={selectionColor}
                     strokeWidth={2 / viewport.zoom}
                     pointerEvents="none"
                   />
