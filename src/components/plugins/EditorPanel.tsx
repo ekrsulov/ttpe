@@ -30,6 +30,7 @@ export const EditorPanel: React.FC = () => {
   const {
     selectedIds,
     deleteSelectedElements,
+    viewport,
     zoom,
     resetZoom,
     plugins,
@@ -169,26 +170,44 @@ export const EditorPanel: React.FC = () => {
     <div style={{ backgroundColor: '#fff' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
         <div style={{
+          width: '40px',
           fontSize: '9px',
+          fontWeight: 'bold',
           color: '#666',
           padding: '1px 4px',
           border: '1px solid #ccc',
-          borderRadius: '8px'
-        }}>
-          {pastStates.length}/{futureStates.length}
+          borderRadius: '8px',
+          textAlign: 'left'
+        }}
+        title="History: Undos/Redos available">
+          {pastStates.length === 0 && futureStates.length === 0 ? '\u00A0' : `${pastStates.length}/${futureStates.length}`}
         </div>
-        <span style={{
-          fontSize: '10px',
-          color: selectedCount > 0 ? '#666' : '#ccc',
-          backgroundColor: '#f8f9fa',
-          border: '1px solid #dee2e6',
-          borderRadius: '12px',
-          padding: '2px 6px',
-          fontWeight: '500',
-          opacity: selectedCount > 0 ? 1 : 0.6
-        }}>
-          Selected: {selectedCount}
-        </span>
+        <div style={{
+          width: '40px',
+          fontSize: '9px',
+          fontWeight: 'bold',
+          color: '#666',
+          padding: '1px 4px',
+          border: '1px solid #ccc',
+          borderRadius: '8px',
+          textAlign: 'center'
+        }}
+        title={`Zoom: ${Math.round((viewport.zoom as number) * 100)}%`}>
+          {Math.round((viewport.zoom as number) * 100)}%
+        </div>
+        <div style={{
+          width: '40px',
+          fontSize: '9px',
+          fontWeight: 'bold',
+          color: '#666',
+          padding: '1px 4px',
+          border: '1px solid #ccc',
+          borderRadius: '8px',
+          textAlign: 'right'
+        }}
+        title={`Selected elements: ${selectedCount}`}>
+          {selectedCount === 0 ? '\u00A0' : selectedCount}
+        </div>
       </div>
 
       {/* Main toolbar with essential buttons */}
@@ -479,6 +498,7 @@ export const EditorPanel: React.FC = () => {
           </div>
         </div>
       </div>
+      <div style={{ borderTop: '1px solid #eee', marginTop: '8px' }}></div>
     </div>
   );
 };

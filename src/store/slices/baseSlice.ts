@@ -45,7 +45,6 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
   deleteSelectedElements: () => {
     // This will be implemented in the selection slice
     // For now, just a placeholder
-    console.log('deleteSelectedElements called');
   },
 
   setActivePlugin: (plugin) => {

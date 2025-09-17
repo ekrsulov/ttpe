@@ -36,8 +36,6 @@ export const textToPath = async (
     return textVectorizationCache.get(cacheKey)!;
   }
 
-  console.log('Converting text to path:', { text, x, y, fontSize, fontFamily });
-
   // Initialize potrace if not already done
   await initPotrace();
 
@@ -45,7 +43,6 @@ export const textToPath = async (
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
   if (!ctx) {
-    console.error('Could not get canvas context');
     return '';
   }
 
@@ -66,8 +63,6 @@ export const textToPath = async (
   const padding = Math.ceil(fontSize * 0.1);
   const canvasWidth = textWidth + (padding * 2);
   const canvasHeight = textHeight + (padding * 2);
-  
-  console.log('Canvas dimensions:', { canvasWidth, canvasHeight, textWidth, textHeight });
   
   // Set canvas size (no resolution scaling - 1:1)
   canvas.width = canvasWidth;
@@ -102,10 +97,7 @@ export const textToPath = async (
     });
 
     // Extract path data from SVG result and position it correctly
-    console.log('SVG result type:', typeof svgResult);
-    console.log('SVG result:', svgResult);
-    
-    let pathData = extractPathFromSVGResult(svgResult, x, y, fontSize, padding, actualAscent, actualDescent);
+    let pathData = extractPathFromSVGResult(svgResult, x, y, actualAscent, actualDescent);
     
     // Cache the result only if we got valid path data
     if (pathData) {
@@ -114,7 +106,6 @@ export const textToPath = async (
     
     return pathData;
   } catch (error) {
-    console.error('Error converting text to path:', error);
     return '';
   }
 };
@@ -123,20 +114,13 @@ export const textToPath = async (
 const extractPathFromSVGResult = (
   svgString: string, 
   targetX: number, 
-  targetY: number, 
-  fontSize: number,
-  canvasPadding: number,
+  targetY: number,
   actualAscent: number,
   actualDescent: number
 ): string => {
-  console.log('extractPathFromSVGResult - svgString type:', typeof svgString);
-  
   if (!svgString || typeof svgString !== 'string') {
-    console.log('No valid SVG string provided');
     return '';
   }
-
-  console.log('Processing SVG string:', svgString.substring(0, 200) + '...'); // Debug logging
 
   // Parse SVG to extract path data
   const parser = new DOMParser();
@@ -145,13 +129,11 @@ const extractPathFromSVGResult = (
   // Check for parsing errors
   const parserError = svgDoc.querySelector('parsererror');
   if (parserError) {
-    console.error('SVG parsing error:', parserError.textContent);
     return '';
   }
   
   // Extract path elements
   const pathElements = svgDoc.querySelectorAll('path');
-  console.log('Found', pathElements.length, 'path elements');
   
   if (pathElements.length === 0) {
     return '';
@@ -162,26 +144,22 @@ const extractPathFromSVGResult = (
   // First pass: Process each path element using path-data-parser
   for (const pathElement of pathElements) {
     const pathData = pathElement.getAttribute('d');
-    console.log('Processing path data:', pathData);
     
     if (!pathData) continue;
     
     try {
       // Parse the path string using path-data-parser
       const segments = parsePath(pathData);
-      console.log('Parsed segments:', segments.length);
       
       // Convert relative commands to absolute
       const absoluteSegments = absolutize(segments);
-      console.log('Absolutized segments:', absoluteSegments.length);
       
       // Normalize to only M, L, C, Z commands
       const normalizedSegments = normalize(absoluteSegments);
-      console.log('Normalized segments:', normalizedSegments.length);
       
       allNormalizedSegments.push(normalizedSegments);
     } catch (error) {
-      console.error('Error processing path data:', error);
+      // Error processing path data
     }
   }
   
@@ -191,7 +169,6 @@ const extractPathFromSVGResult = (
   
   // Calculate global bounds for all paths together
   const globalBounds = calculateGlobalBounds(allNormalizedSegments);
-  console.log('Global bounds:', globalBounds);
   
   // Transform all paths using the same scale and offset to preserve relative positions
   const allTransformedPaths: string[] = [];
@@ -203,8 +180,6 @@ const extractPathFromSVGResult = (
         normalizedSegments,
         targetX,
         targetY,
-        fontSize,
-        canvasPadding,
         globalBounds,
         actualAscent,
         actualDescent
@@ -212,18 +187,16 @@ const extractPathFromSVGResult = (
       
       // Serialize back to path string
       const transformedPath = serialize(transformedSegments);
-      console.log('Transformed path:', transformedPath);
       
       if (transformedPath) {
         allTransformedPaths.push(transformedPath);
       }
     } catch (error) {
-      console.error('Error transforming path data:', error);
+      // Error transforming path data
     }
   }
   
   const result = allTransformedPaths.join(' ');
-  console.log('Final combined path:', result);
   
   return result;
 };
@@ -275,8 +248,6 @@ const transformSegmentsWithGlobalBounds = (
   segments: any[],
   targetX: number,
   targetY: number,
-  fontSize: number,
-  canvasPadding: number,
   globalBounds: { minX: number, minY: number, maxX: number, maxY: number, width: number, height: number },
   actualAscent: number,
   actualDescent: number
@@ -284,8 +255,6 @@ const transformSegmentsWithGlobalBounds = (
   if (!segments || segments.length === 0) {
     return [];
   }
-
-  console.log('Transforming segments with global bounds:', { targetX, targetY, fontSize, canvasPadding, globalBounds, actualAscent, actualDescent });
 
   // Usar las métricas reales del texto para cálculos más precisos
   const realTextHeight = actualAscent + actualDescent;
@@ -301,17 +270,6 @@ const transformSegmentsWithGlobalBounds = (
   // Offset para mover el path a la esquina superior izquierda exacta del texto
   const offsetX = textTopLeftX - (globalBounds.minX * scaleFactor);
   const offsetY = textTopLeftY - (globalBounds.minY * scaleFactor);
-  
-  console.log('Precise transform parameters:', { 
-    scaleFactor, 
-    offsetX, 
-    offsetY,
-    realTextHeight,
-    textTopLeft: { x: textTopLeftX, y: textTopLeftY },
-    actualAscent,
-    actualDescent,
-    globalBounds
-  });
   
   // Transform coordinates
   const transformedSegments = segments.map(segment => {

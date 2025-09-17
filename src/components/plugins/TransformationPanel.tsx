@@ -16,17 +16,6 @@ export const TransformationPanel: React.FC = () => {
           <Move size={16} style={{ marginRight: '6px', color: '#666' }} />
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#333' }}>Transform</span>
         </div>
-        <span style={{
-          fontSize: '10px',
-          color: '#666',
-          backgroundColor: '#f8f9fa',
-          border: '1px solid #dee2e6',
-          borderRadius: '12px',
-          padding: '2px 6px',
-          fontWeight: '500'
-        }}>
-          {hasSelection ? selectedIds.length : 0}
-        </span>
       </div>
 
       {!hasSelection ? (

@@ -41,7 +41,7 @@ export const ShapePanel: React.FC = () => {
                 padding: '6px',
                 backgroundColor: shouldHighlight ? '#007bff' : '#f8f9fa',
                 color: shouldHighlight ? '#fff' : '#333',
-                border: isShapeSelected ? '2px solid #007bff' : '1px solid #dee2e6',
+                border: '1px solid #ccc',
                 borderRadius: '3px',
                 cursor: 'pointer',
                 display: 'flex',
