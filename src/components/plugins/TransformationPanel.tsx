@@ -10,7 +10,7 @@ export const TransformationPanel: React.FC = () => {
   const hasSelection = selectedIds.length > 0;
 
   return (
-    <div style={{ padding: '8px', border: '1px solid #ddd', borderRadius: '4px', backgroundColor: '#fff' }}>
+    <div style={{ backgroundColor: '#fff' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <Move size={16} style={{ marginRight: '6px', color: '#666' }} />
@@ -30,7 +30,7 @@ export const TransformationPanel: React.FC = () => {
       </div>
 
       {!hasSelection ? (
-        <div style={{ fontSize: '11px', color: '#666', textAlign: 'center', padding: '8px' }}>
+        <div style={{ fontSize: '11px', color: '#666', textAlign: 'center' }}>
           Select an element to transform
         </div>
       ) : (
