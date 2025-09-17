@@ -17,30 +17,21 @@ import { createHistoryPluginSlice, type HistoryPluginSlice } from './slices/plug
 import { createTransformationPluginSlice, type TransformationPluginSlice } from './slices/plugins/transformationPluginSlice';
 import { createEditorPluginSlice, type EditorPluginSlice } from './slices/plugins/editorPluginSlice';
 
-// Throttle function to implement cool-off period
-function throttle<T extends (...args: any[]) => any>(
+// Debounce function to implement cool-off period
+function debounce<T extends (...args: any[]) => any>(
   func: T,
   delay: number
 ): T {
   let timeoutId: number | null = null;
-  let lastExecTime = 0;
 
   return ((...args: Parameters<T>) => {
-    const currentTime = Date.now();
-
-    if (currentTime - lastExecTime > delay) {
-      func(...args);
-      lastExecTime = currentTime;
-    } else {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-
-      timeoutId = setTimeout(() => {
-        func(...args);
-        lastExecTime = Date.now();
-      }, delay - (currentTime - lastExecTime));
+    if (timeoutId) {
+      clearTimeout(timeoutId);
     }
+
+    timeoutId = setTimeout(() => {
+      func(...args);
+    }, delay);
   }) as T;
 }
 
@@ -275,12 +266,12 @@ export const useCanvasStore = create<CanvasStore>()(
         viewport: state.viewport,
       }),
       equality: (pastState, currentState) => isDeepEqual(pastState, currentState),
-      // Cool-off period: throttle state changes to prevent too many history entries
+      // Cool-off period: debounce state changes to prevent too many history entries
       // during rapid events like drawing or moving
       handleSet: (handleSet) =>
-        throttle<typeof handleSet>((state) => {
+        debounce<typeof handleSet>((state) => {
           handleSet(state);
-        }, 500), // 500ms cool-off period
+        }, 100), // 100ms cool-off period
     }
   )
 );
