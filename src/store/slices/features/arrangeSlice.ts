@@ -1,6 +1,6 @@
 import type { StateCreator } from 'zustand';
 import type { CanvasElement } from '../../../types';
-import { measureText, measurePath } from '../../../utils/measurementUtils';
+import { measurePath } from '../../../utils/measurementUtils';
 
 // Helper function to transform SVG path commands by applying a translation
 const transformSvgPath = (d: string, deltaX: number, deltaY: number): string => {
@@ -70,9 +70,6 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
         const pathData = el.data as import('../../../types').PathData;
         const bounds = measurePath(pathData.d, pathData.strokeWidth, fullState.viewport.zoom);
         return bounds.minX;
-      } else if (el.type === 'text') {
-        const textData = el.data as import('../../../types').TextData;
-        return textData.x;
       }
       return 0;
     }));
@@ -89,15 +86,6 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
               data: {
                 ...pathData,
                 d: transformSvgPath(pathData.d, deltaX, 0),
-              },
-            };
-          } else if (el.type === 'text') {
-            const textData = el.data as import('../../../types').TextData;
-            return {
-              ...el,
-              data: {
-                ...textData,
-                x: minX,
               },
             };
           }
@@ -117,17 +105,6 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
         const pathData = el.data as import('../../../types').PathData;
         const bounds = measurePath(pathData.d, pathData.strokeWidth, fullState.viewport.zoom);
         return (bounds.minX + bounds.maxX) / 2;
-      } else if (el.type === 'text') {
-        const textData = el.data as import('../../../types').TextData;
-        const dimensions = measureText(
-          textData.text,
-          textData.fontSize,
-          textData.fontFamily,
-          textData.fontWeight,
-          textData.fontStyle,
-          fullState.viewport.zoom
-        );
-        return textData.x + dimensions.width / 2;
       }
       return 0;
     });
@@ -149,15 +126,6 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
                 d: transformSvgPath(pathData.d, deltaX, 0),
               },
             };
-          } else if (el.type === 'text') {
-            const textData = el.data as import('../../../types').TextData;
-            return {
-              ...el,
-              data: {
-                ...textData,
-                x: textData.x + deltaX,
-              },
-            };
           }
         }
         return el;
@@ -175,17 +143,6 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
         const pathData = el.data as import('../../../types').PathData;
         const bounds = measurePath(pathData.d, pathData.strokeWidth, fullState.viewport.zoom);
         return bounds.maxX;
-      } else if (el.type === 'text') {
-        const textData = el.data as import('../../../types').TextData;
-        const dimensions = measureText(
-          textData.text,
-          textData.fontSize,
-          textData.fontFamily,
-          textData.fontWeight,
-          textData.fontStyle,
-          fullState.viewport.zoom
-        );
-        return textData.x + dimensions.width;
       }
       return 0;
     }));
@@ -202,25 +159,6 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
               data: {
                 ...pathData,
                 d: transformSvgPath(pathData.d, deltaX, 0),
-              },
-            };
-          } else if (el.type === 'text') {
-            const textData = el.data as import('../../../types').TextData;
-            const dimensions = measureText(
-              textData.text,
-              textData.fontSize,
-              textData.fontFamily,
-              textData.fontWeight,
-              textData.fontStyle,
-              fullState.viewport.zoom
-            );
-            const currentMaxX = textData.x + dimensions.width;
-            const deltaX = maxX - currentMaxX;
-            return {
-              ...el,
-              data: {
-                ...textData,
-                x: textData.x + deltaX,
               },
             };
           }
@@ -240,17 +178,6 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
         const pathData = el.data as import('../../../types').PathData;
         const bounds = measurePath(pathData.d, pathData.strokeWidth, fullState.viewport.zoom);
         return bounds.minY;
-      } else if (el.type === 'text') {
-        const textData = el.data as import('../../../types').TextData;
-        const dimensions = measureText(
-          textData.text,
-          textData.fontSize,
-          textData.fontFamily,
-          textData.fontWeight,
-          textData.fontStyle,
-          fullState.viewport.zoom
-        );
-        return textData.y - dimensions.height;
       }
       return 0;
     }));
@@ -267,25 +194,6 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
               data: {
                 ...pathData,
                 d: transformSvgPath(pathData.d, 0, deltaY),
-              },
-            };
-          } else if (el.type === 'text') {
-            const textData = el.data as import('../../../types').TextData;
-            const dimensions = measureText(
-              textData.text,
-              textData.fontSize,
-              textData.fontFamily,
-              textData.fontWeight,
-              textData.fontStyle,
-              fullState.viewport.zoom
-            );
-            const currentMinY = textData.y - dimensions.height;
-            const deltaY = minY - currentMinY;
-            return {
-              ...el,
-              data: {
-                ...textData,
-                y: textData.y + deltaY,
               },
             };
           }
@@ -305,17 +213,6 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
         const pathData = el.data as import('../../../types').PathData;
         const bounds = measurePath(pathData.d, pathData.strokeWidth, fullState.viewport.zoom);
         return (bounds.minY + bounds.maxY) / 2;
-      } else if (el.type === 'text') {
-        const textData = el.data as import('../../../types').TextData;
-        const dimensions = measureText(
-          textData.text,
-          textData.fontSize,
-          textData.fontFamily,
-          textData.fontWeight,
-          textData.fontStyle,
-          fullState.viewport.zoom
-        );
-        return textData.y - dimensions.height / 2;
       }
       return 0;
     });
@@ -337,15 +234,6 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
                 d: transformSvgPath(pathData.d, 0, deltaY),
               },
             };
-          } else if (el.type === 'text') {
-            const textData = el.data as import('../../../types').TextData;
-            return {
-              ...el,
-              data: {
-                ...textData,
-                y: textData.y + deltaY,
-              },
-            };
           }
         }
         return el;
@@ -363,9 +251,6 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
         const pathData = el.data as import('../../../types').PathData;
         const bounds = measurePath(pathData.d, pathData.strokeWidth, fullState.viewport.zoom);
         return bounds.maxY;
-      } else if (el.type === 'text') {
-        const textData = el.data as import('../../../types').TextData;
-        return textData.y;
       }
       return 0;
     }));
@@ -382,15 +267,6 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
               data: {
                 ...pathData,
                 d: transformSvgPath(pathData.d, 0, deltaY),
-              },
-            };
-          } else if (el.type === 'text') {
-            const textData = el.data as import('../../../types').TextData;
-            return {
-              ...el,
-              data: {
-                ...textData,
-                y: maxY,
               },
             };
           }
@@ -418,28 +294,6 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
           centerX: (bounds.minX + bounds.maxX) / 2,
           width: bounds.maxX - bounds.minX,
           height: bounds.maxY - bounds.minY
-        });
-      } else if (el.type === 'text') {
-        const textData = el.data as import('../../../types').TextData;
-        const dimensions = measureText(
-          textData.text,
-          textData.fontSize,
-          textData.fontFamily,
-          textData.fontWeight,
-          textData.fontStyle,
-          fullState.viewport.zoom
-        );
-        elementBounds.push({
-          element: el,
-          bounds: {
-            minX: textData.x,
-            maxX: textData.x + dimensions.width,
-            minY: textData.y - dimensions.height,
-            maxY: textData.y
-          },
-          centerX: textData.x + dimensions.width / 2,
-          width: dimensions.width,
-          height: dimensions.height
         });
       }
     });
@@ -487,15 +341,6 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
                 d: transformSvgPath(pathData.d, deltaX, 0),
               },
             };
-          } else if (el.type === 'text') {
-            const textData = el.data as import('../../../types').TextData;
-            return {
-              ...el,
-              data: {
-                ...textData,
-                x: textData.x + deltaX,
-              },
-            };
           }
         }
         return el;
@@ -521,28 +366,6 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
           centerX: (bounds.minX + bounds.maxX) / 2,
           width: bounds.maxX - bounds.minX,
           height: bounds.maxY - bounds.minY
-        });
-      } else if (el.type === 'text') {
-        const textData = el.data as import('../../../types').TextData;
-        const dimensions = measureText(
-          textData.text,
-          textData.fontSize,
-          textData.fontFamily,
-          textData.fontWeight,
-          textData.fontStyle,
-          fullState.viewport.zoom
-        );
-        elementBounds.push({
-          element: el,
-          bounds: {
-            minX: textData.x,
-            maxX: textData.x + dimensions.width,
-            minY: textData.y - dimensions.height,
-            maxY: textData.y
-          },
-          centerX: textData.x + dimensions.width / 2,
-          width: dimensions.width,
-          height: dimensions.height
         });
       }
     });
@@ -596,15 +419,6 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
               data: {
                 ...pathData,
                 d: transformSvgPath(pathData.d, 0, deltaY),
-              },
-            };
-          } else if (el.type === 'text') {
-            const textData = el.data as import('../../../types').TextData;
-            return {
-              ...el,
-              data: {
-                ...textData,
-                y: textData.y + deltaY,
               },
             };
           }

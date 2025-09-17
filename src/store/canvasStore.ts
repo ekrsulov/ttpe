@@ -98,7 +98,7 @@ export const useCanvasStore = create<CanvasStore>()(
 
       // Cross-slice actions
       startPath: (point) => {
-        const { strokeWidth, strokeColor, opacity } = get().plugins.pencil;
+        const { strokeWidth, strokeColor, opacity, fillColor, fillOpacity } = get().plugins.pencil;
         get().addElement({
           type: 'path',
           data: {
@@ -106,6 +106,8 @@ export const useCanvasStore = create<CanvasStore>()(
             strokeWidth,
             strokeColor,
             opacity,
+            fillColor,
+            fillOpacity,
           },
         });
       },
@@ -153,6 +155,8 @@ export const useCanvasStore = create<CanvasStore>()(
                 strokeWidth: 1,
                 strokeColor: color,
                 opacity,
+                fillColor: color,
+                fillOpacity: 1,
               },
             });
           } else {
@@ -243,6 +247,8 @@ export const useCanvasStore = create<CanvasStore>()(
         strokeWidth,
         strokeColor,
         opacity,
+        fillColor: strokeColor,
+        fillOpacity: 0,
       },
     });
     

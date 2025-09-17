@@ -1,5 +1,5 @@
 // Export all measurement utilities
-export { measureText, measurePath } from './measurementUtils';
+export { measurePath } from './measurementUtils';
 
 // Export all text vectorization utilities
 export {

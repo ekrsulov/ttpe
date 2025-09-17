@@ -8,6 +8,8 @@ export interface PathData {
   strokeWidth: number;
   strokeColor: string;
   opacity: number;
+  fillColor: string;
+  fillOpacity: number;
   transform?: {
     scaleX: number;
     scaleY: number;
@@ -17,31 +19,12 @@ export interface PathData {
   };
 }
 
-export interface TextData {
-  x: number;
-  y: number;
-  text: string;
-  fontSize: number;
-  fontFamily: string;
-  color: string;
-  fontWeight: 'normal' | 'bold';
-  fontStyle: 'normal' | 'italic';
-  opacity: number;
-  transform?: {
-    scaleX: number;
-    scaleY: number;
-    rotation: number;
-    translateX: number;
-    translateY: number;
-  };
-}
-
-export type ElementType = 'path' | 'text';
+export type ElementType = 'path';
 
 export interface CanvasElement {
   id: string;
   type: ElementType;
-  data: PathData | TextData;
+  data: PathData;
   zIndex: number;
 }
 

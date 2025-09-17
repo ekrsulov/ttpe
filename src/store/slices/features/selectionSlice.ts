@@ -46,10 +46,8 @@ export interface SelectionSlice {
   clearSelection: () => void;
   getSelectedElements: () => CanvasElement[];
   getSelectedPathsCount: () => number;
-  getSelectedTextsCount: () => number;
   moveSelectedElements: (deltaX: number, deltaY: number) => void;
   updateSelectedPaths: (properties: Partial<import('../../../types').PathData>) => void;
-  updateSelectedTexts: (properties: Partial<import('../../../types').TextData>) => void;
 }
 
 export const createSelectionSlice: StateCreator<SelectionSlice> = (set, get, _api) => ({
@@ -85,11 +83,6 @@ export const createSelectionSlice: StateCreator<SelectionSlice> = (set, get, _ap
     return state.elements.filter((el: CanvasElement) => (state.selectedIds as any).includes(el.id) && el.type === 'path').length;
   },
 
-  getSelectedTextsCount: () => {
-    const state = get() as any;
-    return state.elements.filter((el: CanvasElement) => (state.selectedIds as any).includes(el.id) && el.type === 'text').length;
-  },
-
   moveSelectedElements: (deltaX, deltaY) => {
     const selectedIds = get().selectedIds;
     (set as any)((currentState: any) => ({
@@ -117,30 +110,6 @@ export const createSelectionSlice: StateCreator<SelectionSlice> = (set, get, _ap
                 },
               };
             }
-          } else if (el.type === 'text') {
-            const textData = el.data as import('../../../types').TextData;
-            
-            // If element has transform, move the text coordinates directly to avoid confusion with transform origins
-            if (textData.transform && (textData.transform.scaleX !== 1 || textData.transform.scaleY !== 1 || textData.transform.rotation !== 0)) {
-              return {
-                ...el,
-                data: {
-                  ...textData,
-                  x: textData.x + deltaX,
-                  y: textData.y + deltaY,
-                },
-              };
-            } else {
-              // No significant transform, move the coordinates directly
-              return {
-                ...el,
-                data: {
-                  ...textData,
-                  x: textData.x + deltaX,
-                  y: textData.y + deltaY,
-                },
-              };
-            }
           }
         }
         return el;
@@ -158,25 +127,6 @@ export const createSelectionSlice: StateCreator<SelectionSlice> = (set, get, _ap
             ...el,
             data: {
               ...pathData,
-              ...properties,
-            },
-          };
-        }
-        return el;
-      }),
-    }));
-  },
-
-  updateSelectedTexts: (properties) => {
-    const selectedIds = get().selectedIds;
-    (set as any)((currentState: any) => ({
-      elements: currentState.elements.map((el: CanvasElement) => {
-        if ((selectedIds as any).includes(el.id) && el.type === 'text') {
-          const textData = el.data as import('../../../types').TextData;
-          return {
-            ...el,
-            data: {
-              ...textData,
               ...properties,
             },
           };

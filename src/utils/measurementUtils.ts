@@ -1,56 +1,6 @@
-// Measurement utilities for text and path elements
-// Cache for text measurements to improve performance
-const textMeasurementCache = new (globalThis as any).Map();
-
+// Measurement utilities for path elements
 // Cache for path measurements to improve performance
 const pathMeasurementCache = new (globalThis as any).Map();
-
-// Function to measure text using a ghost canvas
-export const measureText = (
-  text: string,
-  fontSize: number,
-  fontFamily: string,
-  fontWeight: string = 'normal',
-  fontStyle: string = 'normal',
-  zoom: number = 1
-): { width: number; height: number } => {
-  const cacheKey = `${text}-${fontSize}-${fontFamily}-${fontWeight}-${fontStyle}-${zoom}`;
-
-  // Check cache first
-  if (textMeasurementCache.has(cacheKey)) {
-    return textMeasurementCache.get(cacheKey)!;
-  }
-
-  // Create ghost canvas
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-  if (!ctx) {
-    // Fallback approximation with zoom consideration
-    const approxWidth = text.length * (fontSize * zoom / 2);
-    const approxHeight = fontSize * zoom;
-    return { width: approxWidth, height: approxHeight };
-  }
-
-  // Set font with zoom consideration and text decorations
-  const scaledFontSize = fontSize * zoom;
-  ctx.font = `${fontStyle} ${fontWeight} ${scaledFontSize}px ${fontFamily}`;
-
-  // Measure text
-  const metrics = ctx.measureText(text);
-  const width = metrics.width;
-
-  // Get more precise height using actual bounding box metrics
-  const actualHeight = metrics.actualBoundingBoxAscent && metrics.actualBoundingBoxDescent
-    ? metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent
-    : scaledFontSize;
-
-  const result = { width, height: actualHeight };
-
-  // Cache the result
-  textMeasurementCache.set(cacheKey, result);
-
-  return result;
-};
 
 // Function to measure path bounds using a ghost SVG element
 export const measurePath = (

@@ -1,4 +1,4 @@
-import type { PathData, TextData, Point } from '../types';
+import type { PathData, Point } from '../types';
 
 /**
  * Parses an SVG path string and extracts coordinate points for transformation
@@ -201,38 +201,6 @@ export function transformPathData(
     d: newPathString,
     // Scale stroke width proportionally
     strokeWidth: pathData.strokeWidth * Math.min(scaleX, scaleY),
-    // Remove transform since we've applied it directly
-    transform: undefined
-  };
-}
-
-/**
- * Applies scale transformation directly to text by adjusting font size and position
- */
-export function transformTextData(
-  textData: TextData,
-  scaleX: number,
-  scaleY: number,
-  originX: number,
-  originY: number
-): TextData {
-  // Transform the text position
-  const transformedPosition = transformPoint(
-    { x: textData.x, y: textData.y },
-    scaleX,
-    scaleY,
-    originX,
-    originY
-  );
-  
-  // Scale font size (use minimum scale to maintain aspect ratio)
-  const scaleFactor = Math.min(scaleX, scaleY);
-  
-  return {
-    ...textData,
-    x: transformedPosition.x,
-    y: transformedPosition.y,
-    fontSize: textData.fontSize * scaleFactor,
     // Remove transform since we've applied it directly
     transform: undefined
   };

@@ -4,7 +4,6 @@ import { EditorPanel } from './plugins/EditorPanel';
 import { ArrangePanel } from './plugins/ArrangePanel';
 import { PanPanel } from './plugins/PanPanel';
 import { TransformationPanel } from './plugins/TransformationPanel';
-import { PencilPanel } from './plugins/PencilPanel';
 import { TextPanel } from './plugins/TextPanel';
 import { SelectPanel } from './plugins/SelectPanel';
 import { ShapePanel } from './plugins/ShapePanel';
@@ -99,7 +98,6 @@ export const Sidebar: React.FC = () => {
         <EditorPanel />
         {activePlugin === 'pan' && <PanPanel />}
         {activePlugin === 'transformation' && <TransformationPanel />}
-        {activePlugin === 'pencil' && <PencilPanel />}
         {activePlugin === 'text' && <TextPanel />}
         {activePlugin === 'shape' && <ShapePanel />}
       </div>

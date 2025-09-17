@@ -1,8 +1,8 @@
 import React, { useRef, useCallback, useState, useEffect } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
-import { measureText, measurePath } from '../utils/measurementUtils';
-import { transformPathData, transformTextData } from '../utils/transformationUtils';
-import type { Point, PathData, TextData } from '../types';
+import { measurePath } from '../utils/measurementUtils';
+import { transformPathData } from '../utils/transformationUtils';
+import type { Point, PathData } from '../types';
 
 interface CanvasProps {
   width?: number;
@@ -165,22 +165,6 @@ export const Canvas: React.FC<CanvasProps> = () => {
     if (element.type === 'path') {
       const pathData = element.data as import('../types').PathData;
       return measurePath(pathData.d, pathData.strokeWidth, viewport.zoom);
-    } else if (element.type === 'text') {
-      const textData = element.data as import('../types').TextData;
-      const { width: textWidth, height: textHeight } = measureText(
-        textData.text,
-        textData.fontSize,
-        textData.fontFamily,
-        textData.fontWeight,
-        textData.fontStyle,
-        viewport.zoom
-      );
-      return {
-        minX: textData.x,
-        minY: textData.y - textHeight,
-        maxX: textData.x + textWidth,
-        maxY: textData.y,
-      };
     }
     return null;
   };
@@ -452,16 +436,6 @@ export const Canvas: React.FC<CanvasProps> = () => {
           transformOriginX,
           transformOriginY
         );
-      } else if (element.type === 'text') {
-        // Use original element data to prevent accumulation
-        const textData = originalElementData as TextData;
-        transformedData = transformTextData(
-          textData,
-          newScaleX,
-          newScaleY,
-          transformOriginX,
-          transformOriginY
-        );
       } else {
         // Fallback to transform approach for other element types
         transformedData = { 
@@ -557,36 +531,6 @@ export const Canvas: React.FC<CanvasProps> = () => {
                      pathBounds.minX > selectionMaxX ||
                      pathBounds.maxY < selectionMinY ||
                      pathBounds.minY > selectionMaxY);
-
-            return intersects;
-          } else if (el.type === 'text') {
-            const textData = el.data as import('../types').TextData;
-
-            // Get text dimensions in screen pixels
-            const { width: textWidth, height: textHeight } = measureText(
-              textData.text,
-              textData.fontSize,
-              textData.fontFamily,
-              textData.fontWeight,
-              textData.fontStyle,
-              viewport.zoom // Use current zoom for consistent measurements
-            );
-
-            // Convert text dimensions to canvas coordinates
-            const canvasTextWidth = textWidth / viewport.zoom;
-            const canvasTextHeight = textHeight / viewport.zoom;
-
-            // Calculate text bounding box in canvas coordinates
-            const textMinX = textData.x;
-            const textMaxX = textData.x + canvasTextWidth;
-            const textMinY = textData.y - canvasTextHeight;
-            const textMaxY = textData.y;
-
-            // Check for intersection between text bounds and selection bounds
-            const intersects = !(textMaxX < selectionMinX ||
-                     textMinX > selectionMaxX ||
-                     textMaxY < selectionMinY ||
-                     textMinY > selectionMaxY);
 
             return intersects;
           }
@@ -1067,7 +1011,8 @@ export const Canvas: React.FC<CanvasProps> = () => {
               d={pathData.d}
               stroke={pathData.strokeColor}
               strokeWidth={pathData.strokeWidth}
-              fill="none"
+              fill={pathData.fillColor}
+              fillOpacity={pathData.fillOpacity}
               strokeLinecap="round"
               strokeLinejoin="round"
               vectorEffect="non-scaling-stroke"
@@ -1078,34 +1023,6 @@ export const Canvas: React.FC<CanvasProps> = () => {
                 cursor: activePlugin === 'select' ? (isSelected ? 'move' : 'pointer') : 'default'
               }}
             />
-            {isSelected && renderSelectionBox(element)}
-          </g>
-        );
-      }
-
-      case 'text': {
-        const textData = data as import('../types').TextData;
-
-        return (
-          <g key={element.id}>
-            <text
-              x={textData.x}
-              y={textData.y}
-              fontSize={textData.fontSize * viewport.zoom}
-              fontFamily={textData.fontFamily}
-              fontWeight={textData.fontWeight}
-              fontStyle={textData.fontStyle}
-              fill={textData.color}
-              opacity={textData.opacity}
-              style={{ 
-                userSelect: 'none', 
-                cursor: activePlugin === 'select' ? (isSelected ? 'move' : 'pointer') : 'default'
-              }}
-              onPointerUp={(e) => handleElementClick(element.id, e)}
-              onPointerDown={(e) => handleElementPointerDown(element.id, e)}
-            >
-              {textData.text}
-            </text>
             {isSelected && renderSelectionBox(element)}
           </g>
         );

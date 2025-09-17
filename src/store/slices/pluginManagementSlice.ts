@@ -2,7 +2,7 @@ import type { StateCreator } from 'zustand';
 
 type PluginState = {
   // Keep non-editor plugins
-  pencil: { strokeWidth: number; strokeColor: string; opacity: number };
+  pencil: { strokeWidth: number; strokeColor: string; opacity: number; fillColor: string; fillOpacity: number };
   text: {
     text: string;
     fontSize: number;
@@ -62,7 +62,7 @@ export interface PluginManagementSlice {
 export const createPluginManagementSlice: StateCreator<PluginManagementSlice> = (set, _get, _api) => ({
   // Initial state
   plugins: {
-    pencil: { strokeWidth: 20, strokeColor: '#000000', opacity: 1 },
+    pencil: { strokeWidth: 4, strokeColor: '#000000', opacity: 1, fillColor: 'none', fillOpacity: 1 },
     text: { text: 'New Text', fontSize: 72, fontFamily: 'Arial', color: '#000000', fontWeight: 'normal', fontStyle: 'normal', opacity: 1 },
     shape: { selectedShape: 'square' },
     select: {},
