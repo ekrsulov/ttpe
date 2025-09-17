@@ -97,9 +97,6 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   // Local state for drag visualization
   const [dragPosition, setDragPosition] = React.useState<{x: number, y: number} | null>(null);
 
-  // Determine if delete commands button should be active (red)
-  const canDeleteCommands = activePlugin === 'edit' && selectedCommands.length > 0;
-
   // Global pointer event handlers for drag
   React.useEffect(() => {
     let lastUpdateTime = 0;

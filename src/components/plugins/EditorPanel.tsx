@@ -329,7 +329,6 @@ export const EditorPanel: React.FC = () => {
               justifyContent: 'center',
               alignItems: 'center',
               cursor: 'pointer',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
               transition: 'all 0.2s ease'
             }}
             title={isExpanded ? "Collapse Controls" : "Expand Controls"}
