@@ -10,7 +10,7 @@ export const SelectPanel: React.FC = () => {
   return (
     <div style={{ 
       backgroundColor: '#fff',
-      padding: '0 8px',
+      padding: '8px 8px 0 8px',
       display: 'flex',
       flexDirection: 'column'
     }}>
@@ -24,10 +24,11 @@ export const SelectPanel: React.FC = () => {
               display: 'flex',
               alignItems: 'center',
               gap: '4px',
-              padding: '4px',
+              padding: '2px 4px',
               backgroundColor: '#f8f9fa',
               borderRadius: '3px',
-              fontSize: '11px'
+              fontSize: '11px',
+              marginBottom: '4px'
             }}>
               {el.type === 'path' ? <Pen size={12} /> : <Pen size={12} />}
               <div style={{ flex: 1 }}>

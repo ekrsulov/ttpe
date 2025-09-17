@@ -13,6 +13,7 @@ import {
   MoveHorizontal,
   MoveVertical
 } from 'lucide-react';
+import { IconButton } from '../ui/IconButton';
 
 export const ArrangePanel: React.FC = () => {
   const {
@@ -36,247 +37,83 @@ export const ArrangePanel: React.FC = () => {
   const canDistribute = selectedCount >= 3;
 
   return (
-    <div style={{ backgroundColor: '#fff', padding: '0 8px' }}>
+    <div style={{ 
+      backgroundColor: '#fff', 
+      padding: '8px 8px 0 8px',
+      borderTop: '1px solid #ddd'
+    }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-        {/* Primera línea: Order buttons */}
+        {/* Distribution & Order buttons */}
         <div style={{ display: 'flex', gap: '2px' }}>
-          <button
-            onPointerUp={bringToFront}
-            disabled={selectedCount === 0}
-            style={{
-              padding: '4px',
-              backgroundColor: '#f8f9fa',
-              border: '1px solid #dee2e6',
-              borderRadius: '3px',
-              cursor: selectedCount > 0 ? 'pointer' : 'not-allowed',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: selectedCount > 0 ? 1 : 0.5,
-              flex: 1
-            }}
-            title="Bring to Front"
-          >
-            <Triangle size={10} />
-          </button>
-          <button
-            onPointerUp={sendForward}
-            disabled={selectedCount === 0}
-            style={{
-              padding: '4px',
-              backgroundColor: '#f8f9fa',
-              border: '1px solid #dee2e6',
-              borderRadius: '3px',
-              cursor: selectedCount > 0 ? 'pointer' : 'not-allowed',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: selectedCount > 0 ? 1 : 0.5,
-              flex: 1
-            }}
-            title="Send Forward"
-          >
-            <ChevronUp size={10} />
-          </button>
-          <button
-            onPointerUp={sendBackward}
-            disabled={selectedCount === 0}
-            style={{
-              padding: '4px',
-              backgroundColor: '#f8f9fa',
-              border: '1px solid #dee2e6',
-              borderRadius: '3px',
-              cursor: selectedCount > 0 ? 'pointer' : 'not-allowed',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: selectedCount > 0 ? 1 : 0.5,
-              flex: 1
-            }}
-            title="Send Backward"
-          >
-            <ChevronDown size={10} />
-          </button>
-          <button
-            onPointerUp={sendToBack}
-            disabled={selectedCount === 0}
-            style={{
-              padding: '4px',
-              backgroundColor: '#f8f9fa',
-              border: '1px solid #dee2e6',
-              borderRadius: '3px',
-              cursor: selectedCount > 0 ? 'pointer' : 'not-allowed',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: selectedCount > 0 ? 1 : 0.5,
-              flex: 1
-            }}
-            title="Send to Back"
-          >
-            <Triangle size={10} style={{ transform: 'rotate(180deg)' }} />
-          </button>
+          <div style={{ flex: 1 }}>
+            <IconButton onClick={distributeHorizontally} disabled={!canDistribute} title="Distribute Horizontally" borderColor="#dee2e6">
+              <MoveHorizontal size={10} />
+            </IconButton>
+          </div>
+          <div style={{ flex: 1 }}>
+            <IconButton onClick={distributeVertically} disabled={!canDistribute} title="Distribute Vertically" borderColor="#dee2e6">
+              <MoveVertical size={10} />
+            </IconButton>
+          </div>
+
+          {/* Order buttons */}
+          <div style={{ flex: 1 }}>
+            <IconButton onClick={bringToFront} disabled={selectedCount === 0} title="Bring to Front" borderColor="#dee2e6">
+              <Triangle size={10} />
+            </IconButton>
+          </div>
+          <div style={{ flex: 1 }}>
+            <IconButton onClick={sendForward} disabled={selectedCount === 0} title="Send Forward" borderColor="#dee2e6">
+              <ChevronUp size={10} />
+            </IconButton>
+          </div>
+          <div style={{ flex: 1 }}>
+            <IconButton onClick={sendBackward} disabled={selectedCount === 0} title="Send Backward" borderColor="#dee2e6">
+              <ChevronDown size={10} />
+            </IconButton>
+          </div>
+          <div style={{ flex: 1 }}>
+            <IconButton onClick={sendToBack} disabled={selectedCount === 0} title="Send to Back" borderColor="#dee2e6">
+              <Triangle size={10} style={{ transform: 'rotate(180deg)' }} />
+            </IconButton>
+          </div>
         </div>
 
-        {/* Segunda línea: Align & Distribute buttons */}
+        {/* Align buttons */}
         <div style={{ display: 'flex', gap: '2px' }}>
           {/* Horizontal alignment */}
-          <button
-            onClick={alignLeft}
-            disabled={!canAlign}
-            style={{
-              padding: '4px',
-              backgroundColor: '#f8f9fa',
-              border: '1px solid #dee2e6',
-              borderRadius: '3px',
-              cursor: canAlign ? 'pointer' : 'not-allowed',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: canAlign ? 1 : 0.5,
-              flex: 1
-            }}
-            title="Align Left"
-          >
-            <AlignLeft size={10} />
-          </button>
-          <button
-            onClick={alignCenter}
-            disabled={!canAlign}
-            style={{
-              padding: '4px',
-              backgroundColor: '#f8f9fa',
-              border: '1px solid #dee2e6',
-              borderRadius: '3px',
-              cursor: canAlign ? 'pointer' : 'not-allowed',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: canAlign ? 1 : 0.5,
-              flex: 1
-            }}
-            title="Align Center"
-          >
-            <AlignHorizontalJustifyCenter size={10} />
-          </button>
-          <button
-            onClick={alignRight}
-            disabled={!canAlign}
-            style={{
-              padding: '4px',
-              backgroundColor: '#f8f9fa',
-              border: '1px solid #dee2e6',
-              borderRadius: '3px',
-              cursor: canAlign ? 'pointer' : 'not-allowed',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: canAlign ? 1 : 0.5,
-              flex: 1
-            }}
-            title="Align Right"
-          >
-            <AlignRight size={10} />
-          </button>
+          <div style={{ flex: 1 }}>
+            <IconButton onClick={alignLeft} disabled={!canAlign} title="Align Left" borderColor="#dee2e6">
+              <AlignLeft size={10} />
+            </IconButton>
+          </div>
+          <div style={{ flex: 1 }}>
+            <IconButton onClick={alignCenter} disabled={!canAlign} title="Align Center" borderColor="#dee2e6">
+              <AlignHorizontalJustifyCenter size={10} />
+            </IconButton>
+          </div>
+          <div style={{ flex: 1 }}>
+            <IconButton onClick={alignRight} disabled={!canAlign} title="Align Right" borderColor="#dee2e6">
+              <AlignRight size={10} />
+            </IconButton>
+          </div>
 
           {/* Vertical alignment */}
-          <button
-            onClick={alignTop}
-            disabled={!canAlign}
-            style={{
-              padding: '4px',
-              backgroundColor: '#f8f9fa',
-              border: '1px solid #dee2e6',
-              borderRadius: '3px',
-              cursor: canAlign ? 'pointer' : 'not-allowed',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: canAlign ? 1 : 0.5,
-              flex: 1
-            }}
-            title="Align Top"
-          >
-            <AlignVerticalJustifyStart size={10} />
-          </button>
-          <button
-            onClick={alignMiddle}
-            disabled={!canAlign}
-            style={{
-              padding: '4px',
-              backgroundColor: '#f8f9fa',
-              border: '1px solid #dee2e6',
-              borderRadius: '3px',
-              cursor: canAlign ? 'pointer' : 'not-allowed',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: canAlign ? 1 : 0.5,
-              flex: 1
-            }}
-            title="Align Middle"
-          >
-            <AlignVerticalJustifyCenter size={10} />
-          </button>
-          <button
-            onClick={alignBottom}
-            disabled={!canAlign}
-            style={{
-              padding: '4px',
-              backgroundColor: '#f8f9fa',
-              border: '1px solid #dee2e6',
-              borderRadius: '3px',
-              cursor: canAlign ? 'pointer' : 'not-allowed',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: canAlign ? 1 : 0.5,
-              flex: 1
-            }}
-            title="Align Bottom"
-          >
-            <AlignVerticalJustifyEnd size={10} />
-          </button>
-
-          {/* Distribution */}
-          <button
-            onClick={distributeHorizontally}
-            disabled={!canDistribute}
-            style={{
-              padding: '4px',
-              backgroundColor: '#f8f9fa',
-              border: '1px solid #dee2e6',
-              borderRadius: '3px',
-              cursor: canDistribute ? 'pointer' : 'not-allowed',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: canDistribute ? 1 : 0.5,
-              flex: 1
-            }}
-            title="Distribute Horizontally"
-          >
-            <MoveHorizontal size={10} />
-          </button>
-          <button
-            onClick={distributeVertically}
-            disabled={!canDistribute}
-            style={{
-              padding: '4px',
-              backgroundColor: '#f8f9fa',
-              border: '1px solid #dee2e6',
-              borderRadius: '3px',
-              cursor: canDistribute ? 'pointer' : 'not-allowed',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: canDistribute ? 1 : 0.5,
-              flex: 1
-            }}
-            title="Distribute Vertically"
-          >
-            <MoveVertical size={10} />
-          </button>
+          <div style={{ flex: 1 }}>
+            <IconButton onClick={alignTop} disabled={!canAlign} title="Align Top" borderColor="#dee2e6">
+              <AlignVerticalJustifyStart size={10} />
+            </IconButton>
+          </div>
+          <div style={{ flex: 1 }}>
+            <IconButton onClick={alignMiddle} disabled={!canAlign} title="Align Middle" borderColor="#dee2e6">
+              <AlignVerticalJustifyCenter size={10} />
+            </IconButton>
+          </div>
+          <div style={{ flex: 1 }}>
+            <IconButton onClick={alignBottom} disabled={!canAlign} title="Align Bottom" borderColor="#dee2e6">
+              <AlignVerticalJustifyEnd size={10} />
+            </IconButton>
+          </div>
         </div>
       </div>
     </div>

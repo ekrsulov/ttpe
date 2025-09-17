@@ -7,6 +7,7 @@ import { TransformationPanel } from './plugins/TransformationPanel';
 import { TextPanel } from './plugins/TextPanel';
 import { SelectPanel } from './plugins/SelectPanel';
 import { ShapePanel } from './plugins/ShapePanel';
+import { IconButton } from './ui/IconButton';
 import {
   Move,
   Pen,
@@ -57,29 +58,20 @@ export const Sidebar: React.FC = () => {
             const IconComponent = plugin.icon;
             const isDisabled = plugin.name === 'transformation' && selectedIds.length === 0;
             return (
-              <button
+              <IconButton
                 key={plugin.name}
-                onPointerUp={() => !isDisabled && setActivePlugin(activePlugin === plugin.name ? null : plugin.name)}
-                style={{
-                  padding: '4px',
-                  backgroundColor: activePlugin === plugin.name ? '#007bff' : '#fff',
-                  color: activePlugin === plugin.name ? '#fff' : isDisabled ? '#ccc' : '#333',
-                  border: '1px solid #ccc',
-                  borderRadius: '4px',
-                  cursor: isDisabled ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '8px',
-                  minHeight: '28px',
-                  opacity: isDisabled ? 0.5 : 1
-                }}
-                title={plugin.label}
+                onClick={() => !isDisabled && setActivePlugin(activePlugin === plugin.name ? null : plugin.name)}
                 disabled={isDisabled}
+                active={activePlugin === plugin.name}
+                activeBgColor="#007bff"
+                activeColor="#fff"
+                borderColor="#ccc"
+                size="custom"
+                customSize="32px"
+                title={plugin.label}
               >
-                <IconComponent size={16} />
-              </button>
+                <IconComponent size={14} />
+              </IconButton>
             );
           })}
         </div>

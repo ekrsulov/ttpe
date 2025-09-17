@@ -13,6 +13,7 @@ import {
   PaintBucket,
   X
 } from 'lucide-react';
+import { IconButton } from '../ui/IconButton';
 
 // Custom hook to subscribe to temporal state changes
 const useTemporalState = () => {
@@ -172,11 +173,12 @@ export const EditorPanel: React.FC = () => {
         <div style={{
           width: '40px',
           fontSize: '9px',
-          fontWeight: 'bold',
+          fontWeight: '600',
           color: '#666',
-          padding: '1px 4px',
-          border: '1px solid #ccc',
-          borderRadius: '8px',
+          padding: '1px 6px',
+          backgroundColor: '#f8f9fa',
+          border: '1px solid #dee2e6',
+          borderRadius: '12px',
           textAlign: 'left'
         }}
         title="History: Undos/Redos available">
@@ -185,11 +187,12 @@ export const EditorPanel: React.FC = () => {
         <div style={{
           width: '40px',
           fontSize: '9px',
-          fontWeight: 'bold',
+          fontWeight: '600',
           color: '#666',
-          padding: '1px 4px',
-          border: '1px solid #ccc',
-          borderRadius: '8px',
+          padding: '1px 6px',
+          backgroundColor: '#f8f9fa',
+          border: '1px solid #dee2e6',
+          borderRadius: '12px',
           textAlign: 'center'
         }}
         title={`Zoom: ${Math.round((viewport.zoom as number) * 100)}%`}>
@@ -198,11 +201,12 @@ export const EditorPanel: React.FC = () => {
         <div style={{
           width: '40px',
           fontSize: '9px',
-          fontWeight: 'bold',
+          fontWeight: '600',
           color: '#666',
-          padding: '1px 4px',
-          border: '1px solid #ccc',
-          borderRadius: '8px',
+          padding: '1px 6px',
+          backgroundColor: '#f8f9fa',
+          border: '1px solid #dee2e6',
+          borderRadius: '12px',
           textAlign: 'right'
         }}
         title={`Selected elements: ${selectedCount}`}>
@@ -214,133 +218,79 @@ export const EditorPanel: React.FC = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', gap: '8px' }}>
         {/* Undo/Redo Group */}
         <div style={{ display: 'flex', gap: '2px' }}>
-          <button
+          <IconButton
             onClick={() => undo()}
             disabled={!canUndo}
-            style={{
-              padding: '6px',
-              backgroundColor: canUndo ? '#007bff' : '#f8f9fa',
-              color: canUndo ? '#fff' : '#6c757d',
-              border: '1px solid #dee2e6',
-              borderRadius: '3px',
-              cursor: canUndo ? 'pointer' : 'not-allowed',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '12px',
-              minWidth: '32px',
-              minHeight: '32px'
-            }}
+            active={canUndo}
+            activeBgColor="#007bff"
+            activeColor="#fff"
+            borderColor="#dee2e6"
+            size="custom"
+            customSize="32px"
             title="Undo"
           >
             <Undo2 size={14} />
-          </button>
-          <button
+          </IconButton>
+          <IconButton
             onClick={() => redo()}
             disabled={!canRedo}
-            style={{
-              padding: '6px',
-              backgroundColor: canRedo ? '#007bff' : '#f8f9fa',
-              color: canRedo ? '#fff' : '#6c757d',
-              border: '1px solid #dee2e6',
-              borderRadius: '3px',
-              cursor: canRedo ? 'pointer' : 'not-allowed',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '12px',
-              minWidth: '32px',
-              minHeight: '32px'
-            }}
+            active={canRedo}
+            activeBgColor="#007bff"
+            activeColor="#fff"
+            borderColor="#dee2e6"
+            size="custom"
+            customSize="32px"
             title="Redo"
           >
             <Redo2 size={14} />
-          </button>
+          </IconButton>
         </div>
 
         {/* Zoom Controls Group */}
         <div style={{ display: 'flex', gap: '2px' }}>
-          <button
+          <IconButton
             onClick={() => zoom(1 / zoomFactor, window.innerWidth / 2, window.innerHeight / 2)}
-            style={{
-              padding: '6px',
-              backgroundColor: '#f8f9fa',
-              border: '1px solid #dee2e6',
-              borderRadius: '3px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '12px',
-              minWidth: '32px',
-              minHeight: '32px'
-            }}
+            borderColor="#dee2e6"
+            size="custom"
+            customSize="32px"
             title="Zoom Out"
           >
             <ZoomOut size={14} />
-          </button>
-          <button
+          </IconButton>
+          <IconButton
             onClick={resetZoom}
-            style={{
-              padding: '6px',
-              backgroundColor: '#f8f9fa',
-              border: '1px solid #dee2e6',
-              borderRadius: '3px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '12px',
-              minWidth: '32px',
-              minHeight: '32px'
-            }}
+            borderColor="#dee2e6"
+            size="custom"
+            customSize="32px"
             title="Reset Zoom"
           >
             <RotateCcw size={14} />
-          </button>
-          <button
+          </IconButton>
+          <IconButton
             onClick={() => zoom(zoomFactor, window.innerWidth / 2, window.innerHeight / 2)}
-            style={{
-              padding: '6px',
-              backgroundColor: '#f8f9fa',
-              border: '1px solid #dee2e6',
-              borderRadius: '3px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '12px',
-              minWidth: '32px',
-              minHeight: '32px'
-            }}
+            borderColor="#dee2e6"
+            size="custom"
+            customSize="32px"
             title="Zoom In"
           >
             <ZoomIn size={14} />
-          </button>
+          </IconButton>
         </div>
 
         {/* Delete Button */}
-        <button
-          onPointerUp={deleteSelectedElements}
+        <IconButton
+          onClick={deleteSelectedElements}
           disabled={selectedIds.length === 0}
-          style={{
-            padding: '6px',
-            backgroundColor: selectedIds.length > 0 ? '#dc3545' : '#f8f9fa',
-            color: selectedIds.length > 0 ? '#fff' : '#6c757d',
-            border: '1px solid #dee2e6',
-            borderRadius: '3px',
-            cursor: selectedIds.length > 0 ? 'pointer' : 'not-allowed',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '12px',
-            minWidth: '32px',
-            minHeight: '32px'
-          }}
+          active={selectedIds.length > 0}
+          activeBgColor="#dc3545"
+          activeColor="#fff"
+          borderColor="#dee2e6"
+          size="custom"
+          customSize="32px"
           title="Delete Selected"
         >
           <Trash2 size={14} />
-        </button>
+        </IconButton>
       </div>
 
       {/* Pencil Properties Section */}
@@ -365,7 +315,13 @@ export const EditorPanel: React.FC = () => {
             }}
             title="Stroke Width"
           />
-          <span style={{ fontSize: '10px', color: '#666', width: '31px', textAlign: 'right', flexShrink: 0 }}>
+          <span style={{
+            fontSize: '10px',
+            color: '#666',
+            width: '31px',
+            textAlign: 'right',
+            flexShrink: 0
+          }}>
             {getCurrentStrokeWidth()}px
           </span>
         </div>
@@ -388,25 +344,18 @@ export const EditorPanel: React.FC = () => {
               }}
               title="Stroke Color"
             />
-            <button
+            <IconButton
               onClick={handleStrokeNone}
-              style={{
-                padding: '2px',
-                backgroundColor: getCurrentStrokeColor() === 'none' ? '#007bff' : '#f8f9fa',
-                color: getCurrentStrokeColor() === 'none' ? '#fff' : '#666',
-                border: '1px solid #ccc',
-                borderRadius: '2px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '20px',
-                height: '20px'
-              }}
+              active={getCurrentStrokeColor() === 'none'}
+              activeBgColor="#007bff"
+              activeColor="#fff"
+              borderColor="#ccc"
+              size="custom"
+              customSize="20px"
               title="No Stroke"
             >
               <X size={12} />
-            </button>
+            </IconButton>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px', minWidth: '120px' }}>
             <Eye size={14} style={{ color: '#666', flexShrink: 0 }} />
@@ -428,7 +377,13 @@ export const EditorPanel: React.FC = () => {
               }}
               title="Stroke Opacity"
             />
-            <span style={{ fontSize: '10px', color: '#666', width: '35px', textAlign: 'right', flexShrink: 0 }}>
+            <span style={{
+              fontSize: '10px',
+              color: '#666',
+              width: '35px',
+              textAlign: 'right',
+              flexShrink: 0
+            }}>
               {Math.round(getCurrentOpacity() * 100)}%
             </span>
           </div>
@@ -452,25 +407,18 @@ export const EditorPanel: React.FC = () => {
               }}
               title="Fill Color"
             />
-            <button
+            <IconButton
               onClick={handleFillNone}
-              style={{
-                padding: '2px',
-                backgroundColor: getCurrentFillColor() === 'none' ? '#007bff' : '#f8f9fa',
-                color: getCurrentFillColor() === 'none' ? '#fff' : '#666',
-                border: '1px solid #ccc',
-                borderRadius: '2px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '20px',
-                height: '20px'
-              }}
+              active={getCurrentFillColor() === 'none'}
+              activeBgColor="#007bff"
+              activeColor="#fff"
+              borderColor="#ccc"
+              size="custom"
+              customSize="20px"
               title="No Fill"
             >
               <X size={12} />
-            </button>
+            </IconButton>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px', minWidth: '120px' }}>
             <Eye size={14} style={{ color: '#666', flexShrink: 0 }} />
@@ -492,7 +440,13 @@ export const EditorPanel: React.FC = () => {
               }}
               title="Fill Opacity"
             />
-            <span style={{ fontSize: '10px', color: '#666', width: '35px', textAlign: 'right', flexShrink: 0 }}>
+            <span style={{
+              fontSize: '10px',
+              color: '#666',
+              width: '35px',
+              textAlign: 'right',
+              flexShrink: 0
+            }}>
               {Math.round(getCurrentFillOpacity() * 100)}%
             </span>
           </div>

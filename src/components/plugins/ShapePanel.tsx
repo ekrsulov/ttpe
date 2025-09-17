@@ -1,6 +1,7 @@
 import React from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Square, Circle, Triangle, Shapes } from 'lucide-react';
+import { IconButton } from '../ui/IconButton';
 import type { ShapeType } from '../../store/slices/plugins/shapePluginSlice';
 
 export const ShapePanel: React.FC = () => {
@@ -34,28 +35,18 @@ export const ShapePanel: React.FC = () => {
           const shouldHighlight = isShapeModeActive && isShapeSelected;
 
           return (
-            <button
+            <IconButton
               key={shape.type}
               onClick={() => handleShapeSelect(shape.type)}
-              style={{
-                padding: '6px',
-                backgroundColor: shouldHighlight ? '#007bff' : '#f8f9fa',
-                color: shouldHighlight ? '#fff' : '#333',
-                border: '1px solid #ccc',
-                borderRadius: '3px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '12px',
-                transition: 'all 0.2s ease',
-                minWidth: '28px',
-                minHeight: '28px'
-              }}
+              active={shouldHighlight}
+              activeBgColor="#007bff"
+              activeColor="#fff"
+              borderColor="#ccc"
+              transition="all 0.2s ease"
               title={`${shape.label} - Click and drag to create`}
             >
               <IconComponent size={14} />
-            </button>
+            </IconButton>
           );
         })}
       </div>

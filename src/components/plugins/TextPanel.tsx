@@ -3,6 +3,7 @@ import { useCanvasStore } from '../../store/canvasStore';
 import { Type, Bold, Italic } from 'lucide-react';
 import { getAvailableFonts } from '../../utils';
 import { FontSelector } from '../FontSelector';
+import { IconButton } from '../ui/IconButton';
 
 export const TextPanel: React.FC = () => {
   const { plugins, updatePluginState } = useCanvasStore();
@@ -133,36 +134,30 @@ export const TextPanel: React.FC = () => {
               fontSize: '12px'
             }}
           />
-          <button
-            onPointerUp={() => handleFontWeightChange(getCurrentFontWeight() === 'bold' ? 'normal' : 'bold')}
-            style={{
-              padding: '4px',
-              border: '1px solid #ccc',
-              borderRadius: '3px',
-              backgroundColor: getCurrentFontWeight() === 'bold' ? '#007bff' : '#fff',
-              color: getCurrentFontWeight() === 'bold' ? '#fff' : '#333',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center'
-            }}
+                    <IconButton
+            onClick={() => handleFontWeightChange(getCurrentFontWeight() === 'bold' ? 'normal' : 'bold')}
+            active={getCurrentFontWeight() === 'bold'}
+            activeBgColor="#007bff"
+            activeColor="#fff"
+            borderColor="#ccc"
+            size="custom"
+            customSize="22px"
+            title="Bold"
           >
-            <Bold size={14} />
-          </button>
-          <button
-            onPointerUp={() => handleFontStyleChange(getCurrentFontStyle() === 'italic' ? 'normal' : 'italic')}
-            style={{
-              padding: '4px',
-              border: '1px solid #ccc',
-              borderRadius: '3px',
-              backgroundColor: getCurrentFontStyle() === 'italic' ? '#007bff' : '#fff',
-              color: getCurrentFontStyle() === 'italic' ? '#fff' : '#333',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center'
-            }}
+            <Bold size={12} />
+          </IconButton>
+          <IconButton
+            onClick={() => handleFontStyleChange(getCurrentFontStyle() === 'italic' ? 'normal' : 'italic')}
+            active={getCurrentFontStyle() === 'italic'}
+            activeBgColor="#007bff"
+            activeColor="#fff"
+            borderColor="#ccc"
+            size="custom"
+            customSize="22px"
+            title="Italic"
           >
-            <Italic size={14} />
-          </button>
+            <Italic size={12} />
+          </IconButton>
         </div>
 
       </div>
