@@ -1,6 +1,7 @@
 import React from 'react';
 import { useCanvasStore } from '../store/canvasStore';
 import { EditorPanel } from './plugins/EditorPanel';
+import { ArrangePanel } from './plugins/ArrangePanel';
 import { PanPanel } from './plugins/PanPanel';
 import { TransformationPanel } from './plugins/TransformationPanel';
 import { PencilPanel } from './plugins/PencilPanel';
@@ -113,8 +114,12 @@ export const Sidebar: React.FC = () => {
         backgroundColor: 'rgba(249, 249, 249, 0.95)',
         backdropFilter: 'blur(10px)',
         borderTop: '1px solid #ddd',
-        zIndex: 1001
+        zIndex: 1001,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px'
       }}>
+        <ArrangePanel />
         <SelectPanel />
       </div>
     </div>

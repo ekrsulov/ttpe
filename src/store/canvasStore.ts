@@ -57,10 +57,9 @@ type CanvasStore = BaseSlice &
     startPath: (point: Point) => void;
     addPointToPath: (point: Point) => void;
     finishPath: () => void;
-    addText: (x: number, y: number, text: string) => void;
+    addText: (x: number, y: number, text: string) => Promise<void>;
     deleteSelectedElements: () => void;
     createShape: (startPoint: Point, endPoint: Point) => void;
-    convertTextToPath: () => Promise<void>;
   };
 
 // Create the store with all slices combined and temporal middleware
@@ -130,22 +129,39 @@ export const useCanvasStore = create<CanvasStore>()(
         // Path is already added, nothing special to do
       },
 
-      addText: (x, y, text) => {
+      addText: async (x, y, text) => {
         const { fontSize, fontFamily, color, fontWeight, fontStyle, opacity } = get().plugins.text;
-        get().addElement({
-          type: 'text',
-          data: {
+        
+        try {
+          // Convert text to path automatically
+          const pathD = await textToPath(
+            text,
             x,
             y,
-            text,
             fontSize,
             fontFamily,
-            color,
             fontWeight,
-            fontStyle,
-            opacity,
-          },
-        });
+            fontStyle
+          );
+
+          if (pathD) {
+            // Create path element with the converted text
+            get().addElement({
+              type: 'path',
+              data: {
+                d: pathD,
+                strokeWidth: 1,
+                strokeColor: color,
+                opacity,
+              },
+            });
+          } else {
+            console.error('Failed to convert text to path');
+          }
+        } catch (error) {
+          console.error('Error converting text to path:', error);
+        }
+        
         // Auto-switch to select mode after adding text
         get().setActivePlugin('select');
       },
@@ -232,55 +248,6 @@ export const useCanvasStore = create<CanvasStore>()(
     
     // Auto-switch to select mode after creating shape
     get().setActivePlugin('select');
-  },
-
-  convertTextToPath: async () => {
-    const state = get();
-    const selectedElements = state.elements.filter(el => state.selectedIds.includes(el.id));
-    const textElements = selectedElements.filter(el => el.type === 'text');
-
-    if (textElements.length === 0) return;
-
-    // Process each selected text element
-    for (const textElement of textElements) {
-      const textData = textElement.data as import('../types').TextData;
-
-      try {
-        // Convert text to path using the utility function
-        const pathD = await textToPath(
-          textData.text,
-          textData.x,
-          textData.y,
-          textData.fontSize,
-          textData.fontFamily,
-          textData.fontWeight,
-          textData.fontStyle
-        );
-
-        if (pathD) {
-          // Create new path element
-          const pathElement = {
-            id: `${textElement.id}-path`,
-            type: 'path' as const,
-            data: {
-              d: pathD, // textToPath already includes proper positioning
-              strokeWidth: 1,
-              strokeColor: textData.color,
-              opacity: textData.opacity,
-            },
-            zIndex: textElement.zIndex,
-          };
-
-          // Add the new path element
-          get().addElement(pathElement);
-
-          // Remove the original text element
-          get().deleteElement(textElement.id);
-        }
-      } catch (error) {
-        console.error('Error converting text to path:', error);
-      }
-    }
   },
 }),
 {
