@@ -12,7 +12,22 @@ export interface BaseSlice {
   deleteElement: (id: string) => void;
   deleteSelectedElements: () => void;
   setActivePlugin: (plugin: string | null) => void;
+  setMode: (mode: string) => void;
 }
+
+type ModeRule = {
+  canToggleOff: boolean;
+  defaultFallback?: string;
+};
+
+const modeRules: Record<string, ModeRule> = {
+  select: { canToggleOff: false },
+  pan: { canToggleOff: false },
+  pencil: { canToggleOff: false },
+  text: { canToggleOff: false },
+  shape: { canToggleOff: false },
+  transformation: { canToggleOff: true, defaultFallback: 'select' },
+};
 
 export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
   // Initial state
@@ -49,5 +64,21 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
 
   setActivePlugin: (plugin) => {
     set({ activePlugin: plugin });
+  },
+
+  setMode: (mode) => {
+    const current = get().activePlugin;
+    const rule = modeRules[mode] || { canToggleOff: false };
+
+    if (current === mode) {
+      if (rule.canToggleOff) {
+        // Apagar, pero pasar al fallback o al mismo
+        const fallback = rule.defaultFallback || mode;
+        set({ activePlugin: fallback });
+      }
+      // Para modos que no se pueden apagar, no hacer nada
+    } else {
+      set({ activePlugin: mode });
+    }
   },
 });

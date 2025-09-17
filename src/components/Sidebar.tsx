@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
-  const { activePlugin, setActivePlugin, selectedIds } = useCanvasStore();
+  const { activePlugin, setMode, selectedIds } = useCanvasStore();
 
   const plugins = [
     { name: 'select', label: 'Select', icon: MousePointer },
@@ -60,7 +60,7 @@ export const Sidebar: React.FC = () => {
             return (
               <IconButton
                 key={plugin.name}
-                onPointerUp={() => !isDisabled && setActivePlugin(activePlugin === plugin.name ? null : plugin.name)}
+                onPointerUp={() => !isDisabled && setMode(plugin.name)}
                 disabled={isDisabled}
                 active={activePlugin === plugin.name}
                 activeBgColor="#007bff"
