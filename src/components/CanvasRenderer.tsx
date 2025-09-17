@@ -887,7 +887,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
               }}
             />
             {isSelected && renderSelectionBox(element)}
-            {activePlugin === 'edit' && renderEditPoints(element)}
+            {isSelected && activePlugin === 'edit' && renderEditPoints(element)}
           </g>
         );
       }

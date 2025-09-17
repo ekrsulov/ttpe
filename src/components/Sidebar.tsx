@@ -58,7 +58,7 @@ export const Sidebar: React.FC = () => {
         }}>
           {plugins.map((plugin) => {
             const IconComponent = plugin.icon;
-            const isDisabled = plugin.name === 'transformation' && selectedIds.length === 0;
+            const isDisabled = (plugin.name === 'transformation' || plugin.name === 'edit') && selectedIds.length === 0;
             return (
               <IconButton
                 key={plugin.name}
