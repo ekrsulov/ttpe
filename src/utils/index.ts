@@ -12,3 +12,6 @@ export {
   clearFontCache,
   FONTS_TO_CHECK
 } from './fontDetectionUtils';
+
+// Export path parser utilities
+export * from './pathParserUtils';

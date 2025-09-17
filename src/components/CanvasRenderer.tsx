@@ -1,5 +1,6 @@
 import React from 'react';
 import { measurePath } from '../utils/measurementUtils';
+import { parsePathD, extractEditablePoints, getCommandStartPoint, updatePathD } from '../utils/pathParserUtils';
 import type { Point } from '../types';
 
 interface CanvasRendererProps {
@@ -23,6 +24,14 @@ interface CanvasRendererProps {
     zIndex: number;
   }>;
   activePlugin: string | null;
+  editingPoint: { 
+    elementId: string; 
+    commandIndex: number; 
+    pointIndex: number;
+    isDragging: boolean;
+    offsetX: number;
+    offsetY: number;
+  } | null;
   isSelecting: boolean;
   selectionStart: Point | null;
   selectionEnd: Point | null;
@@ -33,6 +42,10 @@ interface CanvasRendererProps {
   onElementPointerDown: (elementId: string, e: React.PointerEvent) => void;
   onTransformationHandlerPointerDown: (e: React.PointerEvent, elementId: string, handler: string) => void;
   onTransformationHandlerPointerUp: (e: React.PointerEvent) => void;
+  onStartDraggingPoint: (elementId: string, commandIndex: number, pointIndex: number, offsetX: number, offsetY: number) => void;
+  onUpdateDraggingPoint: (x: number, y: number) => void;
+  onStopDraggingPoint: () => void;
+  onUpdateElement: (id: string, updates: any) => void;
 }
 
 export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
@@ -42,6 +55,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   shape,
   elements,
   activePlugin,
+  editingPoint,
   isSelecting,
   selectionStart,
   selectionEnd,
@@ -52,7 +66,135 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   onElementPointerDown,
   onTransformationHandlerPointerDown,
   onTransformationHandlerPointerUp,
+  onStartDraggingPoint,
+  onUpdateDraggingPoint,
+  onStopDraggingPoint,
+  onUpdateElement,
 }) => {
+  // Local state for drag visualization
+  const [dragPosition, setDragPosition] = React.useState<{x: number, y: number} | null>(null);
+
+  // Global pointer event handlers for drag
+  React.useEffect(() => {
+    let lastUpdateTime = 0;
+    const UPDATE_THROTTLE = 16; // ~60fps
+
+    const handlePointerMove = (e: PointerEvent) => {
+      if (editingPoint?.isDragging) {
+        // Get SVG element as reference for coordinate conversion
+        const svgElement = document.querySelector('svg');
+        if (svgElement) {
+          const svgRect = svgElement.getBoundingClientRect();
+          
+          // Convert screen coordinates to SVG coordinates
+          const svgX = e.clientX - svgRect.left;
+          const svgY = e.clientY - svgRect.top;
+          
+          // Convert SVG coordinates to canvas coordinates (accounting for viewport)
+          const canvasX = (svgX - viewport.panX) / viewport.zoom;
+          const canvasY = (svgY - viewport.panY) / viewport.zoom;
+          
+          // Update local drag position for smooth visualization
+          setDragPosition({ x: canvasX, y: canvasY });
+          
+          // Update store position
+          onUpdateDraggingPoint(canvasX, canvasY);
+
+          // Throttled path update for real-time feedback
+          const now = Date.now();
+          if (now - lastUpdateTime >= UPDATE_THROTTLE) {
+            lastUpdateTime = now;
+            
+            // Update the path in real-time
+            const element = elements.find(el => el.id === editingPoint.elementId);
+            if (element && element.type === 'path') {
+              const pathData = element.data as import('../types').PathData;
+              const commands = parsePathD(pathData.d);
+              const points = extractEditablePoints(commands);
+
+              const pointToUpdate = points.find(p => 
+                p.commandIndex === editingPoint.commandIndex && 
+                p.pointIndex === editingPoint.pointIndex
+              );
+
+              if (pointToUpdate) {
+                pointToUpdate.x = canvasX;
+                pointToUpdate.y = canvasY;
+
+                const newPathD = updatePathD(commands, [pointToUpdate]);
+                onUpdateElement(editingPoint.elementId, {
+                  data: {
+                    ...pathData,
+                    d: newPathD
+                  }
+                });
+              }
+            }
+          }
+        }
+      }
+    };
+
+    const handlePointerUp = (e: PointerEvent) => {
+      if (editingPoint?.isDragging) {
+        // Get final position for one last update if needed
+        const svgElement = document.querySelector('svg');
+        let finalPosition = dragPosition;
+        
+        if (svgElement && !finalPosition) {
+          const svgRect = svgElement.getBoundingClientRect();
+          const svgX = e.clientX - svgRect.left;
+          const svgY = e.clientY - svgRect.top;
+          finalPosition = {
+            x: (svgX - viewport.panX) / viewport.zoom,
+            y: (svgY - viewport.panY) / viewport.zoom
+          };
+        }
+
+        // Final update of the path with the final position (only if dragPosition was null)
+        if (finalPosition && !dragPosition) {
+          const element = elements.find(el => el.id === editingPoint.elementId);
+          if (element && element.type === 'path') {
+            const pathData = element.data as import('../types').PathData;
+            const commands = parsePathD(pathData.d);
+            const points = extractEditablePoints(commands);
+
+            const pointToUpdate = points.find(p => 
+              p.commandIndex === editingPoint.commandIndex && 
+              p.pointIndex === editingPoint.pointIndex
+            );
+
+            if (pointToUpdate) {
+              pointToUpdate.x = finalPosition.x;
+              pointToUpdate.y = finalPosition.y;
+
+              const newPathD = updatePathD(commands, [pointToUpdate]);
+              onUpdateElement(editingPoint.elementId, {
+                data: {
+                  ...pathData,
+                  d: newPathD
+                }
+              });
+            }
+          }
+        }
+        
+        setDragPosition(null);
+        onStopDraggingPoint();
+      }
+    };
+
+    if (editingPoint?.isDragging) {
+      document.addEventListener('pointermove', handlePointerMove);
+      document.addEventListener('pointerup', handlePointerUp);
+    }
+
+    return () => {
+      document.removeEventListener('pointermove', handlePointerMove);
+      document.removeEventListener('pointerup', handlePointerUp);
+    };
+  }, [editingPoint?.isDragging, editingPoint?.elementId, editingPoint?.commandIndex, editingPoint?.pointIndex, viewport, onUpdateDraggingPoint, onStopDraggingPoint, dragPosition, elements, onUpdateElement]);
+
   // Render selection box for selected elements
   const renderSelectionBox = (element: typeof elements[0]) => {
     const bounds = getTransformedBounds(element);
@@ -604,6 +746,113 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     return null;
   };
 
+  // Render edit points for path editing
+  const renderEditPoints = (element: typeof elements[0]) => {
+    if (element.type !== 'path') return null;
+    const pathData = element.data as import('../types').PathData;
+    const commands = parsePathD(pathData.d);
+    const points = extractEditablePoints(commands);
+
+    return (
+      <g>
+        {points.map((point, index) => {
+          // Use drag position if available, otherwise use original position
+          let displayX = point.x;
+          let displayY = point.y;
+
+          if (editingPoint?.isDragging && 
+              editingPoint.elementId === element.id &&
+              editingPoint.commandIndex === point.commandIndex && 
+              editingPoint.pointIndex === point.pointIndex) {
+            // Use drag position for smooth visual feedback during drag
+            if (dragPosition) {
+              displayX = dragPosition.x;
+              displayY = dragPosition.y;
+            }
+          }
+
+          let color = 'black';
+          let size = 4;
+
+          if (point.isControl) {
+            color = 'blue'; // control points in blue
+            size = 3;
+          } else {
+            // command points
+            const cmd = commands[point.commandIndex];
+            const isLastCommand = point.commandIndex === commands.length - 1;
+            const isLastPointInCommand = point.pointIndex === cmd.points.length - 1;
+            const isLastPointInPath = isLastCommand && isLastPointInCommand && cmd.type !== 'Z';
+            
+            if (cmd.type === 'M') {
+              color = 'green';
+              size = 6; // larger
+            } else if (isLastPointInPath) {
+              color = 'red';
+              size = 3; // smaller
+            } else {
+              color = 'blue'; // intermediate command points in blue
+              size = 4;
+            }
+          }
+
+          return (
+            <circle
+              key={index}
+              cx={displayX}
+              cy={displayY}
+              r={size}
+              fill={color}
+              stroke="white"
+              strokeWidth={1}
+              style={{ cursor: 'pointer' }}
+              onPointerDown={(e) => {
+                e.stopPropagation();
+                onStartDraggingPoint(element.id, point.commandIndex, point.pointIndex, point.x, point.y);
+              }}
+            />
+          );
+        })}
+        {/* Render control point lines */}
+        {commands.map((cmd, cmdIndex) => {
+          if (cmd.type === 'C' && cmd.points.length >= 3) {
+            const startPoint = getCommandStartPoint(commands, cmdIndex);
+            if (startPoint) {
+              let control1X = cmd.points[0].x;
+              let control1Y = cmd.points[0].y;
+              let control2X = cmd.points[1].x;
+              let control2Y = cmd.points[1].y;
+              const endX = cmd.points[2].x;
+              const endY = cmd.points[2].y;
+
+              // Update control point positions if being dragged
+              if (editingPoint?.isDragging && editingPoint.elementId === element.id) {
+                const dragX = dragPosition?.x ?? editingPoint.offsetX;
+                const dragY = dragPosition?.y ?? editingPoint.offsetY;
+
+                if (editingPoint.commandIndex === cmdIndex && editingPoint.pointIndex === 0) {
+                  control1X = dragX;
+                  control1Y = dragY;
+                } else if (editingPoint.commandIndex === cmdIndex && editingPoint.pointIndex === 1) {
+                  control2X = dragX;
+                  control2Y = dragY;
+                }
+              }
+
+              return (
+                <g key={`lines-${cmdIndex}`}>
+                  <line x1={startPoint.x} y1={startPoint.y} x2={control1X} y2={control1Y} stroke="blue" strokeWidth={1} opacity={0.5} />
+                  <line x1={control2X} y1={control2Y} x2={endX} y2={endY} stroke="blue" strokeWidth={1} opacity={0.5} />
+                </g>
+              );
+            }
+          }
+          return null;
+        })}
+      </g>
+    );
+  };
+
   // Render elements
   const renderElement = (element: typeof elements[0]) => {
     const { data, type } = element;
@@ -632,10 +881,11 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
               onPointerUp={(e) => onElementClick(element.id, e)}
               onPointerDown={(e) => onElementPointerDown(element.id, e)}
               style={{
-                cursor: isSelected ? 'move' : 'pointer'
+                cursor: activePlugin === 'select' ? (isSelected ? 'move' : 'pointer') : 'default'
               }}
             />
             {isSelected && renderSelectionBox(element)}
+            {activePlugin === 'edit' && renderEditPoints(element)}
           </g>
         );
       }

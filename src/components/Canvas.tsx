@@ -12,7 +12,19 @@ interface CanvasProps {
 
 export const Canvas: React.FC<CanvasProps> = () => {
   const svgRef = useRef<SVGSVGElement>(null);
-  const { elements, viewport, activePlugin, transformation, shape, selectedIds } = useCanvasStore();
+  const { 
+    elements, 
+    viewport, 
+    activePlugin, 
+    transformation, 
+    shape, 
+    selectedIds,
+    editingPoint,
+    updateElement,
+    startDraggingPoint,
+    updateDraggingPoint,
+    stopDraggingPoint
+  } = useCanvasStore();
 
   const [isSpacePressed, setIsSpacePressed] = useState(false);
   const [isSelecting, setIsSelecting] = useState(false);
@@ -640,6 +652,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
         shape={shape}
         elements={elements}
         activePlugin={activePlugin}
+        editingPoint={editingPoint}
         isSelecting={isSelecting}
         selectionStart={selectionStart}
         selectionEnd={selectionEnd}
@@ -650,6 +663,10 @@ export const Canvas: React.FC<CanvasProps> = () => {
         onElementPointerDown={handleElementPointerDown}
         onTransformationHandlerPointerDown={handleTransformationHandlerPointerDown}
         onTransformationHandlerPointerUp={handleTransformationHandlerPointerUp}
+        onStartDraggingPoint={startDraggingPoint}
+        onUpdateDraggingPoint={updateDraggingPoint}
+        onStopDraggingPoint={stopDraggingPoint}
+        onUpdateElement={updateElement}
       />
     </svg>
   );

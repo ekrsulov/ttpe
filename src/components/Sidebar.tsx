@@ -15,6 +15,7 @@ import {
   MousePointer,
   Shapes,
   VectorSquare,
+  MousePointerClick,
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -27,6 +28,7 @@ export const Sidebar: React.FC = () => {
     { name: 'text', label: 'Text', icon: Type },
     { name: 'shape', label: 'Shape', icon: Shapes },
     { name: 'transformation', label: 'Transform', icon: VectorSquare },
+    { name: 'edit', label: 'Edit', icon: MousePointerClick },
   ];
 
   return (
@@ -51,7 +53,7 @@ export const Sidebar: React.FC = () => {
       }}>
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(6, 1fr)',
+          gridTemplateColumns: 'repeat(7, 1fr)',
           gap: '2px'
         }}>
           {plugins.map((plugin) => {
