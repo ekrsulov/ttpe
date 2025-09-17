@@ -5,18 +5,22 @@ interface TagProps {
   width?: string | number;
   className?: string;
   badge?: boolean;
+  title?: string;
+  textAlign?: 'left' | 'center' | 'right';
 }
 
 export const Tag: React.FC<TagProps> = ({
   children,
   width,
   className = '',
-  badge = false
+  badge = false,
+  title,
+  textAlign = 'right'
 }) => {
   const style: React.CSSProperties = {
     fontSize: '10px',
     color: '#666',
-    textAlign: 'right',
+    textAlign: textAlign,
     flexShrink: 0,
   };
 
@@ -37,6 +41,7 @@ export const Tag: React.FC<TagProps> = ({
     <span
       style={style}
       className={className}
+      title={title}
     >
       {children}
     </span>

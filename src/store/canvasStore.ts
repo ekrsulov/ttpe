@@ -142,7 +142,7 @@ export const useCanvasStore = create<CanvasStore>()(
       addText: async (x, y, text) => {
         const { fontSize, fontFamily, fontWeight, fontStyle } = get().text;
         const { fillColor, fillOpacity, strokeColor, strokeWidth, opacity } = get().pencil;
-        
+
         try {
           // Convert text to path automatically
           const pathD = await textToPath(
@@ -174,117 +174,117 @@ export const useCanvasStore = create<CanvasStore>()(
         } catch (error) {
           console.error('Error converting text to path:', error);
         }
-        
+
         // Auto-switch to select mode after adding text
         get().setActivePlugin('select');
       },
 
-  deleteSelectedElements: () => {
-    const selectedIds = get().selectedIds;
-    set((state) => ({
-      elements: state.elements.filter((el) => !(selectedIds as any).includes(el.id)),
-      selectedIds: [],
-    }));
-  },
-
-  createShape: (startPoint, endPoint) => {
-    const { strokeWidth, strokeColor, opacity, fillColor, fillOpacity } = get().pencil;
-    const selectedShape = get().shape.selectedShape;
-    
-    // Calculate shape dimensions
-    const width = Math.abs(endPoint.x - startPoint.x);
-    const height = Math.abs(endPoint.y - startPoint.y);
-    const centerX = (startPoint.x + endPoint.x) / 2;
-    const centerY = (startPoint.y + endPoint.y) / 2;
-    
-    let d = '';
-    
-    switch (selectedShape) {
-      case 'square':
-        // Create a square using path commands
-        const halfSize = Math.min(width, height) / 2;
-        d = `M ${centerX - halfSize} ${centerY - halfSize} L ${centerX + halfSize} ${centerY - halfSize} L ${centerX + halfSize} ${centerY + halfSize} L ${centerX - halfSize} ${centerY + halfSize} Z`;
-        break;
-        
-      case 'rectangle':
-        // Create a rectangle using path commands
-        d = `M ${startPoint.x} ${startPoint.y} L ${endPoint.x} ${startPoint.y} L ${endPoint.x} ${endPoint.y} L ${startPoint.x} ${endPoint.y} Z`;
-        break;
-        
-      case 'circle':
-        // Create a circle using C commands (Bézier curves)
-        const radius = Math.min(width, height) / 2;
-        const kappa = 0.552284749831; // Control point constant for circle approximation
-        
-        // Calculate control points
-        const cx1 = centerX - radius;
-        const cy1 = centerY - radius * kappa;
-        const cx2 = centerX - radius * kappa;
-        const cy2 = centerY - radius;
-        const cx3 = centerX + radius * kappa;
-        const cy3 = centerY - radius;
-        const cx4 = centerX + radius;
-        const cy4 = centerY - radius * kappa;
-        const cx5 = centerX + radius;
-        const cy5 = centerY + radius * kappa;
-        const cx6 = centerX + radius * kappa;
-        const cy6 = centerY + radius;
-        const cx7 = centerX - radius * kappa;
-        const cy7 = centerY + radius;
-        const cx8 = centerX - radius;
-        const cy8 = centerY + radius * kappa;
-        
-        d = `M ${centerX - radius} ${centerY} C ${cx1} ${cy1} ${cx2} ${cy2} ${centerX} ${centerY - radius} C ${cx3} ${cy3} ${cx4} ${cy4} ${centerX + radius} ${centerY} C ${cx5} ${cy5} ${cx6} ${cy6} ${centerX} ${centerY + radius} C ${cx7} ${cy7} ${cx8} ${cy8} ${centerX - radius} ${centerY} Z`;
-        break;
-        
-      case 'triangle':
-        // Create a triangle using path commands
-        d = `M ${centerX} ${startPoint.y} L ${endPoint.x} ${endPoint.y} L ${startPoint.x} ${endPoint.y} Z`;
-        break;
-        
-      default:
-        // Default to square if unknown shape
-        const defaultHalfSize = Math.min(width, height) / 2;
-        d = `M ${centerX - defaultHalfSize} ${centerY - defaultHalfSize} L ${centerX + defaultHalfSize} ${centerY - defaultHalfSize} L ${centerX + defaultHalfSize} ${centerY + defaultHalfSize} L ${centerX - defaultHalfSize} ${centerY + defaultHalfSize} Z`;
-        break;
-    }
-    
-    get().addElement({
-      type: 'path',
-      data: {
-        d,
-        strokeWidth,
-        strokeColor,
-        opacity,
-        fillColor,
-        fillOpacity,
+      deleteSelectedElements: () => {
+        const selectedIds = get().selectedIds;
+        set((state) => ({
+          elements: state.elements.filter((el) => !(selectedIds as any).includes(el.id)),
+          selectedIds: [],
+        }));
       },
-    });
-    
-    // Auto-switch to select mode after creating shape
-    get().setActivePlugin('select');
-  },
-}),
-{
-  // Zundo temporal options
-  limit: 50, // Keep last 50 states
-  partialize: (state) => ({
-    elements: state.elements,
-    selectedIds: state.selectedIds,
-    viewport: state.viewport,
-    pencil: state.pencil,
-    text: state.text,
-    shape: state.shape,
-    transformation: state.transformation,
-    editor: state.editor,
-    activePlugin: state.activePlugin,
-  }),
-  // Cool-off period: throttle state changes to prevent too many history entries
-  // during rapid events like drawing or moving
-  handleSet: (handleSet) =>
-    throttle<typeof handleSet>((state) => {
-      handleSet(state);
-    }, 500), // 500ms cool-off period
-}
-)
+
+      createShape: (startPoint, endPoint) => {
+        const { strokeWidth, strokeColor, opacity, fillColor, fillOpacity } = get().pencil;
+        const selectedShape = get().shape.selectedShape;
+
+        // Calculate shape dimensions
+        const width = Math.abs(endPoint.x - startPoint.x);
+        const height = Math.abs(endPoint.y - startPoint.y);
+        const centerX = (startPoint.x + endPoint.x) / 2;
+        const centerY = (startPoint.y + endPoint.y) / 2;
+
+        let d = '';
+
+        switch (selectedShape) {
+          case 'square':
+            // Create a square using path commands
+            const halfSize = Math.min(width, height) / 2;
+            d = `M ${centerX - halfSize} ${centerY - halfSize} L ${centerX + halfSize} ${centerY - halfSize} L ${centerX + halfSize} ${centerY + halfSize} L ${centerX - halfSize} ${centerY + halfSize} Z`;
+            break;
+
+          case 'rectangle':
+            // Create a rectangle using path commands
+            d = `M ${startPoint.x} ${startPoint.y} L ${endPoint.x} ${startPoint.y} L ${endPoint.x} ${endPoint.y} L ${startPoint.x} ${endPoint.y} Z`;
+            break;
+
+          case 'circle':
+            // Create a circle using C commands (Bézier curves)
+            const radius = Math.min(width, height) / 2;
+            const kappa = 0.552284749831; // Control point constant for circle approximation
+
+            // Calculate control points
+            const cx1 = centerX - radius;
+            const cy1 = centerY - radius * kappa;
+            const cx2 = centerX - radius * kappa;
+            const cy2 = centerY - radius;
+            const cx3 = centerX + radius * kappa;
+            const cy3 = centerY - radius;
+            const cx4 = centerX + radius;
+            const cy4 = centerY - radius * kappa;
+            const cx5 = centerX + radius;
+            const cy5 = centerY + radius * kappa;
+            const cx6 = centerX + radius * kappa;
+            const cy6 = centerY + radius;
+            const cx7 = centerX - radius * kappa;
+            const cy7 = centerY + radius;
+            const cx8 = centerX - radius;
+            const cy8 = centerY + radius * kappa;
+
+            d = `M ${centerX - radius} ${centerY} C ${cx1} ${cy1} ${cx2} ${cy2} ${centerX} ${centerY - radius} C ${cx3} ${cy3} ${cx4} ${cy4} ${centerX + radius} ${centerY} C ${cx5} ${cy5} ${cx6} ${cy6} ${centerX} ${centerY + radius} C ${cx7} ${cy7} ${cx8} ${cy8} ${centerX - radius} ${centerY} Z`;
+            break;
+
+          case 'triangle':
+            // Create a triangle using path commands
+            d = `M ${centerX} ${startPoint.y} L ${endPoint.x} ${endPoint.y} L ${startPoint.x} ${endPoint.y} Z`;
+            break;
+
+          default:
+            // Default to square if unknown shape
+            const defaultHalfSize = Math.min(width, height) / 2;
+            d = `M ${centerX - defaultHalfSize} ${centerY - defaultHalfSize} L ${centerX + defaultHalfSize} ${centerY - defaultHalfSize} L ${centerX + defaultHalfSize} ${centerY + defaultHalfSize} L ${centerX - defaultHalfSize} ${centerY + defaultHalfSize} Z`;
+            break;
+        }
+
+        get().addElement({
+          type: 'path',
+          data: {
+            d,
+            strokeWidth,
+            strokeColor,
+            opacity,
+            fillColor,
+            fillOpacity,
+          },
+        });
+
+        // Auto-switch to select mode after creating shape
+        get().setActivePlugin('select');
+      },
+    }),
+    {
+      // Zundo temporal options
+      limit: 50, // Keep last 50 states
+      partialize: (state) => ({
+        elements: state.elements,
+        selectedIds: state.selectedIds,
+        viewport: state.viewport,
+        pencil: state.pencil,
+        text: state.text,
+        shape: state.shape,
+        transformation: state.transformation,
+        editor: state.editor,
+        activePlugin: state.activePlugin,
+      }),
+      // Cool-off period: throttle state changes to prevent too many history entries
+      // during rapid events like drawing or moving
+      handleSet: (handleSet) =>
+        throttle<typeof handleSet>((state) => {
+          handleSet(state);
+        }, 500), // 500ms cool-off period
+    }
+  )
 );

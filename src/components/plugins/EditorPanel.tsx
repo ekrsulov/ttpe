@@ -14,6 +14,7 @@ import {
   X
 } from 'lucide-react';
 import { IconButton } from '../ui/IconButton';
+import { Tag } from '../ui/Tag';
 
 // Custom hook to subscribe to temporal state changes
 const useTemporalState = () => {
@@ -170,48 +171,29 @@ export const EditorPanel: React.FC = () => {
   return (
     <div style={{ backgroundColor: '#fff' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-        <div style={{
-          width: '40px',
-          fontSize: '9px',
-          fontWeight: '600',
-          color: '#666',
-          padding: '1px 6px',
-          backgroundColor: '#f8f9fa',
-          border: '1px solid #dee2e6',
-          borderRadius: '12px',
-          textAlign: 'left'
-        }}
-        title="History: Undos/Redos available">
+        <Tag
+          badge
+          width="40px"
+          title="History: Undos/Redos available"
+          textAlign="left"
+        >
           {pastStates.length === 0 && futureStates.length === 0 ? '\u00A0' : `${pastStates.length}/${futureStates.length}`}
-        </div>
-        <div style={{
-          width: '40px',
-          fontSize: '9px',
-          fontWeight: '600',
-          color: '#666',
-          padding: '1px 6px',
-          backgroundColor: '#f8f9fa',
-          border: '1px solid #dee2e6',
-          borderRadius: '12px',
-          textAlign: 'center'
-        }}
-        title={`Zoom: ${Math.round((viewport.zoom as number) * 100)}%`}>
+        </Tag>
+        <Tag
+          badge
+          width="40px"
+          title={`Zoom: ${Math.round((viewport.zoom as number) * 100)}%`}
+          textAlign="center"
+        >
           {Math.round((viewport.zoom as number) * 100)}%
-        </div>
-        <div style={{
-          width: '40px',
-          fontSize: '9px',
-          fontWeight: '600',
-          color: '#666',
-          padding: '1px 6px',
-          backgroundColor: '#f8f9fa',
-          border: '1px solid #dee2e6',
-          borderRadius: '12px',
-          textAlign: 'right'
-        }}
-        title={`Selected elements: ${selectedCount}`}>
+        </Tag>
+        <Tag
+          badge
+          width="40px"
+          title={`Selected elements: ${selectedCount}`}
+        >
           {selectedCount === 0 ? '\u00A0' : selectedCount}
-        </div>
+        </Tag>
       </div>
 
       {/* Main toolbar with essential buttons */}

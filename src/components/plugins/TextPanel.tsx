@@ -134,7 +134,7 @@ export const TextPanel: React.FC = () => {
               fontSize: '12px'
             }}
           />
-                    <IconButton
+          <IconButton
             onPointerUp={() => handleFontWeightChange(getCurrentFontWeight() === 'bold' ? 'normal' : 'bold')}
             active={getCurrentFontWeight() === 'bold'}
             activeBgColor="#007bff"
