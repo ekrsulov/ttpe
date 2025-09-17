@@ -1,7 +1,8 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { temporal } from 'zundo';
-import type { Point } from '../types';
 import { textToPath } from '../utils/textVectorizationUtils';
+import type { Point } from '../types';
 import isDeepEqual from 'fast-deep-equal';
 
 // Import all slices
@@ -58,220 +59,223 @@ type CanvasStore = BaseSlice &
 
 // Create the store with all slices combined and temporal middleware
 export const useCanvasStore = create<CanvasStore>()(
-  temporal(
-    (set, get, api) => ({
-      // Base slice
-      ...createBaseSlice(set, get, api),
+  persist(
 
-      // Viewport slice
-      ...createViewportSlice(set, get, api),
+    temporal(
+      (set, get, api) => ({
+        // Base slice
+        ...createBaseSlice(set, get, api),
 
-      // Selection slice
-      ...createSelectionSlice(set, get, api),
+        // Viewport slice
+        ...createViewportSlice(set, get, api),
 
-      // Order slice
-      ...createOrderSlice(set, get, api),
+        // Selection slice
+        ...createSelectionSlice(set, get, api),
 
-      // Arrange slice
-      ...createArrangeSlice(set, get, api),
+        // Order slice
+        ...createOrderSlice(set, get, api),
 
-      // Pencil plugin slice
-      ...createPencilPluginSlice(set, get, api),
+        // Arrange slice
+        ...createArrangeSlice(set, get, api),
 
-      // Text plugin slice
-      ...createTextPluginSlice(set, get, api),
+        // Pencil plugin slice
+        ...createPencilPluginSlice(set, get, api),
 
-      // Shape plugin slice
-      ...createShapePluginSlice(set, get, api),
+        // Text plugin slice
+        ...createTextPluginSlice(set, get, api),
 
-      // History plugin slice
-      ...createHistoryPluginSlice(set, get, api),
+        // Shape plugin slice
+        ...createShapePluginSlice(set, get, api),
 
-      // Transformation plugin slice
-      ...createTransformationPluginSlice(set, get, api),
+        // History plugin slice
+        ...createHistoryPluginSlice(set, get, api),
 
-      // Editor plugin slice
-      ...createEditorPluginSlice(set, get, api),
+        // Transformation plugin slice
+        ...createTransformationPluginSlice(set, get, api),
 
-      // Cross-slice actions
-      startPath: (point) => {
-        const { strokeWidth, strokeColor, opacity } = get().pencil;
-        // For pencil paths, if strokeColor is 'none', use black instead
-        const effectiveStrokeColor = strokeColor === 'none' ? '#000000' : strokeColor;
-        get().addElement({
-          type: 'path',
-          data: {
-            d: `M ${point.x} ${point.y}`,
-            strokeWidth,
-            strokeColor: effectiveStrokeColor,
-            opacity,
-            fillColor: 'none',  // Always no fill for pencil strokes
-            fillOpacity: 1,     // Always 100% fill opacity for pencil strokes
-            isPencilPath: true, // Mark this as a pencil-created path
-          },
-        });
-      },
+        // Editor plugin slice
+        ...createEditorPluginSlice(set, get, api),
 
-      addPointToPath: (point) => {
-        const state = get();
-        const lastElement = state.elements[state.elements.length - 1];
-        if (lastElement?.type === 'path') {
-          const pathData = lastElement.data as import('../types').PathData;
-          const newD = `${pathData.d} L ${point.x} ${point.y}`;
-          get().updateElement(lastElement.id, {
+        // Cross-slice actions
+        startPath: (point) => {
+          const { strokeWidth, strokeColor, opacity } = get().pencil;
+          // For pencil paths, if strokeColor is 'none', use black instead
+          const effectiveStrokeColor = strokeColor === 'none' ? '#000000' : strokeColor;
+          get().addElement({
+            type: 'path',
             data: {
-              ...pathData,
-              d: newD,
+              d: `M ${point.x} ${point.y}`,
+              strokeWidth,
+              strokeColor: effectiveStrokeColor,
+              opacity,
+              fillColor: 'none',  // Always no fill for pencil strokes
+              fillOpacity: 1,     // Always 100% fill opacity for pencil strokes
+              isPencilPath: true, // Mark this as a pencil-created path
             },
           });
-        }
-      },
+        },
 
-      finishPath: () => {
-        // Path is already added, nothing special to do
-      },
-
-      addText: async (x, y, text) => {
-        const { fontSize, fontFamily, fontWeight, fontStyle } = get().text;
-        const { fillColor, fillOpacity, strokeColor, strokeWidth, opacity } = get().pencil;
-
-        try {
-          // Convert text to path automatically
-          const pathD = await textToPath(
-            text,
-            x,
-            y,
-            fontSize,
-            fontFamily,
-            fontWeight,
-            fontStyle
-          );
-
-          if (pathD) {
-            // Create path element with the converted text
-            get().addElement({
-              type: 'path',
+        addPointToPath: (point) => {
+          const state = get();
+          const lastElement = state.elements[state.elements.length - 1];
+          if (lastElement?.type === 'path') {
+            const pathData = lastElement.data as import('../types').PathData;
+            const newD = `${pathData.d} L ${point.x} ${point.y}`;
+            get().updateElement(lastElement.id, {
               data: {
-                d: pathD,
-                strokeWidth,
-                strokeColor,
-                opacity,
-                fillColor,
-                fillOpacity,
+                ...pathData,
+                d: newD,
               },
             });
-          } else {
-            console.error('Failed to convert text to path');
           }
-        } catch (error) {
-          console.error('Error converting text to path:', error);
-        }
+        },
 
-        // Auto-switch to select mode after adding text
-        get().setActivePlugin('select');
-      },
+        finishPath: () => {
+          // Path is already added, nothing special to do
+        },
 
-      deleteSelectedElements: () => {
-        const selectedIds = get().selectedIds;
-        set((state) => ({
-          elements: state.elements.filter((el) => !(selectedIds as any).includes(el.id)),
-          selectedIds: [],
-        }));
-      },
+        addText: async (x, y, text) => {
+          const { fontSize, fontFamily, fontWeight, fontStyle } = get().text;
+          const { fillColor, fillOpacity, strokeColor, strokeWidth, opacity } = get().pencil;
 
-      createShape: (startPoint, endPoint) => {
-        const { strokeWidth, strokeColor, opacity, fillColor, fillOpacity } = get().pencil;
-        const selectedShape = get().shape.selectedShape;
+          try {
+            // Convert text to path automatically
+            const pathD = await textToPath(
+              text,
+              x,
+              y,
+              fontSize,
+              fontFamily,
+              fontWeight,
+              fontStyle
+            );
 
-        // Calculate shape dimensions
-        const width = Math.abs(endPoint.x - startPoint.x);
-        const height = Math.abs(endPoint.y - startPoint.y);
-        const centerX = (startPoint.x + endPoint.x) / 2;
-        const centerY = (startPoint.y + endPoint.y) / 2;
+            if (pathD) {
+              // Create path element with the converted text
+              get().addElement({
+                type: 'path',
+                data: {
+                  d: pathD,
+                  strokeWidth,
+                  strokeColor,
+                  opacity,
+                  fillColor,
+                  fillOpacity,
+                },
+              });
+            } else {
+              console.error('Failed to convert text to path');
+            }
+          } catch (error) {
+            console.error('Error converting text to path:', error);
+          }
 
-        let d = '';
+          // Auto-switch to select mode after adding text
+          get().setActivePlugin('select');
+        },
 
-        switch (selectedShape) {
-          case 'square':
-            // Create a square using path commands
-            const halfSize = Math.min(width, height) / 2;
-            d = `M ${centerX - halfSize} ${centerY - halfSize} L ${centerX + halfSize} ${centerY - halfSize} L ${centerX + halfSize} ${centerY + halfSize} L ${centerX - halfSize} ${centerY + halfSize} Z`;
-            break;
+        deleteSelectedElements: () => {
+          const selectedIds = get().selectedIds;
+          set((state) => ({
+            elements: state.elements.filter((el) => !(selectedIds as any).includes(el.id)),
+            selectedIds: [],
+          }));
+        },
 
-          case 'rectangle':
-            // Create a rectangle using path commands
-            d = `M ${startPoint.x} ${startPoint.y} L ${endPoint.x} ${startPoint.y} L ${endPoint.x} ${endPoint.y} L ${startPoint.x} ${endPoint.y} Z`;
-            break;
+        createShape: (startPoint, endPoint) => {
+          const { strokeWidth, strokeColor, opacity, fillColor, fillOpacity } = get().pencil;
+          const selectedShape = get().shape.selectedShape;
 
-          case 'circle':
-            // Create a circle using C commands (Bézier curves)
-            const radius = Math.min(width, height) / 2;
-            const kappa = 0.552284749831; // Control point constant for circle approximation
+          // Calculate shape dimensions
+          const width = Math.abs(endPoint.x - startPoint.x);
+          const height = Math.abs(endPoint.y - startPoint.y);
+          const centerX = (startPoint.x + endPoint.x) / 2;
+          const centerY = (startPoint.y + endPoint.y) / 2;
 
-            // Calculate control points
-            const cx1 = centerX - radius;
-            const cy1 = centerY - radius * kappa;
-            const cx2 = centerX - radius * kappa;
-            const cy2 = centerY - radius;
-            const cx3 = centerX + radius * kappa;
-            const cy3 = centerY - radius;
-            const cx4 = centerX + radius;
-            const cy4 = centerY - radius * kappa;
-            const cx5 = centerX + radius;
-            const cy5 = centerY + radius * kappa;
-            const cx6 = centerX + radius * kappa;
-            const cy6 = centerY + radius;
-            const cx7 = centerX - radius * kappa;
-            const cy7 = centerY + radius;
-            const cx8 = centerX - radius;
-            const cy8 = centerY + radius * kappa;
+          let d = '';
 
-            d = `M ${centerX - radius} ${centerY} C ${cx1} ${cy1} ${cx2} ${cy2} ${centerX} ${centerY - radius} C ${cx3} ${cy3} ${cx4} ${cy4} ${centerX + radius} ${centerY} C ${cx5} ${cy5} ${cx6} ${cy6} ${centerX} ${centerY + radius} C ${cx7} ${cy7} ${cx8} ${cy8} ${centerX - radius} ${centerY} Z`;
-            break;
+          switch (selectedShape) {
+            case 'square':
+              // Create a square using path commands
+              const halfSize = Math.min(width, height) / 2;
+              d = `M ${centerX - halfSize} ${centerY - halfSize} L ${centerX + halfSize} ${centerY - halfSize} L ${centerX + halfSize} ${centerY + halfSize} L ${centerX - halfSize} ${centerY + halfSize} Z`;
+              break;
 
-          case 'triangle':
-            // Create a triangle using path commands
-            d = `M ${centerX} ${startPoint.y} L ${endPoint.x} ${endPoint.y} L ${startPoint.x} ${endPoint.y} Z`;
-            break;
+            case 'rectangle':
+              // Create a rectangle using path commands
+              d = `M ${startPoint.x} ${startPoint.y} L ${endPoint.x} ${startPoint.y} L ${endPoint.x} ${endPoint.y} L ${startPoint.x} ${endPoint.y} Z`;
+              break;
 
-          default:
-            // Default to square if unknown shape
-            const defaultHalfSize = Math.min(width, height) / 2;
-            d = `M ${centerX - defaultHalfSize} ${centerY - defaultHalfSize} L ${centerX + defaultHalfSize} ${centerY - defaultHalfSize} L ${centerX + defaultHalfSize} ${centerY + defaultHalfSize} L ${centerX - defaultHalfSize} ${centerY + defaultHalfSize} Z`;
-            break;
-        }
+            case 'circle':
+              // Create a circle using C commands (Bézier curves)
+              const radius = Math.min(width, height) / 2;
+              const kappa = 0.552284749831; // Control point constant for circle approximation
 
-        get().addElement({
-          type: 'path',
-          data: {
-            d,
-            strokeWidth,
-            strokeColor,
-            opacity,
-            fillColor,
-            fillOpacity,
-          },
-        });
+              // Calculate control points
+              const cx1 = centerX - radius;
+              const cy1 = centerY - radius * kappa;
+              const cx2 = centerX - radius * kappa;
+              const cy2 = centerY - radius;
+              const cx3 = centerX + radius * kappa;
+              const cy3 = centerY - radius;
+              const cx4 = centerX + radius;
+              const cy4 = centerY - radius * kappa;
+              const cx5 = centerX + radius;
+              const cy5 = centerY + radius * kappa;
+              const cx6 = centerX + radius * kappa;
+              const cy6 = centerY + radius;
+              const cx7 = centerX - radius * kappa;
+              const cy7 = centerY + radius;
+              const cx8 = centerX - radius;
+              const cy8 = centerY + radius * kappa;
 
-        // Auto-switch to select mode after creating shape
-        get().setActivePlugin('select');
-      },
-    }),
-    {
-      // Zundo temporal options
-      limit: 50, // Keep last 50 states
-      partialize: (state) => ({
-        elements: state.elements,
-        selectedIds: state.selectedIds,
-        viewport: state.viewport,
+              d = `M ${centerX - radius} ${centerY} C ${cx1} ${cy1} ${cx2} ${cy2} ${centerX} ${centerY - radius} C ${cx3} ${cy3} ${cx4} ${cy4} ${centerX + radius} ${centerY} C ${cx5} ${cy5} ${cx6} ${cy6} ${centerX} ${centerY + radius} C ${cx7} ${cy7} ${cx8} ${cy8} ${centerX - radius} ${centerY} Z`;
+              break;
+
+            case 'triangle':
+              // Create a triangle using path commands
+              d = `M ${centerX} ${startPoint.y} L ${endPoint.x} ${endPoint.y} L ${startPoint.x} ${endPoint.y} Z`;
+              break;
+
+            default:
+              // Default to square if unknown shape
+              const defaultHalfSize = Math.min(width, height) / 2;
+              d = `M ${centerX - defaultHalfSize} ${centerY - defaultHalfSize} L ${centerX + defaultHalfSize} ${centerY - defaultHalfSize} L ${centerX + defaultHalfSize} ${centerY + defaultHalfSize} L ${centerX - defaultHalfSize} ${centerY + defaultHalfSize} Z`;
+              break;
+          }
+
+          get().addElement({
+            type: 'path',
+            data: {
+              d,
+              strokeWidth,
+              strokeColor,
+              opacity,
+              fillColor,
+              fillOpacity,
+            },
+          });
+
+          // Auto-switch to select mode after creating shape
+          get().setActivePlugin('select');
+        },
       }),
-      equality: (pastState, currentState) => isDeepEqual(pastState, currentState),
-      // Cool-off period: debounce state changes to prevent too many history entries
-      // during rapid events like drawing or moving
-      handleSet: (handleSet) =>
-        debounce<typeof handleSet>((state) => {
-          handleSet(state);
-        }, 100), // 100ms cool-off period
-    }
+      {
+        // Zundo temporal options
+        limit: 50, // Keep last 50 states
+        partialize: (state) => ({
+          elements: state.elements,
+          selectedIds: state.selectedIds,
+          viewport: state.viewport,
+        }),
+        equality: (pastState, currentState) => isDeepEqual(pastState, currentState),
+        // Cool-off period: debounce state changes to prevent too many history entries
+        // during rapid events like drawing or moving
+        handleSet: (handleSet) =>
+          debounce<typeof handleSet>((state) => {
+            handleSet(state);
+          }, 100), // 100ms cool-off period
+      }
+    ), { name: 'canvas-app-state' }
   )
 );
