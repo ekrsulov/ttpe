@@ -11,7 +11,6 @@ interface IconButtonProps {
   active?: boolean;
   activeBgColor?: string;
   activeColor?: string;
-  borderColor?: string;
   transition?: string;
 }
 
@@ -26,7 +25,6 @@ export const IconButton: React.FC<IconButtonProps> = ({
   active = false,
   activeBgColor = '#007bff',
   activeColor = '#fff',
-  borderColor = '#dee2e6',
   transition = 'all 0.1s ease'
 }) => {
   const getButtonSize = () => {
@@ -59,7 +57,7 @@ export const IconButton: React.FC<IconButtonProps> = ({
         padding,
         backgroundColor: disabled ? '#f8f9fa' : (active ? activeBgColor : '#f8f9fa'),
         color: disabled ? '#6c757d' : (active ? activeColor : '#333'),
-        border: `1px solid ${borderColor}`,
+        border: 'none',
         borderRadius: '3px',
         cursor: disabled ? 'not-allowed' : 'pointer',
         display: 'flex',

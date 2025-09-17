@@ -30,7 +30,7 @@ export const Tag: React.FC<TagProps> = ({
 
   if (badge) {
     style.backgroundColor = '#f8f9fa';
-    style.border = '1px solid #dee2e6';
+    style.border = 'none';
     style.borderRadius = '12px';
     style.padding = '1px 6px';
     style.fontWeight = '600';

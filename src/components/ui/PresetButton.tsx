@@ -18,7 +18,7 @@ export const PresetButton: React.FC<PresetButtonProps> = ({ preset, onClick, isA
       style={{
         width: '20px',
         height: '20px',
-        border: isActive ? '2px solid #007bff' : '1px solid #ddd',
+        border: 'none',
         borderRadius: '3px',
         backgroundColor: '#fff',
         cursor: 'pointer',

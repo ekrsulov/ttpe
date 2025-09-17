@@ -50,8 +50,7 @@ export const Sidebar: React.FC = () => {
     }}>
       {/* Fixed tools section */}
       <div style={{
-        padding: '4px',
-        borderBottom: '1px solid #ddd',
+        padding: '4px 8px 0px 8px',
         backgroundColor: '#fff'
       }}>
         <div style={{
@@ -70,9 +69,8 @@ export const Sidebar: React.FC = () => {
                 active={activePlugin === plugin.name}
                 activeBgColor="#007bff"
                 activeColor="#fff"
-                borderColor="#ccc"
                 size="custom"
-                customSize="32px"
+                customSize="30px"
                 title={plugin.label}
               >
                 <IconComponent size={14} />
