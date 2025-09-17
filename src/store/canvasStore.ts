@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { temporal } from 'zundo';
 import type { Point } from '../types';
 import { textToPath } from '../utils/textVectorizationUtils';
+import isDeepEqual from 'fast-deep-equal';
 
 // Import all slices
 import { createBaseSlice, type BaseSlice } from './slices/baseSlice';
@@ -272,13 +273,8 @@ export const useCanvasStore = create<CanvasStore>()(
         elements: state.elements,
         selectedIds: state.selectedIds,
         viewport: state.viewport,
-        pencil: state.pencil,
-        text: state.text,
-        shape: state.shape,
-        transformation: state.transformation,
-        editor: state.editor,
-        activePlugin: state.activePlugin,
       }),
+      equality: (pastState, currentState) => isDeepEqual(pastState, currentState),
       // Cool-off period: throttle state changes to prevent too many history entries
       // during rapid events like drawing or moving
       handleSet: (handleSet) =>
