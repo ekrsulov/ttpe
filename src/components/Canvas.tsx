@@ -2,6 +2,7 @@ import React, { useRef, useCallback, useState, useEffect } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
 import { measurePath } from '../utils/measurementUtils';
 import { transformPathData } from '../utils/transformationUtils';
+import { parsePathD, extractEditablePoints } from '../utils/pathParserUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../utils';
 import { CanvasRenderer } from './CanvasRenderer';
 import type { Point, PathData } from '../types';
@@ -21,10 +22,14 @@ export const Canvas: React.FC<CanvasProps> = () => {
     shape, 
     selectedIds,
     editingPoint,
+    selectedCommands,
+    draggingSelection,
     updateElement,
     startDraggingPoint,
     updateDraggingPoint,
-    stopDraggingPoint
+    stopDraggingPoint,
+    selectCommand,
+    clearSelectedCommands
   } = useCanvasStore();
 
   const [isSpacePressed, setIsSpacePressed] = useState(false);
@@ -268,6 +273,16 @@ export const Canvas: React.FC<CanvasProps> = () => {
           setIsSelecting(true);
           setSelectionStart(point);
           setSelectionEnd(point);
+        }
+        break;
+      case 'edit':
+        // Start command selection rectangle if clicking on SVG canvas
+        if (target.tagName === 'svg') {
+          setIsSelecting(true);
+          setSelectionStart(point);
+          setSelectionEnd(point);
+          // Clear previous command selection
+          clearSelectedCommands();
         }
         break;
     }
@@ -559,27 +574,54 @@ export const Canvas: React.FC<CanvasProps> = () => {
       const selectionMinY = Math.min(selectionStart.y, selectionEnd.y);
       const selectionMaxY = Math.max(selectionStart.y, selectionEnd.y);
 
-      // Find elements within the box
-      const selectedIds = elements
-        .filter(el => {
+      if (activePlugin === 'edit') {
+        // Select commands within the selection box
+        const selectedCommands: Array<{elementId: string, commandIndex: number, pointIndex: number}> = [];
+        
+        elements.forEach(el => {
           if (el.type === 'path') {
-            const pathData = el.data as import('../types').PathData;
-            // Check if the path bounds intersect with the selection box
-            const pathBounds = measurePath(pathData.d, pathData.strokeWidth, viewport.zoom);
-
-            // Check for intersection between path bounds and selection bounds
-            const intersects = !(pathBounds.maxX < selectionMinX ||
-                     pathBounds.minX > selectionMaxX ||
-                     pathBounds.maxY < selectionMinY ||
-                     pathBounds.minY > selectionMaxY);
-
-            return intersects;
+            const pathData = el.data as PathData;
+            const commands = parsePathD(pathData.d);
+            const points = extractEditablePoints(commands);
+            
+            points.forEach(point => {
+              if (point.x >= selectionMinX && point.x <= selectionMaxX &&
+                  point.y >= selectionMinY && point.y <= selectionMaxY) {
+                selectedCommands.push({
+                  elementId: el.id,
+                  commandIndex: point.commandIndex,
+                  pointIndex: point.pointIndex
+                });
+              }
+            });
           }
-          return false;
-        })
-        .map(el => el.id);
+        });
+        
+        // Select all found commands
+        selectedCommands.forEach(command => selectCommand(command, true));
+      } else {
+        // Original element selection logic
+        const selectedIds = elements
+          .filter(el => {
+            if (el.type === 'path') {
+              const pathData = el.data as import('../types').PathData;
+              // Check if the path bounds intersect with the selection box
+              const pathBounds = measurePath(pathData.d, pathData.strokeWidth, viewport.zoom);
 
-      useCanvasStore.getState().selectElements(selectedIds);
+              // Check for intersection between path bounds and selection bounds
+              const intersects = !(pathBounds.maxX < selectionMinX ||
+                       pathBounds.minX > selectionMaxX ||
+                       pathBounds.maxY < selectionMinY ||
+                       pathBounds.minY > selectionMaxY);
+
+              return intersects;
+            }
+            return false;
+          })
+          .map(el => el.id);
+
+        useCanvasStore.getState().selectElements(selectedIds);
+      }
       
       // Mark that we just made a selection to prevent immediate clearing
       setJustSelected(true);
@@ -598,6 +640,9 @@ export const Canvas: React.FC<CanvasProps> = () => {
     if (activePlugin === 'select' && isCanvasClick && !justSelected && 
         !isSelecting && !isCreatingShape && !isTransforming) {
       useCanvasStore.getState().clearSelection();
+    } else if (activePlugin === 'edit' && isCanvasClick && !justSelected && 
+               !isSelecting && !isCreatingShape && !isTransforming) {
+      clearSelectedCommands();
     }
 
     // Clean up any remaining drag state (in case of click without drag)
@@ -649,11 +694,13 @@ export const Canvas: React.FC<CanvasProps> = () => {
       <CanvasRenderer
         viewport={viewport}
         selectedIds={selectedIds}
+        selectedCommands={selectedCommands}
         transformation={transformation}
         shape={shape}
         elements={elements}
         activePlugin={activePlugin}
         editingPoint={editingPoint}
+        draggingSelection={draggingSelection}
         isSelecting={isSelecting}
         selectionStart={selectionStart}
         selectionEnd={selectionEnd}
@@ -668,6 +715,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
         onUpdateDraggingPoint={updateDraggingPoint}
         onStopDraggingPoint={stopDraggingPoint}
         onUpdateElement={updateElement}
+        onSelectCommand={selectCommand}
       />
     </svg>
   );

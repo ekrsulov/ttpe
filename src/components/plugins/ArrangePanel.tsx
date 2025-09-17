@@ -11,13 +11,16 @@ import {
   AlignVerticalJustifyCenter,
   AlignVerticalJustifyEnd,
   MoveHorizontal,
-  MoveVertical
+  MoveVertical,
+  Trash2
 } from 'lucide-react';
 import { IconButton } from '../ui/IconButton';
 
 export const ArrangePanel: React.FC = () => {
   const {
     selectedIds,
+    selectedCommands,
+    activePlugin,
     bringToFront,
     sendForward,
     sendBackward,
@@ -29,12 +32,23 @@ export const ArrangePanel: React.FC = () => {
     alignMiddle,
     alignBottom,
     distributeHorizontally,
-    distributeVertically
+    distributeVertically,
+    deleteSelectedCommands,
+    alignLeftCommands,
+    alignCenterCommands,
+    alignRightCommands,
+    alignTopCommands,
+    alignMiddleCommands,
+    alignBottomCommands,
+    distributeHorizontallyCommands,
+    distributeVerticallyCommands
   } = useCanvasStore();
 
   const selectedCount = selectedIds.length;
-  const canAlign = selectedCount >= 2;
-  const canDistribute = selectedCount >= 3;
+  const selectedCommandsCount = selectedCommands.length;
+  const canAlign = selectedCount >= 2 || (activePlugin === 'edit' && selectedCommandsCount >= 2);
+  const canDistribute = selectedCount >= 3 || (activePlugin === 'edit' && selectedCommandsCount >= 3);
+  const canDelete = activePlugin === 'edit' && selectedCommandsCount > 0;
 
   return (
     <div style={{ 
@@ -46,71 +60,121 @@ export const ArrangePanel: React.FC = () => {
         {/* Distribution & Order buttons */}
         <div style={{ display: 'flex', gap: '2px' }}>
           <div style={{ flex: 1 }}>
-            <IconButton onClick={distributeHorizontally} disabled={!canDistribute} title="Distribute Horizontally">
+            <IconButton 
+              onClick={activePlugin === 'edit' ? distributeHorizontallyCommands : distributeHorizontally} 
+              disabled={!canDistribute} 
+              title="Distribute Horizontally"
+            >
               <MoveHorizontal size={10} />
             </IconButton>
           </div>
           <div style={{ flex: 1 }}>
-            <IconButton onClick={distributeVertically} disabled={!canDistribute} title="Distribute Vertically">
+            <IconButton 
+              onClick={activePlugin === 'edit' ? distributeVerticallyCommands : distributeVertically} 
+              disabled={!canDistribute} 
+              title="Distribute Vertically"
+            >
               <MoveVertical size={10} />
             </IconButton>
           </div>
 
-          {/* Order buttons */}
-          <div style={{ flex: 1 }}>
-            <IconButton onClick={bringToFront} disabled={selectedCount === 0} title="Bring to Front">
-              <Triangle size={10} />
-            </IconButton>
-          </div>
-          <div style={{ flex: 1 }}>
-            <IconButton onClick={sendForward} disabled={selectedCount === 0} title="Send Forward">
-              <ChevronUp size={10} />
-            </IconButton>
-          </div>
-          <div style={{ flex: 1 }}>
-            <IconButton onClick={sendBackward} disabled={selectedCount === 0} title="Send Backward">
-              <ChevronDown size={10} />
-            </IconButton>
-          </div>
-          <div style={{ flex: 1 }}>
-            <IconButton onClick={sendToBack} disabled={selectedCount === 0} title="Send to Back">
-              <Triangle size={10} style={{ transform: 'rotate(180deg)' }} />
-            </IconButton>
-          </div>
+          {activePlugin === 'edit' ? (
+            /* Delete button for edit mode */
+            <div style={{ flex: 1 }}>
+              <IconButton 
+                onClick={deleteSelectedCommands} 
+                disabled={!canDelete} 
+                active={canDelete}
+                activeBgColor="#dc3545"
+                activeColor="#fff"
+                title="Delete Selected Commands"
+              >
+                <Trash2 size={10} />
+              </IconButton>
+            </div>
+          ) : (
+            /* Order buttons for other modes */
+            <>
+              <div style={{ flex: 1 }}>
+                <IconButton onClick={bringToFront} disabled={selectedCount === 0} title="Bring to Front">
+                  <Triangle size={10} />
+                </IconButton>
+              </div>
+              <div style={{ flex: 1 }}>
+                <IconButton onClick={sendForward} disabled={selectedCount === 0} title="Send Forward">
+                  <ChevronUp size={10} />
+                </IconButton>
+              </div>
+              <div style={{ flex: 1 }}>
+                <IconButton onClick={sendBackward} disabled={selectedCount === 0} title="Send Backward">
+                  <ChevronDown size={10} />
+                </IconButton>
+              </div>
+              <div style={{ flex: 1 }}>
+                <IconButton onClick={sendToBack} disabled={selectedCount === 0} title="Send to Back">
+                  <Triangle size={10} style={{ transform: 'rotate(180deg)' }} />
+                </IconButton>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Align buttons */}
         <div style={{ display: 'flex', gap: '2px' }}>
           {/* Horizontal alignment */}
           <div style={{ flex: 1 }}>
-            <IconButton onClick={alignLeft} disabled={!canAlign} title="Align Left">
+            <IconButton 
+              onClick={activePlugin === 'edit' ? alignLeftCommands : alignLeft} 
+              disabled={!canAlign} 
+              title="Align Left"
+            >
               <AlignLeft size={10} />
             </IconButton>
           </div>
           <div style={{ flex: 1 }}>
-            <IconButton onClick={alignCenter} disabled={!canAlign} title="Align Center">
+            <IconButton 
+              onClick={activePlugin === 'edit' ? alignCenterCommands : alignCenter} 
+              disabled={!canAlign} 
+              title="Align Center"
+            >
               <AlignCenter size={10} />
             </IconButton>
           </div>
           <div style={{ flex: 1 }}>
-            <IconButton onClick={alignRight} disabled={!canAlign} title="Align Right">
+            <IconButton 
+              onClick={activePlugin === 'edit' ? alignRightCommands : alignRight} 
+              disabled={!canAlign} 
+              title="Align Right"
+            >
               <AlignRight size={10} />
             </IconButton>
           </div>
 
           {/* Vertical alignment */}
           <div style={{ flex: 1 }}>
-            <IconButton onClick={alignTop} disabled={!canAlign} title="Align Top">
+            <IconButton 
+              onClick={activePlugin === 'edit' ? alignTopCommands : alignTop} 
+              disabled={!canAlign} 
+              title="Align Top"
+            >
               <AlignVerticalJustifyStart size={10} />
             </IconButton>
           </div>
           <div style={{ flex: 1 }}>
-            <IconButton onClick={alignMiddle} disabled={!canAlign} title="Align Middle">
+            <IconButton 
+              onClick={activePlugin === 'edit' ? alignMiddleCommands : alignMiddle} 
+              disabled={!canAlign} 
+              title="Align Middle"
+            >
               <AlignVerticalJustifyCenter size={10} />
             </IconButton>
           </div>
           <div style={{ flex: 1 }}>
-            <IconButton onClick={alignBottom} disabled={!canAlign} title="Align Bottom">
+            <IconButton 
+              onClick={activePlugin === 'edit' ? alignBottomCommands : alignBottom} 
+              disabled={!canAlign} 
+              title="Align Bottom"
+            >
               <AlignVerticalJustifyEnd size={10} />
             </IconButton>
           </div>
