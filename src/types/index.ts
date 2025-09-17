@@ -52,10 +52,8 @@ export interface PluginState {
     text: string;
     fontSize: number;
     fontFamily: string;
-    color: string;
     fontWeight: 'normal' | 'bold';
     fontStyle: 'normal' | 'italic';
-    opacity: number;
   };
   select: {
     selectedIds: string[];

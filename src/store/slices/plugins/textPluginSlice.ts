@@ -6,10 +6,8 @@ export interface TextPluginSlice {
     text: string;
     fontSize: number;
     fontFamily: string;
-    color: string;
     fontWeight: 'normal' | 'bold';
     fontStyle: 'normal' | 'italic';
-    opacity: number;
   };
 
   // Actions
@@ -22,10 +20,8 @@ export const createTextPluginSlice: StateCreator<TextPluginSlice, [], [], TextPl
     text: 'New Text',
     fontSize: 72,
     fontFamily: 'Arial',
-    color: '#000000',
     fontWeight: 'normal',
     fontStyle: 'normal',
-    opacity: 1,
   },
 
   // Actions
