@@ -19,12 +19,19 @@ const transformSvgPath = (d: string, deltaX: number, deltaY: number): string => 
       i++;
       // Collect all numeric values until the next command
       while (i < commands.length && 'MLHVCSQTAZmlhvcsqtaz'.indexOf(commands[i]) === -1) {
-        const coords = commands[i].trim().split(/[\s,]+/).map(parseFloat);
+        const coords = commands[i].trim().split(/[\s,]+/).map(coord => {
+          const parsed = parseFloat(coord);
+          return isNaN(parsed) ? 0 : parsed; // Default to 0 if parsing fails
+        });
         if (coords.length >= 2) {
           // Apply translation to coordinate pairs
           for (let j = 0; j < coords.length; j += 2) {
-            coords[j] = formatToPrecision(coords[j] + deltaX, PATH_DECIMAL_PRECISION);     // x coordinate
-            coords[j + 1] = formatToPrecision(coords[j + 1] + deltaY, PATH_DECIMAL_PRECISION); // y coordinate
+            if (!isNaN(coords[j]) && !isNaN(deltaX)) {
+              coords[j] = formatToPrecision(coords[j] + deltaX, PATH_DECIMAL_PRECISION);
+            }
+            if (!isNaN(coords[j + 1]) && !isNaN(deltaY)) {
+              coords[j + 1] = formatToPrecision(coords[j + 1] + deltaY, PATH_DECIMAL_PRECISION);
+            }
           }
           result += ' ' + coords.join(' ');
         }

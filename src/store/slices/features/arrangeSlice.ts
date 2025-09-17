@@ -20,12 +20,19 @@ const transformSvgPath = (d: string, deltaX: number, deltaY: number): string => 
       i++;
       // Collect all numeric values until the next command
       while (i < commands.length && 'MLHVCSQTAZmlhvcsqtaz'.indexOf(commands[i]) === -1) {
-        const coords = commands[i].trim().split(/[\s,]+/).map(parseFloat);
+        const coords = commands[i].trim().split(/[\s,]+/).map(coord => {
+          const parsed = parseFloat(coord);
+          return isNaN(parsed) ? 0 : parsed; // Default to 0 if parsing fails
+        });
         if (coords.length >= 2) {
           // Apply translation to coordinate pairs
           for (let j = 0; j < coords.length; j += 2) {
-            coords[j] = formatToPrecision(coords[j] + deltaX, PATH_DECIMAL_PRECISION);     // x coordinate
-            coords[j + 1] = formatToPrecision(coords[j + 1] + deltaY, PATH_DECIMAL_PRECISION); // y coordinate
+            if (!isNaN(coords[j]) && !isNaN(deltaX)) {
+              coords[j] = formatToPrecision(coords[j] + deltaX, PATH_DECIMAL_PRECISION);
+            }
+            if (!isNaN(coords[j + 1]) && !isNaN(deltaY)) {
+              coords[j + 1] = formatToPrecision(coords[j + 1] + deltaY, PATH_DECIMAL_PRECISION);
+            }
           }
           result += ' ' + coords.join(' ');
         }
@@ -83,13 +90,16 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
             const pathData = el.data as import('../../../types').PathData;
             const currentBounds = measurePath(pathData.d, pathData.strokeWidth, fullState.viewport.zoom);
             const deltaX = formatToPrecision(minX - currentBounds.minX, PATH_DECIMAL_PRECISION);
-            return {
-              ...el,
-              data: {
-                ...pathData,
-                d: transformSvgPath(pathData.d, deltaX, 0),
-              },
-            };
+            
+            if (!isNaN(deltaX)) {
+              return {
+                ...el,
+                data: {
+                  ...pathData,
+                  d: transformSvgPath(pathData.d, deltaX, 0),
+                },
+              };
+            }
           }
         }
         return el;
@@ -102,24 +112,24 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
     const selectedElements = fullState.elements.filter((el: CanvasElement) => fullState.selectedIds.includes(el.id));
     if (selectedElements.length < 2) return;
 
-    const centers = selectedElements.map((el: CanvasElement) => {
+    const centers = new Map<string, number>();
+    selectedElements.forEach((el: CanvasElement) => {
       if (el.type === 'path') {
         const pathData = el.data as import('../../../types').PathData;
         const bounds = measurePath(pathData.d, pathData.strokeWidth, fullState.viewport.zoom);
-        return (bounds.minX + bounds.maxX) / 2;
+        centers.set(el.id, (bounds.minX + bounds.maxX) / 2);
       }
-      return 0;
     });
 
-    const targetCenter = centers.reduce((sum: number, center: number) => sum + center, 0) / centers.length;
+    const targetCenter = Array.from(centers.values()).reduce((sum: number, center: number) => sum + center, 0) / centers.size;
 
     (set as any)((state: any) => ({
-      elements: state.elements.map((el: CanvasElement, index: number) => {
-        if (fullState.selectedIds.includes(el.id)) {
-          const currentCenter = centers[index];
+      elements: state.elements.map((el: CanvasElement) => {
+        if (fullState.selectedIds.includes(el.id) && centers.has(el.id)) {
+          const currentCenter = centers.get(el.id)!;
           const deltaX = formatToPrecision(targetCenter - currentCenter, PATH_DECIMAL_PRECISION);
 
-          if (el.type === 'path') {
+          if (!isNaN(deltaX) && el.type === 'path') {
             const pathData = el.data as import('../../../types').PathData;
             return {
               ...el,
@@ -210,24 +220,24 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
     const selectedElements = fullState.elements.filter((el: CanvasElement) => fullState.selectedIds.includes(el.id));
     if (selectedElements.length < 2) return;
 
-    const centers = selectedElements.map((el: CanvasElement) => {
+    const centers = new Map<string, number>();
+    selectedElements.forEach((el: CanvasElement) => {
       if (el.type === 'path') {
         const pathData = el.data as import('../../../types').PathData;
         const bounds = measurePath(pathData.d, pathData.strokeWidth, fullState.viewport.zoom);
-        return (bounds.minY + bounds.maxY) / 2;
+        centers.set(el.id, (bounds.minY + bounds.maxY) / 2);
       }
-      return 0;
     });
 
-    const targetCenter = centers.reduce((sum: number, center: number) => sum + center, 0) / centers.length;
+    const targetCenter = Array.from(centers.values()).reduce((sum: number, center: number) => sum + center, 0) / centers.size;
 
     (set as any)((state: any) => ({
-      elements: state.elements.map((el: CanvasElement, index: number) => {
-        if (fullState.selectedIds.includes(el.id)) {
-          const currentCenter = centers[index];
+      elements: state.elements.map((el: CanvasElement) => {
+        if (fullState.selectedIds.includes(el.id) && centers.has(el.id)) {
+          const currentCenter = centers.get(el.id)!;
           const deltaY = formatToPrecision(targetCenter - currentCenter, PATH_DECIMAL_PRECISION);
 
-          if (el.type === 'path') {
+          if (!isNaN(deltaY) && el.type === 'path') {
             const pathData = el.data as import('../../../types').PathData;
             return {
               ...el,
