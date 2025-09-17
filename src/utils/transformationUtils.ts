@@ -9,7 +9,7 @@ export function parsePathCommands(d: string): Array<{ command: string; points: P
   
   // Remove commas and extra spaces, split by command letters
   const cleaned = d.replace(/,/g, ' ').replace(/\s+/g, ' ').trim();
-  const segments = cleaned.split(/(?=[MLHVCSQTAZ])/i);
+  const segments = cleaned.split(/(?=[MLCZ])/i);
   
   for (const segment of segments) {
     if (!segment.trim()) continue;
@@ -30,21 +30,10 @@ export function parsePathCommands(d: string): Array<{ command: string; points: P
     switch (command.toUpperCase()) {
       case 'M':
       case 'L':
-      case 'T':
         for (let i = 0; i < coords.length; i += 2) {
           if (i + 1 < coords.length) {
             points.push({ x: coords[i], y: coords[i + 1] });
           }
-        }
-        break;
-      case 'H':
-        for (let i = 0; i < coords.length; i++) {
-          points.push({ x: coords[i], y: 0 }); // Y will be ignored
-        }
-        break;
-      case 'V':
-        for (let i = 0; i < coords.length; i++) {
-          points.push({ x: 0, y: coords[i] }); // X will be ignored
         }
         break;
       case 'C':
@@ -54,29 +43,6 @@ export function parsePathCommands(d: string): Array<{ command: string; points: P
               { x: coords[i], y: coords[i + 1] },
               { x: coords[i + 2], y: coords[i + 3] },
               { x: coords[i + 4], y: coords[i + 5] }
-            );
-          }
-        }
-        break;
-      case 'S':
-      case 'Q':
-        for (let i = 0; i < coords.length; i += 4) {
-          if (i + 3 < coords.length) {
-            points.push(
-              { x: coords[i], y: coords[i + 1] },
-              { x: coords[i + 2], y: coords[i + 3] }
-            );
-          }
-        }
-        break;
-      case 'A':
-        for (let i = 0; i < coords.length; i += 7) {
-          if (i + 6 < coords.length) {
-            points.push(
-              { x: coords[i], y: coords[i + 1] }, // rx, ry
-              { x: coords[i + 2], y: 0 }, // x-axis-rotation (no y component)
-              { x: coords[i + 3], y: coords[i + 4] }, // large-arc-flag, sweep-flag
-              { x: coords[i + 5], y: coords[i + 6] } // end point
             );
           }
         }
@@ -143,19 +109,8 @@ export function rebuildPathString(commands: Array<{ command: string; points: Poi
     switch (command.toUpperCase()) {
       case 'M':
       case 'L':
-      case 'T':
         for (const point of points) {
           pathString += ` ${formatToPrecision(point.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(point.y, PATH_DECIMAL_PRECISION)}`;
-        }
-        break;
-      case 'H':
-        for (const point of points) {
-          pathString += ` ${formatToPrecision(point.x, PATH_DECIMAL_PRECISION)}`;
-        }
-        break;
-      case 'V':
-        for (const point of points) {
-          pathString += ` ${formatToPrecision(point.y, PATH_DECIMAL_PRECISION)}`;
         }
         break;
       case 'C':
@@ -163,24 +118,6 @@ export function rebuildPathString(commands: Array<{ command: string; points: Poi
           if (i + 2 < points.length) {
             const separator = i > 0 ? ' C ' : '';
             pathString += `${separator}${formatToPrecision(points[i].x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i].y, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i + 1].x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i + 1].y, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i + 2].x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i + 2].y, PATH_DECIMAL_PRECISION)}`;
-          }
-        }
-        break;
-      case 'S':
-      case 'Q':
-        for (let i = 0; i < points.length; i += 2) {
-          if (i + 1 < points.length) {
-            const separator = i > 0 ? ` ${command} ` : '';
-            pathString += `${separator}${formatToPrecision(points[i].x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i].y, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i + 1].x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i + 1].y, PATH_DECIMAL_PRECISION)}`;
-          }
-        }
-        break;
-      case 'A':
-        for (let i = 0; i < points.length; i += 4) {
-          if (i + 3 < points.length) {
-            // rx ry x-axis-rotation large-arc-flag sweep-flag x y
-            const separator = i > 0 ? ' A ' : '';
-            pathString += `${separator}${formatToPrecision(points[i].x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i].y, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i + 1].x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i + 2].x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i + 2].y, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i + 3].x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i + 3].y, PATH_DECIMAL_PRECISION)}`;
           }
         }
         break;
@@ -211,16 +148,6 @@ export function transformPathData(
     command,
     points: points.map(point => {
       let transformedPoint = point;
-      
-      // Handle special cases for H, V, and A commands
-      if (command.toUpperCase() === 'H') {
-        transformedPoint = { x: point.x, y: 0 };
-      } else if (command.toUpperCase() === 'V') {
-        transformedPoint = { x: 0, y: point.y };
-      } else if (command.toUpperCase() === 'A' && points.indexOf(point) < 2) {
-        // For arc commands, the first two points are rx, ry which should be scaled but not translated
-        return { x: formatToPrecision(point.x * scaleX, PATH_DECIMAL_PRECISION), y: formatToPrecision(point.y * scaleY, PATH_DECIMAL_PRECISION) };
-      }
       
       // Apply scale and translation
       transformedPoint = transformPoint(transformedPoint, scaleX, scaleY, originX, originY);
