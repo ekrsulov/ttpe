@@ -238,6 +238,52 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         onPointerUp={onTransformationHandlerPointerUp}
       />
 
+      {/* Rotation handlers */}
+      <circle
+        cx={bounds.minX - handlerSize}
+        cy={bounds.minY - handlerSize}
+        r={handlerSize / 2}
+        fill={selectionColor}
+        stroke="#fff"
+        strokeWidth={1 / viewport.zoom}
+        style={{ cursor: 'alias' }}
+        onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'rotate-tl')}
+        onPointerUp={onTransformationHandlerPointerUp}
+      />
+      <circle
+        cx={bounds.maxX + handlerSize}
+        cy={bounds.minY - handlerSize}
+        r={handlerSize / 2}
+        fill={selectionColor}
+        stroke="#fff"
+        strokeWidth={1 / viewport.zoom}
+        style={{ cursor: 'alias' }}
+        onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'rotate-tr')}
+        onPointerUp={onTransformationHandlerPointerUp}
+      />
+      <circle
+        cx={bounds.minX - handlerSize}
+        cy={bounds.maxY + handlerSize}
+        r={handlerSize / 2}
+        fill={selectionColor}
+        stroke="#fff"
+        strokeWidth={1 / viewport.zoom}
+        style={{ cursor: 'alias' }}
+        onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'rotate-bl')}
+        onPointerUp={onTransformationHandlerPointerUp}
+      />
+      <circle
+        cx={bounds.maxX + handlerSize}
+        cy={bounds.maxY + handlerSize}
+        r={handlerSize / 2}
+        fill={selectionColor}
+        stroke="#fff"
+        strokeWidth={1 / viewport.zoom}
+        style={{ cursor: 'alias' }}
+        onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'rotate-br')}
+        onPointerUp={onTransformationHandlerPointerUp}
+      />
+
       {/* Midpoint handlers */}
       {/* Top */}
       <rect

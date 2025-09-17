@@ -106,6 +106,29 @@ export function transformPoint(point: Point, scaleX: number, scaleY: number, ori
 }
 
 /**
+ * Rotates a point around an origin by a given angle in degrees
+ */
+export function rotatePoint(point: Point, angleDegrees: number, originX: number, originY: number): Point {
+  const angleRadians = (angleDegrees * Math.PI) / 180;
+  const cos = Math.cos(angleRadians);
+  const sin = Math.sin(angleRadians);
+  
+  // Translate to origin
+  const translatedX = point.x - originX;
+  const translatedY = point.y - originY;
+  
+  // Rotate
+  const rotatedX = translatedX * cos - translatedY * sin;
+  const rotatedY = translatedX * sin + translatedY * cos;
+  
+  // Translate back
+  return {
+    x: rotatedX + originX,
+    y: rotatedY + originY
+  };
+}
+
+/**
  * Rebuilds an SVG path string from parsed commands with transformed coordinates
  */
 export function rebuildPathString(commands: Array<{ command: string; points: Point[] }>): string {
@@ -172,7 +195,8 @@ export function transformPathData(
   scaleX: number, 
   scaleY: number, 
   originX: number, 
-  originY: number
+  originY: number,
+  rotation: number = 0
 ): PathData {
   const commands = parsePathCommands(pathData.d);
   
@@ -180,17 +204,27 @@ export function transformPathData(
   const transformedCommands = commands.map(({ command, points }) => ({
     command,
     points: points.map(point => {
+      let transformedPoint = point;
+      
       // Handle special cases for H, V, and A commands
       if (command.toUpperCase() === 'H') {
-        return { x: transformPoint({ x: point.x, y: 0 }, scaleX, scaleY, originX, originY).x, y: 0 };
+        transformedPoint = { x: point.x, y: 0 };
       } else if (command.toUpperCase() === 'V') {
-        return { x: 0, y: transformPoint({ x: 0, y: point.y }, scaleX, scaleY, originX, originY).y };
+        transformedPoint = { x: 0, y: point.y };
       } else if (command.toUpperCase() === 'A' && points.indexOf(point) < 2) {
         // For arc commands, the first two points are rx, ry which should be scaled but not translated
         return { x: point.x * scaleX, y: point.y * scaleY };
-      } else {
-        return transformPoint(point, scaleX, scaleY, originX, originY);
       }
+      
+      // Apply scale and translation
+      transformedPoint = transformPoint(transformedPoint, scaleX, scaleY, originX, originY);
+      
+      // Apply rotation if specified
+      if (rotation !== 0) {
+        transformedPoint = rotatePoint(transformedPoint, rotation, originX, originY);
+      }
+      
+      return transformedPoint;
     })
   }));
   

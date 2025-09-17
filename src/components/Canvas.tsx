@@ -333,6 +333,10 @@ export const Canvas: React.FC<CanvasProps> = () => {
             transformOriginY = transformedBounds.minY;
             break;
         }
+      } else if (transformHandler.startsWith('rotate-')) {
+        // Rotation handlers: center becomes the transform origin
+        transformOriginX = (transformedBounds.minX + transformedBounds.maxX) / 2;
+        transformOriginY = (transformedBounds.minY + transformedBounds.maxY) / 2;
       } else if (transformHandler.startsWith('midpoint-')) {
         // Midpoint handlers: opposite side becomes the transform origin
         switch (transformHandler) {
@@ -418,6 +422,34 @@ export const Canvas: React.FC<CanvasProps> = () => {
         }
       }
 
+      // Handle rotation for rotation handlers
+      if (transformHandler.startsWith('rotate-')) {
+        // Calculate rotation angle based on mouse movement around the center
+        const centerX = (originalBounds.minX + originalBounds.maxX) / 2;
+        const centerY = (originalBounds.minY + originalBounds.maxY) / 2;
+        
+        // Calculate angle from center to start point
+        const startAngle = Math.atan2(transformStart.y - centerY, transformStart.x - centerX) * 180 / Math.PI;
+        
+        // Calculate angle from center to current point
+        const currentAngle = Math.atan2(point.y - centerY, point.x - centerX) * 180 / Math.PI;
+        
+        // Calculate rotation change
+        let angleChange = currentAngle - startAngle;
+        
+        // Normalize angle to -180 to 180 range
+        while (angleChange > 180) angleChange -= 360;
+        while (angleChange < -180) angleChange += 360;
+        
+        // Apply sensitivity
+        const ROTATION_SENSITIVITY = 0.5;
+        newRotation = initialTransform.rotation + angleChange * ROTATION_SENSITIVITY;
+        
+        // Keep rotation within reasonable bounds (-180 to 180)
+        while (newRotation > 180) newRotation -= 360;
+        while (newRotation < -180) newRotation += 360;
+      }
+
       // Apply transformation directly to element data instead of using SVG transforms
       let transformedData;
       
@@ -429,7 +461,8 @@ export const Canvas: React.FC<CanvasProps> = () => {
           newScaleX,
           newScaleY,
           transformOriginX,
-          transformOriginY
+          transformOriginY,
+          newRotation
         );
       } else {
         // Fallback to transform approach for other element types
