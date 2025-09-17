@@ -15,10 +15,6 @@ export interface EditorPluginSlice {
     transformation: {
       isTransforming: boolean;
       activeHandler: string | null;
-      scaleX: number;
-      scaleY: number;
-      rotation: number;
-      transformOrigin: { x: number; y: number } | null;
       showCoordinates: boolean;
       showRulers: boolean;
     };
@@ -63,10 +59,6 @@ export const createEditorPluginSlice: StateCreator<EditorPluginSlice, [], [], Ed
     transformation: {
       isTransforming: false,
       activeHandler: null,
-      scaleX: 1,
-      scaleY: 1,
-      rotation: 0,
-      transformOrigin: null,
       showCoordinates: true,
       showRulers: true,
     },
