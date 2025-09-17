@@ -17,7 +17,8 @@ import {
   VectorSquare,
   MousePointerClick,
   ChevronUp,
-  ChevronDown
+  ChevronDown,
+  Route
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -26,9 +27,10 @@ export const Sidebar: React.FC = () => {
 
   const plugins = [
     { name: 'select', label: 'Select', icon: MousePointer },
-    { name: 'pan', label: 'Pan', icon: Hand },
     { name: 'edit', label: 'Edit', icon: MousePointerClick },
     { name: 'transformation', label: 'Transform', icon: VectorSquare },
+    { name: 'subpath', label: 'Subpath', icon: Route },
+    { name: 'pan', label: 'Pan', icon: Hand },
     { name: 'pencil', label: 'Pencil', icon: Pen },
     { name: 'text', label: 'Text', icon: Type },
     { name: 'shape', label: 'Shape', icon: Shapes },
@@ -53,14 +55,42 @@ export const Sidebar: React.FC = () => {
         padding: '4px 8px 4px 8px',
         backgroundColor: '#fff'
       }}>
+        {/* First row */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(7, 1fr)',
+          gridTemplateColumns: 'repeat(4, 1fr)',
+          gap: '2px',
+          marginBottom: '2px'
+        }}>
+          {plugins.slice(0, 4).map((plugin) => {
+            const IconComponent = plugin.icon;
+            const isDisabled = (plugin.name === 'transformation' || plugin.name === 'edit' || plugin.name === 'subpath') && selectedIds.length === 0;
+            return (
+              <IconButton
+                key={plugin.name}
+                onPointerUp={() => !isDisabled && setMode(plugin.name)}
+                disabled={isDisabled}
+                active={activePlugin === plugin.name}
+                activeBgColor="#007bff"
+                activeColor="#fff"
+                size="custom"
+                customSize="30px"
+                title={plugin.label}
+              >
+                <IconComponent size={14} />
+              </IconButton>
+            );
+          })}
+        </div>
+        {/* Second row */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, 1fr)',
           gap: '2px'
         }}>
-          {plugins.map((plugin) => {
+          {plugins.slice(4).map((plugin) => {
             const IconComponent = plugin.icon;
-            const isDisabled = (plugin.name === 'transformation' || plugin.name === 'edit') && selectedIds.length === 0;
+            const isDisabled = (plugin.name === 'transformation' || plugin.name === 'edit' || plugin.name === 'subpath') && selectedIds.length === 0;
             return (
               <IconButton
                 key={plugin.name}

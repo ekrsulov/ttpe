@@ -210,3 +210,37 @@ export function updatePathD(commands: PathCommand[], updatedPoints: ControlPoint
     return `${cmd.type} ${pointStr}`;
   }).join(' ');
 }
+
+/**
+ * Extract subpaths from the main path commands
+ */
+export function extractSubpaths(commands: PathCommand[]): { d: string; startIndex: number; endIndex: number }[] {
+  const subpaths: { d: string; startIndex: number; endIndex: number }[] = [];
+  let currentStart = 0;
+
+  for (let i = 0; i < commands.length; i++) {
+    if (commands[i].type === 'M' && i > 0) {
+      // End previous subpath
+      const subpathCommands = commands.slice(currentStart, i);
+      const d = commandsToString(subpathCommands);
+      subpaths.push({ d, startIndex: currentStart, endIndex: i - 1 });
+      currentStart = i;
+    }
+  }
+
+  // Last subpath
+  if (currentStart < commands.length) {
+    const subpathCommands = commands.slice(currentStart);
+    const d = commandsToString(subpathCommands);
+    subpaths.push({ d, startIndex: currentStart, endIndex: commands.length - 1 });
+  }
+
+  return subpaths;
+}
+
+function commandsToString(commands: PathCommand[]): string {
+  return commands.map(cmd => {
+    const pointsStr = cmd.points.map(p => `${p.x} ${p.y}`).join(' ');
+    return `${cmd.type} ${pointsStr}`;
+  }).join(' ');
+}

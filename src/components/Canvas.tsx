@@ -24,12 +24,16 @@ export const Canvas: React.FC<CanvasProps> = () => {
     editingPoint,
     selectedCommands,
     draggingSelection,
+    subpath,
     updateElement,
     startDraggingPoint,
     updateDraggingPoint,
     stopDraggingPoint,
     selectCommand,
-    clearSelectedCommands
+    clearSelectedCommands,
+    startDraggingSubpath,
+    updateDraggingSubpath,
+    stopDraggingSubpath
   } = useCanvasStore();
 
   const [isSpacePressed, setIsSpacePressed] = useState(false);
@@ -701,6 +705,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
         activePlugin={activePlugin}
         editingPoint={editingPoint}
         draggingSelection={draggingSelection}
+        subpath={subpath}
         isSelecting={isSelecting}
         selectionStart={selectionStart}
         selectionEnd={selectionEnd}
@@ -716,6 +721,9 @@ export const Canvas: React.FC<CanvasProps> = () => {
         onStopDraggingPoint={stopDraggingPoint}
         onUpdateElement={updateElement}
         onSelectCommand={selectCommand}
+        onStartDraggingSubpath={startDraggingSubpath}
+        onUpdateDraggingSubpath={updateDraggingSubpath}
+        onStopDraggingSubpath={stopDraggingSubpath}
       />
     </svg>
   );

@@ -70,6 +70,7 @@ const modeRules: Record<string, ModeRule> = {
   shape: { canToggleOff: false },
   transformation: { canToggleOff: true, defaultFallback: 'select' },
   edit: { canToggleOff: true, defaultFallback: 'select' },
+  subpath: { canToggleOff: true, defaultFallback: 'select' },
 };
 
 export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
