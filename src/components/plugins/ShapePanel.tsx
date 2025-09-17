@@ -41,7 +41,6 @@ export const ShapePanel: React.FC = () => {
               active={shouldHighlight}
               activeBgColor="#007bff"
               activeColor="#fff"
-              borderColor="#ccc"
               transition="all 0.2s ease"
               title={`${shapeItem.label} - Click and drag to create`}
             >

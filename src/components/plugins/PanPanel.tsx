@@ -24,28 +24,28 @@ export const PanPanel: React.FC = () => {
         {/* Direction buttons group */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
           {/* Pan Left */}
-          <IconButton onClick={() => pan(-panAmount, 0)} title="Pan Left" borderColor="#dee2e6">
+          <IconButton onClick={() => pan(-panAmount, 0)} title="Pan Left">
             <ChevronLeft size={14} />
           </IconButton>
 
           {/* Pan Up */}
-          <IconButton onClick={() => pan(0, -panAmount)} title="Pan Up" borderColor="#dee2e6">
+          <IconButton onClick={() => pan(0, -panAmount)} title="Pan Up">
             <ChevronUp size={14} />
           </IconButton>
 
           {/* Pan Down */}
-          <IconButton onClick={() => pan(0, panAmount)} title="Pan Down" borderColor="#dee2e6">
+          <IconButton onClick={() => pan(0, panAmount)} title="Pan Down">
             <ChevronDown size={14} />
           </IconButton>
 
           {/* Pan Right */}
-          <IconButton onClick={() => pan(panAmount, 0)} title="Pan Right" borderColor="#dee2e6">
+          <IconButton onClick={() => pan(panAmount, 0)} title="Pan Right">
             <ChevronRight size={14} />
           </IconButton>
         </div>
 
         {/* Reset Pan - aligned to the right */}
-        <IconButton onClick={resetPan} title="Reset Pan" borderColor="#dee2e6">
+        <IconButton onClick={resetPan} title="Reset Pan">
           <RotateCcw size={14} />
         </IconButton>
       </div>

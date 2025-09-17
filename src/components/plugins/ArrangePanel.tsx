@@ -46,34 +46,34 @@ export const ArrangePanel: React.FC = () => {
         {/* Distribution & Order buttons */}
         <div style={{ display: 'flex', gap: '2px' }}>
           <div style={{ flex: 1 }}>
-            <IconButton onClick={distributeHorizontally} disabled={!canDistribute} title="Distribute Horizontally" borderColor="#dee2e6">
+            <IconButton onClick={distributeHorizontally} disabled={!canDistribute} title="Distribute Horizontally">
               <MoveHorizontal size={10} />
             </IconButton>
           </div>
           <div style={{ flex: 1 }}>
-            <IconButton onClick={distributeVertically} disabled={!canDistribute} title="Distribute Vertically" borderColor="#dee2e6">
+            <IconButton onClick={distributeVertically} disabled={!canDistribute} title="Distribute Vertically">
               <MoveVertical size={10} />
             </IconButton>
           </div>
 
           {/* Order buttons */}
           <div style={{ flex: 1 }}>
-            <IconButton onClick={bringToFront} disabled={selectedCount === 0} title="Bring to Front" borderColor="#dee2e6">
+            <IconButton onClick={bringToFront} disabled={selectedCount === 0} title="Bring to Front">
               <Triangle size={10} />
             </IconButton>
           </div>
           <div style={{ flex: 1 }}>
-            <IconButton onClick={sendForward} disabled={selectedCount === 0} title="Send Forward" borderColor="#dee2e6">
+            <IconButton onClick={sendForward} disabled={selectedCount === 0} title="Send Forward">
               <ChevronUp size={10} />
             </IconButton>
           </div>
           <div style={{ flex: 1 }}>
-            <IconButton onClick={sendBackward} disabled={selectedCount === 0} title="Send Backward" borderColor="#dee2e6">
+            <IconButton onClick={sendBackward} disabled={selectedCount === 0} title="Send Backward">
               <ChevronDown size={10} />
             </IconButton>
           </div>
           <div style={{ flex: 1 }}>
-            <IconButton onClick={sendToBack} disabled={selectedCount === 0} title="Send to Back" borderColor="#dee2e6">
+            <IconButton onClick={sendToBack} disabled={selectedCount === 0} title="Send to Back">
               <Triangle size={10} style={{ transform: 'rotate(180deg)' }} />
             </IconButton>
           </div>
@@ -83,34 +83,34 @@ export const ArrangePanel: React.FC = () => {
         <div style={{ display: 'flex', gap: '2px' }}>
           {/* Horizontal alignment */}
           <div style={{ flex: 1 }}>
-            <IconButton onClick={alignLeft} disabled={!canAlign} title="Align Left" borderColor="#dee2e6">
+            <IconButton onClick={alignLeft} disabled={!canAlign} title="Align Left">
               <AlignLeft size={10} />
             </IconButton>
           </div>
           <div style={{ flex: 1 }}>
-            <IconButton onClick={alignCenter} disabled={!canAlign} title="Align Center" borderColor="#dee2e6">
+            <IconButton onClick={alignCenter} disabled={!canAlign} title="Align Center">
               <AlignCenter size={10} />
             </IconButton>
           </div>
           <div style={{ flex: 1 }}>
-            <IconButton onClick={alignRight} disabled={!canAlign} title="Align Right" borderColor="#dee2e6">
+            <IconButton onClick={alignRight} disabled={!canAlign} title="Align Right">
               <AlignRight size={10} />
             </IconButton>
           </div>
 
           {/* Vertical alignment */}
           <div style={{ flex: 1 }}>
-            <IconButton onClick={alignTop} disabled={!canAlign} title="Align Top" borderColor="#dee2e6">
+            <IconButton onClick={alignTop} disabled={!canAlign} title="Align Top">
               <AlignVerticalJustifyStart size={10} />
             </IconButton>
           </div>
           <div style={{ flex: 1 }}>
-            <IconButton onClick={alignMiddle} disabled={!canAlign} title="Align Middle" borderColor="#dee2e6">
+            <IconButton onClick={alignMiddle} disabled={!canAlign} title="Align Middle">
               <AlignVerticalJustifyCenter size={10} />
             </IconButton>
           </div>
           <div style={{ flex: 1 }}>
-            <IconButton onClick={alignBottom} disabled={!canAlign} title="Align Bottom" borderColor="#dee2e6">
+            <IconButton onClick={alignBottom} disabled={!canAlign} title="Align Bottom">
               <AlignVerticalJustifyEnd size={10} />
             </IconButton>
           </div>
