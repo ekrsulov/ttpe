@@ -143,8 +143,8 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       ? (element.data as { strokeWidth?: number }).strokeWidth || 0 
       : 0;
     
-    const elementOpacity = element.type === 'path' && element.data && typeof element.data === 'object' && 'opacity' in element.data 
-      ? (element.data as { opacity?: number }).opacity || 1 
+    const elementOpacity = element.type === 'path' && element.data && typeof element.data === 'object' && 'strokeOpacity' in element.data 
+      ? (element.data as { strokeOpacity?: number }).strokeOpacity || 1 
       : 1;
     
     // Determine if the path has an effective stroke
@@ -582,7 +582,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
               strokeLinecap="round"
               strokeLinejoin="round"
               vectorEffect="non-scaling-stroke"
-              opacity={pathData.opacity}
+              opacity={pathData.strokeOpacity}
               onPointerUp={(e) => onElementClick(element.id, e)}
               onPointerDown={(e) => onElementPointerDown(element.id, e)}
               style={{

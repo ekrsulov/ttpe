@@ -7,7 +7,7 @@ export interface PathData {
   d: string; // SVG path commands (M, L, C, Z.)
   strokeWidth: number;
   strokeColor: string;
-  opacity: number;
+  strokeOpacity: number;
   fillColor: string;
   fillOpacity: number;
   isPencilPath?: boolean; // Indicates if this path was created with the pencil tool
@@ -46,7 +46,7 @@ export interface PluginState {
   pencil: {
     strokeWidth: number;
     strokeColor: string;
-    opacity: number;
+    strokeOpacity: number;
   };
   text: {
     text: string;

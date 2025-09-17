@@ -5,7 +5,7 @@ export interface PencilPluginSlice {
   pencil: {
     strokeWidth: number;
     strokeColor: string;
-    opacity: number;
+    strokeOpacity: number;
     fillColor: string;
     fillOpacity: number;
   };
@@ -19,7 +19,7 @@ export const createPencilPluginSlice: StateCreator<PencilPluginSlice, [], [], Pe
   pencil: {
     strokeWidth: 4,
     strokeColor: '#000000',
-    opacity: 1,
+    strokeOpacity: 1,
     fillColor: 'none',
     fillOpacity: 1,
   },

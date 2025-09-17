@@ -77,9 +77,9 @@ export const EditorPanel: React.FC = () => {
 
   const handleOpacityChange = (value: number) => {
     if (selectedPathsCount > 0) {
-      updateSelectedPaths({ opacity: value });
+      updateSelectedPaths({ strokeOpacity: value });
     } else {
-      updatePencilState({ opacity: value });
+      updatePencilState({ strokeOpacity: value });
     }
   };
 
@@ -138,10 +138,10 @@ export const EditorPanel: React.FC = () => {
       const pathElements = selectedElements.filter(el => el.type === 'path');
       if (pathElements.length > 0) {
         // Return the opacity of the first selected path
-        return (pathElements[0].data as any).opacity;
+        return (pathElements[0].data as any).strokeOpacity;
       }
     }
-    return pencil.opacity;
+    return pencil.strokeOpacity;
   };
 
   const getCurrentFillColor = () => {
