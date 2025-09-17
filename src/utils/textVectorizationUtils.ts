@@ -27,10 +27,9 @@ export const textToPath = async (
   fontSize: number,
   fontFamily: string,
   fontWeight: string = 'normal',
-  fontStyle: string = 'normal',
-  textDecoration: string = 'none'
+  fontStyle: string = 'normal'
 ): Promise<string> => {
-  const cacheKey = `text2path-${text}-${x}-${y}-${fontSize}-${fontFamily}-${fontWeight}-${fontStyle}-${textDecoration}`;
+  const cacheKey = `text2path-${text}-${x}-${y}-${fontSize}-${fontFamily}-${fontWeight}-${fontStyle}`;
 
   // Check cache first
   if (textVectorizationCache.has(cacheKey)) {

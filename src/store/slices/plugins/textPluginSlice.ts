@@ -9,7 +9,6 @@ export interface TextPluginSlice {
     color: string;
     fontWeight: 'normal' | 'bold';
     fontStyle: 'normal' | 'italic';
-    textDecoration: 'none' | 'underline' | 'line-through';
     opacity: number;
   };
 }
@@ -23,7 +22,6 @@ export const createTextPluginSlice: StateCreator<TextPluginSlice, [], [], TextPl
     color: '#000000',
     fontWeight: 'normal',
     fontStyle: 'normal',
-    textDecoration: 'none',
     opacity: 1,
   },
 });

@@ -13,6 +13,7 @@ import { createPluginManagementSlice, type PluginManagementSlice } from './slice
 import { createShapePluginSlice, type ShapePluginSlice } from './slices/plugins/shapePluginSlice';
 import { createHistoryPluginSlice, type HistoryPluginSlice } from './slices/plugins/historyPluginSlice';
 import { createTransformationPluginSlice, type TransformationPluginSlice } from './slices/plugins/transformationPluginSlice';
+import { createEditorPluginSlice, type EditorPluginSlice } from './slices/plugins/editorPluginSlice';
 
 // Throttle function to implement cool-off period
 function throttle<T extends (...args: any[]) => any>(
@@ -50,7 +51,8 @@ type CanvasStore = BaseSlice &
   PluginManagementSlice &
   ShapePluginSlice &
   HistoryPluginSlice &
-  TransformationPluginSlice & {
+  TransformationPluginSlice &
+  EditorPluginSlice & {
     // Additional actions that need cross-slice functionality
     startPath: (point: Point) => void;
     addPointToPath: (point: Point) => void;
@@ -92,6 +94,9 @@ export const useCanvasStore = create<CanvasStore>()(
       // Transformation plugin slice
       ...createTransformationPluginSlice(set, get, api),
 
+      // Editor plugin slice
+      ...createEditorPluginSlice(set, get, api),
+
       // Cross-slice actions
       startPath: (point) => {
         const { strokeWidth, strokeColor, opacity } = get().plugins.pencil;
@@ -126,7 +131,7 @@ export const useCanvasStore = create<CanvasStore>()(
       },
 
       addText: (x, y, text) => {
-        const { fontSize, fontFamily, color, fontWeight, fontStyle, textDecoration, opacity } = get().plugins.text;
+        const { fontSize, fontFamily, color, fontWeight, fontStyle, opacity } = get().plugins.text;
         get().addElement({
           type: 'text',
           data: {
@@ -138,7 +143,6 @@ export const useCanvasStore = create<CanvasStore>()(
             color,
             fontWeight,
             fontStyle,
-            textDecoration,
             opacity,
           },
         });
@@ -250,8 +254,7 @@ export const useCanvasStore = create<CanvasStore>()(
           textData.fontSize,
           textData.fontFamily,
           textData.fontWeight,
-          textData.fontStyle,
-          textData.textDecoration
+          textData.fontStyle
         );
 
         if (pathD) {

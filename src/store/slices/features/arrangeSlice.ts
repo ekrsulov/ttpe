@@ -125,7 +125,6 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
           textData.fontFamily,
           textData.fontWeight,
           textData.fontStyle,
-          textData.textDecoration,
           fullState.viewport.zoom
         );
         return textData.x + dimensions.width / 2;
@@ -184,7 +183,6 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
           textData.fontFamily,
           textData.fontWeight,
           textData.fontStyle,
-          textData.textDecoration,
           fullState.viewport.zoom
         );
         return textData.x + dimensions.width;
@@ -214,7 +212,6 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
               textData.fontFamily,
               textData.fontWeight,
               textData.fontStyle,
-              textData.textDecoration,
               fullState.viewport.zoom
             );
             const currentMaxX = textData.x + dimensions.width;
@@ -251,7 +248,6 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
           textData.fontFamily,
           textData.fontWeight,
           textData.fontStyle,
-          textData.textDecoration,
           fullState.viewport.zoom
         );
         return textData.y - dimensions.height;
@@ -281,7 +277,6 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
               textData.fontFamily,
               textData.fontWeight,
               textData.fontStyle,
-              textData.textDecoration,
               fullState.viewport.zoom
             );
             const currentMinY = textData.y - dimensions.height;
@@ -318,7 +313,6 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
           textData.fontFamily,
           textData.fontWeight,
           textData.fontStyle,
-          textData.textDecoration,
           fullState.viewport.zoom
         );
         return textData.y - dimensions.height / 2;
@@ -433,7 +427,6 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
           textData.fontFamily,
           textData.fontWeight,
           textData.fontStyle,
-          textData.textDecoration,
           fullState.viewport.zoom
         );
         elementBounds.push({
@@ -537,7 +530,6 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
           textData.fontFamily,
           textData.fontWeight,
           textData.fontStyle,
-          textData.textDecoration,
           fullState.viewport.zoom
         );
         elementBounds.push({

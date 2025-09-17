@@ -99,7 +99,7 @@ export const PanPanel: React.FC = () => {
           <ChevronRight size={14} />
         </button>
 
-        {/* Reset button */}
+        {/* Reset Pan */}
         <button
           onClick={resetPan}
           style={{
@@ -112,7 +112,7 @@ export const PanPanel: React.FC = () => {
             alignItems: 'center',
             justifyContent: 'center'
           }}
-          title="Reset Pan Position"
+          title="Reset Pan"
         >
           <RotateCcw size={14} />
         </button>

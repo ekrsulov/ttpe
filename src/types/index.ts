@@ -26,7 +26,6 @@ export interface TextData {
   color: string;
   fontWeight: 'normal' | 'bold';
   fontStyle: 'normal' | 'italic';
-  textDecoration: 'none' | 'underline' | 'line-through';
   opacity: number;
   transform?: {
     scaleX: number;
@@ -72,7 +71,6 @@ export interface PluginState {
     color: string;
     fontWeight: 'normal' | 'bold';
     fontStyle: 'normal' | 'italic';
-    textDecoration: 'none' | 'underline' | 'line-through';
     opacity: number;
   };
   select: {

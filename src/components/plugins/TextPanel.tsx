@@ -79,14 +79,6 @@ export const TextPanel: React.FC = () => {
     }
   };
 
-  const handleTextDecorationChange = (value: 'none' | 'underline' | 'line-through') => {
-    if (selectedTextsCount > 0) {
-      updateSelectedTexts({ textDecoration: value });
-    } else {
-      updatePluginState('text', { textDecoration: value });
-    }
-  };
-
   const handleOpacityChange = (value: number) => {
     if (selectedTextsCount > 0) {
       updateSelectedTexts({ opacity: value });
@@ -164,17 +156,6 @@ export const TextPanel: React.FC = () => {
       }
     }
     return plugins.text.fontStyle;
-  };
-
-  const getCurrentTextDecoration = () => {
-    if (selectedTextsCount > 0) {
-      const selectedElements = useCanvasStore.getState().getSelectedElements();
-      const textElements = selectedElements.filter(el => el.type === 'text');
-      if (textElements.length > 0) {
-        return (textElements[0].data as any).textDecoration;
-      }
-    }
-    return plugins.text.textDecoration;
   };
 
   const getCurrentOpacity = () => {
@@ -302,21 +283,6 @@ export const TextPanel: React.FC = () => {
           >
             <Italic size={14} />
           </button>
-          <select
-            value={getCurrentTextDecoration()}
-            onChange={(e) => handleTextDecorationChange(e.target.value as 'none' | 'underline' | 'line-through')}
-            style={{
-              flex: 1,
-              padding: '4px',
-              border: '1px solid #ccc',
-              borderRadius: '3px',
-              fontSize: '12px'
-            }}
-          >
-            <option value="none">-</option>
-            <option value="underline">U</option>
-            <option value="line-through">S</option>
-          </select>
           <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
             <Palette size={14} style={{ color: '#666' }} />
             <input

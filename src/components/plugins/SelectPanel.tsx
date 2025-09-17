@@ -9,8 +9,16 @@ export const SelectPanel: React.FC = () => {
   const selectedElements = elements.filter(el => (selectedIds as any).includes(el.id));
 
   return (
-    <div style={{ padding: '8px', border: '1px solid #ddd', borderRadius: '4px', backgroundColor: '#fff' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+    <div style={{ 
+      padding: '8px', 
+      border: '1px solid #ddd', 
+      borderRadius: '4px', 
+      backgroundColor: '#fff',
+      height: '120px', // Fixed height for ~2.5 elements
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <MousePointer size={16} style={{ marginRight: '6px', color: '#666' }} />
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#333' }}>Select</span>
@@ -28,9 +36,13 @@ export const SelectPanel: React.FC = () => {
         </span>
       </div>
 
-      {selectedElements.length > 0 ? (
-        <div style={{ maxHeight: '120px', overflowY: 'auto' }}>
-          {selectedElements.map(el => (
+      <div style={{ 
+        flex: 1, 
+        overflowY: 'auto',
+        minHeight: 0 // Allow flexbox to shrink this area
+      }}>
+        {selectedElements.length > 0 ? (
+          selectedElements.map(el => (
             <div key={el.id} style={{
               display: 'flex',
               alignItems: 'center',
@@ -56,13 +68,22 @@ export const SelectPanel: React.FC = () => {
                 )}
               </div>
             </div>
-          ))}
-        </div>
-      ) : (
-        <div style={{ fontSize: '11px', color: '#666', textAlign: 'center', padding: '8px' }}>
-          No elements selected
-        </div>
-      )}
+          ))
+        ) : (
+          <div style={{ 
+            fontSize: '11px', 
+            color: '#666', 
+            textAlign: 'center', 
+            padding: '16px 8px',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            No elements selected
+          </div>
+        )}
+      </div>
     </div>
   );
 };

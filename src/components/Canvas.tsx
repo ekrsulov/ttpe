@@ -173,7 +173,6 @@ export const Canvas: React.FC<CanvasProps> = () => {
         textData.fontFamily,
         textData.fontWeight,
         textData.fontStyle,
-        textData.textDecoration,
         viewport.zoom
       );
       return {
@@ -570,7 +569,6 @@ export const Canvas: React.FC<CanvasProps> = () => {
               textData.fontFamily,
               textData.fontWeight,
               textData.fontStyle,
-              textData.textDecoration,
               viewport.zoom // Use current zoom for consistent measurements
             );
 
@@ -1101,8 +1099,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
               opacity={textData.opacity}
               style={{ 
                 userSelect: 'none', 
-                cursor: activePlugin === 'select' ? (isSelected ? 'move' : 'pointer') : 'default',
-                textDecoration: textData.textDecoration !== 'none' ? textData.textDecoration : undefined
+                cursor: activePlugin === 'select' ? (isSelected ? 'move' : 'pointer') : 'default'
               }}
               onPointerUp={(e) => handleElementClick(element.id, e)}
               onPointerDown={(e) => handleElementPointerDown(element.id, e)}

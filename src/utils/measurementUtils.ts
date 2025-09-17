@@ -12,10 +12,9 @@ export const measureText = (
   fontFamily: string,
   fontWeight: string = 'normal',
   fontStyle: string = 'normal',
-  textDecoration: string = 'none',
   zoom: number = 1
 ): { width: number; height: number } => {
-  const cacheKey = `${text}-${fontSize}-${fontFamily}-${fontWeight}-${fontStyle}-${textDecoration}-${zoom}`;
+  const cacheKey = `${text}-${fontSize}-${fontFamily}-${fontWeight}-${fontStyle}-${zoom}`;
 
   // Check cache first
   if (textMeasurementCache.has(cacheKey)) {
