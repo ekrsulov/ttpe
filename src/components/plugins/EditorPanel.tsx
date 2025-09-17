@@ -42,7 +42,8 @@ export const EditorPanel: React.FC = () => {
     pencil,
     updatePencilState,
     getSelectedPathsCount,
-    updateSelectedPaths
+    updateSelectedPaths,
+    activePlugin
   } = useCanvasStore();
 
   const { undo, redo, pastStates, futureStates } = useTemporalState();
@@ -283,7 +284,7 @@ export const EditorPanel: React.FC = () => {
         {/* Delete Button */}
         <IconButton
           onPointerUp={deleteSelectedElements}
-          disabled={selectedIds.length === 0}
+          disabled={selectedIds.length === 0 || activePlugin !== 'select'}
           active={selectedIds.length > 0}
           activeBgColor="#dc3545"
           activeColor="#fff"

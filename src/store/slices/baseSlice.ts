@@ -359,8 +359,6 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
 
     if (selectedCommands.length === 0) return;
 
-    console.log('Delete selected commands:', selectedCommands);
-
     // Group commands by elementId
     const commandsByElement = selectedCommands.reduce((acc, cmd) => {
       if (!acc[cmd.elementId]) acc[cmd.elementId] = [];
@@ -396,12 +394,10 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
             // Handle different command types
             if (cmd.type === 'M') {
               // Can't delete M point as it's required for path start
-              console.log(`Cannot delete M point at command ${cmdIndex}`);
               return cmd;
             } else if (cmd.type === 'L') {
               // For L commands, we can remove the entire command if the point is selected
               if (commandSelectedPoints.some(p => p.pointIndex === 0 && !p.isControl)) {
-                console.log(`Removing L command at index ${cmdIndex}`);
                 return null; // Mark for removal
               }
               return cmd;
@@ -410,20 +406,17 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
               // For now, we'll try to simplify the curve to a line
               if (commandSelectedPoints.some(p => p.pointIndex === 0 || p.pointIndex === 1)) {
                 // Remove control points, convert to L command
-                console.log(`Converting C to L command at index ${cmdIndex} (removing control points)`);
                 return {
                   type: 'L' as const,
                   points: [cmd.points[2]] // Keep only the end point
                 };
               } else if (commandSelectedPoints.some(p => p.pointIndex === 2 && !p.isControl)) {
                 // Remove end point, convert to L to previous point or remove command
-                console.log(`Removing end point of C command at index ${cmdIndex}`);
                 return null; // Mark for removal
               }
               return cmd;
             } else if (cmd.type === 'Z') {
               // Can't delete Z command
-              console.log(`Cannot delete Z command at index ${cmdIndex}`);
               return cmd;
             }
 
@@ -454,7 +447,6 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
             )
           }));
 
-          console.log(`Updated path for element ${elementId}:`, newPathD);
         }
       }
     });

@@ -54,12 +54,21 @@ export const ArrangePanel: React.FC = () => {
     <div style={{ 
       backgroundColor: '#fff', 
       padding: '8px 8px 0 8px',
-      borderTop: '1px solid #ddd'
+      borderTop: '1px solid #ddd',
+      width: '100%'
     }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
         {/* Distribution & Order buttons */}
-        <div style={{ display: 'flex', gap: '2px' }}>
-          <div style={{ flex: 1 }}>
+        <div style={{ 
+          display: 'flex', 
+          gap: '2px',
+          width: activePlugin === 'edit' ? '100%' : 'auto',
+          justifyContent: activePlugin === 'edit' ? 'space-between' : 'flex-start'
+        }}>
+          <div style={{ 
+            flex: activePlugin === 'edit' ? 'none' : 1,
+            width: activePlugin === 'edit' ? 'auto' : 'auto'
+          }}>
             <IconButton 
               onClick={activePlugin === 'edit' ? distributeHorizontallyCommands : distributeHorizontally} 
               disabled={!canDistribute} 
@@ -68,7 +77,11 @@ export const ArrangePanel: React.FC = () => {
               <MoveHorizontal size={10} />
             </IconButton>
           </div>
-          <div style={{ flex: 1 }}>
+          <div style={{ 
+            flex: activePlugin === 'edit' ? 'none' : 1,
+            width: activePlugin === 'edit' ? 'auto' : 'auto',
+            margin: activePlugin === 'edit' ? '0 auto' : '0'
+          }}>
             <IconButton 
               onClick={activePlugin === 'edit' ? distributeVerticallyCommands : distributeVertically} 
               disabled={!canDistribute} 
@@ -80,7 +93,10 @@ export const ArrangePanel: React.FC = () => {
 
           {activePlugin === 'edit' ? (
             /* Delete button for edit mode */
-            <div style={{ flex: 1 }}>
+            <div style={{ 
+              flex: 'none',
+              width: 'auto'
+            }}>
               <IconButton 
                 onClick={deleteSelectedCommands} 
                 disabled={!canDelete} 
