@@ -61,11 +61,9 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     const isTransformationMode = activePlugin === 'transformation';
     const handlerSize = 8 / viewport.zoom;
 
-    // Calculate contrasting selection color based on element's stroke color
-    const getContrastingColor = (strokeColor: string) => {
-      if (!strokeColor || strokeColor === 'none') return '#ff6b35'; // Default orange-red
-      
-      // Convert hex to RGB
+    // Calculate contrasting selection color based on element's color (stroke or fill)
+    const getContrastingColor = (color: string) => {
+      if (!color || color === 'none') return '#ff6b35'; // Default orange-red for transparent/no-color elements      // Convert hex to RGB
       const hexToRgb = (hex: string) => {
         const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
         return result ? {
@@ -84,7 +82,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
       };
 
-      const rgb = hexToRgb(strokeColor);
+      const rgb = hexToRgb(color);
       if (!rgb) return '#ff6b35'; // Fallback if not a valid hex color
 
       const luminance = getLuminance(rgb.r, rgb.g, rgb.b);
@@ -136,7 +134,27 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     const elementStrokeColor = element.type === 'path' && element.data && typeof element.data === 'object' && 'strokeColor' in element.data 
       ? (element.data as { strokeColor?: string }).strokeColor || '#000000' 
       : '#000000';
-    const selectionColor = getContrastingColor(elementStrokeColor);
+    
+    const elementFillColor = element.type === 'path' && element.data && typeof element.data === 'object' && 'fillColor' in element.data 
+      ? (element.data as { fillColor?: string }).fillColor || 'none' 
+      : 'none';
+    
+    const elementStrokeWidth = element.type === 'path' && element.data && typeof element.data === 'object' && 'strokeWidth' in element.data 
+      ? (element.data as { strokeWidth?: number }).strokeWidth || 0 
+      : 0;
+    
+    const elementOpacity = element.type === 'path' && element.data && typeof element.data === 'object' && 'opacity' in element.data 
+      ? (element.data as { opacity?: number }).opacity || 1 
+      : 1;
+    
+    // Determine if the path has an effective stroke
+    // If not, use fillColor for selection color calculation instead of strokeColor
+    const hasEffectiveStroke = elementStrokeWidth > 0 && elementStrokeColor !== 'none' && elementOpacity > 0;
+    
+    // Use fillColor for contrasting color calculation if no effective stroke
+    const colorForContrast = hasEffectiveStroke ? elementStrokeColor : elementFillColor;
+    
+    const selectionColor = getContrastingColor(colorForContrast);
 
     return (
       <g key={`selection-${element.id}`}>
