@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
 import { EditorPanel } from './plugins/EditorPanel';
 import { ArrangePanel } from './plugins/ArrangePanel';
@@ -16,10 +16,13 @@ import {
   Shapes,
   VectorSquare,
   MousePointerClick,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
   const { activePlugin, setMode, selectedIds } = useCanvasStore();
+  const [isArrangeExpanded, setIsArrangeExpanded] = useState(false);
 
   const plugins = [
     { name: 'select', label: 'Select', icon: MousePointer },
@@ -107,7 +110,51 @@ export const Sidebar: React.FC = () => {
         display: 'flex',
         flexDirection: 'column'
       }}>
-        <ArrangePanel />
+        {isArrangeExpanded && <ArrangePanel />}
+
+        {/* Expand/Collapse Chevron for Arrange */}
+        <div style={{ position: 'relative', margin: '4px 0' }}>
+          {/* Horizontal line */}
+          <div style={{
+            position: 'absolute',
+            top: '50%',
+            left: 0,
+            right: 0,
+            height: '1px',
+            backgroundColor: '#dee2e6',
+            zIndex: 1
+          }} />
+          
+          {/* Circular button in the center */}
+          <div style={{
+            position: 'relative',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 2
+          }}>
+            <div
+              onClick={() => setIsArrangeExpanded(!isArrangeExpanded)}
+              style={{
+                width: '24px',
+                height: '24px',
+                borderRadius: '50%',
+                backgroundColor: '#fff',
+                border: '1px solid #dee2e6',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                cursor: 'pointer',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                transition: 'all 0.2s ease'
+              }}
+              title={isArrangeExpanded ? "Collapse Arrange" : "Expand Arrange"}
+            >
+              {isArrangeExpanded ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
+            </div>
+          </div>
+        </div>
+
         <SelectPanel />
       </div>
     </div>

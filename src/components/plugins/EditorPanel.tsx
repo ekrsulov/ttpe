@@ -11,10 +11,14 @@ import {
   Eye,
   Circle,
   PaintBucket,
-  X
+  X,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { IconButton } from '../ui/IconButton';
 import { Tag } from '../ui/Tag';
+import { PresetButton } from '../ui/PresetButton';
+import { PRESETS, type Preset } from '../../utils/presets';
 
 // Custom hook to subscribe to temporal state changes
 const useTemporalState = () => {
@@ -49,6 +53,8 @@ export const EditorPanel: React.FC = () => {
   const canRedo = futureStates.length > 0;
   const zoomFactor = 1.2;
   const selectedPathsCount = getSelectedPathsCount();
+
+  const [isExpanded, setIsExpanded] = useState(false);
 
   // Pencil properties handlers
   const handleStrokeWidthChange = (value: number) => {
@@ -104,6 +110,26 @@ export const EditorPanel: React.FC = () => {
       updateSelectedPaths({ fillOpacity: value });
     } else {
       updatePencilState({ fillOpacity: value });
+    }
+  };
+
+  const handlePresetSelect = (preset: Preset) => {
+    if (selectedPathsCount > 0) {
+      updateSelectedPaths({
+        strokeWidth: preset.strokeWidth,
+        strokeColor: preset.strokeColor,
+        strokeOpacity: preset.strokeOpacity,
+        fillColor: preset.fillColor,
+        fillOpacity: preset.fillOpacity
+      });
+    } else {
+      updatePencilState({
+        strokeWidth: preset.strokeWidth,
+        strokeColor: preset.strokeColor,
+        strokeOpacity: preset.strokeOpacity,
+        fillColor: preset.fillColor,
+        fillOpacity: preset.fillOpacity
+      });
     }
   };
 
@@ -197,7 +223,7 @@ export const EditorPanel: React.FC = () => {
       </div>
 
       {/* Main toolbar with essential buttons */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', gap: '8px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px', gap: '8px' }}>
         {/* Undo/Redo Group */}
         <div style={{ display: 'flex', gap: '2px' }}>
           <IconButton
@@ -275,167 +301,234 @@ export const EditorPanel: React.FC = () => {
         </IconButton>
       </div>
 
-      {/* Pencil Properties Section */}
-      <div style={{ borderTop: '1px solid #eee', paddingTop: '8px', marginTop: '8px' }}>
-        {/* Stroke Width - First Line */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-          <Circle size={14} style={{ color: '#666', flexShrink: 0 }} />
-          <input
-            type="range"
-            min="0"
-            max="20"
-            value={getCurrentStrokeWidth()}
-            onChange={(e) => handleStrokeWidthChange(parseInt(e.target.value))}
+      {/* Expand/Collapse Chevron */}
+      <div style={{ position: 'relative', margin: '0 0' }}>
+        {/* Horizontal line */}
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: 0,
+          right: 0,
+          height: '1px',
+          backgroundColor: '#dee2e6',
+          zIndex: 1
+        }} />
+        
+        {/* Circular button in the center */}
+        <div style={{
+          position: 'relative',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 2
+        }}>
+          <div
+            onClick={() => setIsExpanded(!isExpanded)}
             style={{
-              flex: 1,
-              height: '4px',
-              borderRadius: '2px',
-              background: '#ddd',
-              outline: 'none',
+              width: '24px',
+              height: '24px',
+              borderRadius: '50%',
+              backgroundColor: '#fff',
+              border: '1px solid #dee2e6',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
               cursor: 'pointer',
-              minWidth: '60px'
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              transition: 'all 0.2s ease'
             }}
-            title="Stroke Width"
-          />
-          <span style={{
-            fontSize: '10px',
-            color: '#666',
-            width: '31px',
-            textAlign: 'right',
-            flexShrink: 0
-          }}>
-            {getCurrentStrokeWidth()}px
-          </span>
-        </div>
-
-        {/* Stroke Color & Opacity - Second Line */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-          <Pen size={14} style={{ color: '#666', flexShrink: 0 }} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
-            <input
-              type="color"
-              value={getCurrentStrokeColor() === 'none' ? '#000000' : getCurrentStrokeColor()}
-              onChange={(e) => handleStrokeColorChange(e.target.value)}
-              style={{
-                width: '24px',
-                height: '24px',
-                border: '1px solid #ccc',
-                borderRadius: '3px',
-                cursor: 'pointer',
-                opacity: getCurrentStrokeColor() === 'none' ? 0.5 : 1
-              }}
-              title="Stroke Color"
-            />
-            <IconButton
-              onPointerUp={handleStrokeNone}
-              disabled={getCurrentFillColor() === 'none'}
-              active={getCurrentStrokeColor() === 'none'}
-              activeBgColor="#007bff"
-              activeColor="#fff"
-              borderColor="#ccc"
-              size="custom"
-              customSize="20px"
-              title="No Stroke"
-            >
-              <X size={12} />
-            </IconButton>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', minWidth: '120px' }}>
-            <Eye size={14} style={{ color: '#666', flexShrink: 0 }} />
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.1"
-              value={getCurrentOpacity()}
-              onChange={(e) => handleOpacityChange(parseFloat(e.target.value))}
-              style={{
-                flex: 1,
-                height: '4px',
-                borderRadius: '2px',
-                background: '#ddd',
-                outline: 'none',
-                cursor: 'pointer',
-                minWidth: '50px'
-              }}
-              title="Stroke Opacity"
-            />
-            <span style={{
-              fontSize: '10px',
-              color: '#666',
-              width: '35px',
-              textAlign: 'right',
-              flexShrink: 0
-            }}>
-              {Math.round(getCurrentOpacity() * 100)}%
-            </span>
-          </div>
-        </div>
-
-        {/* Fill Color & Opacity - Third Line */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <PaintBucket size={14} style={{ color: '#666', flexShrink: 0 }} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
-            <input
-              type="color"
-              value={getCurrentFillColor() === 'none' ? '#000000' : getCurrentFillColor()}
-              onChange={(e) => handleFillColorChange(e.target.value)}
-              style={{
-                width: '24px',
-                height: '24px',
-                border: '1px solid #ccc',
-                borderRadius: '3px',
-                cursor: 'pointer',
-                opacity: getCurrentFillColor() === 'none' ? 0.5 : 1
-              }}
-              title="Fill Color"
-            />
-            <IconButton
-              onPointerUp={handleFillNone}
-              active={getCurrentFillColor() === 'none'}
-              activeBgColor="#007bff"
-              activeColor="#fff"
-              borderColor="#ccc"
-              size="custom"
-              customSize="20px"
-              title="No Fill"
-            >
-              <X size={12} />
-            </IconButton>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', minWidth: '120px' }}>
-            <Eye size={14} style={{ color: '#666', flexShrink: 0 }} />
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.1"
-              value={getCurrentFillOpacity()}
-              onChange={(e) => handleFillOpacityChange(parseFloat(e.target.value))}
-              style={{
-                flex: 1,
-                height: '4px',
-                borderRadius: '2px',
-                background: '#ddd',
-                outline: 'none',
-                cursor: 'pointer',
-                minWidth: '50px'
-              }}
-              title="Fill Opacity"
-            />
-            <span style={{
-              fontSize: '10px',
-              color: '#666',
-              width: '35px',
-              textAlign: 'right',
-              flexShrink: 0
-            }}>
-              {Math.round(getCurrentFillOpacity() * 100)}%
-            </span>
+            title={isExpanded ? "Collapse Controls" : "Expand Controls"}
+          >
+            {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
           </div>
         </div>
       </div>
-      <div style={{ borderTop: '1px solid #eee', marginTop: '8px' }}></div>
+
+      {/* Pencil Properties Section */}
+      {isExpanded && (
+        <div style={{}}>
+          {/* Stroke Width - First Line */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+            <Circle size={14} style={{ color: '#666', flexShrink: 0 }} />
+            <input
+              type="range"
+              min="0"
+              max="20"
+              value={getCurrentStrokeWidth()}
+              onChange={(e) => handleStrokeWidthChange(parseInt(e.target.value))}
+              style={{
+                flex: 1,
+                height: '4px',
+                borderRadius: '2px',
+                background: '#ddd',
+                outline: 'none',
+                cursor: 'pointer',
+                minWidth: '60px'
+              }}
+              title="Stroke Width"
+            />
+            <span style={{
+              fontSize: '10px',
+              color: '#666',
+              width: '31px',
+              textAlign: 'right',
+              flexShrink: 0
+            }}>
+              {getCurrentStrokeWidth()}px
+            </span>
+          </div>
+
+          {/* Stroke Color & Opacity - Second Line */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+            <Pen size={14} style={{ color: '#666', flexShrink: 0 }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+              <input
+                type="color"
+                value={getCurrentStrokeColor() === 'none' ? '#000000' : getCurrentStrokeColor()}
+                onChange={(e) => handleStrokeColorChange(e.target.value)}
+                style={{
+                  width: '24px',
+                  height: '24px',
+                  border: '1px solid #ccc',
+                  borderRadius: '3px',
+                  cursor: 'pointer',
+                  opacity: getCurrentStrokeColor() === 'none' ? 0.5 : 1
+                }}
+                title="Stroke Color"
+              />
+              <IconButton
+                onPointerUp={handleStrokeNone}
+                disabled={getCurrentFillColor() === 'none'}
+                active={getCurrentStrokeColor() === 'none'}
+                activeBgColor="#007bff"
+                activeColor="#fff"
+                borderColor="#ccc"
+                size="custom"
+                customSize="20px"
+                title="No Stroke"
+              >
+                <X size={12} />
+              </IconButton>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', minWidth: '120px' }}>
+              <Eye size={14} style={{ color: '#666', flexShrink: 0 }} />
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.1"
+                value={getCurrentOpacity()}
+                onChange={(e) => handleOpacityChange(parseFloat(e.target.value))}
+                style={{
+                  flex: 1,
+                  height: '4px',
+                  borderRadius: '2px',
+                  background: '#ddd',
+                  outline: 'none',
+                  cursor: 'pointer',
+                  minWidth: '50px'
+                }}
+                title="Stroke Opacity"
+              />
+              <span style={{
+                fontSize: '10px',
+                color: '#666',
+                width: '35px',
+                textAlign: 'right',
+                flexShrink: 0
+              }}>
+                {Math.round(getCurrentOpacity() * 100)}%
+              </span>
+            </div>
+          </div>
+
+          {/* Fill Color & Opacity - Third Line */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <PaintBucket size={14} style={{ color: '#666', flexShrink: 0 }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+              <input
+                type="color"
+                value={getCurrentFillColor() === 'none' ? '#000000' : getCurrentFillColor()}
+                onChange={(e) => handleFillColorChange(e.target.value)}
+                style={{
+                  width: '24px',
+                  height: '24px',
+                  border: '1px solid #ccc',
+                  borderRadius: '3px',
+                  cursor: 'pointer',
+                  opacity: getCurrentFillColor() === 'none' ? 0.5 : 1
+                }}
+                title="Fill Color"
+              />
+              <IconButton
+                onPointerUp={handleFillNone}
+                active={getCurrentFillColor() === 'none'}
+                activeBgColor="#007bff"
+                activeColor="#fff"
+                borderColor="#ccc"
+                size="custom"
+                customSize="20px"
+                title="No Fill"
+              >
+                <X size={12} />
+              </IconButton>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', minWidth: '120px' }}>
+              <Eye size={14} style={{ color: '#666', flexShrink: 0 }} />
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.1"
+                value={getCurrentFillOpacity()}
+                onChange={(e) => handleFillOpacityChange(parseFloat(e.target.value))}
+                style={{
+                  flex: 1,
+                  height: '4px',
+                  borderRadius: '2px',
+                  background: '#ddd',
+                  outline: 'none',
+                  cursor: 'pointer',
+                  minWidth: '50px'
+                }}
+                title="Fill Opacity"
+              />
+              <span style={{
+                fontSize: '10px',
+                color: '#666',
+                width: '35px',
+                textAlign: 'right',
+                flexShrink: 0
+              }}>
+                {Math.round(getCurrentFillOpacity() * 100)}%
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Presets Section */}
+      {isExpanded && (
+        <div style={{ paddingTop: '8px', marginTop: '4px' }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(10, 1fr)',
+            gap: '3px',
+            maxWidth: '230px'
+          }}>
+            {PRESETS.map((preset) => (
+              <PresetButton
+                key={preset.id}
+                preset={preset}
+                onClick={handlePresetSelect}
+              />
+            ))}
+          </div>
+          <div style={{ borderTop: '1px solid #eee', marginTop: '8px' }}></div>
+
+        </div>
+      )}
+
     </div>
   );
 };

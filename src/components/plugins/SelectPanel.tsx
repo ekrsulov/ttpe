@@ -10,7 +10,7 @@ export const SelectPanel: React.FC = () => {
   return (
     <div style={{ 
       backgroundColor: '#fff',
-      padding: '8px 8px 0 8px',
+      padding: '0 8px 0 8px',
       display: 'flex',
       flexDirection: 'column'
     }}>
