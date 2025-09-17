@@ -9,7 +9,7 @@ import { SelectPanel } from './plugins/SelectPanel';
 import { ShapePanel } from './plugins/ShapePanel';
 import { IconButton } from './ui/IconButton';
 import {
-  Move,
+  Hand,
   Pen,
   Type,
   MousePointer,
@@ -23,12 +23,12 @@ export const Sidebar: React.FC = () => {
 
   const plugins = [
     { name: 'select', label: 'Select', icon: MousePointer },
-    { name: 'pan', label: 'Pan', icon: Move },
+    { name: 'pan', label: 'Pan', icon: Hand },
+    { name: 'edit', label: 'Edit', icon: MousePointerClick },
+    { name: 'transformation', label: 'Transform', icon: VectorSquare },
     { name: 'pencil', label: 'Pencil', icon: Pen },
     { name: 'text', label: 'Text', icon: Type },
     { name: 'shape', label: 'Shape', icon: Shapes },
-    { name: 'transformation', label: 'Transform', icon: VectorSquare },
-    { name: 'edit', label: 'Edit', icon: MousePointerClick },
   ];
 
   return (

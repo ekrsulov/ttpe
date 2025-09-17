@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { Move, RotateCcw, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Hand, RotateCcw, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { IconButton } from '../ui/IconButton';
 import { Tag } from '../ui/Tag';
 
@@ -12,7 +12,7 @@ export const PanPanel: React.FC = () => {
     <div style={{ backgroundColor: '#fff' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <Move size={16} style={{ marginRight: '6px', color: '#666' }} />
+          <Hand size={16} style={{ marginRight: '6px', color: '#666' }} />
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#333' }}>Pan</span>
         </div>
         <Tag badge={true}>
