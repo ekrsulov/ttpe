@@ -802,10 +802,11 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
               key={index}
               cx={displayX}
               cy={displayY}
-              r={size}
+              r={size / viewport.zoom}
               fill={color}
               stroke="white"
-              strokeWidth={1}
+              strokeWidth={1 / viewport.zoom}
+              vectorEffect="non-scaling-stroke"
               style={{ cursor: 'pointer' }}
               onPointerDown={(e) => {
                 e.stopPropagation();
@@ -842,8 +843,8 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
 
               return (
                 <g key={`lines-${cmdIndex}`}>
-                  <line x1={startPoint.x} y1={startPoint.y} x2={control1X} y2={control1Y} stroke="blue" strokeWidth={1} opacity={0.5} />
-                  <line x1={control2X} y1={control2Y} x2={endX} y2={endY} stroke="blue" strokeWidth={1} opacity={0.5} />
+                  <line x1={startPoint.x} y1={startPoint.y} x2={control1X} y2={control1Y} stroke="blue" strokeWidth={1 / viewport.zoom} opacity={0.5} vectorEffect="non-scaling-stroke" />
+                  <line x1={control2X} y1={control2Y} x2={endX} y2={endY} stroke="blue" strokeWidth={1 / viewport.zoom} opacity={0.5} vectorEffect="non-scaling-stroke" />
                 </g>
               );
             }
