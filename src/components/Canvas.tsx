@@ -604,6 +604,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
         selectedIds={selectedIds}
         plugins={plugins}
         elements={elements}
+        activePlugin={activePlugin}
         isSelecting={isSelecting}
         selectionStart={selectionStart}
         selectionEnd={selectionEnd}

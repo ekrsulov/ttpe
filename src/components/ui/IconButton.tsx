@@ -2,6 +2,7 @@ import React from 'react';
 
 interface IconButtonProps {
   onClick?: () => void;
+  onPointerUp?: () => void;
   disabled?: boolean;
   children: React.ReactNode;
   title?: string;
@@ -16,6 +17,7 @@ interface IconButtonProps {
 
 export const IconButton: React.FC<IconButtonProps> = ({
   onClick,
+  onPointerUp,
   disabled = false,
   children,
   title,
@@ -50,7 +52,7 @@ export const IconButton: React.FC<IconButtonProps> = ({
 
   return (
     <button
-      onClick={onClick}
+      onPointerUp={onPointerUp || onClick}
       disabled={disabled}
       title={title}
       style={{

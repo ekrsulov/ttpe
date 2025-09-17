@@ -219,7 +219,7 @@ export const EditorPanel: React.FC = () => {
         {/* Undo/Redo Group */}
         <div style={{ display: 'flex', gap: '2px' }}>
           <IconButton
-            onClick={() => undo()}
+            onPointerUp={() => undo()}
             disabled={!canUndo}
             active={canUndo}
             activeBgColor="#007bff"
@@ -232,7 +232,7 @@ export const EditorPanel: React.FC = () => {
             <Undo2 size={14} />
           </IconButton>
           <IconButton
-            onClick={() => redo()}
+            onPointerUp={() => redo()}
             disabled={!canRedo}
             active={canRedo}
             activeBgColor="#007bff"
@@ -249,7 +249,7 @@ export const EditorPanel: React.FC = () => {
         {/* Zoom Controls Group */}
         <div style={{ display: 'flex', gap: '2px' }}>
           <IconButton
-            onClick={() => zoom(1 / zoomFactor, window.innerWidth / 2, window.innerHeight / 2)}
+            onPointerUp={() => zoom(1 / zoomFactor, window.innerWidth / 2, window.innerHeight / 2)}
             borderColor="#dee2e6"
             size="custom"
             customSize="32px"
@@ -258,7 +258,7 @@ export const EditorPanel: React.FC = () => {
             <ZoomOut size={14} />
           </IconButton>
           <IconButton
-            onClick={resetZoom}
+            onPointerUp={resetZoom}
             borderColor="#dee2e6"
             size="custom"
             customSize="32px"
@@ -267,7 +267,7 @@ export const EditorPanel: React.FC = () => {
             <RotateCcw size={14} />
           </IconButton>
           <IconButton
-            onClick={() => zoom(zoomFactor, window.innerWidth / 2, window.innerHeight / 2)}
+            onPointerUp={() => zoom(zoomFactor, window.innerWidth / 2, window.innerHeight / 2)}
             borderColor="#dee2e6"
             size="custom"
             customSize="32px"
@@ -279,7 +279,7 @@ export const EditorPanel: React.FC = () => {
 
         {/* Delete Button */}
         <IconButton
-          onClick={deleteSelectedElements}
+          onPointerUp={deleteSelectedElements}
           disabled={selectedIds.length === 0}
           active={selectedIds.length > 0}
           activeBgColor="#dc3545"
@@ -345,7 +345,7 @@ export const EditorPanel: React.FC = () => {
               title="Stroke Color"
             />
             <IconButton
-              onClick={handleStrokeNone}
+              onPointerUp={handleStrokeNone}
               active={getCurrentStrokeColor() === 'none'}
               activeBgColor="#007bff"
               activeColor="#fff"
@@ -408,7 +408,7 @@ export const EditorPanel: React.FC = () => {
               title="Fill Color"
             />
             <IconButton
-              onClick={handleFillNone}
+              onPointerUp={handleFillNone}
               active={getCurrentFillColor() === 'none'}
               activeBgColor="#007bff"
               activeColor="#fff"

@@ -60,7 +60,7 @@ export const Sidebar: React.FC = () => {
             return (
               <IconButton
                 key={plugin.name}
-                onClick={() => !isDisabled && setActivePlugin(activePlugin === plugin.name ? null : plugin.name)}
+                onPointerUp={() => !isDisabled && setActivePlugin(activePlugin === plugin.name ? null : plugin.name)}
                 disabled={isDisabled}
                 active={activePlugin === plugin.name}
                 activeBgColor="#007bff"

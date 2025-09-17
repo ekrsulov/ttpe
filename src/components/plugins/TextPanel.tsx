@@ -135,7 +135,7 @@ export const TextPanel: React.FC = () => {
             }}
           />
                     <IconButton
-            onClick={() => handleFontWeightChange(getCurrentFontWeight() === 'bold' ? 'normal' : 'bold')}
+            onPointerUp={() => handleFontWeightChange(getCurrentFontWeight() === 'bold' ? 'normal' : 'bold')}
             active={getCurrentFontWeight() === 'bold'}
             activeBgColor="#007bff"
             activeColor="#fff"
@@ -147,7 +147,7 @@ export const TextPanel: React.FC = () => {
             <Bold size={12} />
           </IconButton>
           <IconButton
-            onClick={() => handleFontStyleChange(getCurrentFontStyle() === 'italic' ? 'normal' : 'italic')}
+            onPointerUp={() => handleFontStyleChange(getCurrentFontStyle() === 'italic' ? 'normal' : 'italic')}
             active={getCurrentFontStyle() === 'italic'}
             activeBgColor="#007bff"
             activeColor="#fff"

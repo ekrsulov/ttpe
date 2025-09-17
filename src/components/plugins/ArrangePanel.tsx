@@ -6,7 +6,7 @@ import {
   ChevronDown,
   AlignLeft,
   AlignRight,
-  AlignHorizontalJustifyCenter,
+  AlignCenter,
   AlignVerticalJustifyStart,
   AlignVerticalJustifyCenter,
   AlignVerticalJustifyEnd,
@@ -89,7 +89,7 @@ export const ArrangePanel: React.FC = () => {
           </div>
           <div style={{ flex: 1 }}>
             <IconButton onClick={alignCenter} disabled={!canAlign} title="Align Center" borderColor="#dee2e6">
-              <AlignHorizontalJustifyCenter size={10} />
+              <AlignCenter size={10} />
             </IconButton>
           </div>
           <div style={{ flex: 1 }}>

@@ -37,7 +37,7 @@ export const ShapePanel: React.FC = () => {
           return (
             <IconButton
               key={shape.type}
-              onClick={() => handleShapeSelect(shape.type)}
+              onPointerUp={() => handleShapeSelect(shape.type)}
               active={shouldHighlight}
               activeBgColor="#007bff"
               activeColor="#fff"
