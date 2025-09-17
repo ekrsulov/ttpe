@@ -7,7 +7,7 @@ export const PanPanel: React.FC = () => {
   const panAmount = 50; // pixels to pan
 
   return (
-    <div style={{ padding: '8px', border: '1px solid #ddd', borderRadius: '4px', backgroundColor: '#fff' }}>
+    <div style={{ backgroundColor: '#fff' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <Move size={16} style={{ marginRight: '6px', color: '#666' }} />

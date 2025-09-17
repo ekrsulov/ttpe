@@ -46,7 +46,7 @@ export const Sidebar: React.FC = () => {
       <div style={{
         padding: '4px',
         borderBottom: '1px solid #ddd',
-        backgroundColor: '#f9f9f9'
+        backgroundColor: '#fff'
       }}>
         <div style={{
           display: 'grid',
@@ -93,7 +93,7 @@ export const Sidebar: React.FC = () => {
         display: 'flex',
         flexDirection: 'column',
         gap: '8px',
-        paddingBottom: '140px' // Space for fixed SelectPanel
+        backgroundColor: '#fff'
       }}>
         <EditorPanel />
         {activePlugin === 'pan' && <PanPanel />}
@@ -108,14 +108,10 @@ export const Sidebar: React.FC = () => {
         bottom: 0,
         left: 0,
         right: 0,
-        padding: '8px',
-        backgroundColor: 'rgba(249, 249, 249, 0.95)',
-        backdropFilter: 'blur(10px)',
-        borderTop: '1px solid #ddd',
+        backgroundColor: '#fff',
         zIndex: 1001,
         display: 'flex',
-        flexDirection: 'column',
-        gap: '8px'
+        flexDirection: 'column'
       }}>
         <ArrangePanel />
         <SelectPanel />

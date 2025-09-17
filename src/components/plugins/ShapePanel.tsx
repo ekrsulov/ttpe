@@ -20,7 +20,7 @@ export const ShapePanel: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: '8px', border: '1px solid #ddd', borderRadius: '4px', backgroundColor: '#fff' }}>
+    <div style={{ backgroundColor: '#fff' }}>
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
         <Shapes size={16} style={{ marginRight: '6px', color: '#666' }} />
         <span style={{ fontSize: '12px', fontWeight: '500', color: '#333' }}>Shape</span>

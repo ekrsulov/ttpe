@@ -36,7 +36,7 @@ export const ArrangePanel: React.FC = () => {
   const canDistribute = selectedCount >= 3;
 
   return (
-    <div style={{ padding: '6px', border: '1px solid #ddd', borderRadius: '4px', backgroundColor: '#fff' }}>
+    <div style={{ backgroundColor: '#fff', padding: '0 8px' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
         {/* Primera línea: Order buttons */}
         <div style={{ display: 'flex', gap: '2px' }}>

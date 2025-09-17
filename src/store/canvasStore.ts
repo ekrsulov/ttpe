@@ -98,7 +98,7 @@ export const useCanvasStore = create<CanvasStore>()(
 
       // Cross-slice actions
       startPath: (point) => {
-        const { strokeWidth, strokeColor, opacity, fillColor, fillOpacity } = get().plugins.pencil;
+        const { strokeWidth, strokeColor, opacity } = get().plugins.pencil;
         get().addElement({
           type: 'path',
           data: {
@@ -106,8 +106,8 @@ export const useCanvasStore = create<CanvasStore>()(
             strokeWidth,
             strokeColor,
             opacity,
-            fillColor,
-            fillOpacity,
+            fillColor: 'none',  // Always no fill for pencil strokes
+            fillOpacity: 1,     // Always 100% fill opacity for pencil strokes
           },
         });
       },
@@ -132,7 +132,8 @@ export const useCanvasStore = create<CanvasStore>()(
       },
 
       addText: async (x, y, text) => {
-        const { fontSize, fontFamily, color, fontWeight, fontStyle, opacity } = get().plugins.text;
+        const { fontSize, fontFamily, fontWeight, fontStyle } = get().plugins.text;
+        const { fillColor, fillOpacity, strokeColor, strokeWidth, opacity } = get().plugins.pencil;
         
         try {
           // Convert text to path automatically
@@ -152,11 +153,11 @@ export const useCanvasStore = create<CanvasStore>()(
               type: 'path',
               data: {
                 d: pathD,
-                strokeWidth: 1,
-                strokeColor: color,
+                strokeWidth,
+                strokeColor,
                 opacity,
-                fillColor: color,
-                fillOpacity: 1,
+                fillColor,
+                fillOpacity,
               },
             });
           } else {
@@ -179,7 +180,7 @@ export const useCanvasStore = create<CanvasStore>()(
   },
 
   createShape: (startPoint, endPoint) => {
-    const { strokeWidth, strokeColor, opacity } = get().plugins.pencil;
+    const { strokeWidth, strokeColor, opacity, fillColor, fillOpacity } = get().plugins.pencil;
     const selectedShape = get().plugins.shape.selectedShape;
     
     // Calculate shape dimensions
@@ -247,8 +248,8 @@ export const useCanvasStore = create<CanvasStore>()(
         strokeWidth,
         strokeColor,
         opacity,
-        fillColor: strokeColor,
-        fillOpacity: 0,
+        fillColor,
+        fillOpacity,
       },
     });
     
