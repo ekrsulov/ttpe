@@ -5,7 +5,7 @@ import { IconButton } from '../ui/IconButton';
 import type { ShapeType } from '../../store/slices/plugins/shapePluginSlice';
 
 export const ShapePanel: React.FC = () => {
-  const { plugins, updatePluginState, setActivePlugin, activePlugin } = useCanvasStore();
+  const { shape, updateShapeState, setActivePlugin, activePlugin } = useCanvasStore();
 
   const shapes: { type: ShapeType; label: string; icon: React.ComponentType<any> }[] = [
     { type: 'square', label: 'Square', icon: Square },
@@ -15,7 +15,7 @@ export const ShapePanel: React.FC = () => {
   ];
 
   const handleShapeSelect = (shapeType: ShapeType) => {
-    updatePluginState('shape', { selectedShape: shapeType });
+    updateShapeState({ selectedShape: shapeType });
     // Auto-switch to shape mode when selecting a shape
     setActivePlugin('shape');
   };
@@ -28,22 +28,22 @@ export const ShapePanel: React.FC = () => {
       </div>
 
       <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-        {shapes.map((shape) => {
-          const IconComponent = shape.icon;
-          const isShapeSelected = plugins.shape.selectedShape === shape.type;
+        {shapes.map((shapeItem) => {
+          const IconComponent = shapeItem.icon;
+          const isShapeSelected = shape.selectedShape === shapeItem.type;
           const isShapeModeActive = activePlugin === 'shape';
           const shouldHighlight = isShapeModeActive && isShapeSelected;
 
           return (
             <IconButton
-              key={shape.type}
-              onPointerUp={() => handleShapeSelect(shape.type)}
+              key={shapeItem.type}
+              onPointerUp={() => handleShapeSelect(shapeItem.type)}
               active={shouldHighlight}
               activeBgColor="#007bff"
               activeColor="#fff"
               borderColor="#ccc"
               transition="all 0.2s ease"
-              title={`${shape.label} - Click and drag to create`}
+              title={`${shapeItem.label} - Click and drag to create`}
             >
               <IconComponent size={14} />
             </IconButton>

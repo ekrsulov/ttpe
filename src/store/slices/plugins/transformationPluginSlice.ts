@@ -12,9 +12,12 @@ export interface TransformationPluginSlice {
     showCoordinates: boolean;
     showRulers: boolean;
   };
+
+  // Actions
+  updateTransformationState: (state: Partial<TransformationPluginSlice['transformation']>) => void;
 }
 
-export const createTransformationPluginSlice: StateCreator<TransformationPluginSlice, [], [], TransformationPluginSlice> = () => ({
+export const createTransformationPluginSlice: StateCreator<TransformationPluginSlice, [], [], TransformationPluginSlice> = (set) => ({
   // Initial state
   transformation: {
     isTransforming: false,
@@ -23,7 +26,14 @@ export const createTransformationPluginSlice: StateCreator<TransformationPluginS
     scaleY: 1,
     rotation: 0,
     transformOrigin: null,
-    showCoordinates: true,
-    showRulers: true,
+    showCoordinates: false,
+    showRulers: false,
+  },
+
+  // Actions
+  updateTransformationState: (state) => {
+    set((current) => ({
+      transformation: { ...current.transformation, ...state },
+    }));
   },
 });

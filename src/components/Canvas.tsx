@@ -12,7 +12,7 @@ interface CanvasProps {
 
 export const Canvas: React.FC<CanvasProps> = () => {
   const svgRef = useRef<SVGSVGElement>(null);
-  const { elements, viewport, activePlugin, plugins, selectedIds } = useCanvasStore();
+  const { elements, viewport, activePlugin, transformation, shape, selectedIds } = useCanvasStore();
 
   const [isSpacePressed, setIsSpacePressed] = useState(false);
   const [isSelecting, setIsSelecting] = useState(false);
@@ -240,7 +240,8 @@ export const Canvas: React.FC<CanvasProps> = () => {
         useCanvasStore.getState().startPath(point);
         break;
       case 'text':
-        useCanvasStore.getState().addText(point.x, point.y, plugins.text.text);
+        const state = useCanvasStore.getState();
+        state.addText(point.x, point.y, state.text.text);
         break;
       case 'shape':
         // Start creating a shape
@@ -257,7 +258,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
         }
         break;
     }
-  }, [activePlugin, screenToCanvas, isSpacePressed, plugins.text.text]);
+  }, [activePlugin, screenToCanvas, isSpacePressed, useCanvasStore.getState().text.text]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     const point = screenToCanvas(e.clientX, e.clientY);
@@ -462,7 +463,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
     if (isCreatingShape && shapeStart) {
       setShapeEnd(point);
     }
-  }, [activePlugin, screenToCanvas, isSpacePressed, isSelecting, selectionStart, viewport.zoom, isDragging, dragStart, isCreatingShape, shapeStart, isTransforming, transformStart, transformElementId, transformHandler, originalBounds, initialTransform, originalElementData, plugins.transformation, getElementBounds]);
+  }, [activePlugin, screenToCanvas, isSpacePressed, isSelecting, selectionStart, viewport.zoom, isDragging, dragStart, isCreatingShape, shapeStart, isTransforming, transformStart, transformElementId, transformHandler, originalBounds, initialTransform, originalElementData, useCanvasStore.getState().transformation, getElementBounds]);
 
   const handlePointerUp = useCallback((e: React.PointerEvent) => {
     // Only handle dragging if it hasn't been handled by element click already
@@ -602,7 +603,8 @@ export const Canvas: React.FC<CanvasProps> = () => {
       <CanvasRenderer
         viewport={viewport}
         selectedIds={selectedIds}
-        plugins={plugins}
+        transformation={transformation}
+        shape={shape}
         elements={elements}
         activePlugin={activePlugin}
         isSelecting={isSelecting}

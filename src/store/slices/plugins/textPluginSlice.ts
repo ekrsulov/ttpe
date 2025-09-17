@@ -11,9 +11,12 @@ export interface TextPluginSlice {
     fontStyle: 'normal' | 'italic';
     opacity: number;
   };
+
+  // Actions
+  updateTextState: (state: Partial<TextPluginSlice['text']>) => void;
 }
 
-export const createTextPluginSlice: StateCreator<TextPluginSlice, [], [], TextPluginSlice> = () => ({
+export const createTextPluginSlice: StateCreator<TextPluginSlice, [], [], TextPluginSlice> = (set) => ({
   // Initial state
   text: {
     text: 'New Text',
@@ -23,5 +26,12 @@ export const createTextPluginSlice: StateCreator<TextPluginSlice, [], [], TextPl
     fontWeight: 'normal',
     fontStyle: 'normal',
     opacity: 1,
+  },
+
+  // Actions
+  updateTextState: (state) => {
+    set((current) => ({
+      text: { ...current.text, ...state },
+    }));
   },
 });

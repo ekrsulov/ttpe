@@ -9,7 +9,8 @@ import { createViewportSlice, type ViewportSlice } from './slices/features/viewp
 import { createSelectionSlice, type SelectionSlice } from './slices/features/selectionSlice';
 import { createOrderSlice, type OrderSlice } from './slices/features/orderSlice';
 import { createArrangeSlice, type ArrangeSlice } from './slices/features/arrangeSlice';
-import { createPluginManagementSlice, type PluginManagementSlice } from './slices/pluginManagementSlice';
+import { createPencilPluginSlice, type PencilPluginSlice } from './slices/plugins/pencilPluginSlice';
+import { createTextPluginSlice, type TextPluginSlice } from './slices/plugins/textPluginSlice';
 import { createShapePluginSlice, type ShapePluginSlice } from './slices/plugins/shapePluginSlice';
 import { createHistoryPluginSlice, type HistoryPluginSlice } from './slices/plugins/historyPluginSlice';
 import { createTransformationPluginSlice, type TransformationPluginSlice } from './slices/plugins/transformationPluginSlice';
@@ -48,7 +49,8 @@ type CanvasStore = BaseSlice &
   SelectionSlice &
   OrderSlice &
   ArrangeSlice &
-  PluginManagementSlice &
+  PencilPluginSlice &
+  TextPluginSlice &
   ShapePluginSlice &
   HistoryPluginSlice &
   TransformationPluginSlice &
@@ -81,8 +83,11 @@ export const useCanvasStore = create<CanvasStore>()(
       // Arrange slice
       ...createArrangeSlice(set, get, api),
 
-      // Plugin management slice
-      ...createPluginManagementSlice(set, get, api),
+      // Pencil plugin slice
+      ...createPencilPluginSlice(set, get, api),
+
+      // Text plugin slice
+      ...createTextPluginSlice(set, get, api),
 
       // Shape plugin slice
       ...createShapePluginSlice(set, get, api),
@@ -98,7 +103,7 @@ export const useCanvasStore = create<CanvasStore>()(
 
       // Cross-slice actions
       startPath: (point) => {
-        const { strokeWidth, strokeColor, opacity } = get().plugins.pencil;
+        const { strokeWidth, strokeColor, opacity } = get().pencil;
         // For pencil paths, if strokeColor is 'none', use black instead
         const effectiveStrokeColor = strokeColor === 'none' ? '#000000' : strokeColor;
         get().addElement({
@@ -135,8 +140,8 @@ export const useCanvasStore = create<CanvasStore>()(
       },
 
       addText: async (x, y, text) => {
-        const { fontSize, fontFamily, fontWeight, fontStyle } = get().plugins.text;
-        const { fillColor, fillOpacity, strokeColor, strokeWidth, opacity } = get().plugins.pencil;
+        const { fontSize, fontFamily, fontWeight, fontStyle } = get().text;
+        const { fillColor, fillOpacity, strokeColor, strokeWidth, opacity } = get().pencil;
         
         try {
           // Convert text to path automatically
@@ -183,8 +188,8 @@ export const useCanvasStore = create<CanvasStore>()(
   },
 
   createShape: (startPoint, endPoint) => {
-    const { strokeWidth, strokeColor, opacity, fillColor, fillOpacity } = get().plugins.pencil;
-    const selectedShape = get().plugins.shape.selectedShape;
+    const { strokeWidth, strokeColor, opacity, fillColor, fillOpacity } = get().pencil;
+    const selectedShape = get().shape.selectedShape;
     
     // Calculate shape dimensions
     const width = Math.abs(endPoint.x - startPoint.x);
@@ -267,10 +272,11 @@ export const useCanvasStore = create<CanvasStore>()(
     elements: state.elements,
     selectedIds: state.selectedIds,
     viewport: state.viewport,
-    plugins: {
-      ...state.plugins,
-      history: undefined, // Exclude history state from tracking
-    },
+    pencil: state.pencil,
+    text: state.text,
+    shape: state.shape,
+    transformation: state.transformation,
+    editor: state.editor,
     activePlugin: state.activePlugin,
   }),
   // Cool-off period: throttle state changes to prevent too many history entries

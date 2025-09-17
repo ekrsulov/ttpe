@@ -9,9 +9,12 @@ export interface PencilPluginSlice {
     fillColor: string;
     fillOpacity: number;
   };
+
+  // Actions
+  updatePencilState: (state: Partial<PencilPluginSlice['pencil']>) => void;
 }
 
-export const createPencilPluginSlice: StateCreator<PencilPluginSlice, [], [], PencilPluginSlice> = () => ({
+export const createPencilPluginSlice: StateCreator<PencilPluginSlice, [], [], PencilPluginSlice> = (set) => ({
   // Initial state
   pencil: {
     strokeWidth: 4,
@@ -19,5 +22,12 @@ export const createPencilPluginSlice: StateCreator<PencilPluginSlice, [], [], Pe
     opacity: 1,
     fillColor: 'none',
     fillOpacity: 1,
+  },
+
+  // Actions
+  updatePencilState: (state) => {
+    set((current) => ({
+      pencil: { ...current.pencil, ...state },
+    }));
   },
 });

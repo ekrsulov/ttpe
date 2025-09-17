@@ -1,11 +1,10 @@
 import React from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { Move, Eye, EyeOff, Grid } from 'lucide-react';
+import { VectorSquare } from 'lucide-react';
 
 export const TransformationPanel: React.FC = () => {
-  const { selectedIds, plugins, updatePluginState } = useCanvasStore();
-  const transformationPlugin = plugins.transformation || {};
-  const { showCoordinates = false, showRulers = false } = transformationPlugin;
+  const { selectedIds, transformation, updateTransformationState } = useCanvasStore();
+  const { showCoordinates, showRulers } = transformation;
 
   const hasSelection = selectedIds.length > 0;
 
@@ -13,7 +12,7 @@ export const TransformationPanel: React.FC = () => {
     <div style={{ backgroundColor: '#fff' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <Move size={16} style={{ marginRight: '6px', color: '#666' }} />
+          <VectorSquare size={16} style={{ marginRight: '6px', color: '#666' }} />
           <span style={{ fontSize: '12px', fontWeight: '500', color: '#333' }}>Transform</span>
         </div>
       </div>
@@ -30,11 +29,10 @@ export const TransformationPanel: React.FC = () => {
               type="checkbox"
               id="showCoordinates"
               checked={showCoordinates}
-              onChange={(e) => updatePluginState('transformation', { showCoordinates: e.target.checked })}
+              onChange={(e) => updateTransformationState({ showCoordinates: e.target.checked })}
               style={{ marginRight: '6px' }}
             />
-            <label htmlFor="showCoordinates" style={{ fontSize: '11px', color: '#666', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-              {showCoordinates ? <Eye size={12} style={{ marginRight: '4px' }} /> : <EyeOff size={12} style={{ marginRight: '4px' }} />}
+            <label htmlFor="showCoordinates" style={{ fontSize: '11px', color: '#666', cursor: 'pointer' }}>
               Coordinates
             </label>
           </div>
@@ -45,11 +43,10 @@ export const TransformationPanel: React.FC = () => {
               type="checkbox"
               id="showRulers"
               checked={showRulers}
-              onChange={(e) => updatePluginState('transformation', { showRulers: e.target.checked })}
+              onChange={(e) => updateTransformationState({ showRulers: e.target.checked })}
               style={{ marginRight: '6px' }}
             />
-            <label htmlFor="showRulers" style={{ fontSize: '11px', color: '#666', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-              <Grid size={12} style={{ marginRight: '4px' }} />
+            <label htmlFor="showRulers" style={{ fontSize: '11px', color: '#666', cursor: 'pointer' }}>
               Rulers
             </label>
           </div>

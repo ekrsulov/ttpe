@@ -9,14 +9,12 @@ interface CanvasRendererProps {
     panY: number;
   };
   selectedIds: string[];
-  plugins: {
-    transformation?: {
-      showCoordinates?: boolean;
-      showRulers?: boolean;
-    };
-    shape?: {
-      selectedShape?: string;
-    };
+  transformation: {
+    showCoordinates?: boolean;
+    showRulers?: boolean;
+  };
+  shape: {
+    selectedShape?: string;
   };
   elements: Array<{
     id: string;
@@ -40,7 +38,8 @@ interface CanvasRendererProps {
 export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   viewport,
   selectedIds,
-  plugins,
+  transformation,
+  shape,
   elements,
   activePlugin,
   isSelecting,
@@ -161,10 +160,10 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         {isTransformationMode && renderCenterMarker(bounds, selectionColor)}
 
         {/* Corner coordinates */}
-        {isTransformationMode && plugins.transformation?.showCoordinates && renderCornerCoordinates(bounds)}
+        {isTransformationMode && transformation?.showCoordinates && renderCornerCoordinates(bounds)}
 
         {/* Measurement rulers */}
-        {isTransformationMode && plugins.transformation?.showRulers && renderMeasurementRulers(bounds)}
+        {isTransformationMode && transformation?.showRulers && renderMeasurementRulers(bounds)}
       </g>
     );
   };
@@ -501,7 +500,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         />
 
         {/* Center coordinates */}
-        {plugins.transformation?.showCoordinates && (
+        {transformation?.showCoordinates && (
           <g>
             <rect
               x={centerX - textWidth / 2 - padding}
@@ -608,7 +607,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   );
 
   function renderShapePreview() {
-    const selectedShape = plugins.shape?.selectedShape || 'rectangle';
+    const selectedShape = shape?.selectedShape || 'rectangle';
     const width = Math.abs(shapeEnd!.x - shapeStart!.x);
     const height = Math.abs(shapeEnd!.y - shapeStart!.y);
     const centerX = (shapeStart!.x + shapeEnd!.x) / 2;

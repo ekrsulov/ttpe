@@ -14,7 +14,7 @@ import {
   Type,
   MousePointer,
   Shapes,
-  RotateCcw,
+  VectorSquare,
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -26,7 +26,7 @@ export const Sidebar: React.FC = () => {
     { name: 'pencil', label: 'Pencil', icon: Pen },
     { name: 'text', label: 'Text', icon: Type },
     { name: 'shape', label: 'Shape', icon: Shapes },
-    { name: 'transformation', label: 'Transform', icon: RotateCcw },
+    { name: 'transformation', label: 'Transform', icon: VectorSquare },
   ];
 
   return (

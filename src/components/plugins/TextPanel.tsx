@@ -6,7 +6,7 @@ import { FontSelector } from '../FontSelector';
 import { IconButton } from '../ui/IconButton';
 
 export const TextPanel: React.FC = () => {
-  const { plugins, updatePluginState } = useCanvasStore();
+  const { text, updateTextState } = useCanvasStore();
 
   // Font detection state
   const [availableFonts, setAvailableFonts] = useState<string[]>([]);
@@ -32,44 +32,44 @@ export const TextPanel: React.FC = () => {
   }, []);
 
   const handleFontSizeChange = (value: number) => {
-    updatePluginState('text', { fontSize: value });
+    updateTextState({ fontSize: value });
   };
 
   const handleFontFamilyChange = (value: string) => {
-    updatePluginState('text', { fontFamily: value });
+    updateTextState({ fontFamily: value });
   };
 
   const handleFontWeightChange = (value: 'normal' | 'bold') => {
-    updatePluginState('text', { fontWeight: value });
+    updateTextState({ fontWeight: value });
   };
 
   const handleFontStyleChange = (value: 'normal' | 'italic') => {
-    updatePluginState('text', { fontStyle: value });
+    updateTextState({ fontStyle: value });
   };
 
   const handleTextChange = (value: string) => {
-    updatePluginState('text', { text: value });
+    updateTextState({ text: value });
   };
 
   // Get current values from plugin defaults
   const getCurrentFontSize = () => {
-    return plugins.text.fontSize;
+    return text.fontSize;
   };
 
   const getCurrentFontFamily = () => {
-    return plugins.text.fontFamily;
+    return text.fontFamily;
   };
 
   const getCurrentText = () => {
-    return plugins.text.text;
+    return text.text;
   };
 
   const getCurrentFontWeight = () => {
-    return plugins.text.fontWeight;
+    return text.fontWeight;
   };
 
   const getCurrentFontStyle = () => {
-    return plugins.text.fontStyle;
+    return text.fontStyle;
   };
 
   return (

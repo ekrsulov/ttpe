@@ -7,11 +7,21 @@ export interface ShapePluginSlice {
   shape: {
     selectedShape: ShapeType;
   };
+
+  // Actions
+  updateShapeState: (state: Partial<ShapePluginSlice['shape']>) => void;
 }
 
-export const createShapePluginSlice: StateCreator<ShapePluginSlice, [], [], ShapePluginSlice> = () => ({
+export const createShapePluginSlice: StateCreator<ShapePluginSlice, [], [], ShapePluginSlice> = (set) => ({
   // Initial state
   shape: {
     selectedShape: 'square',
+  },
+
+  // Actions
+  updateShapeState: (state) => {
+    set((current) => ({
+      shape: { ...current.shape, ...state },
+    }));
   },
 });

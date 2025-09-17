@@ -34,8 +34,8 @@ export const EditorPanel: React.FC = () => {
     viewport,
     zoom,
     resetZoom,
-    plugins,
-    updatePluginState,
+    pencil,
+    updatePencilState,
     getSelectedPathsCount,
     updateSelectedPaths
   } = useCanvasStore();
@@ -54,7 +54,7 @@ export const EditorPanel: React.FC = () => {
     if (selectedPathsCount > 0) {
       updateSelectedPaths({ strokeWidth: value });
     } else {
-      updatePluginState('pencil', { strokeWidth: value });
+      updatePencilState({ strokeWidth: value });
     }
   };
 
@@ -62,7 +62,7 @@ export const EditorPanel: React.FC = () => {
     if (selectedPathsCount > 0) {
       updateSelectedPaths({ strokeColor: value });
     } else {
-      updatePluginState('pencil', { strokeColor: value });
+      updatePencilState({ strokeColor: value });
     }
   };
 
@@ -70,7 +70,7 @@ export const EditorPanel: React.FC = () => {
     if (selectedPathsCount > 0) {
       updateSelectedPaths({ strokeColor: 'none' });
     } else {
-      updatePluginState('pencil', { strokeColor: 'none' });
+      updatePencilState({ strokeColor: 'none' });
     }
   };
 
@@ -78,7 +78,7 @@ export const EditorPanel: React.FC = () => {
     if (selectedPathsCount > 0) {
       updateSelectedPaths({ opacity: value });
     } else {
-      updatePluginState('pencil', { opacity: value });
+      updatePencilState({ opacity: value });
     }
   };
 
@@ -86,7 +86,7 @@ export const EditorPanel: React.FC = () => {
     if (selectedPathsCount > 0) {
       updateSelectedPaths({ fillColor: value });
     } else {
-      updatePluginState('pencil', { fillColor: value });
+      updatePencilState({ fillColor: value });
     }
   };
 
@@ -94,7 +94,7 @@ export const EditorPanel: React.FC = () => {
     if (selectedPathsCount > 0) {
       updateSelectedPaths({ fillColor: 'none' });
     } else {
-      updatePluginState('pencil', { fillColor: 'none' });
+      updatePencilState({ fillColor: 'none' });
     }
   };
 
@@ -102,7 +102,7 @@ export const EditorPanel: React.FC = () => {
     if (selectedPathsCount > 0) {
       updateSelectedPaths({ fillOpacity: value });
     } else {
-      updatePluginState('pencil', { fillOpacity: value });
+      updatePencilState({ fillOpacity: value });
     }
   };
 
@@ -116,7 +116,7 @@ export const EditorPanel: React.FC = () => {
         return (pathElements[0].data as any).strokeWidth;
       }
     }
-    return plugins.pencil.strokeWidth;
+    return pencil.strokeWidth;
   };
 
   const getCurrentStrokeColor = () => {
@@ -128,7 +128,7 @@ export const EditorPanel: React.FC = () => {
         return (pathElements[0].data as any).strokeColor;
       }
     }
-    return plugins.pencil.strokeColor;
+    return pencil.strokeColor;
   };
 
   const getCurrentOpacity = () => {
@@ -140,7 +140,7 @@ export const EditorPanel: React.FC = () => {
         return (pathElements[0].data as any).opacity;
       }
     }
-    return plugins.pencil.opacity;
+    return pencil.opacity;
   };
 
   const getCurrentFillColor = () => {
@@ -152,7 +152,7 @@ export const EditorPanel: React.FC = () => {
         return (pathElements[0].data as any).fillColor;
       }
     }
-    return plugins.pencil.fillColor;
+    return pencil.fillColor;
   };
 
   const getCurrentFillOpacity = () => {
@@ -164,7 +164,7 @@ export const EditorPanel: React.FC = () => {
         return (pathElements[0].data as any).fillOpacity;
       }
     }
-    return plugins.pencil.fillOpacity;
+    return pencil.fillOpacity;
   };
 
   return (
@@ -410,7 +410,6 @@ export const EditorPanel: React.FC = () => {
             />
             <IconButton
               onPointerUp={handleFillNone}
-              disabled={getCurrentStrokeColor() === 'none'}
               active={getCurrentFillColor() === 'none'}
               activeBgColor="#007bff"
               activeColor="#fff"

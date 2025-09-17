@@ -4,7 +4,7 @@ export interface Point {
 }
 
 export interface PathData {
-  d: string; // SVG path commands (M, L, C, Z, etc.)
+  d: string; // SVG path commands (M, L, C, Z.)
   strokeWidth: number;
   strokeColor: string;
   opacity: number;
