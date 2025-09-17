@@ -346,6 +346,7 @@ export const EditorPanel: React.FC = () => {
             />
             <IconButton
               onPointerUp={handleStrokeNone}
+              disabled={getCurrentFillColor() === 'none'}
               active={getCurrentStrokeColor() === 'none'}
               activeBgColor="#007bff"
               activeColor="#fff"
@@ -409,6 +410,7 @@ export const EditorPanel: React.FC = () => {
             />
             <IconButton
               onPointerUp={handleFillNone}
+              disabled={getCurrentStrokeColor() === 'none'}
               active={getCurrentFillColor() === 'none'}
               activeBgColor="#007bff"
               activeColor="#fff"

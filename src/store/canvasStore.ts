@@ -99,15 +99,18 @@ export const useCanvasStore = create<CanvasStore>()(
       // Cross-slice actions
       startPath: (point) => {
         const { strokeWidth, strokeColor, opacity } = get().plugins.pencil;
+        // For pencil paths, if strokeColor is 'none', use black instead
+        const effectiveStrokeColor = strokeColor === 'none' ? '#000000' : strokeColor;
         get().addElement({
           type: 'path',
           data: {
             d: `M ${point.x} ${point.y}`,
             strokeWidth,
-            strokeColor,
+            strokeColor: effectiveStrokeColor,
             opacity,
             fillColor: 'none',  // Always no fill for pencil strokes
             fillOpacity: 1,     // Always 100% fill opacity for pencil strokes
+            isPencilPath: true, // Mark this as a pencil-created path
           },
         });
       },

@@ -549,12 +549,16 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     switch (type) {
       case 'path': {
         const pathData = data as import('../types').PathData;
+        // For pencil paths, if strokeColor is 'none', render with black
+        const effectiveStrokeColor = pathData.isPencilPath && pathData.strokeColor === 'none' 
+          ? '#000000' 
+          : pathData.strokeColor;
 
         return (
           <g key={element.id}>
             <path
               d={pathData.d}
-              stroke={pathData.strokeColor}
+              stroke={effectiveStrokeColor}
               strokeWidth={pathData.strokeWidth}
               fill={pathData.fillColor}
               fillOpacity={pathData.fillOpacity}

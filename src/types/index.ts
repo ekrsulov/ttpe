@@ -10,6 +10,7 @@ export interface PathData {
   opacity: number;
   fillColor: string;
   fillOpacity: number;
+  isPencilPath?: boolean; // Indicates if this path was created with the pencil tool
   transform?: {
     scaleX: number;
     scaleY: number;
