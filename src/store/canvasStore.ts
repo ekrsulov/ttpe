@@ -276,6 +276,12 @@ export const useCanvasStore = create<CanvasStore>()(
             handleSet(state);
           }, 100), // 100ms cool-off period
       }
-    ), { name: 'canvas-app-state' }
+    ), { 
+      name: 'canvas-app-state',
+      partialize: (state: any) => {
+        const { editor, history, ...rest } = state;
+        return rest;
+      }
+    }
   )
 );
