@@ -202,7 +202,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     if (!bounds) return null;
 
     const isTransformationMode = activePlugin === 'transformation';
-    const handlerSize = 8 / viewport.zoom;
+    const handlerSize = 12 / viewport.zoom;
 
     // Calculate contrasting selection color based on element's color (stroke or fill)
     const getContrastingColor = (color: string) => {

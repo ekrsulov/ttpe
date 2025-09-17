@@ -139,7 +139,6 @@ export const TextPanel: React.FC = () => {
             active={getCurrentFontWeight() === 'bold'}
             activeBgColor="#007bff"
             activeColor="#fff"
-            borderColor="#ccc"
             size="custom"
             customSize="22px"
             title="Bold"
@@ -151,7 +150,6 @@ export const TextPanel: React.FC = () => {
             active={getCurrentFontStyle() === 'italic'}
             activeBgColor="#007bff"
             activeColor="#fff"
-            borderColor="#ccc"
             size="custom"
             customSize="22px"
             title="Italic"

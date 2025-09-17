@@ -370,7 +370,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
 
       // Calculate transformation with damping to reduce sensitivity
       // NEW APPROACH: Use relative mouse movement from start position to prevent accumulation
-      const SENSITIVITY_FACTOR = 0.3; // Further reduced sensitivity
+      const SENSITIVITY_FACTOR = 0.6; // Further reduced sensitivity
       const MIN_MOVEMENT_THRESHOLD = 3; // Increased threshold
       
       // Calculate movement distance from start point

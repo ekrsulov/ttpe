@@ -50,7 +50,7 @@ export const Sidebar: React.FC = () => {
     }}>
       {/* Fixed tools section */}
       <div style={{
-        padding: '4px 8px 0px 8px',
+        padding: '4px 8px 4px 8px',
         backgroundColor: '#fff'
       }}>
         <div style={{
@@ -83,7 +83,7 @@ export const Sidebar: React.FC = () => {
       {/* Scrollable panels section */}
       <div style={{
         flex: 1,
-        padding: '8px',
+        padding: '0px 8px 8px 8px',
         overflowY: 'auto',
         display: 'flex',
         flexDirection: 'column',

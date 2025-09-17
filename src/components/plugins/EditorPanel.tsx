@@ -196,7 +196,7 @@ export const EditorPanel: React.FC = () => {
 
   return (
     <div style={{ backgroundColor: '#fff' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
         <Tag
           badge
           width="40px"
@@ -232,7 +232,6 @@ export const EditorPanel: React.FC = () => {
             active={canUndo}
             activeBgColor="#007bff"
             activeColor="#fff"
-            borderColor="#dee2e6"
             size="custom"
             customSize="32px"
             title="Undo"
@@ -245,7 +244,6 @@ export const EditorPanel: React.FC = () => {
             active={canRedo}
             activeBgColor="#007bff"
             activeColor="#fff"
-            borderColor="#dee2e6"
             size="custom"
             customSize="32px"
             title="Redo"
@@ -258,7 +256,6 @@ export const EditorPanel: React.FC = () => {
         <div style={{ display: 'flex', gap: '2px' }}>
           <IconButton
             onPointerUp={() => zoom(1 / zoomFactor, window.innerWidth / 2, window.innerHeight / 2)}
-            borderColor="#dee2e6"
             size="custom"
             customSize="32px"
             title="Zoom Out"
@@ -267,7 +264,6 @@ export const EditorPanel: React.FC = () => {
           </IconButton>
           <IconButton
             onPointerUp={resetZoom}
-            borderColor="#dee2e6"
             size="custom"
             customSize="32px"
             title="Reset Zoom"
@@ -276,7 +272,6 @@ export const EditorPanel: React.FC = () => {
           </IconButton>
           <IconButton
             onPointerUp={() => zoom(zoomFactor, window.innerWidth / 2, window.innerHeight / 2)}
-            borderColor="#dee2e6"
             size="custom"
             customSize="32px"
             title="Zoom In"
@@ -292,7 +287,6 @@ export const EditorPanel: React.FC = () => {
           active={selectedIds.length > 0}
           activeBgColor="#dc3545"
           activeColor="#fff"
-          borderColor="#dee2e6"
           size="custom"
           customSize="32px"
           title="Delete Selected"
@@ -402,7 +396,6 @@ export const EditorPanel: React.FC = () => {
                 active={getCurrentStrokeColor() === 'none'}
                 activeBgColor="#007bff"
                 activeColor="#fff"
-                borderColor="#ccc"
                 size="custom"
                 customSize="20px"
                 title="No Stroke"
@@ -465,7 +458,6 @@ export const EditorPanel: React.FC = () => {
                 active={getCurrentFillColor() === 'none'}
                 activeBgColor="#007bff"
                 activeColor="#fff"
-                borderColor="#ccc"
                 size="custom"
                 customSize="20px"
                 title="No Fill"
