@@ -16,6 +16,10 @@ interface CanvasRendererProps {
     commandIndex: number;
     pointIndex: number;
   }>;
+  selectedSubpaths: Array<{
+    elementId: string;
+    subpathIndex: number;
+  }>;
   transformation: {
     showCoordinates?: boolean;
     showRulers?: boolean;
@@ -79,7 +83,8 @@ interface CanvasRendererProps {
   onStopDraggingPoint: () => void;
   onUpdateElement: (id: string, updates: any) => void;
   onSelectCommand: (command: { elementId: string; commandIndex: number; pointIndex: number }, multiSelect?: boolean) => void;
-  onStartDraggingSubpath: (elementId: string, subpathIndex: number, startX: number, startY: number, originalPathData: string) => void;
+  onSelectSubpath: (elementId: string, subpathIndex: number, multiSelect?: boolean) => void;
+  onStartDraggingSubpath: (elementId: string, subpathIndex: number, startX: number, startY: number) => void;
   onUpdateDraggingSubpath: (x: number, y: number) => void;
   onStopDraggingSubpath: () => void;
 }
@@ -88,6 +93,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   viewport,
   selectedIds,
   selectedCommands,
+  selectedSubpaths,
   transformation,
   shape,
   elements,
@@ -110,6 +116,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   onStopDraggingPoint,
   onUpdateElement,
   onSelectCommand,
+  onSelectSubpath,
   onStartDraggingSubpath,
   onUpdateDraggingSubpath,
   onStopDraggingSubpath,
@@ -180,46 +187,68 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
                 }
               }
             } else if (subpath?.isDragging && subpath.draggedSubpath && subpath.originalPathData) {
-              // Update the path in real-time for subpath drag
-              const originalCommands = parsePathD(subpath.originalPathData);
-              const subpaths = extractSubpaths(originalCommands);
+              // Update paths in real-time for multi-subpath drag
+              const originalPathDataMap = JSON.parse(subpath.originalPathData) as Record<string, string>;
               
-              const draggedSubpath = subpaths[subpath.draggedSubpath!.subpathIndex];
-              if (draggedSubpath) {
-                // Calculate current delta from drag start to current position
-                const deltaX = formatToPrecision(canvasX - subpath.startX, PATH_DECIMAL_PRECISION);
-                const deltaY = formatToPrecision(canvasY - subpath.startY, PATH_DECIMAL_PRECISION);
-                
-                // Create a copy of the original commands to modify
-                const commandsCopy = originalCommands.map(cmd => ({
-                  ...cmd,
-                  points: cmd.points.map(p => ({ ...p }))
-                }));
-                
-                // Apply delta to all commands in the subpath
-                const startIndex = draggedSubpath.startIndex;
-                const endIndex = draggedSubpath.endIndex;
-                for (let i = startIndex; i <= endIndex; i++) {
-                  const cmd = commandsCopy[i];
-                  cmd.points = cmd.points.map(p => ({
-                    x: formatToPrecision(p.x + deltaX, PATH_DECIMAL_PRECISION),
-                    y: formatToPrecision(p.y + deltaY, PATH_DECIMAL_PRECISION)
-                  }));
+              // Calculate current delta from drag start to current position
+              const deltaX = formatToPrecision(canvasX - subpath.startX, PATH_DECIMAL_PRECISION);
+              const deltaY = formatToPrecision(canvasY - subpath.startY, PATH_DECIMAL_PRECISION);
+              
+              // Group selected subpaths by element
+              const subpathsByElement = selectedSubpaths.reduce((acc, subpath) => {
+                if (!acc[subpath.elementId]) {
+                  acc[subpath.elementId] = [];
                 }
-                
-                // Reconstruct the path d
-                const newPathD = commandsCopy.map(cmd => {
-                  const pointsStr = cmd.points.map(p => `${formatToPrecision(p.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(p.y, PATH_DECIMAL_PRECISION)}`).join(' ');
-                  return `${cmd.type} ${pointsStr}`;
-                }).join(' ');
-                
-                onUpdateElement(subpath.draggedSubpath!.elementId, {
-                  data: {
-                    ...(elements.find(el => el.id === subpath.draggedSubpath!.elementId)?.data as import('../types').PathData),
-                    d: newPathD
+                acc[subpath.elementId].push(subpath.subpathIndex);
+                return acc;
+              }, {} as Record<string, number[]>);
+              
+              // Update each element that contains selected subpaths
+              Object.entries(subpathsByElement).forEach(([elementId, subpathIndices]) => {
+                const originalPathData = originalPathDataMap[elementId];
+                if (originalPathData) {
+                  const originalCommands = parsePathD(originalPathData);
+                  const subpaths = extractSubpaths(originalCommands);
+                  
+                  // Create a copy of the original commands to modify
+                  const commandsCopy = originalCommands.map(cmd => ({
+                    ...cmd,
+                    points: cmd.points.map(p => ({ ...p }))
+                  }));
+                  
+                  // Apply delta to all selected subpaths in this element
+                  subpathIndices.forEach(subpathIndex => {
+                    const subpathData = subpaths[subpathIndex];
+                    if (subpathData) {
+                      const startIndex = subpathData.startIndex;
+                      const endIndex = subpathData.endIndex;
+                      for (let i = startIndex; i <= endIndex; i++) {
+                        const cmd = commandsCopy[i];
+                        cmd.points = cmd.points.map(p => ({
+                          x: formatToPrecision(p.x + deltaX, PATH_DECIMAL_PRECISION),
+                          y: formatToPrecision(p.y + deltaY, PATH_DECIMAL_PRECISION)
+                        }));
+                      }
+                    }
+                  });
+                  
+                  // Reconstruct the path d
+                  const newPathD = commandsCopy.map(cmd => {
+                    const pointsStr = cmd.points.map(p => `${formatToPrecision(p.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(p.y, PATH_DECIMAL_PRECISION)}`).join(' ');
+                    return `${cmd.type} ${pointsStr}`;
+                  }).join(' ');
+                  
+                  const element = elements.find(el => el.id === elementId);
+                  if (element) {
+                    onUpdateElement(elementId, {
+                      data: {
+                        ...(element.data as import('../types').PathData),
+                        d: newPathD
+                      }
+                    });
                   }
-                });
-              }
+                }
+              });
             }
           }
         }
@@ -1041,6 +1070,8 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   const renderSubpathOverlays = (element: typeof elements[0]) => {
     if (element.type !== 'path') return null;
     const pathData = element.data as import('../types').PathData;
+    
+    // Use the current path data (which may be updated during dragging) instead of original
     const commands = parsePathD(pathData.d);
     const subpaths = extractSubpaths(commands);
 
@@ -1057,12 +1088,19 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     const colorForContrast = hasEffectiveStroke ? elementStrokeColor : elementFillColor;
     
     const overlayColor = getContrastingColor(colorForContrast);
-    const overlayFill = `${overlayColor}01`; // 20% opacity for fill
-    const overlayStroke = `${overlayColor}01`; // 50% opacity for stroke
 
     return (
       <g>
         {subpaths.map((subpathData, index) => {
+          // Check if this subpath is selected
+          const isSubpathSelected = selectedSubpaths.some(
+            s => s.elementId === element.id && s.subpathIndex === index
+          );
+          
+          // Different colors for selected and unselected subpaths
+          const overlayFill = isSubpathSelected ? `${overlayColor}40` : `${overlayColor}15`; // More opacity for selected
+          const overlayStroke = isSubpathSelected ? `${overlayColor}80` : `${overlayColor}40`; // Stronger stroke for selected
+          const strokeWidth = isSubpathSelected ? elementStrokeWidth + 1 : elementStrokeWidth;
 
           return (
             <path
@@ -1070,27 +1108,43 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
               d={subpathData.d}
               fill={overlayFill}
               stroke={overlayStroke}
-              strokeWidth={elementStrokeWidth}
+              strokeWidth={strokeWidth}
               vectorEffect="non-scaling-stroke"
               style={{ 
-                cursor: 'move',
-                transform: subpath.isDragging && subpath.draggedSubpath?.elementId === element.id && subpath.draggedSubpath.subpathIndex === index && dragPosition
-                  ? `translate(${dragPosition.x - subpath.startX}px, ${dragPosition.y - subpath.startY}px)`
-                  : 'none'
+                cursor: 'pointer'
+                // Removed the transform - the overlay should follow the updated path data
               }}
               onPointerDown={(e) => {
                 e.stopPropagation();
-                const svgElement = e.currentTarget.ownerSVGElement;
-                if (svgElement) {
-                  const svgRect = svgElement.getBoundingClientRect();
-                  const svgX = e.clientX - svgRect.left;
-                  const svgY = e.clientY - svgRect.top;
+                
+                // Check if this is a click for selection or start of drag
+                if (e.shiftKey) {
+                  // Shift+click for multiselect
+                  onSelectSubpath(element.id, index, true);
+                } else {
+                  // Regular click - check if already selected
+                  const isAlreadySelected = selectedSubpaths.some(
+                    s => s.elementId === element.id && s.subpathIndex === index
+                  );
                   
-                  // Convert to canvas coordinates
-                  const canvasX = (svgX - viewport.panX) / viewport.zoom;
-                  const canvasY = (svgY - viewport.panY) / viewport.zoom;
+                  if (!isAlreadySelected) {
+                    // Select this subpath if not already selected
+                    onSelectSubpath(element.id, index, false);
+                  }
                   
-                  onStartDraggingSubpath(element.id, index, canvasX, canvasY, pathData.d);
+                  // Start dragging
+                  const svgElement = e.currentTarget.ownerSVGElement;
+                  if (svgElement) {
+                    const svgRect = svgElement.getBoundingClientRect();
+                    const svgX = e.clientX - svgRect.left;
+                    const svgY = e.clientY - svgRect.top;
+                    
+                    // Convert to canvas coordinates
+                    const canvasX = (svgX - viewport.panX) / viewport.zoom;
+                    const canvasY = (svgY - viewport.panY) / viewport.zoom;
+                    
+                    onStartDraggingSubpath(element.id, index, canvasX, canvasY);
+                  }
                 }
               }}
               onPointerUp={(e) => {

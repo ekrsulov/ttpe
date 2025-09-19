@@ -35,7 +35,9 @@ const useTemporalState = () => {
 export const EditorPanel: React.FC = () => {
   const {
     selectedIds,
+    selectedCommands,
     deleteSelectedElements,
+    deleteSelectedCommands,
     viewport,
     zoom,
     resetZoom,
@@ -43,19 +45,39 @@ export const EditorPanel: React.FC = () => {
     updatePencilState,
     getSelectedPathsCount,
     updateSelectedPaths,
-    activePlugin
+    activePlugin,
+    deleteSelectedSubpaths,
+    getSelectedSubpathsCount
   } = useCanvasStore();
 
   const { undo, redo, pastStates, futureStates } = useTemporalState();
   
-    // Computed values
+  // Computed values
   const selectedCount = selectedIds.length;
+  const selectedCommandsCount = selectedCommands.length;
   const canUndo = pastStates.length > 0;
   const canRedo = futureStates.length > 0;
   const zoomFactor = 1.2;
   const selectedPathsCount = getSelectedPathsCount();
+  const selectedSubpathsCount = getSelectedSubpathsCount();
 
   const [isExpanded, setIsExpanded] = useState(false);
+
+  // Handle delete action based on active plugin
+  const handleDelete = () => {
+    if (activePlugin === 'edit' && selectedCommandsCount > 0) {
+      deleteSelectedCommands();
+    } else if (activePlugin === 'subpath' && selectedSubpathsCount > 0) {
+      deleteSelectedSubpaths();
+    } else if (activePlugin === 'select' && selectedCount > 0) {
+      deleteSelectedElements();
+    }
+  };
+
+  // Determine if delete button should be enabled
+  const canDelete = (activePlugin === 'edit' && selectedCommandsCount > 0) ||
+                    (activePlugin === 'select' && selectedCount > 0) || 
+                    (activePlugin === 'subpath' && selectedSubpathsCount > 0);
 
   // Pencil properties handlers
   const handleStrokeWidthChange = (value: number) => {
@@ -283,14 +305,18 @@ export const EditorPanel: React.FC = () => {
 
         {/* Delete Button */}
         <IconButton
-          onPointerUp={deleteSelectedElements}
-          disabled={selectedIds.length === 0 || activePlugin !== 'select'}
-          active={selectedIds.length > 0}
+          onPointerUp={handleDelete}
+          disabled={!canDelete}
+          active={canDelete}
           activeBgColor="#dc3545"
           activeColor="#fff"
           size="custom"
           customSize="32px"
-          title="Delete Selected"
+          title={
+            activePlugin === 'edit' ? "Delete Selected Points" :
+            activePlugin === 'subpath' ? "Delete Selected Subpaths" : 
+            "Delete Selected"
+          }
         >
           <Trash2 size={14} />
         </IconButton>

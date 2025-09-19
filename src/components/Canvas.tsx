@@ -2,7 +2,7 @@ import React, { useRef, useCallback, useState, useEffect } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
 import { measurePath } from '../utils/measurementUtils';
 import { transformPathData } from '../utils/transformationUtils';
-import { parsePathD, extractEditablePoints } from '../utils/pathParserUtils';
+import { parsePathD, extractEditablePoints, extractSubpaths } from '../utils/pathParserUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../utils';
 import { CanvasRenderer } from './CanvasRenderer';
 import type { Point, PathData } from '../types';
@@ -23,6 +23,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
     selectedIds,
     editingPoint,
     selectedCommands,
+    selectedSubpaths,
     draggingSelection,
     subpath,
     updateElement,
@@ -32,6 +33,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
     selectCommand,
     clearSelectedCommands,
     deleteSelectedCommands,
+    selectSubpath,
     startDraggingSubpath,
     updateDraggingSubpath,
     stopDraggingSubpath
@@ -304,6 +306,16 @@ export const Canvas: React.FC<CanvasProps> = () => {
           setSelectionEnd(point);
           // Clear previous command selection
           clearSelectedCommands();
+        }
+        break;
+      case 'subpath':
+        // Start subpath selection rectangle if clicking on SVG canvas
+        if (target.tagName === 'svg') {
+          setIsSelecting(true);
+          setSelectionStart(point);
+          setSelectionEnd(point);
+          // Clear previous subpath selection
+          useCanvasStore.getState().clearSubpathSelection();
         }
         break;
     }
@@ -620,6 +632,39 @@ export const Canvas: React.FC<CanvasProps> = () => {
         
         // Select all found commands
         selectedCommands.forEach(command => selectCommand(command, true));
+      } else if (activePlugin === 'subpath') {
+        // Select subpaths within the selection box
+        const selectedSubpathsList: Array<{elementId: string, subpathIndex: number}> = [];
+        
+        elements.forEach(el => {
+          if (el.type === 'path' && selectedIds.includes(el.id)) {
+            const pathData = el.data as PathData;
+            const commands = parsePathD(pathData.d);
+            const subpaths = extractSubpaths(commands);
+            
+            subpaths.forEach((subpathData: any, index: number) => {
+              // Check if subpath intersects with selection box
+              const subpathBounds = measurePath(subpathData.d, pathData.strokeWidth || 1, viewport.zoom);
+              
+              const intersects = !(subpathBounds.maxX < selectionMinX ||
+                         subpathBounds.minX > selectionMaxX ||
+                         subpathBounds.maxY < selectionMinY ||
+                         subpathBounds.minY > selectionMaxY);
+              
+              if (intersects) {
+                selectedSubpathsList.push({
+                  elementId: el.id,
+                  subpathIndex: index
+                });
+              }
+            });
+          }
+        });
+        
+        // Select all found subpaths (clear previous selection if not shift-selecting)
+        if (selectedSubpathsList.length > 0) {
+          useCanvasStore.getState().selectSubpaths(selectedSubpathsList);
+        }
       } else {
         // Original element selection logic
         const selectedIds = elements
@@ -716,6 +761,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
         viewport={viewport}
         selectedIds={selectedIds}
         selectedCommands={selectedCommands}
+        selectedSubpaths={selectedSubpaths}
         transformation={transformation}
         shape={shape}
         elements={elements}
@@ -738,6 +784,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
         onStopDraggingPoint={stopDraggingPoint}
         onUpdateElement={updateElement}
         onSelectCommand={selectCommand}
+        onSelectSubpath={selectSubpath}
         onStartDraggingSubpath={startDraggingSubpath}
         onUpdateDraggingSubpath={updateDraggingSubpath}
         onStopDraggingSubpath={stopDraggingSubpath}
