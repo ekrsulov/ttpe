@@ -1,6 +1,7 @@
 import type { StateCreator } from 'zustand';
 import type { CanvasElement } from '../../types';
-import { parsePathD, extractEditablePoints, updatePathD, type ControlPoint } from '../../utils/pathParserUtils';
+import { parsePathD, extractEditablePoints, updatePathD, type ControlPoint, normalizePathCommands } from '../../utils/pathParserUtils';
+import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../utils';
 
 export interface BaseSlice {
   // State
@@ -384,58 +385,94 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
         );
 
         if (selectedPoints.length > 0) {
-          // Create updated commands by removing selected points
-          const updatedCommands = parsedCommands.map((cmd, cmdIndex) => {
-            const commandSelectedPoints = selectedPoints.filter(p => p.commandIndex === cmdIndex);
+          // Sort selected points by command index and point index (process in reverse order to maintain indices)
+          const sortedSelectedPoints = selectedPoints.sort((a, b) => {
+            if (a.commandIndex !== b.commandIndex) return b.commandIndex - a.commandIndex;
+            return b.pointIndex - a.pointIndex;
+          });
 
-            if (commandSelectedPoints.length === 0) {
-              return cmd; // No points to delete in this command
-            }
+          let updatedCommands = [...parsedCommands];
+
+          // Process each selected point for deletion
+          sortedSelectedPoints.forEach(selectedPoint => {
+            const cmdIndex = selectedPoint.commandIndex;
+            const pointIndex = selectedPoint.pointIndex;
+            const command = updatedCommands[cmdIndex];
+
+            if (!command) return;
 
             // Handle different command types
-            if (cmd.type === 'M') {
-              // Can't delete M point as it's required for path start
-              return cmd;
-            } else if (cmd.type === 'L') {
-              // For L commands, we can remove the entire command if the point is selected
-              if (commandSelectedPoints.some(p => p.pointIndex === 0 && !p.isControl)) {
-                return null; // Mark for removal
+            if (command.type === 'M') {
+              // For M commands, we need special handling
+              if (cmdIndex < updatedCommands.length - 1) {
+                // Find the next non-Z command to convert to M
+                let nextNonZIndex = cmdIndex + 1;
+                while (nextNonZIndex < updatedCommands.length && updatedCommands[nextNonZIndex]?.type === 'Z') {
+                  nextNonZIndex++;
+                }
+
+                if (nextNonZIndex < updatedCommands.length) {
+                  const nextCommand = updatedCommands[nextNonZIndex];
+                  if (nextCommand.type === 'C' && nextCommand.points.length >= 3) {
+                    // For C commands, convert to M using only the end point (last point)
+                    updatedCommands[nextNonZIndex] = {
+                      type: 'M' as const,
+                      points: [nextCommand.points[nextCommand.points.length - 1]] // Keep only the end point
+                    };
+                  } else {
+                    // For other commands, convert to M normally
+                    updatedCommands[nextNonZIndex] = {
+                      ...nextCommand,
+                      type: 'M' as const
+                    };
+                  }
+                }
               }
-              return cmd;
-            } else if (cmd.type === 'C') {
-              // For C commands, removing control points is complex
-              // For now, we'll try to simplify the curve to a line
-              if (commandSelectedPoints.some(p => p.pointIndex === 0 || p.pointIndex === 1)) {
+              // Remove the M command
+              updatedCommands.splice(cmdIndex, 1);
+            } else if (command.type === 'L') {
+              // For L commands, remove the entire command
+              updatedCommands.splice(cmdIndex, 1);
+            } else if (command.type === 'C') {
+              // For C commands, handle control points
+              if (pointIndex === 0 || pointIndex === 1) {
                 // Remove control points, convert to L command
-                return {
+                updatedCommands[cmdIndex] = {
                   type: 'L' as const,
-                  points: [cmd.points[2]] // Keep only the end point
+                  points: [command.points[2]] // Keep only the end point
                 };
-              } else if (commandSelectedPoints.some(p => p.pointIndex === 2 && !p.isControl)) {
-                // Remove end point, convert to L to previous point or remove command
-                return null; // Mark for removal
+              } else if (pointIndex === 2) {
+                // Remove end point, remove the entire command
+                updatedCommands.splice(cmdIndex, 1);
               }
-              return cmd;
-            } else if (cmd.type === 'Z') {
-              // Can't delete Z command
-              return cmd;
+            } else if (command.type === 'Z') {
+              // Can't delete Z command directly, but if it's the only command left, handle it
+              if (updatedCommands.length === 1) {
+                // If only Z is left, we'll handle this below
+              }
             }
+          });
 
-            return cmd;
-          }).filter(cmd => cmd !== null); // Remove null commands
+          // Filter out any null commands and clean up
+          updatedCommands = updatedCommands.filter(cmd => cmd !== null);
 
-          // Reconstruct path string
-          const newPathD = updatedCommands.map(cmd => {
-            if (!cmd) return '';
+          // Normalize the commands to remove duplicates and clean up
+          const normalizedCommands = normalizePathCommands(updatedCommands);
+
+          // Check if the path is now empty after normalization
+          if (normalizedCommands.length === 0) {
+            // Delete the entire element
+            (set as any)((currentState: any) => ({
+              elements: currentState.elements.filter((el: any) => el.id !== elementId)
+            }));
+            return;
+          }
+
+          // Reconstruct path string from normalized commands
+          const newPathD = normalizedCommands.map(cmd => {
             if (cmd.type === 'Z') return 'Z';
 
-            let pointStr = '';
-            if (cmd.type === 'C' && cmd.points.length >= 3) {
-              pointStr = cmd.points.map(p => `${p.x} ${p.y}`).join(' ');
-            } else {
-              pointStr = cmd.points.map(p => `${p.x} ${p.y}`).join(' ');
-            }
-
+            const pointStr = cmd.points.map(p => `${formatToPrecision(p.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(p.y, PATH_DECIMAL_PRECISION)}`).join(' ');
             return `${cmd.type} ${pointStr}`;
           }).join(' ');
 

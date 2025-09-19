@@ -244,3 +244,85 @@ function commandsToString(commands: PathCommand[]): string {
     return `${cmd.type} ${pointsStr}`;
   }).join(' ');
 }
+
+/**
+ * Normalize and clean SVG path commands to remove duplicates, extra spaces, and malformed commands
+ */
+export function normalizePathCommands(commands: PathCommand[]): PathCommand[] {
+  if (commands.length === 0) return [];
+
+  const normalized: PathCommand[] = [];
+  let lastWasZ = false;
+
+  for (let i = 0; i < commands.length; i++) {
+    const cmd = commands[i];
+
+    // Skip null or undefined commands
+    if (!cmd) continue;
+
+    // Handle Z commands - don't allow consecutive Z commands
+    if (cmd.type === 'Z') {
+      if (!lastWasZ) {
+        normalized.push(cmd);
+        lastWasZ = true;
+      }
+      // Skip consecutive Z commands
+      continue;
+    }
+
+    // Reset Z flag for non-Z commands
+    lastWasZ = false;
+
+    // Skip commands with no points (except Z which we already handled)
+    if (cmd.points.length === 0) continue;
+
+    // Ensure all points have valid coordinates
+    const validPoints = cmd.points.filter(point =>
+      !isNaN(point.x) && !isNaN(point.y) &&
+      isFinite(point.x) && isFinite(point.y)
+    );
+
+    // Skip commands with no valid points
+    if (validPoints.length === 0) continue;
+
+    // Create normalized command with valid points
+    const normalizedCmd: PathCommand = {
+      type: cmd.type,
+      points: validPoints.map(point => ({
+        x: formatToPrecision(point.x, PATH_DECIMAL_PRECISION),
+        y: formatToPrecision(point.y, PATH_DECIMAL_PRECISION)
+      }))
+    };
+
+    normalized.push(normalizedCmd);
+  }
+
+  // Remove trailing Z if it's the only command or if the path is effectively empty
+  if (normalized.length === 1 && normalized[0].type === 'Z') {
+    return [];
+  }
+
+  // If we end with Z and the path is valid, keep it
+  // If we have multiple trailing Z, we already removed them above
+
+  return normalized;
+}
+
+/**
+ * Normalize SVG path d string by parsing, cleaning, and reconstructing
+ */
+export function normalizePathD(d: string): string {
+  if (!d || d.trim() === '') return '';
+
+  try {
+    const commands = parsePathD(d);
+    const normalizedCommands = normalizePathCommands(commands);
+
+    if (normalizedCommands.length === 0) return '';
+
+    return commandsToString(normalizedCommands);
+  } catch (error) {
+    console.warn('Error normalizing path:', error);
+    return d; // Return original if normalization fails
+  }
+}

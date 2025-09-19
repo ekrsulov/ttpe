@@ -31,6 +31,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
     stopDraggingPoint,
     selectCommand,
     clearSelectedCommands,
+    deleteSelectedCommands,
     startDraggingSubpath,
     updateDraggingSubpath,
     stopDraggingSubpath
@@ -85,6 +86,22 @@ export const Canvas: React.FC<CanvasProps> = () => {
 
         if (!isInputFocused) {
           setIsSpacePressed(true);
+          e.preventDefault();
+        }
+      }
+
+      // Handle Delete key for deleting selected commands
+      if (e.code === 'Delete' || e.code === 'Backspace') {
+        const activeElement = document.activeElement;
+        const isInputFocused = activeElement && (
+          activeElement.tagName === 'INPUT' ||
+          activeElement.tagName === 'TEXTAREA' ||
+          (activeElement as HTMLElement).contentEditable === 'true'
+        );
+
+        // Only delete if not typing in an input and we have selected commands
+        if (!isInputFocused && selectedCommands.length > 0) {
+          deleteSelectedCommands();
           e.preventDefault();
         }
       }
