@@ -60,6 +60,7 @@ interface CanvasRendererProps {
       x: number;
       y: number;
     }>;
+    originalPathData: string | null;
     startX: number;
     startY: number;
   };
@@ -78,7 +79,7 @@ interface CanvasRendererProps {
   onStopDraggingPoint: () => void;
   onUpdateElement: (id: string, updates: any) => void;
   onSelectCommand: (command: { elementId: string; commandIndex: number; pointIndex: number }, multiSelect?: boolean) => void;
-  onStartDraggingSubpath: (elementId: string, subpathIndex: number, startX: number, startY: number) => void;
+  onStartDraggingSubpath: (elementId: string, subpathIndex: number, startX: number, startY: number, originalPathData: string) => void;
   onUpdateDraggingSubpath: (x: number, y: number) => void;
   onStopDraggingSubpath: () => void;
 }
@@ -142,14 +143,17 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           if (editingPoint?.isDragging) {
             // Update store position
             onUpdateDraggingPoint(formatToPrecision(canvasX, PATH_DECIMAL_PRECISION), formatToPrecision(canvasY, PATH_DECIMAL_PRECISION));
+          } else if (subpath?.isDragging) {
+            // Update store position for subpath
+            onUpdateDraggingSubpath(formatToPrecision(canvasX, PATH_DECIMAL_PRECISION), formatToPrecision(canvasY, PATH_DECIMAL_PRECISION));
           }
 
-          // Throttled path update for real-time feedback (only for single point drag)
-          if (editingPoint?.isDragging) {
-            const now = Date.now();
-            if (now - lastUpdateTime >= UPDATE_THROTTLE) {
-              lastUpdateTime = now;
-              
+          // Throttled path update for real-time feedback
+          const now = Date.now();
+          if (now - lastUpdateTime >= UPDATE_THROTTLE) {
+            lastUpdateTime = now;
+            
+            if (editingPoint?.isDragging) {
               // Update the path in real-time for single point
               const element = elements.find(el => el.id === editingPoint.elementId);
               if (element && element.type === 'path') {
@@ -174,6 +178,47 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
                     }
                   });
                 }
+              }
+            } else if (subpath?.isDragging && subpath.draggedSubpath && subpath.originalPathData) {
+              // Update the path in real-time for subpath drag
+              const originalCommands = parsePathD(subpath.originalPathData);
+              const subpaths = extractSubpaths(originalCommands);
+              
+              const draggedSubpath = subpaths[subpath.draggedSubpath!.subpathIndex];
+              if (draggedSubpath) {
+                // Calculate current delta from drag start to current position
+                const deltaX = formatToPrecision(canvasX - subpath.startX, PATH_DECIMAL_PRECISION);
+                const deltaY = formatToPrecision(canvasY - subpath.startY, PATH_DECIMAL_PRECISION);
+                
+                // Create a copy of the original commands to modify
+                const commandsCopy = originalCommands.map(cmd => ({
+                  ...cmd,
+                  points: cmd.points.map(p => ({ ...p }))
+                }));
+                
+                // Apply delta to all commands in the subpath
+                const startIndex = draggedSubpath.startIndex;
+                const endIndex = draggedSubpath.endIndex;
+                for (let i = startIndex; i <= endIndex; i++) {
+                  const cmd = commandsCopy[i];
+                  cmd.points = cmd.points.map(p => ({
+                    x: formatToPrecision(p.x + deltaX, PATH_DECIMAL_PRECISION),
+                    y: formatToPrecision(p.y + deltaY, PATH_DECIMAL_PRECISION)
+                  }));
+                }
+                
+                // Reconstruct the path d
+                const newPathD = commandsCopy.map(cmd => {
+                  const pointsStr = cmd.points.map(p => `${formatToPrecision(p.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(p.y, PATH_DECIMAL_PRECISION)}`).join(' ');
+                  return `${cmd.type} ${pointsStr}`;
+                }).join(' ');
+                
+                onUpdateElement(subpath.draggedSubpath!.elementId, {
+                  data: {
+                    ...(elements.find(el => el.id === subpath.draggedSubpath!.elementId)?.data as import('../types').PathData),
+                    d: newPathD
+                  }
+                });
               }
             }
           }
@@ -225,47 +270,6 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           }
         }
 
-        // Apply subpath transformation when drag ends
-        if (subpath?.isDragging && subpath.draggedSubpath && finalPosition) {
-          const element = elements.find(el => el.id === subpath.draggedSubpath!.elementId);
-          if (element && element.type === 'path') {
-            const pathData = element.data as import('../types').PathData;
-            const commands = parsePathD(pathData.d);
-            const subpaths = extractSubpaths(commands);
-            
-            const draggedSubpath = subpaths[subpath.draggedSubpath!.subpathIndex];
-            if (draggedSubpath) {
-              // Calculate final delta from drag start to final position
-              const deltaX = formatToPrecision(finalPosition.x - subpath.startX, PATH_DECIMAL_PRECISION);
-              const deltaY = formatToPrecision(finalPosition.y - subpath.startY, PATH_DECIMAL_PRECISION);
-              
-              // Apply delta to all commands in the subpath
-              const startIndex = draggedSubpath.startIndex;
-              const endIndex = draggedSubpath.endIndex;
-              for (let i = startIndex; i <= endIndex; i++) {
-                const cmd = commands[i];
-                cmd.points = cmd.points.map(p => ({
-                  x: formatToPrecision(p.x + deltaX, PATH_DECIMAL_PRECISION),
-                  y: formatToPrecision(p.y + deltaY, PATH_DECIMAL_PRECISION)
-                }));
-              }
-              
-              // Reconstruct the path d
-              const newPathD = commands.map(cmd => {
-                const pointsStr = cmd.points.map(p => `${formatToPrecision(p.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(p.y, PATH_DECIMAL_PRECISION)}`).join(' ');
-                return `${cmd.type} ${pointsStr}`;
-              }).join(' ');
-              
-              onUpdateElement(subpath.draggedSubpath!.elementId, {
-                data: {
-                  ...pathData,
-                  d: newPathD
-                }
-              });
-            }
-          }
-        }
-        
         setDragPosition(null);
         if (editingPoint?.isDragging) {
           onStopDraggingPoint();
@@ -1053,8 +1057,8 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     const colorForContrast = hasEffectiveStroke ? elementStrokeColor : elementFillColor;
     
     const overlayColor = getContrastingColor(colorForContrast);
-    const overlayFill = `${overlayColor}33`; // 20% opacity for fill
-    const overlayStroke = overlayColor;
+    const overlayFill = `${overlayColor}01`; // 20% opacity for fill
+    const overlayStroke = `${overlayColor}01`; // 50% opacity for stroke
 
     return (
       <g>
@@ -1066,7 +1070,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
               d={subpathData.d}
               fill={overlayFill}
               stroke={overlayStroke}
-              strokeWidth={2 / viewport.zoom}
+              strokeWidth={elementStrokeWidth}
               vectorEffect="non-scaling-stroke"
               style={{ 
                 cursor: 'move',
@@ -1086,7 +1090,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
                   const canvasX = (svgX - viewport.panX) / viewport.zoom;
                   const canvasY = (svgY - viewport.panY) / viewport.zoom;
                   
-                  onStartDraggingSubpath(element.id, index, canvasX, canvasY);
+                  onStartDraggingSubpath(element.id, index, canvasX, canvasY, pathData.d);
                 }
               }}
               onPointerUp={(e) => {
