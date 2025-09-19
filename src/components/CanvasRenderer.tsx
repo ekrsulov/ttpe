@@ -150,7 +150,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
             if (now - lastUpdateTime >= UPDATE_THROTTLE) {
               lastUpdateTime = now;
               
-              // Update the path in real-time
+              // Update the path in real-time for single point
               const element = elements.find(el => el.id === editingPoint.elementId);
               if (element && element.type === 'path') {
                 const pathData = element.data as import('../types').PathData;
@@ -182,7 +182,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     };
 
     const handlePointerUp = (e: PointerEvent) => {
-      if (editingPoint?.isDragging || draggingSelection?.isDragging) {
+      if (editingPoint?.isDragging || draggingSelection?.isDragging || subpath?.isDragging) {
         // Get final position for one last update if needed
         const svgElement = document.querySelector('svg');
         let finalPosition = dragPosition;
@@ -224,51 +224,52 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
             }
           }
         }
+
+        // Apply subpath transformation when drag ends
+        if (subpath?.isDragging && subpath.draggedSubpath && finalPosition) {
+          const element = elements.find(el => el.id === subpath.draggedSubpath!.elementId);
+          if (element && element.type === 'path') {
+            const pathData = element.data as import('../types').PathData;
+            const commands = parsePathD(pathData.d);
+            const subpaths = extractSubpaths(commands);
+            
+            const draggedSubpath = subpaths[subpath.draggedSubpath!.subpathIndex];
+            if (draggedSubpath) {
+              // Calculate final delta from drag start to final position
+              const deltaX = formatToPrecision(finalPosition.x - subpath.startX, PATH_DECIMAL_PRECISION);
+              const deltaY = formatToPrecision(finalPosition.y - subpath.startY, PATH_DECIMAL_PRECISION);
+              
+              // Apply delta to all commands in the subpath
+              const startIndex = draggedSubpath.startIndex;
+              const endIndex = draggedSubpath.endIndex;
+              for (let i = startIndex; i <= endIndex; i++) {
+                const cmd = commands[i];
+                cmd.points = cmd.points.map(p => ({
+                  x: formatToPrecision(p.x + deltaX, PATH_DECIMAL_PRECISION),
+                  y: formatToPrecision(p.y + deltaY, PATH_DECIMAL_PRECISION)
+                }));
+              }
+              
+              // Reconstruct the path d
+              const newPathD = commands.map(cmd => {
+                const pointsStr = cmd.points.map(p => `${formatToPrecision(p.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(p.y, PATH_DECIMAL_PRECISION)}`).join(' ');
+                return `${cmd.type} ${pointsStr}`;
+              }).join(' ');
+              
+              onUpdateElement(subpath.draggedSubpath!.elementId, {
+                data: {
+                  ...pathData,
+                  d: newPathD
+                }
+              });
+            }
+          }
+        }
         
         setDragPosition(null);
         if (editingPoint?.isDragging) {
           onStopDraggingPoint();
         } else if (subpath?.isDragging) {
-          // Apply subpath transformation
-          if (finalPosition && subpath.draggedSubpath) {
-            const element = elements.find(el => el.id === subpath.draggedSubpath!.elementId);
-            if (element && element.type === 'path') {
-              const pathData = element.data as import('../types').PathData;
-              const commands = parsePathD(pathData.d);
-              const subpaths = extractSubpaths(commands);
-              
-              const draggedSubpath = subpaths[subpath.draggedSubpath!.subpathIndex];
-              if (draggedSubpath) {
-                // Calculate delta
-                const deltaX = finalPosition.x - subpath.startX;
-                const deltaY = finalPosition.y - subpath.startY;
-                
-                // Move the subpath commands
-                const startIndex = draggedSubpath.startIndex;
-                const endIndex = draggedSubpath.endIndex;
-                for (let i = startIndex; i <= endIndex; i++) {
-                  const cmd = commands[i];
-                  cmd.points = cmd.points.map(p => ({
-                    x: p.x + deltaX,
-                    y: p.y + deltaY
-                  }));
-                }
-                
-                // Reconstruct the path d
-                const newPathD = commands.map(cmd => {
-                  const pointsStr = cmd.points.map(p => `${formatToPrecision(p.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(p.y, PATH_DECIMAL_PRECISION)}`).join(' ');
-                  return `${cmd.type} ${pointsStr}`;
-                }).join(' ');
-                
-                onUpdateElement(subpath.draggedSubpath.elementId, {
-                  data: {
-                    ...pathData,
-                    d: newPathD
-                  }
-                });
-              }
-            }
-          }
           onStopDraggingSubpath();
         }
       }
@@ -291,6 +292,76 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     };
   }, [editingPoint?.isDragging, editingPoint?.elementId, editingPoint?.commandIndex, editingPoint?.pointIndex, draggingSelection?.isDragging, subpath?.isDragging, viewport, onUpdateDraggingPoint, onStopDraggingPoint, onUpdateDraggingSubpath, onStopDraggingSubpath, dragPosition, elements, onUpdateElement]);
 
+  // Calculate contrasting selection color based on element's color (stroke or fill)
+  const getContrastingColor = (color: string) => {
+    if (!color || color === 'none') return '#ff6b35'; // Default orange-red for transparent/no-color elements    // Convert hex to RGB
+    const hexToRgb = (hex: string) => {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+      } : null;
+    };
+
+    // Calculate relative luminance
+    const getLuminance = (r: number, g: number, b: number) => {
+      const [rs, gs, bs] = [r, g, b].map(c => {
+        c = c / 255;
+        return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+      });
+      return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+    };
+
+    const rgb = hexToRgb(color);
+    if (!rgb) return '#ff6b35'; // Fallback if not a valid hex color
+
+    const luminance = getLuminance(rgb.r, rgb.g, rgb.b);
+    const isDark = luminance < 0.5;
+
+    // High contrast color palette based on luminance
+    if (isDark) {
+      // For dark colors, use bright contrasting colors
+      const brightColors = [
+        '#ff6b35', // Orange-red
+        '#f7931e', // Orange
+        '#00ff88', // Bright green
+        '#00d4ff', // Bright cyan
+        '#ff44ff', // Magenta
+        '#ffff00', // Yellow
+        '#ff4444', // Red
+      ];
+      
+      // Select color based on hue to ensure good contrast
+      const hue = Math.atan2(Math.sqrt(3) * (rgb.g - rgb.b), 2 * rgb.r - rgb.g - rgb.b) * 180 / Math.PI;
+      const colorIndex = Math.floor((hue + 180) / (360 / brightColors.length)) % brightColors.length;
+      return brightColors[colorIndex];
+    } else {
+      // For light colors, use dark contrasting colors
+      const darkColors = [
+        '#8b0000', // Dark red
+        '#006400', // Dark green
+        '#00008b', // Dark blue
+        '#8b008b', // Dark magenta
+        '#8b4513', // Saddle brown
+        '#2f4f4f', // Dark slate gray
+        '#000000', // Black
+      ];
+      
+      // Select color based on saturation and value
+      const max = Math.max(rgb.r, rgb.g, rgb.b);
+      const min = Math.min(rgb.r, rgb.g, rgb.b);
+      const saturation = max === 0 ? 0 : (max - min) / max;
+      
+      if (saturation < 0.3) {
+        return '#8b0000'; // Dark red for desaturated colors
+      } else {
+        const colorIndex = Math.floor((rgb.r * 2 + rgb.g + rgb.b) / (255 * 4) * darkColors.length) % darkColors.length;
+        return darkColors[colorIndex];
+      }
+    }
+  };
+
   // Render selection box for selected elements
   const renderSelectionBox = (element: typeof elements[0]) => {
     const bounds = getTransformedBounds(element);
@@ -298,76 +369,6 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
 
     const isTransformationMode = activePlugin === 'transformation';
     const handlerSize = 12 / viewport.zoom;
-
-    // Calculate contrasting selection color based on element's color (stroke or fill)
-    const getContrastingColor = (color: string) => {
-      if (!color || color === 'none') return '#ff6b35'; // Default orange-red for transparent/no-color elements      // Convert hex to RGB
-      const hexToRgb = (hex: string) => {
-        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-        return result ? {
-          r: parseInt(result[1], 16),
-          g: parseInt(result[2], 16),
-          b: parseInt(result[3], 16)
-        } : null;
-      };
-
-      // Calculate relative luminance
-      const getLuminance = (r: number, g: number, b: number) => {
-        const [rs, gs, bs] = [r, g, b].map(c => {
-          c = c / 255;
-          return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
-        });
-        return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
-      };
-
-      const rgb = hexToRgb(color);
-      if (!rgb) return '#ff6b35'; // Fallback if not a valid hex color
-
-      const luminance = getLuminance(rgb.r, rgb.g, rgb.b);
-      const isDark = luminance < 0.5;
-
-      // High contrast color palette based on luminance
-      if (isDark) {
-        // For dark colors, use bright contrasting colors
-        const brightColors = [
-          '#ff6b35', // Orange-red
-          '#f7931e', // Orange
-          '#00ff88', // Bright green
-          '#00d4ff', // Bright cyan
-          '#ff44ff', // Magenta
-          '#ffff00', // Yellow
-          '#ff4444', // Red
-        ];
-        
-        // Select color based on hue to ensure good contrast
-        const hue = Math.atan2(Math.sqrt(3) * (rgb.g - rgb.b), 2 * rgb.r - rgb.g - rgb.b) * 180 / Math.PI;
-        const colorIndex = Math.floor((hue + 180) / (360 / brightColors.length)) % brightColors.length;
-        return brightColors[colorIndex];
-      } else {
-        // For light colors, use dark contrasting colors
-        const darkColors = [
-          '#8b0000', // Dark red
-          '#006400', // Dark green
-          '#00008b', // Dark blue
-          '#8b008b', // Dark magenta
-          '#8b4513', // Saddle brown
-          '#2f4f4f', // Dark slate gray
-          '#000000', // Black
-        ];
-        
-        // Select color based on saturation and value
-        const max = Math.max(rgb.r, rgb.g, rgb.b);
-        const min = Math.min(rgb.r, rgb.g, rgb.b);
-        const saturation = max === 0 ? 0 : (max - min) / max;
-        
-        if (saturation < 0.3) {
-          return '#8b0000'; // Dark red for desaturated colors
-        } else {
-          const colorIndex = Math.floor((rgb.r * 2 + rgb.g + rgb.b) / (255 * 4) * darkColors.length) % darkColors.length;
-          return darkColors[colorIndex];
-        }
-      }
-    };
 
     const elementStrokeColor = element.type === 'path' && element.data && typeof element.data === 'object' && 'strokeColor' in element.data 
       ? (element.data as { strokeColor?: string }).strokeColor || '#000000' 
@@ -1039,40 +1040,40 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     const commands = parsePathD(pathData.d);
     const subpaths = extractSubpaths(commands);
 
+    // Calculate contrasting colors for the overlay based on element's colors
+    const elementStrokeColor = pathData.strokeColor || '#000000';
+    const elementFillColor = pathData.fillColor || 'none';
+    const elementStrokeWidth = pathData.strokeWidth || 0;
+    const elementOpacity = pathData.strokeOpacity || 1;
+
+    // Determine if the path has an effective stroke
+    const hasEffectiveStroke = elementStrokeWidth > 0 && elementStrokeColor !== 'none' && elementOpacity > 0;
+    
+    // Use fillColor for contrasting color calculation if no effective stroke
+    const colorForContrast = hasEffectiveStroke ? elementStrokeColor : elementFillColor;
+    
+    const overlayColor = getContrastingColor(colorForContrast);
+    const overlayFill = `${overlayColor}33`; // 20% opacity for fill
+    const overlayStroke = overlayColor;
+
     return (
       <g>
         {subpaths.map((subpathData, index) => {
-          // Calculate bounding box for the subpath
-          const bbox = measurePath(subpathData.d, pathData.strokeWidth, viewport.zoom);
-          const displayX = bbox.minX;
-          const displayY = bbox.minY;
-          const displayWidth = bbox.maxX - bbox.minX;
-          const displayHeight = bbox.maxY - bbox.minY;
-
-          // Handle dragging
-          let finalX = displayX;
-          let finalY = displayY;
-          if (subpath.isDragging && subpath.draggedSubpath?.elementId === element.id && subpath.draggedSubpath.subpathIndex === index) {
-            if (dragPosition) {
-              const deltaX = dragPosition.x - subpath.startX;
-              const deltaY = dragPosition.y - subpath.startY;
-              finalX += deltaX;
-              finalY += deltaY;
-            }
-          }
 
           return (
-            <rect
+            <path
               key={index}
-              x={finalX}
-              y={finalY}
-              width={displayWidth}
-              height={displayHeight}
-              fill="rgba(0, 123, 255, 0.2)"
-              stroke="rgba(0, 123, 255, 0.8)"
+              d={subpathData.d}
+              fill={overlayFill}
+              stroke={overlayStroke}
               strokeWidth={2 / viewport.zoom}
               vectorEffect="non-scaling-stroke"
-              style={{ cursor: 'move' }}
+              style={{ 
+                cursor: 'move',
+                transform: subpath.isDragging && subpath.draggedSubpath?.elementId === element.id && subpath.draggedSubpath.subpathIndex === index && dragPosition
+                  ? `translate(${dragPosition.x - subpath.startX}px, ${dragPosition.y - subpath.startY}px)`
+                  : 'none'
+              }}
               onPointerDown={(e) => {
                 e.stopPropagation();
                 const svgElement = e.currentTarget.ownerSVGElement;
@@ -1091,54 +1092,6 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
               onPointerUp={(e) => {
                 e.stopPropagation();
                 if (subpath.isDragging && subpath.draggedSubpath?.elementId === element.id && subpath.draggedSubpath.subpathIndex === index) {
-                  const svgElement = e.currentTarget.ownerSVGElement;
-                  if (svgElement) {
-                    const svgRect = svgElement.getBoundingClientRect();
-                    const svgX = e.clientX - svgRect.left;
-                    const svgY = e.clientY - svgRect.top;
-                    
-                    // Convert to canvas coordinates
-                    const canvasX = (svgX - viewport.panX) / viewport.zoom;
-                    const canvasY = (svgY - viewport.panY) / viewport.zoom;
-                    
-                    const finalPosition = { x: formatToPrecision(canvasX, PATH_DECIMAL_PRECISION), y: formatToPrecision(canvasY, PATH_DECIMAL_PRECISION) };
-                    
-                    // Apply subpath transformation
-                    const pathData = element.data as import('../types').PathData;
-                    const commands = parsePathD(pathData.d);
-                    const subpaths = extractSubpaths(commands);
-                    
-                    const draggedSubpath = subpaths[subpath.draggedSubpath.subpathIndex];
-                    if (draggedSubpath) {
-                      // Calculate delta
-                      const deltaX = finalPosition.x - subpath.startX;
-                      const deltaY = finalPosition.y - subpath.startY;
-                      
-                      // Move the subpath commands
-                      const startIndex = draggedSubpath.startIndex;
-                      const endIndex = draggedSubpath.endIndex;
-                      for (let i = startIndex; i <= endIndex; i++) {
-                        const cmd = commands[i];
-                        cmd.points = cmd.points.map(p => ({
-                          x: p.x + deltaX,
-                          y: p.y + deltaY
-                        }));
-                      }
-                      
-                      // Reconstruct the path d
-                      const newPathD = commands.map(cmd => {
-                        const pointsStr = cmd.points.map(p => `${formatToPrecision(p.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(p.y, PATH_DECIMAL_PRECISION)}`).join(' ');
-                        return `${cmd.type} ${pointsStr}`;
-                      }).join(' ');
-                      
-                      onUpdateElement(subpath.draggedSubpath.elementId, {
-                        data: {
-                          ...pathData,
-                          d: newPathD
-                        }
-                      });
-                    }
-                  }
                   onStopDraggingSubpath();
                 }
               }}
