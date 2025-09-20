@@ -1,6 +1,6 @@
 import type { StateCreator } from 'zustand';
 import type { CanvasElement } from '../../types';
-import { parsePathD, extractEditablePoints, updatePathD, type ControlPoint, normalizePathCommands } from '../../utils/pathParserUtils';
+import { parsePathD, extractEditablePoints, updatePathD, normalizePathCommands } from '../../utils/pathParserUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../utils';
 
 export interface BaseSlice {
@@ -32,6 +32,10 @@ export interface BaseSlice {
     }>;
     startX: number;
     startY: number;
+    currentX?: number;
+    currentY?: number;
+    deltaX?: number;
+    deltaY?: number;
   } | null;
 
   // Actions
@@ -45,6 +49,7 @@ export interface BaseSlice {
   startDraggingPoint: (elementId: string, commandIndex: number, pointIndex: number, offsetX: number, offsetY: number) => void;
   updateDraggingPoint: (x: number, y: number) => void;
   stopDraggingPoint: () => void;
+  emergencyCleanupDrag: () => void;
   selectCommand: (command: { elementId: string; commandIndex: number; pointIndex: number }, multiSelect?: boolean) => void;
   clearSelectedCommands: () => void;
   deleteSelectedCommands: () => void;
@@ -221,52 +226,23 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
     const state = get();
     
     if (state.draggingSelection?.isDragging) {
-      // Handle group drag of selected points
+      // Handle group drag of selected points - but don't update path data here anymore
+      // The path updates will be handled directly in the renderer for real-time feedback
       const deltaX = x - state.draggingSelection.startX;
       const deltaY = y - state.draggingSelection.startY;
       
-      // Group updates by element to avoid multiple state updates
-      const elementUpdates: Record<string, ControlPoint[]> = {};
-      
-      // Collect all point updates for each element
-      state.draggingSelection.initialPositions.forEach(initialPos => {
-        const element = state.elements.find(el => el.id === initialPos.elementId);
-        if (element && element.type === 'path') {
-          if (!elementUpdates[initialPos.elementId]) {
-            elementUpdates[initialPos.elementId] = [];
-          }
-          
-          elementUpdates[initialPos.elementId].push({
-            commandIndex: initialPos.commandIndex,
-            pointIndex: initialPos.pointIndex,
-            x: initialPos.x + deltaX,
-            y: initialPos.y + deltaY,
-            isControl: false
-          });
-        }
-      });
-      
-      // Update all elements at once
-      set((currentState) => {
-        const updatedElements = currentState.elements.map((element) => {
-          const updates = elementUpdates[element.id];
-          if (updates && element.type === 'path') {
-            const pathData = element.data as import('../../types').PathData;
-            const commands = parsePathD(pathData.d);
-            const newPathD = updatePathD(commands, updates);
-            
-            return {
-              ...element,
-              data: { ...pathData, d: newPathD }
-            };
-          }
-          return element;
-        });
-        
-        return { elements: updatedElements };
-      });
+      // Just update the dragging selection state for tracking
+      set((currentState) => ({
+        draggingSelection: currentState.draggingSelection ? {
+          ...currentState.draggingSelection,
+          currentX: x,
+          currentY: y,
+          deltaX,
+          deltaY
+        } : null
+      }));
     } else if (state.editingPoint && state.editingPoint.isDragging) {
-      // Handle single point drag
+      // Handle single point drag - also handled in renderer now
       set((currentState) => ({
         editingPoint: {
           ...currentState.editingPoint!,
@@ -279,46 +255,25 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
 
   stopDraggingPoint: () => {
     set((state) => {
-      if (state.editingPoint && state.editingPoint.isDragging) {
-        // Apply the drag changes to the actual path
-        const element = state.elements.find(el => el.id === state.editingPoint!.elementId);
-        if (element && element.type === 'path') {
-          const pathData = element.data as import('../../types').PathData;
-          const commands = parsePathD(pathData.d);
-          const points = extractEditablePoints(commands);
-          
-          const pointToUpdate = points.find(p => 
-            p.commandIndex === state.editingPoint!.commandIndex && 
-            p.pointIndex === state.editingPoint!.pointIndex
-          );
-          
-          if (pointToUpdate) {
-            pointToUpdate.x = state.editingPoint!.offsetX;
-            pointToUpdate.y = state.editingPoint!.offsetY;
-            
-            const newPathD = updatePathD(commands, [pointToUpdate]);
-            
-            return {
-              elements: state.elements.map(el =>
-                el.id === state.editingPoint!.elementId
-                  ? { ...el, data: { ...pathData, d: newPathD } }
-                  : el
-              ),
-              editingPoint: {
-                ...state.editingPoint,
-                isDragging: false
-              },
-              draggingSelection: null
-            };
-          }
-        }
-      }
-      
+      // Emergency cleanup - ensure all drag states are cleared
       return {
         ...state,
+        editingPoint: state.editingPoint ? {
+          ...state.editingPoint,
+          isDragging: false
+        } : null,
         draggingSelection: null
       };
     });
+  },
+
+  // Emergency cleanup method
+  emergencyCleanupDrag: () => {
+    set((state) => ({
+      ...state,
+      editingPoint: null,
+      draggingSelection: null
+    }));
   },
 
   selectCommand: (command, multiSelect = false) => {

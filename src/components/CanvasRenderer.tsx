@@ -123,6 +123,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
 }) => {
   // Local state for drag visualization
   const [dragPosition, setDragPosition] = React.useState<{x: number, y: number} | null>(null);
+  const [originalPathDataMap, setOriginalPathDataMap] = React.useState<Record<string, string> | null>(null);
 
   // Global pointer event handlers for drag
   React.useEffect(() => {
@@ -185,6 +186,67 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
                     }
                   });
                 }
+              }
+            } else if (draggingSelection?.isDragging) {
+              // Handle group drag with real-time path updates  
+              const deltaX = formatToPrecision(canvasX - draggingSelection.startX, PATH_DECIMAL_PRECISION);
+              const deltaY = formatToPrecision(canvasY - draggingSelection.startY, PATH_DECIMAL_PRECISION);
+              
+              // Store original path data to prevent accumulation
+              if (!originalPathDataMap) {
+                const newOriginalPathDataMap: Record<string, string> = {};
+                draggingSelection.initialPositions.forEach(pos => {
+                  const element = elements.find(el => el.id === pos.elementId);
+                  if (element && element.type === 'path') {
+                    const pathData = element.data as import('../types').PathData;
+                    newOriginalPathDataMap[pos.elementId] = pathData.d;
+                  }
+                });
+                setOriginalPathDataMap(newOriginalPathDataMap);
+              }
+              
+              if (originalPathDataMap) {
+                // Group updates by element
+                const elementUpdates: Record<string, Array<{
+                  commandIndex: number;
+                  pointIndex: number;
+                  x: number;
+                  y: number;
+                  isControl: boolean;
+                }>> = {};
+                
+                draggingSelection.initialPositions.forEach(initialPos => {
+                  if (!elementUpdates[initialPos.elementId]) {
+                    elementUpdates[initialPos.elementId] = [];
+                  }
+                  
+                  elementUpdates[initialPos.elementId].push({
+                    commandIndex: initialPos.commandIndex,
+                    pointIndex: initialPos.pointIndex,
+                    x: formatToPrecision(initialPos.x + deltaX, PATH_DECIMAL_PRECISION),
+                    y: formatToPrecision(initialPos.y + deltaY, PATH_DECIMAL_PRECISION),
+                    isControl: false
+                  });
+                });
+                
+                // Update each element
+                Object.entries(elementUpdates).forEach(([elementId, updates]) => {
+                  const originalPathData = originalPathDataMap[elementId];
+                  if (originalPathData) {
+                    const originalCommands = parsePathD(originalPathData);
+                    const newPathD = updatePathD(originalCommands, updates);
+                    
+                    const element = elements.find(el => el.id === elementId);
+                    if (element) {
+                      onUpdateElement(elementId, {
+                        data: {
+                          ...(element.data as import('../types').PathData),
+                          d: newPathD
+                        }
+                      });
+                    }
+                  }
+                });
               }
             } else if (subpath?.isDragging && subpath.draggedSubpath && subpath.originalPathData) {
               // Update paths in real-time for multi-subpath drag
@@ -257,7 +319,11 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
 
     const handlePointerUp = (e: PointerEvent) => {
       if (editingPoint?.isDragging || draggingSelection?.isDragging || subpath?.isDragging) {
-        // Get final position for one last update if needed
+        // Emergency cleanup - clear all temporary state
+        setDragPosition(null);
+        setOriginalPathDataMap(null);
+        
+        // Get final position for final update if needed
         const svgElement = document.querySelector('svg');
         let finalPosition = dragPosition;
         
@@ -271,57 +337,52 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           };
         }
 
-        // Final update of the path with the final position (only if dragPosition was null)
-        if (editingPoint?.isDragging && finalPosition && !dragPosition) {
-          const element = elements.find(el => el.id === editingPoint.elementId);
-          if (element && element.type === 'path') {
-            const pathData = element.data as import('../types').PathData;
-            const commands = parsePathD(pathData.d);
-            const points = extractEditablePoints(commands);
-
-            const pointToUpdate = points.find(p => 
-              p.commandIndex === editingPoint.commandIndex && 
-              p.pointIndex === editingPoint.pointIndex
-            );
-
-            if (pointToUpdate) {
-              pointToUpdate.x = formatToPrecision(finalPosition.x, PATH_DECIMAL_PRECISION);
-              pointToUpdate.y = formatToPrecision(finalPosition.y, PATH_DECIMAL_PRECISION);
-
-              const newPathD = updatePathD(commands, [pointToUpdate]);
-              onUpdateElement(editingPoint.elementId, {
-                data: {
-                  ...pathData,
-                  d: newPathD
-                }
-              });
-            }
-          }
-        }
-
-        setDragPosition(null);
+        // Force cleanup of drag state
         if (editingPoint?.isDragging) {
           onStopDraggingPoint();
+        } else if (draggingSelection?.isDragging) {
+          onStopDraggingPoint(); // This will handle draggingSelection cleanup
         } else if (subpath?.isDragging) {
           onStopDraggingSubpath();
         }
       }
     };
 
-    if (editingPoint?.isDragging || draggingSelection?.isDragging || subpath?.isDragging) {
-      const svgElement = document.querySelector('svg');
-      if (svgElement) {
-        svgElement.addEventListener('pointermove', handlePointerMove);
-        svgElement.addEventListener('pointerup', handlePointerUp);
+    // Emergency cleanup for cases where pointerup might not fire
+    const handlePointerCancel = () => {
+      setDragPosition(null);
+      setOriginalPathDataMap(null);
+      if (editingPoint?.isDragging) {
+        onStopDraggingPoint();
+      } else if (draggingSelection?.isDragging) {
+        onStopDraggingPoint();
+      } else if (subpath?.isDragging) {
+        onStopDraggingSubpath();
       }
+    };
+
+    const isAnyDragging = editingPoint?.isDragging || draggingSelection?.isDragging || subpath?.isDragging;
+    
+    if (isAnyDragging) {
+      // Use document for more reliable event capture
+      document.addEventListener('pointermove', handlePointerMove, { passive: false });
+      document.addEventListener('pointerup', handlePointerUp, { passive: false });
+      document.addEventListener('pointercancel', handlePointerCancel, { passive: false });
+      
+      // Additional cleanup listeners for edge cases
+      document.addEventListener('contextmenu', handlePointerCancel, { passive: false });
+      document.addEventListener('blur', handlePointerCancel, { passive: false });
+      window.addEventListener('blur', handlePointerCancel, { passive: false });
     }
 
     return () => {
-      const svgElement = document.querySelector('svg');
-      if (svgElement) {
-        svgElement.removeEventListener('pointermove', handlePointerMove);
-        svgElement.removeEventListener('pointerup', handlePointerUp);
-      }
+      // Cleanup all listeners
+      document.removeEventListener('pointermove', handlePointerMove);
+      document.removeEventListener('pointerup', handlePointerUp);
+      document.removeEventListener('pointercancel', handlePointerCancel);
+      document.removeEventListener('contextmenu', handlePointerCancel);
+      document.removeEventListener('blur', handlePointerCancel);
+      window.removeEventListener('blur', handlePointerCancel);
     };
   }, [editingPoint?.isDragging, editingPoint?.elementId, editingPoint?.commandIndex, editingPoint?.pointIndex, draggingSelection?.isDragging, subpath?.isDragging, viewport, onUpdateDraggingPoint, onStopDraggingPoint, onUpdateDraggingSubpath, onStopDraggingSubpath, dragPosition, elements, onUpdateElement]);
 
@@ -1109,6 +1170,8 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
               fill={overlayFill}
               stroke={overlayStroke}
               strokeWidth={strokeWidth}
+              strokeLinecap={pathData.strokeLinecap || "round"}
+              strokeLinejoin={pathData.strokeLinejoin || "round"}
               vectorEffect="non-scaling-stroke"
               style={{ 
                 cursor: 'pointer'
@@ -1181,8 +1244,8 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
               strokeWidth={pathData.strokeWidth}
               fill={pathData.fillColor}
               fillOpacity={pathData.fillOpacity}
-              strokeLinecap="round"
-              strokeLinejoin="round"
+              strokeLinecap={pathData.strokeLinecap || "round"}
+              strokeLinejoin={pathData.strokeLinejoin || "round"}
               vectorEffect="non-scaling-stroke"
               opacity={pathData.strokeOpacity}
               onPointerUp={(e) => onElementClick(element.id, e)}

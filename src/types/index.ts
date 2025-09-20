@@ -13,6 +13,8 @@ export interface PathData {
   strokeOpacity: number;
   fillColor: string;
   fillOpacity: number;
+  strokeLinecap?: 'butt' | 'round' | 'square'; // SVG stroke-linecap property
+  strokeLinejoin?: 'miter' | 'round' | 'bevel'; // SVG stroke-linejoin property
   isPencilPath?: boolean; // Indicates if this path was created with the pencil tool
   transform?: {
     scaleX: number;

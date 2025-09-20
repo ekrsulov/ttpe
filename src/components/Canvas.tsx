@@ -30,6 +30,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
     startDraggingPoint,
     updateDraggingPoint,
     stopDraggingPoint,
+    emergencyCleanupDrag,
     selectCommand,
     clearSelectedCommands,
     deleteSelectedCommands,
@@ -123,6 +124,29 @@ export const Canvas: React.FC<CanvasProps> = () => {
       document.removeEventListener('keyup', handleKeyUp);
     };
   }, []);
+
+  // Emergency cleanup listeners for drag states
+  useEffect(() => {
+    const handleEmergencyCleanup = () => {
+      if (editingPoint?.isDragging || draggingSelection?.isDragging) {
+        emergencyCleanupDrag();
+      }
+    };
+
+    // Multiple emergency cleanup triggers
+    window.addEventListener('beforeunload', handleEmergencyCleanup);
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        handleEmergencyCleanup();
+      }
+    });
+    
+    // Cleanup on component unmount
+    return () => {
+      handleEmergencyCleanup();
+      window.removeEventListener('beforeunload', handleEmergencyCleanup);
+    };
+  }, [editingPoint?.isDragging, draggingSelection?.isDragging, emergencyCleanupDrag]);
 
   // Transform screen coordinates to canvas coordinates
   const screenToCanvas = useCallback((screenX: number, screenY: number): Point => {
