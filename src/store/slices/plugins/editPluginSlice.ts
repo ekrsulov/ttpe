@@ -1,5 +1,5 @@
 import type { StateCreator } from 'zustand';
-import { parsePathD, extractEditablePoints, updatePathD, normalizePathCommands } from '../../../utils/pathParserUtils';
+import { parsePathD, extractEditablePoints, updatePathD, normalizePathCommands, extractSubpaths } from '../../../utils/pathParserUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../../utils';
 
 export interface EditPluginSlice {
@@ -52,6 +52,14 @@ export interface EditPluginSlice {
   alignBottomCommands: () => void;
   distributeHorizontallyCommands: () => void;
   distributeVerticallyCommands: () => void;
+  isWorkingWithSubpaths: () => boolean;
+  getFilteredEditablePoints: (elementId: string) => Array<{
+    commandIndex: number;
+    pointIndex: number;
+    x: number;
+    y: number;
+    isControl: boolean;
+  }>;
 }
 
 export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPluginSlice> = (set, get) => ({
@@ -910,5 +918,50 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
         }));
       }
     });
+  },
+
+  // Check if edit should work with subpaths instead of all points
+  isWorkingWithSubpaths: () => {
+    const state = get() as any;
+    return state.selectedSubpaths && state.selectedSubpaths.length > 0;
+  },
+
+  // Get filtered editable points - either from selected subpaths or all points
+  getFilteredEditablePoints: (elementId: string) => {
+    const state = get() as any;
+    const isSubpathMode = (get() as any).isWorkingWithSubpaths();
+    
+    const element = state.elements.find((el: any) => el.id === elementId);
+    if (!element || element.type !== 'path') return [];
+
+    const pathData = element.data as any;
+    const commands = parsePathD(pathData.d);
+    const allPoints = extractEditablePoints(commands);
+
+    if (!isSubpathMode) {
+      // Normal mode: return all points
+      return allPoints;
+    }
+
+    // Subpath mode: filter points to only include those from selected subpaths
+    const selectedSubpaths = state.selectedSubpaths.filter((sp: any) => sp.elementId === elementId);
+    if (selectedSubpaths.length === 0) return [];
+
+    const subpaths = extractSubpaths(commands);
+    const filteredPoints: typeof allPoints = [];
+
+    selectedSubpaths.forEach((selected: { subpathIndex: number }) => {
+      const subpathData = subpaths[selected.subpathIndex];
+      if (subpathData) {
+        // Include points that fall within this subpath's command range
+        const pointsInSubpath = allPoints.filter(point => 
+          point.commandIndex >= subpathData.startIndex && 
+          point.commandIndex <= subpathData.endIndex
+        );
+        filteredPoints.push(...pointsInSubpath);
+      }
+    });
+
+    return filteredPoints;
   },
 });

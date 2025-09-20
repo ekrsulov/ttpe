@@ -27,9 +27,9 @@ export const Sidebar: React.FC = () => {
 
   const plugins = [
     { name: 'select', label: 'Select', icon: MousePointer },
-    { name: 'edit', label: 'Edit', icon: MousePointerClick },
-    { name: 'transformation', label: 'Transform', icon: VectorSquare },
     { name: 'subpath', label: 'Subpath', icon: Route },
+    { name: 'transformation', label: 'Transform', icon: VectorSquare },
+    { name: 'edit', label: 'Edit', icon: MousePointerClick },
     { name: 'pan', label: 'Pan', icon: Hand },
     { name: 'pencil', label: 'Pencil', icon: Pen },
     { name: 'text', label: 'Text', icon: Type },

@@ -37,7 +37,11 @@ export const Canvas: React.FC<CanvasProps> = () => {
     selectSubpath,
     startDraggingSubpath,
     updateDraggingSubpath,
-    stopDraggingSubpath
+    stopDraggingSubpath,
+    getTransformationBounds,
+    isWorkingWithSubpaths,
+    getFilteredEditablePoints,
+    applyTransformationToSubpaths
   } = useCanvasStore();
 
   const [isSpacePressed, setIsSpacePressed] = useState(false);
@@ -64,6 +68,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
   const [transformedBounds, setTransformedBounds] = useState<{ minX: number; minY: number; maxX: number; maxY: number } | null>(null);
   const [initialTransform, setInitialTransform] = useState<{ scaleX: number; scaleY: number; rotation: number; translateX: number; translateY: number } | null>(null);
   const [originalElementData, setOriginalElementData] = useState<any | null>(null);
+  const [lastTransformTime, setLastTransformTime] = useState<number>(0);
 
   // Handle window resize
   useEffect(() => {
@@ -252,18 +257,34 @@ export const Canvas: React.FC<CanvasProps> = () => {
   const handleTransformationHandlerPointerDown = useCallback((e: React.PointerEvent, elementId: string, handler: string) => {
     e.stopPropagation();
     const point = screenToCanvas(e.clientX, e.clientY);
-    const element = elements.find(el => el.id === elementId);
+    
+    // Check if we're working with subpaths
+    const isSubpathTransformation = elementId.startsWith('subpaths:');
+    const actualElementId = isSubpathTransformation ? elementId.replace('subpaths:', '') : elementId;
+    const element = elements.find(el => el.id === actualElementId);
 
     if (element) {
-      // Use original (untransformed) bounds for transformation calculations
-      const bounds = getElementBounds(element);
-      // Get current transformed bounds for transform origin calculation
-      const transformedBounds = getElementBounds(element);
+      let bounds;
+      let transformedBounds;
+      
+      if (isSubpathTransformation) {
+        // For subpath transformations, get bounds from transformation plugin
+        const transformationBounds = getTransformationBounds();
+        if (transformationBounds) {
+          bounds = transformationBounds;
+          transformedBounds = transformationBounds;
+        }
+      } else {
+        // Use original (untransformed) bounds for transformation calculations
+        bounds = getElementBounds(element);
+        // Get current transformed bounds for transform origin calculation
+        transformedBounds = getElementBounds(element);
+      }
       
       if (bounds && transformedBounds) {
         setIsTransforming(true);
         setTransformStart(point);
-        setTransformElementId(elementId);
+        setTransformElementId(elementId); // Keep the full elementId including 'subpaths:' prefix
         setTransformHandler(handler);
         setOriginalBounds(bounds); // Use original bounds for scale calculation
         setTransformedBounds(transformedBounds); // Use transformed bounds for transform origin
@@ -274,7 +295,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
         setInitialTransform(currentTransform);
       }
     }
-  }, [elements, screenToCanvas, getElementBounds, getCurrentTransform]);
+  }, [elements, screenToCanvas, getElementBounds, getCurrentTransform, getTransformationBounds]);
 
   const handleTransformationHandlerPointerUp = useCallback((e: React.PointerEvent) => {
     e.stopPropagation();
@@ -382,8 +403,12 @@ export const Canvas: React.FC<CanvasProps> = () => {
     }
 
     if (isTransforming && transformStart && transformElementId && transformHandler && originalBounds && transformedBounds && initialTransform && originalElementData) {
+      // Check if we're working with subpaths
+      const isSubpathTransformation = transformElementId.startsWith('subpaths:');
+      const actualElementId = isSubpathTransformation ? transformElementId.replace('subpaths:', '') : transformElementId;
+      
       // Handle transformation
-      const element = elements.find(el => el.id === transformElementId);
+      const element = elements.find(el => el.id === actualElementId);
       if (!element) return;
 
       // Calculate center of the original (untransformed) element
@@ -442,8 +467,22 @@ export const Canvas: React.FC<CanvasProps> = () => {
 
       // Calculate transformation with damping to reduce sensitivity
       // NEW APPROACH: Use relative mouse movement from start position to prevent accumulation
-      const SENSITIVITY_FACTOR = 0.6; // Further reduced sensitivity
-      const MIN_MOVEMENT_THRESHOLD = 3; // Increased threshold
+      // Different sensitivity values for subpaths vs full elements
+      const SENSITIVITY_FACTOR = isSubpathTransformation ? 0.02 : 0.6; // Extremely reduced sensitivity for subpaths (was 0.1)
+      const MIN_MOVEMENT_THRESHOLD = isSubpathTransformation ? 20 : 3; // Very high threshold for subpaths (was 10)
+      const ROTATION_SENSITIVITY_FACTOR = isSubpathTransformation ? 0.02 : 0.5; // Extremely low rotation sensitivity for subpaths (was 0.1)
+      
+      // Scale limits - extremely conservative for subpaths
+      const MIN_SCALE = isSubpathTransformation ? 0.9 : 0.1; // Almost no shrinking for subpaths (was 0.8)
+      const MAX_SCALE = isSubpathTransformation ? 1.2 : 5.0; // Very limited enlarging for subpaths (was 1.5)
+      
+      // Throttling for subpaths - limit transformation frequency
+      const now = Date.now();
+      const THROTTLE_MS = isSubpathTransformation ? 50 : 16; // Slower updates for subpaths (50ms vs 16ms)
+      
+      if (isSubpathTransformation && now - lastTransformTime < THROTTLE_MS) {
+        return; // Skip transformation if not enough time has passed
+      }
       
       // Calculate movement distance from start point
       const movementX = point.x - transformStart.x;
@@ -477,8 +516,8 @@ export const Canvas: React.FC<CanvasProps> = () => {
         );
         
         const finalScale = towardsOrigin ? 1 / scaleChange : scaleChange;
-        newScaleX = Math.max(0.1, Math.min(5.0, finalScale));
-        newScaleY = Math.max(0.1, Math.min(5.0, finalScale));
+        newScaleX = Math.max(MIN_SCALE, Math.min(MAX_SCALE, finalScale));
+        newScaleY = Math.max(MIN_SCALE, Math.min(MAX_SCALE, finalScale));
         
       } else if (transformHandler.startsWith('midpoint-')) {
         // For midpoint handlers: single-axis scaling based on perpendicular movement
@@ -491,7 +530,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
           const shrinking = (transformHandler === 'midpoint-t' && movementY > 0) || 
                           (transformHandler === 'midpoint-b' && movementY < 0);
           
-          newScaleY = Math.max(0.1, Math.min(5.0, shrinking ? 1 / scaleChange : scaleChange));
+          newScaleY = Math.max(MIN_SCALE, Math.min(MAX_SCALE, shrinking ? 1 / scaleChange : scaleChange));
           newScaleX = 1; // Keep original X scale
           
         } else if (transformHandler === 'midpoint-l' || transformHandler === 'midpoint-r') {
@@ -502,7 +541,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
           const shrinking = (transformHandler === 'midpoint-l' && movementX > 0) || 
                           (transformHandler === 'midpoint-r' && movementX < 0);
           
-          newScaleX = Math.max(0.1, Math.min(5.0, shrinking ? 1 / scaleChange : scaleChange));
+          newScaleX = Math.max(MIN_SCALE, Math.min(MAX_SCALE, shrinking ? 1 / scaleChange : scaleChange));
           newScaleY = 1; // Keep original Y scale
         }
       }
@@ -526,9 +565,8 @@ export const Canvas: React.FC<CanvasProps> = () => {
         while (angleChange > 180) angleChange -= 360;
         while (angleChange < -180) angleChange += 360;
         
-        // Apply sensitivity
-        const ROTATION_SENSITIVITY = 0.5;
-        newRotation = initialTransform.rotation + angleChange * ROTATION_SENSITIVITY;
+        // Apply sensitivity (using the dynamic factor defined earlier)
+        newRotation = initialTransform.rotation + angleChange * ROTATION_SENSITIVITY_FACTOR;
         
         // Keep rotation within reasonable bounds (-180 to 180)
         while (newRotation > 180) newRotation -= 360;
@@ -536,36 +574,51 @@ export const Canvas: React.FC<CanvasProps> = () => {
       }
 
       // Apply transformation directly to element data instead of using SVG transforms
-      let transformedData;
-      
-      if (element.type === 'path') {
-        // Use original element data to prevent accumulation
-        const pathData = originalElementData as PathData;
-        transformedData = transformPathData(
-          pathData,
+      if (isSubpathTransformation) {
+        // Apply transformation only to selected subpaths
+        applyTransformationToSubpaths(
+          actualElementId,
           newScaleX,
           newScaleY,
           transformOriginX,
           transformOriginY,
           newRotation
         );
+        // Update throttle timestamp for subpaths
+        setLastTransformTime(now);
       } else {
-        // Fallback to transform approach for other element types
-        transformedData = { 
-          ...originalElementData, 
-          transform: {
-            scaleX: newScaleX,
-            scaleY: newScaleY, 
-            rotation: newRotation,
-            translateX: transformOriginX,
-            translateY: transformOriginY,
-          }
-        };
-      }
+        // Apply transformation to the entire element (original behavior)
+        let transformedData;
+        
+        if (element.type === 'path') {
+          // Use original element data to prevent accumulation
+          const pathData = originalElementData as PathData;
+          transformedData = transformPathData(
+            pathData,
+            newScaleX,
+            newScaleY,
+            transformOriginX,
+            transformOriginY,
+            newRotation
+          );
+        } else {
+          // Fallback to transform approach for other element types
+          transformedData = { 
+            ...originalElementData, 
+            transform: {
+              scaleX: newScaleX,
+              scaleY: newScaleY, 
+              rotation: newRotation,
+              translateX: transformOriginX,
+              translateY: transformOriginY,
+            }
+          };
+        }
 
-      useCanvasStore.getState().updateElement(transformElementId, {
-        data: transformedData
-      });
+        useCanvasStore.getState().updateElement(actualElementId, {
+          data: transformedData
+        });
+      }
 
       return;
     }
@@ -812,6 +865,9 @@ export const Canvas: React.FC<CanvasProps> = () => {
         onStartDraggingSubpath={startDraggingSubpath}
         onUpdateDraggingSubpath={updateDraggingSubpath}
         onStopDraggingSubpath={stopDraggingSubpath}
+        getTransformationBounds={getTransformationBounds}
+        isWorkingWithSubpaths={isWorkingWithSubpaths}
+        getFilteredEditablePoints={getFilteredEditablePoints}
       />
     </svg>
   );
