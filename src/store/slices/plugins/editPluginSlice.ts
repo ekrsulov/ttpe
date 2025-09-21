@@ -69,6 +69,7 @@ export interface EditPluginSlice {
   stopDraggingPoint: () => void;
   emergencyCleanupDrag: () => void;
   selectCommand: (command: { elementId: string; commandIndex: number; pointIndex: number }, multiSelect?: boolean) => void;
+  getPointsInRange: (elementId: string, startCommandIndex: number, startPointIndex: number, endCommandIndex: number, endPointIndex: number) => Array<{ elementId: string; commandIndex: number; pointIndex: number }>;
   clearSelectedCommands: () => void;
   deleteSelectedCommands: () => void;
   alignLeftCommands: () => void;
@@ -260,6 +261,72 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     }));
   },
 
+  // Helper function to get points between two points in the same subpath
+  getPointsInRange: (elementId: string, startCommandIndex: number, startPointIndex: number, endCommandIndex: number, endPointIndex: number) => {
+    const state = get() as FullCanvasState;
+    const element = state.elements.find(el => el.id === elementId);
+    if (!element || element.type !== 'path') return [];
+
+    const pathData = element.data as PathData;
+    const commands = parsePathD(pathData.d);
+    const subpaths = extractSubpaths(commands);
+    
+    // Find which subpath the start point belongs to
+    let startSubpathIndex = -1;
+    for (let i = 0; i < subpaths.length; i++) {
+      const subpath = subpaths[i];
+      if (startCommandIndex >= subpath.startIndex && startCommandIndex <= subpath.endIndex) {
+        startSubpathIndex = i;
+        break;
+      }
+    }
+    
+    // Find which subpath the end point belongs to
+    let endSubpathIndex = -1;
+    for (let i = 0; i < subpaths.length; i++) {
+      const subpath = subpaths[i];
+      if (endCommandIndex >= subpath.startIndex && endCommandIndex <= subpath.endIndex) {
+        endSubpathIndex = i;
+        break;
+      }
+    }
+    
+    // Only select range if both points are in the same subpath
+    if (startSubpathIndex !== endSubpathIndex || startSubpathIndex === -1) return [];
+    
+    const subpath = subpaths[startSubpathIndex];
+    const subpathCommands = commands.slice(subpath.startIndex, subpath.endIndex + 1);
+    const allPoints = extractEditablePoints(subpathCommands);
+    
+    // Adjust command indices to be relative to the full path
+    const adjustedPoints = allPoints.map(p => ({
+      ...p,
+      commandIndex: p.commandIndex + subpath.startIndex
+    }));
+    
+    // Find indices in the subpath's point array
+    const startPointGlobalIndex = adjustedPoints.findIndex(p => 
+      p.commandIndex === startCommandIndex && p.pointIndex === startPointIndex
+    );
+    const endPointGlobalIndex = adjustedPoints.findIndex(p => 
+      p.commandIndex === endCommandIndex && p.pointIndex === endPointIndex
+    );
+    
+    if (startPointGlobalIndex === -1 || endPointGlobalIndex === -1) return [];
+    
+    // Get all points between the two indices (inclusive)
+    const minIndex = Math.min(startPointGlobalIndex, endPointGlobalIndex);
+    const maxIndex = Math.max(startPointGlobalIndex, endPointGlobalIndex);
+    
+    const pointsInRange = adjustedPoints.slice(minIndex, maxIndex + 1);
+    
+    return pointsInRange.map(p => ({
+      elementId,
+      commandIndex: p.commandIndex,
+      pointIndex: p.pointIndex
+    }));
+  },
+
   selectCommand: (command, multiSelect = false) => {
     set((state) => {
       const isAlreadySelected = state.selectedCommands.some(
@@ -277,7 +344,27 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
                      c.pointIndex === command.pointIndex)
           );
         } else {
-          newSelectedCommands = [...state.selectedCommands, command];
+          // Check if there's already a selection in the same element for range selection
+          const existingSelectionInElement = state.selectedCommands.filter(
+            (c) => c.elementId === command.elementId
+          );
+          
+          if (existingSelectionInElement.length === 1) {
+            // Do range selection: select all points between the existing selection and new point
+            const existingCmd = existingSelectionInElement[0];
+            const pointsInRange = get().getPointsInRange(
+              command.elementId,
+              existingCmd.commandIndex,
+              existingCmd.pointIndex,
+              command.commandIndex,
+              command.pointIndex
+            );
+            
+            newSelectedCommands = [...state.selectedCommands, ...pointsInRange];
+          } else {
+            // Multiple or no existing selection in element, just add the single command
+            newSelectedCommands = [...state.selectedCommands, command];
+          }
         }
       } else {
         newSelectedCommands = isAlreadySelected ? [] : [command];
