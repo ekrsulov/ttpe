@@ -506,17 +506,19 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     return (
       <g key={`selection-${element.id}`}>
         {/* Selection rectangle */}
-        <rect
-          x={bounds.minX}
-          y={bounds.minY}
-          width={bounds.maxX - bounds.minX}
-          height={bounds.maxY - bounds.minY}
-          fill="none"
-          stroke={selectionColor}
-          strokeWidth={3 / viewport.zoom}
-          strokeDasharray={`${6 / viewport.zoom} ${4 / viewport.zoom}`}
-          pointerEvents="none"
-        />
+        {!isTransformationMode && (
+          <rect
+            x={bounds.minX}
+            y={bounds.minY}
+            width={bounds.maxX - bounds.minX}
+            height={bounds.maxY - bounds.minY}
+            fill="none"
+            stroke={selectionColor}
+            strokeWidth={1.5 / viewport.zoom}
+            opacity="0.5"
+            pointerEvents="none"
+          />
+        )}
 
         {/* Transformation handlers */}
         {isTransformationMode && renderTransformationHandlers(bounds, element.id, handlerSize, selectionColor)}
@@ -562,50 +564,142 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   ) => (
     <>
       {/* Corner handlers - Always visible */}
+      {/* Top-left corner */}
       <rect
-        x={bounds.minX - handlerSize / 2}
-        y={bounds.minY - handlerSize / 2}
+        x={bounds.minX}
+        y={bounds.minY - 1.5 / viewport.zoom}
         width={handlerSize}
+        height={3 / viewport.zoom}
+        fill={selectionColor}
+        stroke="#fff"
+        strokeWidth={1 / viewport.zoom}
+        opacity="0.5"
+        pointerEvents="none"
+      />
+      <rect
+        x={bounds.minX - 1.5 / viewport.zoom}
+        y={bounds.minY}
+        width={3 / viewport.zoom}
         height={handlerSize}
         fill={selectionColor}
         stroke="#fff"
         strokeWidth={1 / viewport.zoom}
+        opacity="0.5"
+        pointerEvents="none"
+      />
+      {/* Top-left corner overlay */}
+      <rect
+        x={bounds.minX - 10 / viewport.zoom}
+        y={bounds.minY - 10 / viewport.zoom}
+        width={20 / viewport.zoom}
+        height={20 / viewport.zoom}
+        fill="transparent"
+        opacity="0.1"
         style={{ cursor: 'nw-resize' }}
         onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpath:${elementId}:${subpathIndex}`, 'corner-tl')}
         onPointerUp={onTransformationHandlerPointerUp}
       />
+      {/* Top-right corner */}
       <rect
-        x={bounds.maxX - handlerSize / 2}
-        y={bounds.minY - handlerSize / 2}
+        x={bounds.maxX - handlerSize}
+        y={bounds.minY - 1.5 / viewport.zoom}
         width={handlerSize}
+        height={3 / viewport.zoom}
+        fill={selectionColor}
+        stroke="#fff"
+        strokeWidth={1 / viewport.zoom}
+        opacity="0.5"
+        pointerEvents="none"
+      />
+      <rect
+        x={bounds.maxX - 1.5 / viewport.zoom}
+        y={bounds.minY}
+        width={3 / viewport.zoom}
         height={handlerSize}
         fill={selectionColor}
         stroke="#fff"
         strokeWidth={1 / viewport.zoom}
+        opacity="0.5"
+        pointerEvents="none"
+      />
+      {/* Top-right corner overlay */}
+      <rect
+        x={bounds.maxX - 10 / viewport.zoom}
+        y={bounds.minY - 10 / viewport.zoom}
+        width={20 / viewport.zoom}
+        height={20 / viewport.zoom}
+        fill="transparent"
+        opacity="0.1"
         style={{ cursor: 'ne-resize' }}
         onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpath:${elementId}:${subpathIndex}`, 'corner-tr')}
         onPointerUp={onTransformationHandlerPointerUp}
       />
+      {/* Bottom-left corner */}
       <rect
-        x={bounds.minX - handlerSize / 2}
-        y={bounds.maxY - handlerSize / 2}
+        x={bounds.minX}
+        y={bounds.maxY - 1.5 / viewport.zoom}
         width={handlerSize}
+        height={3 / viewport.zoom}
+        fill={selectionColor}
+        stroke="#fff"
+        strokeWidth={1 / viewport.zoom}
+        opacity="0.5"
+        pointerEvents="none"
+      />
+      <rect
+        x={bounds.minX - 1.5 / viewport.zoom}
+        y={bounds.maxY - handlerSize}
+        width={3 / viewport.zoom}
         height={handlerSize}
         fill={selectionColor}
         stroke="#fff"
         strokeWidth={1 / viewport.zoom}
+        opacity="0.5"
+        pointerEvents="none"
+      />
+      {/* Bottom-left corner overlay */}
+      <rect
+        x={bounds.minX - 10 / viewport.zoom}
+        y={bounds.maxY - 10 / viewport.zoom}
+        width={20 / viewport.zoom}
+        height={20 / viewport.zoom}
+        fill="transparent"
+        opacity="0.1"
         style={{ cursor: 'sw-resize' }}
         onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpath:${elementId}:${subpathIndex}`, 'corner-bl')}
         onPointerUp={onTransformationHandlerPointerUp}
       />
+      {/* Bottom-right corner */}
       <rect
-        x={bounds.maxX - handlerSize / 2}
-        y={bounds.maxY - handlerSize / 2}
+        x={bounds.maxX - handlerSize}
+        y={bounds.maxY - 1.5 / viewport.zoom}
         width={handlerSize}
+        height={3 / viewport.zoom}
+        fill={selectionColor}
+        stroke="#fff"
+        strokeWidth={1 / viewport.zoom}
+        opacity="0.5"
+        pointerEvents="none"
+      />
+      <rect
+        x={bounds.maxX - 1.5 / viewport.zoom}
+        y={bounds.maxY - handlerSize}
+        width={3 / viewport.zoom}
         height={handlerSize}
         fill={selectionColor}
         stroke="#fff"
         strokeWidth={1 / viewport.zoom}
+        opacity="0.5"
+        pointerEvents="none"
+      />
+      {/* Bottom-right corner overlay */}
+      <rect
+        x={bounds.maxX - 10 / viewport.zoom}
+        y={bounds.maxY - 10 / viewport.zoom}
+        width={20 / viewport.zoom}
+        height={20 / viewport.zoom}
+        fill="transparent"
+        opacity="0.1"
         style={{ cursor: 'se-resize' }}
         onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpath:${elementId}:${subpathIndex}`, 'corner-br')}
         onPointerUp={onTransformationHandlerPointerUp}
@@ -615,47 +709,15 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       {transformation.showRotateHandlers && (
         <>
           <circle
-            cx={bounds.minX - handlerSize}
-            cy={bounds.minY - handlerSize}
-            r={handlerSize / 2}
-            fill={selectionColor}
-            stroke="#fff"
-            strokeWidth={1 / viewport.zoom}
-            style={{ cursor: 'alias' }}
-            onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpath:${elementId}:${subpathIndex}`, 'rotate-tl')}
-            onPointerUp={onTransformationHandlerPointerUp}
-          />
-          <circle
             cx={bounds.maxX + handlerSize}
             cy={bounds.minY - handlerSize}
             r={handlerSize / 2}
             fill={selectionColor}
             stroke="#fff"
             strokeWidth={1 / viewport.zoom}
+            opacity="0.5"
             style={{ cursor: 'alias' }}
             onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpath:${elementId}:${subpathIndex}`, 'rotate-tr')}
-            onPointerUp={onTransformationHandlerPointerUp}
-          />
-          <circle
-            cx={bounds.minX - handlerSize}
-            cy={bounds.maxY + handlerSize}
-            r={handlerSize / 2}
-            fill={selectionColor}
-            stroke="#fff"
-            strokeWidth={1 / viewport.zoom}
-            style={{ cursor: 'alias' }}
-            onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpath:${elementId}:${subpathIndex}`, 'rotate-bl')}
-            onPointerUp={onTransformationHandlerPointerUp}
-          />
-          <circle
-            cx={bounds.maxX + handlerSize}
-            cy={bounds.maxY + handlerSize}
-            r={handlerSize / 2}
-            fill={selectionColor}
-            stroke="#fff"
-            strokeWidth={1 / viewport.zoom}
-            style={{ cursor: 'alias' }}
-            onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpath:${elementId}:${subpathIndex}`, 'rotate-br')}
             onPointerUp={onTransformationHandlerPointerUp}
           />
         </>
@@ -666,13 +728,24 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         <>
           {/* Top */}
           <rect
-            x={bounds.minX + (bounds.maxX - bounds.minX) / 2 - handlerSize / 2}
-            y={bounds.minY - handlerSize / 2}
-            width={handlerSize}
-            height={handlerSize}
+            x={bounds.minX + handlerSize}
+            y={bounds.minY - 1.5 / viewport.zoom}
+            width={bounds.maxX - bounds.minX - 2 * handlerSize}
+            height={3 / viewport.zoom}
             fill={selectionColor}
             stroke="#fff"
             strokeWidth={1 / viewport.zoom}
+            opacity="0.5"
+            pointerEvents="none"
+          />
+          {/* Top overlay */}
+          <rect
+            x={bounds.minX + handlerSize}
+            y={bounds.minY - 1.5 / viewport.zoom - 8.5 / viewport.zoom}
+            width={bounds.maxX - bounds.minX - 2 * handlerSize}
+            height={3 / viewport.zoom + 17 / viewport.zoom}
+            fill="transparent"
+            opacity="0.1"
             style={{ cursor: 'n-resize' }}
             onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpath:${elementId}:${subpathIndex}`, 'midpoint-t')}
             onPointerUp={onTransformationHandlerPointerUp}
@@ -680,13 +753,24 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
 
           {/* Right */}
           <rect
-            x={bounds.maxX - handlerSize / 2}
-            y={bounds.minY + (bounds.maxY - bounds.minY) / 2 - handlerSize / 2}
-            width={handlerSize}
-            height={handlerSize}
+            x={bounds.maxX - 1.5 / viewport.zoom}
+            y={bounds.minY + handlerSize}
+            width={3 / viewport.zoom}
+            height={bounds.maxY - bounds.minY - 2 * handlerSize}
             fill={selectionColor}
             stroke="#fff"
             strokeWidth={1 / viewport.zoom}
+            opacity="0.5"
+            pointerEvents="none"
+          />
+          {/* Right overlay */}
+          <rect
+            x={bounds.maxX + 1.5 / viewport.zoom - 8.5 / viewport.zoom}
+            y={bounds.minY + handlerSize}
+            width={3 / viewport.zoom + 17 / viewport.zoom}
+            height={bounds.maxY - bounds.minY - 2 * handlerSize}
+            fill="transparent"
+            opacity="0.1"
             style={{ cursor: 'e-resize' }}
             onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpath:${elementId}:${subpathIndex}`, 'midpoint-r')}
             onPointerUp={onTransformationHandlerPointerUp}
@@ -694,13 +778,24 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
 
           {/* Bottom */}
           <rect
-            x={bounds.minX + (bounds.maxX - bounds.minX) / 2 - handlerSize / 2}
-            y={bounds.maxY - handlerSize / 2}
-            width={handlerSize}
-            height={handlerSize}
+            x={bounds.minX + handlerSize}
+            y={bounds.maxY - 1.5 / viewport.zoom}
+            width={bounds.maxX - bounds.minX - 2 * handlerSize}
+            height={3 / viewport.zoom}
             fill={selectionColor}
             stroke="#fff"
             strokeWidth={1 / viewport.zoom}
+            opacity="0.5"
+            pointerEvents="none"
+          />
+          {/* Bottom overlay */}
+          <rect
+            x={bounds.minX + handlerSize}
+            y={bounds.maxY + 1.5 / viewport.zoom - 8.5 / viewport.zoom}
+            width={bounds.maxX - bounds.minX - 2 * handlerSize}
+            height={3 / viewport.zoom + 17 / viewport.zoom}
+            fill="transparent"
+            opacity="0.1"
             style={{ cursor: 's-resize' }}
             onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpath:${elementId}:${subpathIndex}`, 'midpoint-b')}
             onPointerUp={onTransformationHandlerPointerUp}
@@ -708,13 +803,24 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
 
           {/* Left */}
           <rect
-            x={bounds.minX - handlerSize / 2}
-            y={bounds.minY + (bounds.maxY - bounds.minY) / 2 - handlerSize / 2}
-            width={handlerSize}
-            height={handlerSize}
+            x={bounds.minX - 1.5 / viewport.zoom}
+            y={bounds.minY + handlerSize}
+            width={3 / viewport.zoom}
+            height={bounds.maxY - bounds.minY - 2 * handlerSize}
             fill={selectionColor}
             stroke="#fff"
             strokeWidth={1 / viewport.zoom}
+            opacity="0.5"
+            pointerEvents="none"
+          />
+          {/* Left overlay */}
+          <rect
+            x={bounds.minX - 1.5 / viewport.zoom - 8.5 / viewport.zoom}
+            y={bounds.minY + handlerSize}
+            width={3 / viewport.zoom + 17 / viewport.zoom}
+            height={bounds.maxY - bounds.minY - 2 * handlerSize}
+            fill="transparent"
+            opacity="0.1"
             style={{ cursor: 'w-resize' }}
             onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpath:${elementId}:${subpathIndex}`, 'midpoint-l')}
             onPointerUp={onTransformationHandlerPointerUp}
@@ -747,17 +853,19 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           return (
             <g key={`subpath-${selected.elementId}-${selected.subpathIndex}`}>
               {/* Selection rectangle for this subpath */}
-              <rect
-                x={subpathBounds.minX}
-                y={subpathBounds.minY}
-                width={subpathBounds.maxX - subpathBounds.minX}
-                height={subpathBounds.maxY - subpathBounds.minY}
-                fill="none"
-                stroke={selectionColor}
-                strokeWidth={2 / viewport.zoom}
-                strokeDasharray={`${6 / viewport.zoom} ${3 / viewport.zoom}`}
-                pointerEvents="none"
-              />
+              {!isTransformationMode && (
+                <rect
+                  x={subpathBounds.minX}
+                  y={subpathBounds.minY}
+                  width={subpathBounds.maxX - subpathBounds.minX}
+                  height={subpathBounds.maxY - subpathBounds.minY}
+                  fill="none"
+                  stroke={selectionColor}
+                  strokeWidth={1.5 / viewport.zoom}
+                  opacity="0.5"
+                  pointerEvents="none"
+                />
+              )}
 
               {/* Individual transformation handlers for this subpath */}
               {isTransformationMode && renderIndividualSubpathHandlers(
@@ -786,50 +894,142 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   const renderTransformationHandlers = (bounds: { minX: number; minY: number; maxX: number; maxY: number }, elementId: string, handlerSize: number, selectionColor: string) => (
     <>
       {/* Corner handlers - Always visible */}
+      {/* Top-left corner */}
       <rect
-        x={bounds.minX - handlerSize / 2}
-        y={bounds.minY - handlerSize / 2}
+        x={bounds.minX}
+        y={bounds.minY - 1.5 / viewport.zoom}
         width={handlerSize}
+        height={3 / viewport.zoom}
+        fill={selectionColor}
+        stroke="#fff"
+        strokeWidth={1 / viewport.zoom}
+        opacity="0.5"
+        pointerEvents="none"
+      />
+      <rect
+        x={bounds.minX - 1.5 / viewport.zoom}
+        y={bounds.minY}
+        width={3 / viewport.zoom}
         height={handlerSize}
         fill={selectionColor}
         stroke="#fff"
         strokeWidth={1 / viewport.zoom}
+        opacity="0.5"
+        pointerEvents="none"
+      />
+      {/* Top-left corner overlay */}
+      <rect
+        x={bounds.minX - 10 / viewport.zoom}
+        y={bounds.minY - 10 / viewport.zoom}
+        width={20 / viewport.zoom}
+        height={20 / viewport.zoom}
+        fill="transparent"
+        opacity="0.1"
         style={{ cursor: 'nw-resize' }}
         onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'corner-tl')}
         onPointerUp={onTransformationHandlerPointerUp}
       />
+      {/* Top-right corner */}
       <rect
-        x={bounds.maxX - handlerSize / 2}
-        y={bounds.minY - handlerSize / 2}
+        x={bounds.maxX - handlerSize}
+        y={bounds.minY - 1.5 / viewport.zoom}
         width={handlerSize}
+        height={3 / viewport.zoom}
+        fill={selectionColor}
+        stroke="#fff"
+        strokeWidth={1 / viewport.zoom}
+        opacity="0.5"
+        pointerEvents="none"
+      />
+      <rect
+        x={bounds.maxX - 1.5 / viewport.zoom}
+        y={bounds.minY}
+        width={3 / viewport.zoom}
         height={handlerSize}
         fill={selectionColor}
         stroke="#fff"
         strokeWidth={1 / viewport.zoom}
+        opacity="0.5"
+        pointerEvents="none"
+      />
+      {/* Top-right corner overlay */}
+      <rect
+        x={bounds.maxX - 10 / viewport.zoom}
+        y={bounds.minY - 10 / viewport.zoom}
+        width={20 / viewport.zoom}
+        height={20 / viewport.zoom}
+        fill="transparent"
+        opacity="0.1"
         style={{ cursor: 'ne-resize' }}
         onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'corner-tr')}
         onPointerUp={onTransformationHandlerPointerUp}
       />
+      {/* Bottom-left corner */}
       <rect
-        x={bounds.minX - handlerSize / 2}
-        y={bounds.maxY - handlerSize / 2}
+        x={bounds.minX}
+        y={bounds.maxY - 1.5 / viewport.zoom}
         width={handlerSize}
+        height={3 / viewport.zoom}
+        fill={selectionColor}
+        stroke="#fff"
+        strokeWidth={1 / viewport.zoom}
+        opacity="0.5"
+        pointerEvents="none"
+      />
+      <rect
+        x={bounds.minX - 1.5 / viewport.zoom}
+        y={bounds.maxY - handlerSize}
+        width={3 / viewport.zoom}
         height={handlerSize}
         fill={selectionColor}
         stroke="#fff"
         strokeWidth={1 / viewport.zoom}
+        opacity="0.5"
+        pointerEvents="none"
+      />
+      {/* Bottom-left corner overlay */}
+      <rect
+        x={bounds.minX - 10 / viewport.zoom}
+        y={bounds.maxY - 10 / viewport.zoom}
+        width={20 / viewport.zoom}
+        height={20 / viewport.zoom}
+        fill="transparent"
+        opacity="0.1"
         style={{ cursor: 'sw-resize' }}
         onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'corner-bl')}
         onPointerUp={onTransformationHandlerPointerUp}
       />
+      {/* Bottom-right corner */}
       <rect
-        x={bounds.maxX - handlerSize / 2}
-        y={bounds.maxY - handlerSize / 2}
+        x={bounds.maxX - handlerSize}
+        y={bounds.maxY - 1.5 / viewport.zoom}
         width={handlerSize}
+        height={3 / viewport.zoom}
+        fill={selectionColor}
+        stroke="#fff"
+        strokeWidth={1 / viewport.zoom}
+        opacity="0.5"
+        pointerEvents="none"
+      />
+      <rect
+        x={bounds.maxX - 1.5 / viewport.zoom}
+        y={bounds.maxY - handlerSize}
+        width={3 / viewport.zoom}
         height={handlerSize}
         fill={selectionColor}
         stroke="#fff"
         strokeWidth={1 / viewport.zoom}
+        opacity="0.5"
+        pointerEvents="none"
+      />
+      {/* Bottom-right corner overlay */}
+      <rect
+        x={bounds.maxX - 10 / viewport.zoom}
+        y={bounds.maxY - 10 / viewport.zoom}
+        width={20 / viewport.zoom}
+        height={20 / viewport.zoom}
+        fill="transparent"
+        opacity="0.1"
         style={{ cursor: 'se-resize' }}
         onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'corner-br')}
         onPointerUp={onTransformationHandlerPointerUp}
@@ -839,47 +1039,15 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       {transformation.showRotateHandlers && (
         <>
           <circle
-            cx={bounds.minX - handlerSize}
-            cy={bounds.minY - handlerSize}
-            r={handlerSize / 2}
-            fill={selectionColor}
-            stroke="#fff"
-            strokeWidth={1 / viewport.zoom}
-            style={{ cursor: 'alias' }}
-            onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'rotate-tl')}
-            onPointerUp={onTransformationHandlerPointerUp}
-          />
-          <circle
             cx={bounds.maxX + handlerSize}
             cy={bounds.minY - handlerSize}
             r={handlerSize / 2}
             fill={selectionColor}
             stroke="#fff"
             strokeWidth={1 / viewport.zoom}
+            opacity="0.5"
             style={{ cursor: 'alias' }}
             onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'rotate-tr')}
-            onPointerUp={onTransformationHandlerPointerUp}
-          />
-          <circle
-            cx={bounds.minX - handlerSize}
-            cy={bounds.maxY + handlerSize}
-            r={handlerSize / 2}
-            fill={selectionColor}
-            stroke="#fff"
-            strokeWidth={1 / viewport.zoom}
-            style={{ cursor: 'alias' }}
-            onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'rotate-bl')}
-            onPointerUp={onTransformationHandlerPointerUp}
-          />
-          <circle
-            cx={bounds.maxX + handlerSize}
-            cy={bounds.maxY + handlerSize}
-            r={handlerSize / 2}
-            fill={selectionColor}
-            stroke="#fff"
-            strokeWidth={1 / viewport.zoom}
-            style={{ cursor: 'alias' }}
-            onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'rotate-br')}
             onPointerUp={onTransformationHandlerPointerUp}
           />
         </>
@@ -890,13 +1058,24 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         <>
           {/* Top */}
           <rect
-            x={bounds.minX + (bounds.maxX - bounds.minX) / 2 - handlerSize / 2}
-            y={bounds.minY - handlerSize / 2}
-            width={handlerSize}
-            height={handlerSize}
+            x={bounds.minX + handlerSize}
+            y={bounds.minY - 1.5 / viewport.zoom}
+            width={bounds.maxX - bounds.minX - 2 * handlerSize}
+            height={3 / viewport.zoom}
             fill={selectionColor}
             stroke="#fff"
             strokeWidth={1 / viewport.zoom}
+            opacity="0.5"
+            pointerEvents="none"
+          />
+          {/* Top overlay */}
+          <rect
+            x={bounds.minX + handlerSize}
+            y={bounds.minY - 1.5 / viewport.zoom - 8.5 / viewport.zoom}
+            width={bounds.maxX - bounds.minX - 2 * handlerSize}
+            height={3 / viewport.zoom + 17 / viewport.zoom}
+            fill="transparent"
+            opacity="0.1"
             style={{ cursor: 'n-resize' }}
             onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'midpoint-t')}
             onPointerUp={onTransformationHandlerPointerUp}
@@ -904,13 +1083,24 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
 
           {/* Right */}
           <rect
-            x={bounds.maxX - handlerSize / 2}
-            y={bounds.minY + (bounds.maxY - bounds.minY) / 2 - handlerSize / 2}
-            width={handlerSize}
-            height={handlerSize}
+            x={bounds.maxX - 1.5 / viewport.zoom}
+            y={bounds.minY + handlerSize}
+            width={3 / viewport.zoom}
+            height={bounds.maxY - bounds.minY - 2 * handlerSize}
             fill={selectionColor}
             stroke="#fff"
             strokeWidth={1 / viewport.zoom}
+            opacity="0.5"
+            pointerEvents="none"
+          />
+          {/* Right overlay */}
+          <rect
+            x={bounds.maxX - 1.5 / viewport.zoom - 8.5 / viewport.zoom}
+            y={bounds.minY + handlerSize}
+            width={3 / viewport.zoom + 17 / viewport.zoom}
+            height={bounds.maxY - bounds.minY - 2 * handlerSize}
+            fill="transparent"
+            opacity="0.1"
             style={{ cursor: 'e-resize' }}
             onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'midpoint-r')}
             onPointerUp={onTransformationHandlerPointerUp}
@@ -918,13 +1108,24 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
 
           {/* Bottom */}
           <rect
-            x={bounds.minX + (bounds.maxX - bounds.minX) / 2 - handlerSize / 2}
-            y={bounds.maxY - handlerSize / 2}
-            width={handlerSize}
-            height={handlerSize}
+            x={bounds.minX + handlerSize}
+            y={bounds.maxY - 1.5 / viewport.zoom}
+            width={bounds.maxX - bounds.minX - 2 * handlerSize}
+            height={3 / viewport.zoom}
             fill={selectionColor}
             stroke="#fff"
             strokeWidth={1 / viewport.zoom}
+            opacity="0.5"
+            pointerEvents="none"
+          />
+          {/* Bottom overlay */}
+          <rect
+            x={bounds.minX + handlerSize}
+            y={bounds.maxY - 1.5 / viewport.zoom - 8.5 / viewport.zoom}
+            width={bounds.maxX - bounds.minX - 2 * handlerSize}
+            height={3 / viewport.zoom + 17 / viewport.zoom}
+            fill="transparent"
+            opacity="0.1"
             style={{ cursor: 's-resize' }}
             onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'midpoint-b')}
             onPointerUp={onTransformationHandlerPointerUp}
@@ -932,13 +1133,24 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
 
           {/* Left */}
           <rect
-            x={bounds.minX - handlerSize / 2}
-            y={bounds.minY + (bounds.maxY - bounds.minY) / 2 - handlerSize / 2}
-            width={handlerSize}
-            height={handlerSize}
+            x={bounds.minX - 1.5 / viewport.zoom}
+            y={bounds.minY + handlerSize}
+            width={3 / viewport.zoom}
+            height={bounds.maxY - bounds.minY - 2 * handlerSize}
             fill={selectionColor}
             stroke="#fff"
             strokeWidth={1 / viewport.zoom}
+            opacity="0.5"
+            pointerEvents="none"
+          />
+          {/* Left overlay */}
+          <rect
+            x={bounds.minX - 1.5 / viewport.zoom - 8.5 / viewport.zoom}
+            y={bounds.minY + handlerSize}
+            width={3 / viewport.zoom + 17 / viewport.zoom}
+            height={bounds.maxY - bounds.minY - 2 * handlerSize}
+            fill="transparent"
+            opacity="0.1"
             style={{ cursor: 'w-resize' }}
             onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'midpoint-l')}
             onPointerUp={onTransformationHandlerPointerUp}
@@ -1156,6 +1368,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           y2={centerY + xSize / 2}
           stroke={selectionColor}
           strokeWidth={2 / viewport.zoom}
+          opacity="0.5"
           pointerEvents="none"
         />
         <line
@@ -1165,6 +1378,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           y2={centerY - xSize / 2}
           stroke={selectionColor}
           strokeWidth={2 / viewport.zoom}
+          opacity="0.5"
           pointerEvents="none"
         />
 
@@ -1179,6 +1393,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
               fill="#6b7280"
               rx={borderRadius}
               ry={borderRadius}
+              opacity="0.5"
               pointerEvents="none"
             />
             <text
