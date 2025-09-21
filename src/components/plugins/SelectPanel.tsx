@@ -43,7 +43,7 @@ export const SelectPanel: React.FC = () => {
   const duplicateItem = (item: typeof items[0]) => {
     if (item.type === 'element') {
       // Duplicate the entire element
-      const { id, zIndex, ...elementData } = item.element;
+      const { id: _id, zIndex: _zIndex, ...elementData } = item.element;
       addElement(elementData);
     } else if (item.type === 'subpath' && item.subpathIndex !== undefined) {
       // Duplicate the subpath as a new element

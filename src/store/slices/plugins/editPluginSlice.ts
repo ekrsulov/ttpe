@@ -2,15 +2,10 @@ import type { StateCreator } from 'zustand';
 import { parsePathD, extractEditablePoints, updatePathD, normalizePathCommands, extractSubpaths, simplifyPoints } from '../../../utils/pathParserUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../../utils';
 import type { CanvasElement, PathData } from '../../../types';
+import type { CanvasStore } from '../../canvasStore';
 
 // Type for the full store state (needed for get() calls)
-interface FullCanvasState {
-  elements: CanvasElement[];
-  selectedCommands: EditPluginSlice['selectedCommands'];
-  editingPoint: EditPluginSlice['editingPoint'];
-  draggingSelection: EditPluginSlice['draggingSelection'];
-  smoothBrush: EditPluginSlice['smoothBrush'];
-}
+type FullCanvasState = CanvasStore;
 
 type SelectedCommand = EditPluginSlice['selectedCommands'][0];
 
@@ -118,7 +113,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
   },
 
   startDraggingPoint: (elementId, commandIndex, pointIndex, offsetX, offsetY) => {
-    const state = get() as unknown as FullCanvasState;
+    const state = get() as FullCanvasState;
     
     // Check if the point being dragged is in the selection
     const isSelected = state.selectedCommands.some((cmd) => 
@@ -133,7 +128,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     }
     
     // Now determine the drag type based on current selection
-    const currentState = get() as unknown as FullCanvasState;
+    const currentState = get() as FullCanvasState;
     const currentIsSelected = currentState.selectedCommands.some((cmd) => 
       cmd.elementId === elementId && 
       cmd.commandIndex === commandIndex && 
@@ -201,7 +196,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
   },
 
   updateDraggingPoint: (x, y) => {
-    const state = get() as unknown as FullCanvasState;
+    const state = get() as FullCanvasState;
     
     if (state.draggingSelection?.isDragging) {
       // Handle group drag of selected points - but don't update path data here anymore
@@ -289,7 +284,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
   },
 
   deleteSelectedCommands: () => {
-    const state = get() as any;
+    const state = get() as FullCanvasState;
     const selectedCommands = state.selectedCommands;
 
     if (selectedCommands.length === 0) return;
@@ -429,23 +424,23 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
   },
 
   alignLeftCommands: () => {
-    const state = get() as any;
+    const state = get() as FullCanvasState;
     const selectedCommands = state.selectedCommands;
     
     if (selectedCommands.length < 2) return;
     
     // Group commands by elementId
-    const commandsByElement = selectedCommands.reduce((acc: any, cmd: any) => {
+    const commandsByElement = selectedCommands.reduce((acc: Record<string, SelectedCommand[]>, cmd: SelectedCommand) => {
       if (!acc[cmd.elementId]) acc[cmd.elementId] = [];
       acc[cmd.elementId].push(cmd);
       return acc;
-    }, {} as Record<string, typeof selectedCommands>);
+    }, {} as Record<string, SelectedCommand[]>);
     
     // Process each element
     Object.entries(commandsByElement).forEach(([elementId, commands]) => {
-      const element = state.elements.find((el: any) => el.id === elementId);
-      if (element && element.type === 'path' && (commands as any).length >= 2) {
-        const pathData = element.data as any;
+      const element = state.elements.find((el: CanvasElement) => el.id === elementId);
+      if (element && element.type === 'path' && commands.length >= 2) {
+        const pathData = element.data as PathData;
         const parsedCommands = parsePathD(pathData.d);
         const allPoints = extractEditablePoints(parsedCommands);
         
@@ -482,7 +477,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
   },
 
   alignCenterCommands: () => {
-    const state = get() as any;
+    const state = get() as FullCanvasState;
     const selectedCommands = state.selectedCommands;
     
     if (selectedCommands.length < 2) return;
@@ -537,7 +532,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
   },
 
   alignRightCommands: () => {
-    const state = get() as any;
+    const state = get() as FullCanvasState;
     const selectedCommands = state.selectedCommands;
     
     if (selectedCommands.length < 2) return;
@@ -590,7 +585,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
   },
 
   alignTopCommands: () => {
-    const state = get() as any;
+    const state = get() as FullCanvasState;
     const selectedCommands = state.selectedCommands;
     
     if (selectedCommands.length < 2) return;
@@ -643,7 +638,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
   },
 
   alignMiddleCommands: () => {
-    const state = get() as any;
+    const state = get() as FullCanvasState;
     const selectedCommands = state.selectedCommands;
     
     if (selectedCommands.length < 2) return;
@@ -698,7 +693,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
   },
 
   alignBottomCommands: () => {
-    const state = get() as any;
+    const state = get() as FullCanvasState;
     const selectedCommands = state.selectedCommands;
     
     if (selectedCommands.length < 2) return;
@@ -751,7 +746,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
   },
 
   distributeHorizontallyCommands: () => {
-    const state = get() as any;
+    const state = get() as FullCanvasState;
     const selectedCommands = state.selectedCommands;
     
     if (selectedCommands.length < 3) return;
@@ -859,7 +854,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
   },
 
   distributeVerticallyCommands: () => {
-    const state = get() as any;
+    const state = get() as FullCanvasState;
     const selectedCommands = state.selectedCommands;
     
     if (selectedCommands.length < 3) return;
@@ -968,14 +963,14 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
 
   // Check if edit should work with subpaths instead of all points
   isWorkingWithSubpaths: () => {
-    const state = get() as any;
+    const state = get() as FullCanvasState;
     return state.selectedSubpaths && state.selectedSubpaths.length > 0;
   },
 
   // Get filtered editable points - either from selected subpaths or all points
   getFilteredEditablePoints: (elementId: string) => {
-    const state = get() as any;
-    const isSubpathMode = (get() as any).isWorkingWithSubpaths();
+    const state = get() as FullCanvasState;
+    const isSubpathMode = (get() as FullCanvasState).isWorkingWithSubpaths();
     
     const element = state.elements.find((el: any) => el.id === elementId);
     if (!element || element.type !== 'path') return [];
@@ -1018,7 +1013,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
   },
 
     applySmoothBrush: (centerX?: number, centerY?: number) => {
-    const state = get() as any;
+    const state = get() as FullCanvasState;
     const { radius, strength, simplifyPoints: shouldSimplifyPoints, simplificationTolerance, minDistance } = state.smoothBrush;
 
     // Find the active element (first selected or the one being edited)
@@ -1036,7 +1031,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
       return;
     }
 
-    const elements = (get() as any).elements;
+    const elements = (get() as FullCanvasState).elements;
     const element = elements.find((el: any) => el.id === targetElementId);
     if (!element || element.type !== 'path') {
       return;
@@ -1250,14 +1245,13 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
         newD = updatePathD(commands, finalPoints);
       }
       
-      (get() as any).updateElement(targetElementId, {
+      (get() as FullCanvasState).updateElement(targetElementId, {
         data: {
           ...pathData,
           d: newD,
         },
       });
       
-    } else {
     }
   },
 

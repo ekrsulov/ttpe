@@ -362,10 +362,11 @@ export const Canvas: React.FC<CanvasProps> = () => {
       case 'pencil':
         useCanvasStore.getState().startPath(point);
         break;
-      case 'text':
+      case 'text': {
         const state = useCanvasStore.getState();
         state.addText(point.x, point.y, state.text.text);
         break;
+      }
       case 'shape':
         // Start creating a shape
         setIsCreatingShape(true);

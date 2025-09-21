@@ -53,7 +53,7 @@ export class SimpleTransformManager {
 
     // Use EXACTLY the same logic as calculateScale - no compensation factors
     switch (handleId) {
-      case 'corner-tl': // Top-left corner
+      case 'corner-tl': { // Top-left corner
         scaleX = (bounds.width - deltaX) / bounds.width;
         scaleY = (bounds.height - deltaY) / bounds.height;
         originX = bounds.x + bounds.width;
@@ -63,8 +63,9 @@ export class SimpleTransformManager {
         scaleX = scaleX < 0 ? -scaleTL : scaleTL;
         scaleY = scaleY < 0 ? -scaleTL : scaleTL;
         break;
+      }
         
-      case 'corner-tr': // Top-right corner
+      case 'corner-tr': { // Top-right corner
         scaleX = (bounds.width + deltaX) / bounds.width;
         scaleY = (bounds.height - deltaY) / bounds.height;
         originX = bounds.x;
@@ -74,8 +75,9 @@ export class SimpleTransformManager {
         scaleX = scaleX < 0 ? -scaleTR : scaleTR;
         scaleY = scaleY < 0 ? -scaleTR : scaleTR;
         break;
+      }
         
-      case 'corner-bl': // Bottom-left corner
+      case 'corner-bl': { // Bottom-left corner
         scaleX = (bounds.width - deltaX) / bounds.width;
         scaleY = (bounds.height + deltaY) / bounds.height;
         originX = bounds.x + bounds.width;
@@ -85,8 +87,9 @@ export class SimpleTransformManager {
         scaleX = scaleX < 0 ? -scaleBL : scaleBL;
         scaleY = scaleY < 0 ? -scaleBL : scaleBL;
         break;
+      }
         
-      case 'corner-br': // Bottom-right corner
+      case 'corner-br': { // Bottom-right corner
         scaleX = (bounds.width + deltaX) / bounds.width;
         scaleY = (bounds.height + deltaY) / bounds.height;
         originX = bounds.x;
@@ -96,6 +99,7 @@ export class SimpleTransformManager {
         scaleX = scaleX < 0 ? -scaleBR : scaleBR;
         scaleY = scaleY < 0 ? -scaleBR : scaleBR;
         break;
+      }
         
       // Edge handles - non-proportional scaling
       case 'midpoint-t': // Top edge
@@ -161,7 +165,7 @@ export class SimpleTransformManager {
 
     // Calculate scale based on handle type - direct approach without sensitivity factors
     switch (handleId) {
-      case 'corner-tl': // Top-left corner
+      case 'corner-tl': { // Top-left corner
         scaleX = (bounds.width - deltaX) / bounds.width;
         scaleY = (bounds.height - deltaY) / bounds.height;
         originX = bounds.x + bounds.width;
@@ -171,8 +175,9 @@ export class SimpleTransformManager {
         scaleX = scaleX < 0 ? -scaleTL : scaleTL;
         scaleY = scaleY < 0 ? -scaleTL : scaleTL;
         break;
+      }
         
-      case 'corner-tr': // Top-right corner
+      case 'corner-tr': { // Top-right corner
         scaleX = (bounds.width + deltaX) / bounds.width;
         scaleY = (bounds.height - deltaY) / bounds.height;
         originX = bounds.x;
@@ -182,8 +187,9 @@ export class SimpleTransformManager {
         scaleX = scaleX < 0 ? -scaleTR : scaleTR;
         scaleY = scaleY < 0 ? -scaleTR : scaleTR;
         break;
+      }
         
-      case 'corner-bl': // Bottom-left corner
+      case 'corner-bl': { // Bottom-left corner
         scaleX = (bounds.width - deltaX) / bounds.width;
         scaleY = (bounds.height + deltaY) / bounds.height;
         originX = bounds.x + bounds.width;
@@ -193,8 +199,9 @@ export class SimpleTransformManager {
         scaleX = scaleX < 0 ? -scaleBL : scaleBL;
         scaleY = scaleY < 0 ? -scaleBL : scaleBL;
         break;
+      }
         
-      case 'corner-br': // Bottom-right corner
+      case 'corner-br': { // Bottom-right corner
         scaleX = (bounds.width + deltaX) / bounds.width;
         scaleY = (bounds.height + deltaY) / bounds.height;
         originX = bounds.x;
@@ -204,6 +211,7 @@ export class SimpleTransformManager {
         scaleX = scaleX < 0 ? -scaleBR : scaleBR;
         scaleY = scaleY < 0 ? -scaleBR : scaleBR;
         break;
+      }
         
       // Edge handles - non-proportional scaling
       case 'midpoint-t': // Top edge

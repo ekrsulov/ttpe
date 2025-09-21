@@ -41,7 +41,7 @@ function debounce<T extends (...args: any[]) => any>(
 }
 
 // Combine all slice types
-type CanvasStore = BaseSlice &
+export type CanvasStore = BaseSlice &
   ViewportSlice &
   SelectionSlice &
   OrderSlice &
