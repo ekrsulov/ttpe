@@ -200,7 +200,7 @@ export function transformSubpathsData(
     const subpaths = extractSubpaths(commands);
     
     // Create a copy of the original commands to modify
-    let modifiedCommands = [...commands];
+    const modifiedCommands = [...commands];
     
     // Transform only the selected subpaths
     selectedSubpaths.forEach(({ subpathIndex }) => {
@@ -295,7 +295,7 @@ export function transformSingleSubpath(
     }
     
     // Create a copy of the original commands to modify
-    let modifiedCommands = [...commands];
+    const modifiedCommands = [...commands];
     
     const subpath = subpaths[subpathIndex];
     

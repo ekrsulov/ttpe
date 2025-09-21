@@ -1,6 +1,18 @@
 import type { StateCreator } from 'zustand';
 import { parsePathD, extractEditablePoints, updatePathD, normalizePathCommands, extractSubpaths, simplifyPoints } from '../../../utils/pathParserUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../../utils';
+import type { CanvasElement, PathData } from '../../../types';
+
+// Type for the full store state (needed for get() calls)
+interface FullCanvasState {
+  elements: CanvasElement[];
+  selectedCommands: EditPluginSlice['selectedCommands'];
+  editingPoint: EditPluginSlice['editingPoint'];
+  draggingSelection: EditPluginSlice['draggingSelection'];
+  smoothBrush: EditPluginSlice['smoothBrush'];
+}
+
+type SelectedCommand = EditPluginSlice['selectedCommands'][0];
 
 export interface EditPluginSlice {
   // State
@@ -106,10 +118,10 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
   },
 
   startDraggingPoint: (elementId, commandIndex, pointIndex, offsetX, offsetY) => {
-    const state = get() as any;
+    const state = get() as unknown as FullCanvasState;
     
     // Check if the point being dragged is in the selection
-    const isSelected = state.selectedCommands.some((cmd: any) => 
+    const isSelected = state.selectedCommands.some((cmd) => 
       cmd.elementId === elementId && 
       cmd.commandIndex === commandIndex && 
       cmd.pointIndex === pointIndex
@@ -121,8 +133,8 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     }
     
     // Now determine the drag type based on current selection
-    const currentState = get() as any;
-    const currentIsSelected = currentState.selectedCommands.some((cmd: any) => 
+    const currentState = get() as unknown as FullCanvasState;
+    const currentIsSelected = currentState.selectedCommands.some((cmd) => 
       cmd.elementId === elementId && 
       cmd.commandIndex === commandIndex && 
       cmd.pointIndex === pointIndex
@@ -139,10 +151,10 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
       }> = [];
       
       // Get initial positions of all selected points
-      currentState.selectedCommands.forEach((cmd: any) => {
-        const element = state.elements.find((el: any) => el.id === cmd.elementId);
+      currentState.selectedCommands.forEach((cmd) => {
+        const element = state.elements.find((el) => el.id === cmd.elementId);
         if (element && element.type === 'path') {
-          const pathData = element.data as any;
+          const pathData = element.data as PathData;
           const commands = parsePathD(pathData.d);
           const points = extractEditablePoints(commands);
           
@@ -189,7 +201,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
   },
 
   updateDraggingPoint: (x, y) => {
-    const state = get();
+    const state = get() as unknown as FullCanvasState;
     
     if (state.draggingSelection?.isDragging) {
       // Handle group drag of selected points - but don't update path data here anymore
@@ -283,23 +295,23 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     if (selectedCommands.length === 0) return;
 
     // Group commands by elementId
-    const commandsByElement = selectedCommands.reduce((acc: any, cmd: any) => {
+    const commandsByElement = (selectedCommands as SelectedCommand[]).reduce((acc: Record<string, SelectedCommand[]>, cmd: SelectedCommand) => {
       if (!acc[cmd.elementId]) acc[cmd.elementId] = [];
       acc[cmd.elementId].push(cmd);
       return acc;
-    }, {} as Record<string, typeof selectedCommands>);
+    }, {} as Record<string, SelectedCommand[]>);
 
     // Process each element
-    Object.entries(commandsByElement).forEach(([elementId, commands]) => {
-      const element = state.elements.find((el: any) => el.id === elementId);
+    (Object.entries(commandsByElement) as [string, SelectedCommand[]][]).forEach(([elementId, commands]) => {
+      const element = state.elements.find((el: CanvasElement) => el.id === elementId);
       if (element && element.type === 'path') {
-        const pathData = element.data as any;
+        const pathData = element.data as PathData;
         const parsedCommands = parsePathD(pathData.d);
         const allPoints = extractEditablePoints(parsedCommands);
 
         // Find selected points
-        const selectedPoints = allPoints.filter((point: any) =>
-          (commands as any).some((cmd: any) =>
+        const selectedPoints = allPoints.filter((point) =>
+          commands.some((cmd) =>
             cmd.commandIndex === point.commandIndex &&
             cmd.pointIndex === point.pointIndex
           )
@@ -383,8 +395,9 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
           // Check if the path is now empty after normalization
           if (normalizedCommands.length === 0) {
             // Delete the entire element
-            (set as any)((currentState: any) => ({
-              elements: currentState.elements.filter((el: any) => el.id !== elementId)
+            (set as (fn: (state: FullCanvasState) => Partial<FullCanvasState>) => void)((currentState) => ({
+              ...currentState,
+              elements: currentState.elements.filter((el) => el.id !== elementId)
             }));
             return;
           }
@@ -398,8 +411,9 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
           }).join(' ');
 
           // Update the element with the new path
-          (set as any)((currentState: any) => ({
-            elements: currentState.elements.map((el: any) =>
+          (set as (fn: (state: FullCanvasState) => Partial<FullCanvasState>) => void)((currentState) => ({
+            ...currentState,
+            elements: currentState.elements.map((el) =>
               el.id === elementId
                 ? { ...el, data: { ...pathData, d: newPathD } }
                 : el
@@ -1173,7 +1187,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
 
     // Update the path if points were affected
     if (updatedPoints.length > 0) {
-      let finalPoints = updatedPoints;
+      const finalPoints = updatedPoints;
       
       // Apply point simplification if enabled
       if (shouldSimplifyPoints) {

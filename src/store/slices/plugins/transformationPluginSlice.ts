@@ -141,8 +141,8 @@ export const createTransformationPluginSlice: StateCreator<TransformationPluginS
     const subpaths = extractSubpaths(commands);
     
     // Create a new path by combining original and transformed subpaths
-    let newPathParts: string[] = [];
-    let processedIndices = new Set();
+    const newPathParts: string[] = [];
+    const processedIndices = new Set();
     
     // Process each subpath
     subpaths.forEach((subpathData, index) => {
