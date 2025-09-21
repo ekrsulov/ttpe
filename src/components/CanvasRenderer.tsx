@@ -500,18 +500,24 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     
     const selectionColor = getContrastingColor(colorForContrast);
 
+    const strokeWidth = 2 / viewport.zoom;
+    const adjustedX = bounds.minX + strokeWidth / 2;
+    const adjustedY = bounds.minY + strokeWidth / 2;
+    const adjustedWidth = bounds.maxX - bounds.minX - strokeWidth;
+    const adjustedHeight = bounds.maxY - bounds.minY - strokeWidth;
+
     return (
       <g key={`selection-${element.id}`}>
         {/* Selection rectangle */}
-        {!isTransformationMode && (
+        {!isTransformationMode && adjustedWidth > 0 && adjustedHeight > 0 && (
           <rect
-            x={bounds.minX}
-            y={bounds.minY}
-            width={bounds.maxX - bounds.minX}
-            height={bounds.maxY - bounds.minY}
+            x={adjustedX}
+            y={adjustedY}
+            width={adjustedWidth}
+            height={adjustedHeight}
             fill="none"
             stroke={selectionColor}
-            strokeWidth={1.5 / viewport.zoom}
+            strokeWidth={strokeWidth}
             opacity="0.5"
             pointerEvents="none"
           />
@@ -671,8 +677,6 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           width={bounds.maxX - bounds.minX - 2 * handlerSize - 20}
           height={2 / viewport.zoom}
           fill={selectionColor}
-          stroke="#fff"
-          strokeWidth={1 / viewport.zoom}
           opacity="0.5"
           pointerEvents="none"
         />
@@ -696,8 +700,6 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           width={2 / viewport.zoom}
           height={bounds.maxY - bounds.minY - 2 * handlerSize - 20}
           fill={selectionColor}
-          stroke="#fff"
-          strokeWidth={1 / viewport.zoom}
           opacity="0.5"
           pointerEvents="none"
         />
@@ -721,8 +723,6 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           width={bounds.maxX - bounds.minX - 2 * handlerSize - 20}
           height={2 / viewport.zoom}
           fill={selectionColor}
-          stroke="#fff"
-          strokeWidth={1 / viewport.zoom}
           opacity="0.5"
           pointerEvents="none"
         />
@@ -746,8 +746,6 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           width={2 / viewport.zoom}
           height={bounds.maxY - bounds.minY - 2 * handlerSize - 20}
           fill={selectionColor}
-          stroke="#fff"
-          strokeWidth={1 / viewport.zoom}
           opacity="0.5"
           pointerEvents="none"
         />
@@ -790,19 +788,26 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           return (
             <g key={`subpath-${selected.elementId}-${selected.subpathIndex}`}>
               {/* Selection rectangle for this subpath */}
-              {!isTransformationMode && (
-                <rect
-                  x={subpathBounds.minX}
-                  y={subpathBounds.minY}
-                  width={subpathBounds.maxX - subpathBounds.minX}
-                  height={subpathBounds.maxY - subpathBounds.minY}
-                  fill="none"
-                  stroke={selectionColor}
-                  strokeWidth={1.5 / viewport.zoom}
-                  opacity="0.5"
-                  pointerEvents="none"
-                />
-              )}
+              {!isTransformationMode && (() => {
+                const strokeWidth = 2 / viewport.zoom;
+                const adjustedX = subpathBounds.minX + strokeWidth / 2;
+                const adjustedY = subpathBounds.minY + strokeWidth / 2;
+                const adjustedWidth = subpathBounds.maxX - subpathBounds.minX - strokeWidth;
+                const adjustedHeight = subpathBounds.maxY - subpathBounds.minY - strokeWidth;
+                return adjustedWidth > 0 && adjustedHeight > 0 ? (
+                  <rect
+                    x={adjustedX}
+                    y={adjustedY}
+                    width={adjustedWidth}
+                    height={adjustedHeight}
+                    fill="none"
+                    stroke={selectionColor}
+                    strokeWidth={strokeWidth}
+                    opacity="0.5"
+                    pointerEvents="none"
+                  />
+                ) : null;
+              })()}
 
               {/* Individual transformation handlers for this subpath */}
               {isTransformationMode && renderIndividualSubpathHandlers(
@@ -941,8 +946,6 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           width={bounds.maxX - bounds.minX - 2 * handlerSize - 20}
           height={2 / viewport.zoom}
           fill={selectionColor}
-          stroke="#fff"
-          strokeWidth={1 / viewport.zoom}
           opacity="0.5"
           pointerEvents="none"
         />
@@ -966,8 +969,6 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           width={2 / viewport.zoom}
           height={bounds.maxY - bounds.minY - 2 * handlerSize - 20}
           fill={selectionColor}
-          stroke="#fff"
-          strokeWidth={1 / viewport.zoom}
           opacity="0.5"
           pointerEvents="none"
         />
@@ -991,8 +992,6 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           width={bounds.maxX - bounds.minX - 2 * handlerSize - 20}
           height={2 / viewport.zoom}
           fill={selectionColor}
-          stroke="#fff"
-          strokeWidth={1 / viewport.zoom}
           opacity="0.5"
           pointerEvents="none"
         />
@@ -1016,8 +1015,6 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           width={2 / viewport.zoom}
           height={bounds.maxY - bounds.minY - 2 * handlerSize - 20}
           fill={selectionColor}
-          stroke="#fff"
-          strokeWidth={1 / viewport.zoom}
           opacity="0.5"
           pointerEvents="none"
         />
