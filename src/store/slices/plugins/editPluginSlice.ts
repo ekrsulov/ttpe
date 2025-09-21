@@ -1627,6 +1627,60 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
           });
         }
       }
+    } else if (type === 'independent') {
+      // If setting to independent and points are currently aligned, slightly move one point to break alignment
+      const vector1 = {
+        x: point1.x - sharedAnchor.x,
+        y: point1.y - sharedAnchor.y
+      };
+      const vector2 = {
+        x: point2.x - sharedAnchor.x,
+        y: point2.y - sharedAnchor.y
+      };
+      const magnitude1 = Math.sqrt(vector1.x * vector1.x + vector1.y * vector1.y);
+      const magnitude2 = Math.sqrt(vector2.x * vector2.x + vector2.y * vector2.y);
+      
+      if (magnitude1 > 0 && magnitude2 > 0) {
+        const unitVector1 = {
+          x: vector1.x / magnitude1,
+          y: vector1.y / magnitude1
+        };
+        const unitVector2 = {
+          x: vector2.x / magnitude2,
+          y: vector2.y / magnitude2
+        };
+        
+        // Check if they are aligned (opposite directions)
+        const dot = unitVector1.x * (-unitVector2.x) + unitVector1.y * (-unitVector2.y);
+        if (dot > 0.985) { // Similar threshold as in getSinglePointInfo
+          // Points are aligned, move point2 slightly to break alignment
+          const perpendicularX = -unitVector1.y;
+          const perpendicularY = unitVector1.x;
+          
+          // Move point2 by a small amount in perpendicular direction
+          const moveDistance = 5; // Small movement in pixels
+          const newPoint2X = point2.x + perpendicularX * moveDistance;
+          const newPoint2Y = point2.y + perpendicularY * moveDistance;
+          
+          // Update point2 position
+          const point2ToUpdate = points.find(p => 
+            p.commandIndex === commandIndex2 && p.pointIndex === pointIndex2
+          );
+          if (point2ToUpdate) {
+            point2ToUpdate.x = formatToPrecision(newPoint2X, PATH_DECIMAL_PRECISION);
+            point2ToUpdate.y = formatToPrecision(newPoint2Y, PATH_DECIMAL_PRECISION);
+            
+            // Update the path
+            const newPathD = updatePathD(commands, [point2ToUpdate]);
+            (get() as FullCanvasState).updateElement(elementId, {
+              data: {
+                ...pathData,
+                d: newPathD
+              }
+            });
+          }
+        }
+      }
     }
 
     // Update the control point alignment state
@@ -1657,7 +1711,140 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
 
     // Get the alignment info for this point
     const key = `${elementId}-${commandIndex}-${pointIndex}`;
-    const alignmentInfo = state.controlPointAlignment.controlPoints[key];
+    let alignmentInfo = state.controlPointAlignment.controlPoints[key];
+    
+    // If this point doesn't have alignment info, try to find paired point structurally and check if it has alignment
+    if (!alignmentInfo || alignmentInfo.type === 'independent') {
+      // Determine the paired point structurally
+      const isClosed = commands.length > 2 && commands[commands.length - 1].type === 'Z';
+      
+      let pairedCommandIndex = -1;
+      let pairedPointIndex = -1;
+      const handleType = pointIndex === 0 ? 'outgoing' : 'incoming';
+      
+      if (handleType === 'incoming') {
+        // For incoming handle, find the next command's outgoing handle
+        if (commandIndex < commands.length - 1) {
+          const nextCommand = commands[commandIndex + 1];
+          if (nextCommand.type === 'C') {
+            pairedCommandIndex = commandIndex + 1;
+            pairedPointIndex = 0;
+          }
+        } else if (isClosed && commands[commandIndex].type === 'C') {
+          // Find first C command
+          for (let i = 1; i < commands.length; i++) {
+            if (commands[i].type === 'C') {
+              pairedCommandIndex = i;
+              pairedPointIndex = 0;
+              break;
+            }
+          }
+        }
+      } else {
+        // For outgoing handle, find the previous command's incoming handle
+        if (commandIndex > 0) {
+          const prevCommand = commands[commandIndex - 1];
+          if (prevCommand.type === 'C') {
+            pairedCommandIndex = commandIndex - 1;
+            pairedPointIndex = 1;
+          }
+        } else if (isClosed && commands[commandIndex].type === 'C') {
+          // Find last C command
+          for (let i = commands.length - 2; i >= 0; i--) {
+            if (commands[i].type === 'C') {
+              pairedCommandIndex = i;
+              pairedPointIndex = 1;
+              break;
+            }
+          }
+        }
+      }
+      
+      // If found paired point, check if it has alignment info
+      if (pairedCommandIndex !== -1) {
+        const pairedKey = `${elementId}-${pairedCommandIndex}-${pairedPointIndex}`;
+        const pairedAlignmentInfo = state.controlPointAlignment.controlPoints[pairedKey];
+        if (pairedAlignmentInfo && pairedAlignmentInfo.type !== 'independent') {
+          // Use the paired point's alignment info
+          alignmentInfo = {
+            commandIndex: commandIndex,
+            pointIndex: pointIndex,
+            type: pairedAlignmentInfo.type,
+            pairedCommandIndex: pairedCommandIndex,
+            pairedPointIndex: pairedPointIndex,
+            anchor: pairedAlignmentInfo.anchor
+          };
+        }
+      } else {
+        // Special case: if no paired point found and path is closed, look for control points that share coordinates with the M point
+        const isClosed = commands.length > 2 && commands[commands.length - 1].type === 'Z';
+        
+        if (isClosed && commands[commandIndex].type === 'C') {
+          // Find the M point for this subpath
+          let mCommandIndex = -1;
+          for (let i = commandIndex; i >= 0; i--) {
+            if (commands[i].type === 'M') {
+              mCommandIndex = i;
+              break;
+            }
+          }
+          
+          if (mCommandIndex !== -1) {
+            const mPoint = commands[mCommandIndex].points[0];
+            const currentPoint = points.find(p => p.commandIndex === commandIndex && p.pointIndex === pointIndex);
+            
+            if (currentPoint) {
+              // Check if current point shares x or y coordinate with M point
+              const sharesX = Math.abs(currentPoint.x - mPoint.x) < 0.1;
+              const sharesY = Math.abs(currentPoint.y - mPoint.y) < 0.1;
+              
+              if (sharesX || sharesY) {
+                // Find other control points in the same subpath that share the same coordinate
+                for (const otherPoint of points) {
+                  if (otherPoint.commandIndex !== commandIndex || otherPoint.pointIndex !== pointIndex) {
+                    // Check if it's in the same subpath (between M and Z)
+                    let inSameSubpath = false;
+                    if (otherPoint.commandIndex > mCommandIndex) {
+                      inSameSubpath = true;
+                      // Check if there's an M between them (new subpath)
+                      for (let i = mCommandIndex + 1; i < otherPoint.commandIndex; i++) {
+                        if (commands[i].type === 'M') {
+                          inSameSubpath = false;
+                          break;
+                        }
+                      }
+                    }
+                    
+                    if (inSameSubpath && otherPoint.isControl) {
+                      const sharesCoord = (sharesX && Math.abs(otherPoint.x - mPoint.x) < 0.1) || 
+                                         (sharesY && Math.abs(otherPoint.y - mPoint.y) < 0.1);
+                      
+                      if (sharesCoord) {
+                        // Found a matching point, check if it has alignment info
+                        const pairedKey = `${elementId}-${otherPoint.commandIndex}-${otherPoint.pointIndex}`;
+                        const pairedAlignmentInfo = state.controlPointAlignment.controlPoints[pairedKey];
+                        if (pairedAlignmentInfo && pairedAlignmentInfo.type !== 'independent') {
+                          alignmentInfo = {
+                            commandIndex: commandIndex,
+                            pointIndex: pointIndex,
+                            type: pairedAlignmentInfo.type,
+                            pairedCommandIndex: otherPoint.commandIndex,
+                            pairedPointIndex: otherPoint.pointIndex,
+                            anchor: pairedAlignmentInfo.anchor
+                          };
+                        }
+                        break;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    
     if (!alignmentInfo || alignmentInfo.type === 'independent') return;
 
     // Find the paired point

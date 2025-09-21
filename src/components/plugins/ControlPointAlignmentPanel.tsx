@@ -233,8 +233,63 @@ export const ControlPointAlignmentPanel: React.FC = () => {
       }
       
       const paired = pairedCommandIndex !== -1 ? { commandIndex: pairedCommandIndex, pointIndex: pairedPointIndex } : null;
-      const pairedPoint = paired ? points.find((p: ControlPoint) => p.commandIndex === paired.commandIndex && p.pointIndex === paired.pointIndex) : null;
-      const pairedInfo = paired ? getControlPointInfo(cmd.elementId, paired.commandIndex, paired.pointIndex) : null;
+      let pairedPoint = paired ? points.find((p: ControlPoint) => p.commandIndex === paired.commandIndex && p.pointIndex === paired.pointIndex) : null;
+      let pairedInfo = paired ? getControlPointInfo(cmd.elementId, paired.commandIndex, paired.pointIndex) : null;
+      
+      // Special case: if no paired point found and path is closed, look for control points that share coordinates with the M point
+      if (!pairedPoint && isClosed && commands[cmd.commandIndex].type === 'C') {
+        // Find the M point for this subpath
+        let mCommandIndex = -1;
+        for (let i = cmd.commandIndex; i >= 0; i--) {
+          if (commands[i].type === 'M') {
+            mCommandIndex = i;
+            break;
+          }
+        }
+        
+        if (mCommandIndex !== -1) {
+          const mPoint = commands[mCommandIndex].points[0];
+          const currentPoint = point;
+          
+          // Check if current point shares x or y coordinate with M point
+          const sharesX = Math.abs(currentPoint.x - mPoint.x) < 0.1;
+          const sharesY = Math.abs(currentPoint.y - mPoint.y) < 0.1;
+          
+          if (sharesX || sharesY) {
+            // Find other control points in the same subpath that share the same coordinate
+            for (const otherPoint of points) {
+              if (otherPoint.commandIndex !== cmd.commandIndex || otherPoint.pointIndex !== cmd.pointIndex) {
+                // Check if it's in the same subpath (between M and Z)
+                let inSameSubpath = false;
+                if (otherPoint.commandIndex > mCommandIndex) {
+                  inSameSubpath = true;
+                  // Check if there's an M between them (new subpath)
+                  for (let i = mCommandIndex + 1; i < otherPoint.commandIndex; i++) {
+                    if (commands[i].type === 'M') {
+                      inSameSubpath = false;
+                      break;
+                    }
+                  }
+                }
+                
+                if (inSameSubpath && otherPoint.isControl) {
+                  const sharesCoord = (sharesX && Math.abs(otherPoint.x - mPoint.x) < 0.1) || 
+                                     (sharesY && Math.abs(otherPoint.y - mPoint.y) < 0.1);
+                  
+                  if (sharesCoord) {
+                    // Found a matching point
+                    pairedCommandIndex = otherPoint.commandIndex;
+                    pairedPointIndex = otherPoint.pointIndex;
+                    pairedPoint = otherPoint;
+                    pairedInfo = getControlPointInfo(cmd.elementId, otherPoint.commandIndex, otherPoint.pointIndex);
+                    break;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
       
       // Calculate alignment type based on positions
       let calculatedType: 'independent' | 'aligned' | 'mirrored' = 'independent';
@@ -328,21 +383,22 @@ export const ControlPointAlignmentPanel: React.FC = () => {
 
   // Automatically save the calculated alignment type only once per selection
   useEffect(() => {
-    if (singlePointInfo && singlePointInfo.pairedPoint && singlePointInfo.pairedInfo && singlePointInfo.info) {
+    if (singlePointInfo && singlePointInfo.pairedPoint) {
       const currentSelectionKey = `${selectedCommands[0].elementId}-${selectedCommands[0].commandIndex}-${selectedCommands[0].pointIndex}`;
       
       // Only auto-calculate if we haven't done it for this selection yet
       if (hasAutoCalculatedRef.current !== currentSelectionKey) {
         hasAutoCalculatedRef.current = currentSelectionKey;
         
-        // Only update if the calculated type is different from current
-        if (singlePointInfo.calculatedType !== singlePointInfo.info.type) {
+        // Only update if the calculated type is different from current (or if no current info exists)
+        const currentType = singlePointInfo.info?.type || 'independent';
+        if (singlePointInfo.calculatedType !== currentType) {
           setControlPointAlignmentType(
             selectedCommands[0].elementId,
             selectedCommands[0].commandIndex,
             selectedCommands[0].pointIndex,
-            singlePointInfo.pairedInfo.commandIndex,
-            singlePointInfo.pairedInfo.pointIndex,
+            singlePointInfo.pairedPoint.commandIndex,
+            singlePointInfo.pairedPoint.pointIndex,
             singlePointInfo.calculatedType
           );
         }
@@ -355,13 +411,13 @@ export const ControlPointAlignmentPanel: React.FC = () => {
   }
 
   const handleAlignmentChange = (type: 'independent' | 'aligned' | 'mirrored') => {
-    if (singlePointInfo && singlePointInfo.pairedPoint && singlePointInfo.pairedInfo) {
+    if (singlePointInfo && singlePointInfo.pairedPoint) {
       setControlPointAlignmentType(
         selectedCommands[0].elementId,
         selectedCommands[0].commandIndex,
         selectedCommands[0].pointIndex,
-        singlePointInfo.pairedInfo.commandIndex,
-        singlePointInfo.pairedInfo.pointIndex,
+        singlePointInfo.pairedPoint.commandIndex,
+        singlePointInfo.pairedPoint.pointIndex,
         type
       );
     }
@@ -453,7 +509,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
             <div><strong style={{ color: '#333' }}>Anchor:</strong> ({singlePointInfo.anchor1.x.toFixed(2)}, {singlePointInfo.anchor1.y.toFixed(2)})</div>
             <div><strong style={{ color: '#333' }}>Direction:</strong> {singlePointInfo.angle1.toFixed(1)}°</div>
             <div><strong style={{ color: '#333' }}>Size:</strong> {singlePointInfo.mag1.toFixed(2)}</div>
-            <div><strong style={{ color: '#333' }}>Alignment:</strong> {singlePointInfo.calculatedType}</div>
+            <div><strong style={{ color: '#333' }}>Alignment:</strong> {singlePointInfo.info?.type || 'independent'}</div>
             {singlePointInfo.pairedPoint && (
               <>
                 <div><strong style={{ color: '#333' }}>Paired Point:</strong> ({singlePointInfo.pairedPoint.x.toFixed(2)}, {singlePointInfo.pairedPoint.y.toFixed(2)}) at command {singlePointInfo.pairedInfo?.commandIndex}, point {singlePointInfo.pairedInfo?.pointIndex}</div>
@@ -488,8 +544,8 @@ export const ControlPointAlignmentPanel: React.FC = () => {
               onClick={() => handleAlignmentChange('independent')}
               style={{
                 padding: '6px 8px',
-                backgroundColor: singlePointInfo.calculatedType === 'independent' ? '#007bff' : '#f8f9fa',
-                color: singlePointInfo.calculatedType === 'independent' ? '#fff' : '#333',
+                backgroundColor: (singlePointInfo.info?.type || 'independent') === 'independent' ? '#007bff' : '#f8f9fa',
+                color: (singlePointInfo.info?.type || 'independent') === 'independent' ? '#fff' : '#333',
                 border: '1px solid #dee2e6',
                 borderRadius: '4px',
                 fontSize: '11px',
@@ -506,8 +562,8 @@ export const ControlPointAlignmentPanel: React.FC = () => {
               onClick={() => handleAlignmentChange('aligned')}
               style={{
                 padding: '6px 8px',
-                backgroundColor: singlePointInfo.calculatedType === 'aligned' ? '#007bff' : '#f8f9fa',
-                color: singlePointInfo.calculatedType === 'aligned' ? '#fff' : '#333',
+                backgroundColor: (singlePointInfo.info?.type || 'independent') === 'aligned' ? '#007bff' : '#f8f9fa',
+                color: (singlePointInfo.info?.type || 'independent') === 'aligned' ? '#fff' : '#333',
                 border: '1px solid #dee2e6',
                 borderRadius: '4px',
                 fontSize: '11px',
@@ -524,8 +580,8 @@ export const ControlPointAlignmentPanel: React.FC = () => {
               onClick={() => handleAlignmentChange('mirrored')}
               style={{
                 padding: '6px 8px',
-                backgroundColor: singlePointInfo.calculatedType === 'mirrored' ? '#007bff' : '#f8f9fa',
-                color: singlePointInfo.calculatedType === 'mirrored' ? '#fff' : '#333',
+                backgroundColor: (singlePointInfo.info?.type || 'independent') === 'mirrored' ? '#007bff' : '#f8f9fa',
+                color: (singlePointInfo.info?.type || 'independent') === 'mirrored' ? '#fff' : '#333',
                 border: '1px solid #dee2e6',
                 borderRadius: '4px',
                 fontSize: '11px',
@@ -540,9 +596,9 @@ export const ControlPointAlignmentPanel: React.FC = () => {
           </div>
 
           <div style={{ fontSize: '11px', color: '#666', marginTop: '8px' }}>
-            {singlePointInfo.calculatedType === 'independent' && 'Points move independently'}
-            {singlePointInfo.calculatedType === 'aligned' && 'Points maintain opposite directions'}
-            {singlePointInfo.calculatedType === 'mirrored' && 'Points are mirrored across anchor'}
+            {(singlePointInfo.info?.type || 'independent') === 'independent' && 'Points move independently'}
+            {(singlePointInfo.info?.type || 'independent') === 'aligned' && 'Points maintain opposite directions'}
+            {(singlePointInfo.info?.type || 'independent') === 'mirrored' && 'Points are mirrored across anchor'}
           </div>
         </>
       ) : (
