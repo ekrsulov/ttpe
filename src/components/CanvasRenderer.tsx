@@ -23,6 +23,9 @@ interface CanvasRendererProps {
   transformation: {
     showCoordinates?: boolean;
     showRulers?: boolean;
+    showCenterPoint?: boolean;
+    showRotateHandlers?: boolean;
+    showSideHandlers?: boolean;
   };
   shape: {
     selectedShape?: string;
@@ -129,7 +132,6 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   onStartDraggingSubpath,
   onUpdateDraggingSubpath,
   onStopDraggingSubpath,
-  getTransformationBounds,
   isWorkingWithSubpaths,
   getFilteredEditablePoints,
 }) => {
@@ -520,7 +522,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         {isTransformationMode && renderTransformationHandlers(bounds, element.id, handlerSize, selectionColor)}
 
         {/* Center X marker and coordinates */}
-        {isTransformationMode && renderCenterMarker(bounds, selectionColor)}
+        {isTransformationMode && transformation.showCenterPoint && renderCenterMarker(bounds, selectionColor)}
 
         {/* Corner coordinates */}
         {isTransformationMode && transformation?.showCoordinates && renderCornerCoordinates(bounds)}
@@ -531,10 +533,200 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     );
   };
 
+  // Get bounds for a specific subpath
+  const getIndividualSubpathBounds = (element: typeof elements[0], subpathIndex: number) => {
+    if (element.type !== 'path') return null;
+    
+    try {
+      const pathData = element.data as import('../types').PathData;
+      const commands = parsePathD(pathData.d);
+      const subpaths = extractSubpaths(commands);
+      
+      if (subpathIndex >= subpaths.length) return null;
+      
+      const subpath = subpaths[subpathIndex];
+      return measurePath(subpath.d, pathData.strokeWidth || 1, viewport.zoom);
+    } catch (error) {
+      console.warn('Failed to calculate individual subpath bounds:', error);
+      return null;
+    }
+  };
+
+  // Render transformation handlers for an individual subpath
+  const renderIndividualSubpathHandlers = (
+    bounds: { minX: number; minY: number; maxX: number; maxY: number }, 
+    elementId: string, 
+    subpathIndex: number, 
+    handlerSize: number, 
+    selectionColor: string
+  ) => (
+    <>
+      {/* Corner handlers - Always visible */}
+      <rect
+        x={bounds.minX - handlerSize / 2}
+        y={bounds.minY - handlerSize / 2}
+        width={handlerSize}
+        height={handlerSize}
+        fill={selectionColor}
+        stroke="#fff"
+        strokeWidth={1 / viewport.zoom}
+        style={{ cursor: 'nw-resize' }}
+        onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpath:${elementId}:${subpathIndex}`, 'corner-tl')}
+        onPointerUp={onTransformationHandlerPointerUp}
+      />
+      <rect
+        x={bounds.maxX - handlerSize / 2}
+        y={bounds.minY - handlerSize / 2}
+        width={handlerSize}
+        height={handlerSize}
+        fill={selectionColor}
+        stroke="#fff"
+        strokeWidth={1 / viewport.zoom}
+        style={{ cursor: 'ne-resize' }}
+        onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpath:${elementId}:${subpathIndex}`, 'corner-tr')}
+        onPointerUp={onTransformationHandlerPointerUp}
+      />
+      <rect
+        x={bounds.minX - handlerSize / 2}
+        y={bounds.maxY - handlerSize / 2}
+        width={handlerSize}
+        height={handlerSize}
+        fill={selectionColor}
+        stroke="#fff"
+        strokeWidth={1 / viewport.zoom}
+        style={{ cursor: 'sw-resize' }}
+        onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpath:${elementId}:${subpathIndex}`, 'corner-bl')}
+        onPointerUp={onTransformationHandlerPointerUp}
+      />
+      <rect
+        x={bounds.maxX - handlerSize / 2}
+        y={bounds.maxY - handlerSize / 2}
+        width={handlerSize}
+        height={handlerSize}
+        fill={selectionColor}
+        stroke="#fff"
+        strokeWidth={1 / viewport.zoom}
+        style={{ cursor: 'se-resize' }}
+        onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpath:${elementId}:${subpathIndex}`, 'corner-br')}
+        onPointerUp={onTransformationHandlerPointerUp}
+      />
+
+      {/* Rotation handlers - Conditional based on showRotateHandlers flag */}
+      {transformation.showRotateHandlers && (
+        <>
+          <circle
+            cx={bounds.minX - handlerSize}
+            cy={bounds.minY - handlerSize}
+            r={handlerSize / 2}
+            fill={selectionColor}
+            stroke="#fff"
+            strokeWidth={1 / viewport.zoom}
+            style={{ cursor: 'alias' }}
+            onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpath:${elementId}:${subpathIndex}`, 'rotate-tl')}
+            onPointerUp={onTransformationHandlerPointerUp}
+          />
+          <circle
+            cx={bounds.maxX + handlerSize}
+            cy={bounds.minY - handlerSize}
+            r={handlerSize / 2}
+            fill={selectionColor}
+            stroke="#fff"
+            strokeWidth={1 / viewport.zoom}
+            style={{ cursor: 'alias' }}
+            onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpath:${elementId}:${subpathIndex}`, 'rotate-tr')}
+            onPointerUp={onTransformationHandlerPointerUp}
+          />
+          <circle
+            cx={bounds.minX - handlerSize}
+            cy={bounds.maxY + handlerSize}
+            r={handlerSize / 2}
+            fill={selectionColor}
+            stroke="#fff"
+            strokeWidth={1 / viewport.zoom}
+            style={{ cursor: 'alias' }}
+            onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpath:${elementId}:${subpathIndex}`, 'rotate-bl')}
+            onPointerUp={onTransformationHandlerPointerUp}
+          />
+          <circle
+            cx={bounds.maxX + handlerSize}
+            cy={bounds.maxY + handlerSize}
+            r={handlerSize / 2}
+            fill={selectionColor}
+            stroke="#fff"
+            strokeWidth={1 / viewport.zoom}
+            style={{ cursor: 'alias' }}
+            onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpath:${elementId}:${subpathIndex}`, 'rotate-br')}
+            onPointerUp={onTransformationHandlerPointerUp}
+          />
+        </>
+      )}
+
+      {/* Midpoint handlers (Side handlers) - Conditional based on showSideHandlers flag */}
+      {transformation.showSideHandlers && (
+        <>
+          {/* Top */}
+          <rect
+            x={bounds.minX + (bounds.maxX - bounds.minX) / 2 - handlerSize / 2}
+            y={bounds.minY - handlerSize / 2}
+            width={handlerSize}
+            height={handlerSize}
+            fill={selectionColor}
+            stroke="#fff"
+            strokeWidth={1 / viewport.zoom}
+            style={{ cursor: 'n-resize' }}
+            onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpath:${elementId}:${subpathIndex}`, 'midpoint-t')}
+            onPointerUp={onTransformationHandlerPointerUp}
+          />
+
+          {/* Right */}
+          <rect
+            x={bounds.maxX - handlerSize / 2}
+            y={bounds.minY + (bounds.maxY - bounds.minY) / 2 - handlerSize / 2}
+            width={handlerSize}
+            height={handlerSize}
+            fill={selectionColor}
+            stroke="#fff"
+            strokeWidth={1 / viewport.zoom}
+            style={{ cursor: 'e-resize' }}
+            onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpath:${elementId}:${subpathIndex}`, 'midpoint-r')}
+            onPointerUp={onTransformationHandlerPointerUp}
+          />
+
+          {/* Bottom */}
+          <rect
+            x={bounds.minX + (bounds.maxX - bounds.minX) / 2 - handlerSize / 2}
+            y={bounds.maxY - handlerSize / 2}
+            width={handlerSize}
+            height={handlerSize}
+            fill={selectionColor}
+            stroke="#fff"
+            strokeWidth={1 / viewport.zoom}
+            style={{ cursor: 's-resize' }}
+            onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpath:${elementId}:${subpathIndex}`, 'midpoint-b')}
+            onPointerUp={onTransformationHandlerPointerUp}
+          />
+
+          {/* Left */}
+          <rect
+            x={bounds.minX - handlerSize / 2}
+            y={bounds.minY + (bounds.maxY - bounds.minY) / 2 - handlerSize / 2}
+            width={handlerSize}
+            height={handlerSize}
+            fill={selectionColor}
+            stroke="#fff"
+            strokeWidth={1 / viewport.zoom}
+            style={{ cursor: 'w-resize' }}
+            onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpath:${elementId}:${subpathIndex}`, 'midpoint-l')}
+            onPointerUp={onTransformationHandlerPointerUp}
+          />
+        </>
+      )}
+    </>
+  );
+
   // Render selection box for selected subpaths
   const renderSubpathSelectionBox = (element: typeof elements[0]) => {
-    const bounds = getTransformationBounds();
-    if (!bounds) return null;
+    if (!selectedSubpaths || selectedSubpaths.length === 0) return null;
 
     const isTransformationMode = activePlugin === 'transformation';
     const handlerSize = 12 / viewport.zoom;
@@ -544,37 +736,56 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
 
     return (
       <g key={`subpath-selection-${element.id}`}>
-        {/* Selection rectangle */}
-        <rect
-          x={bounds.minX}
-          y={bounds.minY}
-          width={bounds.maxX - bounds.minX}
-          height={bounds.maxY - bounds.minY}
-          fill="none"
-          stroke={selectionColor}
-          strokeWidth={3 / viewport.zoom}
-          strokeDasharray={`${8 / viewport.zoom} ${4 / viewport.zoom}`}
-          pointerEvents="none"
-        />
+        {/* Render individual selection boxes and handlers for each selected subpath */}
+        {selectedSubpaths.map((selected) => {
+          if (selected.elementId !== element.id) return null;
+          
+          // Get the bounds of this specific subpath
+          const subpathBounds = getIndividualSubpathBounds(element, selected.subpathIndex);
+          if (!subpathBounds) return null;
 
-        {/* Transformation handlers */}
-        {isTransformationMode && renderSubpathTransformationHandlers(bounds, element.id, handlerSize, selectionColor)}
+          return (
+            <g key={`subpath-${selected.elementId}-${selected.subpathIndex}`}>
+              {/* Selection rectangle for this subpath */}
+              <rect
+                x={subpathBounds.minX}
+                y={subpathBounds.minY}
+                width={subpathBounds.maxX - subpathBounds.minX}
+                height={subpathBounds.maxY - subpathBounds.minY}
+                fill="none"
+                stroke={selectionColor}
+                strokeWidth={2 / viewport.zoom}
+                strokeDasharray={`${6 / viewport.zoom} ${3 / viewport.zoom}`}
+                pointerEvents="none"
+              />
 
-        {/* Center X marker and coordinates */}
-        {isTransformationMode && renderCenterMarker(bounds, selectionColor)}
+              {/* Individual transformation handlers for this subpath */}
+              {isTransformationMode && renderIndividualSubpathHandlers(
+                subpathBounds, 
+                element.id, 
+                selected.subpathIndex, 
+                handlerSize, 
+                selectionColor
+              )}
 
-        {/* Corner coordinates */}
-        {isTransformationMode && transformation?.showCoordinates && renderCornerCoordinates(bounds)}
+              {/* Center X marker and coordinates for this subpath */}
+              {isTransformationMode && transformation.showCenterPoint && renderCenterMarker(subpathBounds, selectionColor)}
 
-        {/* Measurement rulers */}
-        {isTransformationMode && transformation?.showRulers && renderMeasurementRulers(bounds)}
+              {/* Corner coordinates for this subpath */}
+              {isTransformationMode && transformation?.showCoordinates && renderCornerCoordinates(subpathBounds)}
+
+              {/* Measurement rulers for this subpath */}
+              {isTransformationMode && transformation?.showRulers && renderMeasurementRulers(subpathBounds)}
+            </g>
+          );
+        })}
       </g>
     );
   };
 
   const renderTransformationHandlers = (bounds: { minX: number; minY: number; maxX: number; maxY: number }, elementId: string, handlerSize: number, selectionColor: string) => (
     <>
-      {/* Corner handlers */}
+      {/* Corner handlers - Always visible */}
       <rect
         x={bounds.minX - handlerSize / 2}
         y={bounds.minY - handlerSize / 2}
@@ -624,266 +835,116 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         onPointerUp={onTransformationHandlerPointerUp}
       />
 
-      {/* Rotation handlers */}
-      <circle
-        cx={bounds.minX - handlerSize}
-        cy={bounds.minY - handlerSize}
-        r={handlerSize / 2}
-        fill={selectionColor}
-        stroke="#fff"
-        strokeWidth={1 / viewport.zoom}
-        style={{ cursor: 'alias' }}
-        onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'rotate-tl')}
-        onPointerUp={onTransformationHandlerPointerUp}
-      />
-      <circle
-        cx={bounds.maxX + handlerSize}
-        cy={bounds.minY - handlerSize}
-        r={handlerSize / 2}
-        fill={selectionColor}
-        stroke="#fff"
-        strokeWidth={1 / viewport.zoom}
-        style={{ cursor: 'alias' }}
-        onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'rotate-tr')}
-        onPointerUp={onTransformationHandlerPointerUp}
-      />
-      <circle
-        cx={bounds.minX - handlerSize}
-        cy={bounds.maxY + handlerSize}
-        r={handlerSize / 2}
-        fill={selectionColor}
-        stroke="#fff"
-        strokeWidth={1 / viewport.zoom}
-        style={{ cursor: 'alias' }}
-        onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'rotate-bl')}
-        onPointerUp={onTransformationHandlerPointerUp}
-      />
-      <circle
-        cx={bounds.maxX + handlerSize}
-        cy={bounds.maxY + handlerSize}
-        r={handlerSize / 2}
-        fill={selectionColor}
-        stroke="#fff"
-        strokeWidth={1 / viewport.zoom}
-        style={{ cursor: 'alias' }}
-        onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'rotate-br')}
-        onPointerUp={onTransformationHandlerPointerUp}
-      />
+      {/* Rotation handlers - Conditional based on showRotateHandlers flag */}
+      {transformation.showRotateHandlers && (
+        <>
+          <circle
+            cx={bounds.minX - handlerSize}
+            cy={bounds.minY - handlerSize}
+            r={handlerSize / 2}
+            fill={selectionColor}
+            stroke="#fff"
+            strokeWidth={1 / viewport.zoom}
+            style={{ cursor: 'alias' }}
+            onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'rotate-tl')}
+            onPointerUp={onTransformationHandlerPointerUp}
+          />
+          <circle
+            cx={bounds.maxX + handlerSize}
+            cy={bounds.minY - handlerSize}
+            r={handlerSize / 2}
+            fill={selectionColor}
+            stroke="#fff"
+            strokeWidth={1 / viewport.zoom}
+            style={{ cursor: 'alias' }}
+            onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'rotate-tr')}
+            onPointerUp={onTransformationHandlerPointerUp}
+          />
+          <circle
+            cx={bounds.minX - handlerSize}
+            cy={bounds.maxY + handlerSize}
+            r={handlerSize / 2}
+            fill={selectionColor}
+            stroke="#fff"
+            strokeWidth={1 / viewport.zoom}
+            style={{ cursor: 'alias' }}
+            onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'rotate-bl')}
+            onPointerUp={onTransformationHandlerPointerUp}
+          />
+          <circle
+            cx={bounds.maxX + handlerSize}
+            cy={bounds.maxY + handlerSize}
+            r={handlerSize / 2}
+            fill={selectionColor}
+            stroke="#fff"
+            strokeWidth={1 / viewport.zoom}
+            style={{ cursor: 'alias' }}
+            onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'rotate-br')}
+            onPointerUp={onTransformationHandlerPointerUp}
+          />
+        </>
+      )}
 
-      {/* Midpoint handlers */}
-      {/* Top */}
-      <rect
-        x={bounds.minX + (bounds.maxX - bounds.minX) / 2 - handlerSize / 2}
-        y={bounds.minY - handlerSize / 2}
-        width={handlerSize}
-        height={handlerSize}
-        fill={selectionColor}
-        stroke="#fff"
-        strokeWidth={1 / viewport.zoom}
-        style={{ cursor: 'n-resize' }}
-        onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'midpoint-t')}
-        onPointerUp={onTransformationHandlerPointerUp}
-      />
+      {/* Midpoint handlers (Side handlers) - Conditional based on showSideHandlers flag */}
+      {transformation.showSideHandlers && (
+        <>
+          {/* Top */}
+          <rect
+            x={bounds.minX + (bounds.maxX - bounds.minX) / 2 - handlerSize / 2}
+            y={bounds.minY - handlerSize / 2}
+            width={handlerSize}
+            height={handlerSize}
+            fill={selectionColor}
+            stroke="#fff"
+            strokeWidth={1 / viewport.zoom}
+            style={{ cursor: 'n-resize' }}
+            onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'midpoint-t')}
+            onPointerUp={onTransformationHandlerPointerUp}
+          />
 
-      {/* Right */}
-      <rect
-        x={bounds.maxX - handlerSize / 2}
-        y={bounds.minY + (bounds.maxY - bounds.minY) / 2 - handlerSize / 2}
-        width={handlerSize}
-        height={handlerSize}
-        fill={selectionColor}
-        stroke="#fff"
-        strokeWidth={1 / viewport.zoom}
-        style={{ cursor: 'e-resize' }}
-        onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'midpoint-r')}
-        onPointerUp={onTransformationHandlerPointerUp}
-      />
+          {/* Right */}
+          <rect
+            x={bounds.maxX - handlerSize / 2}
+            y={bounds.minY + (bounds.maxY - bounds.minY) / 2 - handlerSize / 2}
+            width={handlerSize}
+            height={handlerSize}
+            fill={selectionColor}
+            stroke="#fff"
+            strokeWidth={1 / viewport.zoom}
+            style={{ cursor: 'e-resize' }}
+            onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'midpoint-r')}
+            onPointerUp={onTransformationHandlerPointerUp}
+          />
 
-      {/* Bottom */}
-      <rect
-        x={bounds.minX + (bounds.maxX - bounds.minX) / 2 - handlerSize / 2}
-        y={bounds.maxY - handlerSize / 2}
-        width={handlerSize}
-        height={handlerSize}
-        fill={selectionColor}
-        stroke="#fff"
-        strokeWidth={1 / viewport.zoom}
-        style={{ cursor: 's-resize' }}
-        onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'midpoint-b')}
-        onPointerUp={onTransformationHandlerPointerUp}
-      />
+          {/* Bottom */}
+          <rect
+            x={bounds.minX + (bounds.maxX - bounds.minX) / 2 - handlerSize / 2}
+            y={bounds.maxY - handlerSize / 2}
+            width={handlerSize}
+            height={handlerSize}
+            fill={selectionColor}
+            stroke="#fff"
+            strokeWidth={1 / viewport.zoom}
+            style={{ cursor: 's-resize' }}
+            onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'midpoint-b')}
+            onPointerUp={onTransformationHandlerPointerUp}
+          />
 
-      {/* Left */}
-      <rect
-        x={bounds.minX - handlerSize / 2}
-        y={bounds.minY + (bounds.maxY - bounds.minY) / 2 - handlerSize / 2}
-        width={handlerSize}
-        height={handlerSize}
-        fill={selectionColor}
-        stroke="#fff"
-        strokeWidth={1 / viewport.zoom}
-        style={{ cursor: 'w-resize' }}
-        onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'midpoint-l')}
-        onPointerUp={onTransformationHandlerPointerUp}
-      />
-    </>
-  );
-
-  // Render transformation handlers for subpaths - these handlers will apply transformations only to selected subpaths
-  const renderSubpathTransformationHandlers = (bounds: { minX: number; minY: number; maxX: number; maxY: number }, elementId: string, handlerSize: number, selectionColor: string) => (
-    <>
-      {/* Corner handlers */}
-      <rect
-        x={bounds.minX - handlerSize / 2}
-        y={bounds.minY - handlerSize / 2}
-        width={handlerSize}
-        height={handlerSize}
-        fill={selectionColor}
-        stroke="#fff"
-        strokeWidth={1 / viewport.zoom}
-        style={{ cursor: 'nw-resize' }}
-        onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpaths:${elementId}`, 'corner-tl')}
-        onPointerUp={onTransformationHandlerPointerUp}
-      />
-      <rect
-        x={bounds.maxX - handlerSize / 2}
-        y={bounds.minY - handlerSize / 2}
-        width={handlerSize}
-        height={handlerSize}
-        fill={selectionColor}
-        stroke="#fff"
-        strokeWidth={1 / viewport.zoom}
-        style={{ cursor: 'ne-resize' }}
-        onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpaths:${elementId}`, 'corner-tr')}
-        onPointerUp={onTransformationHandlerPointerUp}
-      />
-      <rect
-        x={bounds.minX - handlerSize / 2}
-        y={bounds.maxY - handlerSize / 2}
-        width={handlerSize}
-        height={handlerSize}
-        fill={selectionColor}
-        stroke="#fff"
-        strokeWidth={1 / viewport.zoom}
-        style={{ cursor: 'sw-resize' }}
-        onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpaths:${elementId}`, 'corner-bl')}
-        onPointerUp={onTransformationHandlerPointerUp}
-      />
-      <rect
-        x={bounds.maxX - handlerSize / 2}
-        y={bounds.maxY - handlerSize / 2}
-        width={handlerSize}
-        height={handlerSize}
-        fill={selectionColor}
-        stroke="#fff"
-        strokeWidth={1 / viewport.zoom}
-        style={{ cursor: 'se-resize' }}
-        onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpaths:${elementId}`, 'corner-br')}
-        onPointerUp={onTransformationHandlerPointerUp}
-      />
-
-      {/* Rotation handlers */}
-      <circle
-        cx={bounds.minX - handlerSize}
-        cy={bounds.minY - handlerSize}
-        r={handlerSize / 2}
-        fill={selectionColor}
-        stroke="#fff"
-        strokeWidth={1 / viewport.zoom}
-        style={{ cursor: 'alias' }}
-        onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpaths:${elementId}`, 'rotate-tl')}
-        onPointerUp={onTransformationHandlerPointerUp}
-      />
-      <circle
-        cx={bounds.maxX + handlerSize}
-        cy={bounds.minY - handlerSize}
-        r={handlerSize / 2}
-        fill={selectionColor}
-        stroke="#fff"
-        strokeWidth={1 / viewport.zoom}
-        style={{ cursor: 'alias' }}
-        onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpaths:${elementId}`, 'rotate-tr')}
-        onPointerUp={onTransformationHandlerPointerUp}
-      />
-      <circle
-        cx={bounds.minX - handlerSize}
-        cy={bounds.maxY + handlerSize}
-        r={handlerSize / 2}
-        fill={selectionColor}
-        stroke="#fff"
-        strokeWidth={1 / viewport.zoom}
-        style={{ cursor: 'alias' }}
-        onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpaths:${elementId}`, 'rotate-bl')}
-        onPointerUp={onTransformationHandlerPointerUp}
-      />
-      <circle
-        cx={bounds.maxX + handlerSize}
-        cy={bounds.maxY + handlerSize}
-        r={handlerSize / 2}
-        fill={selectionColor}
-        stroke="#fff"
-        strokeWidth={1 / viewport.zoom}
-        style={{ cursor: 'alias' }}
-        onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpaths:${elementId}`, 'rotate-br')}
-        onPointerUp={onTransformationHandlerPointerUp}
-      />
-
-      {/* Midpoint handlers */}
-      {/* Top */}
-      <rect
-        x={bounds.minX + (bounds.maxX - bounds.minX) / 2 - handlerSize / 2}
-        y={bounds.minY - handlerSize / 2}
-        width={handlerSize}
-        height={handlerSize}
-        fill={selectionColor}
-        stroke="#fff"
-        strokeWidth={1 / viewport.zoom}
-        style={{ cursor: 'n-resize' }}
-        onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpaths:${elementId}`, 'midpoint-t')}
-        onPointerUp={onTransformationHandlerPointerUp}
-      />
-
-      {/* Right */}
-      <rect
-        x={bounds.maxX - handlerSize / 2}
-        y={bounds.minY + (bounds.maxY - bounds.minY) / 2 - handlerSize / 2}
-        width={handlerSize}
-        height={handlerSize}
-        fill={selectionColor}
-        stroke="#fff"
-        strokeWidth={1 / viewport.zoom}
-        style={{ cursor: 'e-resize' }}
-        onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpaths:${elementId}`, 'midpoint-r')}
-        onPointerUp={onTransformationHandlerPointerUp}
-      />
-
-      {/* Bottom */}
-      <rect
-        x={bounds.minX + (bounds.maxX - bounds.minX) / 2 - handlerSize / 2}
-        y={bounds.maxY - handlerSize / 2}
-        width={handlerSize}
-        height={handlerSize}
-        fill={selectionColor}
-        stroke="#fff"
-        strokeWidth={1 / viewport.zoom}
-        style={{ cursor: 's-resize' }}
-        onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpaths:${elementId}`, 'midpoint-b')}
-        onPointerUp={onTransformationHandlerPointerUp}
-      />
-
-      {/* Left */}
-      <rect
-        x={bounds.minX - handlerSize / 2}
-        y={bounds.minY + (bounds.maxY - bounds.minY) / 2 - handlerSize / 2}
-        width={handlerSize}
-        height={handlerSize}
-        fill={selectionColor}
-        stroke="#fff"
-        strokeWidth={1 / viewport.zoom}
-        style={{ cursor: 'w-resize' }}
-        onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpaths:${elementId}`, 'midpoint-l')}
-        onPointerUp={onTransformationHandlerPointerUp}
-      />
+          {/* Left */}
+          <rect
+            x={bounds.minX - handlerSize / 2}
+            y={bounds.minY + (bounds.maxY - bounds.minY) / 2 - handlerSize / 2}
+            width={handlerSize}
+            height={handlerSize}
+            fill={selectionColor}
+            stroke="#fff"
+            strokeWidth={1 / viewport.zoom}
+            style={{ cursor: 'w-resize' }}
+            onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'midpoint-l')}
+            onPointerUp={onTransformationHandlerPointerUp}
+          />
+        </>
+      )}
     </>
   );
 
@@ -977,7 +1038,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           <text
             x={bounds.maxX + rulerOffset + 12 / viewport.zoom}
             y={bounds.minY + height / 2}
-            textAnchor="start"
+            textAnchor="middle"
             fontSize={fontSize}
             fill="#666"
             pointerEvents="none"

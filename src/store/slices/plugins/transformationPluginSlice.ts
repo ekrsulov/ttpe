@@ -10,6 +10,9 @@ export interface TransformationPluginSlice {
     activeHandler: string | null;
     showCoordinates: boolean;
     showRulers: boolean;
+    showCenterPoint: boolean;
+    showRotateHandlers: boolean;
+    showSideHandlers: boolean;
   };
 
   // Actions
@@ -33,6 +36,9 @@ export const createTransformationPluginSlice: StateCreator<TransformationPluginS
     activeHandler: null,
     showCoordinates: false,
     showRulers: false,
+    showCenterPoint: true,    // Mostrar centro por defecto
+    showRotateHandlers: false, // Ocultar handlers de rotación inicialmente
+    showSideHandlers: false,   // Ocultar handlers laterales inicialmente
   },
 
   // Actions
@@ -72,7 +78,8 @@ export const createTransformationPluginSlice: StateCreator<TransformationPluginS
           const subpathData = subpaths[selected.subpathIndex];
           
           if (subpathData) {
-            const bounds = measurePath(subpathData.d, pathData.strokeWidth || 1, 1);
+            // Use the same zoom as paths completos to avoid amplification
+            const bounds = measurePath(subpathData.d, pathData.strokeWidth || 1, state.viewport.zoom);
             minX = Math.min(minX, bounds.minX);
             minY = Math.min(minY, bounds.minY);
             maxX = Math.max(maxX, bounds.maxX);
@@ -97,7 +104,8 @@ export const createTransformationPluginSlice: StateCreator<TransformationPluginS
         const element = state.elements.find((el: any) => el.id === selectedId);
         if (element && element.type === 'path') {
           const pathData = element.data as any;
-          const bounds = measurePath(pathData.d, pathData.strokeWidth || 1, 1);
+          // Use the same zoom as everywhere else to maintain consistency
+          const bounds = measurePath(pathData.d, pathData.strokeWidth || 1, state.viewport.zoom);
           minX = Math.min(minX, bounds.minX);
           minY = Math.min(minY, bounds.minY);
           maxX = Math.max(maxX, bounds.maxX);

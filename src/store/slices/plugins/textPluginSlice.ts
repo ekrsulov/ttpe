@@ -17,10 +17,10 @@ export interface TextPluginSlice {
 export const createTextPluginSlice: StateCreator<TextPluginSlice, [], [], TextPluginSlice> = (set) => ({
   // Initial state
   text: {
-    text: 'New Text',
-    fontSize: 72,
+    text: 'New',
+    fontSize: 180,
     fontFamily: 'Arial',
-    fontWeight: 'normal',
+    fontWeight: 'bold',
     fontStyle: 'normal',
   },
 
