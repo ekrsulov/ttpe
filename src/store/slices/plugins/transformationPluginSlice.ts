@@ -10,9 +10,6 @@ export interface TransformationPluginSlice {
     activeHandler: string | null;
     showCoordinates: boolean;
     showRulers: boolean;
-    showCenterPoint: boolean;
-    showRotateHandlers: boolean;
-    showSideHandlers: boolean;
   };
 
   // Actions
@@ -36,9 +33,6 @@ export const createTransformationPluginSlice: StateCreator<TransformationPluginS
     activeHandler: null,
     showCoordinates: false,
     showRulers: false,
-    showCenterPoint: true,    // Mostrar centro por defecto
-    showRotateHandlers: false, // Ocultar handlers de rotación inicialmente
-    showSideHandlers: false,   // Ocultar handlers laterales inicialmente
   },
 
   // Actions
