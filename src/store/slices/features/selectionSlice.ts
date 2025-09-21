@@ -1,5 +1,6 @@
 import type { StateCreator } from 'zustand';
 import type { CanvasElement } from '../../../types';
+import type { CanvasStore } from '../../canvasStore';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../../utils';
 
 // Helper function to transform SVG path commands by applying a translation
@@ -68,8 +69,8 @@ export const createSelectionSlice: StateCreator<SelectionSlice> = (set, get, _ap
   selectElement: (id, multiSelect = false) => {
     set((state) => ({
       selectedIds: multiSelect
-        ? (state.selectedIds as any).includes(id)
-          ? (state.selectedIds as any).filter((selId: string) => selId !== id)
+        ? state.selectedIds.includes(id)
+          ? state.selectedIds.filter((selId: string) => selId !== id)
           : [...state.selectedIds, id]
         : [id],
     }));
@@ -84,20 +85,21 @@ export const createSelectionSlice: StateCreator<SelectionSlice> = (set, get, _ap
   },
 
   getSelectedElements: () => {
-    const state = get() as any;
-    return state.elements.filter((el: CanvasElement) => (state.selectedIds as any).includes(el.id));
+    const state = get() as CanvasStore;
+    return state.elements.filter((el: CanvasElement) => state.selectedIds.includes(el.id));
   },
 
   getSelectedPathsCount: () => {
-    const state = get() as any;
-    return state.elements.filter((el: CanvasElement) => (state.selectedIds as any).includes(el.id) && el.type === 'path').length;
+    const state = get() as CanvasStore;
+    return state.elements.filter((el: CanvasElement) => state.selectedIds.includes(el.id) && el.type === 'path').length;
   },
 
   moveSelectedElements: (deltaX, deltaY) => {
     const selectedIds = get().selectedIds;
-    (set as any)((currentState: any) => ({
+    const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+    setStore((currentState) => ({
       elements: currentState.elements.map((el: CanvasElement) => {
-        if ((selectedIds as any).includes(el.id)) {
+        if (selectedIds.includes(el.id)) {
           if (el.type === 'path') {
             const pathData = el.data as import('../../../types').PathData;
             
@@ -129,9 +131,10 @@ export const createSelectionSlice: StateCreator<SelectionSlice> = (set, get, _ap
 
   updateSelectedPaths: (properties) => {
     const selectedIds = get().selectedIds;
-    (set as any)((currentState: any) => ({
+    const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+    setStore((currentState) => ({
       elements: currentState.elements.map((el: CanvasElement) => {
-        if ((selectedIds as any).includes(el.id) && el.type === 'path') {
+        if (selectedIds.includes(el.id) && el.type === 'path') {
           const pathData = el.data as import('../../../types').PathData;
           return {
             ...el,

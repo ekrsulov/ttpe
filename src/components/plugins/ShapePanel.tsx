@@ -1,13 +1,13 @@
 import React from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { Square, Circle, Triangle, Shapes } from 'lucide-react';
+import { Square, Circle, Triangle, Shapes, type LucideIcon } from 'lucide-react';
 import { IconButton } from '../ui/IconButton';
 import type { ShapeType } from '../../store/slices/plugins/shapePluginSlice';
 
 export const ShapePanel: React.FC = () => {
   const { shape, updateShapeState, setActivePlugin, activePlugin } = useCanvasStore();
 
-  const shapes: { type: ShapeType; label: string; icon: React.ComponentType<any> }[] = [
+  const shapes: { type: ShapeType; label: string; icon: LucideIcon }[] = [
     { type: 'square', label: 'Square', icon: Square },
     { type: 'circle', label: 'Circle', icon: Circle },
     { type: 'triangle', label: 'Triangle', icon: Triangle },

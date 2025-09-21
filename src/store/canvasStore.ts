@@ -23,7 +23,7 @@ import { createEditPluginSlice, type EditPluginSlice } from './slices/plugins/ed
 import { createSubpathPluginSlice, type SubpathPluginSlice } from './slices/plugins/subpathPluginSlice';
 
 // Debounce function to implement cool-off period
-function debounce<T extends (...args: any[]) => any>(
+function debounce<T extends (...args: never[]) => void>(
   func: T,
   delay: number
 ): T {
@@ -233,7 +233,7 @@ export const useCanvasStore = create<CanvasStore>()(
         deleteSelectedElements: () => {
           const selectedIds = get().selectedIds;
           set((state) => ({
-            elements: state.elements.filter((el) => !(selectedIds as any).includes(el.id)),
+            elements: state.elements.filter((el) => !selectedIds.includes(el.id)),
             selectedIds: [],
           }));
         },
@@ -341,7 +341,7 @@ export const useCanvasStore = create<CanvasStore>()(
       }
     ), { 
       name: 'canvas-app-state',
-      partialize: (state: any) => {
+      partialize: (state: CanvasStore) => {
         const { ...rest } = state;
         return rest;
       }

@@ -2,7 +2,7 @@ import React from 'react';
 import { measurePath } from '../utils/measurementUtils';
 import { parsePathD, extractEditablePoints, getCommandStartPoint, updatePathD, extractSubpaths } from '../utils/pathParserUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../utils';
-import type { Point } from '../types';
+import type { Point, CanvasElement } from '../types';
 
 interface CanvasRendererProps {
   viewport: {
@@ -81,7 +81,7 @@ interface CanvasRendererProps {
   onStartDraggingPoint: (elementId: string, commandIndex: number, pointIndex: number, offsetX: number, offsetY: number) => void;
   onUpdateDraggingPoint: (x: number, y: number) => void;
   onStopDraggingPoint: () => void;
-  onUpdateElement: (id: string, updates: any) => void;
+  onUpdateElement: (id: string, updates: Partial<CanvasElement>) => void;
   onSelectCommand: (command: { elementId: string; commandIndex: number; pointIndex: number }, multiSelect?: boolean) => void;
   onSelectSubpath: (elementId: string, subpathIndex: number, multiSelect?: boolean) => void;
   onStartDraggingSubpath: (elementId: string, subpathIndex: number, startX: number, startY: number) => void;
@@ -151,6 +151,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   const [originalPathDataMap, setOriginalPathDataMap] = React.useState<Record<string, string> | null>(null);
 
   // Global pointer event handlers for drag
+  /* eslint-disable react-hooks/exhaustive-deps */
   React.useEffect(() => {
     let lastUpdateTime = 0;
     const UPDATE_THROTTLE = 16; // ~60fps
@@ -413,6 +414,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       window.removeEventListener('blur', handlePointerCancel);
     };
   }, [editingPoint?.isDragging, editingPoint?.elementId, editingPoint?.commandIndex, editingPoint?.pointIndex, draggingSelection?.isDragging, subpath?.isDragging, viewport, onUpdateDraggingPoint, onStopDraggingPoint, onUpdateDraggingSubpath, onStopDraggingSubpath, dragPosition, elements, onUpdateElement]);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   // Calculate contrasting selection color based on element's color (stroke or fill)
   const getContrastingColor = (color: string) => {

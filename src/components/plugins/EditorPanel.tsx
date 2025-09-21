@@ -163,7 +163,7 @@ export const EditorPanel: React.FC = () => {
       const pathElements = selectedElements.filter(el => el.type === 'path');
       if (pathElements.length > 0) {
         // Return the stroke width of the first selected path
-        return (pathElements[0].data as any).strokeWidth;
+        return pathElements[0].data.strokeWidth;
       }
     }
     return pencil.strokeWidth;
@@ -175,7 +175,7 @@ export const EditorPanel: React.FC = () => {
       const pathElements = selectedElements.filter(el => el.type === 'path');
       if (pathElements.length > 0) {
         // Return the stroke color of the first selected path
-        return (pathElements[0].data as any).strokeColor;
+        return pathElements[0].data.strokeColor;
       }
     }
     return pencil.strokeColor;
@@ -187,7 +187,7 @@ export const EditorPanel: React.FC = () => {
       const pathElements = selectedElements.filter(el => el.type === 'path');
       if (pathElements.length > 0) {
         // Return the opacity of the first selected path
-        return (pathElements[0].data as any).strokeOpacity;
+        return pathElements[0].data.strokeOpacity;
       }
     }
     return pencil.strokeOpacity;
@@ -199,7 +199,7 @@ export const EditorPanel: React.FC = () => {
       const pathElements = selectedElements.filter(el => el.type === 'path');
       if (pathElements.length > 0) {
         // Return the fill color of the first selected path
-        return (pathElements[0].data as any).fillColor;
+        return pathElements[0].data.fillColor;
       }
     }
     return pencil.fillColor;
@@ -211,7 +211,7 @@ export const EditorPanel: React.FC = () => {
       const pathElements = selectedElements.filter(el => el.type === 'path');
       if (pathElements.length > 0) {
         // Return the fill opacity of the first selected path
-        return (pathElements[0].data as any).fillOpacity;
+        return pathElements[0].data.fillOpacity;
       }
     }
     return pencil.fillOpacity;

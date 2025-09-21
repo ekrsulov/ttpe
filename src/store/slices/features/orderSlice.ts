@@ -1,5 +1,6 @@
 import type { StateCreator } from 'zustand';
 import type { CanvasElement } from '../../../types';
+import type { CanvasStore } from '../../canvasStore';
 
 export interface OrderSlice {
   // Actions
@@ -12,11 +13,13 @@ export interface OrderSlice {
 export const createOrderSlice: StateCreator<OrderSlice> = (set, get, _api) => ({
   // Actions
   bringToFront: () => {
-    const selectedIds = (get() as any).selectedIds;
+    const store = get() as CanvasStore;
+    const selectedIds = store.selectedIds;
     if (selectedIds.length === 0) return;
 
-    const maxZIndex = Math.max(...(get() as any).elements.map((el: CanvasElement) => el.zIndex));
-    (set as any)((state: any) => ({
+    const maxZIndex = Math.max(...store.elements.map((el: CanvasElement) => el.zIndex));
+    const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+    setStore((state) => ({
       elements: state.elements.map((el: CanvasElement, index: number) => {
         if (selectedIds.includes(el.id)) {
           return { ...el, zIndex: maxZIndex + index + 1 };
@@ -27,10 +30,12 @@ export const createOrderSlice: StateCreator<OrderSlice> = (set, get, _api) => ({
   },
 
   sendForward: () => {
-    const selectedIds = (get() as any).selectedIds;
+    const store = get() as CanvasStore;
+    const selectedIds = store.selectedIds;
     if (selectedIds.length === 0) return;
 
-    (set as any)((state: any) => {
+    const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+    setStore((state) => {
       const elements = [...state.elements];
       
       selectedIds.forEach((selectedId: string) => {
@@ -57,10 +62,12 @@ export const createOrderSlice: StateCreator<OrderSlice> = (set, get, _api) => ({
   },
 
   sendBackward: () => {
-    const selectedIds = (get() as any).selectedIds;
+    const store = get() as CanvasStore;
+    const selectedIds = store.selectedIds;
     if (selectedIds.length === 0) return;
 
-    (set as any)((state: any) => {
+    const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+    setStore((state) => {
       const elements = [...state.elements];
       
       selectedIds.forEach((selectedId: string) => {
@@ -87,11 +94,13 @@ export const createOrderSlice: StateCreator<OrderSlice> = (set, get, _api) => ({
   },
 
   sendToBack: () => {
-    const selectedIds = (get() as any).selectedIds;
+    const store = get() as CanvasStore;
+    const selectedIds = store.selectedIds;
     if (selectedIds.length === 0) return;
 
-    const minZIndex = Math.min(...(get() as any).elements.map((el: CanvasElement) => el.zIndex));
-    (set as any)((state: any) => ({
+    const minZIndex = Math.min(...store.elements.map((el: CanvasElement) => el.zIndex));
+    const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+    setStore((state) => ({
       elements: state.elements.map((el: CanvasElement, index: number) => {
         if (selectedIds.includes(el.id)) {
           return { ...el, zIndex: minZIndex - index - 1 };

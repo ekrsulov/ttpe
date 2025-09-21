@@ -1,11 +1,21 @@
 import type { StateCreator } from 'zustand';
+import type { CanvasStore } from '../../canvasStore';
+import type { PluginState } from '../../../types';
+
+export interface StateSnapshot {
+  elements: CanvasStore['elements'];
+  selectedIds: CanvasStore['selectedIds'];
+  viewport: CanvasStore['viewport'];
+  plugins: PluginState;
+  activePlugin: CanvasStore['activePlugin'];
+}
 
 export interface HistoryPluginSlice {
   // State
   history: {
     canUndo: boolean;
     canRedo: boolean;
-    historyStack: any[];
+    historyStack: StateSnapshot[];
     currentIndex: number;
   };
 
@@ -13,7 +23,7 @@ export interface HistoryPluginSlice {
   undo: () => void;
   redo: () => void;
   clearHistory: () => void;
-  saveState: (state: any) => void;
+  saveState: (state: StateSnapshot) => void;
 }
 
 export const createHistoryPluginSlice: StateCreator<HistoryPluginSlice> = (set, get) => ({

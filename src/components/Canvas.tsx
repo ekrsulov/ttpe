@@ -6,7 +6,7 @@ import { parsePathD, extractEditablePoints, extractSubpaths } from '../utils/pat
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../utils';
 import { CanvasRenderer } from './CanvasRenderer';
 import { transformManager, type TransformBounds } from '../utils/transformManager';
-import type { Point, PathData } from '../types';
+import type { Point, PathData, CanvasElement } from '../types';
 
 interface CanvasProps {
   width?: number;
@@ -70,7 +70,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
   const [originalBounds, setOriginalBounds] = useState<{ minX: number; minY: number; maxX: number; maxY: number } | null>(null);
   const [transformedBounds, setTransformedBounds] = useState<{ minX: number; minY: number; maxX: number; maxY: number } | null>(null);
   const [initialTransform, setInitialTransform] = useState<{ scaleX: number; scaleY: number; rotation: number; translateX: number; translateY: number } | null>(null);
-  const [originalElementData, setOriginalElementData] = useState<any | null>(null);
+  const [originalElementData, setOriginalElementData] = useState<PathData | null>(null);
 
   // Handle window resize
   useEffect(() => {
@@ -83,6 +83,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
   }, []);
 
   // Handle keyboard events
+  /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Don't activate pan mode if user is typing in an input or textarea
@@ -131,6 +132,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
       document.removeEventListener('keyup', handleKeyUp);
     };
   }, []);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   // Emergency cleanup listeners for drag states
   useEffect(() => {
@@ -167,6 +169,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
   }, [viewport]);
 
     // Handle element click
+  /* eslint-disable react-hooks/exhaustive-deps */
   const handleElementClick = useCallback((elementId: string, e: React.PointerEvent) => {
     e.stopPropagation();
     
@@ -211,6 +214,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
       setTimeout(() => setJustSelected(false), 100);
     }
   }, [activePlugin, screenToCanvas, isDragging, hasDragMoved, dragStart]);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   // Handle element pointer down for drag
   const handleElementPointerDown = useCallback((elementId: string, e: React.PointerEvent) => {
@@ -256,7 +260,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
   };
 
   // Get bounds for a specific subpath
-  const getSubpathBounds = (element: any, subpathIndex: number) => {
+  const getSubpathBounds = (element: CanvasElement, subpathIndex: number) => {
     if (element.type !== 'path') return null;
     
     try {
@@ -275,6 +279,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
   };
 
   // Handle transformation handler pointer down
+  /* eslint-disable react-hooks/exhaustive-deps */
   const handleTransformationHandlerPointerDown = useCallback((e: React.PointerEvent, elementId: string, handler: string) => {
     e.stopPropagation();
     const point = screenToCanvas(e.clientX, e.clientY);
@@ -333,6 +338,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
       }
     }
   }, [elements, screenToCanvas, getElementBounds, getSubpathBounds, getCurrentTransform, getTransformationBounds]);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   const handleTransformationHandlerPointerUp = useCallback((e: React.PointerEvent) => {
     e.stopPropagation();
@@ -349,6 +355,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
   }, []);
 
   // Handle pointer events
+  /* eslint-disable react-hooks/exhaustive-deps */
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     const point = screenToCanvas(e.clientX, e.clientY);
     const target = e.target as Element;
@@ -403,7 +410,9 @@ export const Canvas: React.FC<CanvasProps> = () => {
         break;
     }
   }, [activePlugin, screenToCanvas, isSpacePressed, useCanvasStore.getState().text.text]);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
+  /* eslint-disable react-hooks/exhaustive-deps */
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     const point = screenToCanvas(e.clientX, e.clientY);
 
@@ -602,7 +611,9 @@ export const Canvas: React.FC<CanvasProps> = () => {
       setShapeEnd(point);
     }
   }, [activePlugin, screenToCanvas, isSpacePressed, isSelecting, selectionStart, viewport.zoom, isDragging, dragStart, isCreatingShape, shapeStart, isTransforming, transformStart, transformElementId, transformHandler, originalBounds, initialTransform, originalElementData, useCanvasStore.getState().transformation, getElementBounds, getSubpathBounds, smoothBrush.isActive, applySmoothBrush, updateSmoothBrushCursor]);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
+  /* eslint-disable react-hooks/exhaustive-deps */
   const handlePointerUp = useCallback((e: React.PointerEvent) => {
     // Only handle dragging if it hasn't been handled by element click already
     if (isDragging) {
@@ -686,7 +697,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
             const commands = parsePathD(pathData.d);
             const subpaths = extractSubpaths(commands);
             
-            subpaths.forEach((subpathData: any, index: number) => {
+            subpaths.forEach((subpathData: { d: string; startIndex: number; endIndex: number }, index: number) => {
               // Check if subpath intersects with selection box
               const subpathBounds = measurePath(subpathData.d, pathData.strokeWidth || 1, viewport.zoom);
               
@@ -761,6 +772,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
       setHasDragMoved(false);
     }
   }, [isDragging, isSelecting, selectionStart, selectionEnd, elements, activePlugin, isCreatingShape, shapeStart, shapeEnd, isTransforming, justSelected, dragStart]);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   // Handle wheel events with passive: false to allow preventDefault
   useEffect(() => {

@@ -1,6 +1,6 @@
 // Measurement utilities for path elements
 // Cache for path measurements to improve performance
-const pathMeasurementCache = new (globalThis as any).Map();
+const pathMeasurementCache = new Map<string, { minX: number; minY: number; maxX: number; maxY: number }>();
 
 // Function to measure path bounds using a ghost SVG element
 export const measurePath = (

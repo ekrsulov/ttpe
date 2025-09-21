@@ -3,16 +3,17 @@ import { useCanvasStore } from '../../store/canvasStore';
 import { Pen, RotateCcw, Minus, Copy } from 'lucide-react';
 import { IconButton } from '../ui/IconButton';
 import { parsePathD, extractEditablePoints, extractSubpaths } from '../../utils/pathParserUtils';
+import type { CanvasElement } from '../../types';
 
 export const SelectPanel: React.FC = () => {
   const { elements, selectedIds, selectedSubpaths, addElement } = useCanvasStore();
 
-  const selectedElements = elements.filter(el => (selectedIds as any).includes(el.id));
+  const selectedElements = elements.filter(el => selectedIds.includes(el.id));
 
   // Build list of items to display
   const items: Array<{
     type: 'element' | 'subpath';
-    element: any;
+    element: CanvasElement;
     subpathIndex?: number;
     pointCount: number;
   }> = [];

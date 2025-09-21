@@ -1,4 +1,5 @@
 import type { StateCreator } from 'zustand';
+import type { CanvasStore } from '../../canvasStore';
 import { parsePathD, extractSubpaths } from '../../../utils/pathParserUtils';
 import { measurePath } from '../../../utils/measurementUtils';
 import { transformPathData } from '../../../utils/transformationUtils';
@@ -44,14 +45,14 @@ export const createTransformationPluginSlice: StateCreator<TransformationPluginS
 
   // Check if transformation should work with subpaths instead of full elements
   isWorkingWithSubpaths: () => {
-    const state = get() as any;
+    const state = get() as CanvasStore;
     return state.selectedSubpaths && state.selectedSubpaths.length > 0;
   },
 
   // Get bounds for transformation - either from selected subpaths or selected elements
   getTransformationBounds: () => {
-    const state = get() as any;
-    const isSubpathMode = (get() as any).isWorkingWithSubpaths();
+    const state = get() as CanvasStore;
+    const isSubpathMode = (get() as CanvasStore).isWorkingWithSubpaths();
     
     if (isSubpathMode) {
       // Calculate bounds from selected subpaths
@@ -64,16 +65,16 @@ export const createTransformationPluginSlice: StateCreator<TransformationPluginS
       let maxY = -Infinity;
 
       selectedSubpaths.forEach((selected: { elementId: string; subpathIndex: number }) => {
-        const element = state.elements.find((el: any) => el.id === selected.elementId);
+        const element = state.elements.find((el) => el.id === selected.elementId);
         if (element && element.type === 'path') {
-          const pathData = element.data as any;
+          const pathData = element.data as import('../../../types').PathData;
           const commands = parsePathD(pathData.d);
           const subpaths = extractSubpaths(commands);
           const subpathData = subpaths[selected.subpathIndex];
           
           if (subpathData) {
             // Use the same zoom as paths completos to avoid amplification
-            const bounds = measurePath(subpathData.d, pathData.strokeWidth || 1, state.viewport.zoom);
+            const bounds = measurePath(subpathData.d, pathData.strokeWidth, state.viewport.zoom);
             minX = Math.min(minX, bounds.minX);
             minY = Math.min(minY, bounds.minY);
             maxX = Math.max(maxX, bounds.maxX);
@@ -95,11 +96,11 @@ export const createTransformationPluginSlice: StateCreator<TransformationPluginS
       let maxY = -Infinity;
 
       selectedIds.forEach((selectedId: string) => {
-        const element = state.elements.find((el: any) => el.id === selectedId);
+        const element = state.elements.find((el) => el.id === selectedId);
         if (element && element.type === 'path') {
-          const pathData = element.data as any;
+          const pathData = element.data as import('../../../types').PathData;
           // Use the same zoom as everywhere else to maintain consistency
-          const bounds = measurePath(pathData.d, pathData.strokeWidth || 1, state.viewport.zoom);
+          const bounds = measurePath(pathData.d, pathData.strokeWidth, state.viewport.zoom);
           minX = Math.min(minX, bounds.minX);
           minY = Math.min(minY, bounds.minY);
           maxX = Math.max(maxX, bounds.maxX);
@@ -121,7 +122,7 @@ export const createTransformationPluginSlice: StateCreator<TransformationPluginS
     transformOriginY: number,
     rotation: number
   ) => {
-    const state = get() as any;
+    const state = get() as CanvasStore;
     const selectedSubpaths = state.selectedSubpaths;
     
     if (!selectedSubpaths || selectedSubpaths.length === 0) return;
@@ -133,10 +134,10 @@ export const createTransformationPluginSlice: StateCreator<TransformationPluginS
     
     if (elementSubpaths.length === 0) return;
     
-    const element = state.elements.find((el: any) => el.id === elementId);
+    const element = state.elements.find((el) => el.id === elementId);
     if (!element || element.type !== 'path') return;
     
-    const pathData = element.data as any;
+    const pathData = element.data as import('../../../types').PathData;
     const commands = parsePathD(pathData.d);
     const subpaths = extractSubpaths(commands);
     

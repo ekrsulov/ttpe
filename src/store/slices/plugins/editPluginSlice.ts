@@ -445,8 +445,8 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
         const allPoints = extractEditablePoints(parsedCommands);
         
         // Find selected points
-        const selectedPoints = allPoints.filter((point: any) => 
-          (commands as any).some((cmd: any) => 
+        const selectedPoints = allPoints.filter((point) => 
+          (commands).some((cmd) => 
             cmd.commandIndex === point.commandIndex && 
             cmd.pointIndex === point.pointIndex
           )
@@ -464,8 +464,9 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
           
           // Update the path
           const newPathD = updatePathD(parsedCommands, updatedPoints);
-          (set as any)((currentState: any) => ({
-            elements: currentState.elements.map((el: any) =>
+          const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+          setStore((currentState) => ({
+            elements: currentState.elements.map((el) =>
               el.id === elementId 
                 ? { ...el, data: { ...pathData, d: newPathD } }
                 : el
@@ -483,7 +484,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     if (selectedCommands.length < 2) return;
     
     // Group commands by elementId
-    const commandsByElement = selectedCommands.reduce((acc: any, cmd: any) => {
+    const commandsByElement = selectedCommands.reduce((acc: Record<string, typeof cmd[]>, cmd) => {
       if (!acc[cmd.elementId]) acc[cmd.elementId] = [];
       acc[cmd.elementId].push(cmd);
       return acc;
@@ -491,15 +492,15 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     
     // Process each element
     Object.entries(commandsByElement).forEach(([elementId, commands]) => {
-      const element = state.elements.find((el: any) => el.id === elementId);
-      if (element && element.type === 'path' && (commands as any).length >= 2) {
-        const pathData = element.data as any;
+      const element = state.elements.find((el) => el.id === elementId);
+      if (element && element.type === 'path' && (commands).length >= 2) {
+        const pathData = element.data as PathData;
         const parsedCommands = parsePathD(pathData.d);
         const allPoints = extractEditablePoints(parsedCommands);
         
         // Find selected points
-        const selectedPoints = allPoints.filter((point: any) => 
-          (commands as any).some((cmd: any) => 
+        const selectedPoints = allPoints.filter((point) => 
+          (commands).some((cmd) => 
             cmd.commandIndex === point.commandIndex && 
             cmd.pointIndex === point.pointIndex
           )
@@ -519,8 +520,9 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
           
           // Update the path
           const newPathD = updatePathD(parsedCommands, updatedPoints);
-          (set as any)((currentState: any) => ({
-            elements: currentState.elements.map((el: any) =>
+          const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+          setStore((currentState) => ({
+            elements: currentState.elements.map((el) =>
               el.id === elementId 
                 ? { ...el, data: { ...pathData, d: newPathD } }
                 : el
@@ -538,7 +540,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     if (selectedCommands.length < 2) return;
     
     // Group commands by elementId
-    const commandsByElement = selectedCommands.reduce((acc: any, cmd: any) => {
+    const commandsByElement = selectedCommands.reduce((acc: Record<string, typeof cmd[]>, cmd) => {
       if (!acc[cmd.elementId]) acc[cmd.elementId] = [];
       acc[cmd.elementId].push(cmd);
       return acc;
@@ -546,15 +548,15 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     
     // Process each element
     Object.entries(commandsByElement).forEach(([elementId, commands]) => {
-      const element = state.elements.find((el: any) => el.id === elementId);
-      if (element && element.type === 'path' && (commands as any).length >= 2) {
-        const pathData = element.data as any;
+      const element = state.elements.find((el) => el.id === elementId);
+      if (element && element.type === 'path' && (commands).length >= 2) {
+        const pathData = element.data as PathData;
         const parsedCommands = parsePathD(pathData.d);
         const allPoints = extractEditablePoints(parsedCommands);
         
         // Find selected points
-        const selectedPoints = allPoints.filter((point: any) => 
-          (commands as any).some((cmd: any) => 
+        const selectedPoints = allPoints.filter((point) => 
+          (commands).some((cmd) => 
             cmd.commandIndex === point.commandIndex && 
             cmd.pointIndex === point.pointIndex
           )
@@ -572,8 +574,9 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
           
           // Update the path
           const newPathD = updatePathD(parsedCommands, updatedPoints);
-          (set as any)((currentState: any) => ({
-            elements: currentState.elements.map((el: any) =>
+          const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+          setStore((currentState) => ({
+            elements: currentState.elements.map((el) =>
               el.id === elementId 
                 ? { ...el, data: { ...pathData, d: newPathD } }
                 : el
@@ -591,7 +594,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     if (selectedCommands.length < 2) return;
     
     // Group commands by elementId
-    const commandsByElement = selectedCommands.reduce((acc: any, cmd: any) => {
+    const commandsByElement = selectedCommands.reduce((acc: Record<string, typeof cmd[]>, cmd) => {
       if (!acc[cmd.elementId]) acc[cmd.elementId] = [];
       acc[cmd.elementId].push(cmd);
       return acc;
@@ -599,15 +602,15 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     
     // Process each element
     Object.entries(commandsByElement).forEach(([elementId, commands]) => {
-      const element = state.elements.find((el: any) => el.id === elementId);
-      if (element && element.type === 'path' && (commands as any).length >= 2) {
-        const pathData = element.data as any;
+      const element = state.elements.find((el) => el.id === elementId);
+      if (element && element.type === 'path' && (commands).length >= 2) {
+        const pathData = element.data as PathData;
         const parsedCommands = parsePathD(pathData.d);
         const allPoints = extractEditablePoints(parsedCommands);
         
         // Find selected points
-        const selectedPoints = allPoints.filter((point: any) => 
-          (commands as any).some((cmd: any) => 
+        const selectedPoints = allPoints.filter((point) => 
+          (commands).some((cmd) => 
             cmd.commandIndex === point.commandIndex && 
             cmd.pointIndex === point.pointIndex
           )
@@ -625,8 +628,9 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
           
           // Update the path
           const newPathD = updatePathD(parsedCommands, updatedPoints);
-          (set as any)((currentState: any) => ({
-            elements: currentState.elements.map((el: any) =>
+          const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+          setStore((currentState) => ({
+            elements: currentState.elements.map((el) =>
               el.id === elementId 
                 ? { ...el, data: { ...pathData, d: newPathD } }
                 : el
@@ -644,7 +648,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     if (selectedCommands.length < 2) return;
     
     // Group commands by elementId
-    const commandsByElement = selectedCommands.reduce((acc: any, cmd: any) => {
+    const commandsByElement = selectedCommands.reduce((acc: Record<string, typeof cmd[]>, cmd) => {
       if (!acc[cmd.elementId]) acc[cmd.elementId] = [];
       acc[cmd.elementId].push(cmd);
       return acc;
@@ -652,15 +656,15 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     
     // Process each element
     Object.entries(commandsByElement).forEach(([elementId, commands]) => {
-      const element = state.elements.find((el: any) => el.id === elementId);
-      if (element && element.type === 'path' && (commands as any).length >= 2) {
-        const pathData = element.data as any;
+      const element = state.elements.find((el) => el.id === elementId);
+      if (element && element.type === 'path' && (commands).length >= 2) {
+        const pathData = element.data as PathData;
         const parsedCommands = parsePathD(pathData.d);
         const allPoints = extractEditablePoints(parsedCommands);
         
         // Find selected points
-        const selectedPoints = allPoints.filter((point: any) => 
-          (commands as any).some((cmd: any) => 
+        const selectedPoints = allPoints.filter((point) => 
+          (commands).some((cmd) => 
             cmd.commandIndex === point.commandIndex && 
             cmd.pointIndex === point.pointIndex
           )
@@ -680,8 +684,9 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
           
           // Update the path
           const newPathD = updatePathD(parsedCommands, updatedPoints);
-          (set as any)((currentState: any) => ({
-            elements: currentState.elements.map((el: any) =>
+          const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+          setStore((currentState) => ({
+            elements: currentState.elements.map((el) =>
               el.id === elementId 
                 ? { ...el, data: { ...pathData, d: newPathD } }
                 : el
@@ -699,7 +704,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     if (selectedCommands.length < 2) return;
     
     // Group commands by elementId
-    const commandsByElement = selectedCommands.reduce((acc: any, cmd: any) => {
+    const commandsByElement = selectedCommands.reduce((acc: Record<string, typeof cmd[]>, cmd) => {
       if (!acc[cmd.elementId]) acc[cmd.elementId] = [];
       acc[cmd.elementId].push(cmd);
       return acc;
@@ -707,15 +712,15 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     
     // Process each element
     Object.entries(commandsByElement).forEach(([elementId, commands]) => {
-      const element = state.elements.find((el: any) => el.id === elementId);
-      if (element && element.type === 'path' && (commands as any).length >= 2) {
-        const pathData = element.data as any;
+      const element = state.elements.find((el) => el.id === elementId);
+      if (element && element.type === 'path' && (commands).length >= 2) {
+        const pathData = element.data as PathData;
         const parsedCommands = parsePathD(pathData.d);
         const allPoints = extractEditablePoints(parsedCommands);
         
         // Find selected points
-        const selectedPoints = allPoints.filter((point: any) => 
-          (commands as any).some((cmd: any) => 
+        const selectedPoints = allPoints.filter((point) => 
+          (commands).some((cmd) => 
             cmd.commandIndex === point.commandIndex && 
             cmd.pointIndex === point.pointIndex
           )
@@ -733,8 +738,9 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
           
           // Update the path
           const newPathD = updatePathD(parsedCommands, updatedPoints);
-          (set as any)((currentState: any) => ({
-            elements: currentState.elements.map((el: any) =>
+          const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+          setStore((currentState) => ({
+            elements: currentState.elements.map((el) =>
               el.id === elementId 
                 ? { ...el, data: { ...pathData, d: newPathD } }
                 : el
@@ -752,7 +758,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     if (selectedCommands.length < 3) return;
     
     // For distribution, we need a consistent grouping strategy
-    const commandsByElement = selectedCommands.reduce((acc: any, cmd: any) => {
+    const commandsByElement = selectedCommands.reduce((acc: Record<string, typeof cmd[]>, cmd) => {
       if (!acc[cmd.elementId]) acc[cmd.elementId] = [];
       acc[cmd.elementId].push(cmd);
       return acc;
@@ -768,14 +774,14 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     
     // First collect all selected points with their current positions
     Object.entries(commandsByElement).forEach(([elementId, commands]) => {
-      const element = state.elements.find((el: any) => el.id === elementId);
+      const element = state.elements.find((el) => el.id === elementId);
       if (element && element.type === 'path') {
-        const pathData = element.data as any;
+        const pathData = element.data as PathData;
         const parsedCommands = parsePathD(pathData.d);
         const allPoints = extractEditablePoints(parsedCommands);
         
-        (commands as any).forEach((cmd: any) => {
-          const point = allPoints.find((p: any) => 
+        (commands).forEach((cmd) => {
+          const point = allPoints.find((p) => 
             p.commandIndex === cmd.commandIndex && 
             p.pointIndex === cmd.pointIndex
           );
@@ -836,14 +842,15 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     
     // Apply updates to each element
     elementUpdates.forEach((updates, elementId) => {
-      const element = state.elements.find((el: any) => el.id === elementId);
+      const element = state.elements.find((el) => el.id === elementId);
       if (element && element.type === 'path') {
-        const pathData = element.data as any;
+        const pathData = element.data as PathData;
         const parsedCommands = parsePathD(pathData.d);
         
         const newPathD = updatePathD(parsedCommands, updates);
-        (set as any)((currentState: any) => ({
-          elements: currentState.elements.map((el: any) =>
+        const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+          setStore((currentState) => ({
+          elements: currentState.elements.map((el) =>
             el.id === elementId 
               ? { ...el, data: { ...pathData, d: newPathD } }
               : el
@@ -860,7 +867,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     if (selectedCommands.length < 3) return;
     
     // For distribution, we need a consistent grouping strategy
-    const commandsByElement = selectedCommands.reduce((acc: any, cmd: any) => {
+    const commandsByElement = selectedCommands.reduce((acc: Record<string, typeof cmd[]>, cmd) => {
       if (!acc[cmd.elementId]) acc[cmd.elementId] = [];
       acc[cmd.elementId].push(cmd);
       return acc;
@@ -876,14 +883,14 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     
     // First collect all selected points with their current positions
     Object.entries(commandsByElement).forEach(([elementId, commands]) => {
-      const element = state.elements.find((el: any) => el.id === elementId);
+      const element = state.elements.find((el) => el.id === elementId);
       if (element && element.type === 'path') {
-        const pathData = element.data as any;
+        const pathData = element.data as PathData;
         const parsedCommands = parsePathD(pathData.d);
         const allPoints = extractEditablePoints(parsedCommands);
         
-        (commands as any).forEach((cmd: any) => {
-          const point = allPoints.find((p: any) => 
+        (commands).forEach((cmd) => {
+          const point = allPoints.find((p) => 
             p.commandIndex === cmd.commandIndex && 
             p.pointIndex === cmd.pointIndex
           );
@@ -944,14 +951,15 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     
     // Apply updates to each element
     elementUpdates.forEach((updates, elementId) => {
-      const element = state.elements.find((el: any) => el.id === elementId);
+      const element = state.elements.find((el) => el.id === elementId);
       if (element && element.type === 'path') {
-        const pathData = element.data as any;
+        const pathData = element.data as PathData;
         const parsedCommands = parsePathD(pathData.d);
         
         const newPathD = updatePathD(parsedCommands, updates);
-        (set as any)((currentState: any) => ({
-          elements: currentState.elements.map((el: any) =>
+        const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+          setStore((currentState) => ({
+          elements: currentState.elements.map((el) =>
             el.id === elementId 
               ? { ...el, data: { ...pathData, d: newPathD } }
               : el
@@ -972,10 +980,10 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     const state = get() as FullCanvasState;
     const isSubpathMode = (get() as FullCanvasState).isWorkingWithSubpaths();
     
-    const element = state.elements.find((el: any) => el.id === elementId);
+    const element = state.elements.find((el) => el.id === elementId);
     if (!element || element.type !== 'path') return [];
 
-    const pathData = element.data as any;
+    const pathData = element.data as PathData;
     const commands = parsePathD(pathData.d);
     const allPoints = extractEditablePoints(commands);
 
@@ -985,7 +993,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     }
 
     // Subpath mode: filter points to only include those from selected subpaths
-    const selectedSubpaths = state.selectedSubpaths.filter((sp: any) => sp.elementId === elementId);
+    const selectedSubpaths = state.selectedSubpaths.filter((sp) => sp.elementId === elementId);
     if (selectedSubpaths.length === 0) return [];
 
     const subpaths = extractSubpaths(commands);
@@ -1022,9 +1030,9 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
       targetElementId = state.selectedCommands[0].elementId;
     } else if (state.editingPoint) {
       targetElementId = state.editingPoint.elementId;
-    } else if ((state as any).selectedIds && (state as any).selectedIds.length > 0) {
+    } else if ((state as CanvasStore).selectedIds && (state as CanvasStore).selectedIds.length > 0) {
       // Fallback to first selected element
-      targetElementId = (state as any).selectedIds[0];
+      targetElementId = (state as CanvasStore).selectedIds[0];
     }
 
     if (!targetElementId) {
@@ -1032,7 +1040,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     }
 
     const elements = (get() as FullCanvasState).elements;
-    const element = elements.find((el: any) => el.id === targetElementId);
+    const element = elements.find((el) => el.id === targetElementId);
     if (!element || element.type !== 'path') {
       return;
     }
@@ -1042,7 +1050,13 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     const editablePoints = extractEditablePoints(commands);
 
     let rebuildPath = false;
-    let simplifiedPointsForRebuild: any[] = [];
+    let simplifiedPointsForRebuild: Array<{
+      commandIndex: number;
+      pointIndex: number;
+      x: number;
+      y: number;
+      isControl: boolean;
+    }> = [];
 
     // Calculate affected points for feedback
     const affectedPoints: Array<{
@@ -1064,7 +1078,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     if (state.selectedCommands.length > 0) {
       // Apply smoothing only to selected commands
       
-      state.selectedCommands.forEach((selectedCmd: any) => {
+      state.selectedCommands.forEach((selectedCmd) => {
         const point = editablePoints.find(p => 
           p.commandIndex === selectedCmd.commandIndex && 
           p.pointIndex === selectedCmd.pointIndex
@@ -1176,7 +1190,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     }
 
     // Update affected points for feedback
-    set((currentState: any) => ({
+    set((currentState) => ({
       smoothBrush: { ...currentState.smoothBrush, affectedPoints },
     }));
 

@@ -1,4 +1,6 @@
 import type { StateCreator } from 'zustand';
+import type { CanvasStore } from '../../canvasStore';
+import type { PathData } from '../../../types';
 import { parsePathD, extractSubpaths } from '../../../utils/pathParserUtils';
 import { measurePath } from '../../../utils/measurementUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../../utils';
@@ -61,21 +63,21 @@ interface SubpathWithBounds {
 
 // Helper function to apply transformations to multiple subpaths efficiently
 const applySubpathTransformations = (
-  state: any,
+  state: CanvasStore,
   subpathBounds: SubpathWithBounds[], 
   getTransformation: (subpathInfo: SubpathWithBounds) => { deltaX: number; deltaY: number }
 ) => {
   // Group transformations by element to avoid multiple updates
-  const elementUpdates = new Map<string, { pathData: any; transformations: Array<{ subpathIndex: number; deltaX: number; deltaY: number }> }>();
+  const elementUpdates = new Map<string, { pathData: PathData; transformations: Array<{ subpathIndex: number; deltaX: number; deltaY: number }> }>();
 
   // Collect all transformations first
   subpathBounds.forEach(subpathInfo => {
     const { deltaX, deltaY } = getTransformation(subpathInfo);
     
     if (Math.abs(deltaX) > 0.001 || Math.abs(deltaY) > 0.001) { // Only update if there's a meaningful change
-      const element = state.elements.find((el: any) => el.id === subpathInfo.elementId);
+      const element = state.elements.find((el) => el.id === subpathInfo.elementId);
       if (element) {
-        const pathData = element.data as any;
+        const pathData = element.data as import('../../../types').PathData;
         
         if (!elementUpdates.has(subpathInfo.elementId)) {
           elementUpdates.set(subpathInfo.elementId, {
@@ -169,7 +171,7 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
 
   // Actions
   startDraggingSubpath: (elementId: string, subpathIndex: number, startX: number, startY: number) => {
-    const state = get() as any;
+    const state = get() as CanvasStore;
     const selectedSubpaths = get().selectedSubpaths;
     
     // Check if the dragged subpath is in the selection
@@ -205,9 +207,10 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
     
     // Store original path data for each element
     Object.keys(subpathsByElement).forEach(elId => {
-      const element = state.elements.find((el: any) => el.id === elId);
+      const element = state.elements.find((el) => el.id === elId);
       if (element && element.type === 'path') {
-        originalPathDataMap[elId] = (element.data as any).d;
+        const pathData = element.data as import('../../../types').PathData;
+        originalPathDataMap[elId] = pathData.d;
       }
     });
     
@@ -284,7 +287,7 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
   },
 
   deleteSelectedSubpaths: () => {
-    const state = get() as any;
+    const state = get() as CanvasStore;
     const selectedSubpaths = get().selectedSubpaths;
     
     if (selectedSubpaths.length === 0) return;
@@ -300,9 +303,9 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
 
     // Update each element by removing selected subpaths
     Object.entries(subpathsByElement).forEach(([elementId, subpathIndices]) => {
-      const element = state.elements.find((el: any) => el.id === elementId);
+      const element = state.elements.find((el) => el.id === elementId);
       if (element && element.type === 'path') {
-        const pathData = element.data as any;
+        const pathData = element.data as import('../../../types').PathData;
         
         const commands = parsePathD(pathData.d);
         const subpaths = extractSubpaths(commands);
@@ -333,7 +336,7 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
   },
 
   bringSubpathToFront: () => {
-    const state = get() as any;
+    const state = get() as CanvasStore;
     const selectedSubpaths = get().selectedSubpaths;
     
     if (selectedSubpaths.length === 0) return;
@@ -348,9 +351,9 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
     }, {} as Record<string, number[]>);
 
     Object.entries(subpathsByElement).forEach(([elementId, subpathIndices]) => {
-      const element = state.elements.find((el: any) => el.id === elementId);
+      const element = state.elements.find((el) => el.id === elementId);
       if (element && element.type === 'path') {
-        const pathData = element.data as any;
+        const pathData = element.data as import('../../../types').PathData;
         const commands = parsePathD(pathData.d);
         const subpaths = extractSubpaths(commands);
         
@@ -376,7 +379,7 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
   },
 
   sendSubpathForward: () => {
-    const state = get() as any;
+    const state = get() as CanvasStore;
     const selectedSubpaths = get().selectedSubpaths;
     
     if (selectedSubpaths.length === 0) return;
@@ -390,9 +393,9 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
     }, {} as Record<string, number[]>);
 
     Object.entries(subpathsByElement).forEach(([elementId, subpathIndices]) => {
-      const element = state.elements.find((el: any) => el.id === elementId);
+      const element = state.elements.find((el) => el.id === elementId);
       if (element && element.type === 'path') {
-        const pathData = element.data as any;
+        const pathData = element.data as PathData;
         const commands = parsePathD(pathData.d);
         const subpaths = extractSubpaths(commands);
         
@@ -417,7 +420,7 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
   },
 
   sendSubpathBackward: () => {
-    const state = get() as any;
+    const state = get() as CanvasStore;
     const selectedSubpaths = get().selectedSubpaths;
     
     if (selectedSubpaths.length === 0) return;
@@ -431,9 +434,9 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
     }, {} as Record<string, number[]>);
 
     Object.entries(subpathsByElement).forEach(([elementId, subpathIndices]) => {
-      const element = state.elements.find((el: any) => el.id === elementId);
+      const element = state.elements.find((el) => el.id === elementId);
       if (element && element.type === 'path') {
-        const pathData = element.data as any;
+        const pathData = element.data as PathData;
         const commands = parsePathD(pathData.d);
         const subpaths = extractSubpaths(commands);
         
@@ -458,7 +461,7 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
   },
 
   sendSubpathToBack: () => {
-    const state = get() as any;
+    const state = get() as CanvasStore;
     const selectedSubpaths = get().selectedSubpaths;
     
     if (selectedSubpaths.length === 0) return;
@@ -472,9 +475,9 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
     }, {} as Record<string, number[]>);
 
     Object.entries(subpathsByElement).forEach(([elementId, subpathIndices]) => {
-      const element = state.elements.find((el: any) => el.id === elementId);
+      const element = state.elements.find((el) => el.id === elementId);
       if (element && element.type === 'path') {
-        const pathData = element.data as any;
+        const pathData = element.data as PathData;
         const commands = parsePathD(pathData.d);
         const subpaths = extractSubpaths(commands);
         
@@ -499,7 +502,7 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
   },
 
   alignLeftSubpaths: () => {
-    const state = get() as any;
+    const state = get() as CanvasStore;
     const selectedSubpaths = get().selectedSubpaths;
     
     if (selectedSubpaths.length < 2) {
@@ -510,9 +513,9 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
     const subpathBounds: SubpathWithBounds[] = [];
     
     selectedSubpaths.forEach(selected => {
-      const element = state.elements.find((el: any) => el.id === selected.elementId);
+      const element = state.elements.find((el) => el.id === selected.elementId);
       if (element && element.type === 'path') {
-        const pathData = element.data as any;
+        const pathData = element.data as PathData;
         const commands = parsePathD(pathData.d);
         const subpaths = extractSubpaths(commands);
         const subpathData = subpaths[selected.subpathIndex];
@@ -546,7 +549,7 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
   },
 
   alignCenterSubpaths: () => {
-    const state = get() as any;
+    const state = get() as CanvasStore;
     const selectedSubpaths = get().selectedSubpaths;
     
     if (selectedSubpaths.length < 2) return;
@@ -554,9 +557,9 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
     const subpathBounds: SubpathWithBounds[] = [];
     
     selectedSubpaths.forEach(selected => {
-      const element = state.elements.find((el: any) => el.id === selected.elementId);
+      const element = state.elements.find((el) => el.id === selected.elementId);
       if (element && element.type === 'path') {
-        const pathData = element.data as any;
+        const pathData = element.data as PathData;
         const commands = parsePathD(pathData.d);
         const subpaths = extractSubpaths(commands);
         const subpathData = subpaths[selected.subpathIndex];
@@ -590,7 +593,7 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
   },
 
   alignRightSubpaths: () => {
-    const state = get() as any;
+    const state = get() as CanvasStore;
     const selectedSubpaths = get().selectedSubpaths;
     
     if (selectedSubpaths.length < 2) return;
@@ -598,9 +601,9 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
     const subpathBounds: SubpathWithBounds[] = [];
     
     selectedSubpaths.forEach(selected => {
-      const element = state.elements.find((el: any) => el.id === selected.elementId);
+      const element = state.elements.find((el) => el.id === selected.elementId);
       if (element && element.type === 'path') {
-        const pathData = element.data as any;
+        const pathData = element.data as PathData;
         const commands = parsePathD(pathData.d);
         const subpaths = extractSubpaths(commands);
         const subpathData = subpaths[selected.subpathIndex];
@@ -634,7 +637,7 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
   },
 
   alignTopSubpaths: () => {
-    const state = get() as any;
+    const state = get() as CanvasStore;
     const selectedSubpaths = get().selectedSubpaths;
     
     if (selectedSubpaths.length < 2) return;
@@ -642,9 +645,9 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
     const subpathBounds: SubpathWithBounds[] = [];
     
     selectedSubpaths.forEach(selected => {
-      const element = state.elements.find((el: any) => el.id === selected.elementId);
+      const element = state.elements.find((el) => el.id === selected.elementId);
       if (element && element.type === 'path') {
-        const pathData = element.data as any;
+        const pathData = element.data as PathData;
         const commands = parsePathD(pathData.d);
         const subpaths = extractSubpaths(commands);
         const subpathData = subpaths[selected.subpathIndex];
@@ -678,7 +681,7 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
   },
 
   alignMiddleSubpaths: () => {
-    const state = get() as any;
+    const state = get() as CanvasStore;
     const selectedSubpaths = get().selectedSubpaths;
     
     if (selectedSubpaths.length < 2) return;
@@ -686,9 +689,9 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
     const subpathBounds: SubpathWithBounds[] = [];
     
     selectedSubpaths.forEach(selected => {
-      const element = state.elements.find((el: any) => el.id === selected.elementId);
+      const element = state.elements.find((el) => el.id === selected.elementId);
       if (element && element.type === 'path') {
-        const pathData = element.data as any;
+        const pathData = element.data as PathData;
         const commands = parsePathD(pathData.d);
         const subpaths = extractSubpaths(commands);
         const subpathData = subpaths[selected.subpathIndex];
@@ -722,7 +725,7 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
   },
 
   alignBottomSubpaths: () => {
-    const state = get() as any;
+    const state = get() as CanvasStore;
     const selectedSubpaths = get().selectedSubpaths;
     
     if (selectedSubpaths.length < 2) return;
@@ -730,9 +733,9 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
     const subpathBounds: SubpathWithBounds[] = [];
     
     selectedSubpaths.forEach(selected => {
-      const element = state.elements.find((el: any) => el.id === selected.elementId);
+      const element = state.elements.find((el) => el.id === selected.elementId);
       if (element && element.type === 'path') {
-        const pathData = element.data as any;
+        const pathData = element.data as PathData;
         const commands = parsePathD(pathData.d);
         const subpaths = extractSubpaths(commands);
         const subpathData = subpaths[selected.subpathIndex];
@@ -766,7 +769,7 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
   },
 
   distributeHorizontallySubpaths: () => {
-    const state = get() as any;
+    const state = get() as CanvasStore;
     const selectedSubpaths = get().selectedSubpaths;
     
     if (selectedSubpaths.length < 3) {
@@ -776,9 +779,9 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
     const subpathBounds: SubpathWithBounds[] = [];
     
     selectedSubpaths.forEach(selected => {
-      const element = state.elements.find((el: any) => el.id === selected.elementId);
+      const element = state.elements.find((el) => el.id === selected.elementId);
       if (element && element.type === 'path') {
-        const pathData = element.data as any;
+        const pathData = element.data as PathData;
         const commands = parsePathD(pathData.d);
         const subpaths = extractSubpaths(commands);
         const subpathData = subpaths[selected.subpathIndex];
@@ -849,7 +852,7 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
   },
 
   distributeVerticallySubpaths: () => {
-    const state = get() as any;
+    const state = get() as CanvasStore;
     const selectedSubpaths = get().selectedSubpaths;
     
     if (selectedSubpaths.length < 3) return;
@@ -857,9 +860,9 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
     const subpathBounds: SubpathWithBounds[] = [];
     
     selectedSubpaths.forEach(selected => {
-      const element = state.elements.find((el: any) => el.id === selected.elementId);
+      const element = state.elements.find((el) => el.id === selected.elementId);
       if (element && element.type === 'path') {
-        const pathData = element.data as any;
+        const pathData = element.data as PathData;
         const commands = parsePathD(pathData.d);
         const subpaths = extractSubpaths(commands);
         const subpathData = subpaths[selected.subpathIndex];

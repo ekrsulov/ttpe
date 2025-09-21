@@ -1,4 +1,5 @@
 import type { StateCreator } from 'zustand';
+import type { StateSnapshot } from './historyPluginSlice';
 
 export interface EditorPluginSlice {
   // State - consolidating relevant state from individual plugins
@@ -7,7 +8,7 @@ export interface EditorPluginSlice {
     history: {
       canUndo: boolean;
       canRedo: boolean;
-      historyStack: any[];
+      historyStack: StateSnapshot[];
       currentIndex: number;
     };
     

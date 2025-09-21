@@ -1,5 +1,6 @@
 import type { StateCreator } from 'zustand';
 import type { CanvasElement } from '../../../types';
+import type { CanvasStore } from '../../canvasStore';
 import { measurePath } from '../../../utils/measurementUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../../utils';
 
@@ -71,7 +72,7 @@ export interface ArrangeSlice {
 export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) => ({
   // Actions
   alignLeft: () => {
-    const fullState = get() as any;
+    const fullState = get() as CanvasStore;
     const selectedElements = fullState.elements.filter((el: CanvasElement) => fullState.selectedIds.includes(el.id));
     if (selectedElements.length < 2) return;
 
@@ -84,7 +85,8 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
       return 0;
     }));
 
-    (set as any)((state: any) => ({
+    const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+    setStore((state) => ({
       elements: state.elements.map((el: CanvasElement) => {
         if (fullState.selectedIds.includes(el.id)) {
           if (el.type === 'path') {
@@ -109,7 +111,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
   },
 
   alignCenter: () => {
-    const fullState = get() as any;
+    const fullState = get() as CanvasStore;
     const selectedElements = fullState.elements.filter((el: CanvasElement) => fullState.selectedIds.includes(el.id));
     if (selectedElements.length < 2) return;
 
@@ -124,7 +126,8 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
 
     const targetCenter = Array.from(centers.values()).reduce((sum: number, center: number) => sum + center, 0) / centers.size;
 
-    (set as any)((state: any) => ({
+    const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+    setStore((state) => ({
       elements: state.elements.map((el: CanvasElement) => {
         if (fullState.selectedIds.includes(el.id) && centers.has(el.id)) {
           const currentCenter = centers.get(el.id)!;
@@ -147,7 +150,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
   },
 
   alignRight: () => {
-    const fullState = get() as any;
+    const fullState = get() as CanvasStore;
     const selectedElements = fullState.elements.filter((el: CanvasElement) => fullState.selectedIds.includes(el.id));
     if (selectedElements.length < 2) return;
 
@@ -160,7 +163,8 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
       return 0;
     }));
 
-    (set as any)((state: any) => ({
+    const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+    setStore((state) => ({
       elements: state.elements.map((el: CanvasElement) => {
         if (fullState.selectedIds.includes(el.id)) {
           if (el.type === 'path') {
@@ -182,7 +186,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
   },
 
   alignTop: () => {
-    const fullState = get() as any;
+    const fullState = get() as CanvasStore;
     const selectedElements = fullState.elements.filter((el: CanvasElement) => fullState.selectedIds.includes(el.id));
     if (selectedElements.length < 2) return;
 
@@ -195,7 +199,8 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
       return 0;
     }));
 
-    (set as any)((state: any) => ({
+    const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+    setStore((state) => ({
       elements: state.elements.map((el: CanvasElement) => {
         if (fullState.selectedIds.includes(el.id)) {
           if (el.type === 'path') {
@@ -217,7 +222,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
   },
 
   alignMiddle: () => {
-    const fullState = get() as any;
+    const fullState = get() as CanvasStore;
     const selectedElements = fullState.elements.filter((el: CanvasElement) => fullState.selectedIds.includes(el.id));
     if (selectedElements.length < 2) return;
 
@@ -232,7 +237,8 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
 
     const targetCenter = Array.from(centers.values()).reduce((sum: number, center: number) => sum + center, 0) / centers.size;
 
-    (set as any)((state: any) => ({
+    const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+    setStore((state) => ({
       elements: state.elements.map((el: CanvasElement) => {
         if (fullState.selectedIds.includes(el.id) && centers.has(el.id)) {
           const currentCenter = centers.get(el.id)!;
@@ -255,7 +261,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
   },
 
   alignBottom: () => {
-    const fullState = get() as any;
+    const fullState = get() as CanvasStore;
     const selectedElements = fullState.elements.filter((el: CanvasElement) => fullState.selectedIds.includes(el.id));
     if (selectedElements.length < 2) return;
 
@@ -268,7 +274,8 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
       return 0;
     }));
 
-    (set as any)((state: any) => ({
+    const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+    setStore((state) => ({
       elements: state.elements.map((el: CanvasElement) => {
         if (fullState.selectedIds.includes(el.id)) {
           if (el.type === 'path') {
@@ -290,7 +297,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
   },
 
   distributeHorizontally: () => {
-    const fullState = get() as any;
+    const fullState = get() as CanvasStore;
     const selectedElements = fullState.elements.filter((el: CanvasElement) => fullState.selectedIds.includes(el.id));
     if (selectedElements.length < 3) return;
 
@@ -336,7 +343,8 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
       currentX += elementBounds[i].width + spaceBetween;
     }
 
-    (set as any)((state: any) => ({
+    const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+    setStore((state) => ({
       elements: state.elements.map((el: CanvasElement) => {
         const boundItemIndex = elementBounds.findIndex((item: ElementWithBounds) => item.element.id === el.id);
         if (boundItemIndex !== -1) {
@@ -362,7 +370,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
   },
 
   distributeVertically: () => {
-    const fullState = get() as any;
+    const fullState = get() as CanvasStore;
     const selectedElements = fullState.elements.filter((el: CanvasElement) => fullState.selectedIds.includes(el.id));
     if (selectedElements.length < 3) return;
 
@@ -416,7 +424,8 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
       currentY += elementHeight + spaceBetween;
     }
 
-    (set as any)((state: any) => ({
+    const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+    setStore((state) => ({
       elements: state.elements.map((el: CanvasElement) => {
         const boundItemIndex = elementBounds.findIndex((item: ElementWithBounds) => item.element.id === el.id);
         if (boundItemIndex !== -1) {

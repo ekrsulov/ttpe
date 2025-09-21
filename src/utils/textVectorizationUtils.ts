@@ -4,7 +4,7 @@ import { parsePath, serialize, absolutize, normalize } from 'path-data-parser';
 import { PATH_DECIMAL_PRECISION, formatToPrecision } from './index';
 
 // Cache for text vectorization to improve performance
-const textVectorizationCache = new (globalThis as any).Map();
+const textVectorizationCache = new Map<string, string>();
 
 // Initialize potrace once
 let potraceInitialized = false;
@@ -140,7 +140,7 @@ const extractPathFromSVGResult = (
     return '';
   }
 
-  const allNormalizedSegments: any[][] = [];
+  const allNormalizedSegments: Array<Array<{ key: string; data: number[] }>> = [];
   
   // First pass: Process each path element using path-data-parser
   for (const pathElement of pathElements) {
@@ -203,7 +203,7 @@ const extractPathFromSVGResult = (
 };
 
 // Calculate global bounds for all paths to preserve relative positions
-const calculateGlobalBounds = (allSegments: any[][]): { minX: number, minY: number, maxX: number, maxY: number, width: number, height: number } => {
+const calculateGlobalBounds = (allSegments: Array<Array<{ key: string; data: number[] }>>): { minX: number, minY: number, maxX: number, maxY: number, width: number, height: number } => {
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   
   for (const segments of allSegments) {
@@ -246,13 +246,13 @@ const calculateGlobalBounds = (allSegments: any[][]): { minX: number, minY: numb
 
 // Transform segments using global bounds to preserve relative positions between paths
 const transformSegmentsWithGlobalBounds = (
-  segments: any[],
+  segments: Array<{ key: string; data: number[] }>,
   targetX: number,
   targetY: number,
   globalBounds: { minX: number, minY: number, maxX: number, maxY: number, width: number, height: number },
   actualAscent: number,
   actualDescent: number
-): any[] => {
+): Array<{ key: string; data: number[] }> => {
   if (!segments || segments.length === 0) {
     return [];
   }
