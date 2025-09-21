@@ -1,5 +1,5 @@
 import type { StateCreator } from 'zustand';
-import { parsePathD, extractEditablePoints, updatePathD, normalizePathCommands, extractSubpaths, simplifyPoints, findPairedControlPoint, determineControlPointAlignment } from '../../../utils/pathParserUtils';
+import { parsePathD, extractEditablePoints, updatePathD, normalizePathCommands, extractSubpaths, simplifyPoints, findPairedControlPoint, determineControlPointAlignment, type PathCommand } from '../../../utils/pathParserUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../../utils';
 import type { CanvasElement, PathData, Point } from '../../../types';
 import type { CanvasStore } from '../../canvasStore';
@@ -72,6 +72,9 @@ export interface EditPluginSlice {
   getPointsInRange: (elementId: string, startCommandIndex: number, startPointIndex: number, endCommandIndex: number, endPointIndex: number) => Array<{ elementId: string; commandIndex: number; pointIndex: number }>;
   clearSelectedCommands: () => void;
   deleteSelectedCommands: () => void;
+  deleteZCommandForMPoint: (elementId: string, commandIndex: number) => void;
+  moveToM: (elementId: string, commandIndex: number, pointIndex: number) => void;
+  convertCommandType: (elementId: string, commandIndex: number) => void;
   alignLeftCommands: () => void;
   alignCenterCommands: () => void;
   alignRightCommands: () => void;
@@ -96,6 +99,8 @@ export interface EditPluginSlice {
   updateControlPointAlignment: (elementId: string, commandIndex: number, pointIndex: number) => void;
   getControlPointInfo: (elementId: string, commandIndex: number, pointIndex: number) => import('../../../types').ControlPointInfo | null;
   setControlPointAlignmentType: (elementId: string, commandIndex1: number, pointIndex1: number, commandIndex2: number, pointIndex2: number, type: import('../../../types').ControlPointType) => void;
+  applyControlPointAlignment: (elementId: string, commandIndex: number, pointIndex: number, newX: number, newY: number) => void;
+  finalizePointMove: (elementId: string, commandIndex: number, pointIndex: number, newX: number, newY: number) => void;
 }
 
 export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPluginSlice> = (set, get) => ({
@@ -1636,4 +1641,306 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
       }
     }));
   },
-});
+
+  applyControlPointAlignment: (elementId: string, commandIndex: number, pointIndex: number, newX: number, newY: number) => {
+    const state = get() as FullCanvasState;
+    const element = state.elements.find((el: CanvasElement) => el.id === elementId);
+    if (!element || element.type !== 'path') return;
+
+    const pathData = element.data as PathData;
+    const commands = parsePathD(pathData.d);
+    const points = extractEditablePoints(commands);
+
+    // Find the control point that was moved
+    const movedPoint = points.find(p => p.commandIndex === commandIndex && p.pointIndex === pointIndex);
+    if (!movedPoint || !movedPoint.isControl) return;
+
+    // Get the alignment info for this point
+    const key = `${elementId}-${commandIndex}-${pointIndex}`;
+    const alignmentInfo = state.controlPointAlignment.controlPoints[key];
+    if (!alignmentInfo || alignmentInfo.type === 'independent') return;
+
+    // Find the paired point
+    const pairedPoint = points.find(p => 
+      p.commandIndex === alignmentInfo.pairedCommandIndex && 
+      p.pointIndex === alignmentInfo.pairedPointIndex
+    );
+    if (!pairedPoint) return;
+
+    // Calculate the new position for the paired point based on alignment type
+    const sharedAnchor = alignmentInfo.anchor;
+    const newVector = {
+      x: newX - sharedAnchor.x,
+      y: newY - sharedAnchor.y
+    };
+
+    let newPairedX: number;
+    let newPairedY: number;
+
+    if (alignmentInfo.type === 'mirrored') {
+      // Mirror the movement
+      const magnitude = Math.sqrt(newVector.x * newVector.x + newVector.y * newVector.y);
+      const unitVector = magnitude > 0 ? {
+        x: newVector.x / magnitude,
+        y: newVector.y / magnitude
+      } : { x: 0, y: 0 };
+
+      newPairedX = sharedAnchor.x + (-unitVector.x * magnitude);
+      newPairedY = sharedAnchor.y + (-unitVector.y * magnitude);
+    } else { // aligned
+      // Maintain opposite direction with same magnitude
+      const magnitude = Math.sqrt(newVector.x * newVector.x + newVector.y * newVector.y);
+      const unitVector = magnitude > 0 ? {
+        x: newVector.x / magnitude,
+        y: newVector.y / magnitude
+      } : { x: 0, y: 0 };
+
+      newPairedX = sharedAnchor.x + (-unitVector.x * magnitude);
+      newPairedY = sharedAnchor.y + (-unitVector.y * magnitude);
+    }
+
+    // Update the paired point position
+    pairedPoint.x = formatToPrecision(newPairedX, PATH_DECIMAL_PRECISION);
+    pairedPoint.y = formatToPrecision(newPairedY, PATH_DECIMAL_PRECISION);
+
+    // Update the path
+    const newPathD = updatePathD(commands, [pairedPoint]);
+    (get() as FullCanvasState).updateElement(elementId, {
+      data: {
+        ...pathData,
+        d: newPathD
+      }
+    });
+  },
+
+  finalizePointMove: (elementId: string, commandIndex: number, pointIndex: number, newX: number, newY: number) => {
+    // Apply control point alignment if this point has alignment configured
+    get().applyControlPointAlignment(elementId, commandIndex, pointIndex, newX, newY);
+  },
+
+  deleteZCommandForMPoint: (elementId: string, commandIndex: number) => {
+    const state = get() as FullCanvasState;
+    const element = state.elements.find((el: CanvasElement) => el.id === elementId);
+    
+    if (!element || element.type !== 'path') return;
+    
+    const pathData = element.data as PathData;
+    const commands = parsePathD(pathData.d);
+    
+    // Check if the command at commandIndex is an M command
+    if (commands[commandIndex]?.type !== 'M') return;
+    
+    // Find if there's a Z command that closes to this M point
+    // A Z command closes to the most recent M command
+    let hasClosingZ = false;
+    let zCommandIndex = -1;
+    
+    // Look for Z commands after this M command
+    for (let i = commandIndex + 1; i < commands.length; i++) {
+      if (commands[i].type === 'Z') {
+        // Check if this Z closes to our M point
+        // A Z closes to the last M before it
+        let lastMIndex = -1;
+        for (let j = i - 1; j >= 0; j--) {
+          if (commands[j].type === 'M') {
+            lastMIndex = j;
+            break;
+          }
+        }
+        
+        if (lastMIndex === commandIndex) {
+          hasClosingZ = true;
+          zCommandIndex = i;
+          break;
+        }
+      } else if (commands[i].type === 'M') {
+        // If we hit another M, stop looking
+        break;
+      }
+    }
+    
+    if (hasClosingZ && zCommandIndex !== -1) {
+      // Remove the Z command
+      const updatedCommands = commands.filter((_, index) => index !== zCommandIndex);
+      
+      // Normalize and reconstruct path
+      const normalizedCommands = normalizePathCommands(updatedCommands);
+      const newPathD = normalizedCommands.map(cmd => {
+        if (cmd.type === 'Z') return 'Z';
+        const pointStr = cmd.points.map(p => `${formatToPrecision(p.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(p.y, PATH_DECIMAL_PRECISION)}`).join(' ');
+        return `${cmd.type} ${pointStr}`;
+      }).join(' ');
+      
+      // Update the element
+      (set as (fn: (state: FullCanvasState) => Partial<FullCanvasState>) => void)((currentState) => ({
+        ...currentState,
+        elements: currentState.elements.map((el) =>
+          el.id === elementId
+            ? { ...el, data: { ...pathData, d: newPathD } }
+            : el
+        )
+      }));
+    }
+  },
+
+  moveToM: (elementId: string, commandIndex: number, pointIndex: number) => {
+    const state = get() as FullCanvasState;
+    const element = state.elements.find((el: CanvasElement) => el.id === elementId);
+    
+    if (!element || element.type !== 'path') return;
+    
+    const pathData = element.data as PathData;
+    const commands = parsePathD(pathData.d);
+    
+    // Check if the command exists and is L or C
+    const command = commands[commandIndex];
+    if (!command || (command.type !== 'L' && command.type !== 'C')) return;
+    
+    // Check if this is the last point of the command
+    const isLastPoint = pointIndex === command.points.length - 1;
+    if (!isLastPoint) return;
+    
+    // Check if this is the last command in the path or before a Z/M
+    const isLastCommandInSubpath = commandIndex === commands.length - 1 || 
+                                   commands[commandIndex + 1].type === 'M' || 
+                                   commands[commandIndex + 1].type === 'Z';
+    
+    if (!isLastCommandInSubpath) return;
+    
+    // Find the M command for this subpath (the last M before this command)
+    let subpathMIndex = -1;
+    for (let i = commandIndex - 1; i >= 0; i--) {
+      if (commands[i].type === 'M') {
+        subpathMIndex = i;
+        break;
+      }
+    }
+    
+    if (subpathMIndex === -1) return; // No M found
+    
+    // Get the point to move to M position
+    const pointToMove = command.points[pointIndex];
+    if (!pointToMove) return;
+    
+    const updatedCommands = [...commands];
+    
+    // Move the last point to the M position to close the subpath
+    updatedCommands[commandIndex] = {
+      ...command,
+      points: command.points.map((point, index) => 
+        index === pointIndex ? commands[subpathMIndex].points[0] : point
+      )
+    };
+    
+    // For C commands, we need to adjust control points to maintain curve shape
+    if (command.type === 'C' && command.points.length >= 3) {
+      // For a C command, points are: [control1, control2, endpoint]
+      // When moving the endpoint to the M position, we need to adjust control points
+      const mPosition = commands[subpathMIndex].points[0];
+      const originalEndpoint = command.points[2];
+      
+      // Calculate the offset
+      const offsetX = mPosition.x - originalEndpoint.x;
+      const offsetY = mPosition.y - originalEndpoint.y;
+      
+      // Move control points by the same offset to maintain relative positions
+      updatedCommands[commandIndex] = {
+        ...command,
+        points: [
+          { x: command.points[0].x + offsetX, y: command.points[0].y + offsetY }, // control point 1
+          { x: command.points[1].x + offsetX, y: command.points[1].y + offsetY }, // control point 2
+          mPosition // endpoint moved to M position
+        ]
+      };
+    }
+    
+    // Normalize and reconstruct path
+    const normalizedCommands = normalizePathCommands(updatedCommands);
+    const newPathD = normalizedCommands.map(cmd => {
+      if (cmd.type === 'Z') return 'Z';
+      const pointStr = cmd.points.map(p => `${formatToPrecision(p.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(p.y, PATH_DECIMAL_PRECISION)}`).join(' ');
+      return `${cmd.type} ${pointStr}`;
+    }).join(' ');
+    
+    // Update the element
+    (set as (fn: (state: FullCanvasState) => Partial<FullCanvasState>) => void)((currentState) => ({
+      ...currentState,
+      elements: currentState.elements.map((el) =>
+        el.id === elementId
+          ? { ...el, data: { ...pathData, d: newPathD } }
+          : el
+      )
+    }));
+  },
+
+  convertCommandType: (elementId: string, commandIndex: number) => {
+    const state = get() as FullCanvasState;
+    const element = state.elements.find((el: CanvasElement) => el.id === elementId);
+    
+    if (!element || element.type !== 'path') return;
+    
+    const pathData = element.data as PathData;
+    const commands = parsePathD(pathData.d);
+    
+    const command = commands[commandIndex];
+    if (!command) return;
+    
+    // Helper function to get command end point
+    const getCommandEndPoint = (cmd: PathCommand) => {
+      if (cmd.points && cmd.points.length > 0) {
+        return cmd.points[cmd.points.length - 1];
+      }
+      return null;
+    };
+    
+    const updatedCommands = [...commands];
+    
+    if (command.type === 'L') {
+      // Convert L to C: need to add control points
+      // For a smooth conversion, place control points at 1/3 and 2/3 of the line
+      const startPoint = commandIndex > 0 ? getCommandEndPoint(commands[commandIndex - 1]) : { x: 0, y: 0 };
+      const endPoint = command.points[0];
+      
+      if (startPoint) {
+        // Calculate control points at 1/3 and 2/3 of the line
+        const control1 = {
+          x: startPoint.x + (endPoint.x - startPoint.x) * (1/3),
+          y: startPoint.y + (endPoint.y - startPoint.y) * (1/3)
+        };
+        const control2 = {
+          x: startPoint.x + (endPoint.x - startPoint.x) * (2/3),
+          y: startPoint.y + (endPoint.y - startPoint.y) * (2/3)
+        };
+        
+        updatedCommands[commandIndex] = {
+          type: 'C',
+          points: [control1, control2, endPoint]
+        };
+      }
+    } else if (command.type === 'C') {
+      // Convert C to L: keep only the endpoint
+      const endPoint = command.points[2]; // Last point is the endpoint
+      updatedCommands[commandIndex] = {
+        type: 'L',
+        points: [endPoint]
+      };
+    }
+    
+    // Normalize and reconstruct path
+    const normalizedCommands = normalizePathCommands(updatedCommands);
+    const newPathD = normalizedCommands.map(cmd => {
+      if (cmd.type === 'Z') return 'Z';
+      const pointStr = cmd.points.map(p => `${formatToPrecision(p.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(p.y, PATH_DECIMAL_PRECISION)}`).join(' ');
+      return `${cmd.type} ${pointStr}`;
+    }).join(' ');
+    
+    // Update the element
+    (set as (fn: (state: FullCanvasState) => Partial<FullCanvasState>) => void)((currentState) => ({
+      ...currentState,
+      elements: currentState.elements.map((el) =>
+        el.id === elementId
+          ? { ...el, data: { ...pathData, d: newPathD } }
+          : el
+      )
+    }));
+  },});

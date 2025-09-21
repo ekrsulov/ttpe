@@ -9,7 +9,10 @@ export const ControlPointAlignmentPanel: React.FC = () => {
     activePlugin,
     getControlPointInfo,
     setControlPointAlignmentType,
-    elements
+    elements,
+    deleteZCommandForMPoint,
+    moveToM,
+    convertCommandType
   } = useCanvasStore();
 
   // Track if we already auto-calculated alignment for current selection
@@ -43,6 +46,99 @@ export const ControlPointAlignmentPanel: React.FC = () => {
     }
     return null;
   };
+
+  // Check if selected M point has a closing Z command
+  const hasClosingZCommand = useCallback((elementId: string, commandIndex: number): boolean => {
+    const element = elements.find(el => el.id === elementId);
+    if (!element || element.type !== 'path') return false;
+    
+    const pathData = element.data as import('../../types').PathData;
+    const commands = parsePathD(pathData.d);
+    
+    // Check if the command at commandIndex is an M command
+    if (commands[commandIndex]?.type !== 'M') return false;
+    
+    // Look for Z commands after this M command
+    for (let i = commandIndex + 1; i < commands.length; i++) {
+      if (commands[i].type === 'Z') {
+        // Check if this Z closes to our M point
+        // A Z closes to the last M before it
+        let lastMIndex = -1;
+        for (let j = i - 1; j >= 0; j--) {
+          if (commands[j].type === 'M') {
+            lastMIndex = j;
+            break;
+          }
+        }
+        
+        if (lastMIndex === commandIndex) {
+          return true;
+        }
+      } else if (commands[i].type === 'M') {
+        // If we hit another M, stop looking
+        break;
+      }
+    }
+    
+    return false;
+  }, [elements]);
+
+  // Check if selected point is the last point of its subpath
+  const isLastPointOfSubpath = useCallback((elementId: string, commandIndex: number, pointIndex: number): boolean => {
+    const element = elements.find(el => el.id === elementId);
+    if (!element || element.type !== 'path') return false;
+    
+    const pathData = element.data as import('../../types').PathData;
+    const commands = parsePathD(pathData.d);
+    
+    const command = commands[commandIndex];
+    if (!command) return false;
+    
+    // Check if this is the last point of the command
+    const isLastPoint = pointIndex === command.points.length - 1;
+    if (!isLastPoint) return false;
+    
+    // Check if this is the last command in the path or before a Z/M
+    const isLastCommandInSubpath = commandIndex === commands.length - 1 || 
+                                   commands[commandIndex + 1].type === 'M' || 
+                                   commands[commandIndex + 1].type === 'Z';
+    
+    return isLastCommandInSubpath;
+  }, [elements]);
+
+  // Check if selected point is already at the same position as the M of its subpath
+  const isAtMPosition = useCallback((elementId: string, commandIndex: number, pointIndex: number): boolean => {
+    const element = elements.find(el => el.id === elementId);
+    if (!element || element.type !== 'path') return false;
+    
+    const pathData = element.data as import('../../types').PathData;
+    const commands = parsePathD(pathData.d);
+    
+    const command = commands[commandIndex];
+    if (!command) return false;
+    
+    // Find the M command for this subpath (the last M before this command)
+    let subpathMIndex = -1;
+    for (let i = commandIndex - 1; i >= 0; i--) {
+      if (commands[i].type === 'M') {
+        subpathMIndex = i;
+        break;
+      }
+    }
+    
+    if (subpathMIndex === -1) return false;
+    
+    // Get the point to check
+    const pointToCheck = command.points[pointIndex];
+    const mPosition = commands[subpathMIndex].points[0];
+    
+    if (!pointToCheck || !mPosition) return false;
+    
+    // Check if they are at the same position (with small tolerance for floating point)
+    const tolerance = 0.1;
+    return Math.abs(pointToCheck.x - mPosition.x) < tolerance && 
+           Math.abs(pointToCheck.y - mPosition.y) < tolerance;
+  }, [elements]);
 
   // Get info for a single selected control point
   const getSinglePointInfo = useCallback(() => {
@@ -282,6 +378,71 @@ export const ControlPointAlignmentPanel: React.FC = () => {
         <div style={{ fontSize: '11px', color: '#666', lineHeight: '1.4' }}>
           <div><strong style={{ color: '#333' }}>Position:</strong> ({singlePointInfo.point.x.toFixed(2)}, {singlePointInfo.point.y.toFixed(2)})</div>
           <div><strong style={{ color: '#333' }}>Location:</strong> {singlePointInfo.location}</div>
+          {hasClosingZCommand(selectedCommands[0].elementId, selectedCommands[0].commandIndex) && (
+            <div style={{ marginTop: '8px' }}>
+              <button
+                onClick={() => deleteZCommandForMPoint(selectedCommands[0].elementId, selectedCommands[0].commandIndex)}
+                style={{
+                  padding: '6px 8px',
+                  backgroundColor: '#dc3545',
+                  color: '#fff',
+                  border: '1px solid #dc3545',
+                  borderRadius: '4px',
+                  fontSize: '11px',
+                  cursor: 'pointer',
+                  width: '100%',
+                  textAlign: 'center'
+                }}
+                title="Delete the Z command that closes this path"
+              >
+                Delete Z Command
+              </button>
+            </div>
+          )}
+          {(singlePointInfo.command.type === 'L' || singlePointInfo.command.type === 'C') && 
+           isLastPointOfSubpath(selectedCommands[0].elementId, selectedCommands[0].commandIndex, selectedCommands[0].pointIndex) && 
+           !isAtMPosition(selectedCommands[0].elementId, selectedCommands[0].commandIndex, selectedCommands[0].pointIndex) && (
+            <div style={{ marginTop: '8px' }}>
+              <button
+                onClick={() => moveToM(selectedCommands[0].elementId, selectedCommands[0].commandIndex, selectedCommands[0].pointIndex)}
+                style={{
+                  padding: '6px 8px',
+                  backgroundColor: '#28a745',
+                  color: '#fff',
+                  border: '1px solid #28a745',
+                  borderRadius: '4px',
+                  fontSize: '11px',
+                  cursor: 'pointer',
+                  width: '100%',
+                  textAlign: 'center'
+                }}
+                title="Move this point to start a new subpath"
+              >
+                Move to M
+              </button>
+            </div>
+          )}
+          {(singlePointInfo.command.type === 'L' || singlePointInfo.command.type === 'C') && (
+            <div style={{ marginTop: '8px' }}>
+              <button
+                onClick={() => convertCommandType(selectedCommands[0].elementId, selectedCommands[0].commandIndex)}
+                style={{
+                  padding: '6px 8px',
+                  backgroundColor: '#17a2b8',
+                  color: '#fff',
+                  border: '1px solid #17a2b8',
+                  borderRadius: '4px',
+                  fontSize: '11px',
+                  cursor: 'pointer',
+                  width: '100%',
+                  textAlign: 'center'
+                }}
+                title={`Convert to ${singlePointInfo.command.type === 'L' ? 'C' : 'L'} command`}
+              >
+                To {singlePointInfo.command.type === 'L' ? 'C' : 'L'}
+              </button>
+            </div>
+          )}
         </div>
       ) : singlePointInfo.pairedPoint ? (
         <>
