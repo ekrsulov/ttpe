@@ -1,5 +1,5 @@
 import type { StateCreator } from 'zustand';
-import { parsePathD, extractEditablePoints, updatePathD, normalizePathCommands, extractSubpaths } from '../../../utils/pathParserUtils';
+import { parsePathD, extractEditablePoints, updatePathD, normalizePathCommands, extractSubpaths, simplifyPoints } from '../../../utils/pathParserUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../../utils';
 
 export interface EditPluginSlice {
@@ -34,6 +34,22 @@ export interface EditPluginSlice {
     deltaX?: number;
     deltaY?: number;
   } | null;
+  smoothBrush: {
+    radius: number;
+    strength: number;
+    isActive: boolean;
+    cursorX: number;
+    cursorY: number;
+    simplifyPoints: boolean;
+    simplificationTolerance: number;
+    minDistance: number;
+    affectedPoints: Array<{
+      commandIndex: number;
+      pointIndex: number;
+      x: number;
+      y: number;
+    }>;
+  };
 
   // Actions
   setEditingPoint: (point: { elementId: string; commandIndex: number; pointIndex: number } | null) => void;
@@ -60,6 +76,11 @@ export interface EditPluginSlice {
     y: number;
     isControl: boolean;
   }>;
+  updateSmoothBrush: (brush: Partial<EditPluginSlice['smoothBrush']>) => void;
+  applySmoothBrush: (centerX?: number, centerY?: number) => void;
+  activateSmoothBrush: () => void;
+  deactivateSmoothBrush: () => void;
+  updateSmoothBrushCursor: (x: number, y: number) => void;
 }
 
 export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPluginSlice> = (set, get) => ({
@@ -67,6 +88,17 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
   editingPoint: null,
   selectedCommands: [],
   draggingSelection: null,
+  smoothBrush: {
+    radius: 18,
+    strength: 0.35,
+    isActive: false,
+    cursorX: 0,
+    cursorY: 0,
+    simplifyPoints: false,
+    simplificationTolerance: 2.0,
+    minDistance: 0.5,
+    affectedPoints: [],
+  },
 
   // Actions
   setEditingPoint: (point) => {
@@ -963,5 +995,308 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     });
 
     return filteredPoints;
+  },
+
+  updateSmoothBrush: (brush) => {
+    set((state) => ({
+      smoothBrush: { ...state.smoothBrush, ...brush },
+    }));
+  },
+
+    applySmoothBrush: (centerX?: number, centerY?: number) => {
+    const state = get() as any;
+    const { radius, strength, simplifyPoints: shouldSimplifyPoints, simplificationTolerance, minDistance } = state.smoothBrush;
+
+    console.log('=== APPLY SMOOTH BRUSH ===');
+    console.log('Settings:', { radius, strength, shouldSimplifyPoints, simplificationTolerance, minDistance });
+
+    // Find the active element (first selected or the one being edited)
+    let targetElementId = null;
+    if (state.selectedCommands.length > 0) {
+      targetElementId = state.selectedCommands[0].elementId;
+    } else if (state.editingPoint) {
+      targetElementId = state.editingPoint.elementId;
+    } else if ((state as any).selectedIds && (state as any).selectedIds.length > 0) {
+      // Fallback to first selected element
+      targetElementId = (state as any).selectedIds[0];
+    }
+
+    if (!targetElementId) {
+      console.log('No target element found');
+      return;
+    }
+
+    const elements = (get() as any).elements;
+    const element = elements.find((el: any) => el.id === targetElementId);
+    if (!element || element.type !== 'path') {
+      console.log('Target element not found or not a path');
+      return;
+    }
+
+    const pathData = element.data;
+    const commands = parsePathD(pathData.d);
+    const editablePoints = extractEditablePoints(commands);
+
+    let rebuildPath = false;
+    let simplifiedPointsForRebuild: any[] = [];
+
+    console.log('Original path points:', editablePoints.length);
+    console.log('Selected commands:', state.selectedCommands.length);
+    console.log('Mode:', state.selectedCommands.length > 0 ? 'Selected points mode' : 'Brush mode');
+    console.log('Brush type:', centerX !== undefined && centerY !== undefined ? 'Click-based' : 'Drag-based');
+
+    // Calculate affected points for feedback
+    const affectedPoints: Array<{
+      commandIndex: number;
+      pointIndex: number;
+      x: number;
+      y: number;
+    }> = [];
+
+    // Apply smoothing to points
+    const updatedPoints: Array<{
+      commandIndex: number;
+      pointIndex: number;
+      x: number;
+      y: number;
+      isControl: boolean;
+    }> = [];
+
+    if (state.selectedCommands.length > 0) {
+      // Apply smoothing only to selected commands
+      
+      state.selectedCommands.forEach((selectedCmd: any) => {
+        const point = editablePoints.find(p => 
+          p.commandIndex === selectedCmd.commandIndex && 
+          p.pointIndex === selectedCmd.pointIndex
+        );
+        
+        if (point) {
+          // Skip start and end points of the path
+          const pointIndex = editablePoints.indexOf(point);
+          if (pointIndex === 0 || pointIndex === editablePoints.length - 1) return;
+          
+          affectedPoints.push({
+            commandIndex: point.commandIndex,
+            pointIndex: point.pointIndex,
+            x: point.x,
+            y: point.y,
+          });
+
+          // Calculate smoothed position by averaging with neighbors
+          let sumX = 0, sumY = 0, count = 0;
+          
+          // Include current point and neighbors
+          for (let offset = -1; offset <= 1; offset++) {
+            const neighborIndex = editablePoints.findIndex(p => 
+              p.commandIndex === point.commandIndex && 
+              p.pointIndex === point.pointIndex
+            ) + offset;
+            if (neighborIndex >= 0 && neighborIndex < editablePoints.length) {
+              const neighbor = editablePoints[neighborIndex];
+              sumX += neighbor.x;
+              sumY += neighbor.y;
+              count++;
+            }
+          }
+          
+          if (count > 0) {
+            const avgX = sumX / count;
+            const avgY = sumY / count;
+            
+            const newX = point.x + (avgX - point.x) * strength;
+            const newY = point.y + (avgY - point.y) * strength;
+            
+            updatedPoints.push({
+              commandIndex: point.commandIndex,
+              pointIndex: point.pointIndex,
+              x: newX,
+              y: newY,
+              isControl: point.isControl,
+            });
+          }
+        }
+      });
+    } else {
+      // Original radius-based behavior
+      editablePoints.forEach((point, index) => {
+        // Skip start and end points of the path
+        if (index === 0 || index === editablePoints.length - 1) return;
+        
+        // If center is provided, only affect points within radius
+        if (centerX !== undefined && centerY !== undefined) {
+          const distance = Math.sqrt((point.x - centerX) ** 2 + (point.y - centerY) ** 2);
+          if (distance > radius) return;
+        }
+        
+        // Add to affected points for feedback
+        affectedPoints.push({
+          commandIndex: point.commandIndex,
+          pointIndex: point.pointIndex,
+          x: point.x,
+          y: point.y,
+        });
+
+        // Calculate smoothed position by averaging with neighbors
+        let sumX = 0, sumY = 0, count = 0;
+        
+        // Include current point and neighbors
+        for (let offset = -1; offset <= 1; offset++) {
+          const neighborIndex = index + offset;
+          if (neighborIndex >= 0 && neighborIndex < editablePoints.length) {
+            const neighbor = editablePoints[neighborIndex];
+            sumX += neighbor.x;
+            sumY += neighbor.y;
+            count++;
+          }
+        }
+        
+        if (count > 0) {
+          const avgX = sumX / count;
+          const avgY = sumY / count;
+          
+          // Weight based on distance (closer = more smoothing) if center is provided
+          let weight = strength;
+          if (centerX !== undefined && centerY !== undefined) {
+            const distance = Math.sqrt((point.x - centerX) ** 2 + (point.y - centerY) ** 2);
+            weight = strength * (1 - distance / radius);
+          }
+          
+          const newX = point.x + (avgX - point.x) * weight;
+          const newY = point.y + (avgY - point.y) * weight;
+          
+          updatedPoints.push({
+            commandIndex: point.commandIndex,
+            pointIndex: point.pointIndex,
+            x: newX,
+            y: newY,
+            isControl: point.isControl,
+          });
+        }
+      });
+    }
+
+    // Update affected points for feedback
+    set((currentState: any) => ({
+      smoothBrush: { ...currentState.smoothBrush, affectedPoints },
+    }));
+
+    // Update the path if points were affected
+    if (updatedPoints.length > 0) {
+      console.log('Points to update:', updatedPoints.length);
+      let finalPoints = updatedPoints;
+      
+      // Apply point simplification if enabled
+      if (shouldSimplifyPoints) {
+        console.log('Applying point simplification...');
+        
+        if (state.selectedCommands.length > 0) {
+          // When points are selected, get all points after partial smoothing to apply simplification
+          console.log('Selected mode - getting all points after partial smoothing for simplification');
+          const smoothedCommands = updatePathD(commands, updatedPoints);
+          const smoothedPathData = parsePathD(smoothedCommands);
+          const allPointsAfterSmoothing = extractEditablePoints(smoothedPathData);
+          
+          console.log('Points after partial smoothing:', allPointsAfterSmoothing.length);
+          
+          // Simplify all points
+          const simplifiedPoints = simplifyPoints(allPointsAfterSmoothing, simplificationTolerance, minDistance);
+          
+          console.log('Points after simplification:', simplifiedPoints.length);
+          console.log('Simplification removed', allPointsAfterSmoothing.length - simplifiedPoints.length, 'points');
+          
+          // Rebuild the path from simplified points
+          simplifiedPointsForRebuild = simplifiedPoints;
+          rebuildPath = true;
+        } else {
+          // When no points are selected, simplify all points after smoothing
+          console.log('Simplifying all points after smoothing (brush mode)');
+          
+          if (centerX !== undefined && centerY !== undefined) {
+            // When clicking in brush mode, get all points after partial smoothing to apply simplification
+            console.log('Click-based brush mode - getting all points after partial smoothing for simplification');
+            const smoothedCommands = updatePathD(commands, updatedPoints);
+            const smoothedPathData = parsePathD(smoothedCommands);
+            const allPointsAfterSmoothing = extractEditablePoints(smoothedPathData);
+            
+            console.log('Points after partial smoothing:', allPointsAfterSmoothing.length);
+            
+            // Simplify all points
+            const simplifiedPoints = simplifyPoints(allPointsAfterSmoothing, simplificationTolerance, minDistance);
+            
+            console.log('Points after simplification:', simplifiedPoints.length);
+            console.log('Simplification removed', allPointsAfterSmoothing.length - simplifiedPoints.length, 'points');
+            
+            // Rebuild the path from simplified points
+            simplifiedPointsForRebuild = simplifiedPoints;
+            rebuildPath = true;
+          } else {
+            // When dragging in brush mode, simplify all points after smoothing
+            // Get all editable points after smoothing to apply simplification
+            const smoothedCommands = updatePathD(commands, updatedPoints);
+            const smoothedPathData = parsePathD(smoothedCommands);
+            const allPointsAfterSmoothing = extractEditablePoints(smoothedPathData);
+            
+            console.log('Points after smoothing:', allPointsAfterSmoothing.length);
+            
+            // Simplify the points
+            const simplifiedPoints = simplifyPoints(allPointsAfterSmoothing, simplificationTolerance, minDistance);
+            
+            console.log('Points after simplification:', simplifiedPoints.length);
+            console.log('Simplification removed', allPointsAfterSmoothing.length - simplifiedPoints.length, 'points');
+            
+            // For brush mode, rebuild the path from simplified points
+            simplifiedPointsForRebuild = simplifiedPoints;
+            rebuildPath = true;
+          }
+        }
+      } else {
+        console.log('Point simplification disabled');
+      }
+      
+      let newD: string;
+      if (rebuildPath) {
+        if (simplifiedPointsForRebuild.length > 0) {
+          newD = `M ${formatToPrecision(simplifiedPointsForRebuild[0].x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(simplifiedPointsForRebuild[0].y, PATH_DECIMAL_PRECISION)}`;
+          for (let i = 1; i < simplifiedPointsForRebuild.length; i++) {
+            newD += ` L ${formatToPrecision(simplifiedPointsForRebuild[i].x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(simplifiedPointsForRebuild[i].y, PATH_DECIMAL_PRECISION)}`;
+          }
+        } else {
+          newD = '';
+        }
+      } else {
+        newD = updatePathD(commands, finalPoints);
+      }
+      console.log('Final path d length:', newD.length);
+      
+      (get() as any).updateElement(targetElementId, {
+        data: {
+          ...pathData,
+          d: newD,
+        },
+      });
+      
+      console.log('=== SMOOTH BRUSH APPLIED ===');
+    } else {
+      console.log('No points were updated');
+    }
+  },
+
+  activateSmoothBrush: () => {
+    set((state) => ({
+      smoothBrush: { ...state.smoothBrush, isActive: true },
+    }));
+  },
+
+  deactivateSmoothBrush: () => {
+    set((state) => ({
+      smoothBrush: { ...state.smoothBrush, isActive: false, affectedPoints: [] },
+    }));
+  },
+
+  updateSmoothBrushCursor: (x: number, y: number) => {
+    set((state) => ({
+      smoothBrush: { ...state.smoothBrush, cursorX: x, cursorY: y },
+    }));
   },
 });

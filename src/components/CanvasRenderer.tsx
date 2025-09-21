@@ -96,6 +96,19 @@ interface CanvasRendererProps {
     y: number;
     isControl: boolean;
   }>;
+  smoothBrush: {
+    radius: number;
+    strength: number;
+    isActive: boolean;
+    cursorX: number;
+    cursorY: number;
+    affectedPoints: Array<{
+      commandIndex: number;
+      pointIndex: number;
+      x: number;
+      y: number;
+    }>;
+  };
 }
 
 export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
@@ -131,6 +144,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   onStopDraggingSubpath,
   isWorkingWithSubpaths,
   getFilteredEditablePoints,
+  smoothBrush,
 }) => {
   // Local state for drag visualization
   const [dragPosition, setDragPosition] = React.useState<{x: number, y: number} | null>(null);
@@ -142,6 +156,9 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     const UPDATE_THROTTLE = 16; // ~60fps
 
     const handlePointerMove = (e: PointerEvent) => {
+      // Disable all dragging interactions when smooth brush is active
+      if (smoothBrush.isActive) return;
+      
       if (editingPoint?.isDragging || draggingSelection?.isDragging || subpath?.isDragging) {
         // Get SVG element as reference for coordinate conversion
         const svgElement = document.querySelector('svg');
@@ -1363,7 +1380,17 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
                    cmd.pointIndex === point.pointIndex
           );
 
-          if (isSelected) {
+          // Check if this point is affected by smooth brush
+          const isAffectedByBrush = smoothBrush.isActive && smoothBrush.affectedPoints.some(
+            affected => affected.commandIndex === point.commandIndex && 
+                       affected.pointIndex === point.pointIndex
+          );
+
+          if (isAffectedByBrush) {
+            color = '#f59e0b'; // orange color for affected points
+            strokeColor = '#92400e'; // darker orange stroke
+            strokeWidth = 1.5;
+          } else if (isSelected) {
             strokeColor = 'yellow';
             strokeWidth = 2;
           }
@@ -1403,6 +1430,9 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
               style={{ cursor: 'pointer' }}
               onPointerDown={(e) => {
                 e.stopPropagation();
+                
+                // Disable point interaction when smooth brush is active
+                if (smoothBrush.isActive) return;
                 
                 // Check if this point is already selected
                 const isAlreadySelected = selectedCommands.some(cmd => 
@@ -1553,6 +1583,9 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
               }}
               onPointerDown={(e) => {
                 e.stopPropagation();
+                
+                // Disable subpath interaction when smooth brush is active
+                if (smoothBrush.isActive) return;
                 
                 // Check if this is a click for selection or start of drag
                 if (e.shiftKey) {

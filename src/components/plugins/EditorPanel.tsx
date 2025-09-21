@@ -47,7 +47,7 @@ export const EditorPanel: React.FC = () => {
     updateSelectedPaths,
     activePlugin,
     deleteSelectedSubpaths,
-    getSelectedSubpathsCount
+    getSelectedSubpathsCount,
   } = useCanvasStore();
 
   const { undo, redo, pastStates, futureStates } = useTemporalState();
@@ -524,6 +524,8 @@ export const EditorPanel: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Smooth Brush controls moved to EditPanel in Sidebar */}
 
       {/* Presets Section */}
       {isExpanded && (

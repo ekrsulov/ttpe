@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { temporal } from 'zundo';
 import { textToPath } from '../utils/textVectorizationUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../utils';
+import { parsePathD } from '../utils/pathParserUtils';
 import type { Point } from '../types';
 import isDeepEqual from 'fast-deep-equal';
 
@@ -156,6 +157,23 @@ export const useCanvasStore = create<CanvasStore>()(
           
           if (pencilPathElement) {
             const pathData = pencilPathElement.data as import('../types').PathData;
+            
+            // Parse the current path to get the last point
+            const commands = parsePathD(pathData.d);
+            if (commands.length > 0) {
+              const lastCommand = commands[commands.length - 1];
+              if (lastCommand.points.length > 0) {
+                const lastPoint = lastCommand.points[lastCommand.points.length - 1];
+                
+                // Check minimum step distance (like in the provided code)
+                const minStep = 1.25;
+                const distance = Math.sqrt((point.x - lastPoint.x) ** 2 + (point.y - lastPoint.y) ** 2);
+                if (distance < minStep) {
+                  return; // Don't add point if too close
+                }
+              }
+            }
+            
             const newD = `${pathData.d} L ${formatToPrecision(point.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(point.y, PATH_DECIMAL_PRECISION)}`;
             get().updateElement(pencilPathElement.id, {
               data: {

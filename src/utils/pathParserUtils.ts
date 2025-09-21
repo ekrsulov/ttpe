@@ -326,3 +326,143 @@ export function normalizePathD(d: string): string {
     return d; // Return original if normalization fails
   }
 }
+
+/**
+ * Calculate the distance from a point to a line segment
+ */
+function pointToLineDistance(px: number, py: number, x1: number, y1: number, x2: number, y2: number): number {
+  const A = px - x1;
+  const B = py - y1;
+  const C = x2 - x1;
+  const D = y2 - y1;
+
+  const dot = A * C + B * D;
+  const lenSq = C * C + D * D;
+
+  if (lenSq === 0) {
+    // Line segment is a point
+    return Math.sqrt(A * A + B * B);
+  }
+
+  const param = dot / lenSq;
+
+  let xx, yy;
+  if (param < 0) {
+    xx = x1;
+    yy = y1;
+  } else if (param > 1) {
+    xx = x2;
+    yy = y2;
+  } else {
+    xx = x1 + param * C;
+    yy = y1 + param * D;
+  }
+
+  const dx = px - xx;
+  const dy = py - yy;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+/**
+ * Simplify points using the Ramer-Douglas-Peucker algorithm
+ * This is the standard algorithm for curve simplification
+ */
+export function simplifyPoints(points: Array<{ x: number; y: number; commandIndex: number; pointIndex: number; isControl: boolean }>, tolerance: number = 1.0, minDistance: number = 0.1): Array<{ x: number; y: number; commandIndex: number; pointIndex: number; isControl: boolean }> {
+  console.log('=== SIMPLIFY POINTS ===');
+  console.log('Input points:', points.length, 'tolerance:', tolerance, 'minDistance:', minDistance);
+  
+  if (points.length <= 2) {
+    console.log('Not enough points to simplify, returning as-is');
+    return points;
+  }
+
+  // First pass: remove points that are too close to their neighbors
+  const filteredPoints: typeof points = [];
+  filteredPoints.push(points[0]); // Always keep the first point
+
+  for (let i = 1; i < points.length; i++) {
+    const prevPoint = filteredPoints[filteredPoints.length - 1];
+    const currentPoint = points[i];
+
+    // Skip control points for distance check
+    if (currentPoint.isControl) {
+      filteredPoints.push(currentPoint);
+      continue;
+    }
+
+    const distance = Math.sqrt(
+      Math.pow(currentPoint.x - prevPoint.x, 2) + 
+      Math.pow(currentPoint.y - prevPoint.y, 2)
+    );
+
+    // Only keep points that are far enough from the previous retained point
+    if (distance >= minDistance) {
+      filteredPoints.push(currentPoint);
+    } else {
+      console.log('Removing point', i, 'too close to previous retained point (distance:', distance.toFixed(3), '< minDistance:', minDistance, ')');
+    }
+  }
+
+  // Don't automatically add the last point - it's already processed in the loop above
+  console.log('After min distance filter:', filteredPoints.length, 'points (from', points.length, 'original points)');
+
+  // If we filtered out too many points, return the filtered result
+  if (filteredPoints.length <= 2) {
+    console.log('After filtering, not enough points for RDP, returning filtered result');
+    return filteredPoints;
+  }
+
+  // Second pass: apply RDP algorithm
+  const rdpResult = simplifyPointsRDP(filteredPoints, tolerance);
+  console.log('After RDP simplification:', rdpResult.length, 'points');
+  
+  return rdpResult;
+}
+
+/**
+ * Internal RDP simplification function
+ */
+function simplifyPointsRDP(points: Array<{ x: number; y: number; commandIndex: number; pointIndex: number; isControl: boolean }>, tolerance: number): Array<{ x: number; y: number; commandIndex: number; pointIndex: number; isControl: boolean }> {
+  console.log('Running RDP with', points.length, 'points and tolerance', tolerance);
+  
+  if (points.length <= 2) return points;
+
+  // Find the point with the maximum distance from the line between start and end
+  let maxDistance = 0;
+  let maxIndex = 0;
+
+  const start = points[0];
+  const end = points[points.length - 1];
+
+  for (let i = 1; i < points.length - 1; i++) {
+    const point = points[i];
+
+    // Skip control points for simplification
+    if (point.isControl) continue;
+
+    const distance = pointToLineDistance(point.x, point.y, start.x, start.y, end.x, end.y);
+    if (distance > maxDistance) {
+      maxDistance = distance;
+      maxIndex = i;
+    }
+  }
+
+  console.log('Max distance found:', maxDistance.toFixed(3), 'at index', maxIndex);
+
+  // If max distance is greater than tolerance, recursively simplify both segments
+  if (maxDistance > tolerance) {
+    console.log('Splitting at index', maxIndex, 'and recursing...');
+    // Split into two segments and simplify recursively
+    const leftSegment = simplifyPointsRDP(points.slice(0, maxIndex + 1), tolerance);
+    const rightSegment = simplifyPointsRDP(points.slice(maxIndex), tolerance);
+
+    // Combine results (remove duplicate point at junction)
+    const result = [...leftSegment.slice(0, -1), ...rightSegment];
+    console.log('RDP result:', result.length, 'points');
+    return result;
+  } else {
+    console.log('Max distance', maxDistance.toFixed(3), '<= tolerance', tolerance, '- keeping only start and end');
+    // All intermediate points are within tolerance, keep only start and end
+    return [start, end];
+  }
+}

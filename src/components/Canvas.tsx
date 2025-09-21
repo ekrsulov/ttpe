@@ -41,7 +41,10 @@ export const Canvas: React.FC<CanvasProps> = () => {
     stopDraggingSubpath,
     getTransformationBounds,
     isWorkingWithSubpaths,
-    getFilteredEditablePoints
+    getFilteredEditablePoints,
+    smoothBrush,
+    applySmoothBrush,
+    updateSmoothBrushCursor
   } = useCanvasStore();
 
   const [isSpacePressed, setIsSpacePressed] = useState(false);
@@ -378,8 +381,8 @@ export const Canvas: React.FC<CanvasProps> = () => {
         }
         break;
       case 'edit':
-        // Start command selection rectangle if clicking on SVG canvas
-        if (target.tagName === 'svg') {
+        // Start command selection rectangle if clicking on SVG canvas (only when smooth brush is not active)
+        if (target.tagName === 'svg' && !smoothBrush.isActive) {
           setIsSelecting(true);
           setSelectionStart(point);
           setSelectionEnd(point);
@@ -580,6 +583,16 @@ export const Canvas: React.FC<CanvasProps> = () => {
       useCanvasStore.getState().addPointToPath(point);
     }
 
+    // Handle smooth brush in edit mode
+    if (activePlugin === 'edit' && smoothBrush.isActive && e.buttons === 1) {
+      applySmoothBrush(point.x, point.y);
+    }
+
+    // Update smooth brush cursor position
+    if (activePlugin === 'edit' && smoothBrush.isActive) {
+      updateSmoothBrushCursor(point.x, point.y);
+    }
+
     if (isSelecting && selectionStart) {
       setSelectionEnd(point);
     }
@@ -587,7 +600,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
     if (isCreatingShape && shapeStart) {
       setShapeEnd(point);
     }
-  }, [activePlugin, screenToCanvas, isSpacePressed, isSelecting, selectionStart, viewport.zoom, isDragging, dragStart, isCreatingShape, shapeStart, isTransforming, transformStart, transformElementId, transformHandler, originalBounds, initialTransform, originalElementData, useCanvasStore.getState().transformation, getElementBounds, getSubpathBounds]);
+  }, [activePlugin, screenToCanvas, isSpacePressed, isSelecting, selectionStart, viewport.zoom, isDragging, dragStart, isCreatingShape, shapeStart, isTransforming, transformStart, transformElementId, transformHandler, originalBounds, initialTransform, originalElementData, useCanvasStore.getState().transformation, getElementBounds, getSubpathBounds, smoothBrush.isActive, applySmoothBrush, updateSmoothBrushCursor]);
 
   const handlePointerUp = useCallback((e: React.PointerEvent) => {
     // Only handle dragging if it hasn't been handled by element click already
@@ -781,7 +794,10 @@ export const Canvas: React.FC<CanvasProps> = () => {
         width: '100%',
         height: '100%',
         border: 'none',
-        cursor: (isSpacePressed || activePlugin === 'pan') ? 'grabbing' : activePlugin === 'select' ? 'crosshair' : activePlugin === 'shape' ? 'crosshair' : 'default'
+        cursor: (isSpacePressed || activePlugin === 'pan') ? 'grabbing' : 
+                activePlugin === 'select' ? 'crosshair' : 
+                activePlugin === 'shape' ? 'crosshair' :
+                (activePlugin === 'edit' && smoothBrush.isActive) ? 'none' : 'default'
       }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
@@ -821,7 +837,22 @@ export const Canvas: React.FC<CanvasProps> = () => {
         getTransformationBounds={getTransformationBounds}
         isWorkingWithSubpaths={isWorkingWithSubpaths}
         getFilteredEditablePoints={getFilteredEditablePoints}
+        smoothBrush={smoothBrush}
       />
+
+      {/* Smooth Brush Cursor */}
+      {activePlugin === 'edit' && smoothBrush.isActive && (
+        <ellipse
+          cx={smoothBrush.cursorX}
+          cy={smoothBrush.cursorY}
+          rx={smoothBrush.radius}
+          ry={smoothBrush.radius}
+          fill="none"
+          stroke="#38bdf8"
+          strokeWidth="1.2"
+          style={{ pointerEvents: 'none' }}
+        />
+      )}
     </svg>
   );
 };

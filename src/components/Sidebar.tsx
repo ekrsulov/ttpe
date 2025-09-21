@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
 import { EditorPanel } from './plugins/EditorPanel';
+import { EditPanel } from './plugins/EditPanel';
 import { ArrangePanel } from './plugins/ArrangePanel';
 import { PanPanel } from './plugins/PanPanel';
 import { TransformationPanel } from './plugins/TransformationPanel';
@@ -23,7 +24,17 @@ import {
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
-  const { activePlugin, setMode, selectedIds } = useCanvasStore();
+  const { 
+    activePlugin, 
+    setMode, 
+    selectedIds,
+    smoothBrush,
+    selectedCommands,
+    updateSmoothBrush,
+    applySmoothBrush,
+    activateSmoothBrush,
+    deactivateSmoothBrush
+  } = useCanvasStore();
   const [isArrangeExpanded, setIsArrangeExpanded] = useState(false);
 
   const plugins = [
@@ -122,6 +133,17 @@ export const Sidebar: React.FC = () => {
         backgroundColor: '#fff'
       }}>
         <EditorPanel />
+        {activePlugin === 'edit' && (
+          <EditPanel
+            activePlugin={activePlugin}
+            smoothBrush={smoothBrush}
+            selectedCommands={selectedCommands}
+            updateSmoothBrush={updateSmoothBrush}
+            applySmoothBrush={applySmoothBrush}
+            activateSmoothBrush={activateSmoothBrush}
+            deactivateSmoothBrush={deactivateSmoothBrush}
+          />
+        )}
         {activePlugin === 'pan' && <PanPanel />}
         {activePlugin === 'pencil' && <PencilPanel />}
         {activePlugin === 'transformation' && <TransformationPanel />}
