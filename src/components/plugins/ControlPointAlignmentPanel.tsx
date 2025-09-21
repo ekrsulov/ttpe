@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo, useCallback } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { parsePathD, extractEditablePoints, type ControlPoint, type PathCommand } from '../../utils/pathParserUtils';
 import { RotateCcw } from 'lucide-react';
@@ -45,7 +45,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
   };
 
   // Get info for a single selected control point
-  const getSinglePointInfo = () => {
+  const getSinglePointInfo = useCallback(() => {
     if (activePlugin !== 'edit' || selectedCommands.length !== 1) {
       return null;
     }
@@ -200,7 +200,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
       anchor1,
       anchor2
     };
-  };
+  }, [activePlugin, selectedCommands, elements, getControlPointInfo]);
 
   // Reset auto-calculation flag when selection changes
   useEffect(() => {
@@ -212,7 +212,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
     }
   }, [selectedCommands]);
 
-  const singlePointInfo = getSinglePointInfo();
+  const singlePointInfo = useMemo(() => getSinglePointInfo(), [getSinglePointInfo]);
 
   // Automatically save the calculated alignment type only once per selection
   useEffect(() => {
@@ -236,7 +236,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
         }
       }
     }
-  }, [singlePointInfo?.calculatedType, selectedCommands, setControlPointAlignmentType]);
+  }, [singlePointInfo, selectedCommands, setControlPointAlignmentType]);
 
   if (!singlePointInfo) {
     return null;
