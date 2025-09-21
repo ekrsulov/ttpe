@@ -95,7 +95,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     cursorX: 0,
     cursorY: 0,
     simplifyPoints: false,
-    simplificationTolerance: 2.0,
+    simplificationTolerance: 0.3,
     minDistance: 0.5,
     affectedPoints: [],
   },
@@ -1007,9 +1007,6 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     const state = get() as any;
     const { radius, strength, simplifyPoints: shouldSimplifyPoints, simplificationTolerance, minDistance } = state.smoothBrush;
 
-    console.log('=== APPLY SMOOTH BRUSH ===');
-    console.log('Settings:', { radius, strength, shouldSimplifyPoints, simplificationTolerance, minDistance });
-
     // Find the active element (first selected or the one being edited)
     let targetElementId = null;
     if (state.selectedCommands.length > 0) {
@@ -1022,14 +1019,12 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     }
 
     if (!targetElementId) {
-      console.log('No target element found');
       return;
     }
 
     const elements = (get() as any).elements;
     const element = elements.find((el: any) => el.id === targetElementId);
     if (!element || element.type !== 'path') {
-      console.log('Target element not found or not a path');
       return;
     }
 
@@ -1039,11 +1034,6 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
 
     let rebuildPath = false;
     let simplifiedPointsForRebuild: any[] = [];
-
-    console.log('Original path points:', editablePoints.length);
-    console.log('Selected commands:', state.selectedCommands.length);
-    console.log('Mode:', state.selectedCommands.length > 0 ? 'Selected points mode' : 'Brush mode');
-    console.log('Brush type:', centerX !== undefined && centerY !== undefined ? 'Click-based' : 'Drag-based');
 
     // Calculate affected points for feedback
     const affectedPoints: Array<{
@@ -1183,49 +1173,34 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
 
     // Update the path if points were affected
     if (updatedPoints.length > 0) {
-      console.log('Points to update:', updatedPoints.length);
       let finalPoints = updatedPoints;
       
       // Apply point simplification if enabled
       if (shouldSimplifyPoints) {
-        console.log('Applying point simplification...');
         
         if (state.selectedCommands.length > 0) {
           // When points are selected, get all points after partial smoothing to apply simplification
-          console.log('Selected mode - getting all points after partial smoothing for simplification');
           const smoothedCommands = updatePathD(commands, updatedPoints);
           const smoothedPathData = parsePathD(smoothedCommands);
           const allPointsAfterSmoothing = extractEditablePoints(smoothedPathData);
           
-          console.log('Points after partial smoothing:', allPointsAfterSmoothing.length);
-          
           // Simplify all points
           const simplifiedPoints = simplifyPoints(allPointsAfterSmoothing, simplificationTolerance, minDistance);
-          
-          console.log('Points after simplification:', simplifiedPoints.length);
-          console.log('Simplification removed', allPointsAfterSmoothing.length - simplifiedPoints.length, 'points');
           
           // Rebuild the path from simplified points
           simplifiedPointsForRebuild = simplifiedPoints;
           rebuildPath = true;
         } else {
           // When no points are selected, simplify all points after smoothing
-          console.log('Simplifying all points after smoothing (brush mode)');
           
           if (centerX !== undefined && centerY !== undefined) {
             // When clicking in brush mode, get all points after partial smoothing to apply simplification
-            console.log('Click-based brush mode - getting all points after partial smoothing for simplification');
             const smoothedCommands = updatePathD(commands, updatedPoints);
             const smoothedPathData = parsePathD(smoothedCommands);
             const allPointsAfterSmoothing = extractEditablePoints(smoothedPathData);
             
-            console.log('Points after partial smoothing:', allPointsAfterSmoothing.length);
-            
             // Simplify all points
             const simplifiedPoints = simplifyPoints(allPointsAfterSmoothing, simplificationTolerance, minDistance);
-            
-            console.log('Points after simplification:', simplifiedPoints.length);
-            console.log('Simplification removed', allPointsAfterSmoothing.length - simplifiedPoints.length, 'points');
             
             // Rebuild the path from simplified points
             simplifiedPointsForRebuild = simplifiedPoints;
@@ -1237,21 +1212,14 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
             const smoothedPathData = parsePathD(smoothedCommands);
             const allPointsAfterSmoothing = extractEditablePoints(smoothedPathData);
             
-            console.log('Points after smoothing:', allPointsAfterSmoothing.length);
-            
             // Simplify the points
             const simplifiedPoints = simplifyPoints(allPointsAfterSmoothing, simplificationTolerance, minDistance);
-            
-            console.log('Points after simplification:', simplifiedPoints.length);
-            console.log('Simplification removed', allPointsAfterSmoothing.length - simplifiedPoints.length, 'points');
             
             // For brush mode, rebuild the path from simplified points
             simplifiedPointsForRebuild = simplifiedPoints;
             rebuildPath = true;
           }
         }
-      } else {
-        console.log('Point simplification disabled');
       }
       
       let newD: string;
@@ -1267,7 +1235,6 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
       } else {
         newD = updatePathD(commands, finalPoints);
       }
-      console.log('Final path d length:', newD.length);
       
       (get() as any).updateElement(targetElementId, {
         data: {
@@ -1276,9 +1243,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
         },
       });
       
-      console.log('=== SMOOTH BRUSH APPLIED ===');
     } else {
-      console.log('No points were updated');
     }
   },
 

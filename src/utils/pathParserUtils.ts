@@ -368,11 +368,8 @@ function pointToLineDistance(px: number, py: number, x1: number, y1: number, x2:
  * This is the standard algorithm for curve simplification
  */
 export function simplifyPoints(points: Array<{ x: number; y: number; commandIndex: number; pointIndex: number; isControl: boolean }>, tolerance: number = 1.0, minDistance: number = 0.1): Array<{ x: number; y: number; commandIndex: number; pointIndex: number; isControl: boolean }> {
-  console.log('=== SIMPLIFY POINTS ===');
-  console.log('Input points:', points.length, 'tolerance:', tolerance, 'minDistance:', minDistance);
   
   if (points.length <= 2) {
-    console.log('Not enough points to simplify, returning as-is');
     return points;
   }
 
@@ -398,23 +395,18 @@ export function simplifyPoints(points: Array<{ x: number; y: number; commandInde
     // Only keep points that are far enough from the previous retained point
     if (distance >= minDistance) {
       filteredPoints.push(currentPoint);
-    } else {
-      console.log('Removing point', i, 'too close to previous retained point (distance:', distance.toFixed(3), '< minDistance:', minDistance, ')');
     }
   }
 
   // Don't automatically add the last point - it's already processed in the loop above
-  console.log('After min distance filter:', filteredPoints.length, 'points (from', points.length, 'original points)');
 
   // If we filtered out too many points, return the filtered result
   if (filteredPoints.length <= 2) {
-    console.log('After filtering, not enough points for RDP, returning filtered result');
     return filteredPoints;
   }
 
   // Second pass: apply RDP algorithm
   const rdpResult = simplifyPointsRDP(filteredPoints, tolerance);
-  console.log('After RDP simplification:', rdpResult.length, 'points');
   
   return rdpResult;
 }
@@ -423,7 +415,6 @@ export function simplifyPoints(points: Array<{ x: number; y: number; commandInde
  * Internal RDP simplification function
  */
 function simplifyPointsRDP(points: Array<{ x: number; y: number; commandIndex: number; pointIndex: number; isControl: boolean }>, tolerance: number): Array<{ x: number; y: number; commandIndex: number; pointIndex: number; isControl: boolean }> {
-  console.log('Running RDP with', points.length, 'points and tolerance', tolerance);
   
   if (points.length <= 2) return points;
 
@@ -447,21 +438,16 @@ function simplifyPointsRDP(points: Array<{ x: number; y: number; commandIndex: n
     }
   }
 
-  console.log('Max distance found:', maxDistance.toFixed(3), 'at index', maxIndex);
-
   // If max distance is greater than tolerance, recursively simplify both segments
   if (maxDistance > tolerance) {
-    console.log('Splitting at index', maxIndex, 'and recursing...');
     // Split into two segments and simplify recursively
     const leftSegment = simplifyPointsRDP(points.slice(0, maxIndex + 1), tolerance);
     const rightSegment = simplifyPointsRDP(points.slice(maxIndex), tolerance);
 
     // Combine results (remove duplicate point at junction)
     const result = [...leftSegment.slice(0, -1), ...rightSegment];
-    console.log('RDP result:', result.length, 'points');
     return result;
   } else {
-    console.log('Max distance', maxDistance.toFixed(3), '<= tolerance', tolerance, '- keeping only start and end');
     // All intermediate points are within tolerance, keep only start and end
     return [start, end];
   }
