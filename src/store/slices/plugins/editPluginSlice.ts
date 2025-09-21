@@ -1234,9 +1234,41 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
       let newD: string;
       if (rebuildPath) {
         if (simplifiedPointsForRebuild.length > 0) {
-          newD = `M ${formatToPrecision(simplifiedPointsForRebuild[0].x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(simplifiedPointsForRebuild[0].y, PATH_DECIMAL_PRECISION)}`;
-          for (let i = 1; i < simplifiedPointsForRebuild.length; i++) {
-            newD += ` L ${formatToPrecision(simplifiedPointsForRebuild[i].x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(simplifiedPointsForRebuild[i].y, PATH_DECIMAL_PRECISION)}`;
+          // Extract original subpaths to maintain separation
+          const originalSubpaths = extractSubpaths(commands);
+          
+          if (originalSubpaths.length > 1) {
+            // Multiple subpaths - rebuild each subpath separately
+            const subpathStrings: string[] = [];
+            
+            // Group simplified points by their original subpath
+            const pointsBySubpath: Array<Array<{ x: number; y: number; commandIndex: number; pointIndex: number; isControl: boolean }>> = [];
+            
+            originalSubpaths.forEach((subpath) => {
+              const subpathPoints = simplifiedPointsForRebuild.filter(point => 
+                point.commandIndex >= subpath.startIndex && point.commandIndex <= subpath.endIndex
+              );
+              pointsBySubpath.push(subpathPoints);
+            });
+            
+            // Rebuild each subpath
+            pointsBySubpath.forEach((subpathPoints) => {
+              if (subpathPoints.length > 0) {
+                let subpathD = `M ${formatToPrecision(subpathPoints[0].x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(subpathPoints[0].y, PATH_DECIMAL_PRECISION)}`;
+                for (let i = 1; i < subpathPoints.length; i++) {
+                  subpathD += ` L ${formatToPrecision(subpathPoints[i].x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(subpathPoints[i].y, PATH_DECIMAL_PRECISION)}`;
+                }
+                subpathStrings.push(subpathD);
+              }
+            });
+            
+            newD = subpathStrings.join(' ');
+          } else {
+            // Single subpath - use original logic
+            newD = `M ${formatToPrecision(simplifiedPointsForRebuild[0].x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(simplifiedPointsForRebuild[0].y, PATH_DECIMAL_PRECISION)}`;
+            for (let i = 1; i < simplifiedPointsForRebuild.length; i++) {
+              newD += ` L ${formatToPrecision(simplifiedPointsForRebuild[i].x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(simplifiedPointsForRebuild[i].y, PATH_DECIMAL_PRECISION)}`;
+            }
           }
         } else {
           newD = '';
