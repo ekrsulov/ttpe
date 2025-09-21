@@ -109,32 +109,55 @@ export const useCanvasStore = create<CanvasStore>()(
 
         // Cross-slice actions
         startPath: (point) => {
-          const { strokeWidth, strokeColor, strokeOpacity } = get().pencil;
+          const { strokeWidth, strokeColor, strokeOpacity, reusePath } = get().pencil;
           // For pencil paths, if strokeColor is 'none', use black instead
           const effectiveStrokeColor = strokeColor === 'none' ? '#000000' : strokeColor;
-          get().addElement({
-            type: 'path',
-            data: {
-              d: `M ${formatToPrecision(point.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(point.y, PATH_DECIMAL_PRECISION)}`,
-              strokeWidth,
-              strokeColor: effectiveStrokeColor,
-              strokeOpacity,
-              fillColor: 'none',  // Always no fill for pencil strokes
-              fillOpacity: 1,     // Always 100% fill opacity for pencil strokes
-              strokeLinecap: 'round',
-              strokeLinejoin: 'round',
-              isPencilPath: true, // Mark this as a pencil-created path
-            },
-          });
+          
+          // Check if we should reuse an existing pencil path
+          const lastElement = get().elements[get().elements.length - 1];
+          const hasExistingPencilPath = lastElement?.type === 'path' && 
+            (lastElement.data as import('../types').PathData).isPencilPath === true;
+          
+          if (reusePath && hasExistingPencilPath) {
+            // Reuse existing path - add the starting point as a new subpath
+            const pathData = lastElement.data as import('../types').PathData;
+            const newD = `${pathData.d} M ${formatToPrecision(point.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(point.y, PATH_DECIMAL_PRECISION)}`;
+            get().updateElement(lastElement.id, {
+              data: {
+                ...pathData,
+                d: newD,
+              },
+            });
+          } else {
+            // Create new path
+            get().addElement({
+              type: 'path',
+              data: {
+                d: `M ${formatToPrecision(point.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(point.y, PATH_DECIMAL_PRECISION)}`,
+                strokeWidth,
+                strokeColor: effectiveStrokeColor,
+                strokeOpacity,
+                fillColor: 'none',  // Always no fill for pencil strokes
+                fillOpacity: 1,     // Always 100% fill opacity for pencil strokes
+                strokeLinecap: 'round',
+                strokeLinejoin: 'round',
+                isPencilPath: true, // Mark this as a pencil-created path
+              },
+            });
+          }
         },
 
         addPointToPath: (point) => {
           const state = get();
-          const lastElement = state.elements[state.elements.length - 1];
-          if (lastElement?.type === 'path') {
-            const pathData = lastElement.data as import('../types').PathData;
+          // Find the last pencil path element
+          const pencilPathElement = [...state.elements].reverse().find(
+            el => el.type === 'path' && (el.data as import('../types').PathData).isPencilPath === true
+          );
+          
+          if (pencilPathElement) {
+            const pathData = pencilPathElement.data as import('../types').PathData;
             const newD = `${pathData.d} L ${formatToPrecision(point.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(point.y, PATH_DECIMAL_PRECISION)}`;
-            get().updateElement(lastElement.id, {
+            get().updateElement(pencilPathElement.id, {
               data: {
                 ...pathData,
                 d: newD,

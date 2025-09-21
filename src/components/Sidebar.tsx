@@ -7,6 +7,7 @@ import { TransformationPanel } from './plugins/TransformationPanel';
 import { TextPanel } from './plugins/TextPanel';
 import { SelectPanel } from './plugins/SelectPanel';
 import { ShapePanel } from './plugins/ShapePanel';
+import { PencilPanel } from './plugins/PencilPanel';
 import { IconButton } from './ui/IconButton';
 import {
   Hand,
@@ -122,6 +123,7 @@ export const Sidebar: React.FC = () => {
       }}>
         <EditorPanel />
         {activePlugin === 'pan' && <PanPanel />}
+        {activePlugin === 'pencil' && <PencilPanel />}
         {activePlugin === 'transformation' && <TransformationPanel />}
         {activePlugin === 'text' && <TextPanel />}
         {activePlugin === 'shape' && <ShapePanel />}

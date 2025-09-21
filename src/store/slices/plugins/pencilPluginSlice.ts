@@ -8,6 +8,7 @@ export interface PencilPluginSlice {
     strokeOpacity: number;
     fillColor: string;
     fillOpacity: number;
+    reusePath: boolean;
   };
 
   // Actions
@@ -22,6 +23,7 @@ export const createPencilPluginSlice: StateCreator<PencilPluginSlice, [], [], Pe
     strokeOpacity: 1,
     fillColor: 'none',
     fillOpacity: 1,
+    reusePath: false,
   },
 
   // Actions
