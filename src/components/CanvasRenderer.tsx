@@ -2,7 +2,7 @@ import React from 'react';
 import { measurePath } from '../utils/measurementUtils';
 import { parsePathD, extractEditablePoints, getCommandStartPoint, updatePathD, extractSubpaths } from '../utils/pathParserUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../utils';
-import type { Point, CanvasElement } from '../types';
+import type { Point, CanvasElement, ControlPointInfo } from '../types';
 
 interface CanvasRendererProps {
   viewport: {
@@ -96,6 +96,7 @@ interface CanvasRendererProps {
     y: number;
     isControl: boolean;
   }>;
+  getControlPointInfo: (elementId: string, commandIndex: number, pointIndex: number) => ControlPointInfo | null;
   smoothBrush: {
     radius: number;
     strength: number;
@@ -144,6 +145,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   onStopDraggingSubpath,
   isWorkingWithSubpaths,
   getFilteredEditablePoints,
+  getControlPointInfo,
   smoothBrush,
 }) => {
   // Local state for drag visualization
@@ -204,10 +206,77 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
                 );
 
                 if (pointToUpdate) {
-                  pointToUpdate.x = formatToPrecision(canvasX, PATH_DECIMAL_PRECISION);
-                  pointToUpdate.y = formatToPrecision(canvasY, PATH_DECIMAL_PRECISION);
+                  const newX = formatToPrecision(canvasX, PATH_DECIMAL_PRECISION);
+                  const newY = formatToPrecision(canvasY, PATH_DECIMAL_PRECISION);
+                  
+                  const pointsToUpdate = [pointToUpdate];
+                  
+                  // Check if this is a control point that has stored alignment
+                  if (pointToUpdate.isControl) {
+                    const info = getControlPointInfo(editingPoint.elementId, editingPoint.commandIndex, editingPoint.pointIndex);
+                    if (info && (info.type === 'aligned' || info.type === 'mirrored')) {
+                      const pairedCommandIndex = info.pairedCommandIndex;
+                      const pairedPointIndex = info.pairedPointIndex;
+                      const anchor = info.anchor;
+                      
+                      // Calculate the synchronized position for the paired control point
+                      const currentVector = {
+                        x: newX - anchor.x,
+                        y: newY - anchor.y
+                      };
+                      const magnitude = Math.sqrt(currentVector.x * currentVector.x + currentVector.y * currentVector.y);
+                      
+                      if (magnitude > 0) {
+                        const unitVector = {
+                          x: currentVector.x / magnitude,
+                          y: currentVector.y / magnitude
+                        };
+                        
+                        let pairedX: number;
+                        let pairedY: number;
+                        
+                        if (info.type === 'mirrored') {
+                          // Opposite direction, same magnitude
+                          pairedX = anchor.x + (-unitVector.x * magnitude);
+                          pairedY = anchor.y + (-unitVector.y * magnitude);
+                        } else {
+                          // Opposite direction, maintain original magnitude
+                          const pairedPoint = points.find(p => 
+                            p.commandIndex === pairedCommandIndex && 
+                            p.pointIndex === pairedPointIndex
+                          );
+                          if (pairedPoint) {
+                            const originalVector = {
+                              x: pairedPoint.x - anchor.x,
+                              y: pairedPoint.y - anchor.y
+                            };
+                            const originalMagnitude = Math.sqrt(originalVector.x * originalVector.x + originalVector.y * originalVector.y);
+                            pairedX = anchor.x + (-unitVector.x * originalMagnitude);
+                            pairedY = anchor.y + (-unitVector.y * originalMagnitude);
+                          } else {
+                            pairedX = anchor.x + (-unitVector.x * magnitude);
+                            pairedY = anchor.y + (-unitVector.y * magnitude);
+                          }
+                        }
+                        
+                        // Find and update the paired point
+                        const pairedPointToUpdate = points.find(p => 
+                          p.commandIndex === pairedCommandIndex && 
+                          p.pointIndex === pairedPointIndex
+                        );
+                        if (pairedPointToUpdate) {
+                          pairedPointToUpdate.x = formatToPrecision(pairedX, PATH_DECIMAL_PRECISION);
+                          pairedPointToUpdate.y = formatToPrecision(pairedY, PATH_DECIMAL_PRECISION);
+                          pointsToUpdate.push(pairedPointToUpdate);
+                        }
+                      }
+                    }
+                  }
+                  
+                  pointToUpdate.x = newX;
+                  pointToUpdate.y = newY;
 
-                  const newPathD = updatePathD(commands, [pointToUpdate]);
+                  const newPathD = updatePathD(commands, pointsToUpdate);
                   onUpdateElement(editingPoint.elementId, {
                     data: {
                       ...pathData,

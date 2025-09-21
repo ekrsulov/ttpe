@@ -44,7 +44,8 @@ export const Canvas: React.FC<CanvasProps> = () => {
     getFilteredEditablePoints,
     smoothBrush,
     applySmoothBrush,
-    updateSmoothBrushCursor
+    updateSmoothBrushCursor,
+    getControlPointInfo
   } = useCanvasStore();
 
   const [isSpacePressed, setIsSpacePressed] = useState(false);
@@ -850,6 +851,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
         getTransformationBounds={getTransformationBounds}
         isWorkingWithSubpaths={isWorkingWithSubpaths}
         getFilteredEditablePoints={getFilteredEditablePoints}
+        getControlPointInfo={getControlPointInfo}
         smoothBrush={smoothBrush}
       />
 

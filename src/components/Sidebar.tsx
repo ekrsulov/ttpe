@@ -9,6 +9,7 @@ import { TextPanel } from './plugins/TextPanel';
 import { SelectPanel } from './plugins/SelectPanel';
 import { ShapePanel } from './plugins/ShapePanel';
 import { PencilPanel } from './plugins/PencilPanel';
+import { ControlPointAlignmentPanel } from './plugins/ControlPointAlignmentPanel';
 import { IconButton } from './ui/IconButton';
 import {
   Hand,
@@ -144,6 +145,7 @@ export const Sidebar: React.FC = () => {
             deactivateSmoothBrush={deactivateSmoothBrush}
           />
         )}
+        {activePlugin === 'edit' && <ControlPointAlignmentPanel />}
         {activePlugin === 'pan' && <PanPanel />}
         {activePlugin === 'pencil' && <PencilPanel />}
         {activePlugin === 'transformation' && <TransformationPanel />}

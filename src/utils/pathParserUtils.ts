@@ -1,13 +1,11 @@
-import { formatToPrecision, PATH_DECIMAL_PRECISION } from './index';
+export interface PathCommand {
+  type: 'M' | 'L' | 'C' | 'Z';
+  points: Point[];
+}
 
 export interface Point {
   x: number;
   y: number;
-}
-
-export interface PathCommand {
-  type: 'M' | 'L' | 'C' | 'Z';
-  points: Point[];
 }
 
 export interface ControlPoint {
@@ -40,8 +38,8 @@ export function parsePathD(d: string): PathCommand[] {
       const points: Point[] = [];
       i++;
       while (i < tokens.length && !isNaN(parseFloat(tokens[i]))) {
-        const x = formatToPrecision(parseFloat(tokens[i]), PATH_DECIMAL_PRECISION);
-        const y = formatToPrecision(parseFloat(tokens[i + 1]), PATH_DECIMAL_PRECISION);
+        const x = parseFloat(tokens[i]);
+        const y = parseFloat(tokens[i + 1]);
         points.push({ x, y });
         i += 2;
       }
@@ -50,8 +48,8 @@ export function parsePathD(d: string): PathCommand[] {
       const points: Point[] = [];
       i++;
       while (i < tokens.length && !isNaN(parseFloat(tokens[i]))) {
-        const x = formatToPrecision(parseFloat(tokens[i]), PATH_DECIMAL_PRECISION);
-        const y = formatToPrecision(parseFloat(tokens[i + 1]), PATH_DECIMAL_PRECISION);
+        const x = parseFloat(tokens[i]);
+        const y = parseFloat(tokens[i + 1]);
         points.push({ x, y });
         i += 2;
       }
@@ -60,8 +58,8 @@ export function parsePathD(d: string): PathCommand[] {
       const points: Point[] = [];
       i++;
       while (i < tokens.length && !isNaN(parseFloat(tokens[i]))) {
-        const x = formatToPrecision(parseFloat(tokens[i]), PATH_DECIMAL_PRECISION);
-        const y = formatToPrecision(parseFloat(tokens[i + 1]), PATH_DECIMAL_PRECISION);
+        const x = parseFloat(tokens[i]);
+        const y = parseFloat(tokens[i + 1]);
         points.push({ x, y });
         i += 2;
       }
@@ -197,56 +195,13 @@ export function updatePathD(commands: PathCommand[], updatedPoints: ControlPoint
   // Convert back to path string
   return updatedCommands.map(cmd => {
     if (cmd.type === 'Z') return 'Z';
-    
-    let pointStr = '';
-    if (cmd.type === 'C' && cmd.points.length >= 3) {
-      // For C commands, join all points with spaces
-      pointStr = cmd.points.map(p => `${formatToPrecision(p.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(p.y, PATH_DECIMAL_PRECISION)}`).join(' ');
-    } else {
-      // For other commands, just join with spaces
-      pointStr = cmd.points.map(p => `${formatToPrecision(p.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(p.y, PATH_DECIMAL_PRECISION)}`).join(' ');
-    }
-    
+    const pointStr = cmd.points.map(p => `${p.x} ${p.y}`).join(' ');
     return `${cmd.type} ${pointStr}`;
   }).join(' ');
 }
 
 /**
- * Extract subpaths from the main path commands
- */
-export function extractSubpaths(commands: PathCommand[]): { d: string; startIndex: number; endIndex: number }[] {
-  const subpaths: { d: string; startIndex: number; endIndex: number }[] = [];
-  let currentStart = 0;
-
-  for (let i = 0; i < commands.length; i++) {
-    if (commands[i].type === 'M' && i > 0) {
-      // End previous subpath
-      const subpathCommands = commands.slice(currentStart, i);
-      const d = commandsToString(subpathCommands);
-      subpaths.push({ d, startIndex: currentStart, endIndex: i - 1 });
-      currentStart = i;
-    }
-  }
-
-  // Last subpath
-  if (currentStart < commands.length) {
-    const subpathCommands = commands.slice(currentStart);
-    const d = commandsToString(subpathCommands);
-    subpaths.push({ d, startIndex: currentStart, endIndex: commands.length - 1 });
-  }
-
-  return subpaths;
-}
-
-function commandsToString(commands: PathCommand[]): string {
-  return commands.map(cmd => {
-    const pointsStr = cmd.points.map(p => `${p.x} ${p.y}`).join(' ');
-    return `${cmd.type} ${pointsStr}`;
-  }).join(' ');
-}
-
-/**
- * Normalize and clean SVG path commands to remove duplicates, extra spaces, and malformed commands
+ * Normalize path commands by removing invalid commands and consecutive Z commands
  */
 export function normalizePathCommands(commands: PathCommand[]): PathCommand[] {
   if (commands.length === 0) return [];
@@ -285,16 +240,11 @@ export function normalizePathCommands(commands: PathCommand[]): PathCommand[] {
     // Skip commands with no valid points
     if (validPoints.length === 0) continue;
 
-    // Create normalized command with valid points
-    const normalizedCmd: PathCommand = {
-      type: cmd.type,
-      points: validPoints.map(point => ({
-        x: formatToPrecision(point.x, PATH_DECIMAL_PRECISION),
-        y: formatToPrecision(point.y, PATH_DECIMAL_PRECISION)
-      }))
-    };
-
-    normalized.push(normalizedCmd);
+    // Create normalized command
+    normalized.push({
+      ...cmd,
+      points: validPoints
+    });
   }
 
   // Remove trailing Z if it's the only command or if the path is effectively empty
@@ -415,7 +365,6 @@ export function simplifyPoints(points: Array<{ x: number; y: number; commandInde
  * Internal RDP simplification function
  */
 function simplifyPointsRDP(points: Array<{ x: number; y: number; commandIndex: number; pointIndex: number; isControl: boolean }>, tolerance: number): Array<{ x: number; y: number; commandIndex: number; pointIndex: number; isControl: boolean }> {
-  
   if (points.length <= 2) return points;
 
   // Find the point with the maximum distance from the line between start and end
@@ -451,4 +400,168 @@ function simplifyPointsRDP(points: Array<{ x: number; y: number; commandIndex: n
     // All intermediate points are within tolerance, keep only start and end
     return [start, end];
   }
+}
+
+/**
+ * Extract subpaths from the main path commands
+ */
+export function extractSubpaths(commands: PathCommand[]): { d: string; startIndex: number; endIndex: number }[] {
+  const subpaths: { d: string; startIndex: number; endIndex: number }[] = [];
+  let currentStart = 0;
+
+  for (let i = 0; i < commands.length; i++) {
+    if (commands[i].type === 'M' && i > 0) {
+      // End previous subpath
+      const subpathCommands = commands.slice(currentStart, i);
+      const d = commandsToString(subpathCommands);
+      subpaths.push({ d, startIndex: currentStart, endIndex: i - 1 });
+      currentStart = i;
+    }
+  }
+
+  // Last subpath
+  if (currentStart < commands.length) {
+    const subpathCommands = commands.slice(currentStart);
+    const d = commandsToString(subpathCommands);
+    subpaths.push({ d, startIndex: currentStart, endIndex: commands.length - 1 });
+  }
+
+  return subpaths;
+}
+
+function commandsToString(commands: PathCommand[]): string {
+  return commands.map(cmd => {
+    const pointsStr = cmd.points.map(p => `${p.x} ${p.y}`).join(' ');
+    return `${cmd.type} ${pointsStr}`;
+  }).join(' ');
+}
+
+/**
+ * Determine the alignment type between two control points
+ */
+export function determineControlPointAlignment(
+  commands: PathCommand[],
+  commandIndex1: number,
+  pointIndex1: number,
+  commandIndex2: number,
+  pointIndex2: number,
+  sharedAnchor: Point
+): 'independent' | 'aligned' | 'mirrored' {
+  const command1 = commands[commandIndex1];
+  const command2 = commands[commandIndex2];
+  
+  if (!command1 || !command2 || command1.type !== 'C' || command2.type !== 'C') {
+    return 'independent';
+  }
+
+  // Get the control point positions
+  let point1: Point | null = null;
+  let point2: Point | null = null;
+
+  if (pointIndex1 === 0 && command1.points.length > 0) {
+    point1 = command1.points[0];
+  } else if (pointIndex1 === 1 && command1.points.length > 1) {
+    point1 = command1.points[1];
+  }
+
+  if (pointIndex2 === 0 && command2.points.length > 0) {
+    point2 = command2.points[0];
+  } else if (pointIndex2 === 1 && command2.points.length > 1) {
+    point2 = command2.points[1];
+  }
+
+  if (!point1 || !point2) {
+    return 'independent';
+  }
+
+  // Calculate vectors from anchor to control points
+  const vector1 = {
+    x: point1.x - sharedAnchor.x,
+    y: point1.y - sharedAnchor.y
+  };
+  const vector2 = {
+    x: point2.x - sharedAnchor.x,
+    y: point2.y - sharedAnchor.y
+  };
+
+  const magnitude1 = Math.sqrt(vector1.x * vector1.x + vector1.y * vector1.y);
+  const magnitude2 = Math.sqrt(vector2.x * vector2.x + vector2.y * vector2.y);
+
+  if (magnitude1 === 0 || magnitude2 === 0) {
+    return 'independent';
+  }
+
+  // Normalize vectors
+  const unit1 = {
+    x: vector1.x / magnitude1,
+    y: vector1.y / magnitude1
+  };
+  const unit2 = {
+    x: vector2.x / magnitude2,
+    y: vector2.y / magnitude2
+  };
+
+  // Check if vectors are aligned (opposite directions)
+  const dotProduct = unit1.x * (-unit2.x) + unit1.y * (-unit2.y);
+  const alignmentThreshold = 0.985; // About 10 degrees tolerance
+
+  if (dotProduct > alignmentThreshold) {
+    // Vectors are aligned, check if magnitudes are similar
+    const magnitudeRatio = Math.min(magnitude1, magnitude2) / Math.max(magnitude1, magnitude2);
+    if (magnitudeRatio > 0.9) {
+      return 'mirrored';
+    } else {
+      return 'aligned';
+    }
+  }
+
+  return 'independent';
+}
+
+/**
+ * Find the paired control point for a given control point
+ */
+export function findPairedControlPoint(
+  commands: PathCommand[],
+  commandIndex: number,
+  pointIndex: number
+): { commandIndex: number; pointIndex: number; anchor: Point } | null {
+  const command = commands[commandIndex];
+  if (!command || command.type !== 'C' || (pointIndex !== 0 && pointIndex !== 1)) {
+    return null;
+  }
+
+  // Check for control points that connect between commands
+  // This happens when the end point of one command is the start of another
+  if (pointIndex === 0) {
+    // This is an outgoing control point, look for the incoming control point of the next command
+    if (commandIndex < commands.length - 1) {
+      const nextCommand = commands[commandIndex + 1];
+      if (nextCommand.type === 'C' && nextCommand.points.length >= 3) {
+        // The anchor is the end point of the current command
+        const anchor = command.points[2];
+        return {
+          commandIndex: commandIndex + 1,
+          pointIndex: 1, // Incoming control point of next command
+          anchor
+        };
+      }
+    }
+  } else if (pointIndex === 1) {
+    // This is an incoming control point, look for the outgoing control point of the previous command
+    if (commandIndex > 0) {
+      const prevCommand = commands[commandIndex - 1];
+      if (prevCommand.type === 'C' && prevCommand.points.length >= 3) {
+        // The anchor is the end point of the previous command (which should match start of current)
+        const anchor = prevCommand.points[2];
+        return {
+          commandIndex: commandIndex - 1,
+          pointIndex: 0, // Outgoing control point of previous command
+          anchor
+        };
+      }
+    }
+  }
+
+  return null;
 }

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { Pen, RotateCcw, Minus, Copy } from 'lucide-react';
+import { Pen, RotateCcw, Minus, Copy, Clipboard } from 'lucide-react';
 import { IconButton } from '../ui/IconButton';
 import { parsePathD, extractEditablePoints, extractSubpaths } from '../../utils/pathParserUtils';
 import type { CanvasElement } from '../../types';
@@ -64,6 +64,34 @@ export const SelectPanel: React.FC = () => {
     }
   };
 
+  const copyPathToClipboard = async (item: typeof items[0]) => {
+    let pathData = '';
+    
+    if (item.type === 'element') {
+      // Copy the entire element's path
+      if (item.element.type === 'path') {
+        pathData = item.element.data.d;
+      }
+    } else if (item.type === 'subpath' && item.subpathIndex !== undefined) {
+      // Copy the subpath's path
+      const commands = parsePathD(item.element.data.d);
+      const subpaths = extractSubpaths(commands);
+      const subpathData = subpaths[item.subpathIndex];
+      if (subpathData) {
+        pathData = subpathData.d;
+      }
+    }
+    
+    if (pathData) {
+      try {
+        await navigator.clipboard.writeText(pathData);
+        console.log('Path copied to clipboard:', pathData);
+      } catch (err) {
+        console.error('Failed to copy path to clipboard:', err);
+      }
+    }
+  };
+
   return (
     <div style={{ 
       backgroundColor: '#fff',
@@ -109,6 +137,13 @@ export const SelectPanel: React.FC = () => {
                 size="small"
               >
                 <Copy size={10} />
+              </IconButton>
+              <IconButton 
+                onClick={() => copyPathToClipboard(item)} 
+                title="Copy Path to Clipboard" 
+                size="small"
+              >
+                <Clipboard size={10} />
               </IconButton>
             </div>
           ))

@@ -3,6 +3,18 @@ export interface Point {
   y: number;
 }
 
+// Control point alignment types
+export type ControlPointType = 'independent' | 'aligned' | 'mirrored';
+
+export interface ControlPointInfo {
+  commandIndex: number;
+  pointIndex: number;
+  type: ControlPointType;
+  pairedCommandIndex?: number;
+  pairedPointIndex?: number;
+  anchor: Point;
+}
+
 // Configurable decimal precision for path coordinates
 export const PATH_DECIMAL_PRECISION = 2;
 
