@@ -1,51 +1,6 @@
 import type { StateCreator } from 'zustand';
 import type { CanvasElement } from '../../../types';
 import type { CanvasStore } from '../../canvasStore';
-import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../../utils';
-
-// Helper function to transform SVG path commands by applying a translation
-const transformSvgPath = (d: string, deltaX: number, deltaY: number): string => {
-  // Split the path into commands and coordinates (only M, L, C, Z)
-  const commands = d.split(/([MLCZmlcz])/).filter(cmd => cmd.trim() !== '');
-  let result = '';
-  let i = 0;
-
-  while (i < commands.length) {
-    const command = commands[i];
-    if (result) result += ' ';
-    result += command;
-
-    // Process coordinates based on command type
-    if ('MLCZmlcz'.indexOf(command) !== -1) {
-      i++;
-      // Collect all numeric values until the next command
-      while (i < commands.length && 'MLCZmlcz'.indexOf(commands[i]) === -1) {
-        const coords = commands[i].trim().split(/[\s,]+/).map(coord => {
-          const parsed = parseFloat(coord);
-          return isNaN(parsed) ? 0 : parsed; // Default to 0 if parsing fails
-        });
-
-        // Apply translation to coordinate pairs (M, L, C all have x,y pairs)
-        if (command.toUpperCase() !== 'Z') {
-          for (let j = 0; j < coords.length; j += 2) {
-            if (!isNaN(coords[j]) && !isNaN(deltaX)) {
-              coords[j] = formatToPrecision(coords[j] + deltaX, PATH_DECIMAL_PRECISION);
-            }
-            if (!isNaN(coords[j + 1]) && !isNaN(deltaY)) {
-              coords[j + 1] = formatToPrecision(coords[j + 1] + deltaY, PATH_DECIMAL_PRECISION);
-            }
-          }
-        }
-        result += ' ' + coords.join(' ');
-        i++;
-      }
-    } else {
-      i++;
-    }
-  }
-
-  return result;
-};
 
 export interface SelectionSlice {
   // State
@@ -103,25 +58,45 @@ export const createSelectionSlice: StateCreator<SelectionSlice> = (set, get, _ap
           if (el.type === 'path') {
             const pathData = el.data as import('../../../types').PathData;
             
-            // If element has transform, move the path coordinates directly to avoid confusion with transform origins
-            if (pathData.transform && (pathData.transform.scaleX !== 1 || pathData.transform.scaleY !== 1 || pathData.transform.rotation !== 0)) {
-              return {
-                ...el,
-                data: {
-                  ...pathData,
-                  d: transformSvgPath(pathData.d, deltaX, deltaY),
-                },
-              };
-            } else {
-              // No significant transform, move the path coordinates directly
-              return {
-                ...el,
-                data: {
-                  ...pathData,
-                  d: transformSvgPath(pathData.d, deltaX, deltaY),
-                },
-              };
-            }
+            // Directly translate all points in the path
+            const translatedSubPaths = pathData.subPaths.map(subpath => 
+              subpath.map(cmd => {
+                const translatedCmd = { ...cmd };
+                
+                if (cmd.type === 'M' || cmd.type === 'L') {
+                  (translatedCmd as { position: import('../../../types').Point }).position = {
+                    x: cmd.position.x + deltaX,
+                    y: cmd.position.y + deltaY
+                  };
+                } else if (cmd.type === 'C') {
+                  (translatedCmd as import('../../../types').Command & { type: 'C' }).controlPoint1 = {
+                    ...cmd.controlPoint1,
+                    x: cmd.controlPoint1.x + deltaX,
+                    y: cmd.controlPoint1.y + deltaY
+                  };
+                  (translatedCmd as import('../../../types').Command & { type: 'C' }).controlPoint2 = {
+                    ...cmd.controlPoint2,
+                    x: cmd.controlPoint2.x + deltaX,
+                    y: cmd.controlPoint2.y + deltaY
+                  };
+                  (translatedCmd as import('../../../types').Command & { type: 'C' }).position = {
+                    x: cmd.position.x + deltaX,
+                    y: cmd.position.y + deltaY
+                  };
+                }
+                // Z commands have no points to translate
+                
+                return translatedCmd;
+              })
+            );
+            
+            return {
+              ...el,
+              data: {
+                ...pathData,
+                subPaths: translatedSubPaths
+              }
+            };
           }
         }
         return el;

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useMemo, useCallback } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { parsePathD, extractEditablePoints, type ControlPoint, type PathCommand } from '../../utils/pathParserUtils';
+import { extractEditablePoints, type ControlPoint } from '../../utils/pathParserUtils';
+import type { Command, Point } from '../../types';
 import { RotateCcw } from 'lucide-react';
 
 export const ControlPointAlignmentPanel: React.FC = () => {
@@ -18,16 +19,16 @@ export const ControlPointAlignmentPanel: React.FC = () => {
   // Track if we already auto-calculated alignment for current selection
   const hasAutoCalculatedRef = useRef<string | null>(null);
 
-  const isPathClosed = (commands: PathCommand[]): boolean => {
+  const isPathClosed = (commands: Command[]): boolean => {
     if (commands.length < 2) return false;
     
     // Check for explicit Z command
     if (commands[commands.length - 1].type === 'Z') return true;
     
     // Check if last point is close to first point (implicitly closed)
-    const firstPoint = commands[0].points.length > 0 ? commands[0].points[0] : null;
+    const firstPoint = commands[0].type === 'Z' ? null : commands[0].position;
     const lastCommand = commands[commands.length - 1];
-    const lastPoint = lastCommand.points.length > 0 ? lastCommand.points[lastCommand.points.length - 1] : null;
+    const lastPoint = lastCommand.type === 'Z' ? null : lastCommand.position;
     
     if (!firstPoint || !lastPoint) return false;
     
@@ -40,9 +41,13 @@ export const ControlPointAlignmentPanel: React.FC = () => {
     return distance < threshold;
   };
 
-  const getCommandEndPoint = (command: PathCommand): import('../../types').Point | null => {
-    if (command.points.length > 0) {
-      return command.points[command.points.length - 1];
+  const getCommandEndPoint = (command: Command): import('../../types').Point | null => {
+    if (command.type === 'M' || command.type === 'L') {
+      return command.position;
+    } else if (command.type === 'C') {
+      return command.position;
+    } else if (command.type === 'Z') {
+      return null;
     }
     return null;
   };
@@ -53,7 +58,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
     if (!element || element.type !== 'path') return false;
     
     const pathData = element.data as import('../../types').PathData;
-    const commands = parsePathD(pathData.d);
+    const commands = pathData.subPaths.flat();
     
     // Check if the command at commandIndex is an M command
     if (commands[commandIndex]?.type !== 'M') return false;
@@ -89,13 +94,14 @@ export const ControlPointAlignmentPanel: React.FC = () => {
     if (!element || element.type !== 'path') return false;
     
     const pathData = element.data as import('../../types').PathData;
-    const commands = parsePathD(pathData.d);
+    const commands = pathData.subPaths.flat();
     
     const command = commands[commandIndex];
     if (!command) return false;
     
     // Check if this is the last point of the command
-    const isLastPoint = pointIndex === command.points.length - 1;
+    const pointsLength = command.type === 'M' || command.type === 'L' ? 1 : command.type === 'C' ? 3 : 0;
+    const isLastPoint = pointIndex === pointsLength - 1;
     if (!isLastPoint) return false;
     
     // Check if this is the last command in the path or before a Z/M
@@ -112,7 +118,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
     if (!element || element.type !== 'path') return false;
     
     const pathData = element.data as import('../../types').PathData;
-    const commands = parsePathD(pathData.d);
+    const commands = pathData.subPaths.flat();
     
     const command = commands[commandIndex];
     if (!command) return false;
@@ -129,8 +135,15 @@ export const ControlPointAlignmentPanel: React.FC = () => {
     if (subpathMIndex === -1) return false;
     
     // Get the point to check
-    const pointToCheck = command.points[pointIndex];
-    const mPosition = commands[subpathMIndex].points[0];
+    let pointToCheck: Point | null = null;
+    if (command.type === 'M' || command.type === 'L') {
+      if (pointIndex === 0) pointToCheck = command.position;
+    } else if (command.type === 'C') {
+      if (pointIndex === 0) pointToCheck = command.controlPoint1;
+      else if (pointIndex === 1) pointToCheck = command.controlPoint2;
+      else if (pointIndex === 2) pointToCheck = command.position;
+    }
+    const mPosition = (commands[subpathMIndex] as Command & { type: 'M' }).position;
     
     if (!pointToCheck || !mPosition) return false;
     
@@ -153,7 +166,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
     }
 
     const pathData = element.data as import('../../types').PathData;
-    const commands = parsePathD(pathData.d);
+    const commands = pathData.subPaths.flat();
     const points = extractEditablePoints(commands);
     const point = points.find((p: ControlPoint) => p.commandIndex === cmd.commandIndex && p.pointIndex === cmd.pointIndex);
 
@@ -248,7 +261,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
         }
         
         if (mCommandIndex !== -1) {
-          const mPoint = commands[mCommandIndex].points[0];
+          const mPoint = (commands[mCommandIndex] as Command & { type: 'M' }).position;
           const currentPoint = point;
           
           // Check if current point shares x or y coordinate with M point

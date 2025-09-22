@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 import { temporal } from 'zundo';
 import { textToPath } from '../utils/textVectorizationUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../utils';
-import { parsePathD } from '../utils/pathParserUtils';
+import { parsePathD, extractSubpaths } from '../utils/pathParserUtils';
 import type { Point } from '../types';
 import isDeepEqual from 'fast-deep-equal';
 
@@ -122,11 +122,10 @@ export const useCanvasStore = create<CanvasStore>()(
           if (reusePath && hasExistingPencilPath) {
             // Reuse existing path - add the starting point as a new subpath
             const pathData = lastElement.data as import('../types').PathData;
-            const newD = `${pathData.d} M ${formatToPrecision(point.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(point.y, PATH_DECIMAL_PRECISION)}`;
             get().updateElement(lastElement.id, {
               data: {
                 ...pathData,
-                d: newD,
+                subPaths: [...pathData.subPaths, [{type: 'M', position: point}]]
               },
             });
           } else {
@@ -134,7 +133,7 @@ export const useCanvasStore = create<CanvasStore>()(
             get().addElement({
               type: 'path',
               data: {
-                d: `M ${formatToPrecision(point.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(point.y, PATH_DECIMAL_PRECISION)}`,
+                subPaths: [[{type: 'M', position: point}]],
                 strokeWidth,
                 strokeColor: effectiveStrokeColor,
                 strokeOpacity,
@@ -159,11 +158,18 @@ export const useCanvasStore = create<CanvasStore>()(
             const pathData = pencilPathElement.data as import('../types').PathData;
             
             // Parse the current path to get the last point
-            const commands = parsePathD(pathData.d);
+            const commands = pathData.subPaths.flat();
             if (commands.length > 0) {
               const lastCommand = commands[commands.length - 1];
-              if (lastCommand.points.length > 0) {
-                const lastPoint = lastCommand.points[lastCommand.points.length - 1];
+              if (lastCommand.type !== 'Z') {
+                let lastPoint: Point;
+                if (lastCommand.type === 'M' || lastCommand.type === 'L') {
+                  lastPoint = lastCommand.position;
+                } else if (lastCommand.type === 'C') {
+                  lastPoint = lastCommand.position;
+                } else {
+                  lastPoint = { x: 0, y: 0 }; // fallback
+                }
                 
                 // Check minimum step distance (like in the provided code)
                 const minStep = 1.25;
@@ -174,11 +180,14 @@ export const useCanvasStore = create<CanvasStore>()(
               }
             }
             
-            const newD = `${pathData.d} L ${formatToPrecision(point.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(point.y, PATH_DECIMAL_PRECISION)}`;
+            // Update subPaths by adding L command to the last subpath
+            const lastSubpathIndex = pathData.subPaths.length - 1;
+            const updatedSubPaths = [...pathData.subPaths];
+            updatedSubPaths[lastSubpathIndex] = [...updatedSubPaths[lastSubpathIndex], {type: 'L', position: point}];
             get().updateElement(pencilPathElement.id, {
               data: {
                 ...pathData,
-                d: newD,
+                subPaths: updatedSubPaths
               },
             });
           }
@@ -205,11 +214,15 @@ export const useCanvasStore = create<CanvasStore>()(
             );
 
             if (pathD) {
+              // Parse the path string into commands and extract subpaths
+              const commands = parsePathD(pathD);
+              const subPaths = extractSubpaths(commands);
+              
               // Create path element with the converted text
               get().addElement({
                 type: 'path',
                 data: {
-                  d: pathD,
+                  subPaths: subPaths.map(sp => sp.commands),
                   strokeWidth,
                   strokeColor,
                   strokeOpacity,
@@ -305,10 +318,14 @@ export const useCanvasStore = create<CanvasStore>()(
             }
           }
 
+          // Parse the path string into commands and extract subpaths
+          const commands = parsePathD(d);
+          const parsedSubPaths = extractSubpaths(commands);
+
           get().addElement({
             type: 'path',
             data: {
-              d,
+              subPaths: parsedSubPaths.map(sp => sp.commands),
               strokeWidth,
               strokeColor,
               strokeOpacity,

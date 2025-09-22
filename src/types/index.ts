@@ -15,11 +15,24 @@ export interface ControlPointInfo {
   anchor: Point;
 }
 
+// Control point combining position and info
+export interface ControlPoint extends Point, ControlPointInfo {}
+
+// Path command types
+export type CommandType = 'M' | 'L' | 'C' | 'Z';
+
+export type Command =
+  | { type: 'M' | 'L'; position: Point }
+  | { type: 'C'; controlPoint1: ControlPoint; controlPoint2: ControlPoint; position: Point }
+  | { type: 'Z' };
+
+export type SubPath = Command[];
+
 // Configurable decimal precision for path coordinates
 export const PATH_DECIMAL_PRECISION = 2;
 
 export interface PathData {
-  d: string; // SVG path commands (M, L, C, Z.)
+  subPaths: SubPath[]; // Structured representation of SVG path commands
   strokeWidth: number;
   strokeColor: string;
   strokeOpacity: number;

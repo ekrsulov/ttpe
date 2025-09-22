@@ -2,7 +2,7 @@ import React, { useRef, useCallback, useState, useEffect } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
 import { measurePath } from '../utils/measurementUtils';
 import { transformPathData, transformSubpathsData, transformSingleSubpath } from '../utils/transformationUtils';
-import { parsePathD, extractEditablePoints, extractSubpaths } from '../utils/pathParserUtils';
+import { extractEditablePoints } from '../utils/pathParserUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../utils';
 import { CanvasRenderer } from './CanvasRenderer';
 import { transformManager, type TransformBounds } from '../utils/transformManager';
@@ -26,7 +26,6 @@ export const Canvas: React.FC<CanvasProps> = () => {
     selectedCommands,
     selectedSubpaths,
     draggingSelection,
-    subpath,
     updateElement,
     startDraggingPoint,
     updateDraggingPoint,
@@ -36,9 +35,6 @@ export const Canvas: React.FC<CanvasProps> = () => {
     clearSelectedCommands,
     deleteSelectedCommands,
     selectSubpath,
-    startDraggingSubpath,
-    updateDraggingSubpath,
-    stopDraggingSubpath,
     getTransformationBounds,
     isWorkingWithSubpaths,
     getFilteredEditablePoints,
@@ -242,7 +238,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
   const getElementBounds = (element: typeof elements[0]) => {
     if (element.type === 'path') {
       const pathData = element.data as import('../types').PathData;
-      return measurePath(pathData.d, pathData.strokeWidth, viewport.zoom);
+      return measurePath(pathData.subPaths, pathData.strokeWidth, viewport.zoom);
     }
     return null;
   };
@@ -266,13 +262,11 @@ export const Canvas: React.FC<CanvasProps> = () => {
     
     try {
       const pathData = element.data as PathData;
-      const commands = parsePathD(pathData.d);
-      const subpaths = extractSubpaths(commands);
       
-      if (subpathIndex >= subpaths.length) return null;
+      if (subpathIndex >= pathData.subPaths.length) return null;
       
-      const subpath = subpaths[subpathIndex];
-      return measurePath(subpath.d, pathData.strokeWidth || 1, viewport.zoom);
+      const subpath = pathData.subPaths[subpathIndex];
+      return measurePath([subpath], pathData.strokeWidth || 1, viewport.zoom);
     } catch (error) {
       console.warn('Failed to calculate individual subpath bounds:', error);
       return null;
@@ -415,7 +409,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
 
   /* eslint-disable react-hooks/exhaustive-deps */
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    const point = screenToCanvas(e.clientX, e.clientY);
+        const point = screenToCanvas(e.clientX, e.clientY);
 
     if (isSpacePressed && e.buttons === 1) {
       // Pan the canvas with spacebar + pointer button
@@ -444,8 +438,18 @@ export const Canvas: React.FC<CanvasProps> = () => {
           setIsDragging(true); // Start dragging now
         }
         setHasDragMoved(true);
-        useCanvasStore.getState().moveSelectedElements(deltaX, deltaY);
-        setDragStart(point);
+        
+        // Check if we're working with subpaths - TODO: Implement subpath dragging
+        if (isWorkingWithSubpaths()) {
+          // Subpath dragging functionality removed - will be reimplemented
+          console.log('Subpath dragging not yet implemented');
+          // Don't update dragStart when dragging subpaths to maintain absolute coordinates
+          return;
+        } else {
+          // Move entire selected elements
+          useCanvasStore.getState().moveSelectedElements(deltaX, deltaY);
+          setDragStart(point);
+        }
       }
       return;
     }
@@ -616,6 +620,8 @@ export const Canvas: React.FC<CanvasProps> = () => {
 
   /* eslint-disable react-hooks/exhaustive-deps */
   const handlePointerUp = useCallback((e: React.PointerEvent) => {
+    // Subpath dragging functionality removed - will be reimplemented
+    
     // Only handle dragging if it hasn't been handled by element click already
     if (isDragging) {
       setIsDragging(false);
@@ -670,7 +676,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
         elements.forEach(el => {
           if (el.type === 'path') {
             const pathData = el.data as PathData;
-            const commands = parsePathD(pathData.d);
+            const commands = pathData.subPaths.flat();
             const points = extractEditablePoints(commands);
             
             points.forEach(point => {
@@ -695,12 +701,10 @@ export const Canvas: React.FC<CanvasProps> = () => {
         elements.forEach(el => {
           if (el.type === 'path' && selectedIds.includes(el.id)) {
             const pathData = el.data as PathData;
-            const commands = parsePathD(pathData.d);
-            const subpaths = extractSubpaths(commands);
             
-            subpaths.forEach((subpathData: { d: string; startIndex: number; endIndex: number }, index: number) => {
+            pathData.subPaths.forEach((subpathData, index) => {
               // Check if subpath intersects with selection box
-              const subpathBounds = measurePath(subpathData.d, pathData.strokeWidth || 1, viewport.zoom);
+              const subpathBounds = measurePath([subpathData], pathData.strokeWidth || 1, viewport.zoom);
               
               const intersects = !(subpathBounds.maxX < selectionMinX ||
                          subpathBounds.minX > selectionMaxX ||
@@ -728,7 +732,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
             if (el.type === 'path') {
               const pathData = el.data as import('../types').PathData;
               // Check if the path bounds intersect with the selection box
-              const pathBounds = measurePath(pathData.d, pathData.strokeWidth, viewport.zoom);
+              const pathBounds = measurePath(pathData.subPaths, pathData.strokeWidth, viewport.zoom);
 
               // Check for intersection between path bounds and selection bounds
               const intersects = !(pathBounds.maxX < selectionMinX ||
@@ -828,7 +832,6 @@ export const Canvas: React.FC<CanvasProps> = () => {
         activePlugin={activePlugin}
         editingPoint={editingPoint}
         draggingSelection={draggingSelection}
-        subpath={subpath}
         isSelecting={isSelecting}
         selectionStart={selectionStart}
         selectionEnd={selectionEnd}
@@ -845,9 +848,6 @@ export const Canvas: React.FC<CanvasProps> = () => {
         onUpdateElement={updateElement}
         onSelectCommand={selectCommand}
         onSelectSubpath={selectSubpath}
-        onStartDraggingSubpath={startDraggingSubpath}
-        onUpdateDraggingSubpath={updateDraggingSubpath}
-        onStopDraggingSubpath={stopDraggingSubpath}
         getTransformationBounds={getTransformationBounds}
         isWorkingWithSubpaths={isWorkingWithSubpaths}
         getFilteredEditablePoints={getFilteredEditablePoints}

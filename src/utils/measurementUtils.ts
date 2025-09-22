@@ -4,10 +4,26 @@ const pathMeasurementCache = new Map<string, { minX: number; minY: number; maxX:
 
 // Function to measure path bounds using a ghost SVG element
 export const measurePath = (
-  d: string,
+  subPaths: import('../types').SubPath[],
   strokeWidth: number,
   zoom: number
 ): { minX: number; minY: number; maxX: number; maxY: number } => {
+  // Generate d string from subPaths
+  const d = subPaths.flat().map(cmd => {
+    switch (cmd.type) {
+      case 'M':
+        return `M ${cmd.position.x} ${cmd.position.y}`;
+      case 'L':
+        return `L ${cmd.position.x} ${cmd.position.y}`;
+      case 'C':
+        return `C ${cmd.controlPoint1.x} ${cmd.controlPoint1.y} ${cmd.controlPoint2.x} ${cmd.controlPoint2.y} ${cmd.position.x} ${cmd.position.y}`;
+      case 'Z':
+        return 'Z';
+      default:
+        return '';
+    }
+  }).join(' ');
+
   const cacheKey = `${d}-${strokeWidth}-${zoom}`;
 
   // Check cache first

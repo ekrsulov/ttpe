@@ -1,8 +1,8 @@
 import React from 'react';
 import { measurePath } from '../utils/measurementUtils';
-import { parsePathD, extractEditablePoints, getCommandStartPoint, updatePathD, extractSubpaths } from '../utils/pathParserUtils';
+import { parsePathD, extractEditablePoints, getCommandStartPoint, updatePathD, extractSubpaths, commandsToString } from '../utils/pathParserUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../utils';
-import type { Point, CanvasElement, ControlPointInfo } from '../types';
+import type { Point, CanvasElement, ControlPointInfo, SubPath } from '../types';
 
 interface CanvasRendererProps {
   viewport: {
@@ -55,19 +55,6 @@ interface CanvasRendererProps {
     startX: number;
     startY: number;
   } | null;
-  subpath: {
-    isDragging: boolean;
-    draggedSubpath: { elementId: string; subpathIndex: number } | null;
-    initialPositions: Array<{
-      elementId: string;
-      subpathIndex: number;
-      x: number;
-      y: number;
-    }>;
-    originalPathData: string | null;
-    startX: number;
-    startY: number;
-  };
   isSelecting: boolean;
   selectionStart: Point | null;
   selectionEnd: Point | null;
@@ -84,9 +71,6 @@ interface CanvasRendererProps {
   onUpdateElement: (id: string, updates: Partial<CanvasElement>) => void;
   onSelectCommand: (command: { elementId: string; commandIndex: number; pointIndex: number }, multiSelect?: boolean) => void;
   onSelectSubpath: (elementId: string, subpathIndex: number, multiSelect?: boolean) => void;
-  onStartDraggingSubpath: (elementId: string, subpathIndex: number, startX: number, startY: number) => void;
-  onUpdateDraggingSubpath: (x: number, y: number) => void;
-  onStopDraggingSubpath: () => void;
   getTransformationBounds: () => { minX: number; minY: number; maxX: number; maxY: number } | null;
   isWorkingWithSubpaths: () => boolean;
   getFilteredEditablePoints: (elementId: string) => Array<{
@@ -123,7 +107,6 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   activePlugin,
   editingPoint,
   draggingSelection,
-  subpath,
   isSelecting,
   selectionStart,
   selectionEnd,
@@ -140,9 +123,6 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   onUpdateElement,
   onSelectCommand,
   onSelectSubpath,
-  onStartDraggingSubpath,
-  onUpdateDraggingSubpath,
-  onStopDraggingSubpath,
   isWorkingWithSubpaths,
   getFilteredEditablePoints,
   getControlPointInfo,
@@ -150,7 +130,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
 }) => {
   // Local state for drag visualization
   const [dragPosition, setDragPosition] = React.useState<{x: number, y: number} | null>(null);
-  const [originalPathDataMap, setOriginalPathDataMap] = React.useState<Record<string, string> | null>(null);
+  const [originalPathDataMap, setOriginalPathDataMap] = React.useState<Record<string, SubPath[]> | null>(null);
 
   // Global pointer event handlers for drag
   /* eslint-disable react-hooks/exhaustive-deps */
@@ -162,7 +142,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       // Disable all dragging interactions when smooth brush is active
       if (smoothBrush.isActive) return;
       
-      if (editingPoint?.isDragging || draggingSelection?.isDragging || subpath?.isDragging) {
+      if (editingPoint?.isDragging || draggingSelection?.isDragging) {
         // Get SVG element as reference for coordinate conversion
         const svgElement = document.querySelector('svg');
         if (svgElement) {
@@ -182,10 +162,8 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           if (editingPoint?.isDragging) {
             // Update store position
             onUpdateDraggingPoint(formatToPrecision(canvasX, PATH_DECIMAL_PRECISION), formatToPrecision(canvasY, PATH_DECIMAL_PRECISION));
-          } else if (subpath?.isDragging) {
-            // Update store position for subpath
-            onUpdateDraggingSubpath(formatToPrecision(canvasX, PATH_DECIMAL_PRECISION), formatToPrecision(canvasY, PATH_DECIMAL_PRECISION));
           }
+          // Subpath dragging functionality removed - will be reimplemented
 
           // Throttled path update for real-time feedback
           const now = Date.now();
@@ -197,7 +175,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
               const element = elements.find(el => el.id === editingPoint.elementId);
               if (element && element.type === 'path') {
                 const pathData = element.data as import('../types').PathData;
-                const commands = parsePathD(pathData.d);
+                const commands = pathData.subPaths.flat();
                 const points = extractEditablePoints(commands);
 
                 const pointToUpdate = points.find(p => 
@@ -221,7 +199,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
                       const element = elements.find(el => el.id === editingPoint.elementId);
                       if (element && element.type === 'path') {
                         const pathData = element.data as import('../types').PathData;
-                        const commands = parsePathD(pathData.d);
+                        const commands = pathData.subPaths.flat();
                         const isClosed = commands.length > 2 && commands[commands.length - 1].type === 'Z';
                         
                         let pairedCommandIndex = -1;
@@ -285,7 +263,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
                           const element = elements.find(el => el.id === editingPoint.elementId);
                           if (element && element.type === 'path') {
                             const pathData = element.data as import('../types').PathData;
-                            const commands = parsePathD(pathData.d);
+                            const commands = pathData.subPaths.flat();
                             const isClosed = commands.length > 2 && commands[commands.length - 1].type === 'Z';
                             
                             if (isClosed && commands[editingPoint.commandIndex].type === 'C') {
@@ -299,7 +277,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
                               }
                               
                               if (mCommandIndex !== -1) {
-                                const mPoint = commands[mCommandIndex].points[0];
+                                const mPoint = commands[mCommandIndex].type !== 'Z' ? (commands[mCommandIndex] as { position: Point }).position : { x: 0, y: 0 };
                                 const currentPoint = points.find(p => p.commandIndex === editingPoint.commandIndex && p.pointIndex === editingPoint.pointIndex);
                                 
                                 if (currentPoint) {
@@ -418,10 +396,11 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
                   pointToUpdate.y = newY;
 
                   const newPathD = updatePathD(commands, pointsToUpdate);
+                  const newSubPaths = extractSubpaths(parsePathD(newPathD)).map(sp => sp.commands);
                   onUpdateElement(editingPoint.elementId, {
                     data: {
                       ...pathData,
-                      d: newPathD
+                      subPaths: newSubPaths
                     }
                   });
                 }
@@ -433,12 +412,12 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
               
               // Store original path data to prevent accumulation
               if (!originalPathDataMap) {
-                const newOriginalPathDataMap: Record<string, string> = {};
+                const newOriginalPathDataMap: Record<string, SubPath[]> = {};
                 draggingSelection.initialPositions.forEach(pos => {
                   const element = elements.find(el => el.id === pos.elementId);
                   if (element && element.type === 'path') {
                     const pathData = element.data as import('../types').PathData;
-                    newOriginalPathDataMap[pos.elementId] = pathData.d;
+                    newOriginalPathDataMap[pos.elementId] = pathData.subPaths;
                   }
                 });
                 setOriginalPathDataMap(newOriginalPathDataMap);
@@ -470,86 +449,24 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
                 
                 // Update each element
                 Object.entries(elementUpdates).forEach(([elementId, updates]) => {
-                  const originalPathData = originalPathDataMap[elementId];
-                  if (originalPathData) {
-                    const originalCommands = parsePathD(originalPathData);
-                    const newPathD = updatePathD(originalCommands, updates);
+                  const originalSubPaths = originalPathDataMap[elementId];
+                  if (originalSubPaths) {
+                    const originalCommands = originalSubPaths.flat();
+                    const newPathD = updatePathD(originalCommands, updates.map(u => ({ ...u, type: 'independent' as const, anchor: { x: u.x, y: u.y } })));
+                    const newSubPaths = extractSubpaths(parsePathD(newPathD)).map(sp => sp.commands);
                     
                     const element = elements.find(el => el.id === elementId);
                     if (element) {
                       onUpdateElement(elementId, {
                         data: {
                           ...(element.data as import('../types').PathData),
-                          d: newPathD
+                          subPaths: newSubPaths
                         }
                       });
                     }
                   }
                 });
               }
-            } else if (subpath?.isDragging && subpath.draggedSubpath && subpath.originalPathData) {
-              // Update paths in real-time for multi-subpath drag
-              const originalPathDataMap = JSON.parse(subpath.originalPathData) as Record<string, string>;
-              
-              // Calculate current delta from drag start to current position
-              const deltaX = formatToPrecision(canvasX - subpath.startX, PATH_DECIMAL_PRECISION);
-              const deltaY = formatToPrecision(canvasY - subpath.startY, PATH_DECIMAL_PRECISION);
-              
-              // Group selected subpaths by element
-              const subpathsByElement = selectedSubpaths.reduce((acc, subpath) => {
-                if (!acc[subpath.elementId]) {
-                  acc[subpath.elementId] = [];
-                }
-                acc[subpath.elementId].push(subpath.subpathIndex);
-                return acc;
-              }, {} as Record<string, number[]>);
-              
-              // Update each element that contains selected subpaths
-              Object.entries(subpathsByElement).forEach(([elementId, subpathIndices]) => {
-                const originalPathData = originalPathDataMap[elementId];
-                if (originalPathData) {
-                  const originalCommands = parsePathD(originalPathData);
-                  const subpaths = extractSubpaths(originalCommands);
-                  
-                  // Create a copy of the original commands to modify
-                  const commandsCopy = originalCommands.map(cmd => ({
-                    ...cmd,
-                    points: cmd.points.map(p => ({ ...p }))
-                  }));
-                  
-                  // Apply delta to all selected subpaths in this element
-                  subpathIndices.forEach(subpathIndex => {
-                    const subpathData = subpaths[subpathIndex];
-                    if (subpathData) {
-                      const startIndex = subpathData.startIndex;
-                      const endIndex = subpathData.endIndex;
-                      for (let i = startIndex; i <= endIndex; i++) {
-                        const cmd = commandsCopy[i];
-                        cmd.points = cmd.points.map(p => ({
-                          x: formatToPrecision(p.x + deltaX, PATH_DECIMAL_PRECISION),
-                          y: formatToPrecision(p.y + deltaY, PATH_DECIMAL_PRECISION)
-                        }));
-                      }
-                    }
-                  });
-                  
-                  // Reconstruct the path d
-                  const newPathD = commandsCopy.map(cmd => {
-                    const pointsStr = cmd.points.map(p => `${formatToPrecision(p.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(p.y, PATH_DECIMAL_PRECISION)}`).join(' ');
-                    return `${cmd.type} ${pointsStr}`;
-                  }).join(' ');
-                  
-                  const element = elements.find(el => el.id === elementId);
-                  if (element) {
-                    onUpdateElement(elementId, {
-                      data: {
-                        ...(element.data as import('../types').PathData),
-                        d: newPathD
-                      }
-                    });
-                  }
-                }
-              });
             }
           }
         }
@@ -557,7 +474,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     };
 
     const handlePointerUp = (e: PointerEvent) => {
-      if (editingPoint?.isDragging || draggingSelection?.isDragging || subpath?.isDragging) {
+      if (editingPoint?.isDragging || draggingSelection?.isDragging) {
         // Emergency cleanup - clear all temporary state
         setDragPosition(null);
         setOriginalPathDataMap(null);
@@ -581,9 +498,8 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           onStopDraggingPoint();
         } else if (draggingSelection?.isDragging) {
           onStopDraggingPoint(); // This will handle draggingSelection cleanup
-        } else if (subpath?.isDragging) {
-          onStopDraggingSubpath();
         }
+        // Subpath dragging functionality removed - will be reimplemented
       }
     };
 
@@ -595,12 +511,11 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         onStopDraggingPoint();
       } else if (draggingSelection?.isDragging) {
         onStopDraggingPoint();
-      } else if (subpath?.isDragging) {
-        onStopDraggingSubpath();
       }
+      // Subpath dragging functionality removed - will be reimplemented
     };
 
-    const isAnyDragging = editingPoint?.isDragging || draggingSelection?.isDragging || subpath?.isDragging;
+    const isAnyDragging = editingPoint?.isDragging || draggingSelection?.isDragging;
     
     if (isAnyDragging) {
       // Use document for more reliable event capture
@@ -623,7 +538,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       document.removeEventListener('blur', handlePointerCancel);
       window.removeEventListener('blur', handlePointerCancel);
     };
-  }, [editingPoint?.isDragging, editingPoint?.elementId, editingPoint?.commandIndex, editingPoint?.pointIndex, draggingSelection?.isDragging, subpath?.isDragging, viewport, onUpdateDraggingPoint, onStopDraggingPoint, onUpdateDraggingSubpath, onStopDraggingSubpath, dragPosition, elements, onUpdateElement]);
+  }, [editingPoint?.isDragging, editingPoint?.elementId, editingPoint?.commandIndex, editingPoint?.pointIndex, draggingSelection?.isDragging, viewport, onUpdateDraggingPoint, onStopDraggingPoint, dragPosition, elements, onUpdateElement]);
   /* eslint-enable react-hooks/exhaustive-deps */
 
   // Calculate contrasting selection color based on element's color (stroke or fill)
@@ -773,13 +688,12 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     
     try {
       const pathData = element.data as import('../types').PathData;
-      const commands = parsePathD(pathData.d);
-      const subpaths = extractSubpaths(commands);
+      const subpaths = pathData.subPaths;
       
       if (subpathIndex >= subpaths.length) return null;
       
       const subpath = subpaths[subpathIndex];
-      return measurePath(subpath.d, pathData.strokeWidth || 1, viewport.zoom);
+      return measurePath([subpath], pathData.strokeWidth || 1, viewport.zoom);
     } catch (error) {
       console.warn('Failed to calculate individual subpath bounds:', error);
       return null;
@@ -1522,7 +1436,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   const getTransformedBounds = (element: typeof elements[0]) => {
     if (element.type === 'path') {
       const pathData = element.data as import('../types').PathData;
-      return measurePath(pathData.d, pathData.strokeWidth, viewport.zoom);
+      return measurePath(pathData.subPaths, pathData.strokeWidth, viewport.zoom);
     }
     return null;
   };
@@ -1532,7 +1446,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     if (element.type !== 'path') return null;
     
     const pathData = element.data as import('../types').PathData;
-    const commands = parsePathD(pathData.d);
+    const commands = pathData.subPaths.flat();
     
     // Use filtered points that consider subpath selection
     const points = getFilteredEditablePoints(element.id);
@@ -1614,7 +1528,8 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
             // command points
             const cmd = commands[point.commandIndex];
             const isLastCommand = point.commandIndex === commands.length - 1;
-            const isLastPointInCommand = point.pointIndex === cmd.points.length - 1;
+            const pointsLength = cmd.type === 'M' || cmd.type === 'L' ? 1 : cmd.type === 'C' ? 3 : 0;
+            const isLastPointInCommand = point.pointIndex === pointsLength - 1;
             const isLastPointInPath = isLastCommand && isLastPointInCommand && cmd.type !== 'Z';
             
             if (cmd.type === 'M') {
@@ -1696,7 +1611,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         })}
         {/* Render control point lines - only for filtered points */}
         {commands.map((cmd, cmdIndex) => {
-          if (cmd.type === 'C' && cmd.points.length >= 3) {
+          if (cmd.type === 'C') {
             // Check if this command has any control points in the filtered points list
             const hasFilteredControlPoints = points.some(point => 
               point.commandIndex === cmdIndex && (point.pointIndex === 0 || point.pointIndex === 1)
@@ -1709,12 +1624,12 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
             
             const startPoint = getCommandStartPoint(commands, cmdIndex);
             if (startPoint) {
-              let control1X = cmd.points[0].x;
-              let control1Y = cmd.points[0].y;
-              let control2X = cmd.points[1].x;
-              let control2Y = cmd.points[1].y;
-              const endX = cmd.points[2].x;
-              const endY = cmd.points[2].y;
+              let control1X = cmd.controlPoint1.x;
+              let control1Y = cmd.controlPoint1.y;
+              let control2X = cmd.controlPoint2.x;
+              let control2Y = cmd.controlPoint2.y;
+              const endX = cmd.position.x;
+              const endY = cmd.position.y;
 
               // Update control point positions if being dragged
               if (editingPoint?.isDragging && editingPoint.elementId === element.id) {
@@ -1749,8 +1664,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     const pathData = element.data as import('../types').PathData;
     
     // Use the current path data (which may be updated during dragging) instead of original
-    const commands = parsePathD(pathData.d);
-    const subpaths = extractSubpaths(commands);
+    const subpaths = pathData.subPaths;
 
     // Calculate contrasting colors for the overlay based on element's colors
     const elementStrokeColor = pathData.strokeColor || '#000000';
@@ -1782,7 +1696,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           return (
             <path
               key={index}
-              d={subpathData.d}
+              d={commandsToString(subpathData)}
               fill={overlayFill}
               stroke={overlayStroke}
               strokeWidth={strokeWidth}
@@ -1794,14 +1708,17 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
                 // Removed the transform - the overlay should follow the updated path data
               }}
               onPointerDown={(e) => {
-                e.stopPropagation();
+                                
+                // Don't stop propagation - let Canvas handlePointerDown also run to set dragStart
                 
                 // Disable subpath interaction when smooth brush is active
-                if (smoothBrush.isActive) return;
+                if (smoothBrush.isActive) {
+                                    return;
+                }
                 
                 // Check if this is a click for selection or start of drag
                 if (e.shiftKey) {
-                  // Shift+click for multiselect
+                                    // Shift+click for multiselect
                   onSelectSubpath(element.id, index, true);
                 } else {
                   // Regular click - check if already selected
@@ -1809,6 +1726,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
                     s => s.elementId === element.id && s.subpathIndex === index
                   );
                   
+                                    
                   if (!isAlreadySelected) {
                     // Select this subpath if not already selected
                     onSelectSubpath(element.id, index, false);
@@ -1825,15 +1743,19 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
                     const canvasX = (svgX - viewport.panX) / viewport.zoom;
                     const canvasY = (svgY - viewport.panY) / viewport.zoom;
                     
-                    onStartDraggingSubpath(element.id, index, canvasX, canvasY);
+                    // Subpath dragging functionality removed - will be reimplemented
+                    console.log('Subpath drag not yet implemented:', { canvasX, canvasY });
                   }
                 }
               }}
+              onPointerMove={() => {
+                // Let Canvas handle all pointer move events for subpaths
+                // The overlay just needs to ensure the drag is started correctly
+              }}
               onPointerUp={(e) => {
+                                
                 e.stopPropagation();
-                if (subpath.isDragging && subpath.draggedSubpath?.elementId === element.id && subpath.draggedSubpath.subpathIndex === index) {
-                  onStopDraggingSubpath();
-                }
+                // Subpath dragging functionality removed - will be reimplemented
               }}
             />
           );
@@ -1850,15 +1772,19 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     switch (type) {
       case 'path': {
         const pathData = data as import('../types').PathData;
-        // For pencil paths, if strokeColor is 'none', render with black
+                // For pencil paths, if strokeColor is 'none', render with black
         const effectiveStrokeColor = pathData.isPencilPath && pathData.strokeColor === 'none' 
           ? '#000000' 
           : pathData.strokeColor;
 
+        const pathD = commandsToString(pathData.subPaths.flat());
+        
+        // Subpath dragging debug logging removed - will be reimplemented
+        
         return (
           <g key={element.id}>
             <path
-              d={pathData.d}
+              d={pathD}
               stroke={effectiveStrokeColor}
               strokeWidth={pathData.strokeWidth}
               fill={pathData.fillColor}
@@ -1879,7 +1805,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
             {/* Render subpath selection box if in subpath mode and element has selected subpaths */}
             {activePlugin === 'transformation' && isWorkingWithSubpaths() && selectedSubpaths.some(sp => sp.elementId === element.id) && renderSubpathSelectionBox(element)}
             {isSelected && activePlugin === 'edit' && renderEditPoints(element)}
-            {isSelected && activePlugin === 'subpath' && renderSubpathOverlays(element)}
+            {activePlugin === 'subpath' && renderSubpathOverlays(element)}
           </g>
         );
       }

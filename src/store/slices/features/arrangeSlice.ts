@@ -3,50 +3,7 @@ import type { CanvasElement } from '../../../types';
 import type { CanvasStore } from '../../canvasStore';
 import { measurePath } from '../../../utils/measurementUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../../utils';
-
-// Helper function to transform SVG path commands by applying a translation
-const transformSvgPath = (d: string, deltaX: number, deltaY: number): string => {
-  // Split the path into commands and coordinates (only M, L, C, Z)
-  const commands = d.split(/([MLCZmlcz])/).filter(cmd => cmd.trim() !== '');
-  let result = '';
-  let i = 0;
-
-  while (i < commands.length) {
-    const command = commands[i];
-    if (result) result += ' ';
-    result += command;
-
-    // Process coordinates based on command type
-    if ('MLCZmlcz'.indexOf(command) !== -1) {
-      i++;
-      // Collect all numeric values until the next command
-      while (i < commands.length && 'MLCZmlcz'.indexOf(commands[i]) === -1) {
-        const coords = commands[i].trim().split(/[\s,]+/).map(coord => {
-          const parsed = parseFloat(coord);
-          return isNaN(parsed) ? 0 : parsed; // Default to 0 if parsing fails
-        });
-
-        // Apply translation to coordinate pairs (M, L, C all have x,y pairs)
-        if (command.toUpperCase() !== 'Z') {
-          for (let j = 0; j < coords.length; j += 2) {
-            if (!isNaN(coords[j]) && !isNaN(deltaX)) {
-              coords[j] = formatToPrecision(coords[j] + deltaX, PATH_DECIMAL_PRECISION);
-            }
-            if (!isNaN(coords[j + 1]) && !isNaN(deltaY)) {
-              coords[j + 1] = formatToPrecision(coords[j + 1] + deltaY, PATH_DECIMAL_PRECISION);
-            }
-          }
-        }
-        result += ' ' + coords.join(' ');
-        i++;
-      }
-    } else {
-      i++;
-    }
-  }
-
-  return result;
-};
+import { transformSubpathsData } from '../../../utils/transformationUtils';
 
 // Helper interface for element bounds
 interface ElementWithBounds {
@@ -79,7 +36,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
     const minX = Math.min(...selectedElements.map((el: CanvasElement) => {
       if (el.type === 'path') {
         const pathData = el.data as import('../../../types').PathData;
-        const bounds = measurePath(pathData.d, pathData.strokeWidth, fullState.viewport.zoom);
+        const bounds = measurePath(pathData.subPaths, pathData.strokeWidth, fullState.viewport.zoom);
         return bounds.minX;
       }
       return 0;
@@ -91,16 +48,13 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
         if (fullState.selectedIds.includes(el.id)) {
           if (el.type === 'path') {
             const pathData = el.data as import('../../../types').PathData;
-            const currentBounds = measurePath(pathData.d, pathData.strokeWidth, fullState.viewport.zoom);
+            const currentBounds = measurePath(pathData.subPaths, pathData.strokeWidth, fullState.viewport.zoom);
             const deltaX = formatToPrecision(minX - currentBounds.minX, PATH_DECIMAL_PRECISION);
             
             if (!isNaN(deltaX)) {
               return {
                 ...el,
-                data: {
-                  ...pathData,
-                  d: transformSvgPath(pathData.d, deltaX, 0),
-                },
+                data: transformSubpathsData(pathData, 1, 1, deltaX, 0, 0),
               };
             }
           }
@@ -119,7 +73,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
     selectedElements.forEach((el: CanvasElement) => {
       if (el.type === 'path') {
         const pathData = el.data as import('../../../types').PathData;
-        const bounds = measurePath(pathData.d, pathData.strokeWidth, fullState.viewport.zoom);
+        const bounds = measurePath(pathData.subPaths, pathData.strokeWidth, fullState.viewport.zoom);
         centers.set(el.id, (bounds.minX + bounds.maxX) / 2);
       }
     });
@@ -137,10 +91,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
             const pathData = el.data as import('../../../types').PathData;
             return {
               ...el,
-              data: {
-                ...pathData,
-                d: transformSvgPath(pathData.d, deltaX, 0),
-              },
+              data: transformSubpathsData(pathData, 1, 1, deltaX, 0, 0),
             };
           }
         }
@@ -157,7 +108,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
     const maxX = Math.max(...selectedElements.map((el: CanvasElement) => {
       if (el.type === 'path') {
         const pathData = el.data as import('../../../types').PathData;
-        const bounds = measurePath(pathData.d, pathData.strokeWidth, fullState.viewport.zoom);
+        const bounds = measurePath(pathData.subPaths, pathData.strokeWidth, fullState.viewport.zoom);
         return bounds.maxX;
       }
       return 0;
@@ -169,14 +120,11 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
         if (fullState.selectedIds.includes(el.id)) {
           if (el.type === 'path') {
             const pathData = el.data as import('../../../types').PathData;
-            const currentBounds = measurePath(pathData.d, pathData.strokeWidth, fullState.viewport.zoom);
+            const currentBounds = measurePath(pathData.subPaths, pathData.strokeWidth, fullState.viewport.zoom);
             const deltaX = formatToPrecision(maxX - currentBounds.maxX, PATH_DECIMAL_PRECISION);
             return {
               ...el,
-              data: {
-                ...pathData,
-                d: transformSvgPath(pathData.d, deltaX, 0),
-              },
+              data: transformSubpathsData(pathData, 1, 1, deltaX, 0, 0),
             };
           }
         }
@@ -193,7 +141,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
     const minY = Math.min(...selectedElements.map((el: CanvasElement) => {
       if (el.type === 'path') {
         const pathData = el.data as import('../../../types').PathData;
-        const bounds = measurePath(pathData.d, pathData.strokeWidth, fullState.viewport.zoom);
+        const bounds = measurePath(pathData.subPaths, pathData.strokeWidth, fullState.viewport.zoom);
         return bounds.minY;
       }
       return 0;
@@ -205,14 +153,11 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
         if (fullState.selectedIds.includes(el.id)) {
           if (el.type === 'path') {
             const pathData = el.data as import('../../../types').PathData;
-            const currentBounds = measurePath(pathData.d, pathData.strokeWidth, fullState.viewport.zoom);
+            const currentBounds = measurePath(pathData.subPaths, pathData.strokeWidth, fullState.viewport.zoom);
             const deltaY = formatToPrecision(minY - currentBounds.minY, PATH_DECIMAL_PRECISION);
             return {
               ...el,
-              data: {
-                ...pathData,
-                d: transformSvgPath(pathData.d, 0, deltaY),
-              },
+              data: transformSubpathsData(pathData, 1, 1, 0, deltaY, 0),
             };
           }
         }
@@ -230,7 +175,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
     selectedElements.forEach((el: CanvasElement) => {
       if (el.type === 'path') {
         const pathData = el.data as import('../../../types').PathData;
-        const bounds = measurePath(pathData.d, pathData.strokeWidth, fullState.viewport.zoom);
+        const bounds = measurePath(pathData.subPaths, pathData.strokeWidth, fullState.viewport.zoom);
         centers.set(el.id, (bounds.minY + bounds.maxY) / 2);
       }
     });
@@ -248,10 +193,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
             const pathData = el.data as import('../../../types').PathData;
             return {
               ...el,
-              data: {
-                ...pathData,
-                d: transformSvgPath(pathData.d, 0, deltaY),
-              },
+              data: transformSubpathsData(pathData, 1, 1, 0, deltaY, 0),
             };
           }
         }
@@ -268,7 +210,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
     const maxY = Math.max(...selectedElements.map((el: CanvasElement) => {
       if (el.type === 'path') {
         const pathData = el.data as import('../../../types').PathData;
-        const bounds = measurePath(pathData.d, pathData.strokeWidth, fullState.viewport.zoom);
+        const bounds = measurePath(pathData.subPaths, pathData.strokeWidth, fullState.viewport.zoom);
         return bounds.maxY;
       }
       return 0;
@@ -280,14 +222,11 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
         if (fullState.selectedIds.includes(el.id)) {
           if (el.type === 'path') {
             const pathData = el.data as import('../../../types').PathData;
-            const currentBounds = measurePath(pathData.d, pathData.strokeWidth, fullState.viewport.zoom);
+            const currentBounds = measurePath(pathData.subPaths, pathData.strokeWidth, fullState.viewport.zoom);
             const deltaY = formatToPrecision(maxY - currentBounds.maxY, PATH_DECIMAL_PRECISION);
             return {
               ...el,
-              data: {
-                ...pathData,
-                d: transformSvgPath(pathData.d, 0, deltaY),
-              },
+              data: transformSubpathsData(pathData, 1, 1, 0, deltaY, 0),
             };
           }
         }
@@ -307,7 +246,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
     selectedElements.forEach((el: CanvasElement) => {
       if (el.type === 'path') {
         const pathData = el.data as import('../../../types').PathData;
-        const bounds = measurePath(pathData.d, pathData.strokeWidth, fullState.viewport.zoom);
+        const bounds = measurePath(pathData.subPaths, pathData.strokeWidth, fullState.viewport.zoom);
         elementBounds.push({
           element: el,
           bounds,
@@ -357,10 +296,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
             const pathData = el.data as import('../../../types').PathData;
             return {
               ...el,
-              data: {
-                ...pathData,
-                d: transformSvgPath(pathData.d, deltaX, 0),
-              },
+              data: transformSubpathsData(pathData, 1, 1, deltaX, 0, 0),
             };
           }
         }
@@ -380,7 +316,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
     selectedElements.forEach((el: CanvasElement) => {
       if (el.type === 'path') {
         const pathData = el.data as import('../../../types').PathData;
-        const bounds = measurePath(pathData.d, pathData.strokeWidth, fullState.viewport.zoom);
+        const bounds = measurePath(pathData.subPaths, pathData.strokeWidth, fullState.viewport.zoom);
         elementBounds.push({
           element: el,
           bounds,
@@ -438,10 +374,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
             const pathData = el.data as import('../../../types').PathData;
             return {
               ...el,
-              data: {
-                ...pathData,
-                d: transformSvgPath(pathData.d, 0, deltaY),
-              },
+              data: transformSubpathsData(pathData, 1, 1, 0, deltaY, 0),
             };
           }
         }

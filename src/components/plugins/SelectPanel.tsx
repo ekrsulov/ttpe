@@ -2,8 +2,8 @@ import React from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Pen, RotateCcw, Minus, Copy, Clipboard } from 'lucide-react';
 import { IconButton } from '../ui/IconButton';
-import { parsePathD, extractEditablePoints, extractSubpaths } from '../../utils/pathParserUtils';
-import type { CanvasElement } from '../../types';
+import { extractEditablePoints, extractSubpaths, commandsToString } from '../../utils/pathParserUtils';
+import type { CanvasElement, PathData } from '../../types';
 
 export const SelectPanel: React.FC = () => {
   const { elements, selectedIds, selectedSubpaths, addElement } = useCanvasStore();
@@ -20,7 +20,7 @@ export const SelectPanel: React.FC = () => {
 
   selectedElements.forEach(el => {
     if (el.type === 'path') {
-      const commands = parsePathD(el.data.d);
+      const commands = (el.data as PathData).subPaths.flat();
       const pointCount = extractEditablePoints(commands).length;
       items.push({ type: 'element', element: el, pointCount });
 
@@ -30,8 +30,7 @@ export const SelectPanel: React.FC = () => {
       elementSubpaths.forEach(sp => {
         const subpathData = subpaths[sp.subpathIndex];
         if (subpathData) {
-          const subCommands = parsePathD(subpathData.d);
-          const subPointCount = extractEditablePoints(subCommands).length;
+          const subPointCount = extractEditablePoints(subpathData.commands).length;
           items.push({ type: 'subpath', element: el, subpathIndex: sp.subpathIndex, pointCount: subPointCount });
         }
       });
@@ -48,7 +47,7 @@ export const SelectPanel: React.FC = () => {
       addElement(elementData);
     } else if (item.type === 'subpath' && item.subpathIndex !== undefined) {
       // Duplicate the subpath as a new element
-      const commands = parsePathD(item.element.data.d);
+      const commands = (item.element.data as PathData).subPaths.flat();
       const subpaths = extractSubpaths(commands);
       const subpathData = subpaths[item.subpathIndex];
       if (subpathData) {
@@ -57,7 +56,7 @@ export const SelectPanel: React.FC = () => {
           type: 'path',
           data: {
             ...item.element.data,
-            d: subpathData.d,
+            subPaths: [subpathData.commands],
           },
         });
       }
@@ -70,15 +69,15 @@ export const SelectPanel: React.FC = () => {
     if (item.type === 'element') {
       // Copy the entire element's path
       if (item.element.type === 'path') {
-        pathData = item.element.data.d;
+        pathData = commandsToString((item.element.data as PathData).subPaths.flat());
       }
     } else if (item.type === 'subpath' && item.subpathIndex !== undefined) {
       // Copy the subpath's path
-      const commands = parsePathD(item.element.data.d);
+      const commands = (item.element.data as PathData).subPaths.flat();
       const subpaths = extractSubpaths(commands);
       const subpathData = subpaths[item.subpathIndex];
       if (subpathData) {
-        pathData = subpathData.d;
+        pathData = commandsToString(subpathData.commands);
       }
     }
     

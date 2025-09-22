@@ -1,6 +1,6 @@
 import type { StateCreator } from 'zustand';
 import type { CanvasStore } from '../../canvasStore';
-import { parsePathD, extractSubpaths } from '../../../utils/pathParserUtils';
+import { commandsToString } from '../../../utils/pathParserUtils';
 import { measurePath } from '../../../utils/measurementUtils';
 import { transformPathData } from '../../../utils/transformationUtils';
 
@@ -68,13 +68,12 @@ export const createTransformationPluginSlice: StateCreator<TransformationPluginS
         const element = state.elements.find((el) => el.id === selected.elementId);
         if (element && element.type === 'path') {
           const pathData = element.data as import('../../../types').PathData;
-          const commands = parsePathD(pathData.d);
-          const subpaths = extractSubpaths(commands);
+          const subpaths = pathData.subPaths;
           const subpathData = subpaths[selected.subpathIndex];
           
           if (subpathData) {
             // Use the same zoom as paths completos to avoid amplification
-            const bounds = measurePath(subpathData.d, pathData.strokeWidth, state.viewport.zoom);
+            const bounds = measurePath([subpathData], pathData.strokeWidth, state.viewport.zoom);
             minX = Math.min(minX, bounds.minX);
             minY = Math.min(minY, bounds.minY);
             maxX = Math.max(maxX, bounds.maxX);
@@ -100,7 +99,7 @@ export const createTransformationPluginSlice: StateCreator<TransformationPluginS
         if (element && element.type === 'path') {
           const pathData = element.data as import('../../../types').PathData;
           // Use the same zoom as everywhere else to maintain consistency
-          const bounds = measurePath(pathData.d, pathData.strokeWidth, state.viewport.zoom);
+          const bounds = measurePath(pathData.subPaths, pathData.strokeWidth, state.viewport.zoom);
           minX = Math.min(minX, bounds.minX);
           minY = Math.min(minY, bounds.minY);
           maxX = Math.max(maxX, bounds.maxX);
@@ -138,15 +137,15 @@ export const createTransformationPluginSlice: StateCreator<TransformationPluginS
     if (!element || element.type !== 'path') return;
     
     const pathData = element.data as import('../../../types').PathData;
-    const commands = parsePathD(pathData.d);
-    const subpaths = extractSubpaths(commands);
+    const subpaths = pathData.subPaths.map((commands) => ({
+      commands,
+      d: commandsToString(commands),
+      startIndex: 0, // Not needed for this logic
+      endIndex: commands.length - 1
+    }));
     
-    // Create a new path by combining original and transformed subpaths
-    const newPathParts: string[] = [];
-    const processedIndices = new Set();
-    
-    // Process each subpath
-    subpaths.forEach((subpathData, index) => {
+    // Create new subPaths by transforming selected ones
+    const newSubPaths = subpaths.map((subpathData, index) => {
       const isSelected = elementSubpaths.some((selected: { subpathIndex: number }) => 
         selected.subpathIndex === index
       );
@@ -154,7 +153,7 @@ export const createTransformationPluginSlice: StateCreator<TransformationPluginS
       if (isSelected) {
         // Transform this subpath
         const subpathPathData = {
-          d: subpathData.d,
+          subPaths: [subpathData.commands],
           strokeWidth: pathData.strokeWidth || 1,
           strokeColor: pathData.strokeColor || '#000000',
           strokeOpacity: pathData.strokeOpacity || 1,
@@ -171,21 +170,16 @@ export const createTransformationPluginSlice: StateCreator<TransformationPluginS
           rotation
         );
         
-        newPathParts.push(transformedSubpath.d);
-        processedIndices.add(index);
+        return transformedSubpath.subPaths[0]; // Return the transformed commands
       } else {
         // Keep original subpath
-        newPathParts.push(subpathData.d);
-        processedIndices.add(index);
+        return subpathData.commands;
       }
     });
     
-    // Combine all subpath parts into a single path
-    const newD = newPathParts.join(' ');
-    
-    // Update the element with the new path data
+    // Update the element with the new subPaths
     state.updateElement(elementId, {
-      data: { ...pathData, d: newD }
+      data: { ...pathData, subPaths: newSubPaths }
     });
   },
 });
