@@ -3,7 +3,43 @@ import type { CanvasElement } from '../../../types';
 import type { CanvasStore } from '../../canvasStore';
 import { measurePath } from '../../../utils/measurementUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../../utils';
-import { transformSubpathsData } from '../../../utils/transformationUtils';
+
+// Helper function to translate PathData by deltaX and deltaY
+const translatePathData = (pathData: any, deltaX: number, deltaY: number): any => {
+  const translatedSubPaths = pathData.subPaths.map((subPath: any[]) => 
+    subPath.map((cmd: any) => {
+      const translatedCmd = { ...cmd };
+      
+      if (cmd.type === 'M' || cmd.type === 'L') {
+        translatedCmd.position = {
+          x: formatToPrecision(cmd.position.x + deltaX, PATH_DECIMAL_PRECISION),
+          y: formatToPrecision(cmd.position.y + deltaY, PATH_DECIMAL_PRECISION)
+        };
+      } else if (cmd.type === 'C') {
+        translatedCmd.controlPoint1 = {
+          x: formatToPrecision(cmd.controlPoint1.x + deltaX, PATH_DECIMAL_PRECISION),
+          y: formatToPrecision(cmd.controlPoint1.y + deltaY, PATH_DECIMAL_PRECISION)
+        };
+        translatedCmd.controlPoint2 = {
+          x: formatToPrecision(cmd.controlPoint2.x + deltaX, PATH_DECIMAL_PRECISION),
+          y: formatToPrecision(cmd.controlPoint2.y + deltaY, PATH_DECIMAL_PRECISION)
+        };
+        translatedCmd.position = {
+          x: formatToPrecision(cmd.position.x + deltaX, PATH_DECIMAL_PRECISION),
+          y: formatToPrecision(cmd.position.y + deltaY, PATH_DECIMAL_PRECISION)
+        };
+      }
+      // Z commands don't need transformation
+      
+      return translatedCmd;
+    })
+  );
+  
+  return {
+    ...pathData,
+    subPaths: translatedSubPaths
+  };
+};
 
 // Helper interface for element bounds
 interface ElementWithBounds {
@@ -54,7 +90,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
             if (!isNaN(deltaX)) {
               return {
                 ...el,
-                data: transformSubpathsData(pathData, 1, 1, deltaX, 0, 0),
+                data: translatePathData(pathData, deltaX, 0),
               };
             }
           }
@@ -91,7 +127,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
             const pathData = el.data as import('../../../types').PathData;
             return {
               ...el,
-              data: transformSubpathsData(pathData, 1, 1, deltaX, 0, 0),
+              data: translatePathData(pathData, deltaX, 0),
             };
           }
         }
@@ -124,7 +160,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
             const deltaX = formatToPrecision(maxX - currentBounds.maxX, PATH_DECIMAL_PRECISION);
             return {
               ...el,
-              data: transformSubpathsData(pathData, 1, 1, deltaX, 0, 0),
+              data: translatePathData(pathData, deltaX, 0),
             };
           }
         }
@@ -157,7 +193,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
             const deltaY = formatToPrecision(minY - currentBounds.minY, PATH_DECIMAL_PRECISION);
             return {
               ...el,
-              data: transformSubpathsData(pathData, 1, 1, 0, deltaY, 0),
+              data: translatePathData(pathData, 0, deltaY),
             };
           }
         }
@@ -193,7 +229,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
             const pathData = el.data as import('../../../types').PathData;
             return {
               ...el,
-              data: transformSubpathsData(pathData, 1, 1, 0, deltaY, 0),
+              data: translatePathData(pathData, 0, deltaY),
             };
           }
         }
@@ -226,7 +262,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
             const deltaY = formatToPrecision(maxY - currentBounds.maxY, PATH_DECIMAL_PRECISION);
             return {
               ...el,
-              data: transformSubpathsData(pathData, 1, 1, 0, deltaY, 0),
+              data: translatePathData(pathData, 0, deltaY),
             };
           }
         }
@@ -296,7 +332,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
             const pathData = el.data as import('../../../types').PathData;
             return {
               ...el,
-              data: transformSubpathsData(pathData, 1, 1, deltaX, 0, 0),
+              data: translatePathData(pathData, deltaX, 0),
             };
           }
         }
@@ -374,7 +410,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
             const pathData = el.data as import('../../../types').PathData;
             return {
               ...el,
-              data: transformSubpathsData(pathData, 1, 1, 0, deltaY, 0),
+              data: translatePathData(pathData, 0, deltaY),
             };
           }
         }
