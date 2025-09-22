@@ -1,5 +1,5 @@
 import type { StateCreator } from 'zustand';
-import { extractEditablePoints, updateCommands, normalizePathCommands, extractSubpaths, simplifyPoints, findPairedControlPoint, determineControlPointAlignment } from '../../../utils/pathParserUtils';
+import { extractEditablePoints, updateCommands, normalizePathCommands, extractSubpaths, simplifyPoints, findPairedControlPoint, determineControlPointAlignment, adjustControlPointForAlignment } from '../../../utils/pathParserUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../../utils';
 import type { CanvasElement, PathData, Point, Command, SubPath } from '../../../types';
 import type { CanvasStore } from '../../canvasStore';
@@ -1557,34 +1557,65 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     const commands = pathData.subPaths.flat();
     const points = extractEditablePoints(commands);
 
-    // Find the shared anchor between the two control points
+    // Find the control points
     const point1 = points.find(p => p.commandIndex === commandIndex1 && p.pointIndex === pointIndex1);
     const point2 = points.find(p => p.commandIndex === commandIndex2 && p.pointIndex === pointIndex2);
     
     if (!point1 || !point2 || !point1.isControl || !point2.isControl) return;
 
-    // Determine the shared anchor
-    let sharedAnchor: Point;
-    if (point1.commandIndex === point2.commandIndex) {
-      // Same command - both control points of the same curve
-      const command = commands[point1.commandIndex];
-      sharedAnchor = (command as Command & { type: 'C' }).position; // End point
+    // Verify they share the same anchor (they should be paired)
+    const tolerance = 0.1;
+    const anchorDistance = Math.sqrt(
+      Math.pow(point1.anchor.x - point2.anchor.x, 2) + 
+      Math.pow(point1.anchor.y - point2.anchor.y, 2)
+    );
+    
+    if (anchorDistance >= tolerance) return;
+
+    const sharedAnchor = point1.anchor;
+
+    // Calculate the new position for point1 based on the alignment type
+    const newPoint1Position = adjustControlPointForAlignment(
+      { x: point1.x, y: point1.y },
+      { x: point2.x, y: point2.y },
+      sharedAnchor,
+      type
+    );
+
+    // Update point1 with new position and type
+    point1.x = newPoint1Position.x;
+    point1.y = newPoint1Position.y;
+    point1.type = type;
+    
+    // For independent type, remove pairing information
+    if (type === 'independent') {
+      point1.pairedCommandIndex = undefined;
+      point1.pairedPointIndex = undefined;
+      point2.pairedCommandIndex = undefined;
+      point2.pairedPointIndex = undefined;
     } else {
-      // Different commands - find the connection point
-      const paired1 = findPairedControlPoint(commands, commandIndex1, pointIndex1);
-      const paired2 = findPairedControlPoint(commands, commandIndex2, pointIndex2);
-      
-      if (paired1 && paired2 && 
-          paired1.commandIndex === commandIndex2 && paired1.pointIndex === pointIndex2) {
-        sharedAnchor = paired1.anchor;
-      } else if (commandIndex1 + 1 === commandIndex2 && pointIndex1 === 1 && pointIndex2 === 0) {
-        sharedAnchor = (commands[commandIndex1] as Command & { position: Point }).position;
-      } else {
-        return; // Not a valid pair
-      }
+      // For aligned and mirrored, maintain pairing
+      point1.pairedCommandIndex = commandIndex2;
+      point1.pairedPointIndex = pointIndex2;
+      point2.pairedCommandIndex = commandIndex1;
+      point2.pairedPointIndex = pointIndex1;
     }
 
-    // Update the control point info
+    // Also update point2 with the new type
+    point2.type = type;
+
+    // Update the path with modified points
+    const newCommands = updateCommands(commands, [point1, point2]);
+    const newSubPaths = extractSubpaths(newCommands).map(s => s.commands);
+    
+    (get() as FullCanvasState).updateElement(elementId, {
+      data: {
+        ...pathData,
+        subPaths: newSubPaths
+      }
+    });
+
+    // Update the control point info in the store
     const key1 = `${elementId}-${commandIndex1}-${pointIndex1}`;
     const key2 = `${elementId}-${commandIndex2}-${pointIndex2}`;
 
@@ -1592,8 +1623,8 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
       commandIndex: commandIndex1,
       pointIndex: pointIndex1,
       type,
-      pairedCommandIndex: commandIndex2,
-      pairedPointIndex: pointIndex2,
+      pairedCommandIndex: type === 'independent' ? undefined : commandIndex2,
+      pairedPointIndex: type === 'independent' ? undefined : pointIndex2,
       anchor: sharedAnchor
     };
 
@@ -1601,130 +1632,32 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
       commandIndex: commandIndex2,
       pointIndex: pointIndex2,
       type,
-      pairedCommandIndex: commandIndex1,
-      pairedPointIndex: pointIndex1,
+      pairedCommandIndex: type === 'independent' ? undefined : commandIndex1,
+      pairedPointIndex: type === 'independent' ? undefined : pointIndex1,
       anchor: sharedAnchor
     };
 
-    // If setting to aligned or mirrored, adjust the positions
-    if (type === 'aligned' || type === 'mirrored') {
-      const vector1 = {
-        x: point1.x - sharedAnchor.x,
-        y: point1.y - sharedAnchor.y
-      };
-      const magnitude1 = Math.sqrt(vector1.x * vector1.x + vector1.y * vector1.y);
-      
-      if (magnitude1 > 0) {
-        const unitVector1 = {
-          x: vector1.x / magnitude1,
-          y: vector1.y / magnitude1
-        };
-
-        let newPoint2X: number;
-        let newPoint2Y: number;
-
-        if (type === 'mirrored') {
-          // Opposite direction, same magnitude
-          newPoint2X = sharedAnchor.x + (-unitVector1.x * magnitude1);
-          newPoint2Y = sharedAnchor.y + (-unitVector1.y * magnitude1);
-        } else {
-          // Opposite direction, maintain point2's original magnitude
-          const vector2 = {
-            x: point2.x - sharedAnchor.x,
-            y: point2.y - sharedAnchor.y
-          };
-          const magnitude2 = Math.sqrt(vector2.x * vector2.x + vector2.y * vector2.y);
-          newPoint2X = sharedAnchor.x + (-unitVector1.x * magnitude2);
-          newPoint2Y = sharedAnchor.y + (-unitVector1.y * magnitude2);
-        }
-
-        // Update point2 position
-        const point2ToUpdate = points.find(p => 
-          p.commandIndex === commandIndex2 && p.pointIndex === pointIndex2
-        );
-        if (point2ToUpdate) {
-          point2ToUpdate.x = formatToPrecision(newPoint2X, PATH_DECIMAL_PRECISION);
-          point2ToUpdate.y = formatToPrecision(newPoint2Y, PATH_DECIMAL_PRECISION);
-          
-          // Update the path
-          const updatedCommands = updateCommands(commands, [point2ToUpdate]);
-          const newSubPaths = extractSubpaths(updatedCommands).map(s => s.commands);
-          (get() as FullCanvasState).updateElement(elementId, {
-            data: {
-              ...pathData,
-              subPaths: newSubPaths
-            }
-          });
-        }
-      }
-    } else if (type === 'independent') {
-      // If setting to independent and points are currently aligned, slightly move one point to break alignment
-      const vector1 = {
-        x: point1.x - sharedAnchor.x,
-        y: point1.y - sharedAnchor.y
-      };
-      const vector2 = {
-        x: point2.x - sharedAnchor.x,
-        y: point2.y - sharedAnchor.y
-      };
-      const magnitude1 = Math.sqrt(vector1.x * vector1.x + vector1.y * vector1.y);
-      const magnitude2 = Math.sqrt(vector2.x * vector2.x + vector2.y * vector2.y);
-      
-      if (magnitude1 > 0 && magnitude2 > 0) {
-        const unitVector1 = {
-          x: vector1.x / magnitude1,
-          y: vector1.y / magnitude1
-        };
-        const unitVector2 = {
-          x: vector2.x / magnitude2,
-          y: vector2.y / magnitude2
-        };
-        
-        // Check if they are aligned (opposite directions)
-        const dot = unitVector1.x * (-unitVector2.x) + unitVector1.y * (-unitVector2.y);
-        if (dot > 0.985) { // Similar threshold as in getSinglePointInfo
-          // Points are aligned, move point2 slightly to break alignment
-          const perpendicularX = -unitVector1.y;
-          const perpendicularY = unitVector1.x;
-          
-          // Move point2 by a small amount in perpendicular direction
-          const moveDistance = 5; // Small movement in pixels
-          const newPoint2X = point2.x + perpendicularX * moveDistance;
-          const newPoint2Y = point2.y + perpendicularY * moveDistance;
-          
-          // Update point2 position
-          const point2ToUpdate = points.find(p => 
-            p.commandIndex === commandIndex2 && p.pointIndex === pointIndex2
-          );
-          if (point2ToUpdate) {
-            point2ToUpdate.x = formatToPrecision(newPoint2X, PATH_DECIMAL_PRECISION);
-            point2ToUpdate.y = formatToPrecision(newPoint2Y, PATH_DECIMAL_PRECISION);
-            
-            // Update the path
-            const updatedCommands = updateCommands(commands, [point2ToUpdate]);
-            const newSubPaths = extractSubpaths(updatedCommands).map(s => s.commands);
-            (get() as FullCanvasState).updateElement(elementId, {
-              data: {
-                ...pathData,
-                subPaths: newSubPaths
-              }
-            });
-          }
-        }
-      }
-    }
-
     // Update the control point alignment state
-    set((currentState) => ({
-      controlPointAlignment: {
-        ...currentState.controlPointAlignment,
-        controlPoints: {
-          ...currentState.controlPointAlignment.controlPoints,
-          [key1]: info1,
-          [key2]: info2
-        }
+    set((currentState) => {
+      const newControlPoints = { ...currentState.controlPointAlignment.controlPoints };
+      
+      if (type === 'independent') {
+        // For independent, we might want to remove the pairing info entirely
+        newControlPoints[key1] = info1;
+        newControlPoints[key2] = info2;
+      } else {
+        // For aligned and mirrored, store the pairing info
+        newControlPoints[key1] = info1;
+        newControlPoints[key2] = info2;
       }
-    }));
+      
+      return {
+        controlPointAlignment: {
+          ...currentState.controlPointAlignment,
+          controlPoints: newControlPoints
+        }
+      };
+    });
   },
 
   applyControlPointAlignment: (elementId: string, commandIndex: number, pointIndex: number, newX: number, newY: number) => {
