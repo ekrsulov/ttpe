@@ -1,7 +1,7 @@
 import type { StateCreator } from 'zustand';
-import { parsePathD, extractEditablePoints, updateCommands, normalizePathCommands, extractSubpaths, simplifyPoints, findPairedControlPoint, determineControlPointAlignment, commandsToString } from '../../../utils/pathParserUtils';
+import { extractEditablePoints, updateCommands, normalizePathCommands, extractSubpaths, simplifyPoints, findPairedControlPoint, determineControlPointAlignment } from '../../../utils/pathParserUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../../utils';
-import type { CanvasElement, PathData, Point, Command } from '../../../types';
+import type { CanvasElement, PathData, Point, Command, SubPath } from '../../../types';
 import type { CanvasStore } from '../../canvasStore';
 
 // Type for the full store state (needed for get() calls)
@@ -1316,9 +1316,8 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
         
         if (state.selectedCommands.length > 0) {
           // When points are selected, get all points after partial smoothing to apply simplification
-          const smoothedCommands = commandsToString(updateCommands(commands, updatedPoints.map(u => ({ ...u, type: 'independent' as const, anchor: { x: u.x, y: u.y } } ))));
-          const smoothedPathData = parsePathD(smoothedCommands);
-          const allPointsAfterSmoothing = extractEditablePoints(smoothedPathData);
+          const smoothedCommands = updateCommands(commands, updatedPoints.map(u => ({ ...u, type: 'independent' as const, anchor: { x: u.x, y: u.y } } )));
+          const allPointsAfterSmoothing = extractEditablePoints(smoothedCommands);
           
           // Simplify all points
           const simplifiedPoints = simplifyPoints(allPointsAfterSmoothing, simplificationTolerance, minDistance);
@@ -1331,9 +1330,8 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
           
           if (centerX !== undefined && centerY !== undefined) {
             // When clicking in brush mode, get all points after partial smoothing to apply simplification
-            const smoothedCommands = commandsToString(updateCommands(commands, updatedPoints.map(u => ({ ...u, type: 'independent' as const, anchor: { x: u.x, y: u.y }} ))));
-            const smoothedPathData = parsePathD(smoothedCommands);
-            const allPointsAfterSmoothing = extractEditablePoints(smoothedPathData);
+            const smoothedCommands = updateCommands(commands, updatedPoints.map(u => ({ ...u, type: 'independent' as const, anchor: { x: u.x, y: u.y }} )));
+            const allPointsAfterSmoothing = extractEditablePoints(smoothedCommands);
             
             // Simplify all points
             const simplifiedPoints = simplifyPoints(allPointsAfterSmoothing, simplificationTolerance, minDistance);
@@ -1344,9 +1342,8 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
           } else {
             // When dragging in brush mode, simplify all points after smoothing
             // Get all editable points after smoothing to apply simplification
-            const smoothedCommands = commandsToString(updateCommands(commands, updatedPoints.map(u => ({ ...u, type: 'independent' as const, anchor: { x: u.x, y: u.y }} ))));
-            const smoothedPathData = parsePathD(smoothedCommands);
-            const allPointsAfterSmoothing = extractEditablePoints(smoothedPathData);
+            const smoothedCommands = updateCommands(commands, updatedPoints.map(u => ({ ...u, type: 'independent' as const, anchor: { x: u.x, y: u.y }} )));
+            const allPointsAfterSmoothing = extractEditablePoints(smoothedCommands);
             
             // Simplify the points
             const simplifiedPoints = simplifyPoints(allPointsAfterSmoothing, simplificationTolerance, minDistance);
@@ -1365,35 +1362,71 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
           
           if (originalSubpaths.length > 1) {
             // Multiple subpaths - rebuild each subpath separately
-            const subpathStrings: string[] = [];
+            const newSubPaths: SubPath[] = [];
             
             // Group simplified points by their original subpath
-            const pointsBySubpath: Array<Array<{ x: number; y: number; commandIndex: number; pointIndex: number; isControl: boolean }>> = [];
-            
             originalSubpaths.forEach((subpath) => {
               const subpathPoints = simplifiedPointsForRebuild.filter(point => 
                 point.commandIndex >= subpath.startIndex && point.commandIndex <= subpath.endIndex
               );
-              pointsBySubpath.push(subpathPoints);
-            });
-            
-            // Rebuild each subpath
-            pointsBySubpath.forEach((subpathPoints) => {
+              
               if (subpathPoints.length > 0) {
-                let subpathD = `M ${formatToPrecision(subpathPoints[0].x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(subpathPoints[0].y, PATH_DECIMAL_PRECISION)}`;
+                const newSubPath: Command[] = [];
+                
+                // Start with M command
+                newSubPath.push({ 
+                  type: 'M', 
+                  position: { x: subpathPoints[0].x, y: subpathPoints[0].y } 
+                });
+                
+                // Add L commands for the rest of the points
                 for (let i = 1; i < subpathPoints.length; i++) {
-                  subpathD += ` L ${formatToPrecision(subpathPoints[i].x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(subpathPoints[i].y, PATH_DECIMAL_PRECISION)}`;
+                  newSubPath.push({ 
+                    type: 'L', 
+                    position: { x: subpathPoints[i].x, y: subpathPoints[i].y } 
+                  });
                 }
-                subpathStrings.push(subpathD);
+                
+                newSubPaths.push(newSubPath);
               }
             });
             
+            // Update the element with the new subpaths
+            (get() as FullCanvasState).updateElement(targetElementId, {
+              data: {
+                ...pathData,
+                subPaths: newSubPaths
+              },
+            });
+            
           } else {
-            // Single subpath - use original logic
-            // TODO: Implement subPath rebuilding from simplified points
+            // Single subpath - rebuild from simplified points
+            if (simplifiedPointsForRebuild.length > 0) {
+              const newSubPath: Command[] = [];
+              
+              // Start with M command
+              newSubPath.push({ 
+                type: 'M', 
+                position: { x: simplifiedPointsForRebuild[0].x, y: simplifiedPointsForRebuild[0].y } 
+              });
+              
+              // Add L commands for the rest of the points
+              for (let i = 1; i < simplifiedPointsForRebuild.length; i++) {
+                newSubPath.push({ 
+                  type: 'L', 
+                  position: { x: simplifiedPointsForRebuild[i].x, y: simplifiedPointsForRebuild[i].y } 
+                });
+              }
+              
+              // Update the element with the new single subpath
+              (get() as FullCanvasState).updateElement(targetElementId, {
+                data: {
+                  ...pathData,
+                  subPaths: [newSubPath]
+                },
+              });
+            }
           }
-        } else {
-          // No simplification needed
         }
       } else {
         const updatedCommands = updateCommands(commands, finalPoints.map(u => ({ ...u, type: 'independent' as const, anchor: { x: u.x, y: u.y } })));
