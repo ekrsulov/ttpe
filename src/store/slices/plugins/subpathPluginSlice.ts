@@ -179,25 +179,259 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
   },
 
   deleteSelectedSubpaths: () => {
-    // Implementation can be added later if needed
-    console.log('Delete subpaths not implemented yet');
+    const state = get() as CanvasStore;
+    const selectedSubpaths = get().selectedSubpaths;
+    
+    if (selectedSubpaths.length === 0) return;
+    
+    // Group subpaths by element ID
+    const subpathsByElement = selectedSubpaths.reduce((acc, subpath) => {
+      if (!acc[subpath.elementId]) {
+        acc[subpath.elementId] = [];
+      }
+      acc[subpath.elementId].push(subpath.subpathIndex);
+      return acc;
+    }, {} as Record<string, number[]>);
+    
+    // Process each element
+    Object.entries(subpathsByElement).forEach(([elementId, subpathIndices]) => {
+      const element = state.elements.find((el) => el.id === elementId);
+      if (element && element.type === 'path') {
+        const pathData = element.data as PathData;
+        
+        // Sort indices in descending order to avoid index shifting issues
+        const sortedIndices = [...subpathIndices].sort((a, b) => b - a);
+        
+        // Remove subpaths from highest index to lowest
+        const newSubPaths = [...pathData.subPaths];
+        sortedIndices.forEach(index => {
+          if (index < newSubPaths.length) {
+            newSubPaths.splice(index, 1);
+          }
+        });
+        
+        // If no subpaths left, delete the entire element
+        if (newSubPaths.length === 0) {
+          state.deleteElement(elementId);
+        } else {
+          // Update the element with remaining subpaths
+          state.updateElement(elementId, {
+            data: { ...pathData, subPaths: newSubPaths }
+          });
+        }
+      }
+    });
+    
+    // Clear selection after deletion
+    set({ selectedSubpaths: [] });
   },
 
   // Order functions
   bringSubpathToFront: () => {
-    console.log('Bring subpath to front not implemented yet');
+    const state = get() as CanvasStore;
+    const selectedSubpaths = get().selectedSubpaths;
+    
+    if (selectedSubpaths.length === 0) return;
+    
+    // Group subpaths by element ID
+    const subpathsByElement = selectedSubpaths.reduce((acc, subpath) => {
+      if (!acc[subpath.elementId]) {
+        acc[subpath.elementId] = [];
+      }
+      acc[subpath.elementId].push(subpath.subpathIndex);
+      return acc;
+    }, {} as Record<string, number[]>);
+    
+    const newSelection: Array<{ elementId: string; subpathIndex: number }> = [];
+    
+    // Process each element
+    Object.entries(subpathsByElement).forEach(([elementId, subpathIndices]) => {
+      const element = state.elements.find((el) => el.id === elementId);
+      if (element && element.type === 'path') {
+        const pathData = element.data as PathData;
+        const newSubPaths = [...pathData.subPaths];
+        
+        // Sort indices in descending order to handle correctly
+        const sortedIndices = [...subpathIndices].sort((a, b) => b - a);
+        const subpathsToMove: any[][] = [];
+        
+        // Extract subpaths to move (from back to front to preserve indices)
+        sortedIndices.forEach(index => {
+          if (index < newSubPaths.length) {
+            subpathsToMove.unshift(newSubPaths.splice(index, 1)[0]);
+          }
+        });
+        
+        // Add them at the end (front in rendering order)
+        const startIndex = newSubPaths.length;
+        newSubPaths.push(...subpathsToMove);
+        
+        // Update selection with new indices
+        subpathsToMove.forEach((_, i) => {
+          newSelection.push({ elementId, subpathIndex: startIndex + i });
+        });
+        
+        // Update the element
+        state.updateElement(elementId, {
+          data: { ...pathData, subPaths: newSubPaths }
+        });
+      }
+    });
+    
+    // Update selection with new indices
+    set({ selectedSubpaths: newSelection });
   },
 
   sendSubpathForward: () => {
-    console.log('Send subpath forward not implemented yet');
+    const state = get() as CanvasStore;
+    const selectedSubpaths = get().selectedSubpaths;
+    
+    if (selectedSubpaths.length === 0) return;
+    
+    // Group subpaths by element ID
+    const subpathsByElement = selectedSubpaths.reduce((acc, subpath) => {
+      if (!acc[subpath.elementId]) {
+        acc[subpath.elementId] = [];
+      }
+      acc[subpath.elementId].push(subpath.subpathIndex);
+      return acc;
+    }, {} as Record<string, number[]>);
+    
+    const newSelection: Array<{ elementId: string; subpathIndex: number }> = [];
+    
+    // Process each element
+    Object.entries(subpathsByElement).forEach(([elementId, subpathIndices]) => {
+      const element = state.elements.find((el) => el.id === elementId);
+      if (element && element.type === 'path') {
+        const pathData = element.data as PathData;
+        const newSubPaths = [...pathData.subPaths];
+        
+        // Sort indices in descending order to avoid index shifting
+        const sortedIndices = [...subpathIndices].sort((a, b) => b - a);
+        
+        sortedIndices.forEach(index => {
+          if (index < newSubPaths.length - 1) {
+            // Swap with the next subpath (move forward one position)
+            [newSubPaths[index], newSubPaths[index + 1]] = [newSubPaths[index + 1], newSubPaths[index]];
+            newSelection.push({ elementId, subpathIndex: index + 1 });
+          } else {
+            // Can't move forward, keep current position
+            newSelection.push({ elementId, subpathIndex: index });
+          }
+        });
+        
+        // Update the element
+        state.updateElement(elementId, {
+          data: { ...pathData, subPaths: newSubPaths }
+        });
+      }
+    });
+    
+    // Update selection with new indices
+    set({ selectedSubpaths: newSelection });
   },
 
   sendSubpathBackward: () => {
-    console.log('Send subpath backward not implemented yet');
+    const state = get() as CanvasStore;
+    const selectedSubpaths = get().selectedSubpaths;
+    
+    if (selectedSubpaths.length === 0) return;
+    
+    // Group subpaths by element ID
+    const subpathsByElement = selectedSubpaths.reduce((acc, subpath) => {
+      if (!acc[subpath.elementId]) {
+        acc[subpath.elementId] = [];
+      }
+      acc[subpath.elementId].push(subpath.subpathIndex);
+      return acc;
+    }, {} as Record<string, number[]>);
+    
+    const newSelection: Array<{ elementId: string; subpathIndex: number }> = [];
+    
+    // Process each element
+    Object.entries(subpathsByElement).forEach(([elementId, subpathIndices]) => {
+      const element = state.elements.find((el) => el.id === elementId);
+      if (element && element.type === 'path') {
+        const pathData = element.data as PathData;
+        const newSubPaths = [...pathData.subPaths];
+        
+        // Sort indices in ascending order to avoid index shifting
+        const sortedIndices = [...subpathIndices].sort((a, b) => a - b);
+        
+        sortedIndices.forEach(index => {
+          if (index > 0) {
+            // Swap with the previous subpath (move backward one position)
+            [newSubPaths[index], newSubPaths[index - 1]] = [newSubPaths[index - 1], newSubPaths[index]];
+            newSelection.push({ elementId, subpathIndex: index - 1 });
+          } else {
+            // Can't move backward, keep current position
+            newSelection.push({ elementId, subpathIndex: index });
+          }
+        });
+        
+        // Update the element
+        state.updateElement(elementId, {
+          data: { ...pathData, subPaths: newSubPaths }
+        });
+      }
+    });
+    
+    // Update selection with new indices
+    set({ selectedSubpaths: newSelection });
   },
 
   sendSubpathToBack: () => {
-    console.log('Send subpath to back not implemented yet');
+    const state = get() as CanvasStore;
+    const selectedSubpaths = get().selectedSubpaths;
+    
+    if (selectedSubpaths.length === 0) return;
+    
+    // Group subpaths by element ID
+    const subpathsByElement = selectedSubpaths.reduce((acc, subpath) => {
+      if (!acc[subpath.elementId]) {
+        acc[subpath.elementId] = [];
+      }
+      acc[subpath.elementId].push(subpath.subpathIndex);
+      return acc;
+    }, {} as Record<string, number[]>);
+    
+    const newSelection: Array<{ elementId: string; subpathIndex: number }> = [];
+    
+    // Process each element
+    Object.entries(subpathsByElement).forEach(([elementId, subpathIndices]) => {
+      const element = state.elements.find((el) => el.id === elementId);
+      if (element && element.type === 'path') {
+        const pathData = element.data as PathData;
+        const newSubPaths = [...pathData.subPaths];
+        
+        // Sort indices in ascending order to handle correctly
+        const sortedIndices = [...subpathIndices].sort((a, b) => a - b);
+        const subpathsToMove: any[][] = [];
+        
+        // Extract subpaths to move (from front to back to preserve indices)
+        sortedIndices.forEach(index => {
+          if (index < newSubPaths.length) {
+            subpathsToMove.push(newSubPaths.splice(index, 1)[0]);
+          }
+        });
+        
+        // Add them at the beginning (back in rendering order)
+        newSubPaths.unshift(...subpathsToMove);
+        
+        // Update selection with new indices (they're now at the beginning)
+        subpathsToMove.forEach((_, i) => {
+          newSelection.push({ elementId, subpathIndex: i });
+        });
+        
+        // Update the element
+        state.updateElement(elementId, {
+          data: { ...pathData, subPaths: newSubPaths }
+        });
+      }
+    });
+    
+    // Update selection with new indices
+    set({ selectedSubpaths: newSelection });
   },
 
   // Alignment functions
