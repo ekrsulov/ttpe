@@ -443,24 +443,7 @@ export function extractSubpaths(commands: Command[]): { commands: SubPath; d: st
   return subpaths;
 }
 
-export function commandsToString(commands: Command[]): string {
-  // Debug log for subpath dragging
-  const hasSubpathAt719 = commands.some(cmd => 
-    cmd.type !== 'Z' && Math.abs(cmd.position.x - 719) < 10 && Math.abs(cmd.position.y - 274) < 10
-  );
-  
-  if (hasSubpathAt719) {
-    console.log('commandsToString - COORDENADAS RECIBIDAS:', {
-      commandCount: commands.length,
-      coordinates: commands.map((cmd, i) => ({
-        index: i,
-        type: cmd.type,
-        position: cmd.type !== 'Z' ? cmd.position : undefined,
-        positionString: cmd.type !== 'Z' ? `(${cmd.position.x}, ${cmd.position.y})` : undefined
-      }))
-    });
-  }
-  
+export function commandsToString(commands: Command[]): string { 
   const result = commands.map(cmd => {
     if (cmd.type === 'Z') return 'Z';
     if (cmd.type === 'M' || cmd.type === 'L') {
@@ -471,10 +454,6 @@ export function commandsToString(commands: Command[]): string {
     }
     return '';
   }).join(' ');
-  
-  if (hasSubpathAt719) {
-    console.log('commandsToString - RESULTADO GENERADO:', result);
-  }
   
   return result;
 }

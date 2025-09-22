@@ -114,6 +114,21 @@ const applySubpathTransformations = (
 export interface SubpathPluginSlice {
   // State
   selectedSubpaths: Array<{ elementId: string; subpathIndex: number }>;
+  draggingSubpaths: {
+    isDragging: boolean;
+    initialPositions: Array<{
+      elementId: string;
+      subpathIndex: number;
+      bounds: { minX: number; minY: number; maxX: number; maxY: number };
+      originalCommands: any[]; // Store the original commands to avoid cumulative transformations
+    }>;
+    startX: number;
+    startY: number;
+    currentX?: number;
+    currentY?: number;
+    deltaX?: number;
+    deltaY?: number;
+  } | null;
 
   // Actions
   selectSubpath: (elementId: string, subpathIndex: number, multiSelect?: boolean) => void;
@@ -121,6 +136,11 @@ export interface SubpathPluginSlice {
   clearSubpathSelection: () => void;
   getSelectedSubpathsCount: () => number;
   deleteSelectedSubpaths: () => void;
+  
+  // Drag actions
+  startDraggingSubpaths: (canvasX: number, canvasY: number) => void;
+  updateDraggingSubpaths: (canvasX: number, canvasY: number) => void;
+  stopDraggingSubpaths: () => void;
   
   // Order functions
   bringSubpathToFront: () => void;
@@ -144,6 +164,7 @@ export interface SubpathPluginSlice {
 export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], SubpathPluginSlice> = (set, get) => ({
   // Initial state
   selectedSubpaths: [],
+  draggingSubpaths: null,
 
   // Actions
   selectSubpath: (elementId, subpathIndex, multiSelect = false) => {
@@ -874,5 +895,124 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
       const key = `${subpathInfo.elementId}-${subpathInfo.subpathIndex}`;
       return transformations.get(key) || { deltaX: 0, deltaY: 0 };
     });
+  },
+
+  // Drag actions
+  startDraggingSubpaths: (canvasX: number, canvasY: number) => {
+    const state = get() as CanvasStore;
+    const selectedSubpaths = get().selectedSubpaths;
+    
+    if (selectedSubpaths.length === 0) return;
+    
+    // Get initial positions and bounds of all selected subpaths
+    const initialPositions: Array<{
+      elementId: string;
+      subpathIndex: number;
+      bounds: { minX: number; minY: number; maxX: number; maxY: number };
+      originalCommands: any[];
+    }> = [];
+    
+    selectedSubpaths.forEach(({ elementId, subpathIndex }) => {
+      const element = state.elements.find((el) => el.id === elementId);
+      if (element && element.type === 'path') {
+        const pathData = element.data as PathData;
+        const allCommands = pathData.subPaths.flat();
+        const subpaths = extractSubpaths(allCommands);
+        
+        if (subpaths[subpathIndex]) {
+          const bounds = measureSubpath(subpaths[subpathIndex].commands, pathData.strokeWidth || 1);
+          initialPositions.push({
+            elementId,
+            subpathIndex,
+            bounds,
+            originalCommands: JSON.parse(JSON.stringify(subpaths[subpathIndex].commands)) // Deep copy of original commands
+          });
+        }
+      }
+    });
+    
+    set({
+      draggingSubpaths: {
+        isDragging: true,
+        initialPositions,
+        startX: canvasX,
+        startY: canvasY
+      }
+    });
+  },
+
+  updateDraggingSubpaths: (canvasX: number, canvasY: number) => {
+    const state = get() as CanvasStore;
+    const draggingSubpaths = get().draggingSubpaths;
+    
+    if (!draggingSubpaths?.isDragging) return;
+    
+    const deltaX = canvasX - draggingSubpaths.startX;
+    const deltaY = canvasY - draggingSubpaths.startY;
+    
+    // Update dragging state for tracking
+    set((currentState) => ({
+      draggingSubpaths: currentState.draggingSubpaths ? {
+        ...currentState.draggingSubpaths,
+        currentX: canvasX,
+        currentY: canvasY,
+        deltaX,
+        deltaY
+      } : null
+    }));
+    
+    // Apply transformations to all dragged subpaths
+    // Group by elementId to avoid multiple updates to the same element
+    const elementUpdates = new Map<string, { 
+      element: any; 
+      pathData: PathData; 
+      subpathUpdates: Array<{ subpathIndex: number; originalCommands: any[] }> 
+    }>();
+    
+    // Collect all transformations by element
+    draggingSubpaths.initialPositions.forEach(({ elementId, subpathIndex, originalCommands }) => {
+      const element = state.elements.find((el) => el.id === elementId);
+      if (element && element.type === 'path') {
+        const pathData = element.data as PathData;
+        
+        if (!elementUpdates.has(elementId)) {
+          elementUpdates.set(elementId, {
+            element,
+            pathData,
+            subpathUpdates: []
+          });
+        }
+        
+        elementUpdates.get(elementId)!.subpathUpdates.push({
+          subpathIndex,
+          originalCommands
+        });
+      }
+    });
+    
+    // Apply all transformations per element in one update
+    elementUpdates.forEach(({ pathData, subpathUpdates }, elementId) => {
+      const allCommands = pathData.subPaths.flat();
+      const subpaths = extractSubpaths(allCommands);
+      
+      // Apply transformations to all subpaths of this element
+      subpathUpdates.forEach(({ subpathIndex, originalCommands }) => {
+        if (subpaths[subpathIndex]) {
+          // Apply transformation to the ORIGINAL commands, not the current ones
+          const transformedCommands = transformSvgCommands(originalCommands, deltaX, deltaY);
+          subpaths[subpathIndex] = { ...subpaths[subpathIndex], commands: transformedCommands };
+        }
+      });
+      
+      // Single update per element
+      const newSubPaths = subpaths.map(sp => sp.commands);
+      state.updateElement(elementId, {
+        data: { ...pathData, subPaths: newSubPaths }
+      });
+    });
+  },
+
+  stopDraggingSubpaths: () => {
+    set({ draggingSubpaths: null });
   },
 });

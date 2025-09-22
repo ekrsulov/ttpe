@@ -25,6 +25,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
     editingPoint,
     selectedCommands,
     selectedSubpaths,
+    draggingSubpaths,
     draggingSelection,
     updateElement,
     startDraggingPoint,
@@ -35,6 +36,9 @@ export const Canvas: React.FC<CanvasProps> = () => {
     clearSelectedCommands,
     deleteSelectedCommands,
     selectSubpath,
+    startDraggingSubpaths,
+    updateDraggingSubpaths,
+    stopDraggingSubpaths,
     getTransformationBounds,
     isWorkingWithSubpaths,
     getFilteredEditablePoints,
@@ -826,6 +830,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
         selectedIds={selectedIds}
         selectedCommands={selectedCommands}
         selectedSubpaths={selectedSubpaths}
+        draggingSubpaths={draggingSubpaths}
         transformation={transformation}
         shape={shape}
         elements={elements}
@@ -848,6 +853,9 @@ export const Canvas: React.FC<CanvasProps> = () => {
         onUpdateElement={updateElement}
         onSelectCommand={selectCommand}
         onSelectSubpath={selectSubpath}
+        onStartDraggingSubpaths={startDraggingSubpaths}
+        onUpdateDraggingSubpaths={updateDraggingSubpaths}
+        onStopDraggingSubpaths={stopDraggingSubpaths}
         getTransformationBounds={getTransformationBounds}
         isWorkingWithSubpaths={isWorkingWithSubpaths}
         getFilteredEditablePoints={getFilteredEditablePoints}

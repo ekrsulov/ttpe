@@ -20,6 +20,21 @@ interface CanvasRendererProps {
     elementId: string;
     subpathIndex: number;
   }>;
+  draggingSubpaths: {
+    isDragging: boolean;
+    initialPositions: Array<{
+      elementId: string;
+      subpathIndex: number;
+      bounds: { minX: number; minY: number; maxX: number; maxY: number };
+      originalCommands: any[];
+    }>;
+    startX: number;
+    startY: number;
+    currentX?: number;
+    currentY?: number;
+    deltaX?: number;
+    deltaY?: number;
+  } | null;
   transformation: {
     showCoordinates?: boolean;
     showRulers?: boolean;
@@ -71,6 +86,9 @@ interface CanvasRendererProps {
   onUpdateElement: (id: string, updates: Partial<CanvasElement>) => void;
   onSelectCommand: (command: { elementId: string; commandIndex: number; pointIndex: number }, multiSelect?: boolean) => void;
   onSelectSubpath: (elementId: string, subpathIndex: number, multiSelect?: boolean) => void;
+  onStartDraggingSubpaths: (canvasX: number, canvasY: number) => void;
+  onUpdateDraggingSubpaths: (canvasX: number, canvasY: number) => void;
+  onStopDraggingSubpaths: () => void;
   getTransformationBounds: () => { minX: number; minY: number; maxX: number; maxY: number } | null;
   isWorkingWithSubpaths: () => boolean;
   getFilteredEditablePoints: (elementId: string) => Array<{
@@ -101,6 +119,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   selectedIds,
   selectedCommands,
   selectedSubpaths,
+  draggingSubpaths,
   transformation,
   shape,
   elements,
@@ -123,6 +142,9 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   onUpdateElement,
   onSelectCommand,
   onSelectSubpath,
+  onStartDraggingSubpaths,
+  onUpdateDraggingSubpaths,
+  onStopDraggingSubpaths,
   isWorkingWithSubpaths,
   getFilteredEditablePoints,
   getControlPointInfo,
@@ -142,7 +164,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       // Disable all dragging interactions when smooth brush is active
       if (smoothBrush.isActive) return;
       
-      if (editingPoint?.isDragging || draggingSelection?.isDragging) {
+      if (editingPoint?.isDragging || draggingSelection?.isDragging || draggingSubpaths?.isDragging) {
         // Get SVG element as reference for coordinate conversion
         const svgElement = document.querySelector('svg');
         if (svgElement) {
@@ -162,8 +184,10 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           if (editingPoint?.isDragging) {
             // Update store position
             onUpdateDraggingPoint(formatToPrecision(canvasX, PATH_DECIMAL_PRECISION), formatToPrecision(canvasY, PATH_DECIMAL_PRECISION));
+          } else if (draggingSubpaths?.isDragging) {
+            // Update subpath dragging
+            onUpdateDraggingSubpaths(formatToPrecision(canvasX, PATH_DECIMAL_PRECISION), formatToPrecision(canvasY, PATH_DECIMAL_PRECISION));
           }
-          // Subpath dragging functionality removed - will be reimplemented
 
           // Throttled path update for real-time feedback
           const now = Date.now();
@@ -474,7 +498,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     };
 
     const handlePointerUp = (e: PointerEvent) => {
-      if (editingPoint?.isDragging || draggingSelection?.isDragging) {
+      if (editingPoint?.isDragging || draggingSelection?.isDragging || draggingSubpaths?.isDragging) {
         // Emergency cleanup - clear all temporary state
         setDragPosition(null);
         setOriginalPathDataMap(null);
@@ -498,8 +522,9 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           onStopDraggingPoint();
         } else if (draggingSelection?.isDragging) {
           onStopDraggingPoint(); // This will handle draggingSelection cleanup
+        } else if (draggingSubpaths?.isDragging) {
+          onStopDraggingSubpaths();
         }
-        // Subpath dragging functionality removed - will be reimplemented
       }
     };
 
@@ -511,11 +536,12 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         onStopDraggingPoint();
       } else if (draggingSelection?.isDragging) {
         onStopDraggingPoint();
+      } else if (draggingSubpaths?.isDragging) {
+        onStopDraggingSubpaths();
       }
-      // Subpath dragging functionality removed - will be reimplemented
     };
 
-    const isAnyDragging = editingPoint?.isDragging || draggingSelection?.isDragging;
+    const isAnyDragging = editingPoint?.isDragging || draggingSelection?.isDragging || draggingSubpaths?.isDragging;
     
     if (isAnyDragging) {
       // Use document for more reliable event capture
@@ -538,7 +564,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       document.removeEventListener('blur', handlePointerCancel);
       window.removeEventListener('blur', handlePointerCancel);
     };
-  }, [editingPoint?.isDragging, editingPoint?.elementId, editingPoint?.commandIndex, editingPoint?.pointIndex, draggingSelection?.isDragging, viewport, onUpdateDraggingPoint, onStopDraggingPoint, dragPosition, elements, onUpdateElement]);
+  }, [editingPoint?.isDragging, editingPoint?.elementId, editingPoint?.commandIndex, editingPoint?.pointIndex, draggingSelection?.isDragging, draggingSubpaths?.isDragging, viewport, onUpdateDraggingPoint, onStopDraggingPoint, onUpdateDraggingSubpaths, onStopDraggingSubpaths, dragPosition, elements, onUpdateElement]);
   /* eslint-enable react-hooks/exhaustive-deps */
 
   // Calculate contrasting selection color based on element's color (stroke or fill)
@@ -1743,8 +1769,8 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
                     const canvasX = (svgX - viewport.panX) / viewport.zoom;
                     const canvasY = (svgY - viewport.panY) / viewport.zoom;
                     
-                    // Subpath dragging functionality removed - will be reimplemented
-                    console.log('Subpath drag not yet implemented:', { canvasX, canvasY });
+                    // Start dragging subpaths
+                    onStartDraggingSubpaths(canvasX, canvasY);
                   }
                 }
               }}
@@ -1753,9 +1779,11 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
                 // The overlay just needs to ensure the drag is started correctly
               }}
               onPointerUp={(e) => {
-                                
                 e.stopPropagation();
-                // Subpath dragging functionality removed - will be reimplemented
+                // Ensure subpath dragging is stopped when releasing on the overlay
+                if (draggingSubpaths?.isDragging) {
+                  onStopDraggingSubpaths();
+                }
               }}
             />
           );
