@@ -3,42 +3,63 @@ import type { CanvasElement } from '../../../types';
 import type { CanvasStore } from '../../canvasStore';
 import { measurePath } from '../../../utils/measurementUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../../utils';
+import { 
+  translatePathData, 
+  alignmentTargets 
+} from '../../../utils/transformationUtils';
 
-// Helper function to translate PathData by deltaX and deltaY
-const translatePathData = (pathData: any, deltaX: number, deltaY: number): any => {
-  const translatedSubPaths = pathData.subPaths.map((subPath: any[]) => 
-    subPath.map((cmd: any) => {
-      const translatedCmd = { ...cmd };
-      
-      if (cmd.type === 'M' || cmd.type === 'L') {
-        translatedCmd.position = {
-          x: formatToPrecision(cmd.position.x + deltaX, PATH_DECIMAL_PRECISION),
-          y: formatToPrecision(cmd.position.y + deltaY, PATH_DECIMAL_PRECISION)
-        };
-      } else if (cmd.type === 'C') {
-        translatedCmd.controlPoint1 = {
-          x: formatToPrecision(cmd.controlPoint1.x + deltaX, PATH_DECIMAL_PRECISION),
-          y: formatToPrecision(cmd.controlPoint1.y + deltaY, PATH_DECIMAL_PRECISION)
-        };
-        translatedCmd.controlPoint2 = {
-          x: formatToPrecision(cmd.controlPoint2.x + deltaX, PATH_DECIMAL_PRECISION),
-          y: formatToPrecision(cmd.controlPoint2.y + deltaY, PATH_DECIMAL_PRECISION)
-        };
-        translatedCmd.position = {
-          x: formatToPrecision(cmd.position.x + deltaX, PATH_DECIMAL_PRECISION),
-          y: formatToPrecision(cmd.position.y + deltaY, PATH_DECIMAL_PRECISION)
-        };
-      }
-      // Z commands don't need transformation
-      
-      return translatedCmd;
-    })
-  );
-  
-  return {
-    ...pathData,
-    subPaths: translatedSubPaths
-  };
+
+
+// Helper function to perform element alignment using the new consolidated utilities
+const alignElements = (
+  elements: CanvasElement[],
+  selectedIds: string[],
+  zoom: number,
+  targetCalculator: import('../../../utils/transformationUtils').TargetCalculator,
+  axis: import('../../../utils/transformationUtils').Axis
+): CanvasElement[] => {
+  const selectedElements = elements.filter(el => selectedIds.includes(el.id));
+  if (selectedElements.length < 2) return elements;
+
+  // Calculate bounds for all selected elements
+  const boundsArray = selectedElements.map(el => {
+    if (el.type === 'path') {
+      const pathData = el.data as import('../../../types').PathData;
+      return measurePath(pathData.subPaths, pathData.strokeWidth, zoom);
+    }
+    return { minX: 0, minY: 0, maxX: 0, maxY: 0 };
+  }).filter(bounds => bounds.minX !== 0 || bounds.minY !== 0 || bounds.maxX !== 0 || bounds.maxY !== 0);
+
+  if (boundsArray.length === 0) return elements;
+
+  // Calculate target position
+  const targetValue = targetCalculator(boundsArray);
+
+  // Update elements
+  return elements.map(el => {
+    if (!selectedIds.includes(el.id) || el.type !== 'path') return el;
+
+    const pathData = el.data as import('../../../types').PathData;
+    const currentBounds = measurePath(pathData.subPaths, pathData.strokeWidth, zoom);
+    
+    let deltaX = 0;
+    let deltaY = 0;
+
+    if (axis === 'x') {
+      const currentValue = targetCalculator([currentBounds]);
+      deltaX = formatToPrecision(targetValue - currentValue, PATH_DECIMAL_PRECISION);
+    } else {
+      const currentValue = targetCalculator([currentBounds]);
+      deltaY = formatToPrecision(targetValue - currentValue, PATH_DECIMAL_PRECISION);
+    }
+
+    if (!isNaN(deltaX) && !isNaN(deltaY)) {
+      const newPathData = translatePathData(pathData, deltaX, deltaY);
+      return { ...el, data: newPathData };
+    }
+
+    return el;
+  });
 };
 
 // Helper interface for element bounds
@@ -66,208 +87,55 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
   // Actions
   alignLeft: () => {
     const fullState = get() as CanvasStore;
-    const selectedElements = fullState.elements.filter((el: CanvasElement) => fullState.selectedIds.includes(el.id));
-    if (selectedElements.length < 2) return;
-
-    const minX = Math.min(...selectedElements.map((el: CanvasElement) => {
-      if (el.type === 'path') {
-        const pathData = el.data as import('../../../types').PathData;
-        const bounds = measurePath(pathData.subPaths, pathData.strokeWidth, fullState.viewport.zoom);
-        return bounds.minX;
-      }
-      return 0;
-    }));
-
     const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+    
     setStore((state) => ({
-      elements: state.elements.map((el: CanvasElement) => {
-        if (fullState.selectedIds.includes(el.id)) {
-          if (el.type === 'path') {
-            const pathData = el.data as import('../../../types').PathData;
-            const currentBounds = measurePath(pathData.subPaths, pathData.strokeWidth, fullState.viewport.zoom);
-            const deltaX = formatToPrecision(minX - currentBounds.minX, PATH_DECIMAL_PRECISION);
-            
-            if (!isNaN(deltaX)) {
-              return {
-                ...el,
-                data: translatePathData(pathData, deltaX, 0),
-              };
-            }
-          }
-        }
-        return el;
-      }),
+      elements: alignElements(state.elements, fullState.selectedIds, fullState.viewport.zoom, alignmentTargets.left, 'x')
     }));
   },
 
   alignCenter: () => {
     const fullState = get() as CanvasStore;
-    const selectedElements = fullState.elements.filter((el: CanvasElement) => fullState.selectedIds.includes(el.id));
-    if (selectedElements.length < 2) return;
-
-    const centers = new Map<string, number>();
-    selectedElements.forEach((el: CanvasElement) => {
-      if (el.type === 'path') {
-        const pathData = el.data as import('../../../types').PathData;
-        const bounds = measurePath(pathData.subPaths, pathData.strokeWidth, fullState.viewport.zoom);
-        centers.set(el.id, (bounds.minX + bounds.maxX) / 2);
-      }
-    });
-
-    const targetCenter = Array.from(centers.values()).reduce((sum: number, center: number) => sum + center, 0) / centers.size;
-
     const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+    
     setStore((state) => ({
-      elements: state.elements.map((el: CanvasElement) => {
-        if (fullState.selectedIds.includes(el.id) && centers.has(el.id)) {
-          const currentCenter = centers.get(el.id)!;
-          const deltaX = formatToPrecision(targetCenter - currentCenter, PATH_DECIMAL_PRECISION);
-
-          if (!isNaN(deltaX) && el.type === 'path') {
-            const pathData = el.data as import('../../../types').PathData;
-            return {
-              ...el,
-              data: translatePathData(pathData, deltaX, 0),
-            };
-          }
-        }
-        return el;
-      }),
+      elements: alignElements(state.elements, fullState.selectedIds, fullState.viewport.zoom, alignmentTargets.center, 'x')
     }));
   },
 
   alignRight: () => {
     const fullState = get() as CanvasStore;
-    const selectedElements = fullState.elements.filter((el: CanvasElement) => fullState.selectedIds.includes(el.id));
-    if (selectedElements.length < 2) return;
-
-    const maxX = Math.max(...selectedElements.map((el: CanvasElement) => {
-      if (el.type === 'path') {
-        const pathData = el.data as import('../../../types').PathData;
-        const bounds = measurePath(pathData.subPaths, pathData.strokeWidth, fullState.viewport.zoom);
-        return bounds.maxX;
-      }
-      return 0;
-    }));
-
     const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+    
     setStore((state) => ({
-      elements: state.elements.map((el: CanvasElement) => {
-        if (fullState.selectedIds.includes(el.id)) {
-          if (el.type === 'path') {
-            const pathData = el.data as import('../../../types').PathData;
-            const currentBounds = measurePath(pathData.subPaths, pathData.strokeWidth, fullState.viewport.zoom);
-            const deltaX = formatToPrecision(maxX - currentBounds.maxX, PATH_DECIMAL_PRECISION);
-            return {
-              ...el,
-              data: translatePathData(pathData, deltaX, 0),
-            };
-          }
-        }
-        return el;
-      }),
+      elements: alignElements(state.elements, fullState.selectedIds, fullState.viewport.zoom, alignmentTargets.right, 'x')
     }));
   },
 
   alignTop: () => {
     const fullState = get() as CanvasStore;
-    const selectedElements = fullState.elements.filter((el: CanvasElement) => fullState.selectedIds.includes(el.id));
-    if (selectedElements.length < 2) return;
-
-    const minY = Math.min(...selectedElements.map((el: CanvasElement) => {
-      if (el.type === 'path') {
-        const pathData = el.data as import('../../../types').PathData;
-        const bounds = measurePath(pathData.subPaths, pathData.strokeWidth, fullState.viewport.zoom);
-        return bounds.minY;
-      }
-      return 0;
-    }));
-
     const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+    
     setStore((state) => ({
-      elements: state.elements.map((el: CanvasElement) => {
-        if (fullState.selectedIds.includes(el.id)) {
-          if (el.type === 'path') {
-            const pathData = el.data as import('../../../types').PathData;
-            const currentBounds = measurePath(pathData.subPaths, pathData.strokeWidth, fullState.viewport.zoom);
-            const deltaY = formatToPrecision(minY - currentBounds.minY, PATH_DECIMAL_PRECISION);
-            return {
-              ...el,
-              data: translatePathData(pathData, 0, deltaY),
-            };
-          }
-        }
-        return el;
-      }),
+      elements: alignElements(state.elements, fullState.selectedIds, fullState.viewport.zoom, alignmentTargets.top, 'y')
     }));
   },
 
   alignMiddle: () => {
     const fullState = get() as CanvasStore;
-    const selectedElements = fullState.elements.filter((el: CanvasElement) => fullState.selectedIds.includes(el.id));
-    if (selectedElements.length < 2) return;
-
-    const centers = new Map<string, number>();
-    selectedElements.forEach((el: CanvasElement) => {
-      if (el.type === 'path') {
-        const pathData = el.data as import('../../../types').PathData;
-        const bounds = measurePath(pathData.subPaths, pathData.strokeWidth, fullState.viewport.zoom);
-        centers.set(el.id, (bounds.minY + bounds.maxY) / 2);
-      }
-    });
-
-    const targetCenter = Array.from(centers.values()).reduce((sum: number, center: number) => sum + center, 0) / centers.size;
-
     const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+    
     setStore((state) => ({
-      elements: state.elements.map((el: CanvasElement) => {
-        if (fullState.selectedIds.includes(el.id) && centers.has(el.id)) {
-          const currentCenter = centers.get(el.id)!;
-          const deltaY = formatToPrecision(targetCenter - currentCenter, PATH_DECIMAL_PRECISION);
-
-          if (!isNaN(deltaY) && el.type === 'path') {
-            const pathData = el.data as import('../../../types').PathData;
-            return {
-              ...el,
-              data: translatePathData(pathData, 0, deltaY),
-            };
-          }
-        }
-        return el;
-      }),
+      elements: alignElements(state.elements, fullState.selectedIds, fullState.viewport.zoom, alignmentTargets.middle, 'y')
     }));
   },
 
   alignBottom: () => {
     const fullState = get() as CanvasStore;
-    const selectedElements = fullState.elements.filter((el: CanvasElement) => fullState.selectedIds.includes(el.id));
-    if (selectedElements.length < 2) return;
-
-    const maxY = Math.max(...selectedElements.map((el: CanvasElement) => {
-      if (el.type === 'path') {
-        const pathData = el.data as import('../../../types').PathData;
-        const bounds = measurePath(pathData.subPaths, pathData.strokeWidth, fullState.viewport.zoom);
-        return bounds.maxY;
-      }
-      return 0;
-    }));
-
     const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+    
     setStore((state) => ({
-      elements: state.elements.map((el: CanvasElement) => {
-        if (fullState.selectedIds.includes(el.id)) {
-          if (el.type === 'path') {
-            const pathData = el.data as import('../../../types').PathData;
-            const currentBounds = measurePath(pathData.subPaths, pathData.strokeWidth, fullState.viewport.zoom);
-            const deltaY = formatToPrecision(maxY - currentBounds.maxY, PATH_DECIMAL_PRECISION);
-            return {
-              ...el,
-              data: translatePathData(pathData, 0, deltaY),
-            };
-          }
-        }
-        return el;
-      }),
+      elements: alignElements(state.elements, fullState.selectedIds, fullState.viewport.zoom, alignmentTargets.bottom, 'y')
     }));
   },
 

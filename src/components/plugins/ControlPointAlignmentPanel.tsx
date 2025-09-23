@@ -315,14 +315,14 @@ export const ControlPointAlignmentPanel: React.FC = () => {
       }
       
       // Calculate alignment type based on positions (this will be the current type from the data)
-      let calculatedType: 'independent' | 'aligned' | 'mirrored' = point.type || 'independent';
+      const calculatedType: 'independent' | 'aligned' | 'mirrored' = point.type || 'independent';
       let mag1 = 0;
       let angle1 = 0;
       let mag2: number | undefined;
       let angle2: number | undefined;
       let anchor2: {x: number, y: number} | undefined;
       
-      let anchor1 = point.anchor;
+      const anchor1 = point.anchor;
       const vector1 = { x: point.x - anchor1.x, y: point.y - anchor1.y };
       mag1 = Math.sqrt(vector1.x * vector1.x + vector1.y * vector1.y);
       angle1 = Math.atan2(vector1.y, vector1.x) * 180 / Math.PI;

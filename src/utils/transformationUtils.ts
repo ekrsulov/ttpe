@@ -4,6 +4,143 @@ import { parsePathD, extractSubpaths, updatePathD } from './pathParserUtils';
 import { measurePath } from './measurementUtils';
 
 /**
+ * Consolidated utility for translating SVG path commands.
+ * Replaces duplicated logic in arrangeSlice, subpathPluginSlice, and selectionSlice.
+ */
+export function translateCommands(commands: Command[], deltaX: number, deltaY: number): Command[] {
+  return commands.map(cmd => {
+    if (cmd.type === 'M' || cmd.type === 'L') {
+      return {
+        ...cmd,
+        position: {
+          x: formatToPrecision(cmd.position.x + deltaX, PATH_DECIMAL_PRECISION),
+          y: formatToPrecision(cmd.position.y + deltaY, PATH_DECIMAL_PRECISION)
+        }
+      };
+    } else if (cmd.type === 'C') {
+      return {
+        ...cmd,
+        controlPoint1: {
+          ...cmd.controlPoint1,
+          x: formatToPrecision(cmd.controlPoint1.x + deltaX, PATH_DECIMAL_PRECISION),
+          y: formatToPrecision(cmd.controlPoint1.y + deltaY, PATH_DECIMAL_PRECISION)
+        },
+        controlPoint2: {
+          ...cmd.controlPoint2,
+          x: formatToPrecision(cmd.controlPoint2.x + deltaX, PATH_DECIMAL_PRECISION),
+          y: formatToPrecision(cmd.controlPoint2.y + deltaY, PATH_DECIMAL_PRECISION)
+        },
+        position: {
+          x: formatToPrecision(cmd.position.x + deltaX, PATH_DECIMAL_PRECISION),
+          y: formatToPrecision(cmd.position.y + deltaY, PATH_DECIMAL_PRECISION)
+        }
+      };
+    }
+    // Z commands don't need transformation
+    return cmd;
+  });
+}
+
+/**
+ * Translates PathData by deltaX and deltaY using the consolidated logic.
+ */
+export function translatePathData(pathData: PathData, deltaX: number, deltaY: number): PathData {
+  const translatedSubPaths = pathData.subPaths.map((subPath: Command[]) => 
+    translateCommands(subPath, deltaX, deltaY)
+  );
+  
+  return {
+    ...pathData,
+    subPaths: translatedSubPaths
+  };
+}
+
+/**
+ * Helper type for alignment operations
+ */
+export type TargetCalculator = (bounds: { minX: number; minY: number; maxX: number; maxY: number }[]) => number;
+export type Axis = 'x' | 'y';
+
+/**
+ * Parameterized alignment utility that consolidates all alignment operations.
+ * Replaces duplicated logic across alignLeft, alignCenter, alignRight, alignTop, alignMiddle, alignBottom.
+ */
+export function performAlignment<T>(
+  elements: T[],
+  selectedIds: string[],
+  getElementId: (element: T) => string,
+  getPathData: (element: T) => PathData,
+  zoom: number,
+  targetCalculator: TargetCalculator,
+  axis: Axis,
+  updateElement: (element: T, newPathData: PathData) => T
+): T[] {
+  const selectedElements = elements.filter(el => selectedIds.includes(getElementId(el)));
+  if (selectedElements.length < 2) return elements;
+
+  // Calculate bounds for all selected elements
+  const boundsArray = selectedElements.map(el => {
+    const pathData = getPathData(el);
+    return measurePath(pathData.subPaths, pathData.strokeWidth, zoom);
+  });
+
+  // Calculate target position
+  const targetValue = targetCalculator(boundsArray);
+
+  // Update elements
+  return elements.map(el => {
+    if (!selectedIds.includes(getElementId(el))) return el;
+
+    const pathData = getPathData(el);
+    const currentBounds = measurePath(pathData.subPaths, pathData.strokeWidth, zoom);
+    
+    let deltaX = 0;
+    let deltaY = 0;
+
+    if (axis === 'x') {
+      deltaX = formatToPrecision(targetValue - getBoundValue(currentBounds, targetCalculator), PATH_DECIMAL_PRECISION);
+    } else {
+      deltaY = formatToPrecision(targetValue - getBoundValue(currentBounds, targetCalculator), PATH_DECIMAL_PRECISION);
+    }
+
+    if (!isNaN(deltaX) && !isNaN(deltaY)) {
+      const newPathData = translatePathData(pathData, deltaX, deltaY);
+      return updateElement(el, newPathData);
+    }
+
+    return el;
+  });
+}
+
+/**
+ * Helper function to get the appropriate bound value for a single bounds object
+ */
+function getBoundValue(
+  bounds: { minX: number; minY: number; maxX: number; maxY: number },
+  targetCalculator: TargetCalculator
+): number {
+  return targetCalculator([bounds]);
+}
+
+/**
+ * Pre-defined target calculators for common alignment operations
+ */
+export const alignmentTargets = {
+  left: (bounds: { minX: number; minY: number; maxX: number; maxY: number }[]) => 
+    Math.min(...bounds.map(b => b.minX)),
+  center: (bounds: { minX: number; minY: number; maxX: number; maxY: number }[]) => 
+    bounds.reduce((sum, b) => sum + (b.minX + b.maxX) / 2, 0) / bounds.length,
+  right: (bounds: { minX: number; minY: number; maxX: number; maxY: number }[]) => 
+    Math.max(...bounds.map(b => b.maxX)),
+  top: (bounds: { minX: number; minY: number; maxX: number; maxY: number }[]) => 
+    Math.min(...bounds.map(b => b.minY)),
+  middle: (bounds: { minX: number; minY: number; maxX: number; maxY: number }[]) => 
+    bounds.reduce((sum, b) => sum + (b.minY + b.maxY) / 2, 0) / bounds.length,
+  bottom: (bounds: { minX: number; minY: number; maxX: number; maxY: number }[]) => 
+    Math.max(...bounds.map(b => b.maxY))
+} as const;
+
+/**
  * Parses an SVG path string and extracts coordinate points for transformation
  */
 export function parsePathCommands(d: string): Array<{ command: string; points: Point[] }> {

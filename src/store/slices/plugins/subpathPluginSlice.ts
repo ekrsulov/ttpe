@@ -1,50 +1,23 @@
 import type { StateCreator } from 'zustand';
 import type { CanvasStore } from '../../canvasStore';
-import type { PathData } from '../../../types';
+import type { PathData, Command, CanvasElement } from '../../../types';
 import { extractSubpaths } from '../../../utils/pathParserUtils';
 import { measurePath } from '../../../utils/measurementUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../../utils';
+import { translateCommands } from '../../../utils/transformationUtils';
 
 // Helper function to measure a single subpath
-const measureSubpath = (subpathCommands: any[], strokeWidth: number = 1): { minX: number; minY: number; maxX: number; maxY: number } => {
+const measureSubpath = (subpathCommands: Command[], strokeWidth: number = 1): { minX: number; minY: number; maxX: number; maxY: number } => {
   return measurePath([subpathCommands], strokeWidth, 1);
 };
 
-// Helper function to transform SVG path commands by applying a translation
-const transformSvgCommands = (commands: any[], deltaX: number, deltaY: number): any[] => {
-  return commands.map(cmd => {
-    let transformedCmd = { ...cmd };
-    
-    if (cmd.type === 'M' || cmd.type === 'L') {
-      transformedCmd.position = {
-        x: formatToPrecision(cmd.position.x + deltaX, PATH_DECIMAL_PRECISION),
-        y: formatToPrecision(cmd.position.y + deltaY, PATH_DECIMAL_PRECISION)
-      };
-    } else if (cmd.type === 'C') {
-      transformedCmd.controlPoint1 = {
-        x: formatToPrecision(cmd.controlPoint1.x + deltaX, PATH_DECIMAL_PRECISION),
-        y: formatToPrecision(cmd.controlPoint1.y + deltaY, PATH_DECIMAL_PRECISION)
-      };
-      transformedCmd.controlPoint2 = {
-        x: formatToPrecision(cmd.controlPoint2.x + deltaX, PATH_DECIMAL_PRECISION),
-        y: formatToPrecision(cmd.controlPoint2.y + deltaY, PATH_DECIMAL_PRECISION)
-      };
-      transformedCmd.position = {
-        x: formatToPrecision(cmd.position.x + deltaX, PATH_DECIMAL_PRECISION),
-        y: formatToPrecision(cmd.position.y + deltaY, PATH_DECIMAL_PRECISION)
-      };
-    }
-    // Z commands don't need transformation
-    
-    return transformedCmd;
-  });
-};
+
 
 // Helper interface for subpath bounds
 interface SubpathWithBounds {
   elementId: string;
   subpathIndex: number;
-  subpathCommands: any[];
+  subpathCommands: Command[];
   bounds: { minX: number; minY: number; maxX: number; maxY: number };
   centerX: number;
   centerY: number;
@@ -98,7 +71,7 @@ const applySubpathTransformations = (
     transformations.forEach(({ subpathIndex, deltaX, deltaY }) => {
       const originalSubpath = subpaths[subpathIndex];
       if (originalSubpath) {
-        const transformedCommands = transformSvgCommands(originalSubpath.commands, deltaX, deltaY);
+        const transformedCommands = translateCommands(originalSubpath.commands, deltaX, deltaY);
         subpaths[subpathIndex] = { ...originalSubpath, commands: transformedCommands };
       }
     });
@@ -120,7 +93,7 @@ export interface SubpathPluginSlice {
       elementId: string;
       subpathIndex: number;
       bounds: { minX: number; minY: number; maxX: number; maxY: number };
-      originalCommands: any[]; // Store the original commands to avoid cumulative transformations
+      originalCommands: Command[]; // Store the original commands to avoid cumulative transformations
     }>;
     startX: number;
     startY: number;
@@ -274,7 +247,7 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
         
         // Sort indices in descending order to handle correctly
         const sortedIndices = [...subpathIndices].sort((a, b) => b - a);
-        const subpathsToMove: any[][] = [];
+        const subpathsToMove: Command[][] = [];
         
         // Extract subpaths to move (from back to front to preserve indices)
         sortedIndices.forEach(index => {
@@ -427,7 +400,7 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
         
         // Sort indices in ascending order to handle correctly
         const sortedIndices = [...subpathIndices].sort((a, b) => a - b);
-        const subpathsToMove: any[][] = [];
+        const subpathsToMove: Command[][] = [];
         
         // Extract subpaths to move (from front to back to preserve indices)
         sortedIndices.forEach(index => {
@@ -909,7 +882,7 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
       elementId: string;
       subpathIndex: number;
       bounds: { minX: number; minY: number; maxX: number; maxY: number };
-      originalCommands: any[];
+      originalCommands: Command[];
     }> = [];
     
     selectedSubpaths.forEach(({ elementId, subpathIndex }) => {
@@ -964,9 +937,9 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
     // Apply transformations to all dragged subpaths
     // Group by elementId to avoid multiple updates to the same element
     const elementUpdates = new Map<string, { 
-      element: any; 
+      element: CanvasElement; 
       pathData: PathData; 
-      subpathUpdates: Array<{ subpathIndex: number; originalCommands: any[] }> 
+      subpathUpdates: Array<{ subpathIndex: number; originalCommands: Command[] }> 
     }>();
     
     // Collect all transformations by element
@@ -999,7 +972,7 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
       subpathUpdates.forEach(({ subpathIndex, originalCommands }) => {
         if (subpaths[subpathIndex]) {
           // Apply transformation to the ORIGINAL commands, not the current ones
-          const transformedCommands = transformSvgCommands(originalCommands, deltaX, deltaY);
+          const transformedCommands = translateCommands(originalCommands, deltaX, deltaY);
           subpaths[subpathIndex] = { ...subpaths[subpathIndex], commands: transformedCommands };
         }
       });

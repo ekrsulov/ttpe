@@ -2,7 +2,7 @@ import React from 'react';
 import { measurePath } from '../utils/measurementUtils';
 import { parsePathD, extractEditablePoints, getCommandStartPoint, updatePathD, extractSubpaths, commandsToString } from '../utils/pathParserUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../utils';
-import type { Point, CanvasElement, ControlPointInfo, SubPath } from '../types';
+import type { Point, CanvasElement, ControlPointInfo, SubPath, Command } from '../types';
 
 interface CanvasRendererProps {
   viewport: {
@@ -26,7 +26,7 @@ interface CanvasRendererProps {
       elementId: string;
       subpathIndex: number;
       bounds: { minX: number; minY: number; maxX: number; maxY: number };
-      originalCommands: any[];
+      originalCommands: Command[];
     }>;
     startX: number;
     startY: number;
@@ -1112,7 +1112,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         <rect
           x={bounds.minX + handlerSize + 10}
           y={bounds.minY}
-          width={bounds.maxX - bounds.minX - 2 * handlerSize - 20}
+          width={Math.max(0, bounds.maxX - bounds.minX - 2 * handlerSize - 20)}
           height={2 / viewport.zoom}
           fill={selectionColor}
           opacity="0.5"
@@ -1122,7 +1122,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         <rect
           x={bounds.minX + handlerSize + 10}
           y={bounds.minY - 8 / viewport.zoom}
-          width={bounds.maxX - bounds.minX - 2 * handlerSize - 20}
+          width={Math.max(0, bounds.maxX - bounds.minX - 2 * handlerSize - 20)}
           height={18 / viewport.zoom}
           fill="transparent"
           opacity="0.1"
@@ -1136,7 +1136,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           x={bounds.maxX - 2 / viewport.zoom}
           y={bounds.minY + handlerSize + 10}
           width={2 / viewport.zoom}
-          height={bounds.maxY - bounds.minY - 2 * handlerSize - 20}
+          height={Math.max(0, bounds.maxY - bounds.minY - 2 * handlerSize - 20)}
           fill={selectionColor}
           opacity="0.5"
           pointerEvents="none"
@@ -1146,7 +1146,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           x={bounds.maxX - 2 / viewport.zoom - 8 / viewport.zoom}
           y={bounds.minY + handlerSize + 10}
           width={18 / viewport.zoom}
-          height={bounds.maxY - bounds.minY - 2 * handlerSize - 20}
+          height={Math.max(0, bounds.maxY - bounds.minY - 2 * handlerSize - 20)}
           fill="transparent"
           opacity="0.1"
           style={{ cursor: 'e-resize' }}
@@ -1158,7 +1158,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         <rect
           x={bounds.minX + handlerSize + 10}
           y={bounds.maxY - 2 / viewport.zoom}
-          width={bounds.maxX - bounds.minX - 2 * handlerSize - 20}
+          width={Math.max(0, bounds.maxX - bounds.minX - 2 * handlerSize - 20)}
           height={2 / viewport.zoom}
           fill={selectionColor}
           opacity="0.5"
@@ -1168,7 +1168,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         <rect
           x={bounds.minX + handlerSize + 10}
           y={bounds.maxY - 2 / viewport.zoom - 8 / viewport.zoom}
-          width={bounds.maxX - bounds.minX - 2 * handlerSize - 20}
+          width={Math.max(0, bounds.maxX - bounds.minX - 2 * handlerSize - 20)}
           height={18 / viewport.zoom}
           fill="transparent"
           opacity="0.1"
@@ -1182,7 +1182,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           x={bounds.minX}
           y={bounds.minY + handlerSize + 10}
           width={2 / viewport.zoom}
-          height={bounds.maxY - bounds.minY - 2 * handlerSize - 20}
+          height={Math.max(0, bounds.maxY - bounds.minY - 2 * handlerSize - 20)}
           fill={selectionColor}
           opacity="0.5"
           pointerEvents="none"
@@ -1192,7 +1192,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           x={bounds.minX - 8 / viewport.zoom}
           y={bounds.minY + handlerSize + 10}
           width={18 / viewport.zoom}
-          height={bounds.maxY - bounds.minY - 2 * handlerSize - 20}
+          height={Math.max(0, bounds.maxY - bounds.minY - 2 * handlerSize - 20)}
           fill="transparent"
           opacity="0.1"
           style={{ cursor: 'w-resize' }}
