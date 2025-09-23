@@ -2,16 +2,9 @@ import type { StateCreator } from 'zustand';
 import type { CanvasStore } from '../../canvasStore';
 import type { PathData, Command, CanvasElement } from '../../../types';
 import { extractSubpaths } from '../../../utils/pathParserUtils';
-import { measurePath } from '../../../utils/measurementUtils';
+import { measureSubpathBounds } from '../../../utils/measurementUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../../utils';
 import { translateCommands } from '../../../utils/transformationUtils';
-
-// Helper function to measure a single subpath
-const measureSubpath = (subpathCommands: Command[], strokeWidth: number = 1): { minX: number; minY: number; maxX: number; maxY: number } => {
-  return measurePath([subpathCommands], strokeWidth, 1);
-};
-
-
 
 // Helper interface for subpath bounds
 interface SubpathWithBounds {
@@ -82,6 +75,47 @@ const applySubpathTransformations = (
       data: { ...pathData, subPaths: newSubPaths }
     });
   });
+};
+
+// Helper function for alignment operations
+const performSubpathAlignment = (
+  state: CanvasStore,
+  selectedSubpaths: Array<{ elementId: string; subpathIndex: number }>,
+  getTargetPosition: (bounds: SubpathWithBounds[]) => (subpathInfo: SubpathWithBounds) => { deltaX: number; deltaY: number }
+) => {
+  if (selectedSubpaths.length < 2) return;
+  
+  const subpathBounds: SubpathWithBounds[] = [];
+  
+  selectedSubpaths.forEach(selected => {
+    const element = state.elements.find((el) => el.id === selected.elementId);
+    if (element && element.type === 'path') {
+      const pathData = element.data as PathData;
+      const allCommands = pathData.subPaths.flat();
+      const subpaths = extractSubpaths(allCommands);
+      const subpathCommands = subpaths[selected.subpathIndex]?.commands;
+      
+      if (subpathCommands) {
+        const bounds = measureSubpathBounds(subpathCommands, pathData.strokeWidth || 1);
+        
+        subpathBounds.push({
+          elementId: selected.elementId,
+          subpathIndex: selected.subpathIndex,
+          subpathCommands,
+          bounds,
+          centerX: (bounds.minX + bounds.maxX) / 2,
+          centerY: (bounds.minY + bounds.maxY) / 2,
+          width: bounds.maxX - bounds.minX,
+          height: bounds.maxY - bounds.minY
+        });
+      }
+    }
+  });
+  
+  if (subpathBounds.length < 2) return;
+  
+  // Apply transformations using helper function
+  applySubpathTransformations(state, subpathBounds, getTargetPosition(subpathBounds));
 };
 
 export interface SubpathPluginSlice {
@@ -433,275 +467,78 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
     const state = get() as CanvasStore;
     const selectedSubpaths = get().selectedSubpaths;
     
-    if (selectedSubpaths.length < 2) return;
-    
-    const subpathBounds: SubpathWithBounds[] = [];
-    
-    selectedSubpaths.forEach(selected => {
-      const element = state.elements.find((el) => el.id === selected.elementId);
-      if (element && element.type === 'path') {
-        const pathData = element.data as PathData;
-        const allCommands = pathData.subPaths.flat();
-        const subpaths = extractSubpaths(allCommands);
-        const subpathCommands = subpaths[selected.subpathIndex]?.commands;
-        
-        if (subpathCommands) {
-          const bounds = measureSubpath(subpathCommands, pathData.strokeWidth || 1);
-          
-          subpathBounds.push({
-            elementId: selected.elementId,
-            subpathIndex: selected.subpathIndex,
-            subpathCommands,
-            bounds,
-            centerX: (bounds.minX + bounds.maxX) / 2,
-            centerY: (bounds.minY + bounds.maxY) / 2,
-            width: bounds.maxX - bounds.minX,
-            height: bounds.maxY - bounds.minY
-          });
-        }
-      }
+    performSubpathAlignment(state, selectedSubpaths, (subpathBounds) => {
+      const minX = Math.min(...subpathBounds.map(sb => sb.bounds.minX));
+      return (subpathInfo) => ({
+        deltaX: minX - subpathInfo.bounds.minX,
+        deltaY: 0
+      });
     });
-    
-    if (subpathBounds.length < 2) return;
-    
-    // Find the leftmost position
-    const minX = Math.min(...subpathBounds.map(sb => sb.bounds.minX));
-    
-    // Apply transformations using helper function
-    applySubpathTransformations(state, subpathBounds, (subpathInfo) => ({
-      deltaX: minX - subpathInfo.bounds.minX,
-      deltaY: 0
-    }));
   },
 
   alignCenterSubpaths: () => {
     const state = get() as CanvasStore;
     const selectedSubpaths = get().selectedSubpaths;
     
-    if (selectedSubpaths.length < 2) return;
-    
-    const subpathBounds: SubpathWithBounds[] = [];
-    
-    selectedSubpaths.forEach(selected => {
-      const element = state.elements.find((el) => el.id === selected.elementId);
-      if (element && element.type === 'path') {
-        const pathData = element.data as PathData;
-        const allCommands = pathData.subPaths.flat();
-        const subpaths = extractSubpaths(allCommands);
-        const subpathCommands = subpaths[selected.subpathIndex]?.commands;
-        
-        if (subpathCommands) {
-          
-          const bounds = measureSubpath(subpathCommands, pathData.strokeWidth || 1);
-          
-          subpathBounds.push({
-            elementId: selected.elementId,
-            subpathIndex: selected.subpathIndex,
-            subpathCommands,
-            bounds,
-            centerX: (bounds.minX + bounds.maxX) / 2,
-            centerY: (bounds.minY + bounds.maxY) / 2,
-            width: bounds.maxX - bounds.minX,
-            height: bounds.maxY - bounds.minY
-          });
-        }
-      }
+    performSubpathAlignment(state, selectedSubpaths, (subpathBounds) => {
+      const targetCenterX = subpathBounds.reduce((sum, sb) => sum + sb.centerX, 0) / subpathBounds.length;
+      return (subpathInfo) => ({
+        deltaX: targetCenterX - subpathInfo.centerX,
+        deltaY: 0
+      });
     });
-    
-    if (subpathBounds.length < 2) return;
-    
-    // Calculate average center position
-    const targetCenterX = subpathBounds.reduce((sum, sb) => sum + sb.centerX, 0) / subpathBounds.length;
-    
-    // Apply transformations using helper function
-    applySubpathTransformations(state, subpathBounds, (subpathInfo) => ({
-      deltaX: targetCenterX - subpathInfo.centerX,
-      deltaY: 0
-    }));
   },
 
   alignRightSubpaths: () => {
     const state = get() as CanvasStore;
     const selectedSubpaths = get().selectedSubpaths;
     
-    if (selectedSubpaths.length < 2) return;
-    
-    const subpathBounds: SubpathWithBounds[] = [];
-    
-    selectedSubpaths.forEach(selected => {
-      const element = state.elements.find((el) => el.id === selected.elementId);
-      if (element && element.type === 'path') {
-        const pathData = element.data as PathData;
-        const allCommands = pathData.subPaths.flat();
-        const subpaths = extractSubpaths(allCommands);
-        const subpathCommands = subpaths[selected.subpathIndex]?.commands;
-        
-        if (subpathCommands) {
-          
-          const bounds = measureSubpath(subpathCommands, pathData.strokeWidth || 1);
-          
-          subpathBounds.push({
-            elementId: selected.elementId,
-            subpathIndex: selected.subpathIndex,
-            subpathCommands,
-            bounds,
-            centerX: (bounds.minX + bounds.maxX) / 2,
-            centerY: (bounds.minY + bounds.maxY) / 2,
-            width: bounds.maxX - bounds.minX,
-            height: bounds.maxY - bounds.minY
-          });
-        }
-      }
+    performSubpathAlignment(state, selectedSubpaths, (subpathBounds) => {
+      const maxX = Math.max(...subpathBounds.map(sb => sb.bounds.maxX));
+      return (subpathInfo) => ({
+        deltaX: maxX - subpathInfo.bounds.maxX,
+        deltaY: 0
+      });
     });
-    
-    if (subpathBounds.length < 2) return;
-    
-    // Find the rightmost position
-    const maxX = Math.max(...subpathBounds.map(sb => sb.bounds.maxX));
-    
-    // Apply transformations using helper function
-    applySubpathTransformations(state, subpathBounds, (subpathInfo) => ({
-      deltaX: maxX - subpathInfo.bounds.maxX,
-      deltaY: 0
-    }));
   },
 
   alignTopSubpaths: () => {
     const state = get() as CanvasStore;
     const selectedSubpaths = get().selectedSubpaths;
     
-    if (selectedSubpaths.length < 2) return;
-    
-    const subpathBounds: SubpathWithBounds[] = [];
-    
-    selectedSubpaths.forEach(selected => {
-      const element = state.elements.find((el) => el.id === selected.elementId);
-      if (element && element.type === 'path') {
-        const pathData = element.data as PathData;
-        const allCommands = pathData.subPaths.flat();
-        const subpaths = extractSubpaths(allCommands);
-        const subpathCommands = subpaths[selected.subpathIndex]?.commands;
-        
-        if (subpathCommands) {
-          
-          const bounds = measureSubpath(subpathCommands, pathData.strokeWidth || 1);
-          
-          subpathBounds.push({
-            elementId: selected.elementId,
-            subpathIndex: selected.subpathIndex,
-            subpathCommands,
-            bounds,
-            centerX: (bounds.minX + bounds.maxX) / 2,
-            centerY: (bounds.minY + bounds.maxY) / 2,
-            width: bounds.maxX - bounds.minX,
-            height: bounds.maxY - bounds.minY
-          });
-        }
-      }
+    performSubpathAlignment(state, selectedSubpaths, (subpathBounds) => {
+      const minY = Math.min(...subpathBounds.map(sb => sb.bounds.minY));
+      return (subpathInfo) => ({
+        deltaX: 0,
+        deltaY: minY - subpathInfo.bounds.minY
+      });
     });
-    
-    if (subpathBounds.length < 2) return;
-    
-    // Find the topmost position
-    const minY = Math.min(...subpathBounds.map(sb => sb.bounds.minY));
-    
-    // Apply transformations using helper function
-    applySubpathTransformations(state, subpathBounds, (subpathInfo) => ({
-      deltaX: 0,
-      deltaY: minY - subpathInfo.bounds.minY
-    }));
   },
 
   alignMiddleSubpaths: () => {
     const state = get() as CanvasStore;
     const selectedSubpaths = get().selectedSubpaths;
     
-    if (selectedSubpaths.length < 2) return;
-    
-    const subpathBounds: SubpathWithBounds[] = [];
-    
-    selectedSubpaths.forEach(selected => {
-      const element = state.elements.find((el) => el.id === selected.elementId);
-      if (element && element.type === 'path') {
-        const pathData = element.data as PathData;
-        const allCommands = pathData.subPaths.flat();
-        const subpaths = extractSubpaths(allCommands);
-        const subpathCommands = subpaths[selected.subpathIndex]?.commands;
-        
-        if (subpathCommands) {
-          
-          const bounds = measureSubpath(subpathCommands, pathData.strokeWidth || 1);
-          
-          subpathBounds.push({
-            elementId: selected.elementId,
-            subpathIndex: selected.subpathIndex,
-            subpathCommands,
-            bounds,
-            centerX: (bounds.minX + bounds.maxX) / 2,
-            centerY: (bounds.minY + bounds.maxY) / 2,
-            width: bounds.maxX - bounds.minX,
-            height: bounds.maxY - bounds.minY
-          });
-        }
-      }
+    performSubpathAlignment(state, selectedSubpaths, (subpathBounds) => {
+      const targetCenterY = subpathBounds.reduce((sum, sb) => sum + sb.centerY, 0) / subpathBounds.length;
+      return (subpathInfo) => ({
+        deltaX: 0,
+        deltaY: targetCenterY - subpathInfo.centerY
+      });
     });
-    
-    if (subpathBounds.length < 2) return;
-    
-    // Calculate average center position
-    const targetCenterY = subpathBounds.reduce((sum, sb) => sum + sb.centerY, 0) / subpathBounds.length;
-    
-    // Apply transformations using helper function
-    applySubpathTransformations(state, subpathBounds, (subpathInfo) => ({
-      deltaX: 0,
-      deltaY: targetCenterY - subpathInfo.centerY
-    }));
   },
 
   alignBottomSubpaths: () => {
     const state = get() as CanvasStore;
     const selectedSubpaths = get().selectedSubpaths;
     
-    if (selectedSubpaths.length < 2) return;
-    
-    const subpathBounds: SubpathWithBounds[] = [];
-    
-    selectedSubpaths.forEach(selected => {
-      const element = state.elements.find((el) => el.id === selected.elementId);
-      if (element && element.type === 'path') {
-        const pathData = element.data as PathData;
-        const allCommands = pathData.subPaths.flat();
-        const subpaths = extractSubpaths(allCommands);
-        const subpathCommands = subpaths[selected.subpathIndex]?.commands;
-        
-        if (subpathCommands) {
-          
-          const bounds = measureSubpath(subpathCommands, pathData.strokeWidth || 1);
-          
-          subpathBounds.push({
-            elementId: selected.elementId,
-            subpathIndex: selected.subpathIndex,
-            subpathCommands,
-            bounds,
-            centerX: (bounds.minX + bounds.maxX) / 2,
-            centerY: (bounds.minY + bounds.maxY) / 2,
-            width: bounds.maxX - bounds.minX,
-            height: bounds.maxY - bounds.minY
-          });
-        }
-      }
+    performSubpathAlignment(state, selectedSubpaths, (subpathBounds) => {
+      const maxY = Math.max(...subpathBounds.map(sb => sb.bounds.maxY));
+      return (subpathInfo) => ({
+        deltaX: 0,
+        deltaY: maxY - subpathInfo.bounds.maxY
+      });
     });
-    
-    if (subpathBounds.length < 2) return;
-    
-    // Find the bottommost position
-    const maxY = Math.max(...subpathBounds.map(sb => sb.bounds.maxY));
-    
-    // Apply transformations using helper function
-    applySubpathTransformations(state, subpathBounds, (subpathInfo) => ({
-      deltaX: 0,
-      deltaY: maxY - subpathInfo.bounds.maxY
-    }));
   },
 
   distributeHorizontallySubpaths: () => {
@@ -722,7 +559,7 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
         
         if (subpathCommands) {
           
-          const bounds = measureSubpath(subpathCommands, pathData.strokeWidth || 1);
+          const bounds = measureSubpathBounds(subpathCommands, pathData.strokeWidth || 1);
           
           subpathBounds.push({
             elementId: selected.elementId,
@@ -805,7 +642,7 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
         
         if (subpathCommands) {
           
-          const bounds = measureSubpath(subpathCommands, pathData.strokeWidth || 1);
+          const bounds = measureSubpathBounds(subpathCommands, pathData.strokeWidth || 1);
           
           subpathBounds.push({
             elementId: selected.elementId,
@@ -893,7 +730,7 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
         const subpaths = extractSubpaths(allCommands);
         
         if (subpaths[subpathIndex]) {
-          const bounds = measureSubpath(subpaths[subpathIndex].commands, pathData.strokeWidth || 1);
+          const bounds = measureSubpathBounds(subpaths[subpathIndex].commands, pathData.strokeWidth || 1);
           initialPositions.push({
             elementId,
             subpathIndex,

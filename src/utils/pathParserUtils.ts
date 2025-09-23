@@ -669,25 +669,6 @@ export function normalizePathCommands(commands: Command[]): Command[] {
 }
 
 /**
- * Normalize SVG path d string by parsing, cleaning, and reconstructing
- */
-export function normalizePathD(d: string): string {
-  if (!d || d.trim() === '') return '';
-
-  try {
-    const commands = parsePathD(d);
-    const normalizedCommands = normalizePathCommands(commands);
-
-    if (normalizedCommands.length === 0) return '';
-
-    return commandsToString(normalizedCommands);
-  } catch (error) {
-    console.warn('Error normalizing path:', error);
-    return d; // Return original if normalization fails
-  }
-}
-
-/**
  * Calculate the distance from a point to a line segment
  */
 function pointToLineDistance(px: number, py: number, x1: number, y1: number, x2: number, y2: number): number {

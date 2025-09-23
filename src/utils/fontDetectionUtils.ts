@@ -38,7 +38,7 @@ export const FONTS_TO_CHECK = [
  * Detects if a specific font is available on the system
  * by comparing text width with a base font
  */
-export const detectFont = (font: string): boolean => {
+const detectFont = (font: string): boolean => {
   const baseFont = 'monospace';
   const testString = "abcdefghijklmnopqrstuvwxyz0123456789";
 
@@ -68,7 +68,7 @@ export const detectFont = (font: string): boolean => {
  * Scans for available fonts from the predefined list
  * Returns a sorted array of available font names
  */
-export const scanAvailableFonts = (): string[] => {
+const scanAvailableFonts = (): string[] => {
   const detected = new Set<string>();
 
   FONTS_TO_CHECK.forEach(font => {

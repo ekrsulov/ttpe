@@ -80,3 +80,17 @@ export const measurePath = (
     document.body.removeChild(svg);
   }
 };
+
+/**
+ * Measure bounds of a subpath from commands
+ * Unifies the logic previously duplicated in Canvas, CanvasRenderer, and subpathPluginSlice
+ */
+export const measureSubpathBounds = (
+  commands: import('../types').Command[],
+  strokeWidth: number = 1,
+  zoom: number = 1
+): { minX: number; minY: number; maxX: number; maxY: number } => {
+  // Convert commands to subpath format for measurePath
+  const subPaths = [commands];
+  return measurePath(subPaths, strokeWidth, zoom);
+};

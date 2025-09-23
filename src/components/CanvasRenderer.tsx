@@ -1,5 +1,5 @@
 import React from 'react';
-import { measurePath } from '../utils/measurementUtils';
+import { measurePath, measureSubpathBounds } from '../utils/measurementUtils';
 import { parsePathD, extractEditablePoints, getCommandStartPoint, updatePathD, extractSubpaths, commandsToString } from '../utils/pathParserUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../utils';
 import type { Point, CanvasElement, ControlPointInfo, SubPath, Command } from '../types';
@@ -732,7 +732,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       if (subpathIndex >= subpaths.length) return null;
       
       const subpath = subpaths[subpathIndex];
-      return measurePath([subpath], pathData.strokeWidth || 1, viewport.zoom);
+      return measureSubpathBounds(subpath, pathData.strokeWidth || 1, viewport.zoom);
     } catch (error) {
       console.warn('Failed to calculate individual subpath bounds:', error);
       return null;

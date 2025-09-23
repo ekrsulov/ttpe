@@ -15,6 +15,13 @@ import {
 } from 'lucide-react';
 import { IconButton } from '../ui/IconButton';
 
+interface ButtonConfig {
+  handler: () => void;
+  icon: React.ReactNode;
+  title: string;
+  disabled?: boolean;
+}
+
 export const ArrangePanel: React.FC = () => {
   const {
     selectedIds,
@@ -65,6 +72,95 @@ export const ArrangePanel: React.FC = () => {
                         (activePlugin === 'edit' && selectedCommandsCount >= 3) ||
                         (activePlugin === 'subpath' && selectedSubpathsCount >= 3);
 
+  // Button configurations based on active plugin
+  const getDistributionButtons = (): ButtonConfig[] => {
+    if (activePlugin === 'subpath') {
+      return [
+        { handler: distributeHorizontallySubpaths, icon: <MoveHorizontal size={10} />, title: "Distribute Horizontally", disabled: !canDistribute },
+        { handler: distributeVerticallySubpaths, icon: <MoveVertical size={10} />, title: "Distribute Vertically", disabled: !canDistribute }
+      ];
+    } else if (activePlugin === 'edit') {
+      return [
+        { handler: distributeHorizontallyCommands, icon: <MoveHorizontal size={10} />, title: "Distribute Horizontally", disabled: !canDistribute },
+        { handler: distributeVerticallyCommands, icon: <MoveVertical size={10} />, title: "Distribute Vertically", disabled: !canDistribute }
+      ];
+    } else {
+      return [
+        { handler: distributeHorizontally, icon: <MoveHorizontal size={10} />, title: "Distribute Horizontally", disabled: !canDistribute },
+        { handler: distributeVertically, icon: <MoveVertical size={10} />, title: "Distribute Vertically", disabled: !canDistribute }
+      ];
+    }
+  };
+
+  const getOrderButtons = (): ButtonConfig[] => {
+    if (activePlugin === 'subpath') {
+      return [
+        { handler: bringSubpathToFront, icon: <Triangle size={10} />, title: "Bring Subpath to Front", disabled: selectedSubpathsCount === 0 },
+        { handler: sendSubpathForward, icon: <ChevronUp size={10} />, title: "Send Subpath Forward", disabled: selectedSubpathsCount === 0 },
+        { handler: sendSubpathBackward, icon: <ChevronDown size={10} />, title: "Send Subpath Backward", disabled: selectedSubpathsCount === 0 },
+        { handler: sendSubpathToBack, icon: <Triangle size={10} style={{ transform: 'rotate(180deg)' }} />, title: "Send Subpath to Back", disabled: selectedSubpathsCount === 0 }
+      ];
+    } else {
+      return [
+        { handler: bringToFront, icon: <Triangle size={10} />, title: "Bring to Front", disabled: selectedCount === 0 },
+        { handler: sendForward, icon: <ChevronUp size={10} />, title: "Send Forward", disabled: selectedCount === 0 },
+        { handler: sendBackward, icon: <ChevronDown size={10} />, title: "Send Backward", disabled: selectedCount === 0 },
+        { handler: sendToBack, icon: <Triangle size={10} style={{ transform: 'rotate(180deg)' }} />, title: "Send to Back", disabled: selectedCount === 0 }
+      ];
+    }
+  };
+
+  const getAlignmentButtons = (): ButtonConfig[] => {
+    if (activePlugin === 'subpath') {
+      return [
+        { handler: alignLeftSubpaths, icon: <AlignLeft size={10} />, title: "Align Left", disabled: !canAlign },
+        { handler: alignCenterSubpaths, icon: <AlignCenter size={10} />, title: "Align Center", disabled: !canAlign },
+        { handler: alignRightSubpaths, icon: <AlignRight size={10} />, title: "Align Right", disabled: !canAlign },
+        { handler: alignTopSubpaths, icon: <AlignVerticalJustifyStart size={10} />, title: "Align Top", disabled: !canAlign },
+        { handler: alignMiddleSubpaths, icon: <AlignVerticalJustifyCenter size={10} />, title: "Align Middle", disabled: !canAlign },
+        { handler: alignBottomSubpaths, icon: <AlignVerticalJustifyEnd size={10} />, title: "Align Bottom", disabled: !canAlign }
+      ];
+    } else if (activePlugin === 'edit') {
+      return [
+        { handler: alignLeftCommands, icon: <AlignLeft size={10} />, title: "Align Left", disabled: !canAlign },
+        { handler: alignCenterCommands, icon: <AlignCenter size={10} />, title: "Align Center", disabled: !canAlign },
+        { handler: alignRightCommands, icon: <AlignRight size={10} />, title: "Align Right", disabled: !canAlign },
+        { handler: alignTopCommands, icon: <AlignVerticalJustifyStart size={10} />, title: "Align Top", disabled: !canAlign },
+        { handler: alignMiddleCommands, icon: <AlignVerticalJustifyCenter size={10} />, title: "Align Middle", disabled: !canAlign },
+        { handler: alignBottomCommands, icon: <AlignVerticalJustifyEnd size={10} />, title: "Align Bottom", disabled: !canAlign }
+      ];
+    } else {
+      return [
+        { handler: alignLeft, icon: <AlignLeft size={10} />, title: "Align Left", disabled: !canAlign },
+        { handler: alignCenter, icon: <AlignCenter size={10} />, title: "Align Center", disabled: !canAlign },
+        { handler: alignRight, icon: <AlignRight size={10} />, title: "Align Right", disabled: !canAlign },
+        { handler: alignTop, icon: <AlignVerticalJustifyStart size={10} />, title: "Align Top", disabled: !canAlign },
+        { handler: alignMiddle, icon: <AlignVerticalJustifyCenter size={10} />, title: "Align Middle", disabled: !canAlign },
+        { handler: alignBottom, icon: <AlignVerticalJustifyEnd size={10} />, title: "Align Bottom", disabled: !canAlign }
+      ];
+    }
+  };
+
+  const renderButtonRow = (buttons: ButtonConfig[]) => (
+    <div style={{ display: 'flex', gap: '2px' }}>
+      {buttons.map((button, index) => (
+        <div key={index} style={{ flex: 1 }}>
+          <IconButton 
+            onClick={button.handler} 
+            disabled={button.disabled} 
+            title={button.title}
+          >
+            {button.icon}
+          </IconButton>
+        </div>
+      ))}
+    </div>
+  );
+
+  const distributionButtons = getDistributionButtons();
+  const orderButtons = getOrderButtons();
+  const alignmentButtons = getAlignmentButtons();
+
   return (
     <div style={{ 
       backgroundColor: '#fff', 
@@ -73,271 +169,21 @@ export const ArrangePanel: React.FC = () => {
       width: '100%'
     }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-        {activePlugin === 'subpath' ? (
-          /* Subpath mode layout - same as select mode but without delete */
-          <>
-            {/* Row 1: Distribution & Order buttons */}
-            <div style={{ display: 'flex', gap: '2px' }}>
-              {/* Distribution buttons */}
-              <div style={{ flex: 1 }}>
-                <IconButton 
-                  onClick={distributeHorizontallySubpaths} 
-                  disabled={!canDistribute} 
-                  title="Distribute Horizontally"
-                >
-                  <MoveHorizontal size={10} />
-                </IconButton>
-              </div>
-              <div style={{ flex: 1 }}>
-                <IconButton 
-                  onClick={distributeVerticallySubpaths} 
-                  disabled={!canDistribute} 
-                  title="Distribute Vertically"
-                >
-                  <MoveVertical size={10} />
-                </IconButton>
-              </div>
-              
-              {/* Order buttons */}
-              <div style={{ flex: 1 }}>
-                <IconButton onClick={bringSubpathToFront} disabled={selectedSubpathsCount === 0} title="Bring Subpath to Front">
-                  <Triangle size={10} />
-                </IconButton>
-              </div>
-              <div style={{ flex: 1 }}>
-                <IconButton onClick={sendSubpathForward} disabled={selectedSubpathsCount === 0} title="Send Subpath Forward">
-                  <ChevronUp size={10} />
-                </IconButton>
-              </div>
-              <div style={{ flex: 1 }}>
-                <IconButton onClick={sendSubpathBackward} disabled={selectedSubpathsCount === 0} title="Send Subpath Backward">
-                  <ChevronDown size={10} />
-                </IconButton>
-              </div>
-              <div style={{ flex: 1 }}>
-                <IconButton onClick={sendSubpathToBack} disabled={selectedSubpathsCount === 0} title="Send Subpath to Back">
-                  <Triangle size={10} style={{ transform: 'rotate(180deg)' }} />
-                </IconButton>
-              </div>
-            </div>
-
-            {/* Row 2: Align buttons */}
-            <div style={{ display: 'flex', gap: '2px' }}>
-              {/* Horizontal alignment */}
-              <div style={{ flex: 1 }}>
-                <IconButton 
-                  onClick={alignLeftSubpaths} 
-                  disabled={!canAlign} 
-                  title="Align Left"
-                >
-                  <AlignLeft size={10} />
-                </IconButton>
-              </div>
-              <div style={{ flex: 1 }}>
-                <IconButton 
-                  onClick={alignCenterSubpaths} 
-                  disabled={!canAlign} 
-                  title="Align Center"
-                >
-                  <AlignCenter size={10} />
-                </IconButton>
-              </div>
-              <div style={{ flex: 1 }}>
-                <IconButton 
-                  onClick={alignRightSubpaths} 
-                  disabled={!canAlign} 
-                  title="Align Right"
-                >
-                  <AlignRight size={10} />
-                </IconButton>
-              </div>
-
-              {/* Vertical alignment */}
-              <div style={{ flex: 1 }}>
-                <IconButton 
-                  onClick={alignTopSubpaths} 
-                  disabled={!canAlign} 
-                  title="Align Top"
-                >
-                  <AlignVerticalJustifyStart size={10} />
-                </IconButton>
-              </div>
-              <div style={{ flex: 1 }}>
-                <IconButton 
-                  onClick={alignMiddleSubpaths} 
-                  disabled={!canAlign} 
-                  title="Align Middle"
-                >
-                  <AlignVerticalJustifyCenter size={10} />
-                </IconButton>
-              </div>
-              <div style={{ flex: 1 }}>
-                <IconButton 
-                  onClick={alignBottomSubpaths} 
-                  disabled={!canAlign} 
-                  title="Align Bottom"
-                >
-                  <AlignVerticalJustifyEnd size={10} />
-                </IconButton>
-              </div>
-            </div>
-          </>
+        {/* Row 1: Distribution & Order buttons */}
+        {activePlugin === 'edit' ? (
+          /* Edit mode has different layout */
+          <div style={{ display: 'flex', gap: '2px', justifyContent: 'space-between' }}>
+            {renderButtonRow(distributionButtons)}
+          </div>
         ) : (
-          /* Original layout for edit and other modes */
-          <>
-            {/* Distribution & Order buttons */}
-            <div style={{ 
-              display: 'flex', 
-              gap: '2px',
-              width: activePlugin === 'edit' ? '100%' : 'auto',
-              justifyContent: activePlugin === 'edit' ? 'space-between' : 'flex-start'
-            }}>
-              <div style={{ 
-                flex: activePlugin === 'edit' ? 'none' : 1,
-                width: activePlugin === 'edit' ? 'auto' : 'auto'
-              }}>
-                <IconButton 
-                  onClick={
-                    activePlugin === 'edit' ? distributeHorizontallyCommands :
-                    distributeHorizontally
-                  } 
-                  disabled={!canDistribute} 
-                  title="Distribute Horizontally"
-                >
-                  <MoveHorizontal size={10} />
-                </IconButton>
-              </div>
-              <div style={{ 
-                flex: activePlugin === 'edit' ? 'none' : 1,
-                width: activePlugin === 'edit' ? 'auto' : 'auto',
-                margin: activePlugin === 'edit' ? '0 auto' : '0'
-              }}>
-                <IconButton 
-                  onClick={
-                    activePlugin === 'edit' ? distributeVerticallyCommands :
-                    distributeVertically
-                  } 
-                  disabled={!canDistribute} 
-                  title="Distribute Vertically"
-                >
-                  <MoveVertical size={10} />
-                </IconButton>
-              </div>
-
-              {activePlugin === 'edit' ? (
-                /* Spacer for edit mode layout */
-                <div style={{ 
-                  flex: 'none',
-                  width: 'auto'
-                }}>
-                </div>
-              ) : (
-                /* Order buttons for select mode */
-                <>
-                  <div style={{ flex: 1 }}>
-                    <IconButton onClick={bringToFront} disabled={selectedCount === 0} title="Bring to Front">
-                      <Triangle size={10} />
-                    </IconButton>
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <IconButton onClick={sendForward} disabled={selectedCount === 0} title="Send Forward">
-                      <ChevronUp size={10} />
-                    </IconButton>
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <IconButton onClick={sendBackward} disabled={selectedCount === 0} title="Send Backward">
-                      <ChevronDown size={10} />
-                    </IconButton>
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <IconButton onClick={sendToBack} disabled={selectedCount === 0} title="Send to Back">
-                      <Triangle size={10} style={{ transform: 'rotate(180deg)' }} />
-                    </IconButton>
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* Align buttons */}
-            <div style={{ display: 'flex', gap: '2px' }}>
-              {/* Horizontal alignment */}
-              <div style={{ flex: 1 }}>
-                <IconButton 
-                  onClick={
-                    activePlugin === 'edit' ? alignLeftCommands :
-                    alignLeft
-                  } 
-                  disabled={!canAlign} 
-                  title="Align Left"
-                >
-                  <AlignLeft size={10} />
-                </IconButton>
-              </div>
-              <div style={{ flex: 1 }}>
-                <IconButton 
-                  onClick={
-                    activePlugin === 'edit' ? alignCenterCommands :
-                    alignCenter
-                  } 
-                  disabled={!canAlign} 
-                  title="Align Center"
-                >
-                  <AlignCenter size={10} />
-                </IconButton>
-              </div>
-              <div style={{ flex: 1 }}>
-                <IconButton 
-                  onClick={
-                    activePlugin === 'edit' ? alignRightCommands :
-                    alignRight
-                  } 
-                  disabled={!canAlign} 
-                  title="Align Right"
-                >
-                  <AlignRight size={10} />
-                </IconButton>
-              </div>
-
-              {/* Vertical alignment */}
-              <div style={{ flex: 1 }}>
-                <IconButton 
-                  onClick={
-                    activePlugin === 'edit' ? alignTopCommands :
-                    alignTop
-                  } 
-                  disabled={!canAlign} 
-                  title="Align Top"
-                >
-                  <AlignVerticalJustifyStart size={10} />
-                </IconButton>
-              </div>
-              <div style={{ flex: 1 }}>
-                <IconButton 
-                  onClick={
-                    activePlugin === 'edit' ? alignMiddleCommands :
-                    alignMiddle
-                  } 
-                  disabled={!canAlign} 
-                  title="Align Middle"
-                >
-                  <AlignVerticalJustifyCenter size={10} />
-                </IconButton>
-              </div>
-              <div style={{ flex: 1 }}>
-                <IconButton 
-                  onClick={
-                    activePlugin === 'edit' ? alignBottomCommands :
-                    alignBottom
-                  } 
-                  disabled={!canAlign} 
-                  title="Align Bottom"
-                >
-                  <AlignVerticalJustifyEnd size={10} />
-                </IconButton>
-              </div>
-            </div>
-          </>
+          /* Normal layout for select and subpath modes */
+          <div style={{ display: 'flex', gap: '2px' }}>
+            {renderButtonRow([...distributionButtons, ...orderButtons])}
+          </div>
         )}
+
+        {/* Row 2: Align buttons */}
+        {renderButtonRow(alignmentButtons)}
       </div>
     </div>
   );

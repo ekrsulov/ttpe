@@ -1,6 +1,6 @@
 import React, { useRef, useCallback, useState, useEffect } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
-import { measurePath } from '../utils/measurementUtils';
+import { measurePath, measureSubpathBounds } from '../utils/measurementUtils';
 import { transformPathData, transformSubpathsData, transformSingleSubpath } from '../utils/transformationUtils';
 import { extractEditablePoints } from '../utils/pathParserUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../utils';
@@ -8,12 +8,7 @@ import { CanvasRenderer } from './CanvasRenderer';
 import { transformManager, type TransformBounds } from '../utils/transformManager';
 import type { Point, PathData, CanvasElement } from '../types';
 
-interface CanvasProps {
-  width?: number;
-  height?: number;
-}
-
-export const Canvas: React.FC<CanvasProps> = () => {
+export const Canvas: React.FC = () => {
   const svgRef = useRef<SVGSVGElement>(null);
   const { 
     elements, 
@@ -266,7 +261,7 @@ export const Canvas: React.FC<CanvasProps> = () => {
       if (subpathIndex >= pathData.subPaths.length) return null;
       
       const subpath = pathData.subPaths[subpathIndex];
-      return measurePath([subpath], pathData.strokeWidth || 1, viewport.zoom);
+      return measureSubpathBounds(subpath, pathData.strokeWidth || 1, viewport.zoom);
     } catch (error) {
       console.warn('Failed to calculate individual subpath bounds:', error);
       return null;
