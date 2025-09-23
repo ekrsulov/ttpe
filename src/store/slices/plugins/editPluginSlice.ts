@@ -3,11 +3,15 @@ import { extractEditablePoints, updateCommands, normalizePathCommands, extractSu
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../../utils';
 import type { CanvasElement, PathData, Point, Command, SubPath } from '../../../types';
 import type { CanvasStore } from '../../canvasStore';
+import { 
+  groupSelectedCommandsByElement, 
+  applyAlignment, 
+  applyDistribution, 
+  alignmentStrategies
+} from './editPluginHelpers';
 
 // Type for the full store state (needed for get() calls)
 type FullCanvasState = CanvasStore;
-
-type SelectedCommand = EditPluginSlice['selectedCommands'][0];
 
 export interface EditPluginSlice {
   // State
@@ -407,15 +411,11 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
 
     if (selectedCommands.length === 0) return;
 
-    // Group commands by elementId
-    const commandsByElement = (selectedCommands as SelectedCommand[]).reduce((acc: Record<string, SelectedCommand[]>, cmd: SelectedCommand) => {
-      if (!acc[cmd.elementId]) acc[cmd.elementId] = [];
-      acc[cmd.elementId].push(cmd);
-      return acc;
-    }, {} as Record<string, SelectedCommand[]>);
+    // Group commands by elementId using helper
+    const commandsByElement = groupSelectedCommandsByElement(selectedCommands);
 
     // Process each element
-    (Object.entries(commandsByElement) as [string, SelectedCommand[]][]).forEach(([elementId, commands]) => {
+    Object.entries(commandsByElement).forEach(([elementId, commands]) => {
       const element = state.elements.find((el: CanvasElement) => el.id === elementId);
       if (element && element.type === 'path') {
         const pathData = element.data as PathData;
@@ -530,556 +530,50 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
 
   alignLeftCommands: () => {
     const state = get() as FullCanvasState;
-    const selectedCommands = state.selectedCommands;
-    
-    if (selectedCommands.length < 2) return;
-    
-    // Group commands by elementId
-    const commandsByElement = selectedCommands.reduce((acc: Record<string, SelectedCommand[]>, cmd: SelectedCommand) => {
-      if (!acc[cmd.elementId]) acc[cmd.elementId] = [];
-      acc[cmd.elementId].push(cmd);
-      return acc;
-    }, {} as Record<string, SelectedCommand[]>);
-    
-    // Process each element
-    Object.entries(commandsByElement).forEach(([elementId, commands]) => {
-      const element = state.elements.find((el: CanvasElement) => el.id === elementId);
-      if (element && element.type === 'path' && commands.length >= 2) {
-        const pathData = element.data as PathData;
-        const parsedCommands = pathData.subPaths.flat();
-        const allPoints = extractEditablePoints(parsedCommands);
-        
-        // Find selected points
-        const selectedPoints = allPoints.filter((point) => 
-          (commands).some((cmd) => 
-            cmd.commandIndex === point.commandIndex && 
-            cmd.pointIndex === point.pointIndex
-          )
-        );
-        
-        if (selectedPoints.length >= 2) {
-          // Find the leftmost point
-          const minX = Math.min(...selectedPoints.map(p => p.x));
-          
-          // Move all selected points to align with the leftmost
-          const updatedPoints = selectedPoints.map(point => ({
-            ...point,
-            x: minX
-          }));
-          
-          // Update the path
-          const updatedCommands = updateCommands(parsedCommands, updatedPoints);
-          const newSubPaths = extractSubpaths(updatedCommands).map(s => s.commands);
-          const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
-          setStore((currentState) => ({
-            elements: currentState.elements.map((el) =>
-              el.id === elementId 
-                ? { ...el, data: { ...pathData, subPaths: newSubPaths } }
-                : el
-            )
-          }));
-        }
-      }
-    });
+    const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+    applyAlignment(state.selectedCommands, alignmentStrategies.left, 'x', state, setStore);
   },
 
   alignCenterCommands: () => {
     const state = get() as FullCanvasState;
-    const selectedCommands = state.selectedCommands;
-    
-    if (selectedCommands.length < 2) return;
-    
-    // Group commands by elementId
-    const commandsByElement = selectedCommands.reduce((acc: Record<string, typeof cmd[]>, cmd) => {
-      if (!acc[cmd.elementId]) acc[cmd.elementId] = [];
-      acc[cmd.elementId].push(cmd);
-      return acc;
-    }, {} as Record<string, typeof selectedCommands>);
-    
-    // Process each element
-    Object.entries(commandsByElement).forEach(([elementId, commands]) => {
-      const element = state.elements.find((el) => el.id === elementId);
-      if (element && element.type === 'path' && (commands).length >= 2) {
-        const pathData = element.data as PathData;
-        const parsedCommands = pathData.subPaths.flat();
-        const allPoints = extractEditablePoints(parsedCommands);
-        
-        // Find selected points
-        const selectedPoints = allPoints.filter((point) => 
-          (commands).some((cmd) => 
-            cmd.commandIndex === point.commandIndex && 
-            cmd.pointIndex === point.pointIndex
-          )
-        );
-        
-        if (selectedPoints.length >= 2) {
-          // Calculate center X of all selected points
-          const minX = Math.min(...selectedPoints.map(p => p.x));
-          const maxX = Math.max(...selectedPoints.map(p => p.x));
-          const centerX = (minX + maxX) / 2;
-          
-          // Move all selected points to align with the center
-          const updatedPoints = selectedPoints.map(point => ({
-            ...point,
-            x: centerX
-          }));
-          
-          // Update the path
-          const updatedCommands = updateCommands(parsedCommands, updatedPoints);
-          const newSubPaths = extractSubpaths(updatedCommands).map(s => s.commands);
-          const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
-          setStore((currentState) => ({
-            elements: currentState.elements.map((el) =>
-              el.id === elementId 
-                ? { ...el, data: { ...pathData, subPaths: newSubPaths } }
-                : el
-            )
-          }));
-        }
-      }
-    });
+    const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+    applyAlignment(state.selectedCommands, alignmentStrategies.center, 'x', state, setStore);
   },
 
   alignRightCommands: () => {
     const state = get() as FullCanvasState;
-    const selectedCommands = state.selectedCommands;
-    
-    if (selectedCommands.length < 2) return;
-    
-    // Group commands by elementId
-    const commandsByElement = selectedCommands.reduce((acc: Record<string, typeof cmd[]>, cmd) => {
-      if (!acc[cmd.elementId]) acc[cmd.elementId] = [];
-      acc[cmd.elementId].push(cmd);
-      return acc;
-    }, {} as Record<string, typeof selectedCommands>);
-    
-    // Process each element
-    Object.entries(commandsByElement).forEach(([elementId, commands]) => {
-      const element = state.elements.find((el) => el.id === elementId);
-      if (element && element.type === 'path' && (commands).length >= 2) {
-        const pathData = element.data as PathData;
-        const parsedCommands = pathData.subPaths.flat();
-        const allPoints = extractEditablePoints(parsedCommands);
-        
-        // Find selected points
-        const selectedPoints = allPoints.filter((point) => 
-          (commands).some((cmd) => 
-            cmd.commandIndex === point.commandIndex && 
-            cmd.pointIndex === point.pointIndex
-          )
-        );
-        
-        if (selectedPoints.length >= 2) {
-          // Find the rightmost point
-          const maxX = Math.max(...selectedPoints.map(p => p.x));
-          
-          // Move all selected points to align with the rightmost
-          const updatedPoints = selectedPoints.map(point => ({
-            ...point,
-            x: maxX
-          }));
-          
-          // Update the path
-          const updatedCommands = updateCommands(parsedCommands, updatedPoints);
-          const newSubPaths = extractSubpaths(updatedCommands).map(s => s.commands);
-          const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
-          setStore((currentState) => ({
-            elements: currentState.elements.map((el) =>
-              el.id === elementId 
-                ? { ...el, data: { ...pathData, subPaths: newSubPaths } }
-                : el
-            )
-          }));
-        }
-      }
-    });
+    const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+    applyAlignment(state.selectedCommands, alignmentStrategies.right, 'x', state, setStore);
   },
 
   alignTopCommands: () => {
     const state = get() as FullCanvasState;
-    const selectedCommands = state.selectedCommands;
-    
-    if (selectedCommands.length < 2) return;
-    
-    // Group commands by elementId
-    const commandsByElement = selectedCommands.reduce((acc: Record<string, typeof cmd[]>, cmd) => {
-      if (!acc[cmd.elementId]) acc[cmd.elementId] = [];
-      acc[cmd.elementId].push(cmd);
-      return acc;
-    }, {} as Record<string, typeof selectedCommands>);
-    
-    // Process each element
-    Object.entries(commandsByElement).forEach(([elementId, commands]) => {
-      const element = state.elements.find((el) => el.id === elementId);
-      if (element && element.type === 'path' && (commands).length >= 2) {
-        const pathData = element.data as PathData;
-        const parsedCommands = pathData.subPaths.flat();
-        const allPoints = extractEditablePoints(parsedCommands);
-        
-        // Find selected points
-        const selectedPoints = allPoints.filter((point) => 
-          (commands).some((cmd) => 
-            cmd.commandIndex === point.commandIndex && 
-            cmd.pointIndex === point.pointIndex
-          )
-        );
-        
-        if (selectedPoints.length >= 2) {
-          // Find the topmost point
-          const minY = Math.min(...selectedPoints.map(p => p.y));
-          
-          // Move all selected points to align with the topmost
-          const updatedPoints = selectedPoints.map(point => ({
-            ...point,
-            y: minY
-          }));
-          
-          // Update the path
-          const updatedCommands = updateCommands(parsedCommands, updatedPoints);
-          const newSubPaths = extractSubpaths(updatedCommands).map(s => s.commands);
-          const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
-          setStore((currentState) => ({
-            elements: currentState.elements.map((el) =>
-              el.id === elementId 
-                ? { ...el, data: { ...pathData, subPaths: newSubPaths } }
-                : el
-            )
-          }));
-        }
-      }
-    });
+    const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+    applyAlignment(state.selectedCommands, alignmentStrategies.top, 'y', state, setStore);
   },
 
   alignMiddleCommands: () => {
     const state = get() as FullCanvasState;
-    const selectedCommands = state.selectedCommands;
-    
-    if (selectedCommands.length < 2) return;
-    
-    // Group commands by elementId
-    const commandsByElement = selectedCommands.reduce((acc: Record<string, typeof cmd[]>, cmd) => {
-      if (!acc[cmd.elementId]) acc[cmd.elementId] = [];
-      acc[cmd.elementId].push(cmd);
-      return acc;
-    }, {} as Record<string, typeof selectedCommands>);
-    
-    // Process each element
-    Object.entries(commandsByElement).forEach(([elementId, commands]) => {
-      const element = state.elements.find((el) => el.id === elementId);
-      if (element && element.type === 'path' && (commands).length >= 2) {
-        const pathData = element.data as PathData;
-        const parsedCommands = pathData.subPaths.flat();
-        const allPoints = extractEditablePoints(parsedCommands);
-        
-        // Find selected points
-        const selectedPoints = allPoints.filter((point) => 
-          (commands).some((cmd) => 
-            cmd.commandIndex === point.commandIndex && 
-            cmd.pointIndex === point.pointIndex
-          )
-        );
-        
-        if (selectedPoints.length >= 2) {
-          // Calculate center Y of all selected points
-          const minY = Math.min(...selectedPoints.map(p => p.y));
-          const maxY = Math.max(...selectedPoints.map(p => p.y));
-          const centerY = (minY + maxY) / 2;
-          
-          // Move all selected points to align with the center
-          const updatedPoints = selectedPoints.map(point => ({
-            ...point,
-            y: centerY
-          }));
-          
-          // Update the path
-          const updatedCommands = updateCommands(parsedCommands, updatedPoints);
-          const newSubPaths = extractSubpaths(updatedCommands).map(s => s.commands);
-          const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
-          setStore((currentState) => ({
-            elements: currentState.elements.map((el) =>
-              el.id === elementId 
-                ? { ...el, data: { ...pathData, subPaths: newSubPaths } }
-                : el
-            )
-          }));
-        }
-      }
-    });
+    const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+    applyAlignment(state.selectedCommands, alignmentStrategies.middle, 'y', state, setStore);
   },
 
   alignBottomCommands: () => {
     const state = get() as FullCanvasState;
-    const selectedCommands = state.selectedCommands;
-    
-    if (selectedCommands.length < 2) return;
-    
-    // Group commands by elementId
-    const commandsByElement = selectedCommands.reduce((acc: Record<string, typeof cmd[]>, cmd) => {
-      if (!acc[cmd.elementId]) acc[cmd.elementId] = [];
-      acc[cmd.elementId].push(cmd);
-      return acc;
-    }, {} as Record<string, typeof selectedCommands>);
-    
-    // Process each element
-    Object.entries(commandsByElement).forEach(([elementId, commands]) => {
-      const element = state.elements.find((el) => el.id === elementId);
-      if (element && element.type === 'path' && (commands).length >= 2) {
-        const pathData = element.data as PathData;
-        const parsedCommands = pathData.subPaths.flat();
-        const allPoints = extractEditablePoints(parsedCommands);
-        
-        // Find selected points
-        const selectedPoints = allPoints.filter((point) => 
-          (commands).some((cmd) => 
-            cmd.commandIndex === point.commandIndex && 
-            cmd.pointIndex === point.pointIndex
-          )
-        );
-        
-        if (selectedPoints.length >= 2) {
-          // Find the bottommost point
-          const maxY = Math.max(...selectedPoints.map(p => p.y));
-          
-          // Move all selected points to align with the bottommost
-          const updatedPoints = selectedPoints.map(point => ({
-            ...point,
-            y: maxY
-          }));
-          
-          // Update the path
-          const updatedCommands = updateCommands(parsedCommands, updatedPoints);
-          const newSubPaths = extractSubpaths(updatedCommands).map(s => s.commands);
-          const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
-          setStore((currentState) => ({
-            elements: currentState.elements.map((el) =>
-              el.id === elementId 
-                ? { ...el, data: { ...pathData, subPaths: newSubPaths } }
-                : el
-            )
-          }));
-        }
-      }
-    });
+    const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+    applyAlignment(state.selectedCommands, alignmentStrategies.bottom, 'y', state, setStore);
   },
 
   distributeHorizontallyCommands: () => {
     const state = get() as FullCanvasState;
-    const selectedCommands = state.selectedCommands;
-    
-    if (selectedCommands.length < 3) return;
-    
-    // For distribution, we need a consistent grouping strategy
-    const commandsByElement = selectedCommands.reduce((acc: Record<string, typeof cmd[]>, cmd) => {
-      if (!acc[cmd.elementId]) acc[cmd.elementId] = [];
-      acc[cmd.elementId].push(cmd);
-      return acc;
-    }, {} as Record<string, typeof selectedCommands>);
-    
-    const allSelectedPoints: Array<{
-      elementId: string;
-      commandIndex: number;
-      pointIndex: number;
-      x: number;
-      y: number;
-    }> = [];
-    
-    // First collect all selected points with their current positions
-    Object.entries(commandsByElement).forEach(([elementId, commands]) => {
-      const element = state.elements.find((el) => el.id === elementId);
-      if (element && element.type === 'path') {
-        const pathData = element.data as PathData;
-        const parsedCommands = pathData.subPaths.flat();
-        const allPoints = extractEditablePoints(parsedCommands);
-        
-        (commands).forEach((cmd) => {
-          const point = allPoints.find((p) => 
-            p.commandIndex === cmd.commandIndex && 
-            p.pointIndex === cmd.pointIndex
-          );
-          
-          if (point) {
-            allSelectedPoints.push({
-              elementId: cmd.elementId,
-              commandIndex: cmd.commandIndex,
-              pointIndex: cmd.pointIndex,
-              x: point.x,
-              y: point.y
-            });
-          }
-        });
-      }
-    });
-    
-    if (allSelectedPoints.length < 3) return;
-    
-    // Sort by current X position
-    allSelectedPoints.sort((a, b) => a.x - b.x);
-    
-    // Calculate distribution
-    const leftmost = allSelectedPoints[0].x;
-    const rightmost = allSelectedPoints[allSelectedPoints.length - 1].x;
-    const totalDistance = rightmost - leftmost;
-    const spacing = totalDistance / (allSelectedPoints.length - 1);
-    
-    // Group updates by element for efficiency
-    const elementUpdates = new Map<string, Array<{
-      commandIndex: number;
-      pointIndex: number;
-      x: number;
-      y: number;
-      isControl: boolean;
-    }>>();
-    
-    allSelectedPoints.forEach((pointInfo, index) => {
-      if (index === 0 || index === allSelectedPoints.length - 1) {
-        // Keep first and last points in place
-        return;
-      }
-      
-      const newX = leftmost + (index * spacing);
-      
-      if (!elementUpdates.has(pointInfo.elementId)) {
-        elementUpdates.set(pointInfo.elementId, []);
-      }
-      
-      elementUpdates.get(pointInfo.elementId)!.push({
-        commandIndex: pointInfo.commandIndex,
-        pointIndex: pointInfo.pointIndex,
-        x: newX,
-        y: pointInfo.y, // Keep Y unchanged
-        isControl: false
-      });
-    });
-    
-    // Apply updates to each element
-    elementUpdates.forEach((updates, elementId) => {
-      const element = state.elements.find((el) => el.id === elementId);
-      if (element && element.type === 'path') {
-        const pathData = element.data as PathData;
-        const parsedCommands = pathData.subPaths.flat();
-        
-        const updatedCommands = updateCommands(parsedCommands, updates.map(u => ({ ...u, type: 'independent' as const, anchor: { x: u.x, y: u.y } } )));
-        const newSubPaths = extractSubpaths(updatedCommands).map(s => s.commands);
-        const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
-          setStore((currentState) => ({
-          elements: currentState.elements.map((el) =>
-            el.id === elementId 
-              ? { ...el, data: { ...pathData, subPaths: newSubPaths } }
-              : el
-          )
-        }));
-      }
-    });
+    const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+    applyDistribution(state.selectedCommands, 'x', state, setStore);
   },
 
   distributeVerticallyCommands: () => {
     const state = get() as FullCanvasState;
-    const selectedCommands = state.selectedCommands;
-    
-    if (selectedCommands.length < 3) return;
-    
-    // For distribution, we need a consistent grouping strategy
-    const commandsByElement = selectedCommands.reduce((acc: Record<string, typeof cmd[]>, cmd) => {
-      if (!acc[cmd.elementId]) acc[cmd.elementId] = [];
-      acc[cmd.elementId].push(cmd);
-      return acc;
-    }, {} as Record<string, typeof selectedCommands>);
-    
-    const allSelectedPoints: Array<{
-      elementId: string;
-      commandIndex: number;
-      pointIndex: number;
-      x: number;
-      y: number;
-    }> = [];
-    
-    // First collect all selected points with their current positions
-    Object.entries(commandsByElement).forEach(([elementId, commands]) => {
-      const element = state.elements.find((el) => el.id === elementId);
-      if (element && element.type === 'path') {
-        const pathData = element.data as PathData;
-        const parsedCommands = pathData.subPaths.flat();
-        const allPoints = extractEditablePoints(parsedCommands);
-        
-        (commands).forEach((cmd) => {
-          const point = allPoints.find((p) => 
-            p.commandIndex === cmd.commandIndex && 
-            p.pointIndex === cmd.pointIndex
-          );
-          
-          if (point) {
-            allSelectedPoints.push({
-              elementId: cmd.elementId,
-              commandIndex: cmd.commandIndex,
-              pointIndex: cmd.pointIndex,
-              x: point.x,
-              y: point.y
-            });
-          }
-        });
-      }
-    });
-    
-    if (allSelectedPoints.length < 3) return;
-    
-    // Sort by current Y position
-    allSelectedPoints.sort((a, b) => a.y - b.y);
-    
-    // Calculate distribution
-    const topmost = allSelectedPoints[0].y;
-    const bottommost = allSelectedPoints[allSelectedPoints.length - 1].y;
-    const totalDistance = bottommost - topmost;
-    const spacing = totalDistance / (allSelectedPoints.length - 1);
-    
-    // Group updates by element for efficiency
-    const elementUpdates = new Map<string, Array<{
-      commandIndex: number;
-      pointIndex: number;
-      x: number;
-      y: number;
-      isControl: boolean;
-    }>>();
-    
-    allSelectedPoints.forEach((pointInfo, index) => {
-      if (index === 0 || index === allSelectedPoints.length - 1) {
-        // Keep first and last points in place
-        return;
-      }
-      
-      const newY = topmost + (index * spacing);
-      
-      if (!elementUpdates.has(pointInfo.elementId)) {
-        elementUpdates.set(pointInfo.elementId, []);
-      }
-      
-      elementUpdates.get(pointInfo.elementId)!.push({
-        commandIndex: pointInfo.commandIndex,
-        pointIndex: pointInfo.pointIndex,
-        x: pointInfo.x, // Keep X unchanged
-        y: newY,
-        isControl: false
-      });
-    });
-    
-    // Apply updates to each element
-    elementUpdates.forEach((updates, elementId) => {
-      const element = state.elements.find((el) => el.id === elementId);
-      if (element && element.type === 'path') {
-        const pathData = element.data as PathData;
-        const parsedCommands = pathData.subPaths.flat();
-        
-        const updatedCommands = updateCommands(parsedCommands, updates.map(u => ({ ...u, type: 'independent' as const, anchor: { x: u.x, y: u.y } } )));
-        const newSubPaths = extractSubpaths(updatedCommands).map(s => s.commands);
-        const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
-          setStore((currentState) => ({
-          elements: currentState.elements.map((el) =>
-            el.id === elementId 
-              ? { ...el, data: { ...pathData, subPaths: newSubPaths } }
-              : el
-          )
-        }));
-      }
-    });
+    const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+    applyDistribution(state.selectedCommands, 'y', state, setStore);
   },
 
   // Check if edit should work with subpaths instead of all points
