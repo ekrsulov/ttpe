@@ -1,10 +1,6 @@
 import type { Point, ControlPointInfo, Command, SubPath } from '../types';
 import { PATH_DECIMAL_PRECISION } from '../types';
-
-// Utility function to format numbers to precision
-function formatToPrecision(num: number, precision: number = 2): number {
-  return parseFloat(num.toFixed(precision));
-}
+import { formatToPrecision } from './index';
 
 export interface PathCommand {
   type: 'M' | 'L' | 'C' | 'Z';

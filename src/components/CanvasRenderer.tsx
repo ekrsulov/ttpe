@@ -733,7 +733,22 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     subpathIndex: number, 
     handlerSize: number, 
     selectionColor: string
-  ) => (
+  ) => {
+    // Helper function to ensure positive dimensions for rectangles
+    const getPositiveDimensions = (width: number, height: number) => ({
+      width: Math.max(width, 1 / viewport.zoom), // Minimum 1 pixel at current zoom
+      height: Math.max(height, 1 / viewport.zoom)
+    });
+
+    // Calculate available space for midpoint handlers
+    const availableWidth = bounds.maxX - bounds.minX - 2 * handlerSize - 20;
+    const availableHeight = bounds.maxY - bounds.minY - 2 * handlerSize - 20;
+    
+    // Get validated dimensions
+    const horizontalDims = getPositiveDimensions(availableWidth, 2 / viewport.zoom);
+    const verticalDims = getPositiveDimensions(2 / viewport.zoom, availableHeight);
+
+    return (
     <>
       {/* Corner handlers - Always visible */}
       {/* Top-left corner */}
@@ -843,7 +858,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         <rect
           x={bounds.minX + handlerSize + 10}
           y={bounds.minY}
-          width={bounds.maxX - bounds.minX - 2 * handlerSize - 20}
+          width={horizontalDims.width}
           height={2 / viewport.zoom}
           fill={selectionColor}
           opacity="0.5"
@@ -853,7 +868,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         <rect
           x={bounds.minX + handlerSize + 10}
           y={bounds.minY - 8 / viewport.zoom}
-          width={bounds.maxX - bounds.minX - 2 * handlerSize - 20}
+          width={horizontalDims.width}
           height={18 / viewport.zoom}
           fill="transparent"
           opacity="0.1"
@@ -867,7 +882,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           x={bounds.maxX - 2 / viewport.zoom}
           y={bounds.minY + handlerSize + 10}
           width={2 / viewport.zoom}
-          height={bounds.maxY - bounds.minY - 2 * handlerSize - 20}
+          height={verticalDims.height}
           fill={selectionColor}
           opacity="0.5"
           pointerEvents="none"
@@ -877,7 +892,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           x={bounds.maxX - 2 / viewport.zoom - 8 / viewport.zoom}
           y={bounds.minY + handlerSize + 10}
           width={18 / viewport.zoom}
-          height={bounds.maxY - bounds.minY - 2 * handlerSize - 20}
+          height={verticalDims.height}
           fill="transparent"
           opacity="0.1"
           style={{ cursor: 'e-resize' }}
@@ -889,7 +904,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         <rect
           x={bounds.minX + handlerSize + 10}
           y={bounds.maxY - 2 / viewport.zoom}
-          width={bounds.maxX - bounds.minX - 2 * handlerSize - 20}
+          width={horizontalDims.width}
           height={2 / viewport.zoom}
           fill={selectionColor}
           opacity="0.5"
@@ -899,7 +914,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         <rect
           x={bounds.minX + handlerSize + 10}
           y={bounds.maxY - 2 / viewport.zoom - 8 / viewport.zoom}
-          width={bounds.maxX - bounds.minX - 2 * handlerSize - 20}
+          width={horizontalDims.width}
           height={18 / viewport.zoom}
           fill="transparent"
           opacity="0.1"
@@ -913,7 +928,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           x={bounds.minX}
           y={bounds.minY + handlerSize + 10}
           width={2 / viewport.zoom}
-          height={bounds.maxY - bounds.minY - 2 * handlerSize - 20}
+          height={verticalDims.height}
           fill={selectionColor}
           opacity="0.5"
           pointerEvents="none"
@@ -923,7 +938,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
           x={bounds.minX - 8 / viewport.zoom}
           y={bounds.minY + handlerSize + 10}
           width={18 / viewport.zoom}
-          height={bounds.maxY - bounds.minY - 2 * handlerSize - 20}
+          height={verticalDims.height}
           fill="transparent"
           opacity="0.1"
           style={{ cursor: 'w-resize' }}
@@ -932,7 +947,8 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         />
       </>
     </>
-  );
+    );
+  };
 
   // Render selection box for selected subpaths
   const renderSubpathSelectionBox = (element: typeof elements[0]) => {

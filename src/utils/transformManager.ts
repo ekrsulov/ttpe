@@ -8,9 +8,19 @@ export interface TransformBounds {
   center: Point;
 }
 
-export type TransformMode = 'scale' | 'rotate' | null;
-
 export class SimpleTransformManager {
+  // Helper method to calculate corner scale with proportional scaling
+  private calculateCornerScale(
+    scaleX: number, 
+    scaleY: number
+  ): { scaleX: number; scaleY: number } {
+    const scale = Math.min(Math.abs(scaleX), Math.abs(scaleY));
+    return {
+      scaleX: scaleX < 0 ? -scale : scale,
+      scaleY: scaleY < 0 ? -scale : scale
+    };
+  }
+
   // Calculate scale factors based on handle movement - more natural approach
   calculateScale(
     handleId: string,
@@ -21,89 +31,63 @@ export class SimpleTransformManager {
     const deltaX = currentPoint.x - dragStart.x;
     const deltaY = currentPoint.y - dragStart.y;
     
+    // Configuration for corner handles
+    const cornerConfigs = {
+      'corner-tl': { signX: -1, signY: -1, originXOffset: bounds.width, originYOffset: bounds.height },
+      'corner-tr': { signX: 1, signY: -1, originXOffset: 0, originYOffset: bounds.height },
+      'corner-bl': { signX: -1, signY: 1, originXOffset: bounds.width, originYOffset: 0 },
+      'corner-br': { signX: 1, signY: 1, originXOffset: 0, originYOffset: 0 }
+    };
+
     let scaleX = 1;
     let scaleY = 1;
     let originX = bounds.x;
     let originY = bounds.y;
 
-    // Calculate scale based on handle type - direct approach without sensitivity factors
-    switch (handleId) {
-      case 'corner-tl': { // Top-left corner
-        scaleX = (bounds.width - deltaX) / bounds.width;
-        scaleY = (bounds.height - deltaY) / bounds.height;
-        originX = bounds.x + bounds.width;
-        originY = bounds.y + bounds.height;
-        // Force proportional scaling for corners
-        const scaleTL = Math.min(Math.abs(scaleX), Math.abs(scaleY));
-        scaleX = scaleX < 0 ? -scaleTL : scaleTL;
-        scaleY = scaleY < 0 ? -scaleTL : scaleTL;
-        break;
-      }
-        
-      case 'corner-tr': { // Top-right corner
-        scaleX = (bounds.width + deltaX) / bounds.width;
-        scaleY = (bounds.height - deltaY) / bounds.height;
-        originX = bounds.x;
-        originY = bounds.y + bounds.height;
-        // Force proportional scaling for corners
-        const scaleTR = Math.min(Math.abs(scaleX), Math.abs(scaleY));
-        scaleX = scaleX < 0 ? -scaleTR : scaleTR;
-        scaleY = scaleY < 0 ? -scaleTR : scaleTR;
-        break;
-      }
-        
-      case 'corner-bl': { // Bottom-left corner
-        scaleX = (bounds.width - deltaX) / bounds.width;
-        scaleY = (bounds.height + deltaY) / bounds.height;
-        originX = bounds.x + bounds.width;
-        originY = bounds.y;
-        // Force proportional scaling for corners
-        const scaleBL = Math.min(Math.abs(scaleX), Math.abs(scaleY));
-        scaleX = scaleX < 0 ? -scaleBL : scaleBL;
-        scaleY = scaleY < 0 ? -scaleBL : scaleBL;
-        break;
-      }
-        
-      case 'corner-br': { // Bottom-right corner
-        scaleX = (bounds.width + deltaX) / bounds.width;
-        scaleY = (bounds.height + deltaY) / bounds.height;
-        originX = bounds.x;
-        originY = bounds.y;
-        // Force proportional scaling for corners
-        const scaleBR = Math.min(Math.abs(scaleX), Math.abs(scaleY));
-        scaleX = scaleX < 0 ? -scaleBR : scaleBR;
-        scaleY = scaleY < 0 ? -scaleBR : scaleBR;
-        break;
-      }
-        
+    // Calculate scale based on handle type
+    if (handleId in cornerConfigs) {
+      // Corner handles with proportional scaling
+      const config = cornerConfigs[handleId as keyof typeof cornerConfigs];
+      const rawScaleX = (bounds.width + config.signX * deltaX) / bounds.width;
+      const rawScaleY = (bounds.height + config.signY * deltaY) / bounds.height;
+      
+      const proportionalScale = this.calculateCornerScale(rawScaleX, rawScaleY);
+      scaleX = proportionalScale.scaleX;
+      scaleY = proportionalScale.scaleY;
+      
+      originX = bounds.x + config.originXOffset;
+      originY = bounds.y + config.originYOffset;
+    } else {
       // Edge handles - non-proportional scaling
-      case 'midpoint-t': // Top edge
-        scaleX = 1; // No horizontal scaling
-        scaleY = (bounds.height - deltaY) / bounds.height;
-        originX = bounds.x + bounds.width / 2;
-        originY = bounds.y + bounds.height;
-        break;
-        
-      case 'midpoint-b': // Bottom edge
-        scaleX = 1; // No horizontal scaling
-        scaleY = (bounds.height + deltaY) / bounds.height;
-        originX = bounds.x + bounds.width / 2;
-        originY = bounds.y;
-        break;
-        
-      case 'midpoint-l': // Left edge
-        scaleX = (bounds.width - deltaX) / bounds.width;
-        scaleY = 1; // No vertical scaling
-        originX = bounds.x + bounds.width;
-        originY = bounds.y + bounds.height / 2;
-        break;
-        
-      case 'midpoint-r': // Right edge
-        scaleX = (bounds.width + deltaX) / bounds.width;
-        scaleY = 1; // No vertical scaling
-        originX = bounds.x;
-        originY = bounds.y + bounds.height / 2;
-        break;
+      switch (handleId) {
+        case 'midpoint-t': // Top edge
+          scaleX = 1; // No horizontal scaling
+          scaleY = (bounds.height - deltaY) / bounds.height;
+          originX = bounds.x + bounds.width / 2;
+          originY = bounds.y + bounds.height;
+          break;
+          
+        case 'midpoint-b': // Bottom edge
+          scaleX = 1; // No horizontal scaling
+          scaleY = (bounds.height + deltaY) / bounds.height;
+          originX = bounds.x + bounds.width / 2;
+          originY = bounds.y;
+          break;
+          
+        case 'midpoint-l': // Left edge
+          scaleX = (bounds.width - deltaX) / bounds.width;
+          scaleY = 1; // No vertical scaling
+          originX = bounds.x + bounds.width;
+          originY = bounds.y + bounds.height / 2;
+          break;
+          
+        case 'midpoint-r': // Right edge
+          scaleX = (bounds.width + deltaX) / bounds.width;
+          scaleY = 1; // No vertical scaling
+          originX = bounds.x;
+          originY = bounds.y + bounds.height / 2;
+          break;
+      }
     }
 
     // Apply reasonable scale limits to prevent extreme transformations

@@ -27,7 +27,26 @@ export interface TransformationPluginSlice {
   ) => void;
 }
 
-export const createTransformationPluginSlice: StateCreator<TransformationPluginSlice, [], [], TransformationPluginSlice> = (set, get) => ({
+export const createTransformationPluginSlice: StateCreator<TransformationPluginSlice, [], [], TransformationPluginSlice> = (set, get) => {
+  // Helper function to accumulate bounds from a collection of commands
+  const accumulateBounds = (commandsList: import('../../../types').Command[][], strokeWidth: number, zoom: number) => {
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+
+    commandsList.forEach((commands) => {
+      const bounds = measurePath([commands], strokeWidth, zoom);
+      minX = Math.min(minX, bounds.minX);
+      minY = Math.min(minY, bounds.minY);
+      maxX = Math.max(maxX, bounds.maxX);
+      maxY = Math.max(maxY, bounds.maxY);
+    });
+
+    return minX === Infinity ? null : { minX, minY, maxX, maxY };
+  };
+
+  return {
   // Initial state
   transformation: {
     isTransforming: false,
@@ -59,10 +78,7 @@ export const createTransformationPluginSlice: StateCreator<TransformationPluginS
       const selectedSubpaths = state.selectedSubpaths;
       if (!selectedSubpaths || selectedSubpaths.length === 0) return null;
 
-      let minX = Infinity;
-      let minY = Infinity;
-      let maxX = -Infinity;
-      let maxY = -Infinity;
+      const subpathCommandsToMeasure: import('../../../types').Command[][] = [];
 
       selectedSubpaths.forEach((selected: { elementId: string; subpathIndex: number }) => {
         const element = state.elements.find((el) => el.id === selected.elementId);
@@ -72,43 +88,40 @@ export const createTransformationPluginSlice: StateCreator<TransformationPluginS
           const subpathData = subpaths[selected.subpathIndex];
           
           if (subpathData) {
-            // Use the same zoom as paths completos to avoid amplification
-            const bounds = measurePath([subpathData], pathData.strokeWidth, state.viewport.zoom);
-            minX = Math.min(minX, bounds.minX);
-            minY = Math.min(minY, bounds.minY);
-            maxX = Math.max(maxX, bounds.maxX);
-            maxY = Math.max(maxY, bounds.maxY);
+            subpathCommandsToMeasure.push(subpathData);
           }
         }
       });
 
-      if (minX === Infinity) return null;
-      return { minX, minY, maxX, maxY };
+      if (subpathCommandsToMeasure.length === 0) return null;
+      
+      // Use the first element's stroke width and zoom for measurement
+      const firstElement = state.elements.find((el) => 
+        el.id === selectedSubpaths[0].elementId && el.type === 'path'
+      );
+      const strokeWidth = firstElement ? (firstElement.data as import('../../../types').PathData).strokeWidth : 1;
+      
+      return accumulateBounds(subpathCommandsToMeasure, strokeWidth, state.viewport.zoom);
     } else {
       // Calculate bounds from selected elements (original behavior)
       const selectedIds = state.selectedIds;
       if (!selectedIds || selectedIds.length === 0) return null;
 
-      let minX = Infinity;
-      let minY = Infinity;
-      let maxX = -Infinity;
-      let maxY = -Infinity;
+      const elementCommandsToMeasure: import('../../../types').Command[][] = [];
+      let commonStrokeWidth = 1;
 
       selectedIds.forEach((selectedId: string) => {
         const element = state.elements.find((el) => el.id === selectedId);
         if (element && element.type === 'path') {
           const pathData = element.data as import('../../../types').PathData;
-          // Use the same zoom as everywhere else to maintain consistency
-          const bounds = measurePath(pathData.subPaths, pathData.strokeWidth, state.viewport.zoom);
-          minX = Math.min(minX, bounds.minX);
-          minY = Math.min(minY, bounds.minY);
-          maxX = Math.max(maxX, bounds.maxX);
-          maxY = Math.max(maxY, bounds.maxY);
+          elementCommandsToMeasure.push(...pathData.subPaths);
+          commonStrokeWidth = pathData.strokeWidth;
         }
       });
 
-      if (minX === Infinity) return null;
-      return { minX, minY, maxX, maxY };
+      if (elementCommandsToMeasure.length === 0) return null;
+      
+      return accumulateBounds(elementCommandsToMeasure, commonStrokeWidth, state.viewport.zoom);
     }
   },
 
@@ -181,5 +194,5 @@ export const createTransformationPluginSlice: StateCreator<TransformationPluginS
     state.updateElement(elementId, {
       data: { ...pathData, subPaths: newSubPaths }
     });
-  },
-});
+  }
+}};

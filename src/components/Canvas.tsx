@@ -86,17 +86,20 @@ export const Canvas: React.FC<CanvasProps> = () => {
   // Handle keyboard events
   /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
+    // Utility function to check if focus is on a text input field
+    const isTextFieldFocused = (): boolean => {
+      const activeElement = document.activeElement;
+      return !!(activeElement && (
+        activeElement.tagName === 'INPUT' ||
+        activeElement.tagName === 'TEXTAREA' ||
+        (activeElement as HTMLElement).contentEditable === 'true'
+      ));
+    };
+
     const handleKeyDown = (e: KeyboardEvent) => {
       // Don't activate pan mode if user is typing in an input or textarea
       if (e.code === 'Space' && !e.repeat) {
-        const activeElement = document.activeElement;
-        const isInputFocused = activeElement && (
-          activeElement.tagName === 'INPUT' ||
-          activeElement.tagName === 'TEXTAREA' ||
-          (activeElement as HTMLElement).contentEditable === 'true'
-        );
-
-        if (!isInputFocused) {
+        if (!isTextFieldFocused()) {
           setIsSpacePressed(true);
           e.preventDefault();
         }
@@ -104,15 +107,8 @@ export const Canvas: React.FC<CanvasProps> = () => {
 
       // Handle Delete key for deleting selected commands
       if (e.code === 'Delete' || e.code === 'Backspace') {
-        const activeElement = document.activeElement;
-        const isInputFocused = activeElement && (
-          activeElement.tagName === 'INPUT' ||
-          activeElement.tagName === 'TEXTAREA' ||
-          (activeElement as HTMLElement).contentEditable === 'true'
-        );
-
         // Only delete if not typing in an input and we have selected commands
-        if (!isInputFocused && selectedCommands.length > 0) {
+        if (!isTextFieldFocused() && selectedCommands.length > 0) {
           deleteSelectedCommands();
           e.preventDefault();
         }
@@ -364,6 +360,20 @@ export const Canvas: React.FC<CanvasProps> = () => {
       return;
     }
 
+    // Helper function to begin selection rectangle
+    const beginSelectionRectangle = (point: Point, shouldClearCommands = false, shouldClearSubpaths = false) => {
+      setIsSelecting(true);
+      setSelectionStart(point);
+      setSelectionEnd(point);
+      
+      if (shouldClearCommands) {
+        clearSelectedCommands();
+      }
+      if (shouldClearSubpaths) {
+        useCanvasStore.getState().clearSubpathSelection();
+      }
+    };
+
     switch (activePlugin) {
       case 'pencil':
         useCanvasStore.getState().startPath(point);
@@ -382,29 +392,19 @@ export const Canvas: React.FC<CanvasProps> = () => {
       case 'select':
         // Only start selection rectangle if clicking on SVG canvas, not on elements
         if (target.tagName === 'svg') {
-          setIsSelecting(true);
-          setSelectionStart(point);
-          setSelectionEnd(point);
+          beginSelectionRectangle(point);
         }
         break;
       case 'edit':
         // Start command selection rectangle if clicking on SVG canvas (only when smooth brush is not active)
         if (target.tagName === 'svg' && !smoothBrush.isActive) {
-          setIsSelecting(true);
-          setSelectionStart(point);
-          setSelectionEnd(point);
-          // Clear previous command selection
-          clearSelectedCommands();
+          beginSelectionRectangle(point, true, false);
         }
         break;
       case 'subpath':
         // Start subpath selection rectangle if clicking on SVG canvas
         if (target.tagName === 'svg') {
-          setIsSelecting(true);
-          setSelectionStart(point);
-          setSelectionEnd(point);
-          // Clear previous subpath selection
-          useCanvasStore.getState().clearSubpathSelection();
+          beginSelectionRectangle(point, false, true);
         }
         break;
     }
