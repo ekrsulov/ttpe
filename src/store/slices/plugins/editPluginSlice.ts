@@ -1486,7 +1486,8 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
         commandIndex,
         pointIndex,
         type: 'independent',
-        anchor: command.position
+        anchor: command.position,
+        isControl: true
       };
       set((currentState) => ({
         controlPointAlignment: {
@@ -1520,7 +1521,8 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
       type: alignmentType,
       pairedCommandIndex: paired.commandIndex,
       pairedPointIndex: paired.pointIndex,
-      anchor: paired.anchor
+      anchor: paired.anchor,
+      isControl: true
     };
 
     const info2: import('../../../types').ControlPointInfo = {
@@ -1529,7 +1531,8 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
       type: alignmentType,
       pairedCommandIndex: commandIndex,
       pairedPointIndex: pointIndex,
-      anchor: paired.anchor
+      anchor: paired.anchor,
+      isControl: true
     };
 
     set((currentState) => ({
@@ -1625,7 +1628,8 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
       type,
       pairedCommandIndex: type === 'independent' ? undefined : commandIndex2,
       pairedPointIndex: type === 'independent' ? undefined : pointIndex2,
-      anchor: sharedAnchor
+      anchor: sharedAnchor,
+      isControl: true
     };
 
     const info2: import('../../../types').ControlPointInfo = {
@@ -1634,7 +1638,8 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
       type,
       pairedCommandIndex: type === 'independent' ? undefined : commandIndex1,
       pairedPointIndex: type === 'independent' ? undefined : pointIndex1,
-      anchor: sharedAnchor
+      anchor: sharedAnchor,
+      isControl: true
     };
 
     // Update the control point alignment state
@@ -1736,7 +1741,8 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
             type: pairedAlignmentInfo.type,
             pairedCommandIndex: pairedCommandIndex,
             pairedPointIndex: pairedPointIndex,
-            anchor: pairedAlignmentInfo.anchor
+            anchor: pairedAlignmentInfo.anchor,
+            isControl: true
           };
         }
       } else {
@@ -1794,7 +1800,8 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
                             type: pairedAlignmentInfo.type,
                             pairedCommandIndex: otherPoint.commandIndex,
                             pairedPointIndex: otherPoint.pointIndex,
-                            anchor: pairedAlignmentInfo.anchor
+                            anchor: pairedAlignmentInfo.anchor,
+                            isControl: true
                           };
                         }
                         break;
@@ -2080,14 +2087,16 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
             commandIndex,
             pointIndex: 0,
             type: 'independent' as const,
-            anchor: startPoint
+            anchor: startPoint,
+            isControl: true
           },
           controlPoint2: {
             ...control2,
             commandIndex,
             pointIndex: 1,
             type: 'independent' as const,
-            anchor: startPoint
+            anchor: startPoint,
+            isControl: true
           },
           position: endPoint
         };

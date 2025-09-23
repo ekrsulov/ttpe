@@ -1,7 +1,7 @@
 import React, { useMemo, useCallback } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { extractEditablePoints, type ControlPoint } from '../../utils/pathParserUtils';
-import type { Command, Point } from '../../types';
+import { extractEditablePoints } from '../../utils/pathParserUtils';
+import type { Command, Point, ControlPoint } from '../../types';
 import { RotateCcw } from 'lucide-react';
 
 export const ControlPointAlignmentPanel: React.FC = () => {
@@ -329,7 +329,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
       
       if (pairedPoint) {
         anchor2 = pairedPoint.anchor;
-        const vector2 = { x: pairedPoint.x - anchor2.x, y: pairedPoint.y - anchor2.y };
+        const vector2 = { x: pairedPoint.x - anchor2!.x, y: pairedPoint.y - anchor2!.y };
         mag2 = Math.sqrt(vector2.x * vector2.x + vector2.y * vector2.y);
         angle2 = Math.atan2(vector2.y, vector2.x) * 180 / Math.PI;
       }
@@ -468,9 +468,9 @@ export const ControlPointAlignmentPanel: React.FC = () => {
             <div><strong style={{ color: '#333' }}>Position:</strong> ({singlePointInfo.point.x.toFixed(2)}, {singlePointInfo.point.y.toFixed(2)})</div>
             <div><strong style={{ color: '#333' }}>Command:</strong> {singlePointInfo.command.type} at index {singlePointInfo.point.commandIndex}</div>
             <div><strong style={{ color: '#333' }}>Point Index:</strong> {singlePointInfo.point.pointIndex}</div>
-            <div><strong style={{ color: '#333' }}>Anchor:</strong> ({singlePointInfo.anchor1.x.toFixed(2)}, {singlePointInfo.anchor1.y.toFixed(2)})</div>
-            <div><strong style={{ color: '#333' }}>Direction:</strong> {singlePointInfo.angle1.toFixed(1)}°</div>
-            <div><strong style={{ color: '#333' }}>Size:</strong> {singlePointInfo.mag1.toFixed(2)}</div>
+            <div><strong style={{ color: '#333' }}>Anchor:</strong> ({singlePointInfo.anchor1?.x.toFixed(2) || '0'}, {singlePointInfo.anchor1?.y.toFixed(2) || '0'})</div>
+            <div><strong style={{ color: '#333' }}>Direction:</strong> {singlePointInfo.angle1?.toFixed(1) || '0'}°</div>
+            <div><strong style={{ color: '#333' }}>Size:</strong> {singlePointInfo.mag1?.toFixed(2) || '0'}</div>
             <div><strong style={{ color: '#333' }}>Alignment:</strong> {singlePointInfo.info?.type || 'independent'}</div>
             {singlePointInfo.pairedPoint && (
               <>
@@ -487,12 +487,12 @@ export const ControlPointAlignmentPanel: React.FC = () => {
                   <tbody>
                     <tr>
                       <td style={{ border: '1px solid #ddd', padding: '4px' }}>Direction</td>
-                      <td style={{ border: '1px solid #ddd', padding: '4px' }}>{singlePointInfo.angle1.toFixed(1)}°</td>
-                      <td style={{ border: '1px solid #ddd', padding: '4px' }}>{singlePointInfo.angle2?.toFixed(1)}°</td>
+                      <td style={{ border: '1px solid #ddd', padding: '4px' }}>{singlePointInfo.angle1?.toFixed(1) || '0'}°</td>
+                      <td style={{ border: '1px solid #ddd', padding: '4px' }}>{singlePointInfo.angle2?.toFixed(1) || '0'}°</td>
                     </tr>
                     <tr>
                       <td style={{ border: '1px solid #ddd', padding: '4px' }}>Size</td>
-                      <td style={{ border: '1px solid #ddd', padding: '4px' }}>{singlePointInfo.mag1.toFixed(2)}</td>
+                      <td style={{ border: '1px solid #ddd', padding: '4px' }}>{singlePointInfo.mag1?.toFixed(2) || '0'}</td>
                       <td style={{ border: '1px solid #ddd', padding: '4px' }}>{singlePointInfo.mag2?.toFixed(2)}</td>
                     </tr>
                   </tbody>

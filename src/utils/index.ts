@@ -9,7 +9,7 @@ export {
 // Export font detection utilities
 export {
   getAvailableFonts,
-  clearFontCache,
+  // clearFontCache removed - function was unused
   FONTS_TO_CHECK
 } from './fontDetectionUtils';
 

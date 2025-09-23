@@ -61,66 +61,7 @@ export function translatePathData(pathData: PathData, deltaX: number, deltaY: nu
 export type TargetCalculator = (bounds: { minX: number; minY: number; maxX: number; maxY: number }[]) => number;
 export type Axis = 'x' | 'y';
 
-/**
- * Parameterized alignment utility that consolidates all alignment operations.
- * Replaces duplicated logic across alignLeft, alignCenter, alignRight, alignTop, alignMiddle, alignBottom.
- */
-export function performAlignment<T>(
-  elements: T[],
-  selectedIds: string[],
-  getElementId: (element: T) => string,
-  getPathData: (element: T) => PathData,
-  zoom: number,
-  targetCalculator: TargetCalculator,
-  axis: Axis,
-  updateElement: (element: T, newPathData: PathData) => T
-): T[] {
-  const selectedElements = elements.filter(el => selectedIds.includes(getElementId(el)));
-  if (selectedElements.length < 2) return elements;
-
-  // Calculate bounds for all selected elements
-  const boundsArray = selectedElements.map(el => {
-    const pathData = getPathData(el);
-    return measurePath(pathData.subPaths, pathData.strokeWidth, zoom);
-  });
-
-  // Calculate target position
-  const targetValue = targetCalculator(boundsArray);
-
-  // Update elements
-  return elements.map(el => {
-    if (!selectedIds.includes(getElementId(el))) return el;
-
-    const pathData = getPathData(el);
-    const currentBounds = measurePath(pathData.subPaths, pathData.strokeWidth, zoom);
-    
-    let deltaX = 0;
-    let deltaY = 0;
-
-    if (axis === 'x') {
-      deltaX = formatToPrecision(targetValue - getBoundValue(currentBounds, targetCalculator), PATH_DECIMAL_PRECISION);
-    } else {
-      deltaY = formatToPrecision(targetValue - getBoundValue(currentBounds, targetCalculator), PATH_DECIMAL_PRECISION);
-    }
-
-    if (!isNaN(deltaX) && !isNaN(deltaY)) {
-      const newPathData = translatePathData(pathData, deltaX, deltaY);
-      return updateElement(el, newPathData);
-    }
-
-    return el;
-  });
-}
-
-/**
- * Helper function to get the appropriate bound value for a single bounds object
- */
-function getBoundValue(
-  bounds: { minX: number; minY: number; maxX: number; maxY: number },
-  targetCalculator: TargetCalculator
-): number {
-  return targetCalculator([bounds]);
-}
+// Removed unused performAlignment function - functionality exists in arrangeSlice alignElements helper
 
 /**
  * Pre-defined target calculators for common alignment operations
@@ -140,59 +81,7 @@ export const alignmentTargets = {
     Math.max(...bounds.map(b => b.maxY))
 } as const;
 
-/**
- * Parses an SVG path string and extracts coordinate points for transformation
- */
-export function parsePathCommands(d: string): Array<{ command: string; points: Point[] }> {
-  const commands: Array<{ command: string; points: Point[] }> = [];
-  
-  // Remove commas and extra spaces, split by command letters
-  const cleaned = d.replace(/,/g, ' ').replace(/\s+/g, ' ').trim();
-  const segments = cleaned.split(/(?=[MLCZ])/i);
-  
-  for (const segment of segments) {
-    if (!segment.trim()) continue;
-    
-    const command = segment[0];
-    const coordsStr = segment.slice(1).trim();
-    
-    if (!coordsStr) {
-      // Commands like Z don't have coordinates
-      commands.push({ command, points: [] });
-      continue;
-    }
-    
-    const coords = coordsStr.split(/\s+/).map(Number).filter(n => !isNaN(n));
-    const points: Point[] = [];
-    
-    // Group coordinates into points based on command type
-    switch (command.toUpperCase()) {
-      case 'M':
-      case 'L':
-        for (let i = 0; i < coords.length; i += 2) {
-          if (i + 1 < coords.length) {
-            points.push({ x: coords[i], y: coords[i + 1] });
-          }
-        }
-        break;
-      case 'C':
-        for (let i = 0; i < coords.length; i += 6) {
-          if (i + 5 < coords.length) {
-            points.push(
-              { x: coords[i], y: coords[i + 1] },
-              { x: coords[i + 2], y: coords[i + 3] },
-              { x: coords[i + 4], y: coords[i + 5] }
-            );
-          }
-        }
-        break;
-    }
-    
-    commands.push({ command, points });
-  }
-  
-  return commands;
-}
+// Removed unused parsePathCommands function - parsePathD is used instead
 
 /**
  * Transforms a point using scale and translation
@@ -234,50 +123,9 @@ export function rotatePoint(point: Point, angleDegrees: number, originX: number,
   };
 }
 
-/**
- * Translates a point by the given deltas
- */
-export function translatePoint(point: Point, deltaX: number, deltaY: number): Point {
-  return {
-    x: formatToPrecision(point.x + deltaX, PATH_DECIMAL_PRECISION),
-    y: formatToPrecision(point.y + deltaY, PATH_DECIMAL_PRECISION)
-  };
-}
+// Removed unused translatePoint function - translatePathData is used instead
 
-/**
- * Rebuilds an SVG path string from parsed commands with transformed coordinates
- */
-export function rebuildPathString(commands: Array<{ command: string; points: Point[] }>): string {
-  let pathString = '';
-  
-  for (let i = 0; i < commands.length; i++) {
-    const { command, points } = commands[i];
-    if (i > 0) pathString += ' ';
-    pathString += command + ' ';
-    
-    switch (command.toUpperCase()) {
-      case 'M':
-      case 'L':
-        for (const point of points) {
-          pathString += ` ${formatToPrecision(point.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(point.y, PATH_DECIMAL_PRECISION)}`;
-        }
-        break;
-      case 'C':
-        for (let i = 0; i < points.length; i += 3) {
-          if (i + 2 < points.length) {
-            if (i > 0) pathString += ' ';
-            pathString += `${formatToPrecision(points[i].x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i].y, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i + 1].x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i + 1].y, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i + 2].x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(points[i + 2].y, PATH_DECIMAL_PRECISION)}`;
-          }
-        }
-        break;
-      case 'Z':
-        // No coordinates for Z command
-        break;
-    }
-  }
-  
-  return pathString;
-}
+// Removed unused rebuildPathString function - commandsToString is used instead
 
 export function transformPathData(
   pathData: PathData, 

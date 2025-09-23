@@ -1,16 +1,10 @@
-import type { Point, ControlPointInfo, Command, SubPath } from '../types';
+import type { Point, Command, SubPath, ControlPoint } from '../types';
 import { PATH_DECIMAL_PRECISION } from '../types';
 import { formatToPrecision } from './index';
 
 export interface PathCommand {
   type: 'M' | 'L' | 'C' | 'Z';
   points: Point[];
-}
-
-export interface ControlPoint extends Point, ControlPointInfo {
-  isControl: boolean;
-  associatedCommandIndex?: number;
-  associatedPointIndex?: number;
 }
 
 /**

@@ -3,6 +3,7 @@ import { measurePath } from '../utils/measurementUtils';
 import { parsePathD, extractEditablePoints, getCommandStartPoint, updatePathD, extractSubpaths, commandsToString } from '../utils/pathParserUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../utils';
 import type { Point, CanvasElement, ControlPointInfo, SubPath, Command } from '../types';
+import { TransformationHandlers } from './TransformationHandlers';
 
 interface CanvasRendererProps {
   viewport: {
@@ -279,7 +280,8 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
                               type: pairedInfo.type,
                               pairedCommandIndex: pairedCommandIndex,
                               pairedPointIndex: pairedPointIndex,
-                              anchor: pairedInfo.anchor
+                              anchor: pairedInfo.anchor,
+                              isControl: true
                             };
                           }
                         } else {
@@ -340,7 +342,8 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
                                                 type: pairedInfo.type,
                                                 pairedCommandIndex: otherPoint.commandIndex,
                                                 pairedPointIndex: otherPoint.pointIndex,
-                                                anchor: pairedInfo.anchor
+                                                anchor: pairedInfo.anchor,
+                                                isControl: true
                                               };
                                             }
                                             break;
@@ -694,7 +697,17 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
         )}
 
         {/* Transformation handlers */}
-        {isTransformationMode && renderTransformationHandlers(bounds, element.id, handlerSize, selectionColor)}
+        {isTransformationMode && (
+          <TransformationHandlers
+            bounds={bounds}
+            elementId={element.id}
+            handlerSize={handlerSize}
+            selectionColor={selectionColor}
+            viewport={viewport}
+            onPointerDown={onTransformationHandlerPointerDown}
+            onPointerUp={onTransformationHandlerPointerUp}
+          />
+        )}
 
         {/* Center X marker and coordinates */}
         {isTransformationMode && renderCenterMarker(bounds, selectionColor)}
@@ -726,229 +739,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     }
   };
 
-  // Render transformation handlers for an individual subpath
-  const renderIndividualSubpathHandlers = (
-    bounds: { minX: number; minY: number; maxX: number; maxY: number },
-    elementId: string, 
-    subpathIndex: number, 
-    handlerSize: number, 
-    selectionColor: string
-  ) => {
-    // Helper function to ensure positive dimensions for rectangles
-    const getPositiveDimensions = (width: number, height: number) => ({
-      width: Math.max(width, 1 / viewport.zoom), // Minimum 1 pixel at current zoom
-      height: Math.max(height, 1 / viewport.zoom)
-    });
-
-    // Calculate available space for midpoint handlers
-    const availableWidth = bounds.maxX - bounds.minX - 2 * handlerSize - 20;
-    const availableHeight = bounds.maxY - bounds.minY - 2 * handlerSize - 20;
-    
-    // Get validated dimensions
-    const horizontalDims = getPositiveDimensions(availableWidth, 2 / viewport.zoom);
-    const verticalDims = getPositiveDimensions(2 / viewport.zoom, availableHeight);
-
-    return (
-    <>
-      {/* Corner handlers - Always visible */}
-      {/* Top-left corner */}
-      <polygon
-        points={`${bounds.minX},${bounds.minY} ${bounds.minX + 18 / viewport.zoom},${bounds.minY} ${bounds.minX},${bounds.minY + 18 / viewport.zoom}`}
-        fill={selectionColor}
-        stroke="#fff"
-        strokeWidth={1 / viewport.zoom}
-        opacity="0.5"
-        pointerEvents="none"
-      />
-      {/* Top-left corner overlay */}
-      <rect
-        x={bounds.minX}
-        y={bounds.minY}
-        width={18 / viewport.zoom}
-        height={18 / viewport.zoom}
-        fill="transparent"
-        opacity="0.1"
-        style={{ cursor: 'nw-resize' }}
-        onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpath:${elementId}:${subpathIndex}`, 'corner-tl')}
-        onPointerUp={onTransformationHandlerPointerUp}
-      />
-      {/* Top-right corner */}
-      <polygon
-        points={`${bounds.maxX},${bounds.minY} ${bounds.maxX - 18 / viewport.zoom},${bounds.minY} ${bounds.maxX},${bounds.minY + 18 / viewport.zoom}`}
-        fill={selectionColor}
-        stroke="#fff"
-        strokeWidth={1 / viewport.zoom}
-        opacity="0.5"
-        pointerEvents="none"
-      />
-      {/* Top-right corner overlay */}
-      <rect
-        x={bounds.maxX - 18 / viewport.zoom}
-        y={bounds.minY}
-        width={18 / viewport.zoom}
-        height={18 / viewport.zoom}
-        fill="transparent"
-        opacity="0.1"
-        style={{ cursor: 'ne-resize' }}
-        onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpath:${elementId}:${subpathIndex}`, 'corner-tr')}
-        onPointerUp={onTransformationHandlerPointerUp}
-      />
-      {/* Bottom-left corner */}
-      <polygon
-        points={`${bounds.minX},${bounds.maxY} ${bounds.minX + 18 / viewport.zoom},${bounds.maxY} ${bounds.minX},${bounds.maxY - 18 / viewport.zoom}`}
-        fill={selectionColor}
-        stroke="#fff"
-        strokeWidth={1 / viewport.zoom}
-        opacity="0.5"
-        pointerEvents="none"
-      />
-      {/* Bottom-left corner overlay */}
-      <rect
-        x={bounds.minX}
-        y={bounds.maxY - 18 / viewport.zoom}
-        width={18 / viewport.zoom}
-        height={18 / viewport.zoom}
-        fill="transparent"
-        opacity="0.1"
-        style={{ cursor: 'sw-resize' }}
-        onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpath:${elementId}:${subpathIndex}`, 'corner-bl')}
-        onPointerUp={onTransformationHandlerPointerUp}
-      />
-      {/* Bottom-right corner */}
-      <polygon
-        points={`${bounds.maxX},${bounds.maxY} ${bounds.maxX - 18 / viewport.zoom},${bounds.maxY} ${bounds.maxX},${bounds.maxY - 18 / viewport.zoom}`}
-        fill={selectionColor}
-        stroke="#fff"
-        strokeWidth={1 / viewport.zoom}
-        opacity="0.5"
-        pointerEvents="none"
-      />
-      {/* Bottom-right corner overlay */}
-      <rect
-        x={bounds.maxX - 18 / viewport.zoom}
-        y={bounds.maxY - 18 / viewport.zoom}
-        width={18 / viewport.zoom}
-        height={18 / viewport.zoom}
-        fill="transparent"
-        opacity="0.1"
-        style={{ cursor: 'se-resize' }}
-        onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpath:${elementId}:${subpathIndex}`, 'corner-br')}
-        onPointerUp={onTransformationHandlerPointerUp}
-      />
-
-      {/* Rotation handlers */}
-      <>
-        <circle
-          cx={bounds.maxX + handlerSize}
-          cy={bounds.minY - handlerSize}
-          r={handlerSize / 2}
-          fill={selectionColor}
-          stroke="#fff"
-          strokeWidth={1 / viewport.zoom}
-          opacity="0.5"
-          style={{ cursor: 'alias' }}
-          onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpath:${elementId}:${subpathIndex}`, 'rotate-tr')}
-          onPointerUp={onTransformationHandlerPointerUp}
-        />
-      </>
-
-      {/* Midpoint handlers (Side handlers) */}
-      <>
-        {/* Top */}
-        <rect
-          x={bounds.minX + handlerSize + 10}
-          y={bounds.minY}
-          width={horizontalDims.width}
-          height={2 / viewport.zoom}
-          fill={selectionColor}
-          opacity="0.5"
-          pointerEvents="none"
-        />
-        {/* Top overlay */}
-        <rect
-          x={bounds.minX + handlerSize + 10}
-          y={bounds.minY - 8 / viewport.zoom}
-          width={horizontalDims.width}
-          height={18 / viewport.zoom}
-          fill="transparent"
-          opacity="0.1"
-          style={{ cursor: 'n-resize' }}
-          onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpath:${elementId}:${subpathIndex}`, 'midpoint-t')}
-          onPointerUp={onTransformationHandlerPointerUp}
-        />
-
-        {/* Right */}
-        <rect
-          x={bounds.maxX - 2 / viewport.zoom}
-          y={bounds.minY + handlerSize + 10}
-          width={2 / viewport.zoom}
-          height={verticalDims.height}
-          fill={selectionColor}
-          opacity="0.5"
-          pointerEvents="none"
-        />
-        {/* Right overlay */}
-        <rect
-          x={bounds.maxX - 2 / viewport.zoom - 8 / viewport.zoom}
-          y={bounds.minY + handlerSize + 10}
-          width={18 / viewport.zoom}
-          height={verticalDims.height}
-          fill="transparent"
-          opacity="0.1"
-          style={{ cursor: 'e-resize' }}
-          onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpath:${elementId}:${subpathIndex}`, 'midpoint-r')}
-          onPointerUp={onTransformationHandlerPointerUp}
-        />
-
-        {/* Bottom */}
-        <rect
-          x={bounds.minX + handlerSize + 10}
-          y={bounds.maxY - 2 / viewport.zoom}
-          width={horizontalDims.width}
-          height={2 / viewport.zoom}
-          fill={selectionColor}
-          opacity="0.5"
-          pointerEvents="none"
-        />
-        {/* Bottom overlay */}
-        <rect
-          x={bounds.minX + handlerSize + 10}
-          y={bounds.maxY - 2 / viewport.zoom - 8 / viewport.zoom}
-          width={horizontalDims.width}
-          height={18 / viewport.zoom}
-          fill="transparent"
-          opacity="0.1"
-          style={{ cursor: 's-resize' }}
-          onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpath:${elementId}:${subpathIndex}`, 'midpoint-b')}
-          onPointerUp={onTransformationHandlerPointerUp}
-        />
-
-        {/* Left */}
-        <rect
-          x={bounds.minX}
-          y={bounds.minY + handlerSize + 10}
-          width={2 / viewport.zoom}
-          height={verticalDims.height}
-          fill={selectionColor}
-          opacity="0.5"
-          pointerEvents="none"
-        />
-        {/* Left overlay */}
-        <rect
-          x={bounds.minX - 8 / viewport.zoom}
-          y={bounds.minY + handlerSize + 10}
-          width={18 / viewport.zoom}
-          height={verticalDims.height}
-          fill="transparent"
-          opacity="0.1"
-          style={{ cursor: 'w-resize' }}
-          onPointerDown={(e) => onTransformationHandlerPointerDown(e, `subpath:${elementId}:${subpathIndex}`, 'midpoint-l')}
-          onPointerUp={onTransformationHandlerPointerUp}
-        />
-      </>
-    </>
-    );
-  };
+  // Removed renderIndividualSubpathHandlers - replaced with unified TransformationHandlers component
 
   // Render selection box for selected subpaths
   const renderSubpathSelectionBox = (element: typeof elements[0]) => {
@@ -995,12 +786,17 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
               })()}
 
               {/* Individual transformation handlers for this subpath */}
-              {isTransformationMode && renderIndividualSubpathHandlers(
-                subpathBounds, 
-                element.id, 
-                selected.subpathIndex, 
-                handlerSize, 
-                selectionColor
+              {isTransformationMode && (
+                <TransformationHandlers
+                  bounds={subpathBounds}
+                  elementId={element.id}
+                  subpathIndex={selected.subpathIndex}
+                  handlerSize={handlerSize}
+                  selectionColor={selectionColor}
+                  viewport={viewport}
+                  onPointerDown={onTransformationHandlerPointerDown}
+                  onPointerUp={onTransformationHandlerPointerUp}
+                />
               )}
 
               {/* Center X marker and coordinates for this subpath */}
@@ -1018,206 +814,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     );
   };
 
-  const renderTransformationHandlers = (bounds: { minX: number; minY: number; maxX: number; maxY: number }, elementId: string, handlerSize: number, selectionColor: string) => (
-    <>
-      {/* Corner handlers - Always visible */}
-      {/* Top-left corner */}
-      <polygon
-        points={`${bounds.minX},${bounds.minY} ${bounds.minX + 18 / viewport.zoom},${bounds.minY} ${bounds.minX},${bounds.minY + 18 / viewport.zoom}`}
-        fill={selectionColor}
-        stroke="#fff"
-        strokeWidth={1 / viewport.zoom}
-        opacity="0.5"
-        pointerEvents="none"
-      />
-      {/* Top-left corner overlay */}
-      <rect
-        x={bounds.minX}
-        y={bounds.minY}
-        width={18 / viewport.zoom}
-        height={18 / viewport.zoom}
-        fill="transparent"
-        opacity="0.1"
-        style={{ cursor: 'nw-resize' }}
-        onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'corner-tl')}
-        onPointerUp={onTransformationHandlerPointerUp}
-      />
-      {/* Top-right corner */}
-      <polygon
-        points={`${bounds.maxX},${bounds.minY} ${bounds.maxX - 18 / viewport.zoom},${bounds.minY} ${bounds.maxX},${bounds.minY + 18 / viewport.zoom}`}
-        fill={selectionColor}
-        stroke="#fff"
-        strokeWidth={1 / viewport.zoom}
-        opacity="0.5"
-        pointerEvents="none"
-      />
-      {/* Top-right corner overlay */}
-      <rect
-        x={bounds.maxX - 18 / viewport.zoom}
-        y={bounds.minY}
-        width={18 / viewport.zoom}
-        height={18 / viewport.zoom}
-        fill="transparent"
-        opacity="0.1"
-        style={{ cursor: 'ne-resize' }}
-        onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'corner-tr')}
-        onPointerUp={onTransformationHandlerPointerUp}
-      />
-      {/* Bottom-left corner */}
-      <polygon
-        points={`${bounds.minX},${bounds.maxY} ${bounds.minX + 18 / viewport.zoom},${bounds.maxY} ${bounds.minX},${bounds.maxY - 18 / viewport.zoom}`}
-        fill={selectionColor}
-        stroke="#fff"
-        strokeWidth={1 / viewport.zoom}
-        opacity="0.5"
-        pointerEvents="none"
-      />
-      {/* Bottom-left corner overlay */}
-      <rect
-        x={bounds.minX}
-        y={bounds.maxY - 18 / viewport.zoom}
-        width={18 / viewport.zoom}
-        height={18 / viewport.zoom}
-        fill="transparent"
-        opacity="0.1"
-        style={{ cursor: 'sw-resize' }}
-        onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'corner-bl')}
-        onPointerUp={onTransformationHandlerPointerUp}
-      />
-      {/* Bottom-right corner */}
-      <polygon
-        points={`${bounds.maxX},${bounds.maxY} ${bounds.maxX - 18 / viewport.zoom},${bounds.maxY} ${bounds.maxX},${bounds.maxY - 18 / viewport.zoom}`}
-        fill={selectionColor}
-        stroke="#fff"
-        strokeWidth={1 / viewport.zoom}
-        opacity="0.5"
-        pointerEvents="none"
-      />
-      {/* Bottom-right corner overlay */}
-      <rect
-        x={bounds.maxX - 18 / viewport.zoom}
-        y={bounds.maxY - 18 / viewport.zoom}
-        width={18 / viewport.zoom}
-        height={18 / viewport.zoom}
-        fill="transparent"
-        opacity="0.1"
-        style={{ cursor: 'se-resize' }}
-        onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'corner-br')}
-        onPointerUp={onTransformationHandlerPointerUp}
-      />
-
-      {/* Rotation handlers */}
-      <>
-        <circle
-          cx={bounds.maxX + handlerSize}
-          cy={bounds.minY - handlerSize}
-          r={handlerSize / 2}
-          fill={selectionColor}
-          stroke="#fff"
-          strokeWidth={1 / viewport.zoom}
-          opacity="0.5"
-          style={{ cursor: 'alias' }}
-          onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'rotate-tr')}
-          onPointerUp={onTransformationHandlerPointerUp}
-        />
-      </>
-
-      {/* Midpoint handlers (Side handlers) */}
-      <>
-        {/* Top */}
-        <rect
-          x={bounds.minX + handlerSize + 10}
-          y={bounds.minY}
-          width={Math.max(0, bounds.maxX - bounds.minX - 2 * handlerSize - 20)}
-          height={2 / viewport.zoom}
-          fill={selectionColor}
-          opacity="0.5"
-          pointerEvents="none"
-        />
-        {/* Top overlay */}
-        <rect
-          x={bounds.minX + handlerSize + 10}
-          y={bounds.minY - 8 / viewport.zoom}
-          width={Math.max(0, bounds.maxX - bounds.minX - 2 * handlerSize - 20)}
-          height={18 / viewport.zoom}
-          fill="transparent"
-          opacity="0.1"
-          style={{ cursor: 'n-resize' }}
-          onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'midpoint-t')}
-          onPointerUp={onTransformationHandlerPointerUp}
-        />
-
-        {/* Right */}
-        <rect
-          x={bounds.maxX - 2 / viewport.zoom}
-          y={bounds.minY + handlerSize + 10}
-          width={2 / viewport.zoom}
-          height={Math.max(0, bounds.maxY - bounds.minY - 2 * handlerSize - 20)}
-          fill={selectionColor}
-          opacity="0.5"
-          pointerEvents="none"
-        />
-        {/* Right overlay */}
-        <rect
-          x={bounds.maxX - 2 / viewport.zoom - 8 / viewport.zoom}
-          y={bounds.minY + handlerSize + 10}
-          width={18 / viewport.zoom}
-          height={Math.max(0, bounds.maxY - bounds.minY - 2 * handlerSize - 20)}
-          fill="transparent"
-          opacity="0.1"
-          style={{ cursor: 'e-resize' }}
-          onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'midpoint-r')}
-          onPointerUp={onTransformationHandlerPointerUp}
-        />
-
-        {/* Bottom */}
-        <rect
-          x={bounds.minX + handlerSize + 10}
-          y={bounds.maxY - 2 / viewport.zoom}
-          width={Math.max(0, bounds.maxX - bounds.minX - 2 * handlerSize - 20)}
-          height={2 / viewport.zoom}
-          fill={selectionColor}
-          opacity="0.5"
-          pointerEvents="none"
-        />
-        {/* Bottom overlay */}
-        <rect
-          x={bounds.minX + handlerSize + 10}
-          y={bounds.maxY - 2 / viewport.zoom - 8 / viewport.zoom}
-          width={Math.max(0, bounds.maxX - bounds.minX - 2 * handlerSize - 20)}
-          height={18 / viewport.zoom}
-          fill="transparent"
-          opacity="0.1"
-          style={{ cursor: 's-resize' }}
-          onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'midpoint-b')}
-          onPointerUp={onTransformationHandlerPointerUp}
-        />
-
-        {/* Left */}
-        <rect
-          x={bounds.minX}
-          y={bounds.minY + handlerSize + 10}
-          width={2 / viewport.zoom}
-          height={Math.max(0, bounds.maxY - bounds.minY - 2 * handlerSize - 20)}
-          fill={selectionColor}
-          opacity="0.5"
-          pointerEvents="none"
-        />
-        {/* Left overlay */}
-        <rect
-          x={bounds.minX - 8 / viewport.zoom}
-          y={bounds.minY + handlerSize + 10}
-          width={18 / viewport.zoom}
-          height={Math.max(0, bounds.maxY - bounds.minY - 2 * handlerSize - 20)}
-          fill="transparent"
-          opacity="0.1"
-          style={{ cursor: 'w-resize' }}
-          onPointerDown={(e) => onTransformationHandlerPointerDown(e, elementId, 'midpoint-l')}
-          onPointerUp={onTransformationHandlerPointerUp}
-        />
-      </>
-    </>
-  );
+  // Removed renderTransformationHandlers - replaced with unified TransformationHandlers component
 
   const renderMeasurementRulers = (bounds: { minX: number; minY: number; maxX: number; maxY: number }) => {
     const width = bounds.maxX - bounds.minX;

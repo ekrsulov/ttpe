@@ -13,6 +13,9 @@ export interface ControlPointInfo {
   pairedCommandIndex?: number;
   pairedPointIndex?: number;
   anchor: Point;
+  isControl: boolean; // Made required to consolidate ControlPoint definitions
+  associatedCommandIndex?: number; // Added to consolidate ControlPoint definitions
+  associatedPointIndex?: number; // Added to consolidate ControlPoint definitions
 }
 
 // Control point combining position and info

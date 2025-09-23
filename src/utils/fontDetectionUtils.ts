@@ -94,9 +94,4 @@ export const getAvailableFonts = (): string[] => {
   return fontCache;
 };
 
-/**
- * Clears the font cache (useful for testing or if fonts are installed/uninstalled)
- */
-export const clearFontCache = (): void => {
-  fontCache = null;
-};
+// Removed unused clearFontCache function - no active calls found
