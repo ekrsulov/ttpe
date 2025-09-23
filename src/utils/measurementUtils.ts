@@ -94,3 +94,28 @@ export const measureSubpathBounds = (
   const subPaths = [commands];
   return measurePath(subPaths, strokeWidth, zoom);
 };
+
+/**
+ * Accumulate bounding boxes from multiple command sets
+ * Centralizes the logic that was duplicated in Canvas and transformationPluginSlice
+ */
+export const accumulateBounds = (
+  commandsList: import('../types').Command[][],
+  strokeWidth: number,
+  zoom: number
+): { minX: number; minY: number; maxX: number; maxY: number } | null => {
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+
+  commandsList.forEach((commands) => {
+    const bounds = measurePath([commands], strokeWidth, zoom);
+    minX = Math.min(minX, bounds.minX);
+    minY = Math.min(minY, bounds.minY);
+    maxX = Math.max(maxX, bounds.maxX);
+    maxY = Math.max(maxY, bounds.maxY);
+  });
+
+  return minX === Infinity ? null : { minX, minY, maxX, maxY };
+};

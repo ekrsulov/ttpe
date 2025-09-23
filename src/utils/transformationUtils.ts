@@ -1,7 +1,8 @@
-import type { PathData, Point, Command } from '../types';
+import type { PathData, Command } from '../types';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from './index';
 import { extractSubpaths } from './pathParserUtils';
 import { measurePath } from './measurementUtils';
+import { transformCommands, calculateScaledStrokeWidth } from './sharedTransformUtils';
 
 /**
  * Consolidated utility for translating SVG path commands.
@@ -81,45 +82,7 @@ export const alignmentTargets = {
     Math.max(...bounds.map(b => b.maxY))
 } as const;
 
-/**
- * Transforms a point using scale and translation
- */
-export function transformPoint(point: Point, scaleX: number, scaleY: number, originX: number, originY: number): Point {
-  // Translate to origin, scale, translate back
-  const translatedX = point.x - originX;
-  const translatedY = point.y - originY;
-  
-  const scaledX = translatedX * scaleX;
-  const scaledY = translatedY * scaleY;
-  
-  return {
-    x: formatToPrecision(scaledX + originX, PATH_DECIMAL_PRECISION),
-    y: formatToPrecision(scaledY + originY, PATH_DECIMAL_PRECISION)
-  };
-}
-
-/**
- * Rotates a point around an origin by a given angle in degrees
- */
-export function rotatePoint(point: Point, angleDegrees: number, originX: number, originY: number): Point {
-  const angleRadians = (angleDegrees * Math.PI) / 180;
-  const cos = Math.cos(angleRadians);
-  const sin = Math.sin(angleRadians);
-  
-  // Translate to origin
-  const translatedX = point.x - originX;
-  const translatedY = point.y - originY;
-  
-  // Rotate
-  const rotatedX = translatedX * cos - translatedY * sin;
-  const rotatedY = translatedX * sin + translatedY * cos;
-  
-  // Translate back
-  return {
-    x: formatToPrecision(rotatedX + originX, PATH_DECIMAL_PRECISION),
-    y: formatToPrecision(rotatedY + originY, PATH_DECIMAL_PRECISION)
-  };
-}
+// Removed unused rebuildPathString function - commandsToString is used instead
 
 // Removed unused translatePoint function - translatePathData is used instead
 
@@ -133,44 +96,17 @@ export function transformPathData(
   originY: number,
   rotation: number = 0
 ): PathData {
-  // Transform all subpaths directly
+  // Transform all subpaths directly using shared utility
   try {
     const commands = pathData.subPaths.flat();
     
-    // Transform each command
-    const transformedCommands = commands.map(cmd => {
-      const transformedCmd = { ...cmd };
-      
-      // Transform points based on command type
-      if (cmd.type === 'M' || cmd.type === 'L') {
-        let transformedPoint = { ...cmd.position };
-        transformedPoint = transformPoint(transformedPoint, scaleX, scaleY, originX, originY);
-        if (rotation !== 0) {
-          transformedPoint = rotatePoint(transformedPoint, rotation, originX, originY);
-        }
-        (transformedCmd as { position: Point }).position = transformedPoint;
-      } else if (cmd.type === 'C') {
-        let cp1 = { ...cmd.controlPoint1 };
-        let cp2 = { ...cmd.controlPoint2 };
-        let pos = { ...cmd.position };
-        
-        cp1 = { ...cp1, ...transformPoint({x: cp1.x, y: cp1.y}, scaleX, scaleY, originX, originY) };
-        cp2 = { ...cp2, ...transformPoint({x: cp2.x, y: cp2.y}, scaleX, scaleY, originX, originY) };
-        pos = transformPoint(pos, scaleX, scaleY, originX, originY);
-        
-        if (rotation !== 0) {
-          cp1 = { ...cp1, ...rotatePoint({x: cp1.x, y: cp1.y}, rotation, originX, originY) };
-          cp2 = { ...cp2, ...rotatePoint({x: cp2.x, y: cp2.y}, rotation, originX, originY) };
-          pos = rotatePoint(pos, rotation, originX, originY);
-        }
-        
-        (transformedCmd as Command & { type: 'C' }).controlPoint1 = { ...cmd.controlPoint1, ...cp1 };
-        (transformedCmd as Command & { type: 'C' }).controlPoint2 = { ...cmd.controlPoint2, ...cp2 };
-        (transformedCmd as Command & { type: 'C' }).position = pos;
-      }
-      // Z has no points to transform
-      
-      return transformedCmd;
+    // Transform each command using the shared utility
+    const transformedCommands = transformCommands(commands, {
+      scaleX,
+      scaleY,
+      originX,
+      originY,
+      rotation
     });
     
     // Rebuild subpaths directly from transformed commands without serialization
@@ -179,8 +115,8 @@ export function transformPathData(
     return {
       ...pathData,
       subPaths: newSubPaths,
-      // Scale stroke width proportionally
-      strokeWidth: formatToPrecision(pathData.strokeWidth * Math.min(scaleX, scaleY), PATH_DECIMAL_PRECISION),
+      // Scale stroke width proportionally using shared utility
+      strokeWidth: calculateScaledStrokeWidth(pathData.strokeWidth, scaleX, scaleY),
       // Remove transform since we've applied it directly
       transform: undefined
     };
@@ -192,7 +128,7 @@ export function transformPathData(
 }
 
 /**
- * Applies scale transformation to ONLY selected subpaths - same calculation logic as transformPathData
+ * Applies scale transformation to ONLY selected subpaths - using shared transformation logic
  */
 export function transformSubpathsData(
   pathData: PathData, 
@@ -242,40 +178,15 @@ export function transformSubpathsData(
         // Extract the commands for this subpath
         const subpathCommands = commands.slice(subpath.startIndex, subpath.endIndex + 1);
         
-        // Transform each command in this subpath using the same logic as transformPathData
-        const transformedSubpathCommands = subpathCommands.map(cmd => {
-          const transformedCmd = { ...cmd };
-          
-          // Transform points based on command type
-          if (cmd.type === 'M' || cmd.type === 'L') {
-            let transformedPoint = { ...cmd.position };
-            transformedPoint = transformPoint(transformedPoint, scaleX, scaleY, originX, originY);
-            if (rotation !== 0) {
-              transformedPoint = rotatePoint(transformedPoint, rotation, subpathCenterX, subpathCenterY);
-            }
-            (transformedCmd as { position: Point }).position = transformedPoint;
-          } else if (cmd.type === 'C') {
-            let cp1 = { ...cmd.controlPoint1 };
-            let cp2 = { ...cmd.controlPoint2 };
-            let pos = { ...cmd.position };
-            
-            cp1 = { ...cp1, ...transformPoint({x: cp1.x, y: cp1.y}, scaleX, scaleY, originX, originY) };
-            cp2 = { ...cp2, ...transformPoint({x: cp2.x, y: cp2.y}, scaleX, scaleY, originX, originY) };
-            pos = transformPoint(pos, scaleX, scaleY, originX, originY);
-            
-            if (rotation !== 0) {
-              cp1 = { ...cp1, ...rotatePoint({x: cp1.x, y: cp1.y}, rotation, subpathCenterX, subpathCenterY) };
-              cp2 = { ...cp2, ...rotatePoint({x: cp2.x, y: cp2.y}, rotation, subpathCenterX, subpathCenterY) };
-              pos = rotatePoint(pos, rotation, subpathCenterX, subpathCenterY);
-            }
-            
-            (transformedCmd as Command & { type: 'C' }).controlPoint1 = { ...cmd.controlPoint1, ...cp1 };
-            (transformedCmd as Command & { type: 'C' }).controlPoint2 = { ...cmd.controlPoint2, ...cp2 };
-            (transformedCmd as Command & { type: 'C' }).position = pos;
-          }
-          // Z has no points to transform
-          
-          return transformedCmd;
+        // Transform each command in this subpath using shared logic
+        const transformedSubpathCommands = transformCommands(subpathCommands, {
+          scaleX,
+          scaleY,
+          originX,
+          originY,
+          rotation,
+          rotationCenterX: subpathCenterX,
+          rotationCenterY: subpathCenterY
         });
         
         // Replace the original subpath commands with transformed ones
@@ -289,8 +200,8 @@ export function transformSubpathsData(
     return {
       ...pathData,
       subPaths: newSubPaths,
-      // Scale stroke width proportionally
-      strokeWidth: formatToPrecision(pathData.strokeWidth * Math.min(scaleX, scaleY), PATH_DECIMAL_PRECISION),
+      // Scale stroke width proportionally using shared utility
+      strokeWidth: calculateScaledStrokeWidth(pathData.strokeWidth, scaleX, scaleY),
       // Remove transform since we've applied it directly
       transform: undefined
     };
@@ -302,7 +213,7 @@ export function transformSubpathsData(
 }
 
 /**
- * Applies transformation to a single subpath with correct origin calculation
+ * Applies transformation to a single subpath with correct origin calculation - using shared logic
  */
 export function transformSingleSubpath(
   pathData: PathData,
@@ -344,40 +255,15 @@ export function transformSingleSubpath(
     // Extract the commands for this subpath
     const subpathCommands = commands.slice(subpath.startIndex, subpath.endIndex + 1);
     
-    // Transform each command in this subpath
-    const transformedSubpathCommands = subpathCommands.map(cmd => {
-      const transformedCmd = { ...cmd };
-      
-      // Transform points based on command type
-      if (cmd.type === 'M' || cmd.type === 'L') {
-        let transformedPoint = { ...cmd.position };
-        transformedPoint = transformPoint(transformedPoint, scaleX, scaleY, originX, originY);
-        if (rotation !== 0) {
-          transformedPoint = rotatePoint(transformedPoint, rotation, subpathCenterX, subpathCenterY);
-        }
-        (transformedCmd as { position: Point }).position = transformedPoint;
-      } else if (cmd.type === 'C') {
-        let cp1 = { ...cmd.controlPoint1 };
-        let cp2 = { ...cmd.controlPoint2 };
-        let pos = { ...cmd.position };
-        
-        cp1 = { ...cp1, ...transformPoint({x: cp1.x, y: cp1.y}, scaleX, scaleY, originX, originY) };
-        cp2 = { ...cp2, ...transformPoint({x: cp2.x, y: cp2.y}, scaleX, scaleY, originX, originY) };
-        pos = transformPoint(pos, scaleX, scaleY, originX, originY);
-        
-        if (rotation !== 0) {
-          cp1 = { ...cp1, ...rotatePoint({x: cp1.x, y: cp1.y}, rotation, subpathCenterX, subpathCenterY) };
-          cp2 = { ...cp2, ...rotatePoint({x: cp2.x, y: cp2.y}, rotation, subpathCenterX, subpathCenterY) };
-          pos = rotatePoint(pos, rotation, subpathCenterX, subpathCenterY);
-        }
-        
-        (transformedCmd as Command & { type: 'C' }).controlPoint1 = cp1;
-        (transformedCmd as Command & { type: 'C' }).controlPoint2 = cp2;
-        (transformedCmd as Command & { type: 'C' }).position = pos;
-      }
-      // Z has no points to transform
-      
-      return transformedCmd;
+    // Transform each command in this subpath using shared logic
+    const transformedSubpathCommands = transformCommands(subpathCommands, {
+      scaleX,
+      scaleY,
+      originX,
+      originY,
+      rotation,
+      rotationCenterX: subpathCenterX,
+      rotationCenterY: subpathCenterY
     });
     
     // Replace the original subpath commands with transformed ones
@@ -389,8 +275,8 @@ export function transformSingleSubpath(
     return {
       ...pathData,
       subPaths: newSubPaths,
-      // Scale stroke width proportionally
-      strokeWidth: formatToPrecision(pathData.strokeWidth * Math.min(scaleX, scaleY), PATH_DECIMAL_PRECISION),
+      // Scale stroke width proportionally using shared utility
+      strokeWidth: calculateScaledStrokeWidth(pathData.strokeWidth, scaleX, scaleY),
       // Remove transform since we've applied it directly
       transform: undefined
     };

@@ -16,9 +16,7 @@ import { createArrangeSlice, type ArrangeSlice } from './slices/features/arrange
 import { createPencilPluginSlice, type PencilPluginSlice } from './slices/plugins/pencilPluginSlice';
 import { createTextPluginSlice, type TextPluginSlice } from './slices/plugins/textPluginSlice';
 import { createShapePluginSlice, type ShapePluginSlice } from './slices/plugins/shapePluginSlice';
-import { createHistoryPluginSlice, type HistoryPluginSlice } from './slices/plugins/historyPluginSlice';
 import { createTransformationPluginSlice, type TransformationPluginSlice } from './slices/plugins/transformationPluginSlice';
-import { createEditorPluginSlice, type EditorPluginSlice } from './slices/plugins/editorPluginSlice';
 import { createEditPluginSlice, type EditPluginSlice } from './slices/plugins/editPluginSlice';
 import { createSubpathPluginSlice, type SubpathPluginSlice } from './slices/plugins/subpathPluginSlice';
 
@@ -49,9 +47,7 @@ export type CanvasStore = BaseSlice &
   PencilPluginSlice &
   TextPluginSlice &
   ShapePluginSlice &
-  HistoryPluginSlice &
   TransformationPluginSlice &
-  EditorPluginSlice &
   EditPluginSlice &
   SubpathPluginSlice & {
     // Additional actions that need cross-slice functionality
@@ -93,14 +89,8 @@ export const useCanvasStore = create<CanvasStore>()(
         // Shape plugin slice
         ...createShapePluginSlice(set, get, api),
 
-        // History plugin slice
-        ...createHistoryPluginSlice(set, get, api),
-
         // Transformation plugin slice
         ...createTransformationPluginSlice(set, get, api),
-
-        // Editor plugin slice
-        ...createEditorPluginSlice(set, get, api),
 
         // Edit plugin slice
         ...createEditPluginSlice(set, get, api),

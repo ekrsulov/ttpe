@@ -1,6 +1,7 @@
 import React from 'react';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../utils';
 import { extractEditablePoints, updateCommands, extractSubpaths } from '../utils/pathParserUtils';
+import { mapSvgToCanvas } from '../utils/coordinateUtils';
 import type { CanvasElement, SubPath, Point, ControlPointInfo, Command, PathData } from '../types';
 
 interface DragCallbacks {
@@ -96,8 +97,9 @@ export const useCanvasDragInteractions = ({
           const svgY = e.clientY - svgRect.top;
           
           // Convert SVG coordinates to canvas coordinates (accounting for viewport)
-          const canvasX = (svgX - viewport.panX) / viewport.zoom;
-          const canvasY = (svgY - viewport.panY) / viewport.zoom;
+          const canvasPoint = mapSvgToCanvas(svgX, svgY, viewport);
+          const canvasX = canvasPoint.x;
+          const canvasY = canvasPoint.y;
           
           // Update local drag position for smooth visualization
           setDragPosition({ 

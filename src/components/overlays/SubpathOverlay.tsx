@@ -1,6 +1,7 @@
 import React from 'react';
 import { getContrastingColor, getEffectiveColorForContrast } from '../../utils/canvasColorUtils';
 import { commandsToString } from '../../utils/pathParserUtils';
+import { mapSvgToCanvas } from '../../utils/coordinateUtils';
 import type { Command, PathData, SubPath } from '../../types';
 
 interface SubpathOverlayProps {
@@ -132,11 +133,10 @@ export const SubpathOverlay: React.FC<SubpathOverlayProps> = ({
                   const svgY = e.clientY - svgRect.top;
                   
                   // Convert to canvas coordinates
-                  const canvasX = (svgX - viewport.panX) / viewport.zoom;
-                  const canvasY = (svgY - viewport.panY) / viewport.zoom;
+                  const canvasPoint = mapSvgToCanvas(svgX, svgY, viewport);
                   
                   // Start dragging subpaths
-                  onStartDraggingSubpaths(canvasX, canvasY);
+                  onStartDraggingSubpaths(canvasPoint.x, canvasPoint.y);
                 }
               }
             }}

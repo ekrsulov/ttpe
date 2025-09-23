@@ -3,7 +3,7 @@ import { useCanvasStore } from '../store/canvasStore';
 import { measurePath, measureSubpathBounds } from '../utils/measurementUtils';
 import { transformPathData, transformSubpathsData, transformSingleSubpath } from '../utils/transformationUtils';
 import { extractEditablePoints } from '../utils/pathParserUtils';
-import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../utils';
+import { mapPointerToCanvas } from '../utils/coordinateUtils';
 import { CanvasRenderer } from './CanvasRenderer';
 import { transformManager, type TransformBounds } from '../utils/transformManager';
 import type { Point, PathData, CanvasElement } from '../types';
@@ -151,13 +151,7 @@ export const Canvas: React.FC = () => {
 
   // Transform screen coordinates to canvas coordinates
   const screenToCanvas = useCallback((screenX: number, screenY: number): Point => {
-    const rect = svgRef.current?.getBoundingClientRect();
-    if (!rect) return { x: formatToPrecision(screenX, PATH_DECIMAL_PRECISION), y: formatToPrecision(screenY, PATH_DECIMAL_PRECISION) };
-
-    const canvasX = (screenX - rect.left - viewport.panX) / viewport.zoom;
-    const canvasY = (screenY - rect.top - viewport.panY) / viewport.zoom;
-
-    return { x: formatToPrecision(canvasX, PATH_DECIMAL_PRECISION), y: formatToPrecision(canvasY, PATH_DECIMAL_PRECISION) };
+    return mapPointerToCanvas(svgRef.current, viewport, screenX, screenY);
   }, [viewport]);
 
     // Handle element click

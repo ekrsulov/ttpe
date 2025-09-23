@@ -1,5 +1,6 @@
 import React from 'react';
 import { getCommandStartPoint } from '../../utils/pathParserUtils';
+import { mapSvgToCanvas } from '../../utils/coordinateUtils';
 import type { Point, PathData, Command } from '../../types';
 
 interface EditPointsOverlayProps {
@@ -310,10 +311,9 @@ const handlePointPointerDown = (
       const svgY = e.clientY - svgRect.top;
       
       // Convert to canvas coordinates
-      const canvasX = (svgX - viewport.panX) / viewport.zoom;
-      const canvasY = (svgY - viewport.panY) / viewport.zoom;
+      const canvasPoint = mapSvgToCanvas(svgX, svgY, viewport);
       
-      onStartDraggingPoint(element.id, point.commandIndex, point.pointIndex, canvasX, canvasY);
+      onStartDraggingPoint(element.id, point.commandIndex, point.pointIndex, canvasPoint.x, canvasPoint.y);
     } else {
       // Fallback to original coordinates
       onStartDraggingPoint(element.id, point.commandIndex, point.pointIndex, point.x, point.y);
