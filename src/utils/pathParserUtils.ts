@@ -288,11 +288,6 @@ export function getCommandStartPoint(commands: Command[], commandIndex: number):
 /**
  * Update path d string from modified points
  */
-export function updatePathD(commands: Command[], updatedPoints: ControlPoint[]): string {
-  const updatedCommands = updateCommands(commands, updatedPoints);
-  return commandsToString(updatedCommands);
-}
-
 export function updateCommands(commands: Command[], updatedPoints: ControlPoint[]): Command[] {
   // Create a copy of commands to modify
   const updatedCommands = commands.map(cmd => {
@@ -963,4 +958,137 @@ export function findPairedControlPoint(
   }
 
   return null;
+}
+
+/**
+ * Generate shape commands directly without SVG serialization
+ */
+export function createSquareCommands(centerX: number, centerY: number, halfSize: number): Command[] {
+  const precision = PATH_DECIMAL_PRECISION;
+  return [
+    { type: 'M', position: { x: formatToPrecision(centerX - halfSize, precision), y: formatToPrecision(centerY - halfSize, precision) } },
+    { type: 'L', position: { x: formatToPrecision(centerX + halfSize, precision), y: formatToPrecision(centerY - halfSize, precision) } },
+    { type: 'L', position: { x: formatToPrecision(centerX + halfSize, precision), y: formatToPrecision(centerY + halfSize, precision) } },
+    { type: 'L', position: { x: formatToPrecision(centerX - halfSize, precision), y: formatToPrecision(centerY + halfSize, precision) } },
+    { type: 'Z' }
+  ];
+}
+
+export function createRectangleCommands(startX: number, startY: number, endX: number, endY: number): Command[] {
+  const precision = PATH_DECIMAL_PRECISION;
+  return [
+    { type: 'M', position: { x: formatToPrecision(startX, precision), y: formatToPrecision(startY, precision) } },
+    { type: 'L', position: { x: formatToPrecision(endX, precision), y: formatToPrecision(startY, precision) } },
+    { type: 'L', position: { x: formatToPrecision(endX, precision), y: formatToPrecision(endY, precision) } },
+    { type: 'L', position: { x: formatToPrecision(startX, precision), y: formatToPrecision(endY, precision) } },
+    { type: 'Z' }
+  ];
+}
+
+export function createCircleCommands(centerX: number, centerY: number, radius: number): Command[] {
+  const kappa = 0.552284749831; // Control point constant for circle approximation
+  const precision = PATH_DECIMAL_PRECISION;
+  
+  return [
+    { type: 'M', position: { x: formatToPrecision(centerX - radius, precision), y: formatToPrecision(centerY, precision) } },
+    {
+      type: 'C',
+      controlPoint1: {
+        x: formatToPrecision(centerX - radius, precision),
+        y: formatToPrecision(centerY - radius * kappa, precision),
+        commandIndex: 1,
+        pointIndex: 0,
+        type: 'independent',
+        anchor: { x: formatToPrecision(centerX - radius, precision), y: formatToPrecision(centerY, precision) },
+        isControl: true
+      },
+      controlPoint2: {
+        x: formatToPrecision(centerX - radius * kappa, precision),
+        y: formatToPrecision(centerY - radius, precision),
+        commandIndex: 1,
+        pointIndex: 1,
+        type: 'independent',
+        anchor: { x: formatToPrecision(centerX, precision), y: formatToPrecision(centerY - radius, precision) },
+        isControl: true
+      },
+      position: { x: formatToPrecision(centerX, precision), y: formatToPrecision(centerY - radius, precision) }
+    },
+    {
+      type: 'C',
+      controlPoint1: {
+        x: formatToPrecision(centerX + radius * kappa, precision),
+        y: formatToPrecision(centerY - radius, precision),
+        commandIndex: 2,
+        pointIndex: 0,
+        type: 'independent',
+        anchor: { x: formatToPrecision(centerX, precision), y: formatToPrecision(centerY - radius, precision) },
+        isControl: true
+      },
+      controlPoint2: {
+        x: formatToPrecision(centerX + radius, precision),
+        y: formatToPrecision(centerY - radius * kappa, precision),
+        commandIndex: 2,
+        pointIndex: 1,
+        type: 'independent',
+        anchor: { x: formatToPrecision(centerX + radius, precision), y: formatToPrecision(centerY, precision) },
+        isControl: true
+      },
+      position: { x: formatToPrecision(centerX + radius, precision), y: formatToPrecision(centerY, precision) }
+    },
+    {
+      type: 'C',
+      controlPoint1: {
+        x: formatToPrecision(centerX + radius, precision),
+        y: formatToPrecision(centerY + radius * kappa, precision),
+        commandIndex: 3,
+        pointIndex: 0,
+        type: 'independent',
+        anchor: { x: formatToPrecision(centerX + radius, precision), y: formatToPrecision(centerY, precision) },
+        isControl: true
+      },
+      controlPoint2: {
+        x: formatToPrecision(centerX + radius * kappa, precision),
+        y: formatToPrecision(centerY + radius, precision),
+        commandIndex: 3,
+        pointIndex: 1,
+        type: 'independent',
+        anchor: { x: formatToPrecision(centerX, precision), y: formatToPrecision(centerY + radius, precision) },
+        isControl: true
+      },
+      position: { x: formatToPrecision(centerX, precision), y: formatToPrecision(centerY + radius, precision) }
+    },
+    {
+      type: 'C',
+      controlPoint1: {
+        x: formatToPrecision(centerX - radius * kappa, precision),
+        y: formatToPrecision(centerY + radius, precision),
+        commandIndex: 4,
+        pointIndex: 0,
+        type: 'independent',
+        anchor: { x: formatToPrecision(centerX, precision), y: formatToPrecision(centerY + radius, precision) },
+        isControl: true
+      },
+      controlPoint2: {
+        x: formatToPrecision(centerX - radius, precision),
+        y: formatToPrecision(centerY + radius * kappa, precision),
+        commandIndex: 4,
+        pointIndex: 1,
+        type: 'independent',
+        anchor: { x: formatToPrecision(centerX - radius, precision), y: formatToPrecision(centerY, precision) },
+        isControl: true
+      },
+      position: { x: formatToPrecision(centerX - radius, precision), y: formatToPrecision(centerY, precision) }
+    },
+    { type: 'Z' }
+  ];
+}
+
+export function createTriangleCommands(centerX: number, startY: number, endX: number, endY: number, startX: number): Command[] {
+  const precision = PATH_DECIMAL_PRECISION;
+  return [
+    { type: 'M', position: { x: formatToPrecision(centerX, precision), y: formatToPrecision(startY, precision) } },
+    { type: 'L', position: { x: formatToPrecision(endX, precision), y: formatToPrecision(endY, precision) } },
+    { type: 'L', position: { x: formatToPrecision(startX, precision), y: formatToPrecision(endY, precision) } },
+    { type: 'Z' }
+  ];
 }

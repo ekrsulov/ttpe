@@ -1,6 +1,6 @@
 import React from 'react';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../utils';
-import { parsePathD, extractEditablePoints, updatePathD, extractSubpaths } from '../utils/pathParserUtils';
+import { extractEditablePoints, updateCommands, extractSubpaths } from '../utils/pathParserUtils';
 import type { CanvasElement, SubPath, Point, ControlPointInfo, Command, PathData } from '../types';
 
 interface DragCallbacks {
@@ -360,8 +360,8 @@ export const useCanvasDragInteractions = ({
           pointToUpdate.x = newX;
           pointToUpdate.y = newY;
 
-          const newPathD = updatePathD(commands, pointsToUpdate);
-          const newSubPaths = extractSubpaths(parsePathD(newPathD)).map(sp => sp.commands);
+          const updatedCommands = updateCommands(commands, pointsToUpdate);
+          const newSubPaths = extractSubpaths(updatedCommands).map(sp => sp.commands);
           callbacks.onUpdateElement(editingPoint.elementId, {
             data: {
               ...pathData,
@@ -418,8 +418,8 @@ export const useCanvasDragInteractions = ({
           const originalSubPaths = originalPathDataMap[elementId];
           if (originalSubPaths) {
             const originalCommands = originalSubPaths.flat();
-            const newPathD = updatePathD(originalCommands, updates.map(u => ({ ...u, type: 'independent' as const, anchor: { x: u.x, y: u.y } })));
-            const newSubPaths = extractSubpaths(parsePathD(newPathD)).map(sp => sp.commands);
+            const updatedCommands = updateCommands(originalCommands, updates.map(u => ({ ...u, type: 'independent' as const, anchor: { x: u.x, y: u.y } })));
+            const newSubPaths = extractSubpaths(updatedCommands).map(sp => sp.commands);
             
             const element = elements.find(el => el.id === elementId);
             if (element) {

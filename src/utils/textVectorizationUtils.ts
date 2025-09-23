@@ -2,6 +2,8 @@
 import { potrace, init } from 'esm-potrace-wasm';
 import { parsePath, serialize, absolutize, normalize } from 'path-data-parser';
 import { PATH_DECIMAL_PRECISION, formatToPrecision } from './index';
+import type { Command } from '../types';
+import { parsePathD } from './pathParserUtils';
 
 // Cache for text vectorization to improve performance
 const textVectorizationCache = new Map<string, string>();
@@ -299,6 +301,29 @@ const transformSegmentsWithGlobalBounds = (
   });
   
   return transformedSegments;
+};
+
+/**
+ * Convert text to structured path commands (instead of SVG string)
+ */
+export const textToPathCommands = async (
+  text: string,
+  x: number,
+  y: number,
+  fontSize: number,
+  fontFamily: string,
+  fontWeight: string = 'normal',
+  fontStyle: string = 'normal'
+): Promise<Command[]> => {
+  // Get the SVG path string first
+  const pathString = await textToPath(text, x, y, fontSize, fontFamily, fontWeight, fontStyle);
+  
+  if (!pathString) {
+    return [];
+  }
+  
+  // Parse the string into commands
+  return parsePathD(pathString);
 };
 
 

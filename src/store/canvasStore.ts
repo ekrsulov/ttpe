@@ -1,10 +1,10 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { temporal } from 'zundo';
-import { textToPath } from '../utils/textVectorizationUtils';
-import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../utils';
-import { parsePathD, extractSubpaths } from '../utils/pathParserUtils';
-import type { Point } from '../types';
+import { textToPathCommands } from '../utils/textVectorizationUtils';
+
+import { extractSubpaths, createSquareCommands, createRectangleCommands, createCircleCommands, createTriangleCommands } from '../utils/pathParserUtils';
+import type { Point, Command } from '../types';
 import isDeepEqual from 'fast-deep-equal';
 
 // Import all slices
@@ -202,8 +202,8 @@ export const useCanvasStore = create<CanvasStore>()(
           const { fillColor, fillOpacity, strokeColor, strokeWidth, strokeOpacity } = get().pencil;
 
           try {
-            // Convert text to path automatically
-            const pathD = await textToPath(
+            // Convert text to path commands directly without string parsing
+            const commands = await textToPathCommands(
               text,
               x,
               y,
@@ -213,9 +213,8 @@ export const useCanvasStore = create<CanvasStore>()(
               fontStyle
             );
 
-            if (pathD) {
-              // Parse the path string into commands and extract subpaths
-              const commands = parsePathD(pathD);
+            if (commands.length > 0) {
+              // Extract subpaths directly from commands
               const subPaths = extractSubpaths(commands);
               
               // Create path element with the converted text
@@ -261,65 +260,44 @@ export const useCanvasStore = create<CanvasStore>()(
           const centerX = (startPoint.x + endPoint.x) / 2;
           const centerY = (startPoint.y + endPoint.y) / 2;
 
-          let d = '';
+          let commands: Command[] = [];
 
           switch (selectedShape) {
             case 'square': {
               // Create a square using path commands
               const halfSize = Math.min(width, height) / 2;
-              d = `M ${formatToPrecision(centerX - halfSize, PATH_DECIMAL_PRECISION)} ${formatToPrecision(centerY - halfSize, PATH_DECIMAL_PRECISION)} L ${formatToPrecision(centerX + halfSize, PATH_DECIMAL_PRECISION)} ${formatToPrecision(centerY - halfSize, PATH_DECIMAL_PRECISION)} L ${formatToPrecision(centerX + halfSize, PATH_DECIMAL_PRECISION)} ${formatToPrecision(centerY + halfSize, PATH_DECIMAL_PRECISION)} L ${formatToPrecision(centerX - halfSize, PATH_DECIMAL_PRECISION)} ${formatToPrecision(centerY + halfSize, PATH_DECIMAL_PRECISION)} Z`;
+              commands = createSquareCommands(centerX, centerY, halfSize);
               break;
             }
 
             case 'rectangle': {
               // Create a rectangle using path commands
-              d = `M ${formatToPrecision(startPoint.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(startPoint.y, PATH_DECIMAL_PRECISION)} L ${formatToPrecision(endPoint.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(startPoint.y, PATH_DECIMAL_PRECISION)} L ${formatToPrecision(endPoint.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(endPoint.y, PATH_DECIMAL_PRECISION)} L ${formatToPrecision(startPoint.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(endPoint.y, PATH_DECIMAL_PRECISION)} Z`;
+              commands = createRectangleCommands(startPoint.x, startPoint.y, endPoint.x, endPoint.y);
               break;
             }
 
             case 'circle': {
               // Create a circle using C commands (Bézier curves)
               const radius = Math.min(width, height) / 2;
-              const kappa = 0.552284749831; // Control point constant for circle approximation
-
-              // Calculate control points
-              const cx1 = centerX - radius;
-              const cy1 = centerY - radius * kappa;
-              const cx2 = centerX - radius * kappa;
-              const cy2 = centerY - radius;
-              const cx3 = centerX + radius * kappa;
-              const cy3 = centerY - radius;
-              const cx4 = centerX + radius;
-              const cy4 = centerY - radius * kappa;
-              const cx5 = centerX + radius;
-              const cy5 = centerY + radius * kappa;
-              const cx6 = centerX + radius * kappa;
-              const cy6 = centerY + radius;
-              const cx7 = centerX - radius * kappa;
-              const cy7 = centerY + radius;
-              const cx8 = centerX - radius;
-              const cy8 = centerY + radius * kappa;
-
-              d = `M ${formatToPrecision(centerX - radius, PATH_DECIMAL_PRECISION)} ${formatToPrecision(centerY, PATH_DECIMAL_PRECISION)} C ${formatToPrecision(cx1, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cy1, PATH_DECIMAL_PRECISION)}, ${formatToPrecision(cx2, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cy2, PATH_DECIMAL_PRECISION)}, ${formatToPrecision(centerX, PATH_DECIMAL_PRECISION)} ${formatToPrecision(centerY - radius, PATH_DECIMAL_PRECISION)} C ${formatToPrecision(cx3, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cy3, PATH_DECIMAL_PRECISION)}, ${formatToPrecision(cx4, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cy4, PATH_DECIMAL_PRECISION)}, ${formatToPrecision(centerX + radius, PATH_DECIMAL_PRECISION)} ${formatToPrecision(centerY, PATH_DECIMAL_PRECISION)} C ${formatToPrecision(cx5, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cy5, PATH_DECIMAL_PRECISION)}, ${formatToPrecision(cx6, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cy6, PATH_DECIMAL_PRECISION)}, ${formatToPrecision(centerX, PATH_DECIMAL_PRECISION)} ${formatToPrecision(centerY + radius, PATH_DECIMAL_PRECISION)} C ${formatToPrecision(cx7, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cy7, PATH_DECIMAL_PRECISION)}, ${formatToPrecision(cx8, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cy8, PATH_DECIMAL_PRECISION)}, ${formatToPrecision(centerX - radius, PATH_DECIMAL_PRECISION)} ${formatToPrecision(centerY, PATH_DECIMAL_PRECISION)} Z`;
+              commands = createCircleCommands(centerX, centerY, radius);
               break;
             }
 
             case 'triangle': {
               // Create a triangle using path commands
-              d = `M ${formatToPrecision(centerX, PATH_DECIMAL_PRECISION)} ${formatToPrecision(startPoint.y, PATH_DECIMAL_PRECISION)} L ${formatToPrecision(endPoint.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(endPoint.y, PATH_DECIMAL_PRECISION)} L ${formatToPrecision(startPoint.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(endPoint.y, PATH_DECIMAL_PRECISION)} Z`;
+              commands = createTriangleCommands(centerX, startPoint.y, endPoint.x, endPoint.y, startPoint.x);
               break;
             }
 
             default: {
               // Default to square if unknown shape
               const defaultHalfSize = Math.min(width, height) / 2;
-              d = `M ${formatToPrecision(centerX - defaultHalfSize, PATH_DECIMAL_PRECISION)} ${formatToPrecision(centerY - defaultHalfSize, PATH_DECIMAL_PRECISION)} L ${formatToPrecision(centerX + defaultHalfSize, PATH_DECIMAL_PRECISION)} ${formatToPrecision(centerY - defaultHalfSize, PATH_DECIMAL_PRECISION)} L ${formatToPrecision(centerX + defaultHalfSize, PATH_DECIMAL_PRECISION)} ${formatToPrecision(centerY + defaultHalfSize, PATH_DECIMAL_PRECISION)} L ${formatToPrecision(centerX - defaultHalfSize, PATH_DECIMAL_PRECISION)} ${formatToPrecision(centerY + defaultHalfSize, PATH_DECIMAL_PRECISION)} Z`;
+              commands = createSquareCommands(centerX, centerY, defaultHalfSize);
               break;
             }
           }
 
-          // Parse the path string into commands and extract subpaths
-          const commands = parsePathD(d);
+          // Extract subpaths directly from generated commands
           const parsedSubPaths = extractSubpaths(commands);
 
           get().addElement({

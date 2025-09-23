@@ -1,6 +1,6 @@
 import type { PathData, Point, Command } from '../types';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from './index';
-import { parsePathD, extractSubpaths, updatePathD } from './pathParserUtils';
+import { extractSubpaths } from './pathParserUtils';
 import { measurePath } from './measurementUtils';
 
 /**
@@ -80,8 +80,6 @@ export const alignmentTargets = {
   bottom: (bounds: { minX: number; minY: number; maxX: number; maxY: number }[]) => 
     Math.max(...bounds.map(b => b.maxY))
 } as const;
-
-// Removed unused parsePathCommands function - parsePathD is used instead
 
 /**
  * Transforms a point using scale and translation
@@ -175,9 +173,8 @@ export function transformPathData(
       return transformedCmd;
     });
     
-    // Rebuild the path from transformed commands
-    const newPathString = updatePathD(transformedCommands, []);
-    const newSubPaths = extractSubpaths(parsePathD(newPathString)).map(sp => sp.commands);
+    // Rebuild subpaths directly from transformed commands without serialization
+    const newSubPaths = extractSubpaths(transformedCommands).map(sp => sp.commands);
     
     return {
       ...pathData,
@@ -286,9 +283,8 @@ export function transformSubpathsData(
       }
     });
     
-    // Rebuild the path string from modified commands
-    const newPathString = updatePathD(modifiedCommands, []);
-    const newSubPaths = extractSubpaths(parsePathD(newPathString)).map(sp => sp.commands);
+    // Rebuild subpaths directly from modified commands without serialization
+    const newSubPaths = extractSubpaths(modifiedCommands).map(sp => sp.commands);
     
     return {
       ...pathData,
