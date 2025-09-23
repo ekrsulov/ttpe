@@ -25,7 +25,7 @@ function debounce<T extends (...args: never[]) => void>(
   func: T,
   delay: number
 ): T {
-  let timeoutId: number | null = null;
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
   return ((...args: Parameters<T>) => {
     if (timeoutId) {
