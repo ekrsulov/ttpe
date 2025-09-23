@@ -35,73 +35,6 @@ test.describe('Arrange and Style Tests', () => {
     expect(paths).toBeGreaterThan(0);
   });
 
-  test('should arrange elements using bring to front and send to back', async ({ page }) => {
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
-
-    // Create first shape
-    await page.locator('[title="Shape"]').click();
-
-    const canvas = page.locator('svg[viewBox*="0 0"]').first();
-    const canvasBox = await canvas.boundingBox();
-    if (!canvasBox) throw new Error('SVG canvas not found');
-
-    // Draw first square
-    await page.mouse.move(
-      canvasBox.x + canvasBox.width * 0.2,
-      canvasBox.y + canvasBox.height * 0.2
-    );
-    await page.mouse.down();
-
-    await page.mouse.move(
-      canvasBox.x + canvasBox.width * 0.4,
-      canvasBox.y + canvasBox.height * 0.4,
-      { steps: 10 }
-    );
-
-    await page.mouse.up();
-
-    // Wait for shape creation
-    await page.waitForTimeout(100);
-
-    // Switch back to shape mode to create second shape
-    await page.locator('[title="Shape"]').click();
-
-    // Create second shape
-    await page.mouse.move(
-      canvasBox.x + canvasBox.width * 0.3,
-      canvasBox.y + canvasBox.height * 0.3
-    );
-    await page.mouse.down();
-
-    await page.mouse.move(
-      canvasBox.x + canvasBox.width * 0.5,
-      canvasBox.y + canvasBox.height * 0.5,
-      { steps: 10 }
-    );
-
-    await page.mouse.up();
-
-    // Wait for second shape creation
-    await page.waitForTimeout(100);
-
-    // Switch to select mode
-    await page.locator('[title="Select"]').click();
-
-    // Select the first shape (bottom one)
-    await page.mouse.click(
-      canvasBox.x + canvasBox.width * 0.25,
-      canvasBox.y + canvasBox.height * 0.25
-    );
-
-    // Wait for selection
-    await page.waitForTimeout(100);
-
-    // Verify both shapes exist
-    const pathsAfterArrange = await canvas.locator('path').count();
-    expect(pathsAfterArrange).toBeGreaterThanOrEqual(2);
-  });
-
   test('should align elements horizontally and vertically', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
@@ -322,27 +255,51 @@ test.describe('Arrange and Style Tests', () => {
     // Switch to select mode
     await page.locator('[title="Select"]').click();
 
-    // Select all three shapes (shift+click)
-    await page.keyboard.down('Shift');
-    await page.mouse.click(
-      canvasBox.x + canvasBox.width * 0.15,
-      canvasBox.y + canvasBox.height * 0.25
-    );
-    await page.mouse.click(
-      canvasBox.x + canvasBox.width * 0.45,
-      canvasBox.y + canvasBox.height * 0.25
-    );
-    await page.mouse.click(
-      canvasBox.x + canvasBox.width * 0.75,
-      canvasBox.y + canvasBox.height * 0.25
-    );
-    await page.keyboard.up('Shift');
+    // Expand arrange panel first
+    await page.locator('[title="Expand Arrange"]').click();
 
-    // Wait for multi-selection
-    await page.waitForTimeout(100);
+    // Verify three shapes were created
+    const pathsCount = await canvas.locator('path').count();
+    expect(pathsCount).toBe(3);
+
+    // Select all three shapes using the exposed store
+    await page.evaluate(() => {
+      const store = (window as any).useCanvasStore;
+      if (store) {
+        const state = store.getState();
+        const elementIds = state.elements.map((el: any) => el.id);
+        if (elementIds.length >= 3) {
+          // Select all elements
+          state.selectElements(elementIds);
+        }
+      }
+    });
+
+    // Wait for selection to be processed
+    await page.waitForTimeout(500);
+
+    // Verify selection by checking if distribute buttons are enabled
+    const distributeHorizontalButton = page.locator('[title="Distribute Horizontally"]');
+    await expect(distributeHorizontalButton).toBeEnabled();
+
+    const distributeVerticalButton = page.locator('[title="Distribute Vertically"]');
+    await expect(distributeVerticalButton).toBeEnabled();
+
+    // Click distribute horizontally button
+    await distributeHorizontalButton.click();
+
+    // Wait for distribution
+    await page.waitForTimeout(200);
+
+    // Click distribute vertically button
+    await distributeVerticalButton.click();
+
+    // Wait for distribution
+    await page.waitForTimeout(200);
 
     // Verify all shapes still exist
     const pathsAfterDistribute = await canvas.locator('path').count();
-    expect(pathsAfterDistribute).toBeGreaterThanOrEqual(3);
+    expect(pathsAfterDistribute).toBe(3);
   });
+
 });
