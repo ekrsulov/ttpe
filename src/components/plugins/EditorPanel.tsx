@@ -16,9 +16,11 @@ import {
   ChevronUp
 } from 'lucide-react';
 import { IconButton } from '../ui/IconButton';
+import { SliderControl } from '../ui/SliderControl';
 import { Tag } from '../ui/Tag';
 import { PresetButton } from '../ui/PresetButton';
 import { PRESETS, type Preset } from '../../utils/presets';
+import { getSelectedPathProperty } from '../../utils/pathPropertyUtils';
 
 // Custom hook to subscribe to temporal state changes
 const useTemporalState = () => {
@@ -157,65 +159,11 @@ export const EditorPanel: React.FC = () => {
   };
 
   // Get current values from selected elements or plugin defaults
-  const getCurrentStrokeWidth = () => {
-    if (selectedPathsCount > 0) {
-      const selectedElements = useCanvasStore.getState().getSelectedElements();
-      const pathElements = selectedElements.filter(el => el.type === 'path');
-      if (pathElements.length > 0) {
-        // Return the stroke width of the first selected path
-        return pathElements[0].data.strokeWidth;
-      }
-    }
-    return pencil.strokeWidth;
-  };
-
-  const getCurrentStrokeColor = () => {
-    if (selectedPathsCount > 0) {
-      const selectedElements = useCanvasStore.getState().getSelectedElements();
-      const pathElements = selectedElements.filter(el => el.type === 'path');
-      if (pathElements.length > 0) {
-        // Return the stroke color of the first selected path
-        return pathElements[0].data.strokeColor;
-      }
-    }
-    return pencil.strokeColor;
-  };
-
-  const getCurrentOpacity = () => {
-    if (selectedPathsCount > 0) {
-      const selectedElements = useCanvasStore.getState().getSelectedElements();
-      const pathElements = selectedElements.filter(el => el.type === 'path');
-      if (pathElements.length > 0) {
-        // Return the opacity of the first selected path
-        return pathElements[0].data.strokeOpacity;
-      }
-    }
-    return pencil.strokeOpacity;
-  };
-
-  const getCurrentFillColor = () => {
-    if (selectedPathsCount > 0) {
-      const selectedElements = useCanvasStore.getState().getSelectedElements();
-      const pathElements = selectedElements.filter(el => el.type === 'path');
-      if (pathElements.length > 0) {
-        // Return the fill color of the first selected path
-        return pathElements[0].data.fillColor;
-      }
-    }
-    return pencil.fillColor;
-  };
-
-  const getCurrentFillOpacity = () => {
-    if (selectedPathsCount > 0) {
-      const selectedElements = useCanvasStore.getState().getSelectedElements();
-      const pathElements = selectedElements.filter(el => el.type === 'path');
-      if (pathElements.length > 0) {
-        // Return the fill opacity of the first selected path
-        return pathElements[0].data.fillOpacity;
-      }
-    }
-    return pencil.fillOpacity;
-  };
+  const getCurrentStrokeWidth = () => getSelectedPathProperty('strokeWidth', pencil.strokeWidth);
+  const getCurrentStrokeColor = () => getSelectedPathProperty('strokeColor', pencil.strokeColor);
+  const getCurrentOpacity = () => getSelectedPathProperty('strokeOpacity', pencil.strokeOpacity);
+  const getCurrentFillColor = () => getSelectedPathProperty('fillColor', pencil.fillColor);
+  const getCurrentFillOpacity = () => getSelectedPathProperty('fillOpacity', pencil.fillOpacity);
 
   return (
     <div style={{ backgroundColor: '#fff' }}>
@@ -367,38 +315,18 @@ export const EditorPanel: React.FC = () => {
       {/* Pencil Properties Section */}
       {isExpanded && (
         <div style={{}}>
-          {/* Stroke Width - First Line */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-            <Circle size={14} style={{ color: '#666', flexShrink: 0 }} />
-            <input
-              type="range"
-              min="0"
-              max="20"
-              value={getCurrentStrokeWidth()}
-              onChange={(e) => handleStrokeWidthChange(parseInt(e.target.value))}
-              style={{
-                flex: 1,
-                height: '4px',
-                borderRadius: '2px',
-                background: '#ddd',
-                outline: 'none',
-                cursor: 'pointer',
-                minWidth: '60px'
-              }}
-              title="Stroke Width"
-            />
-            <span style={{
-              fontSize: '10px',
-              color: '#666',
-              width: '31px',
-              textAlign: 'right',
-              flexShrink: 0
-            }}>
-              {getCurrentStrokeWidth()}px
-            </span>
-          </div>
+          {/* Stroke Width */}
+          <SliderControl
+            icon={<Circle size={14} />}
+            value={getCurrentStrokeWidth()}
+            min={0}
+            max={20}
+            onChange={handleStrokeWidthChange}
+            formatter={(value) => `${value}px`}
+            title="Stroke Width"
+          />
 
-          {/* Stroke Color & Opacity - Second Line */}
+          {/* Stroke Color & Opacity */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
             <Pen size={14} style={{ color: '#666', flexShrink: 0 }} />
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
@@ -430,38 +358,24 @@ export const EditorPanel: React.FC = () => {
               </IconButton>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', minWidth: '120px' }}>
-              <Eye size={14} style={{ color: '#666', flexShrink: 0 }} />
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.1"
+              <SliderControl
+                icon={<Eye size={14} />}
                 value={getCurrentOpacity()}
-                onChange={(e) => handleOpacityChange(parseFloat(e.target.value))}
-                style={{
-                  flex: 1,
-                  height: '4px',
-                  borderRadius: '2px',
-                  background: '#ddd',
-                  outline: 'none',
-                  cursor: 'pointer',
-                  minWidth: '50px'
-                }}
+                min={0}
+                max={1}
+                step={0.1}
+                onChange={handleOpacityChange}
+                formatter={(value) => `${Math.round(value * 100)}%`}
                 title="Stroke Opacity"
+                minWidth="50px"
+                valueWidth="35px"
+                inline={true}
+                gap="4px"
               />
-              <span style={{
-                fontSize: '10px',
-                color: '#666',
-                width: '35px',
-                textAlign: 'right',
-                flexShrink: 0
-              }}>
-                {Math.round(getCurrentOpacity() * 100)}%
-              </span>
             </div>
           </div>
 
-          {/* Fill Color & Opacity - Third Line */}
+          {/* Fill Color & Opacity */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <PaintBucket size={14} style={{ color: '#666', flexShrink: 0 }} />
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
@@ -492,34 +406,20 @@ export const EditorPanel: React.FC = () => {
               </IconButton>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', minWidth: '120px' }}>
-              <Eye size={14} style={{ color: '#666', flexShrink: 0 }} />
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.1"
+              <SliderControl
+                icon={<Eye size={14} />}
                 value={getCurrentFillOpacity()}
-                onChange={(e) => handleFillOpacityChange(parseFloat(e.target.value))}
-                style={{
-                  flex: 1,
-                  height: '4px',
-                  borderRadius: '2px',
-                  background: '#ddd',
-                  outline: 'none',
-                  cursor: 'pointer',
-                  minWidth: '50px'
-                }}
+                min={0}
+                max={1}
+                step={0.1}
+                onChange={handleFillOpacityChange}
+                formatter={(value) => `${Math.round(value * 100)}%`}
                 title="Fill Opacity"
+                minWidth="50px"
+                valueWidth="35px"
+                inline={true}
+                gap="4px"
               />
-              <span style={{
-                fontSize: '10px',
-                color: '#666',
-                width: '35px',
-                textAlign: 'right',
-                flexShrink: 0
-              }}>
-                {Math.round(getCurrentFillOpacity() * 100)}%
-              </span>
             </div>
           </div>
         </div>

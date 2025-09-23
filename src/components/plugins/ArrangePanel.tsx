@@ -72,74 +72,75 @@ export const ArrangePanel: React.FC = () => {
                         (activePlugin === 'edit' && selectedCommandsCount >= 3) ||
                         (activePlugin === 'subpath' && selectedSubpathsCount >= 3);
 
-  // Button configurations based on active plugin
-  const getDistributionButtons = (): ButtonConfig[] => {
-    if (activePlugin === 'subpath') {
-      return [
-        { handler: distributeHorizontallySubpaths, icon: <MoveHorizontal size={10} />, title: "Distribute Horizontally", disabled: !canDistribute },
-        { handler: distributeVerticallySubpaths, icon: <MoveVertical size={10} />, title: "Distribute Vertically", disabled: !canDistribute }
-      ];
-    } else if (activePlugin === 'edit') {
-      return [
-        { handler: distributeHorizontallyCommands, icon: <MoveHorizontal size={10} />, title: "Distribute Horizontally", disabled: !canDistribute },
-        { handler: distributeVerticallyCommands, icon: <MoveVertical size={10} />, title: "Distribute Vertically", disabled: !canDistribute }
-      ];
-    } else {
-      return [
-        { handler: distributeHorizontally, icon: <MoveHorizontal size={10} />, title: "Distribute Horizontally", disabled: !canDistribute },
-        { handler: distributeVertically, icon: <MoveVertical size={10} />, title: "Distribute Vertically", disabled: !canDistribute }
-      ];
+  // Define handlers based on active plugin
+  const handlers = {
+    select: {
+      distributeHorizontally,
+      distributeVertically,
+      bringToFront,
+      sendForward,
+      sendBackward,
+      sendToBack,
+      alignLeft,
+      alignCenter,
+      alignRight,
+      alignTop,
+      alignMiddle,
+      alignBottom
+    },
+    edit: {
+      distributeHorizontally: distributeHorizontallyCommands,
+      distributeVertically: distributeVerticallyCommands,
+      bringToFront: () => {}, // Not applicable for edit mode
+      sendForward: () => {},
+      sendBackward: () => {},
+      sendToBack: () => {},
+      alignLeft: alignLeftCommands,
+      alignCenter: alignCenterCommands,
+      alignRight: alignRightCommands,
+      alignTop: alignTopCommands,
+      alignMiddle: alignMiddleCommands,
+      alignBottom: alignBottomCommands
+    },
+    subpath: {
+      distributeHorizontally: distributeHorizontallySubpaths,
+      distributeVertically: distributeVerticallySubpaths,
+      bringToFront: bringSubpathToFront,
+      sendForward: sendSubpathForward,
+      sendBackward: sendSubpathBackward,
+      sendToBack: sendSubpathToBack,
+      alignLeft: alignLeftSubpaths,
+      alignCenter: alignCenterSubpaths,
+      alignRight: alignRightSubpaths,
+      alignTop: alignTopSubpaths,
+      alignMiddle: alignMiddleSubpaths,
+      alignBottom: alignBottomSubpaths
     }
   };
 
-  const getOrderButtons = (): ButtonConfig[] => {
-    if (activePlugin === 'subpath') {
-      return [
-        { handler: bringSubpathToFront, icon: <Triangle size={10} />, title: "Bring Subpath to Front", disabled: selectedSubpathsCount === 0 },
-        { handler: sendSubpathForward, icon: <ChevronUp size={10} />, title: "Send Subpath Forward", disabled: selectedSubpathsCount === 0 },
-        { handler: sendSubpathBackward, icon: <ChevronDown size={10} />, title: "Send Subpath Backward", disabled: selectedSubpathsCount === 0 },
-        { handler: sendSubpathToBack, icon: <Triangle size={10} style={{ transform: 'rotate(180deg)' }} />, title: "Send Subpath to Back", disabled: selectedSubpathsCount === 0 }
-      ];
-    } else {
-      return [
-        { handler: bringToFront, icon: <Triangle size={10} />, title: "Bring to Front", disabled: selectedCount === 0 },
-        { handler: sendForward, icon: <ChevronUp size={10} />, title: "Send Forward", disabled: selectedCount === 0 },
-        { handler: sendBackward, icon: <ChevronDown size={10} />, title: "Send Backward", disabled: selectedCount === 0 },
-        { handler: sendToBack, icon: <Triangle size={10} style={{ transform: 'rotate(180deg)' }} />, title: "Send to Back", disabled: selectedCount === 0 }
-      ];
-    }
-  };
+  const currentHandlers = handlers[activePlugin as keyof typeof handlers] || handlers.select;
 
-  const getAlignmentButtons = (): ButtonConfig[] => {
-    if (activePlugin === 'subpath') {
-      return [
-        { handler: alignLeftSubpaths, icon: <AlignLeft size={10} />, title: "Align Left", disabled: !canAlign },
-        { handler: alignCenterSubpaths, icon: <AlignCenter size={10} />, title: "Align Center", disabled: !canAlign },
-        { handler: alignRightSubpaths, icon: <AlignRight size={10} />, title: "Align Right", disabled: !canAlign },
-        { handler: alignTopSubpaths, icon: <AlignVerticalJustifyStart size={10} />, title: "Align Top", disabled: !canAlign },
-        { handler: alignMiddleSubpaths, icon: <AlignVerticalJustifyCenter size={10} />, title: "Align Middle", disabled: !canAlign },
-        { handler: alignBottomSubpaths, icon: <AlignVerticalJustifyEnd size={10} />, title: "Align Bottom", disabled: !canAlign }
-      ];
-    } else if (activePlugin === 'edit') {
-      return [
-        { handler: alignLeftCommands, icon: <AlignLeft size={10} />, title: "Align Left", disabled: !canAlign },
-        { handler: alignCenterCommands, icon: <AlignCenter size={10} />, title: "Align Center", disabled: !canAlign },
-        { handler: alignRightCommands, icon: <AlignRight size={10} />, title: "Align Right", disabled: !canAlign },
-        { handler: alignTopCommands, icon: <AlignVerticalJustifyStart size={10} />, title: "Align Top", disabled: !canAlign },
-        { handler: alignMiddleCommands, icon: <AlignVerticalJustifyCenter size={10} />, title: "Align Middle", disabled: !canAlign },
-        { handler: alignBottomCommands, icon: <AlignVerticalJustifyEnd size={10} />, title: "Align Bottom", disabled: !canAlign }
-      ];
-    } else {
-      return [
-        { handler: alignLeft, icon: <AlignLeft size={10} />, title: "Align Left", disabled: !canAlign },
-        { handler: alignCenter, icon: <AlignCenter size={10} />, title: "Align Center", disabled: !canAlign },
-        { handler: alignRight, icon: <AlignRight size={10} />, title: "Align Right", disabled: !canAlign },
-        { handler: alignTop, icon: <AlignVerticalJustifyStart size={10} />, title: "Align Top", disabled: !canAlign },
-        { handler: alignMiddle, icon: <AlignVerticalJustifyCenter size={10} />, title: "Align Middle", disabled: !canAlign },
-        { handler: alignBottom, icon: <AlignVerticalJustifyEnd size={10} />, title: "Align Bottom", disabled: !canAlign }
-      ];
-    }
-  };
+  // Button configurations - now using the consolidated handlers
+  const distributionButtons: ButtonConfig[] = [
+    { handler: currentHandlers.distributeHorizontally, icon: <MoveHorizontal size={10} />, title: "Distribute Horizontally", disabled: !canDistribute },
+    { handler: currentHandlers.distributeVertically, icon: <MoveVertical size={10} />, title: "Distribute Vertically", disabled: !canDistribute }
+  ];
+
+  const orderButtons: ButtonConfig[] = activePlugin === 'edit' ? [] : [
+    { handler: currentHandlers.bringToFront, icon: <Triangle size={10} />, title: `Bring ${activePlugin === 'subpath' ? 'Subpath' : ''} to Front`, disabled: activePlugin === 'subpath' ? selectedSubpathsCount === 0 : selectedCount === 0 },
+    { handler: currentHandlers.sendForward, icon: <ChevronUp size={10} />, title: `Send ${activePlugin === 'subpath' ? 'Subpath' : ''} Forward`, disabled: activePlugin === 'subpath' ? selectedSubpathsCount === 0 : selectedCount === 0 },
+    { handler: currentHandlers.sendBackward, icon: <ChevronDown size={10} />, title: `Send ${activePlugin === 'subpath' ? 'Subpath' : ''} Backward`, disabled: activePlugin === 'subpath' ? selectedSubpathsCount === 0 : selectedCount === 0 },
+    { handler: currentHandlers.sendToBack, icon: <Triangle size={10} style={{ transform: 'rotate(180deg)' }} />, title: `Send ${activePlugin === 'subpath' ? 'Subpath' : ''} to Back`, disabled: activePlugin === 'subpath' ? selectedSubpathsCount === 0 : selectedCount === 0 }
+  ];
+
+  const alignmentButtons: ButtonConfig[] = [
+    { handler: currentHandlers.alignLeft, icon: <AlignLeft size={10} />, title: "Align Left", disabled: !canAlign },
+    { handler: currentHandlers.alignCenter, icon: <AlignCenter size={10} />, title: "Align Center", disabled: !canAlign },
+    { handler: currentHandlers.alignRight, icon: <AlignRight size={10} />, title: "Align Right", disabled: !canAlign },
+    { handler: currentHandlers.alignTop, icon: <AlignVerticalJustifyStart size={10} />, title: "Align Top", disabled: !canAlign },
+    { handler: currentHandlers.alignMiddle, icon: <AlignVerticalJustifyCenter size={10} />, title: "Align Middle", disabled: !canAlign },
+    { handler: currentHandlers.alignBottom, icon: <AlignVerticalJustifyEnd size={10} />, title: "Align Bottom", disabled: !canAlign }
+  ];
 
   const renderButtonRow = (buttons: ButtonConfig[]) => (
     <div style={{ display: 'flex', gap: '2px' }}>
@@ -156,10 +157,6 @@ export const ArrangePanel: React.FC = () => {
       ))}
     </div>
   );
-
-  const distributionButtons = getDistributionButtons();
-  const orderButtons = getOrderButtons();
-  const alignmentButtons = getAlignmentButtons();
 
   return (
     <div style={{ 

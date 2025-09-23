@@ -1,5 +1,6 @@
 import React from 'react';
 import { PaintBucket } from 'lucide-react';
+import { SliderControl } from '../ui/SliderControl';
 
 interface EditPanelProps {
   activePlugin: string | null;
@@ -84,73 +85,30 @@ export const EditPanel: React.FC<EditPanelProps> = ({
 
       {/* Radius Slider - only show when brush mode is active */}
       {smoothBrush.isActive && (
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          marginBottom: '8px',
-          gap: '8px'
-        }}>
-          <span style={{ fontSize: '11px', color: '#666', minWidth: '40px' }}>Radius:</span>
-          <input
-            type="range"
-            min="6"
-            max="60"
-            step="1"
-            value={smoothBrush.radius}
-            onChange={(e) => updateSmoothBrush({ radius: parseInt(e.target.value) })}
-            style={{
-              flex: 1,
-              height: '4px',
-              borderRadius: '2px',
-              background: '#ddd',
-              outline: 'none',
-              cursor: 'pointer'
-            }}
-          />
-          <span style={{
-            fontSize: '10px',
-            color: '#666',
-            width: '25px',
-            textAlign: 'right'
-          }}>
-            {smoothBrush.radius}
-          </span>
-        </div>
+        <SliderControl
+          label="Radius:"
+          value={smoothBrush.radius}
+          min={6}
+          max={60}
+          step={1}
+          onChange={(value) => updateSmoothBrush({ radius: value })}
+          labelWidth="40px"
+          valueWidth="25px"
+        />
       )}
 
       {/* Strength Slider */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        marginBottom: '8px',
-        gap: '8px'
-      }}>
-        <span style={{ fontSize: '11px', color: '#666', minWidth: '40px' }}>Strength:</span>
-        <input
-          type="range"
-          min="0"
-          max="1"
-          step="0.01"
-          value={smoothBrush.strength}
-          onChange={(e) => updateSmoothBrush({ strength: parseFloat(e.target.value) })}
-          style={{
-            flex: 1,
-            height: '4px',
-            borderRadius: '2px',
-            background: '#ddd',
-            outline: 'none',
-            cursor: 'pointer'
-          }}
-        />
-        <span style={{
-          fontSize: '10px',
-          color: '#666',
-          width: '35px',
-          textAlign: 'right'
-        }}>
-          {(smoothBrush.strength * 100).toFixed(0)}%
-        </span>
-      </div>
+      <SliderControl
+        label="Strength:"
+        value={smoothBrush.strength}
+        min={0}
+        max={1}
+        step={0.01}
+        onChange={(value) => updateSmoothBrush({ strength: value })}
+        formatter={(value) => `${(value * 100).toFixed(0)}%`}
+        labelWidth="40px"
+        valueWidth="35px"
+      />
 
       {/* Simplify Points Checkbox */}
       <div style={{
@@ -185,74 +143,32 @@ export const EditPanel: React.FC<EditPanelProps> = ({
 
       {/* Simplification Tolerance Slider - only show when simplify points is enabled */}
       {smoothBrush.simplifyPoints && (
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          marginBottom: '8px',
-          gap: '8px'
-        }}>
-          <span style={{ fontSize: '11px', color: '#666', minWidth: '40px' }}>Tolerance:</span>
-          <input
-            type="range"
-            min="0.1"
-            max="10"
-            step="0.1"
-            value={smoothBrush.simplificationTolerance}
-            onChange={(e) => updateSmoothBrush({ simplificationTolerance: parseFloat(e.target.value) })}
-            style={{
-              flex: 1,
-              height: '4px',
-              borderRadius: '2px',
-              background: '#ddd',
-              outline: 'none',
-              cursor: 'pointer'
-            }}
-          />
-          <span style={{
-            fontSize: '10px',
-            color: '#666',
-            width: '30px',
-            textAlign: 'right'
-          }}>
-            {smoothBrush.simplificationTolerance.toFixed(1)}
-          </span>
-        </div>
+        <SliderControl
+          label="Tolerance:"
+          value={smoothBrush.simplificationTolerance}
+          min={0.1}
+          max={10}
+          step={0.1}
+          onChange={(value) => updateSmoothBrush({ simplificationTolerance: value })}
+          formatter={(value) => value.toFixed(1)}
+          labelWidth="40px"
+          valueWidth="30px"
+        />
       )}
 
       {/* Minimum Distance Slider - only show when simplify points is enabled */}
       {smoothBrush.simplifyPoints && (
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          marginBottom: '8px',
-          gap: '8px'
-        }}>
-          <span style={{ fontSize: '11px', color: '#666', minWidth: '40px' }}>Min Dist:</span>
-          <input
-            type="range"
-            min="0.1"
-            max="5.0"
-            step="0.1"
-            value={smoothBrush.minDistance}
-            onChange={(e) => updateSmoothBrush({ minDistance: parseFloat(e.target.value) })}
-            style={{
-              flex: 1,
-              height: '4px',
-              borderRadius: '2px',
-              background: '#ddd',
-              outline: 'none',
-              cursor: 'pointer'
-            }}
-          />
-          <span style={{
-            fontSize: '10px',
-            color: '#666',
-            width: '30px',
-            textAlign: 'right'
-          }}>
-            {smoothBrush.minDistance.toFixed(1)}
-          </span>
-        </div>
+        <SliderControl
+          label="Min Dist:"
+          value={smoothBrush.minDistance}
+          min={0.1}
+          max={5.0}
+          step={0.1}
+          onChange={(value) => updateSmoothBrush({ minDistance: value })}
+          formatter={(value) => value.toFixed(1)}
+          labelWidth="40px"
+          valueWidth="30px"
+        />
       )}
 
       {/* Apply Button - show when brush mode is OFF or when brush is ON but has selected points */}

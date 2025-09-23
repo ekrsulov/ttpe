@@ -49,6 +49,33 @@ export const Sidebar: React.FC = () => {
     { name: 'shape', label: 'Shape', icon: Shapes },
   ];
 
+  // Helper function to render plugin buttons
+  const renderPluginButton = (plugin: typeof plugins[0]) => {
+    const IconComponent = plugin.icon;
+    const isDisabled = (plugin.name === 'transformation' || plugin.name === 'edit' || plugin.name === 'subpath') && selectedIds.length === 0;
+    return (
+      <IconButton
+        key={plugin.name}
+        onPointerUp={() => !isDisabled && setMode(plugin.name)}
+        disabled={isDisabled}
+        active={activePlugin === plugin.name}
+        activeBgColor="#007bff"
+        activeColor="#fff"
+        size="custom"
+        customSize="30px"
+        title={plugin.label}
+      >
+        <IconComponent size={14} />
+      </IconButton>
+    );
+  };
+
+  // Split plugins into rows of 4
+  const pluginRows = [];
+  for (let i = 0; i < plugins.length; i += 4) {
+    pluginRows.push(plugins.slice(i, i + 4));
+  }
+
   return (
     <div style={{
       position: 'absolute',
@@ -68,59 +95,20 @@ export const Sidebar: React.FC = () => {
         padding: '4px 8px 4px 8px',
         backgroundColor: '#fff'
       }}>
-        {/* First row */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
-          gap: '2px',
-          marginBottom: '2px'
-        }}>
-          {plugins.slice(0, 4).map((plugin) => {
-            const IconComponent = plugin.icon;
-            const isDisabled = (plugin.name === 'transformation' || plugin.name === 'edit' || plugin.name === 'subpath') && selectedIds.length === 0;
-            return (
-              <IconButton
-                key={plugin.name}
-                onPointerUp={() => !isDisabled && setMode(plugin.name)}
-                disabled={isDisabled}
-                active={activePlugin === plugin.name}
-                activeBgColor="#007bff"
-                activeColor="#fff"
-                size="custom"
-                customSize="30px"
-                title={plugin.label}
-              >
-                <IconComponent size={14} />
-              </IconButton>
-            );
-          })}
-        </div>
-        {/* Second row */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
-          gap: '2px'
-        }}>
-          {plugins.slice(4).map((plugin) => {
-            const IconComponent = plugin.icon;
-            const isDisabled = (plugin.name === 'transformation' || plugin.name === 'edit' || plugin.name === 'subpath') && selectedIds.length === 0;
-            return (
-              <IconButton
-                key={plugin.name}
-                onPointerUp={() => !isDisabled && setMode(plugin.name)}
-                disabled={isDisabled}
-                active={activePlugin === plugin.name}
-                activeBgColor="#007bff"
-                activeColor="#fff"
-                size="custom"
-                customSize="30px"
-                title={plugin.label}
-              >
-                <IconComponent size={14} />
-              </IconButton>
-            );
-          })}
-        </div>
+        {/* Plugin button grid */}
+        {pluginRows.map((row, rowIndex) => (
+          <div
+            key={rowIndex}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 1fr)',
+              gap: '2px',
+              marginBottom: rowIndex < pluginRows.length - 1 ? '2px' : '0'
+            }}
+          >
+            {row.map(renderPluginButton)}
+          </div>
+        ))}
       </div>
 
       {/* Scrollable panels section */}
