@@ -171,10 +171,6 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     }
   });
 
-  // Removed renderIndividualSubpathHandlers - replaced with unified TransformationHandlers component
-
-  // Removed renderTransformationHandlers - replaced with unified TransformationHandlers component
-
   // Helper function to get transformed bounds
   const getTransformedBounds = (element: typeof elements[0]) => {
     if (element.type === 'path') {
@@ -194,14 +190,12 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     switch (type) {
       case 'path': {
         const pathData = data as import('../types').PathData;
-                // For pencil paths, if strokeColor is 'none', render with black
+        // For pencil paths, if strokeColor is 'none', render with black
         const effectiveStrokeColor = pathData.isPencilPath && pathData.strokeColor === 'none' 
           ? '#000000' 
           : pathData.strokeColor;
 
         const pathD = commandsToString(pathData.subPaths.flat());
-        
-        // Subpath dragging debug logging removed - will be reimplemented
         
         return (
           <g key={element.id}>
