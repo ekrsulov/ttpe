@@ -3,10 +3,10 @@ import { useCanvasStore } from '../../store/canvasStore';
 import { VectorSquare } from 'lucide-react';
 
 export const TransformationPanel: React.FC = () => {
-  const { 
-    selectedIds, 
-    selectedSubpaths, 
-    transformation, 
+  const {
+    selectedIds,
+    selectedSubpaths,
+    transformation,
     updateTransformationState,
     isWorkingWithSubpaths
   } = useCanvasStore();

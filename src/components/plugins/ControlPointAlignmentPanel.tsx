@@ -17,22 +17,22 @@ export const ControlPointAlignmentPanel: React.FC = () => {
 
   const isPathClosed = (commands: Command[]): boolean => {
     if (commands.length < 2) return false;
-    
+
     // Check for explicit Z command
     if (commands[commands.length - 1].type === 'Z') return true;
-    
+
     // Check if last point is close to first point (implicitly closed)
     const firstPoint = commands[0].type === 'Z' ? null : commands[0].position;
     const lastCommand = commands[commands.length - 1];
     const lastPoint = lastCommand.type === 'Z' ? null : lastCommand.position;
-    
+
     if (!firstPoint || !lastPoint) return false;
-    
+
     const distance = Math.sqrt(
-      Math.pow(lastPoint.x - firstPoint.x, 2) + 
+      Math.pow(lastPoint.x - firstPoint.x, 2) +
       Math.pow(lastPoint.y - firstPoint.y, 2)
     );
-    
+
     const threshold = 0.1; // Small threshold for considering points as the same
     return distance < threshold;
   };
@@ -41,13 +41,13 @@ export const ControlPointAlignmentPanel: React.FC = () => {
   const hasClosingZCommand = useCallback((elementId: string, commandIndex: number): boolean => {
     const element = elements.find(el => el.id === elementId);
     if (!element || element.type !== 'path') return false;
-    
+
     const pathData = element.data as import('../../types').PathData;
     const commands = pathData.subPaths.flat();
-    
+
     // Check if the command at commandIndex is an M command
     if (commands[commandIndex]?.type !== 'M') return false;
-    
+
     // Look for Z commands after this M command
     for (let i = commandIndex + 1; i < commands.length; i++) {
       if (commands[i].type === 'Z') {
@@ -60,7 +60,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
             break;
           }
         }
-        
+
         if (lastMIndex === commandIndex) {
           return true;
         }
@@ -69,7 +69,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
         break;
       }
     }
-    
+
     return false;
   }, [elements]);
 
@@ -77,23 +77,23 @@ export const ControlPointAlignmentPanel: React.FC = () => {
   const isLastPointOfSubpath = useCallback((elementId: string, commandIndex: number, pointIndex: number): boolean => {
     const element = elements.find(el => el.id === elementId);
     if (!element || element.type !== 'path') return false;
-    
+
     const pathData = element.data as import('../../types').PathData;
     const commands = pathData.subPaths.flat();
-    
+
     const command = commands[commandIndex];
     if (!command) return false;
-    
+
     // Check if this is the last point of the command
     const pointsLength = command.type === 'M' || command.type === 'L' ? 1 : command.type === 'C' ? 3 : 0;
     const isLastPoint = pointIndex === pointsLength - 1;
     if (!isLastPoint) return false;
-    
+
     // Check if this is the last command in the path or before a Z/M
-    const isLastCommandInSubpath = commandIndex === commands.length - 1 || 
-                                   commands[commandIndex + 1].type === 'M' || 
-                                   commands[commandIndex + 1].type === 'Z';
-    
+    const isLastCommandInSubpath = commandIndex === commands.length - 1 ||
+      commands[commandIndex + 1].type === 'M' ||
+      commands[commandIndex + 1].type === 'Z';
+
     return isLastCommandInSubpath;
   }, [elements]);
 
@@ -101,13 +101,13 @@ export const ControlPointAlignmentPanel: React.FC = () => {
   const isAtMPosition = useCallback((elementId: string, commandIndex: number, pointIndex: number): boolean => {
     const element = elements.find(el => el.id === elementId);
     if (!element || element.type !== 'path') return false;
-    
+
     const pathData = element.data as import('../../types').PathData;
     const commands = pathData.subPaths.flat();
-    
+
     const command = commands[commandIndex];
     if (!command) return false;
-    
+
     // Find the M command for this subpath (the last M before this command)
     let subpathMIndex = -1;
     for (let i = commandIndex - 1; i >= 0; i--) {
@@ -116,9 +116,9 @@ export const ControlPointAlignmentPanel: React.FC = () => {
         break;
       }
     }
-    
+
     if (subpathMIndex === -1) return false;
-    
+
     // Get the point to check
     let pointToCheck: Point | null = null;
     if (command.type === 'M' || command.type === 'L') {
@@ -129,13 +129,13 @@ export const ControlPointAlignmentPanel: React.FC = () => {
       else if (pointIndex === 2) pointToCheck = command.position;
     }
     const mPosition = (commands[subpathMIndex] as Command & { type: 'M' }).position;
-    
+
     if (!pointToCheck || !mPosition) return false;
-    
+
     // Check if they are at the same position (with small tolerance for floating point)
     const tolerance = 0.1;
-    return Math.abs(pointToCheck.x - mPosition.x) < tolerance && 
-           Math.abs(pointToCheck.y - mPosition.y) < tolerance;
+    return Math.abs(pointToCheck.x - mPosition.x) < tolerance &&
+      Math.abs(pointToCheck.y - mPosition.y) < tolerance;
   }, [elements]);
 
   // Get info for a single selected control point
@@ -162,7 +162,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
     if (!point.isControl) {
       // It's an anchor point - show only basic information
       const command = commands[cmd.commandIndex];
-      
+
       return {
         point,
         command,
@@ -172,40 +172,40 @@ export const ControlPointAlignmentPanel: React.FC = () => {
       };
     } else {
       // Control point logic - use the information directly from the point
-      
+
       // Determine if path is closed
       const isClosed = isPathClosed(commands);
-      
+
       // Find paired control point using the stored pairing information
       let pairedPoint: ControlPoint | null = null;
-      
+
       if (point.pairedCommandIndex !== undefined && point.pairedPointIndex !== undefined) {
-        pairedPoint = points.find((p: ControlPoint) => 
+        pairedPoint = points.find((p: ControlPoint) =>
           p.commandIndex === point.pairedCommandIndex && p.pointIndex === point.pairedPointIndex
         ) || null;
       }
-      
+
       // If no direct pairing found, try to find paired control point using proper logic
       if (!pairedPoint) {
         // For a control point to have a pair, they must share the same anchor point
         // This happens when:
         // 1. Incoming control point (index 1) of command N pairs with outgoing control point (index 0) of command N+1
         // 2. In closed paths, the last command's incoming pairs with first command's outgoing
-        
+
         let candidatePairedPoint: ControlPoint | null = null;
-        
+
         if (cmd.pointIndex === 1) {
           // This is an incoming control point - look for the next command's outgoing control point
           const nextCommandIndex = cmd.commandIndex + 1;
-          
+
           // Skip Z commands when looking for the next command
           let targetCommandIndex = nextCommandIndex;
           while (targetCommandIndex < commands.length && commands[targetCommandIndex].type === 'Z') {
             targetCommandIndex++;
           }
-          
+
           if (targetCommandIndex < commands.length && commands[targetCommandIndex].type === 'C') {
-            candidatePairedPoint = points.find((p: ControlPoint) => 
+            candidatePairedPoint = points.find((p: ControlPoint) =>
               p.commandIndex === targetCommandIndex && p.pointIndex === 0
             ) || null;
           } else if (isClosed) {
@@ -213,7 +213,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
             // Find the first C command after M
             for (let i = 1; i < commands.length; i++) {
               if (commands[i].type === 'C') {
-                candidatePairedPoint = points.find((p: ControlPoint) => 
+                candidatePairedPoint = points.find((p: ControlPoint) =>
                   p.commandIndex === i && p.pointIndex === 0
                 ) || null;
                 break;
@@ -223,15 +223,15 @@ export const ControlPointAlignmentPanel: React.FC = () => {
         } else if (cmd.pointIndex === 0) {
           // This is an outgoing control point - look for the previous command's incoming control point
           const prevCommandIndex = cmd.commandIndex - 1;
-          
+
           // Skip Z commands when looking for the previous command
           let targetCommandIndex = prevCommandIndex;
           while (targetCommandIndex >= 0 && commands[targetCommandIndex].type === 'Z') {
             targetCommandIndex--;
           }
-          
+
           if (targetCommandIndex >= 0 && commands[targetCommandIndex].type === 'C') {
-            candidatePairedPoint = points.find((p: ControlPoint) => 
+            candidatePairedPoint = points.find((p: ControlPoint) =>
               p.commandIndex === targetCommandIndex && p.pointIndex === 1
             ) || null;
           } else if (isClosed) {
@@ -239,7 +239,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
             // Find the last C command before any Z
             for (let i = commands.length - 1; i >= 1; i--) {
               if (commands[i].type === 'C') {
-                candidatePairedPoint = points.find((p: ControlPoint) => 
+                candidatePairedPoint = points.find((p: ControlPoint) =>
                   p.commandIndex === i && p.pointIndex === 1
                 ) || null;
                 break;
@@ -247,21 +247,21 @@ export const ControlPointAlignmentPanel: React.FC = () => {
             }
           }
         }
-        
+
         // For paired control points, verify they have the exact same anchor
         if (candidatePairedPoint) {
           const tolerance = 0.1;
           const anchorDistance = Math.sqrt(
-            Math.pow(point.anchor.x - candidatePairedPoint.anchor.x, 2) + 
+            Math.pow(point.anchor.x - candidatePairedPoint.anchor.x, 2) +
             Math.pow(point.anchor.y - candidatePairedPoint.anchor.y, 2)
           );
-          
+
           if (anchorDistance < tolerance) {
             pairedPoint = candidatePairedPoint;
           }
         }
       }
-      
+
       // Special case: if no paired point found and path is closed, look for control points that share coordinates with the M point
       if (!pairedPoint && isClosed && commands[cmd.commandIndex].type === 'C') {
         // Find the M point for this subpath
@@ -272,15 +272,15 @@ export const ControlPointAlignmentPanel: React.FC = () => {
             break;
           }
         }
-        
+
         if (mCommandIndex !== -1) {
           const mPoint = (commands[mCommandIndex] as Command & { type: 'M' }).position;
           const currentPoint = point;
-          
+
           // Check if current point shares x or y coordinate with M point
           const sharesX = Math.abs(currentPoint.x - mPoint.x) < 0.1;
           const sharesY = Math.abs(currentPoint.y - mPoint.y) < 0.1;
-          
+
           if (sharesX || sharesY) {
             // Find other control points in the same subpath that share the same coordinate
             for (const otherPoint of points) {
@@ -297,11 +297,11 @@ export const ControlPointAlignmentPanel: React.FC = () => {
                     }
                   }
                 }
-                
+
                 if (inSameSubpath && otherPoint.isControl) {
-                  const sharesCoord = (sharesX && Math.abs(otherPoint.x - mPoint.x) < 0.1) || 
-                                     (sharesY && Math.abs(otherPoint.y - mPoint.y) < 0.1);
-                  
+                  const sharesCoord = (sharesX && Math.abs(otherPoint.x - mPoint.x) < 0.1) ||
+                    (sharesY && Math.abs(otherPoint.y - mPoint.y) < 0.1);
+
                   if (sharesCoord) {
                     // Found a matching point
                     pairedPoint = otherPoint;
@@ -313,20 +313,20 @@ export const ControlPointAlignmentPanel: React.FC = () => {
           }
         }
       }
-      
+
       // Calculate alignment type based on positions (this will be the current type from the data)
       const calculatedType: 'independent' | 'aligned' | 'mirrored' = point.type || 'independent';
       let mag1 = 0;
       let angle1 = 0;
       let mag2: number | undefined;
       let angle2: number | undefined;
-      let anchor2: {x: number, y: number} | undefined;
-      
+      let anchor2: { x: number, y: number } | undefined;
+
       const anchor1 = point.anchor;
       const vector1 = { x: point.x - anchor1.x, y: point.y - anchor1.y };
       mag1 = Math.sqrt(vector1.x * vector1.x + vector1.y * vector1.y);
       angle1 = Math.atan2(vector1.y, vector1.x) * 180 / Math.PI;
-      
+
       if (pairedPoint) {
         anchor2 = pairedPoint.anchor;
         const vector2 = { x: pairedPoint.x - anchor2!.x, y: pairedPoint.y - anchor2!.y };
@@ -417,29 +417,29 @@ export const ControlPointAlignmentPanel: React.FC = () => {
               </button>
             </div>
           )}
-          {(singlePointInfo.command.type === 'L' || singlePointInfo.command.type === 'C') && 
-           isLastPointOfSubpath(selectedCommands[0].elementId, selectedCommands[0].commandIndex, selectedCommands[0].pointIndex) && 
-           !isAtMPosition(selectedCommands[0].elementId, selectedCommands[0].commandIndex, selectedCommands[0].pointIndex) && (
-            <div style={{ marginTop: '8px' }}>
-              <button
-                onClick={() => moveToM(selectedCommands[0].elementId, selectedCommands[0].commandIndex, selectedCommands[0].pointIndex)}
-                style={{
-                  padding: '6px 8px',
-                  backgroundColor: '#28a745',
-                  color: '#fff',
-                  border: '1px solid #28a745',
-                  borderRadius: '4px',
-                  fontSize: '11px',
-                  cursor: 'pointer',
-                  width: '100%',
-                  textAlign: 'center'
-                }}
-                title="Move this point to start a new subpath"
-              >
-                Move to M
-              </button>
-            </div>
-          )}
+          {(singlePointInfo.command.type === 'L' || singlePointInfo.command.type === 'C') &&
+            isLastPointOfSubpath(selectedCommands[0].elementId, selectedCommands[0].commandIndex, selectedCommands[0].pointIndex) &&
+            !isAtMPosition(selectedCommands[0].elementId, selectedCommands[0].commandIndex, selectedCommands[0].pointIndex) && (
+              <div style={{ marginTop: '8px' }}>
+                <button
+                  onClick={() => moveToM(selectedCommands[0].elementId, selectedCommands[0].commandIndex, selectedCommands[0].pointIndex)}
+                  style={{
+                    padding: '6px 8px',
+                    backgroundColor: '#28a745',
+                    color: '#fff',
+                    border: '1px solid #28a745',
+                    borderRadius: '4px',
+                    fontSize: '11px',
+                    cursor: 'pointer',
+                    width: '100%',
+                    textAlign: 'center'
+                  }}
+                  title="Move this point to start a new subpath"
+                >
+                  Move to M
+                </button>
+              </div>
+            )}
           {(singlePointInfo.command.type === 'L' || singlePointInfo.command.type === 'C') && (
             <div style={{ marginTop: '8px' }}>
               <button

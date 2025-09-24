@@ -47,13 +47,13 @@ export const SubpathSelectionOverlay: React.FC<SubpathSelectionOverlayProps> = (
   // Get bounds for a specific subpath
   const getIndividualSubpathBounds = (subpathIndex: number) => {
     if (element.type !== 'path') return null;
-    
+
     try {
       const pathData = element.data as PathData;
       const subpaths = pathData.subPaths;
-      
+
       if (subpathIndex >= subpaths.length) return null;
-      
+
       const subpath = subpaths[subpathIndex];
       return measureSubpathBounds(subpath, pathData.strokeWidth || 1, viewport.zoom);
     } catch (error) {
@@ -67,7 +67,7 @@ export const SubpathSelectionOverlay: React.FC<SubpathSelectionOverlayProps> = (
       {/* Render individual selection boxes and handlers for each selected subpath */}
       {selectedSubpaths.map((selected) => {
         if (selected.elementId !== element.id) return null;
-        
+
         // Get the bounds of this specific subpath
         const subpathBounds = getIndividualSubpathBounds(selected.subpathIndex);
         if (!subpathBounds) return null;
@@ -119,11 +119,11 @@ export const SubpathSelectionOverlay: React.FC<SubpathSelectionOverlayProps> = (
 
             {/* Center X marker and coordinates for this subpath */}
             {isTransformationMode && (
-              <CenterMarker 
-                bounds={subpathBounds} 
-                selectionColor={SUBPATH_SELECTION_COLOR} 
-                viewport={viewport} 
-                transformation={transformation} 
+              <CenterMarker
+                bounds={subpathBounds}
+                selectionColor={SUBPATH_SELECTION_COLOR}
+                viewport={viewport}
+                transformation={transformation}
               />
             )}
 

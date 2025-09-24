@@ -43,9 +43,9 @@ export const SliderControl: React.FC<SliderControlProps> = ({
   const formattedValue = formatter ? formatter(value) : (step < 1 ? value.toFixed(2) : value.toString());
 
   return (
-    <div style={{ 
-      display: 'flex', 
-      alignItems: 'center', 
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
       gap,
       marginBottom: inline ? '0' : marginBottom,
       width: inline ? '100%' : undefined

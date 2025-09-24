@@ -318,15 +318,15 @@ export const PRESETS: Preset[] = [
   ].sort((a, b) => {
     const colorA = getPrimaryColor(a);
     const colorB = getPrimaryColor(b);
-    
+
     // Put 'none' colors at the end
     if (colorA === '#808080' && colorB !== '#808080') return 1;
     if (colorB === '#808080' && colorA !== '#808080') return -1;
     if (colorA === '#808080' && colorB === '#808080') return 0;
-    
+
     const [hueA] = hexToHsl(colorA);
     const [hueB] = hexToHsl(colorB);
-    
+
     return hueA - hueB;
   })
 ];

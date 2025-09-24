@@ -52,34 +52,34 @@ export const textToPath = async (
   // Set font for measurement
   const font = `${fontStyle} ${fontWeight} ${fontSize}px ${fontFamily}`;
   ctx.font = font;
-  
+
   // Measure text to determine canvas size
   const textMetrics = ctx.measureText(text);
   const textWidth = Math.ceil(textMetrics.width);
-  
+
   // Use font metrics for more accurate height calculation
   const actualAscent = textMetrics.actualBoundingBoxAscent || fontSize * 0.8;
   const actualDescent = textMetrics.actualBoundingBoxDescent || fontSize * 0.2;
   const textHeight = Math.ceil(actualAscent + actualDescent);
-  
+
   // Add padding
   const padding = Math.ceil(fontSize * 0.1);
   const canvasWidth = textWidth + (padding * 2);
   const canvasHeight = textHeight + (padding * 2);
-  
+
   // Set canvas size (no resolution scaling - 1:1)
   canvas.width = canvasWidth;
   canvas.height = canvasHeight;
-  
+
   // Set font again after canvas resize
   ctx.font = font;
   ctx.textBaseline = 'alphabetic';
   ctx.textAlign = 'left';
-  
+
   // Clear canvas with white background
   ctx.fillStyle = 'white';
   ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-  
+
   // Draw text in black at the correct baseline position
   // textBaseline = 'alphabetic' means the y coordinate is the alphabetic baseline
   // Position the baseline at a specific distance from the top of the canvas
@@ -101,12 +101,12 @@ export const textToPath = async (
 
     // Extract path data from SVG result and position it correctly
     const pathData = extractPathFromSVGResult(svgResult, x, y, actualAscent, actualDescent);
-    
+
     // Cache the result only if we got valid path data
     if (pathData) {
       textVectorizationCache.set(cacheKey, pathData);
     }
-    
+
     return pathData;
   } catch {
     return '';
@@ -115,8 +115,8 @@ export const textToPath = async (
 
 // Helper function to extract and normalize path data from SVG result
 const extractPathFromSVGResult = (
-  svgString: string, 
-  targetX: number, 
+  svgString: string,
+  targetX: number,
   targetY: number,
   actualAscent: number,
   actualDescent: number
@@ -128,54 +128,54 @@ const extractPathFromSVGResult = (
   // Parse SVG to extract path data
   const parser = new DOMParser();
   const svgDoc = parser.parseFromString(svgString, 'image/svg+xml');
-  
+
   // Check for parsing errors
   const parserError = svgDoc.querySelector('parsererror');
   if (parserError) {
     return '';
   }
-  
+
   // Extract path elements
   const pathElements = svgDoc.querySelectorAll('path');
-  
+
   if (pathElements.length === 0) {
     return '';
   }
 
   const allNormalizedSegments: Array<Array<{ key: string; data: number[] }>> = [];
-  
+
   // First pass: Process each path element using path-data-parser
   for (const pathElement of pathElements) {
     const pathData = pathElement.getAttribute('d');
-    
+
     if (!pathData) continue;
-    
+
     try {
       // Parse the path string using path-data-parser
       const segments = parsePath(pathData);
-      
+
       // Convert relative commands to absolute
       const absoluteSegments = absolutize(segments);
-      
+
       // Normalize to only M, L, C, Z commands
       const normalizedSegments = normalize(absoluteSegments);
-      
+
       allNormalizedSegments.push(normalizedSegments);
     } catch {
       // Error processing path data
     }
   }
-  
+
   if (allNormalizedSegments.length === 0) {
     return '';
   }
-  
+
   // Calculate global bounds for all paths together
   const globalBounds = calculateGlobalBounds(allNormalizedSegments);
-  
+
   // Transform all paths using the same scale and offset to preserve relative positions
   const allTransformedPaths: string[] = [];
-  
+
   for (const normalizedSegments of allNormalizedSegments) {
     try {
       // Transform coordinates to target position using global bounds
@@ -187,10 +187,10 @@ const extractPathFromSVGResult = (
         actualAscent,
         actualDescent
       );
-      
+
       // Serialize back to path string
       const transformedPath = serialize(transformedSegments);
-      
+
       if (transformedPath) {
         allTransformedPaths.push(transformedPath);
       }
@@ -198,20 +198,20 @@ const extractPathFromSVGResult = (
       // Error transforming path data
     }
   }
-  
+
   const result = allTransformedPaths.join(' ');
-  
+
   return result;
 };
 
 // Calculate global bounds for all paths to preserve relative positions
 const calculateGlobalBounds = (allSegments: Array<Array<{ key: string; data: number[] }>>): { minX: number, minY: number, maxX: number, maxY: number, width: number, height: number } => {
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  
+
   for (const segments of allSegments) {
     for (const segment of segments) {
       const { key, data } = segment;
-      
+
       if (key === 'M' || key === 'L') {
         // Move and Line commands have x,y coordinates
         for (let i = 0; i < data.length; i += 2) {
@@ -235,7 +235,7 @@ const calculateGlobalBounds = (allSegments: Array<Array<{ key: string; data: num
       }
     }
   }
-  
+
   return {
     minX,
     minY,
@@ -261,45 +261,45 @@ const transformSegmentsWithGlobalBounds = (
 
   // Usar las métricas reales del texto para cálculos más precisos
   const realTextHeight = actualAscent + actualDescent;
-  
+
   // Factor de escala basado en la altura real del texto
   const scaleFactor = realTextHeight / globalBounds.height;
-  
+
   // Posicionamiento más preciso usando las métricas reales
   // targetY es la baseline, la esquina superior izquierda está en targetY - actualAscent
   const textTopLeftX = targetX;
   const textTopLeftY = targetY - actualAscent;
-  
+
   // Offset para mover el path a la esquina superior izquierda exacta del texto
   const offsetX = textTopLeftX - (globalBounds.minX * scaleFactor);
   const offsetY = textTopLeftY - (globalBounds.minY * scaleFactor);
-  
+
   // Transform coordinates
   const transformedSegments = segments.map(segment => {
     const { key, data } = segment;
-    
+
     if (key === 'Z') {
       // Close path command has no data
       return { key, data };
     }
-    
+
     const transformedData = [];
     for (let i = 0; i < data.length; i += 2) {
       let x = data[i];
       let y = data[i + 1];
-      
+
       // Aplicar escala y offset
       x = (x * scaleFactor) + offsetX;
       // Restaurar la inversión Y para manejar diferencia de coordenadas Canvas/SVG
       y = offsetY + (globalBounds.maxY - y) * scaleFactor;
-      
+
       transformedData.push(roundToPrecision(x));
       transformedData.push(roundToPrecision(y));
     }
-    
+
     return { key, data: transformedData };
   });
-  
+
   return transformedSegments;
 };
 
@@ -317,11 +317,11 @@ export const textToPathCommands = async (
 ): Promise<Command[]> => {
   // Get the SVG path string first
   const pathString = await textToPath(text, x, y, fontSize, fontFamily, fontWeight, fontStyle);
-  
+
   if (!pathString) {
     return [];
   }
-  
+
   // Parse the string into commands
   return parsePathD(pathString);
 };

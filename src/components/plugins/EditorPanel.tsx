@@ -53,7 +53,7 @@ export const EditorPanel: React.FC = () => {
   } = useCanvasStore();
 
   const { undo, redo, pastStates, futureStates } = useTemporalState();
-  
+
   // Computed values
   const selectedCount = selectedIds.length;
   const selectedCommandsCount = selectedCommands.length;
@@ -78,8 +78,8 @@ export const EditorPanel: React.FC = () => {
 
   // Determine if delete button should be enabled
   const canDelete = (activePlugin === 'edit' && selectedCommandsCount > 0) ||
-                    (activePlugin === 'select' && selectedCount > 0) || 
-                    (activePlugin === 'subpath' && selectedSubpathsCount > 0);
+    (activePlugin === 'select' && selectedCount > 0) ||
+    (activePlugin === 'subpath' && selectedSubpathsCount > 0);
 
   // Pencil properties handlers
   const handleStrokeWidthChange = (value: number) => {
@@ -262,8 +262,8 @@ export const EditorPanel: React.FC = () => {
           customSize="32px"
           title={
             activePlugin === 'edit' ? "Delete Selected Points" :
-            activePlugin === 'subpath' ? "Delete Selected Subpaths" : 
-            "Delete Selected"
+              activePlugin === 'subpath' ? "Delete Selected Subpaths" :
+                "Delete Selected"
           }
         >
           <Trash2 size={14} />
@@ -282,7 +282,7 @@ export const EditorPanel: React.FC = () => {
           backgroundColor: '#dee2e6',
           zIndex: 1
         }} />
-        
+
         {/* Circular button in the center */}
         <div style={{
           position: 'relative',

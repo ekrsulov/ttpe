@@ -50,9 +50,9 @@ interface CanvasRendererProps {
     zIndex: number;
   }>;
   activePlugin: string | null;
-  editingPoint: { 
-    elementId: string; 
-    commandIndex: number; 
+  editingPoint: {
+    elementId: string;
+    commandIndex: number;
     pointIndex: number;
     isDragging: boolean;
     offsetX: number;
@@ -191,12 +191,12 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
       case 'path': {
         const pathData = data as import('../types').PathData;
         // For pencil paths, if strokeColor is 'none', render with black
-        const effectiveStrokeColor = pathData.isPencilPath && pathData.strokeColor === 'none' 
-          ? '#000000' 
+        const effectiveStrokeColor = pathData.isPencilPath && pathData.strokeColor === 'none'
+          ? '#000000'
           : pathData.strokeColor;
 
         const pathD = commandsToString(pathData.subPaths.flat());
-        
+
         return (
           <g key={element.id}>
             <path

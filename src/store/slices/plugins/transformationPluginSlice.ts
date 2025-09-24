@@ -44,12 +44,12 @@ export const createTransformationPluginSlice: StateCreator<TransformationPluginS
     getTransformationBounds: () => {
       const state = get() as CanvasStore;
       const isSubpathMode = (get() as CanvasStore).isWorkingWithSubpaths();
-      
+
       if (isSubpathMode && state.selectedSubpaths && state.selectedSubpaths.length > 0) {
         // Calculate bounds for selected subpaths
         const subpathCommandsToMeasure: import('../../../types').Command[][] = [];
         let strokeWidth = 1; // Default stroke width
-        
+
         state.selectedSubpaths.forEach(({ elementId, subpathIndex }) => {
           const element = state.elements.find((el) => el.id === elementId);
           if (element && element.type === 'path') {
@@ -62,13 +62,13 @@ export const createTransformationPluginSlice: StateCreator<TransformationPluginS
         });
 
         if (subpathCommandsToMeasure.length === 0) return null;
-        
+
         return accumulateBounds(subpathCommandsToMeasure, strokeWidth, state.viewport.zoom);
       } else {
         // Calculate bounds for selected elements
         const elementCommandsToMeasure: import('../../../types').Command[][] = [];
         let commonStrokeWidth = 1;
-        
+
         state.selectedIds.forEach((id) => {
           const element = state.elements.find((el) => el.id === id);
           if (element && element.type === 'path') {
@@ -81,7 +81,7 @@ export const createTransformationPluginSlice: StateCreator<TransformationPluginS
         });
 
         if (elementCommandsToMeasure.length === 0) return null;
-        
+
         return accumulateBounds(elementCommandsToMeasure, commonStrokeWidth, state.viewport.zoom);
       }
     }

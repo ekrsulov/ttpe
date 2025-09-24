@@ -54,9 +54,9 @@ export const SubpathOverlay: React.FC<SubpathOverlayProps> = ({
   onStopDraggingSubpaths,
 }) => {
   if (element.type !== 'path') return null;
-  
+
   const pathData = element.data as PathData;
-  
+
   // Use the current path data (which may be updated during dragging) instead of original
   const subpaths = pathData.subPaths;
 
@@ -72,7 +72,7 @@ export const SubpathOverlay: React.FC<SubpathOverlayProps> = ({
     elementStrokeWidth,
     elementOpacity
   );
-  
+
   const overlayColor = getContrastingColor(colorForContrast);
 
   return (
@@ -82,7 +82,7 @@ export const SubpathOverlay: React.FC<SubpathOverlayProps> = ({
         const isSubpathSelected = selectedSubpaths.some(
           s => s.elementId === element.id && s.subpathIndex === index
         );
-        
+
         // Different colors for selected and unselected subpaths
         const overlayFill = isSubpathSelected ? `${overlayColor}40` : `${overlayColor}15`; // More opacity for selected
         const overlayStroke = isSubpathSelected ? `${overlayColor}80` : `${overlayColor}40`; // Stronger stroke for selected
@@ -98,18 +98,18 @@ export const SubpathOverlay: React.FC<SubpathOverlayProps> = ({
             strokeLinecap={pathData.strokeLinecap || "round"}
             strokeLinejoin={pathData.strokeLinejoin || "round"}
             vectorEffect="non-scaling-stroke"
-            style={{ 
+            style={{
               cursor: 'pointer'
               // Removed the transform - the overlay should follow the updated path data
             }}
             onPointerDown={(e) => {
               // Don't stop propagation - let Canvas handlePointerDown also run to set dragStart
-              
+
               // Disable subpath interaction when smooth brush is active
               if (smoothBrush.isActive) {
                 return;
               }
-              
+
               // Check if this is a click for selection or start of drag
               if (e.shiftKey) {
                 // Shift+click for multiselect
@@ -119,22 +119,22 @@ export const SubpathOverlay: React.FC<SubpathOverlayProps> = ({
                 const isAlreadySelected = selectedSubpaths.some(
                   s => s.elementId === element.id && s.subpathIndex === index
                 );
-                
+
                 if (!isAlreadySelected) {
                   // Select this subpath if not already selected
                   onSelectSubpath(element.id, index, false);
                 }
-                
+
                 // Start dragging
                 const svgElement = (e.currentTarget as SVGElement).ownerSVGElement;
                 if (svgElement) {
                   const svgRect = svgElement.getBoundingClientRect();
                   const svgX = e.clientX - svgRect.left;
                   const svgY = e.clientY - svgRect.top;
-                  
+
                   // Convert to canvas coordinates
                   const canvasPoint = mapSvgToCanvas(svgX, svgY, viewport);
-                  
+
                   // Start dragging subpaths
                   onStartDraggingSubpaths(canvasPoint.x, canvasPoint.y);
                 }

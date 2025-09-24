@@ -65,7 +65,7 @@ export const SelectPanel: React.FC = () => {
 
   const copyPathToClipboard = async (item: typeof items[0]) => {
     let pathData = '';
-    
+
     if (item.type === 'element') {
       // Copy the entire element's path
       if (item.element.type === 'path') {
@@ -80,7 +80,7 @@ export const SelectPanel: React.FC = () => {
         pathData = commandsToString(subpathData.commands);
       }
     }
-    
+
     if (pathData) {
       try {
         await navigator.clipboard.writeText(pathData);
@@ -92,13 +92,13 @@ export const SelectPanel: React.FC = () => {
   };
 
   return (
-    <div style={{ 
+    <div style={{
       backgroundColor: '#fff',
       padding: '0 8px 0 8px',
       display: 'flex',
       flexDirection: 'column'
     }}>
-      <div style={{ 
+      <div style={{
         height: '94px', // Fixed height for ~2.5 elements (25% larger)
         overflowY: 'auto'
       }}>
@@ -121,7 +121,7 @@ export const SelectPanel: React.FC = () => {
               )}
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: '500' }}>
-                  {item.type === 'element' 
+                  {item.type === 'element'
                     ? `${item.element.type} (z: ${item.element.zIndex})`
                     : `Subpath ${item.subpathIndex}`
                   }
@@ -130,16 +130,16 @@ export const SelectPanel: React.FC = () => {
                   {item.pointCount} points
                 </div>
               </div>
-              <IconButton 
-                onClick={() => duplicateItem(item)} 
-                title="Duplicate" 
+              <IconButton
+                onClick={() => duplicateItem(item)}
+                title="Duplicate"
                 size="small"
               >
                 <Copy size={10} />
               </IconButton>
-              <IconButton 
-                onClick={() => copyPathToClipboard(item)} 
-                title="Copy Path to Clipboard" 
+              <IconButton
+                onClick={() => copyPathToClipboard(item)}
+                title="Copy Path to Clipboard"
                 size="small"
               >
                 <Clipboard size={10} />
@@ -147,10 +147,10 @@ export const SelectPanel: React.FC = () => {
             </div>
           ))
         ) : (
-          <div style={{ 
-            fontSize: '11px', 
-            color: '#666', 
-            textAlign: 'center', 
+          <div style={{
+            fontSize: '11px',
+            color: '#666',
+            textAlign: 'center',
             padding: '8px',
             height: '100%',
             display: 'flex',

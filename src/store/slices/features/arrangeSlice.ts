@@ -3,9 +3,9 @@ import type { CanvasElement } from '../../../types';
 import type { CanvasStore } from '../../canvasStore';
 import { measurePath } from '../../../utils/measurementUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../../utils';
-import { 
-  translatePathData, 
-  alignmentTargets 
+import {
+  translatePathData,
+  alignmentTargets
 } from '../../../utils/transformationUtils';
 
 
@@ -41,7 +41,7 @@ const alignElements = (
 
     const pathData = el.data as import('../../../types').PathData;
     const currentBounds = measurePath(pathData.subPaths, pathData.strokeWidth, zoom);
-    
+
     let deltaX = 0;
     let deltaY = 0;
 
@@ -88,7 +88,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
   alignLeft: () => {
     const fullState = get() as CanvasStore;
     const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
-    
+
     setStore((state) => ({
       elements: alignElements(state.elements, fullState.selectedIds, fullState.viewport.zoom, alignmentTargets.left, 'x')
     }));
@@ -97,7 +97,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
   alignCenter: () => {
     const fullState = get() as CanvasStore;
     const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
-    
+
     setStore((state) => ({
       elements: alignElements(state.elements, fullState.selectedIds, fullState.viewport.zoom, alignmentTargets.center, 'x')
     }));
@@ -106,7 +106,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
   alignRight: () => {
     const fullState = get() as CanvasStore;
     const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
-    
+
     setStore((state) => ({
       elements: alignElements(state.elements, fullState.selectedIds, fullState.viewport.zoom, alignmentTargets.right, 'x')
     }));
@@ -115,7 +115,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
   alignTop: () => {
     const fullState = get() as CanvasStore;
     const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
-    
+
     setStore((state) => ({
       elements: alignElements(state.elements, fullState.selectedIds, fullState.viewport.zoom, alignmentTargets.top, 'y')
     }));
@@ -124,7 +124,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
   alignMiddle: () => {
     const fullState = get() as CanvasStore;
     const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
-    
+
     setStore((state) => ({
       elements: alignElements(state.elements, fullState.selectedIds, fullState.viewport.zoom, alignmentTargets.middle, 'y')
     }));
@@ -133,7 +133,7 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
   alignBottom: () => {
     const fullState = get() as CanvasStore;
     const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
-    
+
     setStore((state) => ({
       elements: alignElements(state.elements, fullState.selectedIds, fullState.viewport.zoom, alignmentTargets.bottom, 'y')
     }));
@@ -170,10 +170,10 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
     const leftmost = elementBounds[0].bounds.minX;
     const rightmost = elementBounds[elementBounds.length - 1].bounds.maxX;
     const totalWidth = rightmost - leftmost;
-    
+
     // Calculate total width of all elements
     const totalElementsWidth = elementBounds.reduce((sum, item) => sum + item.width, 0);
-    
+
     // Calculate available space for distribution (excluding element widths)
     const availableSpace = totalWidth - totalElementsWidth;
     const spaceBetween = availableSpace / (elementBounds.length - 1);
@@ -244,13 +244,13 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
     const topmost = elementBounds[0].bounds.minY;
     const bottommost = elementBounds[elementBounds.length - 1].bounds.maxY;
     const totalHeight = bottommost - topmost;
-    
+
     // Calculate total height of all elements
     const totalElementsHeight = elementBounds.reduce((sum, item) => {
       const height = item.bounds.maxY - item.bounds.minY;
       return sum + height;
     }, 0);
-    
+
     // Calculate available space for distribution (excluding element heights)
     const availableSpace = totalHeight - totalElementsHeight;
     const spaceBetween = availableSpace / (elementBounds.length - 1);

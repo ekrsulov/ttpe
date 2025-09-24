@@ -7,10 +7,10 @@ export function getSelectedPathProperty<T extends keyof PathData>(
 ): PathData[T] {
   const selectedElements = useCanvasStore.getState().getSelectedElements();
   const pathElements = selectedElements.filter(el => el.type === 'path');
-  
+
   if (pathElements.length > 0) {
     return pathElements[0].data[property];
   }
-  
+
   return fallbackValue;
 }

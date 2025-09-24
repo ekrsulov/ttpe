@@ -25,9 +25,9 @@ import {
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
-  const { 
-    activePlugin, 
-    setMode, 
+  const {
+    activePlugin,
+    setMode,
     selectedIds,
     smoothBrush,
     selectedCommands,
@@ -166,7 +166,7 @@ export const Sidebar: React.FC = () => {
             backgroundColor: '#dee2e6',
             zIndex: 1
           }} />
-          
+
           {/* Circular button in the center */}
           <div style={{
             position: 'relative',

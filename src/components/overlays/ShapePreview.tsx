@@ -22,7 +22,7 @@ export const ShapePreview: React.FC<ShapePreviewProps> = ({
   const centerY = (shapeStart.y + shapeEnd.y) / 2;
 
   let pathData = '';
-  
+
   switch (selectedShape) {
     case 'square': {
       const halfSize = Math.min(width, height) / 2;

@@ -104,7 +104,7 @@ export function extractEditablePoints(commands: Command[]): ControlPoint[] {
     } else if (command.type === 'C') {
       // Get the start point for this command (needed for outgoing control point anchor)
       const startPoint = getCommandStartPoint(commands, commandIndex);
-      
+
       // C has 3 points: control1 (outgoing), control2 (incoming), end
       // Control point 1 (outgoing) - anchor is the start of the segment
       points.push({
@@ -120,7 +120,7 @@ export function extractEditablePoints(commands: Command[]): ControlPoint[] {
         associatedCommandIndex: commandIndex,
         associatedPointIndex: 2, // associated with end point
       });
-      
+
       // Control point 2 (incoming) - anchor is the end of the segment
       points.push({
         commandIndex,
@@ -135,7 +135,7 @@ export function extractEditablePoints(commands: Command[]): ControlPoint[] {
         associatedCommandIndex: commandIndex,
         associatedPointIndex: 2, // associated with end point
       });
-      
+
       // End point
       points.push({
         commandIndex,
@@ -159,29 +159,29 @@ export function extractEditablePoints(commands: Command[]): ControlPoint[] {
 
     // Find paired control point based on sequential logic
     let pairedPoint: ControlPoint | null = null;
-    
+
     if (point.pointIndex === 1) {
       // Incoming control point - look for next command's outgoing control point
       const nextCommandIndex = point.commandIndex + 1;
-      
+
       // Skip Z commands
       let targetCommandIndex = nextCommandIndex;
       while (targetCommandIndex < commands.length && commands[targetCommandIndex].type === 'Z') {
         targetCommandIndex++;
       }
-      
+
       if (targetCommandIndex < commands.length) {
-        pairedPoint = points.find(p => 
+        pairedPoint = points.find(p =>
           p.isControl && p.commandIndex === targetCommandIndex && p.pointIndex === 0
         ) || null;
       } else {
         // For closed paths, pair with first curve's outgoing
         const isPathClosed = commands[commands.length - 1]?.type === 'Z';
-        
+
         if (isPathClosed) {
           for (let j = 1; j < commands.length; j++) {
             if (commands[j].type === 'C') {
-              pairedPoint = points.find(p => 
+              pairedPoint = points.find(p =>
                 p.isControl && p.commandIndex === j && p.pointIndex === 0
               ) || null;
               break;
@@ -192,25 +192,25 @@ export function extractEditablePoints(commands: Command[]): ControlPoint[] {
     } else if (point.pointIndex === 0) {
       // Outgoing control point - look for previous command's incoming control point
       const prevCommandIndex = point.commandIndex - 1;
-      
+
       // Skip Z commands
       let targetCommandIndex = prevCommandIndex;
       while (targetCommandIndex >= 0 && commands[targetCommandIndex].type === 'Z') {
         targetCommandIndex--;
       }
-      
+
       if (targetCommandIndex >= 0) {
-        pairedPoint = points.find(p => 
+        pairedPoint = points.find(p =>
           p.isControl && p.commandIndex === targetCommandIndex && p.pointIndex === 1
         ) || null;
       } else {
         // For closed paths, pair with last curve's incoming
         const isPathClosed = commands[commands.length - 1]?.type === 'Z';
-        
+
         if (isPathClosed) {
           for (let j = commands.length - 1; j >= 1; j--) {
             if (commands[j].type === 'C') {
-              pairedPoint = points.find(p => 
+              pairedPoint = points.find(p =>
                 p.isControl && p.commandIndex === j && p.pointIndex === 1
               ) || null;
               break;
@@ -224,10 +224,10 @@ export function extractEditablePoints(commands: Command[]): ControlPoint[] {
     if (pairedPoint) {
       const tolerance = 0.1;
       const anchorDistance = Math.sqrt(
-        Math.pow(point.anchor.x - pairedPoint.anchor.x, 2) + 
+        Math.pow(point.anchor.x - pairedPoint.anchor.x, 2) +
         Math.pow(point.anchor.y - pairedPoint.anchor.y, 2)
       );
-      
+
       if (anchorDistance < tolerance) {
         // Calculate alignment type
         const alignmentType = determineControlPointAlignment(
@@ -238,12 +238,12 @@ export function extractEditablePoints(commands: Command[]): ControlPoint[] {
           pairedPoint.pointIndex,
           point.anchor
         );
-        
+
         // Update both points with pairing information and calculated alignment
         point.type = alignmentType;
         point.pairedCommandIndex = pairedPoint.commandIndex;
         point.pairedPointIndex = pairedPoint.pointIndex;
-        
+
         pairedPoint.type = alignmentType;
         pairedPoint.pairedCommandIndex = point.commandIndex;
         pairedPoint.pairedPointIndex = point.pointIndex;
@@ -312,20 +312,20 @@ export function updateCommands(commands: Command[], updatedPoints: ControlPoint[
       } else if (cmd.type === 'C') {
         // For C: pointIndex 0 = control1, 1 = control2, 2 = end
         if (updatedPoint.pointIndex === 0) {
-          cmd.controlPoint1 = { 
-            ...cmd.controlPoint1, 
-            x: updatedPoint.x, 
+          cmd.controlPoint1 = {
+            ...cmd.controlPoint1,
+            x: updatedPoint.x,
             y: updatedPoint.y,
             type: updatedPoint.type,
             pairedCommandIndex: updatedPoint.pairedCommandIndex,
             pairedPointIndex: updatedPoint.pairedPointIndex
           };
-          
+
           // If this control point has a paired point and is aligned/mirrored, update the paired point too
-          if (updatedPoint.pairedCommandIndex !== undefined && 
-              updatedPoint.pairedPointIndex !== undefined && 
-              (updatedPoint.type === 'aligned' || updatedPoint.type === 'mirrored')) {
-            
+          if (updatedPoint.pairedCommandIndex !== undefined &&
+            updatedPoint.pairedPointIndex !== undefined &&
+            (updatedPoint.type === 'aligned' || updatedPoint.type === 'mirrored')) {
+
             const pairedCmd = updatedCommands[updatedPoint.pairedCommandIndex];
             if (pairedCmd && pairedCmd.type === 'C') {
               // Get the original paired point position for aligned type
@@ -337,25 +337,25 @@ export function updateCommands(commands: Command[], updatedPoints: ControlPoint[
                   originalPairedPosition = { x: pairedCmd.controlPoint2.x, y: pairedCmd.controlPoint2.y };
                 }
               }
-              
+
               const newPairedPosition = calculatePairedPosition(
                 { x: updatedPoint.x, y: updatedPoint.y },
                 updatedPoint.anchor,
                 updatedPoint.type,
                 originalPairedPosition
               );
-              
+
               if (updatedPoint.pairedPointIndex === 0) {
-                pairedCmd.controlPoint1 = { 
-                  ...pairedCmd.controlPoint1, 
+                pairedCmd.controlPoint1 = {
+                  ...pairedCmd.controlPoint1,
                   ...newPairedPosition,
                   type: updatedPoint.type,
                   pairedCommandIndex: updatedPoint.commandIndex,
                   pairedPointIndex: updatedPoint.pointIndex
                 };
               } else if (updatedPoint.pairedPointIndex === 1) {
-                pairedCmd.controlPoint2 = { 
-                  ...pairedCmd.controlPoint2, 
+                pairedCmd.controlPoint2 = {
+                  ...pairedCmd.controlPoint2,
                   ...newPairedPosition,
                   type: updatedPoint.type,
                   pairedCommandIndex: updatedPoint.commandIndex,
@@ -365,20 +365,20 @@ export function updateCommands(commands: Command[], updatedPoints: ControlPoint[
             }
           }
         } else if (updatedPoint.pointIndex === 1) {
-          cmd.controlPoint2 = { 
-            ...cmd.controlPoint2, 
-            x: updatedPoint.x, 
+          cmd.controlPoint2 = {
+            ...cmd.controlPoint2,
+            x: updatedPoint.x,
             y: updatedPoint.y,
             type: updatedPoint.type,
             pairedCommandIndex: updatedPoint.pairedCommandIndex,
             pairedPointIndex: updatedPoint.pairedPointIndex
           };
-          
+
           // If this control point has a paired point and is aligned/mirrored, update the paired point too
-          if (updatedPoint.pairedCommandIndex !== undefined && 
-              updatedPoint.pairedPointIndex !== undefined && 
-              (updatedPoint.type === 'aligned' || updatedPoint.type === 'mirrored')) {
-            
+          if (updatedPoint.pairedCommandIndex !== undefined &&
+            updatedPoint.pairedPointIndex !== undefined &&
+            (updatedPoint.type === 'aligned' || updatedPoint.type === 'mirrored')) {
+
             const pairedCmd = updatedCommands[updatedPoint.pairedCommandIndex];
             if (pairedCmd && pairedCmd.type === 'C') {
               // Get the original paired point position for aligned type
@@ -390,25 +390,25 @@ export function updateCommands(commands: Command[], updatedPoints: ControlPoint[
                   originalPairedPosition = { x: pairedCmd.controlPoint2.x, y: pairedCmd.controlPoint2.y };
                 }
               }
-              
+
               const newPairedPosition = calculatePairedPosition(
                 { x: updatedPoint.x, y: updatedPoint.y },
                 updatedPoint.anchor,
                 updatedPoint.type,
                 originalPairedPosition
               );
-              
+
               if (updatedPoint.pairedPointIndex === 0) {
-                pairedCmd.controlPoint1 = { 
-                  ...pairedCmd.controlPoint1, 
+                pairedCmd.controlPoint1 = {
+                  ...pairedCmd.controlPoint1,
                   ...newPairedPosition,
                   type: updatedPoint.type,
                   pairedCommandIndex: updatedPoint.commandIndex,
                   pairedPointIndex: updatedPoint.pointIndex
                 };
               } else if (updatedPoint.pairedPointIndex === 1) {
-                pairedCmd.controlPoint2 = { 
-                  ...pairedCmd.controlPoint2, 
+                pairedCmd.controlPoint2 = {
+                  ...pairedCmd.controlPoint2,
                   ...newPairedPosition,
                   type: updatedPoint.type,
                   pairedCommandIndex: updatedPoint.commandIndex,
@@ -441,28 +441,28 @@ function calculatePairedPosition(
     x: currentPosition.x - anchor.x,
     y: currentPosition.y - anchor.y
   };
-  
+
   const magnitude = Math.sqrt(vector.x * vector.x + vector.y * vector.y);
-  
+
   if (magnitude === 0) {
     return { x: anchor.x, y: anchor.y };
   }
-  
+
   // Calculate unit vector
   const unitVector = {
     x: vector.x / magnitude,
     y: vector.y / magnitude
   };
-  
+
   // For both aligned and mirrored, the paired point is in the opposite direction
   const oppositeVector = {
     x: -unitVector.x,
     y: -unitVector.y
   };
-  
+
   // Determine the paired point's magnitude based on alignment type
   let pairedMagnitude: number;
-  
+
   if (alignmentType === 'mirrored') {
     // For mirrored, use the same magnitude
     pairedMagnitude = magnitude;
@@ -474,7 +474,7 @@ function calculatePairedPosition(
         y: originalPairedPosition.y - anchor.y
       };
       pairedMagnitude = Math.sqrt(originalPairedVector.x * originalPairedVector.x + originalPairedVector.y * originalPairedVector.y);
-      
+
       // If the original magnitude is too small or too similar to current, make it different
       if (pairedMagnitude < 10 || Math.abs(pairedMagnitude - magnitude) < 5) {
         pairedMagnitude = magnitude * 0.7; // Use 70% of current magnitude
@@ -484,7 +484,7 @@ function calculatePairedPosition(
       pairedMagnitude = magnitude * 0.7;
     }
   }
-  
+
   return {
     x: formatToPrecision(anchor.x + oppositeVector.x * pairedMagnitude, PATH_DECIMAL_PRECISION),
     y: formatToPrecision(anchor.y + oppositeVector.y * pairedMagnitude, PATH_DECIMAL_PRECISION)
@@ -513,7 +513,7 @@ export function adjustControlPointForAlignment(
     y: pairedPoint.y - anchor.y
   };
   const pairedMagnitude = Math.sqrt(pairedVector.x * pairedVector.x + pairedVector.y * pairedVector.y);
-  
+
   if (newAlignmentType === 'independent') {
     // For independent, move the point slightly to break alignment if it's currently aligned
     if (currentMagnitude === 0) {
@@ -523,7 +523,7 @@ export function adjustControlPointForAlignment(
         y: formatToPrecision(anchor.y, PATH_DECIMAL_PRECISION)
       };
     }
-    
+
     // Check if currently aligned with paired point
     if (pairedMagnitude > 0) {
       const currentUnit = {
@@ -534,30 +534,30 @@ export function adjustControlPointForAlignment(
         x: pairedVector.x / pairedMagnitude,
         y: pairedVector.y / pairedMagnitude
       };
-      
+
       // Check if vectors are aligned (opposite directions)
       const dotProduct = currentUnit.x * (-pairedUnit.x) + currentUnit.y * (-pairedUnit.y);
-      
+
       if (dotProduct > 0.985) { // Currently aligned
         // Move point perpendicular to break alignment
         const perpendicular = {
           x: -currentUnit.y,
           y: currentUnit.x
         };
-        
+
         const offsetDistance = Math.max(10, currentMagnitude * 0.2); // 20% offset or minimum 10px
-        
+
         return {
           x: formatToPrecision(controlPoint.x + perpendicular.x * offsetDistance, PATH_DECIMAL_PRECISION),
           y: formatToPrecision(controlPoint.y + perpendicular.y * offsetDistance, PATH_DECIMAL_PRECISION)
         };
       }
     }
-    
+
     // If not aligned, keep current position
     return { x: controlPoint.x, y: controlPoint.y };
   }
-  
+
   if (pairedMagnitude === 0) {
     // If paired point is at anchor, place control point at default position
     const defaultDistance = currentMagnitude > 0 ? currentMagnitude : 30;
@@ -566,36 +566,36 @@ export function adjustControlPointForAlignment(
       y: formatToPrecision(anchor.y, PATH_DECIMAL_PRECISION)
     };
   }
-  
+
   // Calculate unit vector of paired point
   const pairedUnitVector = {
     x: pairedVector.x / pairedMagnitude,
     y: pairedVector.y / pairedMagnitude
   };
-  
+
   // Calculate opposite direction
   const oppositeVector = {
     x: -pairedUnitVector.x,
     y: -pairedUnitVector.y
   };
-  
+
   let newMagnitude: number;
-  
+
   if (newAlignmentType === 'mirrored') {
     // For mirrored, use the same magnitude as the paired point
     newMagnitude = pairedMagnitude;
   } else if (newAlignmentType === 'aligned') {
     // For aligned, we need to determine a good magnitude
     // Always use a different magnitude than the paired point to make it visually distinct from mirrored
-    
+
     // Use 70% of the paired point's magnitude to ensure visual distinction
     newMagnitude = pairedMagnitude * 0.7;
-    
+
     // Ensure we have a reasonable minimum magnitude
     if (newMagnitude < 15) {
       newMagnitude = Math.max(pairedMagnitude * 0.5, 15); // Use 50% of paired magnitude or minimum 15px
     }
-    
+
     // Ensure it's different enough to be visually distinct
     if (Math.abs(newMagnitude - pairedMagnitude) < 5) {
       newMagnitude = pairedMagnitude * 0.6; // Force more difference
@@ -603,7 +603,7 @@ export function adjustControlPointForAlignment(
   } else {
     return { x: controlPoint.x, y: controlPoint.y };
   }
-  
+
   return {
     x: formatToPrecision(anchor.x + oppositeVector.x * newMagnitude, PATH_DECIMAL_PRECISION),
     y: formatToPrecision(anchor.y + oppositeVector.y * newMagnitude, PATH_DECIMAL_PRECISION)
@@ -646,8 +646,8 @@ export function normalizePathCommands(commands: Command[]): Command[] {
     // For C, check all points
     if (cmd.type === 'C') {
       if (!cmd.controlPoint1 || !isFinite(cmd.controlPoint1.x) || !isFinite(cmd.controlPoint1.y) ||
-          !cmd.controlPoint2 || !isFinite(cmd.controlPoint2.x) || !isFinite(cmd.controlPoint2.y) ||
-          !cmd.position || !isFinite(cmd.position.x) || !isFinite(cmd.position.y)) {
+        !cmd.controlPoint2 || !isFinite(cmd.controlPoint2.x) || !isFinite(cmd.controlPoint2.y) ||
+        !cmd.position || !isFinite(cmd.position.x) || !isFinite(cmd.position.y)) {
         continue;
       }
     }
@@ -704,7 +704,7 @@ function pointToLineDistance(px: number, py: number, x1: number, y1: number, x2:
  * This is the standard algorithm for curve simplification
  */
 export function simplifyPoints(points: Array<{ x: number; y: number; commandIndex: number; pointIndex: number; isControl: boolean }>, tolerance: number = 1.0, minDistance: number = 0.1): Array<{ x: number; y: number; commandIndex: number; pointIndex: number; isControl: boolean }> {
-  
+
   if (points.length <= 2) {
     return points;
   }
@@ -724,7 +724,7 @@ export function simplifyPoints(points: Array<{ x: number; y: number; commandInde
     }
 
     const distance = Math.sqrt(
-      Math.pow(currentPoint.x - prevPoint.x, 2) + 
+      Math.pow(currentPoint.x - prevPoint.x, 2) +
       Math.pow(currentPoint.y - prevPoint.y, 2)
     );
 
@@ -743,7 +743,7 @@ export function simplifyPoints(points: Array<{ x: number; y: number; commandInde
 
   // Second pass: apply RDP algorithm
   const rdpResult = simplifyPointsRDP(filteredPoints, tolerance);
-  
+
   return rdpResult;
 }
 
@@ -815,7 +815,7 @@ export function extractSubpaths(commands: Command[]): { commands: SubPath; d: st
   return subpaths;
 }
 
-export function commandsToString(commands: Command[]): string { 
+export function commandsToString(commands: Command[]): string {
   const result = commands.map(cmd => {
     if (cmd.type === 'Z') return 'Z';
     if (cmd.type === 'M' || cmd.type === 'L') {
@@ -826,7 +826,7 @@ export function commandsToString(commands: Command[]): string {
     }
     return '';
   }).join(' ');
-  
+
   return result;
 }
 
@@ -843,7 +843,7 @@ export function determineControlPointAlignment(
 ): 'independent' | 'aligned' | 'mirrored' {
   const command1 = commands[commandIndex1];
   const command2 = commands[commandIndex2];
-  
+
   if (!command1 || !command2 || command1.type !== 'C' || command2.type !== 'C') {
     return 'independent';
   }
@@ -988,7 +988,7 @@ export function createRectangleCommands(startX: number, startY: number, endX: nu
 export function createCircleCommands(centerX: number, centerY: number, radius: number): Command[] {
   const kappa = 0.552284749831; // Control point constant for circle approximation
   const precision = PATH_DECIMAL_PRECISION;
-  
+
   return [
     { type: 'M', position: { x: formatToPrecision(centerX - radius, precision), y: formatToPrecision(centerY, precision) } },
     {

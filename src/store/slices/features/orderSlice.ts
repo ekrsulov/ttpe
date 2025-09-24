@@ -37,7 +37,7 @@ export const createOrderSlice: StateCreator<OrderSlice> = (set, get, _api) => ({
     const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
     setStore((state) => {
       const elements = [...state.elements];
-      
+
       selectedIds.forEach((selectedId: string) => {
         const currentElement = elements.find((el: CanvasElement) => el.id === selectedId);
         if (!currentElement) return;
@@ -46,10 +46,10 @@ export const createOrderSlice: StateCreator<OrderSlice> = (set, get, _api) => ({
         const elementsAbove = elements
           .filter((el: CanvasElement) => el.zIndex > currentElement.zIndex)
           .sort((a: CanvasElement, b: CanvasElement) => a.zIndex - b.zIndex);
-        
+
         if (elementsAbove.length > 0) {
           const nextElement = elementsAbove[0];
-          
+
           // Swap z-index values
           const tempZIndex = currentElement.zIndex;
           currentElement.zIndex = nextElement.zIndex;
@@ -69,7 +69,7 @@ export const createOrderSlice: StateCreator<OrderSlice> = (set, get, _api) => ({
     const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
     setStore((state) => {
       const elements = [...state.elements];
-      
+
       selectedIds.forEach((selectedId: string) => {
         const currentElement = elements.find((el: CanvasElement) => el.id === selectedId);
         if (!currentElement) return;
@@ -78,10 +78,10 @@ export const createOrderSlice: StateCreator<OrderSlice> = (set, get, _api) => ({
         const elementsBelow = elements
           .filter((el: CanvasElement) => el.zIndex < currentElement.zIndex)
           .sort((a: CanvasElement, b: CanvasElement) => b.zIndex - a.zIndex);
-        
+
         if (elementsBelow.length > 0) {
           const prevElement = elementsBelow[0];
-          
+
           // Swap z-index values
           const tempZIndex = currentElement.zIndex;
           currentElement.zIndex = prevElement.zIndex;

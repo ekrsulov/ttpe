@@ -7,7 +7,7 @@
  */
 export const getContrastingColor = (color: string): string => {
   if (!color || color === 'none') return '#ff6b35'; // Default orange-red for transparent/no-color elements
-  
+
   // Convert hex to RGB
   const hexToRgb = (hex: string) => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -45,7 +45,7 @@ export const getContrastingColor = (color: string): string => {
       '#ffff00', // Yellow
       '#ff4444', // Red
     ];
-    
+
     // Select color based on hue to ensure good contrast
     const hue = Math.atan2(Math.sqrt(3) * (rgb.g - rgb.b), 2 * rgb.r - rgb.g - rgb.b) * 180 / Math.PI;
     const colorIndex = Math.floor((hue + 180) / (360 / brightColors.length)) % brightColors.length;
@@ -61,12 +61,12 @@ export const getContrastingColor = (color: string): string => {
       '#2f4f4f', // Dark slate gray
       '#000000', // Black
     ];
-    
+
     // Select color based on saturation and value
     const max = Math.max(rgb.r, rgb.g, rgb.b);
     const min = Math.min(rgb.r, rgb.g, rgb.b);
     const saturation = max === 0 ? 0 : (max - min) / max;
-    
+
     if (saturation < 0.3) {
       return '#8b0000'; // Dark red for desaturated colors
     } else {
@@ -86,10 +86,10 @@ export const getEffectiveColorForContrast = (
   strokeOpacity: number | undefined
 ): string => {
   // Determine if the path has an effective stroke
-  const hasEffectiveStroke = (strokeWidth || 0) > 0 && 
-                           strokeColor !== 'none' && 
-                           (strokeOpacity || 1) > 0;
-  
+  const hasEffectiveStroke = (strokeWidth || 0) > 0 &&
+    strokeColor !== 'none' &&
+    (strokeOpacity || 1) > 0;
+
   // Use fillColor for contrasting color calculation if no effective stroke
   return hasEffectiveStroke ? (strokeColor || '#000000') : (fillColor || 'none');
 };

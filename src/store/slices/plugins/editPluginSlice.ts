@@ -96,13 +96,13 @@ function applyPointUpdates(
   updates: PointUpdate[],
   setStore: (updater: (state: CanvasStore) => Partial<CanvasStore>) => void
 ): void {
-  const updatedCommands = updateCommands(parsedCommands, updates.map(u => ({ 
-    ...u, 
-    type: 'independent' as const, 
-    anchor: { x: u.x, y: u.y } 
+  const updatedCommands = updateCommands(parsedCommands, updates.map(u => ({
+    ...u,
+    type: 'independent' as const,
+    anchor: { x: u.x, y: u.y }
   })));
   const newSubPaths = extractSubpaths(updatedCommands).map(s => s.commands);
-  
+
   setStore((currentState) => ({
     elements: currentState.elements.map((el) =>
       el.id === elementId
@@ -270,9 +270,9 @@ function applyDistribution(
 
 export interface EditPluginSlice {
   // State
-  editingPoint: { 
-    elementId: string; 
-    commandIndex: number; 
+  editingPoint: {
+    elementId: string;
+    commandIndex: number;
     pointIndex: number;
     isDragging: boolean;
     offsetX: number;
@@ -390,27 +390,27 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
 
   startDraggingPoint: (elementId, commandIndex, pointIndex, offsetX, offsetY) => {
     const state = get() as FullCanvasState;
-    
+
     // Check if the point being dragged is in the selection
-    const isSelected = state.selectedCommands.some((cmd) => 
-      cmd.elementId === elementId && 
-      cmd.commandIndex === commandIndex && 
+    const isSelected = state.selectedCommands.some((cmd) =>
+      cmd.elementId === elementId &&
+      cmd.commandIndex === commandIndex &&
       cmd.pointIndex === pointIndex
     );
-    
+
     // If the point is not selected, select it first (single selection)
     if (!isSelected) {
       set({ selectedCommands: [{ elementId, commandIndex, pointIndex }] });
     }
-    
+
     // Now determine the drag type based on current selection
     const currentState = get() as FullCanvasState;
-    const currentIsSelected = currentState.selectedCommands.some((cmd) => 
-      cmd.elementId === elementId && 
-      cmd.commandIndex === commandIndex && 
+    const currentIsSelected = currentState.selectedCommands.some((cmd) =>
+      cmd.elementId === elementId &&
+      cmd.commandIndex === commandIndex &&
       cmd.pointIndex === pointIndex
     );
-    
+
     if (currentIsSelected && currentState.selectedCommands.length > 1) {
       // Multiple points selected - prepare for group drag
       const initialPositions: Array<{
@@ -420,7 +420,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
         x: number;
         y: number;
       }> = [];
-      
+
       // Get initial positions of all selected points
       currentState.selectedCommands.forEach((cmd) => {
         const element = state.elements.find((el) => el.id === cmd.elementId);
@@ -428,12 +428,12 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
           const pathData = element.data as PathData;
           const commands = pathData.subPaths.flat();
           const points = extractEditablePoints(commands);
-          
-          const point = points.find(p => 
-            p.commandIndex === cmd.commandIndex && 
+
+          const point = points.find(p =>
+            p.commandIndex === cmd.commandIndex &&
             p.pointIndex === cmd.pointIndex
           );
-          
+
           if (point) {
             initialPositions.push({
               elementId: cmd.elementId,
@@ -445,8 +445,8 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
           }
         }
       });
-      
-      set({ 
+
+      set({
         draggingSelection: {
           isDragging: true,
           draggedPoint: { elementId, commandIndex, pointIndex },
@@ -457,14 +457,14 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
       });
     } else {
       // Single point drag
-      set({ 
-        editingPoint: { 
-          elementId, 
-          commandIndex, 
-          pointIndex, 
-          isDragging: true, 
-          offsetX, 
-          offsetY 
+      set({
+        editingPoint: {
+          elementId,
+          commandIndex,
+          pointIndex,
+          isDragging: true,
+          offsetX,
+          offsetY
         },
         draggingSelection: null
       });
@@ -473,13 +473,13 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
 
   updateDraggingPoint: (x, y) => {
     const state = get() as FullCanvasState;
-    
+
     if (state.draggingSelection?.isDragging) {
       // Handle group drag of selected points - but don't update path data here anymore
       // The path updates will be handled directly in the renderer for real-time feedback
       const deltaX = x - state.draggingSelection.startX;
       const deltaY = y - state.draggingSelection.startY;
-      
+
       // Just update the dragging selection state for tracking
       set((currentState) => ({
         draggingSelection: currentState.draggingSelection ? {
@@ -533,14 +533,14 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
 
     const pathData = element.data as PathData;
     const subpaths = pathData.subPaths;
-    
+
     // Calculate start and end indices for each subpath
     const subpathInfos = subpaths.map((subpath, index) => {
       const startIndex = subpaths.slice(0, index).reduce((sum, sp) => sum + sp.length, 0);
       const endIndex = startIndex + subpath.length - 1;
       return { subpath, startIndex, endIndex };
     });
-    
+
     // Find which subpath the start point belongs to
     let startSubpathIndex = -1;
     for (let i = 0; i < subpathInfos.length; i++) {
@@ -550,7 +550,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
         break;
       }
     }
-    
+
     // Find which subpath the end point belongs to
     let endSubpathIndex = -1;
     for (let i = 0; i < subpathInfos.length; i++) {
@@ -560,35 +560,35 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
         break;
       }
     }
-    
+
     // Only select range if both points are in the same subpath
     if (startSubpathIndex !== endSubpathIndex || startSubpathIndex === -1) return [];
-    
+
     const { subpath, startIndex } = subpathInfos[startSubpathIndex];
     const allPoints = extractEditablePoints(subpath);
-    
+
     // Adjust command indices to be relative to the full path
     const adjustedPoints = allPoints.map(p => ({
       ...p,
       commandIndex: p.commandIndex + startIndex
     }));
-    
+
     // Find indices in the subpath's point array
-    const startPointGlobalIndex = adjustedPoints.findIndex(p => 
+    const startPointGlobalIndex = adjustedPoints.findIndex(p =>
       p.commandIndex === startCommandIndex && p.pointIndex === startPointIndex
     );
-    const endPointGlobalIndex = adjustedPoints.findIndex(p => 
+    const endPointGlobalIndex = adjustedPoints.findIndex(p =>
       p.commandIndex === endCommandIndex && p.pointIndex === endPointIndex
     );
-    
+
     if (startPointGlobalIndex === -1 || endPointGlobalIndex === -1) return [];
-    
+
     // Get all points between the two indices (inclusive)
     const minIndex = Math.min(startPointGlobalIndex, endPointGlobalIndex);
     const maxIndex = Math.max(startPointGlobalIndex, endPointGlobalIndex);
-    
+
     const pointsInRange = adjustedPoints.slice(minIndex, maxIndex + 1);
-    
+
     return pointsInRange.map(p => ({
       elementId,
       commandIndex: p.commandIndex,
@@ -599,25 +599,25 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
   selectCommand: (command, multiSelect = false) => {
     set((state) => {
       const isAlreadySelected = state.selectedCommands.some(
-        (c) => c.elementId === command.elementId && 
-               c.commandIndex === command.commandIndex && 
-               c.pointIndex === command.pointIndex
+        (c) => c.elementId === command.elementId &&
+          c.commandIndex === command.commandIndex &&
+          c.pointIndex === command.pointIndex
       );
-      
+
       let newSelectedCommands;
       if (multiSelect) {
         if (isAlreadySelected) {
           newSelectedCommands = state.selectedCommands.filter(
-            (c) => !(c.elementId === command.elementId && 
-                     c.commandIndex === command.commandIndex && 
-                     c.pointIndex === command.pointIndex)
+            (c) => !(c.elementId === command.elementId &&
+              c.commandIndex === command.commandIndex &&
+              c.pointIndex === command.pointIndex)
           );
         } else {
           // Check if there's already a selection in the same element for range selection
           const existingSelectionInElement = state.selectedCommands.filter(
             (c) => c.elementId === command.elementId
           );
-          
+
           if (existingSelectionInElement.length === 1) {
             // Do range selection: select all points between the existing selection and new point
             const existingCmd = existingSelectionInElement[0];
@@ -628,7 +628,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
               command.commandIndex,
               command.pointIndex
             );
-            
+
             newSelectedCommands = [...state.selectedCommands, ...pointsInRange];
           } else {
             // Multiple or no existing selection in element, just add the single command
@@ -841,7 +841,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
   getFilteredEditablePoints: (elementId: string) => {
     const state = get() as FullCanvasState;
     const isSubpathMode = (get() as FullCanvasState).isWorkingWithSubpaths();
-    
+
     const element = state.elements.find((el) => el.id === elementId);
     if (!element || element.type !== 'path') return [];
 
@@ -865,8 +865,8 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
       const subpathData = subpaths[selected.subpathIndex];
       if (subpathData) {
         // Include points that fall within this subpath's command range
-        const pointsInSubpath = allPoints.filter(point => 
-          point.commandIndex >= subpathData.startIndex && 
+        const pointsInSubpath = allPoints.filter(point =>
+          point.commandIndex >= subpathData.startIndex &&
           point.commandIndex <= subpathData.endIndex
         );
         filteredPoints.push(...pointsInSubpath);
@@ -882,7 +882,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     }));
   },
 
-    applySmoothBrush: (centerX?: number, centerY?: number) => {
+  applySmoothBrush: (centerX?: number, centerY?: number) => {
     const state = get() as FullCanvasState;
     const { radius, strength, simplifyPoints: shouldSimplifyPoints, simplificationTolerance, minDistance } = state.smoothBrush;
 
@@ -939,18 +939,18 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
 
     if (state.selectedCommands.length > 0) {
       // Apply smoothing only to selected commands
-      
+
       state.selectedCommands.forEach((selectedCmd) => {
-        const point = editablePoints.find(p => 
-          p.commandIndex === selectedCmd.commandIndex && 
+        const point = editablePoints.find(p =>
+          p.commandIndex === selectedCmd.commandIndex &&
           p.pointIndex === selectedCmd.pointIndex
         );
-        
+
         if (point) {
           // Skip start and end points of the path
           const pointIndex = editablePoints.indexOf(point);
           if (pointIndex === 0 || pointIndex === editablePoints.length - 1) return;
-          
+
           affectedPoints.push({
             commandIndex: point.commandIndex,
             pointIndex: point.pointIndex,
@@ -960,11 +960,11 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
 
           // Calculate smoothed position by averaging with neighbors
           let sumX = 0, sumY = 0, count = 0;
-          
+
           // Include current point and neighbors
           for (let offset = -1; offset <= 1; offset++) {
-            const neighborIndex = editablePoints.findIndex(p => 
-              p.commandIndex === point.commandIndex && 
+            const neighborIndex = editablePoints.findIndex(p =>
+              p.commandIndex === point.commandIndex &&
               p.pointIndex === point.pointIndex
             ) + offset;
             if (neighborIndex >= 0 && neighborIndex < editablePoints.length) {
@@ -974,14 +974,14 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
               count++;
             }
           }
-          
+
           if (count > 0) {
             const avgX = sumX / count;
             const avgY = sumY / count;
-            
+
             const newX = point.x + (avgX - point.x) * strength;
             const newY = point.y + (avgY - point.y) * strength;
-            
+
             updatedPoints.push({
               commandIndex: point.commandIndex,
               pointIndex: point.pointIndex,
@@ -997,13 +997,13 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
       editablePoints.forEach((point, index) => {
         // Skip start and end points of the path
         if (index === 0 || index === editablePoints.length - 1) return;
-        
+
         // If center is provided, only affect points within radius
         if (centerX !== undefined && centerY !== undefined) {
           const distance = Math.sqrt((point.x - centerX) ** 2 + (point.y - centerY) ** 2);
           if (distance > radius) return;
         }
-        
+
         // Add to affected points for feedback
         affectedPoints.push({
           commandIndex: point.commandIndex,
@@ -1014,7 +1014,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
 
         // Calculate smoothed position by averaging with neighbors
         let sumX = 0, sumY = 0, count = 0;
-        
+
         // Include current point and neighbors
         for (let offset = -1; offset <= 1; offset++) {
           const neighborIndex = index + offset;
@@ -1025,21 +1025,21 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
             count++;
           }
         }
-        
+
         if (count > 0) {
           const avgX = sumX / count;
           const avgY = sumY / count;
-          
+
           // Weight based on distance (closer = more smoothing) if center is provided
           let weight = strength;
           if (centerX !== undefined && centerY !== undefined) {
             const distance = Math.sqrt((point.x - centerX) ** 2 + (point.y - centerY) ** 2);
             weight = strength * (1 - distance / radius);
           }
-          
+
           const newX = point.x + (avgX - point.x) * weight;
           const newY = point.y + (avgY - point.y) * weight;
-          
+
           updatedPoints.push({
             commandIndex: point.commandIndex,
             pointIndex: point.pointIndex,
@@ -1059,87 +1059,87 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     // Update the path if points were affected
     if (updatedPoints.length > 0) {
       const finalPoints = updatedPoints;
-      
+
       // Apply point simplification if enabled
       if (shouldSimplifyPoints) {
-        
+
         if (state.selectedCommands.length > 0) {
           // When points are selected, get all points after partial smoothing to apply simplification
-          const smoothedCommands = updateCommands(commands, updatedPoints.map(u => ({ ...u, type: 'independent' as const, anchor: { x: u.x, y: u.y } } )));
+          const smoothedCommands = updateCommands(commands, updatedPoints.map(u => ({ ...u, type: 'independent' as const, anchor: { x: u.x, y: u.y } })));
           const allPointsAfterSmoothing = extractEditablePoints(smoothedCommands);
-          
+
           // Simplify all points
           const simplifiedPoints = simplifyPoints(allPointsAfterSmoothing, simplificationTolerance, minDistance);
-          
+
           // Rebuild the path from simplified points
           simplifiedPointsForRebuild = simplifiedPoints;
           rebuildPath = true;
         } else {
           // When no points are selected, simplify all points after smoothing
-          
+
           if (centerX !== undefined && centerY !== undefined) {
             // When clicking in brush mode, get all points after partial smoothing to apply simplification
-            const smoothedCommands = updateCommands(commands, updatedPoints.map(u => ({ ...u, type: 'independent' as const, anchor: { x: u.x, y: u.y }} )));
+            const smoothedCommands = updateCommands(commands, updatedPoints.map(u => ({ ...u, type: 'independent' as const, anchor: { x: u.x, y: u.y } })));
             const allPointsAfterSmoothing = extractEditablePoints(smoothedCommands);
-            
+
             // Simplify all points
             const simplifiedPoints = simplifyPoints(allPointsAfterSmoothing, simplificationTolerance, minDistance);
-            
+
             // Rebuild the path from simplified points
             simplifiedPointsForRebuild = simplifiedPoints;
             rebuildPath = true;
           } else {
             // When dragging in brush mode, simplify all points after smoothing
             // Get all editable points after smoothing to apply simplification
-            const smoothedCommands = updateCommands(commands, updatedPoints.map(u => ({ ...u, type: 'independent' as const, anchor: { x: u.x, y: u.y }} )));
+            const smoothedCommands = updateCommands(commands, updatedPoints.map(u => ({ ...u, type: 'independent' as const, anchor: { x: u.x, y: u.y } })));
             const allPointsAfterSmoothing = extractEditablePoints(smoothedCommands);
-            
+
             // Simplify the points
             const simplifiedPoints = simplifyPoints(allPointsAfterSmoothing, simplificationTolerance, minDistance);
-            
+
             // For brush mode, rebuild the path from simplified points
             simplifiedPointsForRebuild = simplifiedPoints;
             rebuildPath = true;
           }
         }
       }
-      
+
       if (rebuildPath) {
         if (simplifiedPointsForRebuild.length > 0) {
           // Extract original subpaths to maintain separation
           const originalSubpaths = extractSubpaths(commands);
-          
+
           if (originalSubpaths.length > 1) {
             // Multiple subpaths - rebuild each subpath separately
             const newSubPaths: SubPath[] = [];
-            
+
             // Group simplified points by their original subpath
             originalSubpaths.forEach((subpath) => {
-              const subpathPoints = simplifiedPointsForRebuild.filter(point => 
+              const subpathPoints = simplifiedPointsForRebuild.filter(point =>
                 point.commandIndex >= subpath.startIndex && point.commandIndex <= subpath.endIndex
               );
-              
+
               if (subpathPoints.length > 0) {
                 const newSubPath: Command[] = [];
-                
+
                 // Start with M command
-                newSubPath.push({ 
-                  type: 'M', 
-                  position: { x: subpathPoints[0].x, y: subpathPoints[0].y } 
+                newSubPath.push({
+                  type: 'M',
+                  position: { x: subpathPoints[0].x, y: subpathPoints[0].y }
                 });
-                
+
                 // Add L commands for the rest of the points
                 for (let i = 1; i < subpathPoints.length; i++) {
-                  newSubPath.push({ 
-                    type: 'L', 
-                    position: { x: subpathPoints[i].x, y: subpathPoints[i].y } 
+                  newSubPath.push({
+                    type: 'L',
+                    position: { x: subpathPoints[i].x, y: subpathPoints[i].y }
                   });
                 }
-                
+
                 newSubPaths.push(newSubPath);
               }
             });
-            
+
             // Update the element with the new subpaths
             (get() as FullCanvasState).updateElement(targetElementId, {
               data: {
@@ -1147,26 +1147,26 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
                 subPaths: newSubPaths
               },
             });
-            
+
           } else {
             // Single subpath - rebuild from simplified points
             if (simplifiedPointsForRebuild.length > 0) {
               const newSubPath: Command[] = [];
-              
+
               // Start with M command
-              newSubPath.push({ 
-                type: 'M', 
-                position: { x: simplifiedPointsForRebuild[0].x, y: simplifiedPointsForRebuild[0].y } 
+              newSubPath.push({
+                type: 'M',
+                position: { x: simplifiedPointsForRebuild[0].x, y: simplifiedPointsForRebuild[0].y }
               });
-              
+
               // Add L commands for the rest of the points
               for (let i = 1; i < simplifiedPointsForRebuild.length; i++) {
-                newSubPath.push({ 
-                  type: 'L', 
-                  position: { x: simplifiedPointsForRebuild[i].x, y: simplifiedPointsForRebuild[i].y } 
+                newSubPath.push({
+                  type: 'L',
+                  position: { x: simplifiedPointsForRebuild[i].x, y: simplifiedPointsForRebuild[i].y }
                 });
               }
-              
+
               // Update the element with the new single subpath
               (get() as FullCanvasState).updateElement(targetElementId, {
                 data: {
@@ -1180,7 +1180,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
       } else {
         const updatedCommands = updateCommands(commands, finalPoints.map(u => ({ ...u, type: 'independent' as const, anchor: { x: u.x, y: u.y } })));
         const newSubPaths = extractSubpaths(updatedCommands).map(s => s.commands);
-        
+
         (get() as FullCanvasState).updateElement(targetElementId, {
           data: {
             ...pathData,
@@ -1188,7 +1188,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
           },
         });
       }
-      
+
     }
   },
 
@@ -1223,7 +1223,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     const pathData = element.data as PathData;
     const commands = pathData.subPaths.flat();
     const command = commands[commandIndex];
-    
+
     if (!command || command.type !== 'C' || (pointIndex !== 0 && pointIndex !== 1)) return;
 
     // Find paired control point
@@ -1294,7 +1294,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
         }
       }
     }));
-  },  getControlPointInfo: (elementId: string, commandIndex: number, pointIndex: number) => {
+  }, getControlPointInfo: (elementId: string, commandIndex: number, pointIndex: number) => {
     const state = get() as FullCanvasState;
     const key = `${elementId}-${commandIndex}-${pointIndex}`;
     return state.controlPointAlignment.controlPoints[key] || null;
@@ -1312,16 +1312,16 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     // Find the control points
     const point1 = points.find(p => p.commandIndex === commandIndex1 && p.pointIndex === pointIndex1);
     const point2 = points.find(p => p.commandIndex === commandIndex2 && p.pointIndex === pointIndex2);
-    
+
     if (!point1 || !point2 || !point1.isControl || !point2.isControl) return;
 
     // Verify they share the same anchor (they should be paired)
     const tolerance = 0.1;
     const anchorDistance = Math.sqrt(
-      Math.pow(point1.anchor.x - point2.anchor.x, 2) + 
+      Math.pow(point1.anchor.x - point2.anchor.x, 2) +
       Math.pow(point1.anchor.y - point2.anchor.y, 2)
     );
-    
+
     if (anchorDistance >= tolerance) return;
 
     const sharedAnchor = point1.anchor;
@@ -1338,7 +1338,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     point1.x = newPoint1Position.x;
     point1.y = newPoint1Position.y;
     point1.type = type;
-    
+
     // For independent type, remove pairing information
     if (type === 'independent') {
       point1.pairedCommandIndex = undefined;
@@ -1359,7 +1359,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     // Update the path with modified points
     const newCommands = updateCommands(commands, [point1, point2]);
     const newSubPaths = extractSubpaths(newCommands).map(s => s.commands);
-    
+
     (get() as FullCanvasState).updateElement(elementId, {
       data: {
         ...pathData,
@@ -1394,7 +1394,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     // Update the control point alignment state
     set((currentState) => {
       const newControlPoints = { ...currentState.controlPointAlignment.controlPoints };
-      
+
       if (type === 'independent') {
         // For independent, we might want to remove the pairing info entirely
         newControlPoints[key1] = info1;
@@ -1404,7 +1404,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
         newControlPoints[key1] = info1;
         newControlPoints[key2] = info2;
       }
-      
+
       return {
         controlPointAlignment: {
           ...currentState.controlPointAlignment,
@@ -1430,16 +1430,16 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     // Get the alignment info for this point
     const key = `${elementId}-${commandIndex}-${pointIndex}`;
     let alignmentInfo = state.controlPointAlignment.controlPoints[key];
-    
+
     // If this point doesn't have alignment info, try to find paired point structurally and check if it has alignment
     if (!alignmentInfo || alignmentInfo.type === 'independent') {
       // Determine the paired point structurally
       const isClosed = commands.length > 2 && commands[commands.length - 1].type === 'Z';
-      
+
       let pairedCommandIndex = -1;
       let pairedPointIndex = -1;
       const handleType = pointIndex === 0 ? 'outgoing' : 'incoming';
-      
+
       if (handleType === 'incoming') {
         // For incoming handle, find the next command's outgoing handle
         if (commandIndex < commands.length - 1) {
@@ -1477,7 +1477,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
           }
         }
       }
-      
+
       // If found paired point, check if it has alignment info
       if (pairedCommandIndex !== -1) {
         const pairedKey = `${elementId}-${pairedCommandIndex}-${pairedPointIndex}`;
@@ -1497,7 +1497,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
       } else {
         // Special case: if no paired point found and path is closed, look for control points that share coordinates with the M point
         const isClosed = commands.length > 2 && commands[commands.length - 1].type === 'Z';
-        
+
         if (isClosed && commands[commandIndex].type === 'C') {
           // Find the M point for this subpath
           let mCommandIndex = -1;
@@ -1507,16 +1507,16 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
               break;
             }
           }
-          
+
           if (mCommandIndex !== -1) {
             const mPoint = (commands[mCommandIndex] as Command & { type: 'M' }).position;
             const currentPoint = points.find(p => p.commandIndex === commandIndex && p.pointIndex === pointIndex);
-            
+
             if (currentPoint) {
               // Check if current point shares x or y coordinate with M point
               const sharesX = Math.abs(currentPoint.x - mPoint.x) < 0.1;
               const sharesY = Math.abs(currentPoint.y - mPoint.y) < 0.1;
-              
+
               if (sharesX || sharesY) {
                 // Find other control points in the same subpath that share the same coordinate
                 for (const otherPoint of points) {
@@ -1533,11 +1533,11 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
                         }
                       }
                     }
-                    
+
                     if (inSameSubpath && otherPoint.isControl) {
-                      const sharesCoord = (sharesX && Math.abs(otherPoint.x - mPoint.x) < 0.1) || 
-                                         (sharesY && Math.abs(otherPoint.y - mPoint.y) < 0.1);
-                      
+                      const sharesCoord = (sharesX && Math.abs(otherPoint.x - mPoint.x) < 0.1) ||
+                        (sharesY && Math.abs(otherPoint.y - mPoint.y) < 0.1);
+
                       if (sharesCoord) {
                         // Found a matching point, check if it has alignment info
                         const pairedKey = `${elementId}-${otherPoint.commandIndex}-${otherPoint.pointIndex}`;
@@ -1564,12 +1564,12 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
         }
       }
     }
-    
+
     if (!alignmentInfo || alignmentInfo.type === 'independent') return;
 
     // Find the paired point
-    const pairedPoint = points.find(p => 
-      p.commandIndex === alignmentInfo.pairedCommandIndex && 
+    const pairedPoint = points.find(p =>
+      p.commandIndex === alignmentInfo.pairedCommandIndex &&
       p.pointIndex === alignmentInfo.pairedPointIndex
     );
     if (!pairedPoint) return;
@@ -1592,7 +1592,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
         y: newVector.y / magnitude
       } : { x: 0, y: 0 };
 
-     
+
 
       newPairedX = sharedAnchor.x + (-unitVector.x * magnitude);
       newPairedY = sharedAnchor.y + (-unitVector.y * magnitude);
@@ -1631,20 +1631,20 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
   deleteZCommandForMPoint: (elementId: string, commandIndex: number) => {
     const state = get() as FullCanvasState;
     const element = state.elements.find((el: CanvasElement) => el.id === elementId);
-    
+
     if (!element || element.type !== 'path') return;
-    
+
     const pathData = element.data as PathData;
     const commands = pathData.subPaths.flat();
-    
+
     // Check if the command at commandIndex is an M command
     if (commands[commandIndex]?.type !== 'M') return;
-    
+
     // Find if there's a Z command that closes to this M point
     // A Z command closes to the most recent M command
     let hasClosingZ = false;
     let zCommandIndex = -1;
-    
+
     // Look for Z commands after this M command
     for (let i = commandIndex + 1; i < commands.length; i++) {
       if (commands[i].type === 'Z') {
@@ -1657,7 +1657,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
             break;
           }
         }
-        
+
         if (lastMIndex === commandIndex) {
           hasClosingZ = true;
           zCommandIndex = i;
@@ -1668,16 +1668,16 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
         break;
       }
     }
-    
+
     if (hasClosingZ && zCommandIndex !== -1) {
       // Remove the Z command
       const updatedCommands = commands.filter((_, index) => index !== zCommandIndex);
-      
+
       // Normalize and reconstruct path
       const normalizedCommands = normalizePathCommands(updatedCommands);
-      
+
       const newSubPaths = extractSubpaths(normalizedCommands).map(s => s.commands);
-      
+
       // Update the element
       (set as (fn: (state: FullCanvasState) => Partial<FullCanvasState>) => void)((currentState) => ({
         ...currentState,
@@ -1693,30 +1693,30 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
   moveToM: (elementId: string, commandIndex: number, pointIndex: number) => {
     const state = get() as FullCanvasState;
     const element = state.elements.find((el: CanvasElement) => el.id === elementId);
-    
+
     if (!element || element.type !== 'path') return;
-    
+
     const pathData = element.data as PathData;
     const commands = pathData.subPaths.flat();
-    
+
     // Check if the command exists and is L or C
     const command = commands[commandIndex];
     if (!command || (command.type !== 'L' && command.type !== 'C')) return;
-    
+
     // Check if this is the last point of the command
     let pointsLength = 0;
     if (command.type === 'L') pointsLength = 1;
     else if (command.type === 'C') pointsLength = 3;
     const isLastPoint = pointIndex === pointsLength - 1;
     if (!isLastPoint) return;
-    
+
     // Check if this is the last command in the path or before a Z/M
-    const isLastCommandInSubpath = commandIndex === commands.length - 1 || 
-                                   commands[commandIndex + 1].type === 'M' || 
-                                   commands[commandIndex + 1].type === 'Z';
-    
+    const isLastCommandInSubpath = commandIndex === commands.length - 1 ||
+      commands[commandIndex + 1].type === 'M' ||
+      commands[commandIndex + 1].type === 'Z';
+
     if (!isLastCommandInSubpath) return;
-    
+
     // Find the M command for this subpath (the last M before this command)
     let subpathMIndex = -1;
     for (let i = commandIndex - 1; i >= 0; i--) {
@@ -1725,9 +1725,9 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
         break;
       }
     }
-    
+
     if (subpathMIndex === -1) return; // No M found
-    
+
     // Get the point to move to M position
     let pointToMove: Point | null = null;
     if (command.type === 'L') {
@@ -1738,9 +1738,9 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
       else if (pointIndex === 2) pointToMove = command.position;
     }
     if (!pointToMove) return;
-    
+
     const updatedCommands = [...commands];
-    
+
     // Move the last point to the M position to close the subpath
     const mPosition = (commands[subpathMIndex] as Command & { type: 'M' }).position;
     const newCommand = { ...command };
@@ -1755,18 +1755,18 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
       else if (pointIndex === 2) cCommand.position = mPosition;
       updatedCommands[commandIndex] = cCommand;
     }
-    
+
     // For C commands, we need to adjust control points to maintain curve shape
     if (command.type === 'C') {
       // For a C command, points are: [control1, control2, endpoint]
       // When moving the endpoint to the M position, we need to adjust control points
       const mPosition = (commands[subpathMIndex] as Command & { type: 'M' }).position;
       const originalEndpoint = command.position;
-      
+
       // Calculate the offset
       const offsetX = mPosition.x - originalEndpoint.x;
       const offsetY = mPosition.y - originalEndpoint.y;
-      
+
       // Move control points by the same offset to maintain relative positions
       updatedCommands[commandIndex] = {
         ...command,
@@ -1775,12 +1775,12 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
         position: mPosition // endpoint moved to M position
       };
     }
-    
+
     // Normalize and reconstruct path
     const normalizedCommands = normalizePathCommands(updatedCommands);
-    
+
     const newSubPaths = extractSubpaths(normalizedCommands).map(s => s.commands);
-    
+
     // Update the element
     (set as (fn: (state: FullCanvasState) => Partial<FullCanvasState>) => void)((currentState) => ({
       ...currentState,
@@ -1795,40 +1795,40 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
   convertCommandType: (elementId: string, commandIndex: number) => {
     const state = get() as FullCanvasState;
     const element = state.elements.find((el: CanvasElement) => el.id === elementId);
-    
+
     if (!element || element.type !== 'path') return;
-    
+
     const pathData = element.data as PathData;
     const commands = pathData.subPaths.flat();
-    
+
     const command = commands[commandIndex];
     if (!command) return;
-    
+
     // Helper function to get command end point
     const getCommandEndPoint = (cmd: Command): Point | null => {
       if (cmd.type === 'Z') return null;
       return cmd.position;
     };
-    
+
     const updatedCommands = [...commands];
-    
+
     if (command.type === 'L') {
       // Convert L to C: need to add control points
       // For a smooth conversion, place control points at 1/3 and 2/3 of the line
       const startPoint = commandIndex > 0 ? getCommandEndPoint(commands[commandIndex - 1]) : { x: 0, y: 0 };
       const endPoint = command.position;
-      
+
       if (startPoint) {
         // Calculate control points at 1/3 and 2/3 of the line
         const control1 = {
-          x: startPoint.x + (endPoint.x - startPoint.x) * (1/3),
-          y: startPoint.y + (endPoint.y - startPoint.y) * (1/3)
+          x: startPoint.x + (endPoint.x - startPoint.x) * (1 / 3),
+          y: startPoint.y + (endPoint.y - startPoint.y) * (1 / 3)
         };
         const control2 = {
-          x: startPoint.x + (endPoint.x - startPoint.x) * (2/3),
-          y: startPoint.y + (endPoint.y - startPoint.y) * (2/3)
+          x: startPoint.x + (endPoint.x - startPoint.x) * (2 / 3),
+          y: startPoint.y + (endPoint.y - startPoint.y) * (2 / 3)
         };
-        
+
         updatedCommands[commandIndex] = {
           type: 'C',
           controlPoint1: {
@@ -1858,20 +1858,20 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
         position: endPoint
       };
     }
-    
-      // Normalize and reconstruct path
-      const normalizedCommands = normalizePathCommands(updatedCommands);
-      
-      const newSubPaths = extractSubpaths(normalizedCommands).map(s => s.commands);
-      
-      // Update the element
-      (set as (fn: (state: FullCanvasState) => Partial<FullCanvasState>) => void)((currentState) => ({
-        ...currentState,
-        elements: currentState.elements.map((el) =>
-          el.id === elementId
-            ? { ...el, data: { ...pathData, subPaths: newSubPaths } }
-            : el
-        )
-      }));
+
+    // Normalize and reconstruct path
+    const normalizedCommands = normalizePathCommands(updatedCommands);
+
+    const newSubPaths = extractSubpaths(normalizedCommands).map(s => s.commands);
+
+    // Update the element
+    (set as (fn: (state: FullCanvasState) => Partial<FullCanvasState>) => void)((currentState) => ({
+      ...currentState,
+      elements: currentState.elements.map((el) =>
+        el.id === elementId
+          ? { ...el, data: { ...pathData, subPaths: newSubPaths } }
+          : el
+      )
+    }));
   },
 });

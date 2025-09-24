@@ -103,19 +103,19 @@ export const useCanvasStore = create<CanvasStore>()(
           const { strokeWidth, strokeColor, strokeOpacity, reusePath } = get().pencil;
           // For pencil paths, if strokeColor is 'none', use black instead
           const effectiveStrokeColor = strokeColor === 'none' ? '#000000' : strokeColor;
-          
+
           // Check if we should reuse an existing pencil path
           const lastElement = get().elements[get().elements.length - 1];
-          const hasExistingPencilPath = lastElement?.type === 'path' && 
+          const hasExistingPencilPath = lastElement?.type === 'path' &&
             (lastElement.data as import('../types').PathData).isPencilPath === true;
-          
+
           if (reusePath && hasExistingPencilPath) {
             // Reuse existing path - add the starting point as a new subpath
             const pathData = lastElement.data as import('../types').PathData;
             get().updateElement(lastElement.id, {
               data: {
                 ...pathData,
-                subPaths: [...pathData.subPaths, [{type: 'M', position: point}]]
+                subPaths: [...pathData.subPaths, [{ type: 'M', position: point }]]
               },
             });
           } else {
@@ -123,7 +123,7 @@ export const useCanvasStore = create<CanvasStore>()(
             get().addElement({
               type: 'path',
               data: {
-                subPaths: [[{type: 'M', position: point}]],
+                subPaths: [[{ type: 'M', position: point }]],
                 strokeWidth,
                 strokeColor: effectiveStrokeColor,
                 strokeOpacity,
@@ -143,10 +143,10 @@ export const useCanvasStore = create<CanvasStore>()(
           const pencilPathElement = [...state.elements].reverse().find(
             el => el.type === 'path' && (el.data as import('../types').PathData).isPencilPath === true
           );
-          
+
           if (pencilPathElement) {
             const pathData = pencilPathElement.data as import('../types').PathData;
-            
+
             // Parse the current path to get the last point
             const commands = pathData.subPaths.flat();
             if (commands.length > 0) {
@@ -160,7 +160,7 @@ export const useCanvasStore = create<CanvasStore>()(
                 } else {
                   lastPoint = { x: 0, y: 0 }; // fallback
                 }
-                
+
                 // Check minimum step distance (like in the provided code)
                 const minStep = 1.25;
                 const distance = Math.sqrt((point.x - lastPoint.x) ** 2 + (point.y - lastPoint.y) ** 2);
@@ -169,11 +169,11 @@ export const useCanvasStore = create<CanvasStore>()(
                 }
               }
             }
-            
+
             // Update subPaths by adding L command to the last subpath
             const lastSubpathIndex = pathData.subPaths.length - 1;
             const updatedSubPaths = [...pathData.subPaths];
-            updatedSubPaths[lastSubpathIndex] = [...updatedSubPaths[lastSubpathIndex], {type: 'L', position: point}];
+            updatedSubPaths[lastSubpathIndex] = [...updatedSubPaths[lastSubpathIndex], { type: 'L', position: point }];
             get().updateElement(pencilPathElement.id, {
               data: {
                 ...pathData,
@@ -206,7 +206,7 @@ export const useCanvasStore = create<CanvasStore>()(
             if (commands.length > 0) {
               // Extract subpaths directly from commands
               const subPaths = extractSubpaths(commands);
-              
+
               // Create path element with the converted text
               get().addElement({
                 type: 'path',
@@ -324,12 +324,12 @@ export const useCanvasStore = create<CanvasStore>()(
             handleSet(state);
           }, 100), // 100ms cool-off period
       }
-    ), { 
-      name: 'canvas-app-state',
-      partialize: (state: CanvasStore) => {
-        const { ...rest } = state;
-        return rest;
-      }
+    ), {
+    name: 'canvas-app-state',
+    partialize: (state: CanvasStore) => {
+      const { ...rest } = state;
+      return rest;
     }
+  }
   )
 );

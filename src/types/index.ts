@@ -19,7 +19,7 @@ export interface ControlPointInfo {
 }
 
 // Control point combining position and info
-export interface ControlPoint extends Point, ControlPointInfo {}
+export interface ControlPoint extends Point, ControlPointInfo { }
 
 // Path command types
 export type CommandType = 'M' | 'L' | 'C' | 'Z';

@@ -65,12 +65,12 @@ export const ArrangePanel: React.FC = () => {
   const selectedCount = selectedIds.length;
   const selectedCommandsCount = selectedCommands.length;
   const selectedSubpathsCount = getSelectedSubpathsCount();
-  const canAlign = selectedCount >= 2 || 
-                   (activePlugin === 'edit' && selectedCommandsCount >= 2) ||
-                   (activePlugin === 'subpath' && selectedSubpathsCount >= 2);
-  const canDistribute = selectedCount >= 3 || 
-                        (activePlugin === 'edit' && selectedCommandsCount >= 3) ||
-                        (activePlugin === 'subpath' && selectedSubpathsCount >= 3);
+  const canAlign = selectedCount >= 2 ||
+    (activePlugin === 'edit' && selectedCommandsCount >= 2) ||
+    (activePlugin === 'subpath' && selectedSubpathsCount >= 2);
+  const canDistribute = selectedCount >= 3 ||
+    (activePlugin === 'edit' && selectedCommandsCount >= 3) ||
+    (activePlugin === 'subpath' && selectedSubpathsCount >= 3);
 
   // Define handlers based on active plugin
   const handlers = {
@@ -91,10 +91,10 @@ export const ArrangePanel: React.FC = () => {
     edit: {
       distributeHorizontally: distributeHorizontallyCommands,
       distributeVertically: distributeVerticallyCommands,
-      bringToFront: () => {}, // Not applicable for edit mode
-      sendForward: () => {},
-      sendBackward: () => {},
-      sendToBack: () => {},
+      bringToFront: () => { }, // Not applicable for edit mode
+      sendForward: () => { },
+      sendBackward: () => { },
+      sendToBack: () => { },
       alignLeft: alignLeftCommands,
       alignCenter: alignCenterCommands,
       alignRight: alignRightCommands,
@@ -146,9 +146,9 @@ export const ArrangePanel: React.FC = () => {
     <div style={{ display: 'flex', gap: '2px' }}>
       {buttons.map((button, index) => (
         <div key={index} style={{ flex: 1 }}>
-          <IconButton 
-            onClick={button.handler} 
-            disabled={button.disabled} 
+          <IconButton
+            onClick={button.handler}
+            disabled={button.disabled}
             title={button.title}
           >
             {button.icon}
@@ -159,8 +159,8 @@ export const ArrangePanel: React.FC = () => {
   );
 
   return (
-    <div style={{ 
-      backgroundColor: '#fff', 
+    <div style={{
+      backgroundColor: '#fff',
       padding: '8px 8px 0 8px',
       borderTop: '1px solid #ddd',
       width: '100%'

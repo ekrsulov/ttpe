@@ -14,9 +14,9 @@ interface EditPointsOverlayProps {
     commandIndex: number;
     pointIndex: number;
   }>;
-  editingPoint: { 
-    elementId: string; 
-    commandIndex: number; 
+  editingPoint: {
+    elementId: string;
+    commandIndex: number;
     pointIndex: number;
     isDragging: boolean;
     offsetX: number;
@@ -78,10 +78,10 @@ export const EditPointsOverlay: React.FC<EditPointsOverlayProps> = ({
   onSelectCommand,
 }) => {
   if (element.type !== 'path') return null;
-  
+
   const pathData = element.data as PathData;
   const commands = pathData.subPaths.flat();
-  
+
   // Use filtered points that consider subpath selection
   const points = getFilteredEditablePoints(element.id);
 
@@ -95,32 +95,32 @@ export const EditPointsOverlay: React.FC<EditPointsOverlayProps> = ({
         if (draggingSelection?.isDragging && draggingSelection.draggedPoint) {
           // Handle group drag visualization
           const draggedPoint = draggingSelection.draggedPoint;
-          const initialPos = draggingSelection.initialPositions.find(p => 
+          const initialPos = draggingSelection.initialPositions.find(p =>
             p.elementId === element.id &&
-            p.commandIndex === point.commandIndex && 
+            p.commandIndex === point.commandIndex &&
             p.pointIndex === point.pointIndex
           );
-          
+
           if (initialPos && dragPosition) {
             // Calculate delta from the dragged point
-            const draggedInitialPos = draggingSelection.initialPositions.find(p => 
+            const draggedInitialPos = draggingSelection.initialPositions.find(p =>
               p.elementId === draggedPoint.elementId &&
-              p.commandIndex === draggedPoint.commandIndex && 
+              p.commandIndex === draggedPoint.commandIndex &&
               p.pointIndex === draggedPoint.pointIndex
             );
-            
+
             if (draggedInitialPos) {
               const deltaX = dragPosition.x - draggedInitialPos.x;
               const deltaY = dragPosition.y - draggedInitialPos.y;
-              
+
               displayX = initialPos.x + deltaX;
               displayY = initialPos.y + deltaY;
             }
           }
-        } else if (editingPoint?.isDragging && 
-            editingPoint.elementId === element.id &&
-            editingPoint.commandIndex === point.commandIndex && 
-            editingPoint.pointIndex === point.pointIndex) {
+        } else if (editingPoint?.isDragging &&
+          editingPoint.elementId === element.id &&
+          editingPoint.commandIndex === point.commandIndex &&
+          editingPoint.pointIndex === point.pointIndex) {
           // Use drag position for smooth visual feedback during single drag
           if (dragPosition) {
             displayX = dragPosition.x;
@@ -145,15 +145,15 @@ export const EditPointsOverlay: React.FC<EditPointsOverlayProps> = ({
           />
         );
       })}
-      
+
       {/* Render control point lines - only for filtered points */}
-      <ControlPointLines 
-        commands={commands} 
-        points={points} 
-        element={element} 
-        editingPoint={editingPoint} 
-        dragPosition={dragPosition} 
-        viewport={viewport} 
+      <ControlPointLines
+        commands={commands}
+        points={points}
+        element={element}
+        editingPoint={editingPoint}
+        dragPosition={dragPosition}
+        viewport={viewport}
       />
     </g>
   );
@@ -166,17 +166,17 @@ const getPointStyle = (
     x: number;
     y: number;
     isControl: boolean;
-  }, 
+  },
   selectedCommands: Array<{
     elementId: string;
     commandIndex: number;
     pointIndex: number;
-  }>, 
+  }>,
   element: {
     id: string;
     type: string;
     data: unknown;
-  }, 
+  },
   smoothBrush: {
     isActive: boolean;
     affectedPoints: Array<{
@@ -185,7 +185,7 @@ const getPointStyle = (
       x: number;
       y: number;
     }>;
-  }, 
+  },
   commands: Command[]
 ) => {
   let color = 'black';
@@ -195,15 +195,15 @@ const getPointStyle = (
 
   // Check if this point is selected
   const isSelected = selectedCommands.some(
-    cmd => cmd.elementId === element.id && 
-           cmd.commandIndex === point.commandIndex && 
-           cmd.pointIndex === point.pointIndex
+    cmd => cmd.elementId === element.id &&
+      cmd.commandIndex === point.commandIndex &&
+      cmd.pointIndex === point.pointIndex
   );
 
   // Check if this point is affected by smooth brush
   const isAffectedByBrush = smoothBrush.isActive && smoothBrush.affectedPoints.some(
-    (affected) => affected.commandIndex === point.commandIndex && 
-               affected.pointIndex === point.pointIndex
+    (affected) => affected.commandIndex === point.commandIndex &&
+      affected.pointIndex === point.pointIndex
   );
 
   if (isAffectedByBrush) {
@@ -225,7 +225,7 @@ const getPointStyle = (
     const pointsLength = cmd.type === 'M' || cmd.type === 'L' ? 1 : cmd.type === 'C' ? 3 : 0;
     const isLastPointInCommand = point.pointIndex === pointsLength - 1;
     const isLastPointInPath = isLastCommand && isLastPointInCommand && cmd.type !== 'Z';
-    
+
     if (cmd.type === 'M') {
       color = 'green';
       size = 6; // larger
@@ -272,17 +272,17 @@ const handlePointPointerDown = (
   onSelectCommand: (command: { elementId: string; commandIndex: number; pointIndex: number }, multiSelect?: boolean) => void
 ) => {
   e.stopPropagation();
-  
+
   // Disable point interaction when smooth brush is active
   if (smoothBrush.isActive) return;
-  
+
   // Check if this point is already selected
-  const isAlreadySelected = selectedCommands.some(cmd => 
+  const isAlreadySelected = selectedCommands.some(cmd =>
     cmd.elementId === element.id &&
     cmd.commandIndex === point.commandIndex &&
     cmd.pointIndex === point.pointIndex
   );
-  
+
   // Handle selection logic
   if (e.shiftKey) {
     // Shift+click: toggle selection (add/remove from selection)
@@ -300,7 +300,7 @@ const handlePointPointerDown = (
     }, false);
   }
   // If point is already selected and no shift, keep it selected (no action needed)
-  
+
   // Only start dragging if not using shift (to avoid accidental drags during selection)
   if (!e.shiftKey) {
     // Get mouse coordinates relative to SVG
@@ -309,10 +309,10 @@ const handlePointPointerDown = (
       const svgRect = svgElement.getBoundingClientRect();
       const svgX = e.clientX - svgRect.left;
       const svgY = e.clientY - svgRect.top;
-      
+
       // Convert to canvas coordinates
       const canvasPoint = mapSvgToCanvas(svgX, svgY, viewport);
-      
+
       onStartDraggingPoint(element.id, point.commandIndex, point.pointIndex, canvasPoint.x, canvasPoint.y);
     } else {
       // Fallback to original coordinates
@@ -355,15 +355,15 @@ const ControlPointLines: React.FC<{
       {commands.map((cmd, cmdIndex) => {
         if (cmd.type === 'C') {
           // Check if this command has any control points in the filtered points list
-          const hasFilteredControlPoints = points.some(point => 
+          const hasFilteredControlPoints = points.some(point =>
             point.commandIndex === cmdIndex && (point.pointIndex === 0 || point.pointIndex === 1)
           );
-          
+
           // Only render lines if this command's control points are included in filtered points
           if (!hasFilteredControlPoints) {
             return null;
           }
-          
+
           const startPoint = getCommandStartPoint(commands, cmdIndex);
           if (startPoint) {
             let control1X = cmd.controlPoint1.x;
@@ -389,23 +389,23 @@ const ControlPointLines: React.FC<{
 
             return (
               <g key={`lines-${cmdIndex}`}>
-                <line 
-                  x1={startPoint.x} 
-                  y1={startPoint.y} 
-                  x2={control1X} 
-                  y2={control1Y} 
-                  stroke="blue" 
+                <line
+                  x1={startPoint.x}
+                  y1={startPoint.y}
+                  x2={control1X}
+                  y2={control1Y}
+                  stroke="blue"
                   strokeWidth="1"
-                  vectorEffect="non-scaling-stroke" 
+                  vectorEffect="non-scaling-stroke"
                 />
-                <line 
-                  x1={control2X} 
-                  y1={control2Y} 
-                  x2={endX} 
-                  y2={endY} 
-                  stroke="blue" 
+                <line
+                  x1={control2X}
+                  y1={control2Y}
+                  x2={endX}
+                  y2={endY}
+                  stroke="blue"
                   strokeWidth="1"
-                  vectorEffect="non-scaling-stroke" 
+                  vectorEffect="non-scaling-stroke"
                 />
               </g>
             );
