@@ -21,6 +21,7 @@ interface SelectionOverlayProps {
     showCoordinates?: boolean;
     showRulers?: boolean;
   };
+  showTransformations?: boolean;
   onTransformationHandlerPointerDown: (e: React.PointerEvent, elementId: string, handler: string) => void;
   onTransformationHandlerPointerUp: (e: React.PointerEvent) => void;
 }
@@ -31,6 +32,7 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
   viewport,
   activePlugin,
   transformation,
+  showTransformations = true,
   onTransformationHandlerPointerDown,
   onTransformationHandlerPointerUp,
 }) => {
@@ -81,7 +83,7 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
   return (
     <g key={`selection-${element.id}`}>
       {/* Selection rectangle */}
-      {!isTransformationMode && adjustedWidth > 0 && adjustedHeight > 0 && (
+      {adjustedWidth > 0 && adjustedHeight > 0 && (
         <rect
           x={adjustedX}
           y={adjustedY}
@@ -95,7 +97,7 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
       )}
 
       {/* Transformation handlers */}
-      {isTransformationMode && (
+      {isTransformationMode && showTransformations && (
         <TransformationHandlers
           bounds={adjustedBounds}
           elementId={element.id}
@@ -108,13 +110,13 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
       )}
 
       {/* Center X marker and coordinates */}
-      {isTransformationMode && <CenterMarker bounds={adjustedBounds} selectionColor={selectionColor} viewport={viewport} transformation={transformation} />}
+      {isTransformationMode && showTransformations && <CenterMarker bounds={adjustedBounds} selectionColor={selectionColor} viewport={viewport} transformation={transformation} />}
 
       {/* Corner coordinates */}
-      {isTransformationMode && transformation?.showCoordinates && <CornerCoordinates bounds={adjustedBounds} viewport={viewport} />}
+      {isTransformationMode && showTransformations && transformation?.showCoordinates && <CornerCoordinates bounds={adjustedBounds} viewport={viewport} />}
 
       {/* Measurement rulers */}
-      {isTransformationMode && transformation?.showRulers && <MeasurementRulers bounds={adjustedBounds} viewport={viewport} />}
+      {isTransformationMode && showTransformations && transformation?.showRulers && <MeasurementRulers bounds={adjustedBounds} viewport={viewport} />}
     </g>
   );
 };

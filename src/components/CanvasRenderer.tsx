@@ -216,15 +216,15 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
                 pointerEvents: activePlugin === 'subpath' ? 'none' : 'auto'
               }}
             />
-            {/* Only show element selection box if NOT in transformation mode with subpaths selected */}
             {/* Selection overlay */}
-            {isSelected && !(activePlugin === 'transformation' && isWorkingWithSubpaths()) && (
+            {isSelected && (
               <SelectionOverlay
                 element={element}
                 bounds={getTransformedBounds(element)}
                 viewport={viewport}
                 activePlugin={activePlugin}
                 transformation={transformation}
+                showTransformations={!(activePlugin === 'transformation' && isWorkingWithSubpaths())}
                 onTransformationHandlerPointerDown={onTransformationHandlerPointerDown}
                 onTransformationHandlerPointerUp={onTransformationHandlerPointerUp}
               />
