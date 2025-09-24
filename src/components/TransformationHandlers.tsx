@@ -34,22 +34,49 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
     return elementId;
   };
 
+  const triangleOpacity = "0.5";
+  const lineOpacity = "1";
+  const triangleSize = handlerSize;
+  const lineSeparation = 5 / viewport.zoom;
+  const overlaySize = 20 / viewport.zoom;
+  const lineThickness = 1;
+  const circleSize = handlerSize * 0.75;
+
   return (
     <>
       {/* Corner handlers - Always visible */}
       {/* Top-left corner */}
       <polygon
-        points={`${bounds.minX},${bounds.minY} ${bounds.minX + 18 / viewport.zoom},${bounds.minY} ${bounds.minX},${bounds.minY + 18 / viewport.zoom}`}
+        points={`${bounds.minX},${bounds.minY} ${bounds.minX + triangleSize},${bounds.minY} ${bounds.minX},${bounds.minY + triangleSize}`}
         fill={selectionColor}
-        opacity="0.5"
+        opacity={triangleOpacity}
+        pointerEvents="none"
+      />
+      {/* Top-left corner L lines */}
+      <rect
+        x={bounds.minX}
+        y={bounds.minY}
+        width={triangleSize}
+        height={lineThickness / viewport.zoom}
+        fill={selectionColor}
+        opacity={lineOpacity}
+        pointerEvents="none"
+      />
+      <rect
+        x={bounds.minX}
+        y={bounds.minY}
+        width={lineThickness / viewport.zoom}
+        height={triangleSize}
+        fill={selectionColor}
+        opacity={lineOpacity}
         pointerEvents="none"
       />
       {/* Top-left corner overlay */}
       <rect
         x={bounds.minX}
         y={bounds.minY}
-        width={18 / viewport.zoom}
-        height={18 / viewport.zoom}
+        width={triangleSize}
+        height={triangleSize}
         fill="transparent"
         opacity="0.1"
         style={{ cursor: 'nw-resize' }}
@@ -59,17 +86,36 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
 
       {/* Top-right corner */}
       <polygon
-        points={`${bounds.maxX},${bounds.minY} ${bounds.maxX - 18 / viewport.zoom},${bounds.minY} ${bounds.maxX},${bounds.minY + 18 / viewport.zoom}`}
+        points={`${bounds.maxX},${bounds.minY} ${bounds.maxX - triangleSize},${bounds.minY} ${bounds.maxX},${bounds.minY + triangleSize}`}
         fill={selectionColor}
-        opacity="0.5"
+        opacity={triangleOpacity}
+        pointerEvents="none"
+      />
+      {/* Top-right corner L lines */}
+      <rect
+        x={bounds.maxX - triangleSize}
+        y={bounds.minY}
+        width={triangleSize}
+        height={lineThickness / viewport.zoom}
+        fill={selectionColor}
+        opacity={lineOpacity}
+        pointerEvents="none"
+      />
+      <rect
+        x={bounds.maxX - lineThickness / viewport.zoom}
+        y={bounds.minY}
+        width={lineThickness / viewport.zoom}
+        height={triangleSize}
+        fill={selectionColor}
+        opacity={lineOpacity}
         pointerEvents="none"
       />
       {/* Top-right corner overlay */}
       <rect
-        x={bounds.maxX - 18 / viewport.zoom}
+        x={bounds.maxX - triangleSize}
         y={bounds.minY}
-        width={18 / viewport.zoom}
-        height={18 / viewport.zoom}
+        width={triangleSize}
+        height={triangleSize}
         fill="transparent"
         opacity="0.1"
         style={{ cursor: 'ne-resize' }}
@@ -79,17 +125,36 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
 
       {/* Bottom-left corner */}
       <polygon
-        points={`${bounds.minX},${bounds.maxY} ${bounds.minX + 18 / viewport.zoom},${bounds.maxY} ${bounds.minX},${bounds.maxY - 18 / viewport.zoom}`}
+        points={`${bounds.minX},${bounds.maxY} ${bounds.minX + triangleSize},${bounds.maxY} ${bounds.minX},${bounds.maxY - triangleSize}`}
         fill={selectionColor}
-        opacity="0.5"
+        opacity={triangleOpacity}
+        pointerEvents="none"
+      />
+      {/* Bottom-left corner L lines */}
+      <rect
+        x={bounds.minX}
+        y={bounds.maxY - lineThickness / viewport.zoom}
+        width={triangleSize}
+        height={lineThickness / viewport.zoom}
+        fill={selectionColor}
+        opacity={lineOpacity}
+        pointerEvents="none"
+      />
+      <rect
+        x={bounds.minX}
+        y={bounds.maxY - triangleSize}
+        width={lineThickness / viewport.zoom}
+        height={triangleSize}
+        fill={selectionColor}
+        opacity={lineOpacity}
         pointerEvents="none"
       />
       {/* Bottom-left corner overlay */}
       <rect
         x={bounds.minX}
-        y={bounds.maxY - 18 / viewport.zoom}
-        width={18 / viewport.zoom}
-        height={18 / viewport.zoom}
+        y={bounds.maxY - triangleSize}
+        width={triangleSize}
+        height={triangleSize}
         fill="transparent"
         opacity="0.1"
         style={{ cursor: 'sw-resize' }}
@@ -99,17 +164,36 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
 
       {/* Bottom-right corner */}
       <polygon
-        points={`${bounds.maxX},${bounds.maxY} ${bounds.maxX - 18 / viewport.zoom},${bounds.maxY} ${bounds.maxX},${bounds.maxY - 18 / viewport.zoom}`}
+        points={`${bounds.maxX},${bounds.maxY} ${bounds.maxX - triangleSize},${bounds.maxY} ${bounds.maxX},${bounds.maxY - triangleSize}`}
         fill={selectionColor}
-        opacity="0.5"
+        opacity={triangleOpacity}
+        pointerEvents="none"
+      />
+      {/* Bottom-right corner L lines */}
+      <rect
+        x={bounds.maxX - triangleSize}
+        y={bounds.maxY - lineThickness / viewport.zoom}
+        width={triangleSize}
+        height={lineThickness / viewport.zoom}
+        fill={selectionColor}
+        opacity={lineOpacity}
+        pointerEvents="none"
+      />
+      <rect
+        x={bounds.maxX - lineThickness / viewport.zoom}
+        y={bounds.maxY - triangleSize}
+        width={lineThickness / viewport.zoom}
+        height={triangleSize}
+        fill={selectionColor}
+        opacity={lineOpacity}
         pointerEvents="none"
       />
       {/* Bottom-right corner overlay */}
       <rect
-        x={bounds.maxX - 18 / viewport.zoom}
-        y={bounds.maxY - 18 / viewport.zoom}
-        width={18 / viewport.zoom}
-        height={18 / viewport.zoom}
+        x={bounds.maxX - triangleSize}
+        y={bounds.maxY - triangleSize}
+        width={triangleSize}
+        height={triangleSize}
         fill="transparent"
         opacity="0.1"
         style={{ cursor: 'se-resize' }}
@@ -119,33 +203,37 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
 
       {/* Rotation handlers */}
       <circle
-        cx={bounds.maxX + handlerSize}
-        cy={bounds.minY - handlerSize}
-        r={handlerSize / 2}
+        cx={bounds.maxX + circleSize}
+        cy={bounds.minY - circleSize}
+        r={circleSize / 2}
         fill={selectionColor}
-        opacity="0.5"
+        fillOpacity={triangleOpacity}
+        strokeOpacity={lineOpacity}
+        stroke={selectionColor}
         style={{ cursor: 'alias' }}
+        strokeWidth={lineThickness}
         onPointerDown={(e) => onPointerDown(e, generateTargetId(), 'rotate-tr')}
+        vectorEffect="non-scaling-stroke"
         onPointerUp={onPointerUp}
       />
 
       {/* Midpoint handlers (Side handlers) - Complete lines */}
       {/* Top line */}
       <rect
-        x={bounds.minX + handlerSize + 10}
+        x={bounds.minX + handlerSize + lineSeparation}
         y={bounds.minY}
-        width={Math.max(0, bounds.maxX - bounds.minX - 2 * handlerSize - 20)}
-        height={2 / viewport.zoom}
+        width={Math.max(0, bounds.maxX - bounds.minX - 2 * handlerSize - 2 * lineSeparation)}
+        height={lineThickness / viewport.zoom}
         fill={selectionColor}
-        opacity="0.5"
+        opacity={lineOpacity}
         pointerEvents="none"
       />
       {/* Top overlay */}
       <rect
-        x={bounds.minX + handlerSize + 10}
+        x={bounds.minX + handlerSize + lineSeparation}
         y={bounds.minY - 8 / viewport.zoom}
-        width={Math.max(0, bounds.maxX - bounds.minX - 2 * handlerSize - 20)}
-        height={18 / viewport.zoom}
+        width={Math.max(0, bounds.maxX - bounds.minX - 2 * handlerSize - 2 * lineSeparation)}
+        height={overlaySize / viewport.zoom}
         fill="transparent"
         opacity="0.1"
         style={{ cursor: 'n-resize' }}
@@ -155,20 +243,20 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
 
       {/* Right line */}
       <rect
-        x={bounds.maxX - 2 / viewport.zoom}
-        y={bounds.minY + handlerSize + 10}
-        width={2 / viewport.zoom}
-        height={Math.max(0, bounds.maxY - bounds.minY - 2 * handlerSize - 20)}
+        x={bounds.maxX - lineThickness / viewport.zoom}
+        y={bounds.minY + handlerSize + lineSeparation}
+        width={lineThickness / viewport.zoom}
+        height={Math.max(0, bounds.maxY - bounds.minY - 2 * handlerSize - 2 * lineSeparation)}
         fill={selectionColor}
-        opacity="0.5"
+        opacity={lineOpacity}
         pointerEvents="none"
       />
       {/* Right overlay */}
       <rect
-        x={bounds.maxX - 2 / viewport.zoom - 8 / viewport.zoom}
-        y={bounds.minY + handlerSize + 10}
-        width={18 / viewport.zoom}
-        height={Math.max(0, bounds.maxY - bounds.minY - 2 * handlerSize - 20)}
+        x={bounds.maxX - lineThickness / viewport.zoom - 8 / viewport.zoom}
+        y={bounds.minY + handlerSize + lineSeparation}
+        width={overlaySize / viewport.zoom}
+        height={Math.max(0, bounds.maxY - bounds.minY - 2 * handlerSize - 2 * lineSeparation)}
         fill="transparent"
         opacity="0.1"
         style={{ cursor: 'e-resize' }}
@@ -178,20 +266,20 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
 
       {/* Bottom line */}
       <rect
-        x={bounds.minX + handlerSize + 10}
-        y={bounds.maxY - 2 / viewport.zoom}
-        width={Math.max(0, bounds.maxX - bounds.minX - 2 * handlerSize - 20)}
-        height={2 / viewport.zoom}
+        x={bounds.minX + handlerSize + lineSeparation}
+        y={bounds.maxY - lineThickness / viewport.zoom}
+        width={Math.max(0, bounds.maxX - bounds.minX - 2 * handlerSize - 2 * lineSeparation)}
+        height={lineThickness / viewport.zoom}
         fill={selectionColor}
-        opacity="0.5"
+        opacity={lineOpacity}
         pointerEvents="none"
       />
       {/* Bottom overlay */}
       <rect
-        x={bounds.minX + handlerSize + 10}
-        y={bounds.maxY - 2 / viewport.zoom - 8 / viewport.zoom}
-        width={Math.max(0, bounds.maxX - bounds.minX - 2 * handlerSize - 20)}
-        height={18 / viewport.zoom}
+        x={bounds.minX + handlerSize + lineSeparation}
+        y={bounds.maxY - lineThickness / viewport.zoom - 8 / viewport.zoom}
+        width={Math.max(0, bounds.maxX - bounds.minX - 2 * handlerSize - 2 * lineSeparation)}
+        height={overlaySize / viewport.zoom}
         fill="transparent"
         opacity="0.1"
         style={{ cursor: 's-resize' }}
@@ -202,19 +290,19 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
       {/* Left line */}
       <rect
         x={bounds.minX}
-        y={bounds.minY + handlerSize + 10}
-        width={2 / viewport.zoom}
-        height={Math.max(0, bounds.maxY - bounds.minY - 2 * handlerSize - 20)}
+        y={bounds.minY + handlerSize + lineSeparation}
+        width={lineThickness / viewport.zoom}
+        height={Math.max(0, bounds.maxY - bounds.minY - 2 * handlerSize - 2 * lineSeparation)}
         fill={selectionColor}
-        opacity="0.5"
+        opacity={lineOpacity}
         pointerEvents="none"
       />
       {/* Left overlay */}
       <rect
         x={bounds.minX - 8 / viewport.zoom}
-        y={bounds.minY + handlerSize + 10}
-        width={18 / viewport.zoom}
-        height={Math.max(0, bounds.maxY - bounds.minY - 2 * handlerSize - 20)}
+        y={bounds.minY + handlerSize + lineSeparation}
+        width={overlaySize / viewport.zoom}
+        height={Math.max(0, bounds.maxY - bounds.minY - 2 * handlerSize - 2 * lineSeparation)}
         fill="transparent"
         opacity="0.1"
         style={{ cursor: 'w-resize' }}

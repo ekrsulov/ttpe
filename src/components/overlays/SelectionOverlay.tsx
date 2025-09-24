@@ -37,35 +37,35 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
   if (!bounds) return null;
 
   const isTransformationMode = activePlugin === 'transformation';
-  const handlerSize = 12 / viewport.zoom;
+  const handlerSize = 10 / viewport.zoom;
 
   // Extract element colors for contrast calculation
-  const elementStrokeColor = element.type === 'path' && element.data && typeof element.data === 'object' && 'strokeColor' in element.data 
-    ? (element.data as { strokeColor?: string }).strokeColor || '#000000' 
+  const elementStrokeColor = element.type === 'path' && element.data && typeof element.data === 'object' && 'strokeColor' in element.data
+    ? (element.data as { strokeColor?: string }).strokeColor || '#000000'
     : '#000000';
-  
-  const elementFillColor = element.type === 'path' && element.data && typeof element.data === 'object' && 'fillColor' in element.data 
-    ? (element.data as { fillColor?: string }).fillColor || 'none' 
+
+  const elementFillColor = element.type === 'path' && element.data && typeof element.data === 'object' && 'fillColor' in element.data
+    ? (element.data as { fillColor?: string }).fillColor || 'none'
     : 'none';
-  
-  const elementStrokeWidth = element.type === 'path' && element.data && typeof element.data === 'object' && 'strokeWidth' in element.data 
-    ? (element.data as { strokeWidth?: number }).strokeWidth || 0 
+
+  const elementStrokeWidth = element.type === 'path' && element.data && typeof element.data === 'object' && 'strokeWidth' in element.data
+    ? (element.data as { strokeWidth?: number }).strokeWidth || 0
     : 0;
-  
-  const elementOpacity = element.type === 'path' && element.data && typeof element.data === 'object' && 'strokeOpacity' in element.data 
-    ? (element.data as { strokeOpacity?: number }).strokeOpacity || 1 
+
+  const elementOpacity = element.type === 'path' && element.data && typeof element.data === 'object' && 'strokeOpacity' in element.data
+    ? (element.data as { strokeOpacity?: number }).strokeOpacity || 1
     : 1;
-  
+
   const colorForContrast = getEffectiveColorForContrast(
-    elementStrokeColor, 
-    elementFillColor, 
-    elementStrokeWidth, 
+    elementStrokeColor,
+    elementFillColor,
+    elementStrokeWidth,
     elementOpacity
   );
-  
+
   const selectionColor = getContrastingColor(colorForContrast);
 
-  const strokeWidth = 2 / viewport.zoom;
+  const strokeWidth = 1 / viewport.zoom;
   const offset = 5 / viewport.zoom;
   const adjustedX = bounds.minX - offset;
   const adjustedY = bounds.minY - offset;
