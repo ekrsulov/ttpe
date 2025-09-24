@@ -72,15 +72,23 @@ export const SubpathSelectionOverlay: React.FC<SubpathSelectionOverlayProps> = (
         const subpathBounds = getIndividualSubpathBounds(selected.subpathIndex);
         if (!subpathBounds) return null;
 
+        const offset = 5 / viewport.zoom;
+        const adjustedSubpathBounds = {
+          minX: subpathBounds.minX - offset,
+          minY: subpathBounds.minY - offset,
+          maxX: subpathBounds.maxX + offset,
+          maxY: subpathBounds.maxY + offset,
+        };
+
         return (
           <g key={`subpath-${selected.elementId}-${selected.subpathIndex}`}>
             {/* Selection rectangle for this subpath */}
             {!isTransformationMode && (() => {
               const strokeWidth = 2 / viewport.zoom;
-              const adjustedX = subpathBounds.minX + strokeWidth / 2;
-              const adjustedY = subpathBounds.minY + strokeWidth / 2;
-              const adjustedWidth = subpathBounds.maxX - subpathBounds.minX - strokeWidth;
-              const adjustedHeight = subpathBounds.maxY - subpathBounds.minY - strokeWidth;
+              const adjustedX = adjustedSubpathBounds.minX;
+              const adjustedY = adjustedSubpathBounds.minY;
+              const adjustedWidth = adjustedSubpathBounds.maxX - adjustedSubpathBounds.minX;
+              const adjustedHeight = adjustedSubpathBounds.maxY - adjustedSubpathBounds.minY;
               return adjustedWidth > 0 && adjustedHeight > 0 ? (
                 <rect
                   x={adjustedX}
@@ -90,7 +98,7 @@ export const SubpathSelectionOverlay: React.FC<SubpathSelectionOverlayProps> = (
                   fill="none"
                   stroke={SUBPATH_SELECTION_COLOR}
                   strokeWidth={strokeWidth}
-                  opacity="0.5"
+                  opacity="1"
                   pointerEvents="none"
                 />
               ) : null;
@@ -99,7 +107,7 @@ export const SubpathSelectionOverlay: React.FC<SubpathSelectionOverlayProps> = (
             {/* Individual transformation handlers for this subpath */}
             {isTransformationMode && (
               <TransformationHandlers
-                bounds={subpathBounds}
+                bounds={adjustedSubpathBounds}
                 elementId={element.id}
                 subpathIndex={selected.subpathIndex}
                 handlerSize={handlerSize}
@@ -122,12 +130,12 @@ export const SubpathSelectionOverlay: React.FC<SubpathSelectionOverlayProps> = (
 
             {/* Corner coordinates for this subpath */}
             {isTransformationMode && transformation?.showCoordinates && (
-              <CornerCoordinates bounds={subpathBounds} viewport={viewport} />
+              <CornerCoordinates bounds={adjustedSubpathBounds} viewport={viewport} />
             )}
 
             {/* Measurement rulers for this subpath */}
             {isTransformationMode && transformation?.showRulers && (
-              <MeasurementRulers bounds={subpathBounds} viewport={viewport} />
+              <MeasurementRulers bounds={adjustedSubpathBounds} viewport={viewport} />
             )}
           </g>
         );

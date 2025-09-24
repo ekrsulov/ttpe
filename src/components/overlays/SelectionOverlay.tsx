@@ -66,10 +66,17 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
   const selectionColor = getContrastingColor(colorForContrast);
 
   const strokeWidth = 2 / viewport.zoom;
-  const adjustedX = bounds.minX + strokeWidth / 2;
-  const adjustedY = bounds.minY + strokeWidth / 2;
-  const adjustedWidth = bounds.maxX - bounds.minX - strokeWidth;
-  const adjustedHeight = bounds.maxY - bounds.minY - strokeWidth;
+  const offset = 5 / viewport.zoom;
+  const adjustedX = bounds.minX - offset;
+  const adjustedY = bounds.minY - offset;
+  const adjustedWidth = bounds.maxX - bounds.minX + 2 * offset;
+  const adjustedHeight = bounds.maxY - bounds.minY + 2 * offset;
+  const adjustedBounds = {
+    minX: adjustedX,
+    minY: adjustedY,
+    maxX: adjustedX + adjustedWidth,
+    maxY: adjustedY + adjustedHeight,
+  };
 
   return (
     <g key={`selection-${element.id}`}>
@@ -83,7 +90,7 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
           fill="none"
           stroke={selectionColor}
           strokeWidth={strokeWidth}
-          opacity="0.5"
+          opacity="1"
           pointerEvents="none"
         />
       )}
@@ -91,7 +98,7 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
       {/* Transformation handlers */}
       {isTransformationMode && (
         <TransformationHandlers
-          bounds={bounds}
+          bounds={adjustedBounds}
           elementId={element.id}
           handlerSize={handlerSize}
           selectionColor={selectionColor}
@@ -102,13 +109,13 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
       )}
 
       {/* Center X marker and coordinates */}
-      {isTransformationMode && <CenterMarker bounds={bounds} selectionColor={selectionColor} viewport={viewport} transformation={transformation} />}
+      {isTransformationMode && <CenterMarker bounds={adjustedBounds} selectionColor={selectionColor} viewport={viewport} transformation={transformation} />}
 
       {/* Corner coordinates */}
-      {isTransformationMode && transformation?.showCoordinates && <CornerCoordinates bounds={bounds} viewport={viewport} />}
+      {isTransformationMode && transformation?.showCoordinates && <CornerCoordinates bounds={adjustedBounds} viewport={viewport} />}
 
       {/* Measurement rulers */}
-      {isTransformationMode && transformation?.showRulers && <MeasurementRulers bounds={bounds} viewport={viewport} />}
+      {isTransformationMode && transformation?.showRulers && <MeasurementRulers bounds={adjustedBounds} viewport={viewport} />}
     </g>
   );
 };

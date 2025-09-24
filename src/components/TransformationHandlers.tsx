@@ -41,8 +41,6 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
       <polygon
         points={`${bounds.minX},${bounds.minY} ${bounds.minX + 18 / viewport.zoom},${bounds.minY} ${bounds.minX},${bounds.minY + 18 / viewport.zoom}`}
         fill={selectionColor}
-        stroke="#fff"
-        strokeWidth={1 / viewport.zoom}
         opacity="0.5"
         pointerEvents="none"
       />
@@ -63,8 +61,6 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
       <polygon
         points={`${bounds.maxX},${bounds.minY} ${bounds.maxX - 18 / viewport.zoom},${bounds.minY} ${bounds.maxX},${bounds.minY + 18 / viewport.zoom}`}
         fill={selectionColor}
-        stroke="#fff"
-        strokeWidth={1 / viewport.zoom}
         opacity="0.5"
         pointerEvents="none"
       />
@@ -85,8 +81,6 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
       <polygon
         points={`${bounds.minX},${bounds.maxY} ${bounds.minX + 18 / viewport.zoom},${bounds.maxY} ${bounds.minX},${bounds.maxY - 18 / viewport.zoom}`}
         fill={selectionColor}
-        stroke="#fff"
-        strokeWidth={1 / viewport.zoom}
         opacity="0.5"
         pointerEvents="none"
       />
@@ -107,8 +101,6 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
       <polygon
         points={`${bounds.maxX},${bounds.maxY} ${bounds.maxX - 18 / viewport.zoom},${bounds.maxY} ${bounds.maxX},${bounds.maxY - 18 / viewport.zoom}`}
         fill={selectionColor}
-        stroke="#fff"
-        strokeWidth={1 / viewport.zoom}
         opacity="0.5"
         pointerEvents="none"
       />
@@ -131,8 +123,6 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
         cy={bounds.minY - handlerSize}
         r={handlerSize / 2}
         fill={selectionColor}
-        stroke="#fff"
-        strokeWidth={1 / viewport.zoom}
         opacity="0.5"
         style={{ cursor: 'alias' }}
         onPointerDown={(e) => onPointerDown(e, generateTargetId(), 'rotate-tr')}
