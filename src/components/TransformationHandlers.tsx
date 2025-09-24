@@ -53,21 +53,23 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
         pointerEvents="none"
       />
       {/* Top-left corner L lines */}
-      <rect
-        x={bounds.minX}
-        y={bounds.minY}
-        width={triangleSize}
-        height={lineThickness / viewport.zoom}
-        fill={selectionColor}
+      <line
+        x1={bounds.minX}
+        y1={bounds.minY}
+        x2={bounds.minX + triangleSize}
+        y2={bounds.minY}
+        stroke={selectionColor}
+        strokeWidth={lineThickness / viewport.zoom}
         opacity={lineOpacity}
         pointerEvents="none"
       />
-      <rect
-        x={bounds.minX}
-        y={bounds.minY}
-        width={lineThickness / viewport.zoom}
-        height={triangleSize}
-        fill={selectionColor}
+      <line
+        x1={bounds.minX}
+        y1={bounds.minY}
+        x2={bounds.minX}
+        y2={bounds.minY + triangleSize}
+        stroke={selectionColor}
+        strokeWidth={lineThickness / viewport.zoom}
         opacity={lineOpacity}
         pointerEvents="none"
       />
@@ -92,21 +94,23 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
         pointerEvents="none"
       />
       {/* Top-right corner L lines */}
-      <rect
-        x={bounds.maxX - triangleSize}
-        y={bounds.minY}
-        width={triangleSize}
-        height={lineThickness / viewport.zoom}
-        fill={selectionColor}
+      <line
+        x1={bounds.maxX - triangleSize}
+        y1={bounds.minY}
+        x2={bounds.maxX}
+        y2={bounds.minY}
+        stroke={selectionColor}
+        strokeWidth={lineThickness / viewport.zoom}
         opacity={lineOpacity}
         pointerEvents="none"
       />
-      <rect
-        x={bounds.maxX - lineThickness / viewport.zoom}
-        y={bounds.minY}
-        width={lineThickness / viewport.zoom}
-        height={triangleSize}
-        fill={selectionColor}
+      <line
+        x1={bounds.maxX}
+        y1={bounds.minY}
+        x2={bounds.maxX}
+        y2={bounds.minY + triangleSize}
+        stroke={selectionColor}
+        strokeWidth={lineThickness / viewport.zoom}
         opacity={lineOpacity}
         pointerEvents="none"
       />
@@ -131,21 +135,23 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
         pointerEvents="none"
       />
       {/* Bottom-left corner L lines */}
-      <rect
-        x={bounds.minX}
-        y={bounds.maxY - lineThickness / viewport.zoom}
-        width={triangleSize}
-        height={lineThickness / viewport.zoom}
-        fill={selectionColor}
+      <line
+        x1={bounds.minX}
+        y1={bounds.maxY}
+        x2={bounds.minX + triangleSize}
+        y2={bounds.maxY}
+        stroke={selectionColor}
+        strokeWidth={lineThickness / viewport.zoom}
         opacity={lineOpacity}
         pointerEvents="none"
       />
-      <rect
-        x={bounds.minX}
-        y={bounds.maxY - triangleSize}
-        width={lineThickness / viewport.zoom}
-        height={triangleSize}
-        fill={selectionColor}
+      <line
+        x1={bounds.minX}
+        y1={bounds.maxY - triangleSize}
+        x2={bounds.minX}
+        y2={bounds.maxY}
+        stroke={selectionColor}
+        strokeWidth={lineThickness / viewport.zoom}
         opacity={lineOpacity}
         pointerEvents="none"
       />
@@ -170,21 +176,23 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
         pointerEvents="none"
       />
       {/* Bottom-right corner L lines */}
-      <rect
-        x={bounds.maxX - triangleSize}
-        y={bounds.maxY - lineThickness / viewport.zoom}
-        width={triangleSize}
-        height={lineThickness / viewport.zoom}
-        fill={selectionColor}
+      <line
+        x1={bounds.maxX - triangleSize}
+        y1={bounds.maxY}
+        x2={bounds.maxX}
+        y2={bounds.maxY}
+        stroke={selectionColor}
+        strokeWidth={lineThickness / viewport.zoom}
         opacity={lineOpacity}
         pointerEvents="none"
       />
-      <rect
-        x={bounds.maxX - lineThickness / viewport.zoom}
-        y={bounds.maxY - triangleSize}
-        width={lineThickness / viewport.zoom}
-        height={triangleSize}
-        fill={selectionColor}
+      <line
+        x1={bounds.maxX}
+        y1={bounds.maxY - triangleSize}
+        x2={bounds.maxX}
+        y2={bounds.maxY}
+        stroke={selectionColor}
+        strokeWidth={lineThickness / viewport.zoom}
         opacity={lineOpacity}
         pointerEvents="none"
       />
@@ -219,12 +227,13 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
 
       {/* Midpoint handlers (Side handlers) - Complete lines */}
       {/* Top line */}
-      <rect
-        x={bounds.minX + handlerSize + lineSeparation}
-        y={bounds.minY}
-        width={Math.max(0, bounds.maxX - bounds.minX - 2 * handlerSize - 2 * lineSeparation)}
-        height={lineThickness / viewport.zoom}
-        fill={selectionColor}
+      <line
+        x1={bounds.minX + handlerSize + lineSeparation}
+        y1={bounds.minY}
+        x2={bounds.minX + handlerSize + lineSeparation + Math.max(0, bounds.maxX - bounds.minX - 2 * handlerSize - 2 * lineSeparation)}
+        y2={bounds.minY}
+        stroke={selectionColor}
+        strokeWidth={lineThickness / viewport.zoom}
         opacity={lineOpacity}
         pointerEvents="none"
       />
@@ -242,12 +251,13 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
       />
 
       {/* Right line */}
-      <rect
-        x={bounds.maxX - lineThickness / viewport.zoom}
-        y={bounds.minY + handlerSize + lineSeparation}
-        width={lineThickness / viewport.zoom}
-        height={Math.max(0, bounds.maxY - bounds.minY - 2 * handlerSize - 2 * lineSeparation)}
-        fill={selectionColor}
+      <line
+        x1={bounds.maxX}
+        y1={bounds.minY + handlerSize + lineSeparation}
+        x2={bounds.maxX}
+        y2={bounds.minY + handlerSize + lineSeparation + Math.max(0, bounds.maxY - bounds.minY - 2 * handlerSize - 2 * lineSeparation)}
+        stroke={selectionColor}
+        strokeWidth={lineThickness / viewport.zoom}
         opacity={lineOpacity}
         pointerEvents="none"
       />
@@ -265,12 +275,13 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
       />
 
       {/* Bottom line */}
-      <rect
-        x={bounds.minX + handlerSize + lineSeparation}
-        y={bounds.maxY - lineThickness / viewport.zoom}
-        width={Math.max(0, bounds.maxX - bounds.minX - 2 * handlerSize - 2 * lineSeparation)}
-        height={lineThickness / viewport.zoom}
-        fill={selectionColor}
+      <line
+        x1={bounds.minX + handlerSize + lineSeparation}
+        y1={bounds.maxY}
+        x2={bounds.minX + handlerSize + lineSeparation + Math.max(0, bounds.maxX - bounds.minX - 2 * handlerSize - 2 * lineSeparation)}
+        y2={bounds.maxY}
+        stroke={selectionColor}
+        strokeWidth={lineThickness / viewport.zoom}
         opacity={lineOpacity}
         pointerEvents="none"
       />
@@ -288,12 +299,13 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
       />
 
       {/* Left line */}
-      <rect
-        x={bounds.minX}
-        y={bounds.minY + handlerSize + lineSeparation}
-        width={lineThickness / viewport.zoom}
-        height={Math.max(0, bounds.maxY - bounds.minY - 2 * handlerSize - 2 * lineSeparation)}
-        fill={selectionColor}
+      <line
+        x1={bounds.minX}
+        y1={bounds.minY + handlerSize + lineSeparation}
+        x2={bounds.minX}
+        y2={bounds.minY + handlerSize + lineSeparation + Math.max(0, bounds.maxY - bounds.minY - 2 * handlerSize - 2 * lineSeparation)}
+        stroke={selectionColor}
+        strokeWidth={lineThickness / viewport.zoom}
         opacity={lineOpacity}
         pointerEvents="none"
       />
