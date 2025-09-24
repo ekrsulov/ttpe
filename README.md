@@ -160,7 +160,10 @@ npx playwright install
 - ✅ Element selection and transformation
 - ✅ Path editing and smooth brush functionality
 - ✅ Multi-element operations
-- ✅ Undo/redo functionality
+- ✅ Element arrangement (align, distribute)
+- ✅ Element ordering (bring to front, send to back)
+- ✅ Path movement and manipulation
+- ❌ Undo/redo functionality (not yet implemented)
 
 ## Contributing
 
@@ -186,20 +189,6 @@ We welcome contributions! Here's how to get started:
 - Write tests for new features
 - Maintain consistent code style (ESLint configured)
 - Update documentation as needed
-
-## Browser Compatibility
-
-- Chrome 88+
-- Firefox 85+
-- Safari 14+
-- Edge 88+
-
-## Performance Considerations
-
-- Efficient SVG rendering with React
-- Optimized path calculations
-- Memory-conscious state management
-- Smooth 60fps interactions
 
 ## Roadmap
 
