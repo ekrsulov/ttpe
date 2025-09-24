@@ -455,9 +455,9 @@ export const ControlPointAlignmentPanel: React.FC = () => {
                   width: '100%',
                   textAlign: 'center'
                 }}
-                title={`Convert to ${singlePointInfo.command.type === 'L' ? 'C' : 'L'} command`}
+                title={`Change to ${singlePointInfo.command.type === 'L' ? 'Curve' : 'Line'}`}
               >
-                To {singlePointInfo.command.type === 'L' ? 'C' : 'L'}
+                Change to {singlePointInfo.command.type === 'L' ? 'Curve' : 'Line'}
               </button>
             </div>
           )}
