@@ -256,7 +256,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
                 onSelectCommand={onSelectCommand}
               />
             )}
-            {activePlugin === 'subpath' && (
+            {isSelected && activePlugin === 'subpath' && (
               <SubpathOverlay
                 element={element}
                 selectedSubpaths={selectedSubpaths}

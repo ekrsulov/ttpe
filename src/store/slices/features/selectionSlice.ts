@@ -23,13 +23,33 @@ export const createSelectionSlice: StateCreator<SelectionSlice> = (set, get, _ap
 
   // Actions
   selectElement: (id, multiSelect = false) => {
-    set((state) => ({
-      selectedIds: multiSelect
-        ? state.selectedIds.includes(id)
-          ? state.selectedIds.filter((selId: string) => selId !== id)
-          : [...state.selectedIds, id]
-        : [id],
-    }));
+    set((state) => {
+      const fullState = state as any; // Cast to access cross-slice properties
+      
+      // In select mode, when selecting a different path, clear subpath selection
+      if (fullState.activePlugin === 'select' && !multiSelect) {
+        const currentlySelectedPaths = fullState.selectedIds.filter((selId: string) => {
+          const element = fullState.elements.find((el: any) => el.id === selId);
+          return element && element.type === 'path';
+        });
+        
+        const newElement = fullState.elements.find((el: any) => el.id === id);
+        const isSelectingDifferentPath = newElement && newElement.type === 'path' && 
+          currentlySelectedPaths.length > 0 && !currentlySelectedPaths.includes(id);
+        
+        if (isSelectingDifferentPath) {
+          fullState.selectedSubpaths = [];
+        }
+      }
+
+      return {
+        selectedIds: multiSelect
+          ? state.selectedIds.includes(id)
+            ? state.selectedIds.filter((selId: string) => selId !== id)
+            : [...state.selectedIds, id]
+          : [id],
+      };
+    });
   },
 
   selectElements: (ids) => {

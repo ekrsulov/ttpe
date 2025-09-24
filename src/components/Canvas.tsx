@@ -432,10 +432,8 @@ export const Canvas: React.FC = () => {
         }
         setHasDragMoved(true);
 
-        // Check if we're working with subpaths - TODO: Implement subpath dragging
+        // Check if we're working with subpaths
         if (isWorkingWithSubpaths()) {
-          // Subpath dragging functionality removed - will be reimplemented
-          console.log('Subpath dragging not yet implemented');
           // Don't update dragStart when dragging subpaths to maintain absolute coordinates
           return;
         } else {

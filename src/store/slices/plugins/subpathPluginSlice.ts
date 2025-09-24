@@ -176,6 +176,12 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
   // Actions
   selectSubpath: (elementId, subpathIndex, multiSelect = false) => {
     set((state) => {
+      const fullState = state as any; // Cast to access cross-slice properties
+      // In subpath mode, only allow selection of subpaths that belong to selected paths
+      if (!fullState.selectedIds.includes(elementId)) {
+        return state;
+      }
+
       const isSelected = state.selectedSubpaths.some(
         s => s.elementId === elementId && s.subpathIndex === subpathIndex
       );

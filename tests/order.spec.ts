@@ -74,7 +74,6 @@ test.describe('Bring to Front and Send to Back', () => {
       }
       return 0;
     });
-    console.log('First selection count:', firstSelectionCount);
     expect(firstSelectionCount).toBe(1);
 
     // Expand the editor panel by clicking the chevron
@@ -84,46 +83,11 @@ test.describe('Bring to Front and Send to Back', () => {
     // Find and set fill color for first shape using the color input
     const fillColorInput = page.locator('input[type="color"][title="Fill Color"]');
     
-    // Debug: Check if color input exists
-    const colorInputCount = await fillColorInput.count();
-    console.log('Color input count:', colorInputCount);
-    
     // Set red color for first shape by directly clicking the color input and using fill()
     await fillColorInput.click();
     await fillColorInput.fill('#ff4444');
     
     await page.waitForTimeout(300);
-
-    // Debug: Check selected paths count and element state
-    const debugInfo = await page.evaluate(() => {
-      const store = (window as any).useCanvasStore;
-      if (store) {
-        const state = store.getState();
-        const selectedPaths = state.elements.filter((el: any) => state.selectedIds.includes(el.id) && el.type === 'path');
-        const selectedElement = state.elements.find((el: any) => state.selectedIds.includes(el.id));
-        return {
-          selectedPathsCount: selectedPaths.length,
-          selectedIds: state.selectedIds,
-          elementCount: state.elements.length,
-          fillColor: selectedElement?.data?.fillColor || 'none',
-          pencilFillColor: state.pencil?.fillColor || 'none'
-        };
-      }
-      return { error: 'Store not found' };
-    });
-    console.log('Debug info:', debugInfo);
-
-    // Debug: Check if color was applied
-    const firstColorCheck = await page.evaluate(() => {
-      const store = (window as any).useCanvasStore;
-      if (store) {
-        const state = store.getState();
-        const selectedElement = state.elements.find((el: any) => state.selectedIds.includes(el.id));
-        return selectedElement?.data?.fillColor || 'none';
-      }
-      return 'none';
-    });
-    console.log('First element color after setting:', firstColorCheck);
 
     // Collapse the editor panel
     await page.locator('[title="Collapse Controls"]').click();
@@ -153,7 +117,6 @@ test.describe('Bring to Front and Send to Back', () => {
       }
       return 0;
     });
-    console.log('Second selection count:', secondSelectionCount);
     expect(secondSelectionCount).toBe(1);
 
     // Expand the editor panel again
@@ -165,18 +128,6 @@ test.describe('Bring to Front and Send to Back', () => {
     await fillColorInput.fill('#4444ff');
     
     await page.waitForTimeout(300);
-
-    // Debug: Check if second color was applied
-    const secondColorCheck = await page.evaluate(() => {
-      const store = (window as any).useCanvasStore;
-      if (store) {
-        const state = store.getState();
-        const selectedElement = state.elements.find((el: any) => state.selectedIds.includes(el.id));
-        return selectedElement?.data?.fillColor || 'none';
-      }
-      return 'none';
-    });
-    console.log('Second element color after setting:', secondColorCheck);
 
     // Collapse the editor panel
     await page.locator('[title="Collapse Controls"]').click();
@@ -198,25 +149,6 @@ test.describe('Bring to Front and Send to Back', () => {
     // Wait for selection
     await page.waitForTimeout(200);
 
-    // Debug: Check what happened with the selection
-    const selectionDebug = await page.evaluate(() => {
-      const store = (window as any).useCanvasStore;
-      if (store) {
-        const state = store.getState();
-        return {
-          selectedIds: state.selectedIds,
-          elementCount: state.elements.length,
-          elements: state.elements.map((el: any) => ({
-            id: el.id,
-            type: el.type,
-            fillColor: el.data?.fillColor
-          }))
-        };
-      }
-      return { error: 'Store not found' };
-    });
-    console.log('Selection debug after clicking first shape:', selectionDebug);
-
     // Verify element is selected before trying to arrange
     const selectedCount = await page.evaluate(() => {
       const store = (window as any).useCanvasStore;
@@ -225,7 +157,6 @@ test.describe('Bring to Front and Send to Back', () => {
       }
       return 0;
     });
-    console.log('Selected count for z-order operations:', selectedCount);
     expect(selectedCount).toBe(1);
 
     // Get initial z-index order and verify colors are applied via UI
