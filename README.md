@@ -16,7 +16,7 @@ A powerful web-based vector graphics editor built with React and TypeScript that
 
 ### ✨ Advanced Editing
 - **Path Editing**: Edit individual path points and control points
-- **Smooth Brush**: AI-powered path smoothing with adjustable radius and strength
+- **Smooth Brush**: Path smoothing with adjustable radius and strength
 - **Subpath Management**: Work with individual subpaths within complex paths
 - **Control Point Alignment**: Automatic alignment helpers for precise editing
 
