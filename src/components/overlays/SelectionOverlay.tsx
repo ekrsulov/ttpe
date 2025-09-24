@@ -90,7 +90,6 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
           fill="none"
           stroke={selectionColor}
           strokeWidth={strokeWidth}
-          opacity="1"
           pointerEvents="none"
         />
       )}

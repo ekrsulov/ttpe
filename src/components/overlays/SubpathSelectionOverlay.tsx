@@ -98,7 +98,6 @@ export const SubpathSelectionOverlay: React.FC<SubpathSelectionOverlayProps> = (
                   fill="none"
                   stroke={SUBPATH_SELECTION_COLOR}
                   strokeWidth={strokeWidth}
-                  opacity="1"
                   pointerEvents="none"
                 />
               ) : null;
