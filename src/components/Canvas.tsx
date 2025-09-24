@@ -408,7 +408,7 @@ export const Canvas: React.FC = () => {
       // Pan the canvas with spacebar + pointer button
       const deltaX = e.movementX;
       const deltaY = e.movementY;
-      useCanvasStore.getState().pan(deltaX / viewport.zoom, deltaY / viewport.zoom);
+      useCanvasStore.getState().pan(deltaX, deltaY);
       return;
     }
 
@@ -416,7 +416,7 @@ export const Canvas: React.FC = () => {
       // Pan the canvas with pan tool + pointer button
       const deltaX = e.movementX;
       const deltaY = e.movementY;
-      useCanvasStore.getState().pan(deltaX / viewport.zoom, deltaY / viewport.zoom);
+      useCanvasStore.getState().pan(deltaX, deltaY);
       return;
     }
 
