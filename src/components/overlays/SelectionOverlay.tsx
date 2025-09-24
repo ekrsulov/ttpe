@@ -1,7 +1,7 @@
 import React from 'react';
-import { getContrastingColor, getEffectiveColorForContrast } from '../../utils/canvasColorUtils';
-import { TransformationHandlers } from '../TransformationHandlers';
-import { CenterMarker, MeasurementRulers, CornerCoordinates } from './SelectionOverlayPrimitives';
+import { getContrastingColor, getEffectiveColorForContrast, SUBPATH_SELECTION_COLOR } from '../../utils/canvasColorUtils';
+import { measureSubpathBounds } from '../../utils/measurementUtils';
+import type { PathData } from '../../types';
 
 interface SelectionOverlayProps {
   element: {
@@ -16,30 +16,37 @@ interface SelectionOverlayProps {
     panX: number;
     panY: number;
   };
-  activePlugin: string | null;
-  transformation?: {
-    showCoordinates?: boolean;
-    showRulers?: boolean;
-  };
-  showTransformations?: boolean;
-  onTransformationHandlerPointerDown: (e: React.PointerEvent, elementId: string, handler: string) => void;
-  onTransformationHandlerPointerUp: (e: React.PointerEvent) => void;
+  selectedSubpaths?: Array<{
+    elementId: string;
+    subpathIndex: number;
+  }>;
+  activePlugin?: string | null;
 }
 
 export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
   element,
   bounds,
   viewport,
+  selectedSubpaths,
   activePlugin,
-  transformation,
-  showTransformations = true,
-  onTransformationHandlerPointerDown,
-  onTransformationHandlerPointerUp,
 }) => {
-  if (!bounds) return null;
+  // Get bounds for a specific subpath
+  const getIndividualSubpathBounds = (subpathIndex: number) => {
+    if (element.type !== 'path') return null;
 
-  const isTransformationMode = activePlugin === 'transformation';
-  const handlerSize = 10 / viewport.zoom;
+    try {
+      const pathData = element.data as PathData;
+      const subpaths = pathData.subPaths;
+
+      if (subpathIndex >= subpaths.length) return null;
+
+      const subpath = subpaths[subpathIndex];
+      return measureSubpathBounds(subpath, pathData.strokeWidth || 1, viewport.zoom);
+    } catch (error) {
+      console.warn('Failed to calculate individual subpath bounds:', error);
+      return null;
+    }
+  };
 
   // Extract element colors for contrast calculation
   const elementStrokeColor = element.type === 'path' && element.data && typeof element.data === 'object' && 'strokeColor' in element.data
@@ -66,57 +73,67 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
   );
 
   const selectionColor = getContrastingColor(colorForContrast);
-
   const strokeWidth = 1 / viewport.zoom;
-  const offset = 5 / viewport.zoom;
-  const adjustedX = bounds.minX - offset;
-  const adjustedY = bounds.minY - offset;
-  const adjustedWidth = bounds.maxX - bounds.minX + 2 * offset;
-  const adjustedHeight = bounds.maxY - bounds.minY + 2 * offset;
-  const adjustedBounds = {
-    minX: adjustedX,
-    minY: adjustedY,
-    maxX: adjustedX + adjustedWidth,
-    maxY: adjustedY + adjustedHeight,
-  };
 
   return (
     <g key={`selection-${element.id}`}>
-      {/* Selection rectangle */}
-      {adjustedWidth > 0 && adjustedHeight > 0 && (
-        <rect
-          x={adjustedX}
-          y={adjustedY}
-          width={adjustedWidth}
-          height={adjustedHeight}
-          fill="none"
-          stroke={selectionColor}
-          strokeWidth={strokeWidth}
-          pointerEvents="none"
-        />
-      )}
+      {/* Selection rectangle for complete path */}
+      {bounds && (() => {
+        const offset = 5 / viewport.zoom;
+        const adjustedX = bounds.minX - offset;
+        const adjustedY = bounds.minY - offset;
+        const adjustedWidth = bounds.maxX - bounds.minX + 2 * offset;
+        const adjustedHeight = bounds.maxY - bounds.minY + 2 * offset;
 
-      {/* Transformation handlers */}
-      {isTransformationMode && showTransformations && (
-        <TransformationHandlers
-          bounds={adjustedBounds}
-          elementId={element.id}
-          handlerSize={handlerSize}
-          selectionColor={selectionColor}
-          viewport={viewport}
-          onPointerDown={onTransformationHandlerPointerDown}
-          onPointerUp={onTransformationHandlerPointerUp}
-        />
-      )}
+        return adjustedWidth > 0 && adjustedHeight > 0 ? (
+          <rect
+            x={adjustedX}
+            y={adjustedY}
+            width={adjustedWidth}
+            height={adjustedHeight}
+            fill="none"
+            stroke={selectionColor}
+            strokeWidth={strokeWidth}
+            pointerEvents="none"
+          />
+        ) : null;
+      })()}
 
-      {/* Center X marker and coordinates */}
-      {isTransformationMode && showTransformations && <CenterMarker bounds={adjustedBounds} selectionColor={selectionColor} viewport={viewport} transformation={transformation} />}
+      {/* Selection rectangles for subpaths */}
+      {selectedSubpaths && activePlugin !== 'transformation' && selectedSubpaths
+        .filter(sp => sp.elementId === element.id)
+        .map((selected) => {
+          // Get the bounds of this specific subpath
+          const subpathBounds = getIndividualSubpathBounds(selected.subpathIndex);
+          if (!subpathBounds) return null;
 
-      {/* Corner coordinates */}
-      {isTransformationMode && showTransformations && transformation?.showCoordinates && <CornerCoordinates bounds={adjustedBounds} viewport={viewport} />}
+          const offset = 5 / viewport.zoom;
+          const adjustedSubpathBounds = {
+            minX: subpathBounds.minX - offset,
+            minY: subpathBounds.minY - offset,
+            maxX: subpathBounds.maxX + offset,
+            maxY: subpathBounds.maxY + offset,
+          };
 
-      {/* Measurement rulers */}
-      {isTransformationMode && showTransformations && transformation?.showRulers && <MeasurementRulers bounds={adjustedBounds} viewport={viewport} />}
+          const adjustedX = adjustedSubpathBounds.minX;
+          const adjustedY = adjustedSubpathBounds.minY;
+          const adjustedWidth = adjustedSubpathBounds.maxX - adjustedSubpathBounds.minX;
+          const adjustedHeight = adjustedSubpathBounds.maxY - adjustedSubpathBounds.minY;
+
+          return adjustedWidth > 0 && adjustedHeight > 0 ? (
+            <rect
+              key={`subpath-${selected.elementId}-${selected.subpathIndex}`}
+              x={adjustedX}
+              y={adjustedY}
+              width={adjustedWidth}
+              height={adjustedHeight}
+              fill="none"
+              stroke={SUBPATH_SELECTION_COLOR}
+              strokeWidth={strokeWidth}
+              pointerEvents="none"
+            />
+          ) : null;
+        })}
     </g>
   );
 };

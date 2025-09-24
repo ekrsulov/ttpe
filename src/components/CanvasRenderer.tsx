@@ -3,7 +3,8 @@ import { measurePath } from '../utils/measurementUtils';
 import { commandsToString } from '../utils/pathParserUtils';
 import type { Point, CanvasElement, ControlPointInfo, Command } from '../types';
 import { useCanvasDragInteractions } from '../hooks/useCanvasDragInteractions';
-import { SelectionOverlay, SubpathSelectionOverlay, EditPointsOverlay, SubpathOverlay, ShapePreview } from './overlays';
+import { SelectionOverlay, EditPointsOverlay, SubpathOverlay, ShapePreview } from './overlays';
+import { TransformationOverlay } from './overlays/TransformationOverlay';
 
 interface CanvasRendererProps {
   viewport: {
@@ -217,26 +218,26 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
               }}
             />
             {/* Selection overlay */}
-            {isSelected && (
+            {isSelected && (activePlugin !== 'transformation' || isWorkingWithSubpaths()) && (
               <SelectionOverlay
                 element={element}
                 bounds={getTransformedBounds(element)}
                 viewport={viewport}
+                selectedSubpaths={selectedSubpaths}
                 activePlugin={activePlugin}
-                transformation={transformation}
-                showTransformations={!(activePlugin === 'transformation' && isWorkingWithSubpaths())}
-                onTransformationHandlerPointerDown={onTransformationHandlerPointerDown}
-                onTransformationHandlerPointerUp={onTransformationHandlerPointerUp}
               />
             )}
-            {/* Render subpath selection box if in subpath mode and element has selected subpaths */}
-            {activePlugin === 'transformation' && isWorkingWithSubpaths() && selectedSubpaths.some(sp => sp.elementId === element.id) && (
-              <SubpathSelectionOverlay
+
+            {/* Transformation overlay - handles all transformation-related UI */}
+            {isSelected && activePlugin === 'transformation' && (
+              <TransformationOverlay
                 element={element}
+                bounds={getTransformedBounds(element)}
                 selectedSubpaths={selectedSubpaths}
                 viewport={viewport}
                 activePlugin={activePlugin}
                 transformation={transformation}
+                isWorkingWithSubpaths={isWorkingWithSubpaths()}
                 onTransformationHandlerPointerDown={onTransformationHandlerPointerDown}
                 onTransformationHandlerPointerUp={onTransformationHandlerPointerUp}
               />
