@@ -157,7 +157,7 @@ export const SelectPanel: React.FC = () => {
             alignItems: 'center',
             justifyContent: 'center'
           }}>
-            <IconButton onClick={() => { useCanvasStore.persist?.clearStorage(); window.location.reload(); }} title="Reset">
+            <IconButton onClick={() => { localStorage.removeItem('canvas-app-state'); window.location.reload(); }} title="Reset">
               <RotateCcw size={12} /> Reset
             </IconButton>
           </div>

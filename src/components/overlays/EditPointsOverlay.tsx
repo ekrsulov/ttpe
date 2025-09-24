@@ -128,7 +128,7 @@ export const EditPointsOverlay: React.FC<EditPointsOverlayProps> = ({
           }
         }
 
-        const pointStyle = getPointStyle(point, selectedCommands, element, smoothBrush, commands);
+        const pointStyle = getPointStyle(point, selectedCommands, element, smoothBrush, commands, pathData);
 
         return (
           <circle
@@ -186,7 +186,8 @@ const getPointStyle = (
       y: number;
     }>;
   },
-  commands: Command[]
+  commands: Command[],
+  pathData: PathData
 ) => {
   let color = 'black';
   let size = 4;
@@ -226,10 +227,23 @@ const getPointStyle = (
     const isLastPointInCommand = point.pointIndex === pointsLength - 1;
     const isLastPointInPath = isLastCommand && isLastPointInCommand && cmd.type !== 'Z';
 
+    // Check if this is the end of a sub-path
+    let isEndOfSubPath = false;
+    let cumulativeIndex = 0;
+    for (const subPath of pathData.subPaths) {
+      const subPathStartIndex = cumulativeIndex;
+      const subPathEndIndex = cumulativeIndex + subPath.length - 1;
+      if (point.commandIndex >= subPathStartIndex && point.commandIndex <= subPathEndIndex) {
+        isEndOfSubPath = point.commandIndex === subPathEndIndex && isLastPointInCommand && cmd.type !== 'Z';
+        break;
+      }
+      cumulativeIndex += subPath.length;
+    }
+
     if (cmd.type === 'M') {
       color = 'green';
       size = 6; // larger
-    } else if (isLastPointInPath) {
+    } else if (isLastPointInPath || isEndOfSubPath) {
       color = 'red';
       size = 3; // smaller
     } else {
