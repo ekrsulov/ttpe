@@ -192,8 +192,8 @@ We welcome contributions! Here's how to get started:
 
 ## Roadmap
 
-- [ ] Export functionality (SVG, PNG, PDF)
 - [ ] Import SVG files
+- [ ] Export functionality
 - [ ] Advanced path operations (boolean operations)
 - [ ] Collaborative editing
 - [ ] Plugin system for custom tools
