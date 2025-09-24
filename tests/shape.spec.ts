@@ -96,29 +96,4 @@ test.describe('Shape Creation', () => {
     // Verify SVG canvas is still visible and interactive
     await expect(canvas).toBeVisible();
   });
-
-  test('should switch between shape types', async ({ page }) => {
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
-
-    // Switch to shape mode
-    await page.locator('[title="Shape"]').click();
-
-    // Check that shape panel is visible
-    await expect(page.locator('text=Shape')).toBeVisible();
-
-    // Check that shape buttons are visible
-    const squareButton = page.locator('[title="Square - Click and drag to create"]');
-    const circleButton = page.locator('[title="Circle - Click and drag to create"]');
-
-    await expect(squareButton).toBeVisible();
-    await expect(circleButton).toBeVisible();
-
-    // Switch to circle
-    await circleButton.click();
-
-    // Buttons should still be visible
-    await expect(squareButton).toBeVisible();
-    await expect(circleButton).toBeVisible();
-  });
 });

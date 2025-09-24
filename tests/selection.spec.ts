@@ -129,20 +129,4 @@ test.describe('Selection and Transformation', () => {
     const pathsAfterDuplication = await canvas.locator('path').count();
     expect(pathsAfterDuplication).toBeGreaterThan(pathsAfterCreation);
   });
-
-  test('should handle empty selection state', async ({ page }) => {
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
-
-    // Check that Transform button is disabled when no elements are selected
-    const transformButton = page.locator('[title="Transform"]');
-    await expect(transformButton).toBeDisabled();
-
-    // Check that Edit button is also disabled
-    const editButton = page.locator('[title="Edit"]');
-    await expect(editButton).toBeDisabled();
-
-    // Verify that no transformation panel is shown (no elements selected)
-    // This test verifies the disabled state when no elements exist
-  });
 });

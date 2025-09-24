@@ -1,5 +1,47 @@
 import { test, expect } from '@playwright/test';
 
+// Helper function to draw a zig-zag pattern with multiple jumps and small irregularities
+async function drawZigZagPath(page: any, canvasBox: any) {
+  // Start drawing
+  await page.mouse.move(
+    canvasBox.x + canvasBox.width * 0.1,
+    canvasBox.y + canvasBox.height * 0.5
+  );
+  await page.mouse.down();
+
+  // Create zig-zag pattern with multiple jumps and small irregularities (100 steps total)
+  const segments = 8; // 8 main segments for zig-zag
+  const totalSteps = 100;
+  const stepsPerSegment = Math.floor(totalSteps / segments);
+  
+  for (let i = 0; i < segments; i++) {
+    const progress = (i + 1) / segments;
+    const baseX = canvasBox.x + canvasBox.width * (0.1 + progress * 0.8);
+    const yOffset = (i % 2 === 0) ? -0.15 : 0.15; // Main zig-zag movement
+    const baseY = canvasBox.y + canvasBox.height * (0.5 + yOffset);
+    
+    // Add small irregularities/picos to make the path rough
+    const irregularities = 3; // 3 small movements per segment
+    const irregularitySteps = Math.floor(stepsPerSegment / irregularities);
+    
+    for (let j = 0; j < irregularities; j++) {
+      const irregularityProgress = j / irregularities;
+      const irregularityX = baseX - (canvasBox.width * 0.8 / segments) * (1 - irregularityProgress);
+      
+      // Add small random-like movements (±0.02 in both directions)
+      const smallXOffset = (Math.sin(i * 2 + j * 3) * 0.02); // Pseudo-random small movements
+      const smallYOffset = (Math.cos(i * 1.5 + j * 2.5) * 0.02);
+      
+      const finalX = irregularityX + canvasBox.width * smallXOffset;
+      const finalY = baseY + canvasBox.height * smallYOffset;
+      
+      await page.mouse.move(finalX, finalY, { steps: irregularitySteps });
+    }
+  }
+
+  await page.mouse.up();
+}
+
 test.describe('Edit Functionality', () => {
   test('should toggle smooth brush mode', async ({ page }) => {
     await page.goto('/');
@@ -15,20 +57,8 @@ test.describe('Edit Functionality', () => {
     // Count initial elements
     const initialPaths = await canvas.locator('path').count();
 
-    // Draw a path
-    await page.mouse.move(
-      canvasBox.x + canvasBox.width * 0.2,
-      canvasBox.y + canvasBox.height * 0.5
-    );
-    await page.mouse.down();
-
-    await page.mouse.move(
-      canvasBox.x + canvasBox.width * 0.8,
-      canvasBox.y + canvasBox.height * 0.5,
-      { steps: 10 }
-    );
-
-    await page.mouse.up();
+    // Draw a zig-zag path with multiple jumps
+    await drawZigZagPath(page, canvasBox);
 
     // Wait for path creation
     await page.waitForTimeout(100);
@@ -82,20 +112,8 @@ test.describe('Edit Functionality', () => {
     // Count initial elements
     const initialPaths = await canvas.locator('path').count();
 
-    // Draw a path
-    await page.mouse.move(
-      canvasBox.x + canvasBox.width * 0.2,
-      canvasBox.y + canvasBox.height * 0.4
-    );
-    await page.mouse.down();
-
-    await page.mouse.move(
-      canvasBox.x + canvasBox.width * 0.8,
-      canvasBox.y + canvasBox.height * 0.6,
-      { steps: 10 }
-    );
-
-    await page.mouse.up();
+    // Draw a zig-zag path with multiple jumps
+    await drawZigZagPath(page, canvasBox);
 
     // Wait for path creation
     await page.waitForTimeout(100);
@@ -159,20 +177,8 @@ test.describe('Edit Functionality', () => {
     // Count initial elements
     const initialPaths = await canvas.locator('path').count();
 
-    // Draw a path
-    await page.mouse.move(
-      canvasBox.x + canvasBox.width * 0.2,
-      canvasBox.y + canvasBox.height * 0.3
-    );
-    await page.mouse.down();
-
-    await page.mouse.move(
-      canvasBox.x + canvasBox.width * 0.8,
-      canvasBox.y + canvasBox.height * 0.7,
-      { steps: 10 }
-    );
-
-    await page.mouse.up();
+    // Draw a zig-zag path with multiple jumps
+    await drawZigZagPath(page, canvasBox);
 
     // Wait for path creation
     await page.waitForTimeout(100);

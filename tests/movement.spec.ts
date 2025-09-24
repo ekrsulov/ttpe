@@ -46,13 +46,9 @@ test.describe('Path Movement Tests', () => {
     // Switch to select mode
     await page.locator('[title="Select"]').click();
 
-    // Get initial path position (first path element)
-    const initialPath = canvas.locator('path').first();
-    const initialTransform = await initialPath.getAttribute('transform') || '';
-
     // Click and drag the path to move it
-    const startX = canvasBox.x + canvasBox.width * 0.3;
-    const startY = canvasBox.y + canvasBox.height * 0.6;
+    const startX = canvasBox.x + canvasBox.width * 0.4; // Take from the right edge of the path
+    const startY = canvasBox.y + canvasBox.height * 0.7; // Take from the bottom edge of the path
     const endX = canvasBox.x + canvasBox.width * 0.6;
     const endY = canvasBox.y + canvasBox.height * 0.8;
 
@@ -79,7 +75,6 @@ test.describe('Path Movement Tests', () => {
 
     // Verify the path has moved (transform attribute should be different or path position changed)
     const finalPath = canvas.locator('path').first();
-    const finalTransform = await finalPath.getAttribute('transform') || '';
 
     // The path should still exist and be visible
     await expect(finalPath).toBeVisible();
@@ -93,77 +88,99 @@ test.describe('Path Movement Tests', () => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
-    // Create a shape (square by default)
-    await page.locator('[title="Shape"]').click();
+    // Switch to pencil mode
+    await page.locator('[title="Pencil"]').click();
+
+    // Click add subpath button to switch to subpath mode
+    const addSubpathButton = page.locator('[title="Add Subpath"]');
+    await addSubpathButton.click();
 
     const canvas = page.locator('svg[viewBox*="0 0"]').first();
     const canvasBox = await canvas.boundingBox();
     if (!canvasBox) throw new Error('SVG canvas not found');
 
-    // Draw a square by clicking and dragging
+    // Draw first subpath (horizontal line)
     await page.mouse.move(
-      canvasBox.x + canvasBox.width * 0.3,
+      canvasBox.x + canvasBox.width * 0.2,
       canvasBox.y + canvasBox.height * 0.3
     );
     await page.mouse.down();
 
     await page.mouse.move(
       canvasBox.x + canvasBox.width * 0.5,
-      canvasBox.y + canvasBox.height * 0.5,
+      canvasBox.y + canvasBox.height * 0.3,
       { steps: 10 }
     );
 
     await page.mouse.up();
 
-    // Wait for shape creation
+    // Wait a bit before drawing second subpath
     await page.waitForTimeout(100);
+
+    // Draw second subpath (diagonal line from the middle of the screen)
+    await page.mouse.move(
+      canvasBox.x + canvasBox.width * 0.5,
+      canvasBox.y + canvasBox.height * 0.5
+    );
+    await page.mouse.down();
+
+    await page.mouse.move(
+      canvasBox.x + canvasBox.width * 0.7,
+      canvasBox.y + canvasBox.height * 0.7,
+      { steps: 10 }
+    );
+
+    await page.mouse.up();
+
+    // Wait for path creation
+    await page.waitForTimeout(50);
 
     // Switch to select mode
     await page.locator('[title="Select"]').click();
 
-    // Click on the created square to select it
+    // Click on the created path to select it (clicking on the first subpath)
     await page.mouse.click(
       canvasBox.x + canvasBox.width * 0.4,
-      canvasBox.y + canvasBox.height * 0.4
+      canvasBox.y + canvasBox.height * 0.3
     );
 
     // Wait for selection
-    await page.waitForTimeout(100);
+    await page.waitForTimeout(50);
 
     // Check if the subpath button is now enabled
     const subpathButton = page.locator('[title="Subpath"]');
     const isEnabled = await subpathButton.isEnabled();
 
     if (!isEnabled) {
-      throw new Error('Subpath button should be enabled after selecting a shape');
+      throw new Error('Subpath button should be enabled after selecting a path');
     }
 
     // Now switch to subpath mode
     await subpathButton.click();
 
     // Wait for subpath mode to activate
-    await page.waitForTimeout(100);
+    await page.waitForTimeout(50);
 
-    // In subpath mode, click to select a subpath
+    // In subpath mode, click to select the diagonal subpath
     await page.mouse.click(
-      canvasBox.x + canvasBox.width * 0.4,
-      canvasBox.y + canvasBox.height * 0.4
+      canvasBox.x + canvasBox.width * 0.6,
+      canvasBox.y + canvasBox.height * 0.6
     );
 
     // Wait for subpath selection
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(100);
 
     // Drag to move the subpath
     await page.mouse.down();
     await page.mouse.move(
-      canvasBox.x + canvasBox.width * 0.6,
-      canvasBox.y + canvasBox.height * 0.6,
+      canvasBox.x + canvasBox.width * 0.8,
+      canvasBox.y + canvasBox.height * 0.8,
       { steps: 10 }
     );
     await page.mouse.up();
 
     // Wait for movement
-    await page.waitForTimeout(100);
+    await page.waitForTimeout(50);
 
     // Verify the shape still exists
     const finalPath = canvas.locator('path').first();
@@ -230,11 +247,11 @@ test.describe('Path Movement Tests', () => {
 
     // Click on canvas to start point selection (when smooth brush is off)
     await page.mouse.click(
-      canvasBox.x + canvasBox.width * 0.1,
-      canvasBox.y + canvasBox.height * 0.1
+      canvasBox.x + canvasBox.width * 0.3,
+      canvasBox.y + canvasBox.height * 0.4
     );
 
-    // Drag to select points
+    // Drag to select only some points (not all points) - smaller selection to leave some points out
     await page.mouse.down();
     await page.mouse.move(
       canvasBox.x + canvasBox.width * 0.5,
@@ -277,14 +294,17 @@ test.describe('Path Movement Tests', () => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
-    // Create multiple paths
-    await page.locator('[title="Pencil"]').click();
+    // Create a shape and a line
+    await page.locator('[title="Shape"]').click();
+
+    // Select square shape
+    await page.locator('[title="Square - Click and drag to create"]').click();
 
     const canvas = page.locator('svg[viewBox*="0 0"]').first();
     const canvasBox = await canvas.boundingBox();
     if (!canvasBox) throw new Error('SVG canvas not found');
 
-    // Draw first path
+    // Draw a square shape
     await page.mouse.move(
       canvasBox.x + canvasBox.width * 0.1,
       canvasBox.y + canvasBox.height * 0.2
@@ -292,12 +312,15 @@ test.describe('Path Movement Tests', () => {
     await page.mouse.down();
     await page.mouse.move(
       canvasBox.x + canvasBox.width * 0.3,
-      canvasBox.y + canvasBox.height * 0.2,
+      canvasBox.y + canvasBox.height * 0.4,
       { steps: 5 }
     );
     await page.mouse.up();
 
-    // Draw second path
+    // Switch to pencil to draw a line
+    await page.locator('[title="Pencil"]').click();
+
+    // Draw second path (line)
     await page.waitForTimeout(200);
     await page.mouse.move(
       canvasBox.x + canvasBox.width * 0.1,
@@ -314,15 +337,22 @@ test.describe('Path Movement Tests', () => {
     // Wait for paths creation
     await page.waitForTimeout(100);
 
+    // Verify both elements were created
+    const initialPaths = await canvas.locator('path').count();
+    expect(initialPaths).toBeGreaterThanOrEqual(2);
+
     // Switch to select mode
     await page.locator('[title="Select"]').click();
 
-    // Select both paths (shift+click)
+    // Select both elements (shift+click)
     await page.keyboard.down('Shift');
     await page.mouse.click(
       canvasBox.x + canvasBox.width * 0.2,
-      canvasBox.y + canvasBox.height * 0.2
+      canvasBox.y + canvasBox.height * 0.3
     );
+
+    await page.waitForTimeout(300);
+
     await page.mouse.click(
       canvasBox.x + canvasBox.width * 0.2,
       canvasBox.y + canvasBox.height * 0.8
@@ -332,23 +362,19 @@ test.describe('Path Movement Tests', () => {
     // Wait for multi-selection
     await page.waitForTimeout(100);
 
-    // Drag both paths together
-    await page.mouse.move(
-      canvasBox.x + canvasBox.width * 0.2,
-      canvasBox.y + canvasBox.height * 0.5
-    );
+    // Drag both elements
     await page.mouse.down();
     await page.mouse.move(
-      canvasBox.x + canvasBox.width * 0.7,
-      canvasBox.y + canvasBox.height * 0.5,
-      { steps: 10 }
+      canvasBox.x + canvasBox.width * 0.5,
+      canvasBox.y + canvasBox.height * 0.7,
+      { steps: 20 }
     );
     await page.mouse.up();
 
     // Wait for movement
     await page.waitForTimeout(100);
 
-    // Verify both paths still exist
+    // Verify both elements still exist and were moved
     const finalPaths = await canvas.locator('path').count();
     expect(finalPaths).toBeGreaterThanOrEqual(2);
   });

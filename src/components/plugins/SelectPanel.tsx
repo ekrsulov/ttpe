@@ -3,6 +3,7 @@ import { useCanvasStore } from '../../store/canvasStore';
 import { Pen, RotateCcw, Minus, Copy, Clipboard } from 'lucide-react';
 import { IconButton } from '../ui/IconButton';
 import { extractEditablePoints, extractSubpaths, commandsToString } from '../../utils/pathParserUtils';
+import { translateCommands } from '../../utils/transformationUtils';
 import type { CanvasElement, PathData } from '../../types';
 
 export const SelectPanel: React.FC = () => {
@@ -44,19 +45,39 @@ export const SelectPanel: React.FC = () => {
     if (item.type === 'element') {
       // Duplicate the entire element
       const { id: _id, zIndex: _zIndex, ...elementData } = item.element;
-      addElement(elementData);
+      
+      // If it's a path, translate it to make duplication visible
+      if (elementData.type === 'path') {
+        const pathData = elementData.data as PathData;
+        const translatedSubPaths = pathData.subPaths.map(subPath => 
+          translateCommands(subPath, 20, 20)
+        );
+        
+        addElement({
+          ...elementData,
+          data: {
+            ...pathData,
+            subPaths: translatedSubPaths
+          }
+        });
+      } else {
+        addElement(elementData);
+      }
     } else if (item.type === 'subpath' && item.subpathIndex !== undefined) {
       // Duplicate the subpath as a new element
       const commands = (item.element.data as PathData).subPaths.flat();
       const subpaths = extractSubpaths(commands);
       const subpathData = subpaths[item.subpathIndex];
       if (subpathData) {
+        // Translate the subpath commands to make duplication visible
+        const translatedCommands = translateCommands(subpathData.commands, 20, 20);
+        
         // Create new path element from subpath
         addElement({
           type: 'path',
           data: {
             ...item.element.data,
-            subPaths: [subpathData.commands],
+            subPaths: [translatedCommands],
           },
         });
       }

@@ -15,10 +15,10 @@ test.describe('Align Tests', () => {
     const canvasBox = await canvas.boundingBox();
     if (!canvasBox) throw new Error('SVG canvas not found');
 
-    // Create 2 circles at different horizontal positions (not aligned)
+    // Create 2 circles at different horizontal positions with different sizes
     const circlePositions = [
-      { start: { x: 0.4, y: 0.2 }, end: { x: 0.5, y: 0.3 } }, // Circle at x: 0.4-0.5
-      { start: { x: 0.7, y: 0.2 }, end: { x: 0.8, y: 0.3 } }, // Circle at x: 0.7-0.8
+      { start: { x: 0.4, y: 0.2 }, end: { x: 0.45, y: 0.25 } }, // Small circle at x: 0.4-0.45
+      { start: { x: 0.7, y: 0.2 }, end: { x: 0.8, y: 0.35 } }, // Large circle at x: 0.7-0.8
     ];
 
     for (const pos of circlePositions) {
@@ -161,10 +161,10 @@ test.describe('Align Tests', () => {
     const canvasBox = await canvas.boundingBox();
     if (!canvasBox) throw new Error('SVG canvas not found');
 
-    // Create 2 circles at different horizontal positions (not aligned)
+    // Create 2 circles at different horizontal positions with different sizes
     const circlePositions = [
-      { start: { x: 0.2, y: 0.2 }, end: { x: 0.3, y: 0.3 } }, // Circle at x: 0.2-0.3
-      { start: { x: 0.7, y: 0.2 }, end: { x: 0.8, y: 0.3 } }, // Circle at x: 0.7-0.8
+      { start: { x: 0.2, y: 0.2 }, end: { x: 0.25, y: 0.25 } }, // Small circle at x: 0.2-0.25
+      { start: { x: 0.7, y: 0.2 }, end: { x: 0.8, y: 0.35 } }, // Large circle at x: 0.7-0.8
     ];
 
     for (const pos of circlePositions) {
@@ -296,10 +296,10 @@ test.describe('Align Tests', () => {
     const canvasBox = await canvas.boundingBox();
     if (!canvasBox) throw new Error('SVG canvas not found');
 
-    // Create 2 circles at different horizontal positions (same Y, different X)
+    // Create 2 circles at different horizontal positions with different sizes
     const circlePositions = [
-      { start: { x: 0.1, y: 0.2 }, end: { x: 0.2, y: 0.3 } }, // Circle at x: 0.1-0.2, y: 0.2-0.3
-      { start: { x: 0.5, y: 0.2 }, end: { x: 0.6, y: 0.3 } }, // Circle at x: 0.5-0.6, y: 0.2-0.3
+      { start: { x: 0.1, y: 0.2 }, end: { x: 0.15, y: 0.25 } }, // Small circle at x: 0.1-0.15, y: 0.2-0.25
+      { start: { x: 0.5, y: 0.2 }, end: { x: 0.6, y: 0.35 } }, // Large circle at x: 0.5-0.6, y: 0.2-0.35
     ];
 
     for (const pos of circlePositions) {
@@ -430,10 +430,10 @@ test.describe('Align Tests', () => {
     const canvasBox = await canvas.boundingBox();
     if (!canvasBox) throw new Error('SVG canvas not found');
 
-    // Create 2 circles at different vertical positions (not aligned)
+    // Create 2 circles at different vertical positions with different sizes
     const circlePositions = [
-      { start: { x: 0.2, y: 0.1 }, end: { x: 0.3, y: 0.2 } }, // Circle at y: 0.1-0.2
-      { start: { x: 0.2, y: 0.5 }, end: { x: 0.3, y: 0.6 } }, // Circle at y: 0.5-0.6
+      { start: { x: 0.2, y: 0.1 }, end: { x: 0.25, y: 0.15 } }, // Small circle at y: 0.1-0.15
+      { start: { x: 0.2, y: 0.5 }, end: { x: 0.35, y: 0.65 } }, // Large circle at y: 0.5-0.65
     ];
 
     for (const pos of circlePositions) {
@@ -564,10 +564,10 @@ test.describe('Align Tests', () => {
     const canvasBox = await canvas.boundingBox();
     if (!canvasBox) throw new Error('SVG canvas not found');
 
-    // Create 2 circles at different vertical positions (not aligned)
+    // Create 2 circles at different vertical positions with different sizes
     const circlePositions = [
-      { start: { x: 0.2, y: 0.1 }, end: { x: 0.3, y: 0.2 } }, // Circle at y: 0.1-0.2
-      { start: { x: 0.2, y: 0.6 }, end: { x: 0.3, y: 0.7 } }, // Circle at y: 0.6-0.7
+      { start: { x: 0.2, y: 0.1 }, end: { x: 0.25, y: 0.15 } }, // Small circle at y: 0.1-0.15
+      { start: { x: 0.2, y: 0.6 }, end: { x: 0.35, y: 0.75 } }, // Large circle at y: 0.6-0.75
     ];
 
     for (const pos of circlePositions) {
@@ -699,10 +699,10 @@ test.describe('Align Tests', () => {
     const canvasBox = await canvas.boundingBox();
     if (!canvasBox) throw new Error('SVG canvas not found');
 
-    // Create 2 circles at different vertical positions (not aligned)
+    // Create 2 circles at different vertical positions with different sizes
     const circlePositions = [
-      { start: { x: 0.2, y: 0.1 }, end: { x: 0.3, y: 0.2 } }, // Circle at y: 0.1-0.2
-      { start: { x: 0.2, y: 0.5 }, end: { x: 0.3, y: 0.6 } }, // Circle at y: 0.5-0.6
+      { start: { x: 0.2, y: 0.1 }, end: { x: 0.25, y: 0.15 } }, // Small circle at y: 0.1-0.15
+      { start: { x: 0.2, y: 0.5 }, end: { x: 0.35, y: 0.65 } }, // Large circle at y: 0.5-0.65
     ];
 
     for (const pos of circlePositions) {
