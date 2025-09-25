@@ -5,6 +5,7 @@ import { transformPathData, transformSubpathsData, transformSingleSubpath } from
 import { extractEditablePoints } from '../utils/pathParserUtils';
 import { mapPointerToCanvas } from '../utils/coordinateUtils';
 import { CanvasRenderer } from './CanvasRenderer';
+import { OpticalAlignmentOverlay } from './overlays';
 import { transformManager, type TransformBounds } from '../utils/transformManager';
 import type { Point, PathData, CanvasElement } from '../types';
 
@@ -40,7 +41,12 @@ export const Canvas: React.FC = () => {
     smoothBrush,
     applySmoothBrush,
     updateSmoothBrushCursor,
-    getControlPointInfo
+    getControlPointInfo,
+    // Optical Alignment State
+    currentAlignment,
+    showMathematicalCenter,
+    showOpticalCenter,
+    showDistanceRules
   } = useCanvasStore();
 
   const [isSpacePressed, setIsSpacePressed] = useState(false);
@@ -861,6 +867,17 @@ export const Canvas: React.FC = () => {
           stroke="#38bdf8"
           strokeWidth="1.2"
           style={{ pointerEvents: 'none' }}
+        />
+      )}
+
+      {/* Optical Alignment Overlay */}
+      {activePlugin === 'select' && (
+        <OpticalAlignmentOverlay
+          alignment={currentAlignment}
+          showMathematicalCenter={showMathematicalCenter}
+          showOpticalCenter={showOpticalCenter}
+          showDistanceRules={showDistanceRules}
+          viewport={viewport}
         />
       )}
     </svg>

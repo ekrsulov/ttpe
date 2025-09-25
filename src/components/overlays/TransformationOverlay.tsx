@@ -230,14 +230,14 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
                         {/* Top-left corner coordinates */}
                         <g>
                           {(() => {
-                            const topLeftText = `${Math.round(adjustedSubpathBounds.minX)}, ${Math.round(adjustedSubpathBounds.minY)}`;
+                            const topLeftText = `${Math.round(subpathBounds.minX)}, ${Math.round(subpathBounds.minY)}`;
                             const rectWidth = topLeftText.length * fontSize * 0.6 + padding * 2;
-                            const rectX = adjustedSubpathBounds.minX - coordinateOffset - padding * 6;
+                            const rectX = subpathBounds.minX - coordinateOffset - padding * 6;
                             return (
                               <>
                                 <rect
                                   x={rectX}
-                                  y={adjustedSubpathBounds.minY - coordinateOffset - fontSize - padding}
+                                  y={subpathBounds.minY - coordinateOffset - fontSize - padding}
                                   width={rectWidth}
                                   height={fontSize + padding * 2}
                                   fill="#6b7280"
@@ -247,7 +247,7 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
                                 />
                                 <text
                                   x={rectX + rectWidth / 2}
-                                  y={adjustedSubpathBounds.minY - coordinateOffset - fontSize / 2}
+                                  y={subpathBounds.minY - coordinateOffset - fontSize / 2}
                                   textAnchor="middle"
                                   dominantBaseline="middle"
                                   fontSize={fontSize}
@@ -266,14 +266,14 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
                         {/* Bottom-right corner coordinates */}
                         <g>
                           {(() => {
-                            const bottomRightText = `${Math.round(adjustedSubpathBounds.maxX)}, ${Math.round(adjustedSubpathBounds.maxY)}`;
+                            const bottomRightText = `${Math.round(subpathBounds.maxX)}, ${Math.round(subpathBounds.maxY)}`;
                             const rectWidth = bottomRightText.length * fontSize * 0.6 + padding * 2;
-                            const rectX = adjustedSubpathBounds.maxX + coordinateOffset;
+                            const rectX = subpathBounds.maxX + coordinateOffset;
                             return (
                               <>
                                 <rect
                                   x={rectX}
-                                  y={adjustedSubpathBounds.maxY + coordinateOffset}
+                                  y={subpathBounds.maxY + coordinateOffset}
                                   width={rectWidth}
                                   height={fontSize + padding * 2}
                                   fill="#6b7280"
@@ -283,7 +283,7 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
                                 />
                                 <text
                                   x={rectX + rectWidth / 2}
-                                  y={adjustedSubpathBounds.maxY + coordinateOffset + fontSize / 2 + padding}
+                                  y={subpathBounds.maxY + coordinateOffset + fontSize / 2 + padding}
                                   textAnchor="middle"
                                   dominantBaseline="middle"
                                   fontSize={fontSize}
@@ -304,8 +304,9 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
 
                   {/* Measurement rulers for subpath */}
                   {transformation?.showRulers && (() => {
-                    const width = adjustedSubpathBounds.maxX - adjustedSubpathBounds.minX;
-                    const height = adjustedSubpathBounds.maxY - adjustedSubpathBounds.minY;
+                    // Use original subpathBounds for measurements, not the adjusted bounds with offset
+                    const width = subpathBounds.maxX - subpathBounds.minX;
+                    const height = subpathBounds.maxY - subpathBounds.minY;
                     const rulerOffset = 20 / viewport.zoom; // Distance from element
                     const fontSize = 12 / viewport.zoom;
 
@@ -315,38 +316,38 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
                         <g>
                           {/* Ruler line */}
                           <line
-                            x1={adjustedSubpathBounds.minX}
-                            y1={adjustedSubpathBounds.maxY + rulerOffset}
-                            x2={adjustedSubpathBounds.maxX}
-                            y2={adjustedSubpathBounds.maxY + rulerOffset}
+                            x1={subpathBounds.minX}
+                            y1={subpathBounds.maxY + rulerOffset}
+                            x2={subpathBounds.maxX}
+                            y2={subpathBounds.maxY + rulerOffset}
                             stroke="#666"
                             strokeWidth={1 / viewport.zoom}
                             pointerEvents="none"
                           />
                           {/* Left tick */}
                           <line
-                            x1={adjustedSubpathBounds.minX}
-                            y1={adjustedSubpathBounds.maxY + rulerOffset - 3 / viewport.zoom}
-                            x2={adjustedSubpathBounds.minX}
-                            y2={adjustedSubpathBounds.maxY + rulerOffset + 3 / viewport.zoom}
+                            x1={subpathBounds.minX}
+                            y1={subpathBounds.maxY + rulerOffset - 3 / viewport.zoom}
+                            x2={subpathBounds.minX}
+                            y2={subpathBounds.maxY + rulerOffset + 3 / viewport.zoom}
                             stroke="#666"
                             strokeWidth={1 / viewport.zoom}
                             pointerEvents="none"
                           />
                           {/* Right tick */}
                           <line
-                            x1={adjustedSubpathBounds.maxX}
-                            y1={adjustedSubpathBounds.maxY + rulerOffset - 3 / viewport.zoom}
-                            x2={adjustedSubpathBounds.maxX}
-                            y2={adjustedSubpathBounds.maxY + rulerOffset + 3 / viewport.zoom}
+                            x1={subpathBounds.maxX}
+                            y1={subpathBounds.maxY + rulerOffset - 3 / viewport.zoom}
+                            x2={subpathBounds.maxX}
+                            y2={subpathBounds.maxY + rulerOffset + 3 / viewport.zoom}
                             stroke="#666"
                             strokeWidth={1 / viewport.zoom}
                             pointerEvents="none"
                           />
                           {/* Width text */}
                           <text
-                            x={adjustedSubpathBounds.minX + width / 2}
-                            y={adjustedSubpathBounds.maxY + rulerOffset + 12 / viewport.zoom}
+                            x={subpathBounds.minX + width / 2}
+                            y={subpathBounds.maxY + rulerOffset + 12 / viewport.zoom}
                             textAnchor="middle"
                             fontSize={fontSize}
                             fill="#666"
@@ -361,43 +362,43 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
                         <g>
                           {/* Ruler line */}
                           <line
-                            x1={adjustedSubpathBounds.maxX + rulerOffset}
-                            y1={adjustedSubpathBounds.minY}
-                            x2={adjustedSubpathBounds.maxX + rulerOffset}
-                            y2={adjustedSubpathBounds.maxY}
+                            x1={subpathBounds.maxX + rulerOffset}
+                            y1={subpathBounds.minY}
+                            x2={subpathBounds.maxX + rulerOffset}
+                            y2={subpathBounds.maxY}
                             stroke="#666"
                             strokeWidth={1 / viewport.zoom}
                             pointerEvents="none"
                           />
                           {/* Top tick */}
                           <line
-                            x1={adjustedSubpathBounds.maxX + rulerOffset - 3 / viewport.zoom}
-                            y1={adjustedSubpathBounds.minY}
-                            x2={adjustedSubpathBounds.maxX + rulerOffset + 3 / viewport.zoom}
-                            y2={adjustedSubpathBounds.minY}
+                            x1={subpathBounds.maxX + rulerOffset - 3 / viewport.zoom}
+                            y1={subpathBounds.minY}
+                            x2={subpathBounds.maxX + rulerOffset + 3 / viewport.zoom}
+                            y2={subpathBounds.minY}
                             stroke="#666"
                             strokeWidth={1 / viewport.zoom}
                             pointerEvents="none"
                           />
                           {/* Bottom tick */}
                           <line
-                            x1={adjustedSubpathBounds.maxX + rulerOffset - 3 / viewport.zoom}
-                            y1={adjustedSubpathBounds.maxY}
-                            x2={adjustedSubpathBounds.maxX + rulerOffset + 3 / viewport.zoom}
-                            y2={adjustedSubpathBounds.maxY}
+                            x1={subpathBounds.maxX + rulerOffset - 3 / viewport.zoom}
+                            y1={subpathBounds.maxY}
+                            x2={subpathBounds.maxX + rulerOffset + 3 / viewport.zoom}
+                            y2={subpathBounds.maxY}
                             stroke="#666"
                             strokeWidth={1 / viewport.zoom}
                             pointerEvents="none"
                           />
                           {/* Height text */}
                           <text
-                            x={adjustedSubpathBounds.maxX + rulerOffset + 12 / viewport.zoom}
-                            y={adjustedSubpathBounds.minY + height / 2}
+                            x={subpathBounds.maxX + rulerOffset + 12 / viewport.zoom}
+                            y={subpathBounds.minY + height / 2}
                             textAnchor="middle"
                             fontSize={fontSize}
                             fill="#666"
                             pointerEvents="none"
-                            transform={`rotate(90 ${adjustedSubpathBounds.maxX + rulerOffset + 12 / viewport.zoom} ${adjustedSubpathBounds.minY + height / 2})`}
+                            transform={`rotate(90 ${subpathBounds.maxX + rulerOffset + 12 / viewport.zoom} ${subpathBounds.minY + height / 2})`}
                             style={{ userSelect: 'none' }}
                           >
                             {Math.round(height)}px
@@ -499,14 +500,14 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
                 {/* Top-left corner coordinates */}
                 <g>
                   {(() => {
-                    const topLeftText = `${Math.round(adjustedBounds.minX)}, ${Math.round(adjustedBounds.minY)}`;
+                    const topLeftText = `${Math.round(bounds.minX)}, ${Math.round(bounds.minY)}`;
                     const rectWidth = topLeftText.length * fontSize * 0.6 + padding * 2;
-                    const rectX = adjustedBounds.minX - coordinateOffset - padding * 6;
+                    const rectX = bounds.minX - coordinateOffset - padding * 6;
                     return (
                       <>
                         <rect
                           x={rectX}
-                          y={adjustedBounds.minY - coordinateOffset - fontSize - padding}
+                          y={bounds.minY - coordinateOffset - fontSize - padding}
                           width={rectWidth}
                           height={fontSize + padding * 2}
                           fill="#6b7280"
@@ -516,7 +517,7 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
                         />
                         <text
                           x={rectX + rectWidth / 2}
-                          y={adjustedBounds.minY - coordinateOffset - fontSize / 2}
+                          y={bounds.minY - coordinateOffset - fontSize / 2}
                           textAnchor="middle"
                           dominantBaseline="middle"
                           fontSize={fontSize}
@@ -535,14 +536,14 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
                 {/* Bottom-right corner coordinates */}
                 <g>
                   {(() => {
-                    const bottomRightText = `${Math.round(adjustedBounds.maxX)}, ${Math.round(adjustedBounds.maxY)}`;
+                    const bottomRightText = `${Math.round(bounds.maxX)}, ${Math.round(bounds.maxY)}`;
                     const rectWidth = bottomRightText.length * fontSize * 0.6 + padding * 2;
-                    const rectX = adjustedBounds.maxX + coordinateOffset;
+                    const rectX = bounds.maxX + coordinateOffset;
                     return (
                       <>
                         <rect
                           x={rectX}
-                          y={adjustedBounds.maxY + coordinateOffset}
+                          y={bounds.maxY + coordinateOffset}
                           width={rectWidth}
                           height={fontSize + padding * 2}
                           fill="#6b7280"
@@ -552,7 +553,7 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
                         />
                         <text
                           x={rectX + rectWidth / 2}
-                          y={adjustedBounds.maxY + coordinateOffset + fontSize / 2 + padding}
+                          y={bounds.maxY + coordinateOffset + fontSize / 2 + padding}
                           textAnchor="middle"
                           dominantBaseline="middle"
                           fontSize={fontSize}
@@ -573,8 +574,9 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
 
           {/* Measurement rulers */}
           {transformation?.showRulers && (() => {
-            const width = adjustedBounds.maxX - adjustedBounds.minX;
-            const height = adjustedBounds.maxY - adjustedBounds.minY;
+            // Use original bounds for measurements, not the adjusted bounds with offset
+            const width = bounds.maxX - bounds.minX;
+            const height = bounds.maxY - bounds.minY;
             const rulerOffset = 20 / viewport.zoom; // Distance from element
             const fontSize = 12 / viewport.zoom;
 
@@ -584,38 +586,38 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
                 <g>
                   {/* Ruler line */}
                   <line
-                    x1={adjustedBounds.minX}
-                    y1={adjustedBounds.maxY + rulerOffset}
-                    x2={adjustedBounds.maxX}
-                    y2={adjustedBounds.maxY + rulerOffset}
+                    x1={bounds.minX}
+                    y1={bounds.maxY + rulerOffset}
+                    x2={bounds.maxX}
+                    y2={bounds.maxY + rulerOffset}
                     stroke="#666"
                     strokeWidth={1 / viewport.zoom}
                     pointerEvents="none"
                   />
                   {/* Left tick */}
                   <line
-                    x1={adjustedBounds.minX}
-                    y1={adjustedBounds.maxY + rulerOffset - 3 / viewport.zoom}
-                    x2={adjustedBounds.minX}
-                    y2={adjustedBounds.maxY + rulerOffset + 3 / viewport.zoom}
+                    x1={bounds.minX}
+                    y1={bounds.maxY + rulerOffset - 3 / viewport.zoom}
+                    x2={bounds.minX}
+                    y2={bounds.maxY + rulerOffset + 3 / viewport.zoom}
                     stroke="#666"
                     strokeWidth={1 / viewport.zoom}
                     pointerEvents="none"
                   />
                   {/* Right tick */}
                   <line
-                    x1={adjustedBounds.maxX}
-                    y1={adjustedBounds.maxY + rulerOffset - 3 / viewport.zoom}
-                    x2={adjustedBounds.maxX}
-                    y2={adjustedBounds.maxY + rulerOffset + 3 / viewport.zoom}
+                    x1={bounds.maxX}
+                    y1={bounds.maxY + rulerOffset - 3 / viewport.zoom}
+                    x2={bounds.maxX}
+                    y2={bounds.maxY + rulerOffset + 3 / viewport.zoom}
                     stroke="#666"
                     strokeWidth={1 / viewport.zoom}
                     pointerEvents="none"
                   />
                   {/* Width text */}
                   <text
-                    x={adjustedBounds.minX + width / 2}
-                    y={adjustedBounds.maxY + rulerOffset + 12 / viewport.zoom}
+                    x={bounds.minX + width / 2}
+                    y={bounds.maxY + rulerOffset + 12 / viewport.zoom}
                     textAnchor="middle"
                     fontSize={fontSize}
                     fill="#666"
@@ -630,43 +632,43 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
                 <g>
                   {/* Ruler line */}
                   <line
-                    x1={adjustedBounds.maxX + rulerOffset}
-                    y1={adjustedBounds.minY}
-                    x2={adjustedBounds.maxX + rulerOffset}
-                    y2={adjustedBounds.maxY}
+                    x1={bounds.maxX + rulerOffset}
+                    y1={bounds.minY}
+                    x2={bounds.maxX + rulerOffset}
+                    y2={bounds.maxY}
                     stroke="#666"
                     strokeWidth={1 / viewport.zoom}
                     pointerEvents="none"
                   />
                   {/* Top tick */}
                   <line
-                    x1={adjustedBounds.maxX + rulerOffset - 3 / viewport.zoom}
-                    y1={adjustedBounds.minY}
-                    x2={adjustedBounds.maxX + rulerOffset + 3 / viewport.zoom}
-                    y2={adjustedBounds.minY}
+                    x1={bounds.maxX + rulerOffset - 3 / viewport.zoom}
+                    y1={bounds.minY}
+                    x2={bounds.maxX + rulerOffset + 3 / viewport.zoom}
+                    y2={bounds.minY}
                     stroke="#666"
                     strokeWidth={1 / viewport.zoom}
                     pointerEvents="none"
                   />
                   {/* Bottom tick */}
                   <line
-                    x1={adjustedBounds.maxX + rulerOffset - 3 / viewport.zoom}
-                    y1={adjustedBounds.maxY}
-                    x2={adjustedBounds.maxX + rulerOffset + 3 / viewport.zoom}
-                    y2={adjustedBounds.maxY}
+                    x1={bounds.maxX + rulerOffset - 3 / viewport.zoom}
+                    y1={bounds.maxY}
+                    x2={bounds.maxX + rulerOffset + 3 / viewport.zoom}
+                    y2={bounds.maxY}
                     stroke="#666"
                     strokeWidth={1 / viewport.zoom}
                     pointerEvents="none"
                   />
                   {/* Height text */}
                   <text
-                    x={adjustedBounds.maxX + rulerOffset + 12 / viewport.zoom}
-                    y={adjustedBounds.minY + height / 2}
+                    x={bounds.maxX + rulerOffset + 12 / viewport.zoom}
+                    y={bounds.minY + height / 2}
                     textAnchor="middle"
                     fontSize={fontSize}
                     fill="#666"
                     pointerEvents="none"
-                    transform={`rotate(90 ${adjustedBounds.maxX + rulerOffset + 12 / viewport.zoom} ${adjustedBounds.minY + height / 2})`}
+                    transform={`rotate(90 ${bounds.maxX + rulerOffset + 12 / viewport.zoom} ${bounds.minY + height / 2})`}
                     style={{ userSelect: 'none' }}
                   >
                     {Math.round(height)}px

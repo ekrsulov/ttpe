@@ -168,7 +168,7 @@ export interface SubpathPluginSlice {
   distributeVerticallySubpaths: () => void;
 }
 
-export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], SubpathPluginSlice> = (set, get) => ({
+export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], SubpathPluginSlice> = (set, get) => ({
   // Initial state
   selectedSubpaths: [],
   draggingSubpaths: null,
@@ -176,7 +176,7 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
   // Actions
   selectSubpath: (elementId, subpathIndex, multiSelect = false) => {
     set((state) => {
-      const fullState = state as any; // Cast to access cross-slice properties
+      const fullState = state as CanvasStore; // Cast to access cross-slice properties
       // In subpath mode, only allow selection of subpaths that belong to selected paths
       if (!fullState.selectedIds.includes(elementId)) {
         return state;
@@ -198,14 +198,24 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
         };
       }
     });
+    
+    // Auto-reset optical alignment on subpath selection change
+    const currentState = get() as CanvasStore;
+    currentState.autoResetOnSelectionChange();
   },
 
   selectSubpaths: (subpaths) => {
     set({ selectedSubpaths: subpaths });
+    // Auto-reset optical alignment on subpath selection change
+    const currentState = get() as CanvasStore;
+    currentState.autoResetOnSelectionChange();
   },
 
   clearSubpathSelection: () => {
     set({ selectedSubpaths: [] });
+    // Auto-reset optical alignment on subpath selection change
+    const currentState = get() as CanvasStore;
+    currentState.autoResetOnSelectionChange();
   },
 
   getSelectedSubpathsCount: () => {
@@ -830,5 +840,8 @@ export const createSubpathPluginSlice: StateCreator<SubpathPluginSlice, [], [], 
 
   stopDraggingSubpaths: () => {
     set({ draggingSubpaths: null });
+    // Auto-reset optical alignment on subpath movement completion
+    const currentState = get() as CanvasStore;
+    currentState.autoResetOnSelectionChange();
   },
 });

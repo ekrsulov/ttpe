@@ -10,6 +10,7 @@ import { SelectPanel } from './plugins/SelectPanel';
 import { ShapePanel } from './plugins/ShapePanel';
 import { PencilPanel } from './plugins/PencilPanel';
 import { ControlPointAlignmentPanel } from './plugins/ControlPointAlignmentPanel';
+import { OpticalAlignmentPanel } from './plugins/OpticalAlignmentPanel';
 import { IconButton } from './ui/IconButton';
 import {
   Hand,
@@ -134,6 +135,7 @@ export const Sidebar: React.FC = () => {
           />
         )}
         {activePlugin === 'edit' && <ControlPointAlignmentPanel />}
+        {activePlugin === 'select' && <OpticalAlignmentPanel />}
         {activePlugin === 'pan' && <PanPanel />}
         {activePlugin === 'pencil' && <PencilPanel />}
         {activePlugin === 'transformation' && <TransformationPanel />}

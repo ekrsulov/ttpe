@@ -19,6 +19,7 @@ import { createShapePluginSlice, type ShapePluginSlice } from './slices/plugins/
 import { createTransformationPluginSlice, type TransformationPluginSlice } from './slices/plugins/transformationPluginSlice';
 import { createEditPluginSlice, type EditPluginSlice } from './slices/plugins/editPluginSlice';
 import { createSubpathPluginSlice, type SubpathPluginSlice } from './slices/plugins/subpathPluginSlice';
+import { createOpticalAlignmentSlice, type OpticalAlignmentSlice } from './slices/plugins/opticalAlignmentSlice';
 
 // Debounce function to implement cool-off period
 function debounce<T extends (...args: never[]) => void>(
@@ -49,7 +50,8 @@ export type CanvasStore = BaseSlice &
   ShapePluginSlice &
   TransformationPluginSlice &
   EditPluginSlice &
-  SubpathPluginSlice & {
+  SubpathPluginSlice &
+  OpticalAlignmentSlice & {
     // Additional actions that need cross-slice functionality
     startPath: (point: Point) => void;
     addPointToPath: (point: Point) => void;
@@ -97,6 +99,9 @@ export const useCanvasStore = create<CanvasStore>()(
 
         // Subpath plugin slice
         ...createSubpathPluginSlice(set, get, api),
+
+        // Optical alignment slice
+        ...createOpticalAlignmentSlice(set, get, api),
 
         // Cross-slice actions
         startPath: (point) => {

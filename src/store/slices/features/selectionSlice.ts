@@ -17,23 +17,23 @@ export interface SelectionSlice {
   updateSelectedPaths: (properties: Partial<import('../../../types').PathData>) => void;
 }
 
-export const createSelectionSlice: StateCreator<SelectionSlice> = (set, get, _api) => ({
+export const createSelectionSlice: StateCreator<CanvasStore, [], [], SelectionSlice> = (set, get, _api) => ({
   // Initial state
   selectedIds: [],
 
   // Actions
   selectElement: (id, multiSelect = false) => {
     set((state) => {
-      const fullState = state as any; // Cast to access cross-slice properties
+      const fullState = state as CanvasStore; // Cast to access cross-slice properties
       
       // In select mode, when selecting a different path, clear subpath selection
       if (fullState.activePlugin === 'select' && !multiSelect) {
         const currentlySelectedPaths = fullState.selectedIds.filter((selId: string) => {
-          const element = fullState.elements.find((el: any) => el.id === selId);
+          const element = fullState.elements.find((el: CanvasElement) => el.id === selId);
           return element && element.type === 'path';
         });
         
-        const newElement = fullState.elements.find((el: any) => el.id === id);
+        const newElement = fullState.elements.find((el: CanvasElement) => el.id === id);
         const isSelectingDifferentPath = newElement && newElement.type === 'path' && 
           currentlySelectedPaths.length > 0 && !currentlySelectedPaths.includes(id);
         
@@ -50,14 +50,24 @@ export const createSelectionSlice: StateCreator<SelectionSlice> = (set, get, _ap
           : [id],
       };
     });
+    
+    // Auto-reset optical alignment on selection change
+    const currentState = get() as CanvasStore;
+    currentState.autoResetOnSelectionChange();
   },
 
   selectElements: (ids) => {
     set({ selectedIds: ids });
+    // Auto-reset optical alignment on selection change
+    const currentState = get() as CanvasStore;
+    currentState.autoResetOnSelectionChange();
   },
 
   clearSelection: () => {
     set({ selectedIds: [] });
+    // Auto-reset optical alignment on selection change
+    const currentState = get() as CanvasStore;
+    currentState.autoResetOnSelectionChange();
   },
 
   getSelectedElements: () => {
@@ -87,6 +97,10 @@ export const createSelectionSlice: StateCreator<SelectionSlice> = (set, get, _ap
         return el;
       }),
     }));
+    
+    // Auto-reset optical alignment on element movement
+    const currentState = get() as CanvasStore;
+    currentState.autoResetOnSelectionChange();
   },
 
   updateSelectedPaths: (properties) => {
