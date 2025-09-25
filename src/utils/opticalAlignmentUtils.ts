@@ -15,6 +15,18 @@ export interface PathGeometry {
   quadrantWeights: QuadrantWeights;
   directionalBias: DirectionalBias;
   shapeClassification: ShapeType;
+  visualProperties: VisualProperties;
+}
+
+export interface VisualProperties {
+  strokeWidth: number;
+  strokeColor: string;
+  strokeOpacity: number;
+  fillColor: string;
+  fillOpacity: number;
+  overallOpacity: number;
+  visualIntensity: number; // Calculated from colors and opacities
+  contrastWeight: number; // How much the element stands out
 }
 
 export interface QuadrantWeights {
@@ -260,10 +272,108 @@ function calculateWeightVariance(weights: QuadrantWeights): number {
 }
 
 /**
+ * Converts a hex color to HSL for better visual weight calculation
+ */
+function hexToHsl(hex: string): { h: number; s: number; l: number } {
+  // Remove # if present
+  hex = hex.replace('#', '');
+  
+  // Convert to RGB
+  const r = parseInt(hex.substr(0, 2), 16) / 255;
+  const g = parseInt(hex.substr(2, 2), 16) / 255;
+  const b = parseInt(hex.substr(4, 2), 16) / 255;
+  
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  let h = 0, s = 0, l = (max + min) / 2;
+  
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    
+    switch (max) {
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+    }
+    h /= 6;
+  }
+  
+  return { h: h * 360, s: s * 100, l: l * 100 };
+}
+
+/**
+ * Calculates visual intensity based on color properties
+ */
+function calculateColorIntensity(color: string, opacity: number): number {
+  if (!color || color === 'none' || color === 'transparent') {
+    return 0;
+  }
+  
+  try {
+    const hsl = hexToHsl(color);
+    
+    // Calculate intensity based on lightness and saturation
+    // Darker colors and more saturated colors have higher visual weight
+    const lightnessWeight = 1 - (hsl.l / 100); // Inverted: darker = higher weight
+    const saturationWeight = hsl.s / 100; // More saturated = higher weight
+    
+    // Combine factors
+    const colorIntensity = (lightnessWeight * 0.7) + (saturationWeight * 0.3);
+    
+    // Apply opacity
+    return colorIntensity * opacity;
+  } catch {
+    // Fallback for invalid colors
+    return 0.5 * opacity;
+  }
+}
+
+/**
+ * Analyzes visual properties of a path element
+ */
+function analyzeVisualProperties(pathData: PathData, overallOpacity: number = 1): VisualProperties {
+  const {
+    strokeWidth,
+    strokeColor,
+    strokeOpacity,
+    fillColor,
+    fillOpacity
+  } = pathData;
+  
+  // Calculate individual intensities
+  const fillIntensity = calculateColorIntensity(fillColor, fillOpacity * overallOpacity);
+  const strokeIntensity = calculateColorIntensity(strokeColor, strokeOpacity * overallOpacity);
+  
+  // Stroke width affects visual weight - thicker strokes are more prominent
+  const strokeWeightFactor = Math.min(strokeWidth / 3, 2); // Cap at 2x for very thick strokes
+  const adjustedStrokeIntensity = strokeIntensity * strokeWeightFactor;
+  
+  // Calculate overall visual intensity
+  // Fill generally has more visual impact than stroke
+  const visualIntensity = (fillIntensity * 0.7) + (adjustedStrokeIntensity * 0.3);
+  
+  // Calculate contrast weight (how much the element stands out)
+  // Higher contrast elements should have more optical weight
+  const contrastWeight = Math.max(fillIntensity, adjustedStrokeIntensity);
+  
+  return {
+    strokeWidth,
+    strokeColor,
+    strokeOpacity: strokeOpacity * overallOpacity,
+    fillColor,
+    fillOpacity: fillOpacity * overallOpacity,
+    overallOpacity,
+    visualIntensity: formatToPrecision(visualIntensity, PATH_DECIMAL_PRECISION),
+    contrastWeight: formatToPrecision(contrastWeight, PATH_DECIMAL_PRECISION)
+  };
+}
+
+/**
  * Analyzes a path and extracts geometric properties
  */
-export function analyzePathGeometry(commands: Command[], strokeWidth: number = 1): PathGeometry {
-  const bounds = measurePath([commands], strokeWidth, 1); // Use zoom = 1 for true coordinates
+export function analyzePathGeometry(commands: Command[], pathData: PathData, overallOpacity: number = 1): PathGeometry {
+  const bounds = measurePath([commands], pathData.strokeWidth, 1); // Use zoom = 1 for true coordinates
   const points = commandsToPoints(commands);
   
   const area = calculateArea(points);
@@ -277,6 +387,7 @@ export function analyzePathGeometry(commands: Command[], strokeWidth: number = 1
   const vertexCount = points.length;
   const quadrantWeights = calculateQuadrantWeights(points, centroid);
   const directionalBias = calculateDirectionalBias(quadrantWeights);
+  const visualProperties = analyzeVisualProperties(pathData, overallOpacity);
   
   const geometry: PathGeometry = {
     commands,
@@ -289,7 +400,8 @@ export function analyzePathGeometry(commands: Command[], strokeWidth: number = 1
     vertexCount,
     quadrantWeights,
     directionalBias,
-    shapeClassification: 'irregular' // Will be set below
+    shapeClassification: 'irregular', // Will be set below
+    visualProperties
   };
   
   geometry.shapeClassification = classifyShape(geometry);
@@ -320,7 +432,7 @@ export function detectContainer(
       const pathData = element.data as PathData;
       const allCommands = pathData.subPaths.flat();
       const bounds = measurePath(pathData.subPaths, pathData.strokeWidth, 1);
-      const geometry = analyzePathGeometry(allCommands, pathData.strokeWidth);
+      const geometry = analyzePathGeometry(allCommands, pathData);
       
       candidates.push({
         elementId: id,
@@ -340,7 +452,7 @@ export function detectContainer(
       if (subpathIndex < pathData.subPaths.length) {
         const subpathCommands = pathData.subPaths[subpathIndex];
         const bounds = measurePath([subpathCommands], pathData.strokeWidth, 1);
-        const geometry = analyzePathGeometry(subpathCommands, pathData.strokeWidth);
+        const geometry = analyzePathGeometry(subpathCommands, pathData);
         
         candidates.push({
           elementId,
@@ -489,7 +601,7 @@ function calculateAsymmetryIndex(content: ContentInfo[]): number {
 }
 
 /**
- * Prepares content info from elements and subpaths
+ * Prepares content info from elements and subpaths with visual property analysis
  */
 export function prepareContentInfo(
   elements: CanvasElement[],
@@ -501,15 +613,16 @@ export function prepareContentInfo(
 
   // Process selected elements (excluding container)
   selectedIds.forEach(id => {
-    if (id === containerInfo.elementId && containerInfo.subpathIndex === undefined) {
-      return; // Skip container element
-    }
+    if (id === containerInfo.elementId) return; // Skip container
 
     const element = elements.find(el => el.id === id);
     if (element && element.type === 'path') {
       const pathData = element.data as PathData;
       const allCommands = pathData.subPaths.flat();
-      const geometry = analyzePathGeometry(allCommands, pathData.strokeWidth);
+      
+      // Use element's overall opacity if available, otherwise default to 1
+      const overallOpacity = 1; // TODO: Add element-level opacity if implemented
+      const geometry = analyzePathGeometry(allCommands, pathData, overallOpacity);
       
       content.push({
         elementId: id,
@@ -532,7 +645,8 @@ export function prepareContentInfo(
       
       if (subpathIndex < pathData.subPaths.length) {
         const subpathCommands = pathData.subPaths[subpathIndex];
-        const geometry = analyzePathGeometry(subpathCommands, pathData.strokeWidth);
+        const overallOpacity = 1; // TODO: Add element-level opacity if implemented
+        const geometry = analyzePathGeometry(subpathCommands, pathData, overallOpacity);
         
         content.push({
           elementId,
@@ -549,10 +663,10 @@ export function prepareContentInfo(
 }
 
 /**
- * Calculates optical center based on geometric properties
+ * Calculates optical center based on geometric properties and visual characteristics
  */
 function calculateOpticalCenter(geometry: PathGeometry): Point {
-  const { centroid, directionalBias, shapeClassification, bounds } = geometry;
+  const { centroid, directionalBias, shapeClassification, bounds, visualProperties } = geometry;
 
   // Apply shape-specific adjustments to centroid
   let adjustmentX = 0;
@@ -561,29 +675,42 @@ function calculateOpticalCenter(geometry: PathGeometry): Point {
   // Calculate the magnitude of vertical bias to determine if correction is needed
   const verticalBiasMagnitude = Math.abs(directionalBias.vertical);
 
+  // Visual intensity affects how much adjustment we apply
+  // Higher visual intensity elements need more precise centering
+  const visualIntensityMultiplier = 0.5 + (visualProperties.visualIntensity * 0.5); // Range: 0.5 to 1.0
+
   switch (shapeClassification) {
     case 'triangular':
       // Triangular shapes often need adjustment based on direction
-      // If directionalBias.horizontal is negative (more mass on left), move optical center right
-      adjustmentX = -directionalBias.horizontal * 0.2;
-      // Only apply vertical adjustment for significant bias (> 0.3) to avoid over-correction
-      adjustmentY = verticalBiasMagnitude > 0.3 ? -directionalBias.vertical * 0.02 : 0;
+      adjustmentX = -directionalBias.horizontal * 0.2 * visualIntensityMultiplier;
+      // Only apply vertical adjustment for significant bias
+      adjustmentY = verticalBiasMagnitude > 0.3 ? -directionalBias.vertical * 0.02 * visualIntensityMultiplier : 0;
       break;
     case 'circular':
-      // Circular shapes are typically well-centered - no adjustments
+      // Circular shapes are typically well-centered, but high contrast ones might need slight adjustment
+      if (visualProperties.contrastWeight > 0.8) {
+        adjustmentX = -directionalBias.horizontal * 0.02;
+        adjustmentY = verticalBiasMagnitude > 0.5 ? -directionalBias.vertical * 0.01 : 0;
+      }
       break;
     case 'rectangular':
-      // Rectangular shapes might need slight horizontal adjustments only
-      adjustmentX = -directionalBias.horizontal * 0.05;
-      // Vertical adjustment only for very significant bias
-      adjustmentY = verticalBiasMagnitude > 0.4 ? -directionalBias.vertical * 0.01 : 0;
+      // Rectangular shapes with high visual intensity need more careful positioning
+      adjustmentX = -directionalBias.horizontal * 0.05 * visualIntensityMultiplier;
+      adjustmentY = verticalBiasMagnitude > 0.4 ? -directionalBias.vertical * 0.01 * visualIntensityMultiplier : 0;
       break;
     case 'irregular':
-      // Irregular shapes get more significant horizontal adjustments
-      adjustmentX = -directionalBias.horizontal * 0.25;
-      // Conservative vertical adjustment only for very significant bias
-      adjustmentY = verticalBiasMagnitude > 0.5 ? -directionalBias.vertical * 0.02 : 0;
+      // Irregular shapes get more significant adjustments, especially if visually prominent
+      adjustmentX = -directionalBias.horizontal * 0.25 * visualIntensityMultiplier;
+      adjustmentY = verticalBiasMagnitude > 0.5 ? -directionalBias.vertical * 0.02 * visualIntensityMultiplier : 0;
       break;
+  }
+
+  // Additional adjustment for stroke-heavy elements
+  // Thick strokes can shift the visual center outward
+  if (visualProperties.strokeWidth > 2) {
+    const strokeAdjustment = Math.min(visualProperties.strokeWidth / 20, 0.1); // Cap the effect
+    adjustmentX *= (1 + strokeAdjustment);
+    adjustmentY *= (1 + strokeAdjustment);
   }
 
   const adjustmentRangeX = (bounds.maxX - bounds.minX) * adjustmentX;
@@ -598,10 +725,10 @@ function calculateOpticalCenter(geometry: PathGeometry): Point {
 }
 
 /**
- * Calculates visual weight based on area and shape complexity
+ * Calculates visual weight based on area, shape complexity, and visual properties
  */
 function calculateVisualWeight(geometry: PathGeometry): number {
-  const { area, compactness, vertexCount } = geometry;
+  const { area, compactness, vertexCount, visualProperties } = geometry;
 
   // Base weight from area
   let weight = area;
@@ -612,6 +739,19 @@ function calculateVisualWeight(geometry: PathGeometry): number {
   // Adjust for complexity (more vertices can appear lighter due to visual fragmentation)
   const complexityFactor = Math.max(0.5, 1 - (vertexCount - 3) * 0.05);
   weight *= complexityFactor;
+
+  // Apply visual properties - this is the key enhancement
+  // Visual intensity affects how much the shape draws attention
+  const visualIntensityFactor = 0.5 + (visualProperties.visualIntensity * 1.5); // Range: 0.5 to 2.0
+  weight *= visualIntensityFactor;
+
+  // Contrast weight makes elements with high contrast (dark/bright colors) more prominent
+  const contrastFactor = 0.8 + (visualProperties.contrastWeight * 0.4); // Range: 0.8 to 1.2
+  weight *= contrastFactor;
+
+  // Stroke width affects visual weight - thicker strokes add visual mass
+  const strokeFactor = 1 + (visualProperties.strokeWidth / 10); // Small but noticeable effect
+  weight *= strokeFactor;
 
   return formatToPrecision(Math.max(0.1, weight), PATH_DECIMAL_PRECISION);
 }

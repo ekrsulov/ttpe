@@ -255,8 +255,15 @@ export const OpticalAlignmentPanel: React.FC = () => {
                 <div style={{ marginTop: '4px', paddingTop: '4px', borderTop: '1px solid #e9ecef' }}>
                   <div style={{ color: '#666', marginBottom: '2px' }}>Content Items:</div>
                   {currentAlignment.content.map((item, index) => (
-                    <div key={index} style={{ fontSize: '9px', fontFamily: 'monospace', marginBottom: '1px' }}>
-                      #{index + 1}: Weight {item.visualWeight.toFixed(2)} → ({item.opticalCenter.x.toFixed(1)}, {item.opticalCenter.y.toFixed(1)})
+                    <div key={index} style={{ fontSize: '9px', marginBottom: '2px' }}>
+                      <div style={{ fontFamily: 'monospace' }}>
+                        #{index + 1}: Weight {item.visualWeight.toFixed(2)} → ({item.opticalCenter.x.toFixed(1)}, {item.opticalCenter.y.toFixed(1)})
+                      </div>
+                      <div style={{ fontSize: '8px', color: '#888', paddingLeft: '8px' }}>
+                        Visual: {item.geometry.visualProperties.visualIntensity.toFixed(2)}, 
+                        Contrast: {item.geometry.visualProperties.contrastWeight.toFixed(2)}, 
+                        Stroke: {item.geometry.visualProperties.strokeWidth}px
+                      </div>
                     </div>
                   ))}
                 </div>
