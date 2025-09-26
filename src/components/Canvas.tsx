@@ -5,7 +5,7 @@ import { transformPathData, transformSubpathsData, transformSingleSubpath } from
 import { extractEditablePoints } from '../utils/pathParserUtils';
 import { mapPointerToCanvas } from '../utils/coordinateUtils';
 import { CanvasRenderer } from './CanvasRenderer';
-import { OpticalAlignmentOverlay } from './overlays';
+import { OpticalAlignmentOverlay, FeedbackOverlay } from './overlays';
 import { transformManager, type TransformBounds } from '../utils/transformManager';
 import type { Point, PathData, CanvasElement } from '../types';
 
@@ -73,6 +73,10 @@ export const Canvas: React.FC = () => {
   const [transformedBounds, setTransformedBounds] = useState<{ minX: number; minY: number; maxX: number; maxY: number } | null>(null);
   const [initialTransform, setInitialTransform] = useState<{ scaleX: number; scaleY: number; rotation: number; translateX: number; translateY: number } | null>(null);
   const [originalElementData, setOriginalElementData] = useState<PathData | null>(null);
+  const [rotationFeedback, setRotationFeedback] = useState<{ degrees: number; visible: boolean; isShiftPressed: boolean; isMultipleOf15: boolean }>({ degrees: 0, visible: false, isShiftPressed: false, isMultipleOf15: false });
+  const [resizeFeedback, setResizeFeedback] = useState<{ deltaX: number; deltaY: number; visible: boolean; isShiftPressed: boolean; isMultipleOf10: boolean }>({ deltaX: 0, deltaY: 0, visible: false, isShiftPressed: false, isMultipleOf10: false });
+  const [shapeFeedback, setShapeFeedback] = useState<{ width: number; height: number; visible: boolean; isShiftPressed: boolean; isMultipleOf10: boolean }>({ width: 0, height: 0, visible: false, isShiftPressed: false, isMultipleOf10: false });
+  const [pointPositionFeedback, setPointPositionFeedback] = useState<{ x: number; y: number; visible: boolean }>({ x: 0, y: 0, visible: false });
 
   // Handle window resize
   useEffect(() => {
@@ -83,6 +87,38 @@ export const Canvas: React.FC = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Update point position feedback when selection changes
+  useEffect(() => {
+    if (activePlugin === 'edit' && selectedCommands.length === 1) {
+      const selectedCommand = selectedCommands[0];
+      const element = elements.find(el => el.id === selectedCommand.elementId);
+      
+      if (element && element.type === 'path') {
+        const pathData = element.data as PathData;
+        const commands = pathData.subPaths.flat();
+        const points = extractEditablePoints(commands);
+        
+        // Find the specific point
+        const point = points.find(p => 
+          p.commandIndex === selectedCommand.commandIndex && 
+          p.pointIndex === selectedCommand.pointIndex
+        );
+        
+        if (point) {
+          setPointPositionFeedback({
+            x: Math.round(point.x),
+            y: Math.round(point.y),
+            visible: true
+          });
+          return;
+        }
+      }
+    }
+    
+    // Hide feedback if conditions not met
+    setPointPositionFeedback({ x: 0, y: 0, visible: false });
+  }, [activePlugin, selectedCommands, elements]);
 
   // Handle keyboard events
   /* eslint-disable react-hooks/exhaustive-deps */
@@ -272,6 +308,12 @@ export const Canvas: React.FC = () => {
   /* eslint-disable react-hooks/exhaustive-deps */
   const handleTransformationHandlerPointerDown = useCallback((e: React.PointerEvent, elementId: string, handler: string) => {
     e.stopPropagation();
+    
+    // Capture the pointer to ensure we receive pointerup events even if the pointer moves outside the handler
+    if (e.currentTarget && 'setPointerCapture' in e.currentTarget) {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    }
+    
     const point = screenToCanvas(e.clientX, e.clientY);
 
     // Check if we're working with individual subpaths
@@ -332,6 +374,15 @@ export const Canvas: React.FC = () => {
 
   const handleTransformationHandlerPointerUp = useCallback((e: React.PointerEvent) => {
     e.stopPropagation();
+    
+    // Release pointer capture if it was set
+    if (e.currentTarget && 'releasePointerCapture' in e.currentTarget) {
+      try {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      } catch (_error) {
+        // Ignore errors if pointer capture was not set or already released
+      }
+    }
 
     // Reset all transformation state
     setIsTransforming(false);
@@ -342,6 +393,10 @@ export const Canvas: React.FC = () => {
     setTransformedBounds(null);
     setInitialTransform(null);
     setOriginalElementData(null);
+    setRotationFeedback({ degrees: 0, visible: false, isShiftPressed: false, isMultipleOf15: false });
+    setResizeFeedback({ deltaX: 0, deltaY: 0, visible: false, isShiftPressed: false, isMultipleOf10: false });
+    setShapeFeedback({ width: 0, height: 0, visible: false, isShiftPressed: false, isMultipleOf10: false });
+    setPointPositionFeedback({ x: 0, y: 0, visible: false });
   }, []);
 
   // Handle pointer events
@@ -499,10 +554,42 @@ export const Canvas: React.FC = () => {
           bounds
         );
 
-        newScaleX = scaleResult.scaleX;
-        newScaleY = scaleResult.scaleY;
+        // Calculate original scales from transform manager
+        let finalScaleX = scaleResult.scaleX;
+        let finalScaleY = scaleResult.scaleY;
         transformOriginX = scaleResult.originX;
         transformOriginY = scaleResult.originY;
+
+        // Update resize feedback - show relative change from start
+        const newWidth = Math.round(bounds.width * finalScaleX);
+        const newHeight = Math.round(bounds.height * finalScaleY);
+        const originalWidth = Math.round(bounds.width * initialTransform.scaleX);
+        const originalHeight = Math.round(bounds.height * initialTransform.scaleY);
+        let deltaX = newWidth - originalWidth;
+        let deltaY = newHeight - originalHeight;
+        
+        // Apply sticky resize (10-pixel increments) when Shift is pressed
+        const isShiftPressed = e.shiftKey;
+        let adjustedDeltaX = deltaX;
+        let adjustedDeltaY = deltaY;
+        if (isShiftPressed) {
+          // Round to nearest 10-pixel increment
+          adjustedDeltaX = Math.round(deltaX / 10) * 10;
+          adjustedDeltaY = Math.round(deltaY / 10) * 10;
+          
+          // Recalculate scales based on adjusted deltas
+          finalScaleX = initialTransform.scaleX * (originalWidth + adjustedDeltaX) / originalWidth;
+          finalScaleY = initialTransform.scaleY * (originalHeight + adjustedDeltaY) / originalHeight;
+        }
+        
+        // Check if adjusted deltas are multiples of 10
+        const isMultipleOf10 = (Math.abs(adjustedDeltaX) % 10 === 0) && (Math.abs(adjustedDeltaY) % 10 === 0);
+        
+        // Apply the final scales
+        newScaleX = finalScaleX;
+        newScaleY = finalScaleY;
+        
+        setResizeFeedback({ deltaX: adjustedDeltaX, deltaY: adjustedDeltaY, visible: true, isShiftPressed, isMultipleOf10 });
 
       } else if (transformHandler.startsWith('rotate-')) {
         // Calculate rotation using the transform manager
@@ -512,13 +599,32 @@ export const Canvas: React.FC = () => {
           bounds
         );
 
-        newRotation = initialTransform.rotation + rotationResult.angle;
+        let calculatedRotation = initialTransform.rotation + rotationResult.angle;
+
+        // Apply sticky rotation (15-degree increments) when Shift is pressed
+        const isShiftPressed = e.shiftKey;
+        if (isShiftPressed) {
+          // Round to nearest 15-degree increment
+          calculatedRotation = Math.round(calculatedRotation / 15) * 15;
+        }
+
+        newRotation = calculatedRotation;
         transformOriginX = rotationResult.centerX;
         transformOriginY = rotationResult.centerY;
 
         // Keep rotation within reasonable bounds (-180 to 180)
         while (newRotation > 180) newRotation -= 360;
         while (newRotation < -180) newRotation += 360;
+
+        // Update rotation feedback - show total rotation in 0-360 range
+        const normalizedDegrees = newRotation < 0 ? newRotation + 360 : newRotation;
+        const isMultipleOf15 = Math.round(normalizedDegrees) % 15 === 0;
+        setRotationFeedback({ 
+          degrees: Math.round(normalizedDegrees), 
+          visible: true, 
+          isShiftPressed,
+          isMultipleOf15 
+        });
       }
 
       // Apply transformation directly to element data instead of using SVG transforms
@@ -610,7 +716,64 @@ export const Canvas: React.FC = () => {
     }
 
     if (isCreatingShape && shapeStart) {
-      setShapeEnd(point);
+      let endPoint = point;
+      
+      // Calculate current dimensions
+      const currentWidth = Math.abs(point.x - shapeStart.x);
+      const currentHeight = Math.abs(point.y - shapeStart.y);
+      
+      // Get selected shape type
+      const selectedShape = useCanvasStore.getState().shape.selectedShape;
+      
+      // Apply sticky shape creation (10-pixel increments) when Shift is pressed
+      const isShiftPressed = e.shiftKey;
+      let adjustedWidth = currentWidth;
+      let adjustedHeight = currentHeight;
+      
+      if (isShiftPressed) {
+        // Round to nearest 10-pixel increment
+        adjustedWidth = Math.round(currentWidth / 10) * 10;
+        adjustedHeight = Math.round(currentHeight / 10) * 10;
+        
+        // Calculate new end point based on adjusted dimensions
+        // Maintain the direction from start to current point
+        const dirX = point.x >= shapeStart.x ? 1 : -1;
+        const dirY = point.y >= shapeStart.y ? 1 : -1;
+        
+        endPoint = {
+          x: shapeStart.x + dirX * adjustedWidth,
+          y: shapeStart.y + dirY * adjustedHeight
+        };
+      }
+      
+      // Check if adjusted dimensions are multiples of 10
+      const isMultipleOf10 = (Math.abs(adjustedWidth) % 10 === 0) && (Math.abs(adjustedHeight) % 10 === 0);
+      
+      // Calculate real dimensions based on shape type
+      let realWidth = adjustedWidth;
+      let realHeight = adjustedHeight;
+      
+      if (selectedShape === 'square') {
+        // Square always has equal sides
+        const sideLength = Math.min(adjustedWidth, adjustedHeight);
+        realWidth = sideLength;
+        realHeight = sideLength;
+      } else if (selectedShape === 'circle') {
+        // Circle always has equal width and height (diameter)
+        const diameter = Math.min(adjustedWidth, adjustedHeight);
+        realWidth = diameter;
+        realHeight = diameter;
+      }
+      // For rectangle, realWidth and realHeight are already correct
+      
+      setShapeEnd(endPoint);
+      setShapeFeedback({ 
+        width: Math.round(realWidth), 
+        height: Math.round(realHeight), 
+        visible: true, 
+        isShiftPressed, 
+        isMultipleOf10 
+      });
     }
   }, [activePlugin, screenToCanvas, isSpacePressed, isSelecting, selectionStart, viewport.zoom, isDragging, dragStart, isCreatingShape, shapeStart, isTransforming, transformStart, transformElementId, transformHandler, originalBounds, initialTransform, originalElementData, useCanvasStore.getState().transformation, getElementBounds, getSubpathBounds, smoothBrush.isActive, applySmoothBrush, updateSmoothBrushCursor]);
   /* eslint-enable react-hooks/exhaustive-deps */
@@ -636,6 +799,10 @@ export const Canvas: React.FC = () => {
       setTransformedBounds(null); // Reset transformed bounds as well
       setInitialTransform(null);
       setOriginalElementData(null);
+      setRotationFeedback({ degrees: 0, visible: false, isShiftPressed: false, isMultipleOf15: false });
+      setResizeFeedback({ deltaX: 0, deltaY: 0, visible: false, isShiftPressed: false, isMultipleOf10: false });
+      setShapeFeedback({ width: 0, height: 0, visible: false, isShiftPressed: false, isMultipleOf10: false });
+      setPointPositionFeedback({ x: 0, y: 0, visible: false });
       return;
     }
 
@@ -652,6 +819,7 @@ export const Canvas: React.FC = () => {
       setIsCreatingShape(false);
       setShapeStart(null);
       setShapeEnd(null);
+      setShapeFeedback({ width: 0, height: 0, visible: false, isShiftPressed: false, isMultipleOf10: false });
       return;
     }
 
@@ -880,6 +1048,15 @@ export const Canvas: React.FC = () => {
           viewport={viewport}
         />
       )}
+
+      <FeedbackOverlay
+        viewport={viewport}
+        canvasSize={canvasSize}
+        rotationFeedback={rotationFeedback}
+        resizeFeedback={resizeFeedback}
+        shapeFeedback={shapeFeedback}
+        pointPositionFeedback={pointPositionFeedback}
+      />
     </svg>
   );
 };
