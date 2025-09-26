@@ -45,7 +45,6 @@ export type ShapeType = 'triangular' | 'circular' | 'rectangular' | 'irregular';
 
 export interface ContainerInfo {
   elementId: string;
-  subpathIndex?: number;
   bounds: { minX: number; minY: number; maxX: number; maxY: number };
   geometry: PathGeometry;
   center: Point;
@@ -53,7 +52,6 @@ export interface ContainerInfo {
 
 export interface ContentInfo {
   elementId: string;
-  subpathIndex?: number;
   geometry: PathGeometry;
   opticalCenter: Point;
   visualWeight: number;
@@ -62,10 +60,8 @@ export interface ContentInfo {
 export interface AlignmentResult {
   container: ContainerInfo;
   content: ContentInfo[];
-  alignmentPoint: Point;
   offsets: Array<{
     elementId: string;
-    subpathIndex?: number;
     deltaX: number;
     deltaY: number;
   }>;
@@ -75,10 +71,6 @@ export interface AlignmentResult {
 export interface AlignmentMetrics {
   mathematicalCenter: Point;
   opticalCenter: Point;
-  horizontalBias: number;
-  verticalBias: number;
-  totalVisualWeight: number;
-  asymmetryIndex: number;
 }
 
 /**
@@ -236,20 +228,27 @@ export function calculateDirectionalBias(quadrantWeights: QuadrantWeights): Dire
  * Classifies shape type based on geometric properties
  */
 export function classifyShape(geometry: PathGeometry): ShapeType {
-  const { compactness, vertexCount, quadrantWeights } = geometry;
+  const { compactness, points, quadrantWeights } = geometry;
+  const vertexCount = points.length;
   
   // Circular shapes have high compactness
   if (compactness > 0.8) return 'circular';
   
-  // Triangular shapes typically have 3-4 vertices and specific weight distribution
-  if (vertexCount <= 4 && compactness > 0.3) {
-    const maxWeight = Math.max(
-      quadrantWeights.topLeft,
-      quadrantWeights.topRight,
-      quadrantWeights.bottomLeft,
-      quadrantWeights.bottomRight
-    );
-    if (maxWeight > 0.4) return 'triangular';
+  // Triangular shapes: exactly 3 vertices (or 4 if closed), not colinear, moderate compactness
+  if ((vertexCount === 3) && compactness > 0.2 && compactness <= 0.8) {
+    // Check if points form a valid triangle (not colinear)
+    if (isValidTriangle(points)) {
+      // Triangles often have more balanced quadrant distribution
+      const totalWeight = quadrantWeights.topLeft + quadrantWeights.topRight + 
+                         quadrantWeights.bottomLeft + quadrantWeights.bottomRight;
+      const balancedDistribution = totalWeight > 0 && 
+        Math.max(quadrantWeights.topLeft, quadrantWeights.topRight, 
+                quadrantWeights.bottomLeft, quadrantWeights.bottomRight) / totalWeight < 0.5;
+      
+      if (balancedDistribution || compactness < 0.6) {
+        return 'triangular';
+      }
+    }
   }
   
   // Rectangular shapes have moderate compactness and even distribution
@@ -259,6 +258,25 @@ export function classifyShape(geometry: PathGeometry): ShapeType {
   }
   
   return 'irregular';
+}
+
+/**
+ * Checks if a set of points forms a valid triangle (not colinear)
+ */
+function isValidTriangle(points: Point[]): boolean {
+  if (points.length < 3) return false;
+  
+  // Take first 3 points (skip closing point if polygon is closed)
+  const p1 = points[0];
+  const p2 = points[1];
+  const p3 = points[points.length - 1] === points[0] && points.length > 3 ? points[1] : points[2];
+  
+  // Calculate area using cross product to check if points are colinear
+  // If area is very small, points are approximately colinear
+  const area = Math.abs((p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x));
+  
+  // Allow for some floating point tolerance
+  return area > 1e-6;
 }
 
 /**
@@ -411,16 +429,17 @@ export function analyzePathGeometry(commands: Command[], pathData: PathData, ove
 }
 
 /**
- * Detects which path should be the container
+ * Detects which path should be the container (simplified for 2-element alignment)
  */
 export function detectContainer(
   elements: CanvasElement[],
-  selectedIds: string[],
-  selectedSubpaths: Array<{ elementId: string; subpathIndex: number }> = []
+  selectedIds: string[]
 ): ContainerInfo | null {
+  // Only work with exactly 2 selected elements
+  if (selectedIds.length !== 2) return null;
+
   const candidates: Array<{
     elementId: string;
-    subpathIndex?: number;
     bounds: { minX: number; minY: number; maxX: number; maxY: number };
     area: number;
     geometry: PathGeometry;
@@ -434,7 +453,7 @@ export function detectContainer(
       const allCommands = pathData.subPaths.flat();
       const bounds = measurePath(pathData.subPaths, pathData.strokeWidth, 1);
       const geometry = analyzePathGeometry(allCommands, pathData);
-      
+
       candidates.push({
         elementId: id,
         bounds,
@@ -444,64 +463,21 @@ export function detectContainer(
     }
   });
 
-  // Analyze selected subpaths
-  selectedSubpaths.forEach(({ elementId, subpathIndex }) => {
-    const element = elements.find(el => el.id === elementId);
-    if (element && element.type === 'path') {
-      const pathData = element.data as PathData;
-      
-      if (subpathIndex < pathData.subPaths.length) {
-        const subpathCommands = pathData.subPaths[subpathIndex];
-        const bounds = measurePath([subpathCommands], pathData.strokeWidth, 1);
-        const geometry = analyzePathGeometry(subpathCommands, pathData);
-        
-        candidates.push({
-          elementId,
-          subpathIndex,
-          bounds,
-          area: geometry.area,
-          geometry
-        });
-      }
-    }
-  });
+  if (candidates.length !== 2) return null;
 
-  if (candidates.length < 2) return null;
-
-  // Sort by area (largest first)
+  // Sort by area (largest first) - the larger one is the container
   candidates.sort((a, b) => b.area - a.area);
+  const containerCandidate = candidates[0];
 
-  // Find the largest path that contains the others
-  for (const candidate of candidates) {
-    const isContainer = candidates.every(other => {
-      if (other.elementId === candidate.elementId && other.subpathIndex === candidate.subpathIndex) {
-        return true; // Same path
-      }
-      
-      // Check if candidate bounds contain other bounds
-      return (
-        candidate.bounds.minX <= other.bounds.minX &&
-        candidate.bounds.minY <= other.bounds.minY &&
-        candidate.bounds.maxX >= other.bounds.maxX &&
-        candidate.bounds.maxY >= other.bounds.maxY
-      );
-    });
+  // Calculate the optical center of the container
+  const opticalCenter = calculateOpticalCenter(containerCandidate.geometry);
 
-    if (isContainer) {
-      // Calculate the optical center of the container, not just the mathematical center
-      const opticalCenter = calculateOpticalCenter(candidate.geometry);
-      
-      return {
-        elementId: candidate.elementId,
-        subpathIndex: candidate.subpathIndex,
-        bounds: candidate.bounds,
-        geometry: candidate.geometry,
-        center: opticalCenter
-      };
-    }
-  }
-
-  return null; // No valid container found
+  return {
+    elementId: containerCandidate.elementId,
+    bounds: containerCandidate.bounds,
+    geometry: containerCandidate.geometry,
+    center: opticalCenter
+  };
 }
 
 /**
@@ -514,100 +490,36 @@ export function calculateOpticalAlignment(
   // Calculate mathematical center of container
   const mathematicalCenter = container.center;
 
-  // Calculate weighted optical center based on content
-  let totalWeight = 0;
-  let weightedX = 0;
-  let weightedY = 0;
-
-  content.forEach(item => {
-    const weight = item.visualWeight;
-    totalWeight += weight;
-    weightedX += item.opticalCenter.x * weight;
-    weightedY += item.opticalCenter.y * weight;
-  });
-
-  const opticalCenter = totalWeight > 0 ? {
-    x: formatToPrecision(weightedX / totalWeight, PATH_DECIMAL_PRECISION),
-    y: formatToPrecision(weightedY / totalWeight, PATH_DECIMAL_PRECISION)
-  } : mathematicalCenter;
-
-  // Calculate target alignment point - should be the optical center of the container
-  const alignmentPoint = {
-    x: formatToPrecision(container.center.x, PATH_DECIMAL_PRECISION),
-    y: formatToPrecision(container.center.y, PATH_DECIMAL_PRECISION)
-  };
+  // Calculate weighted optical center based on content (simplified for single element)
+  const opticalCenter = content.length > 0 ? content[0].opticalCenter : mathematicalCenter;
 
   // Calculate offsets needed for each content item
   const offsets = content.map(item => ({
     elementId: item.elementId,
-    subpathIndex: item.subpathIndex,
-    deltaX: formatToPrecision(alignmentPoint.x - item.opticalCenter.x, PATH_DECIMAL_PRECISION),
-    deltaY: formatToPrecision(alignmentPoint.y - item.opticalCenter.y, PATH_DECIMAL_PRECISION)
+    deltaX: formatToPrecision(container.center.x - item.opticalCenter.x, PATH_DECIMAL_PRECISION),
+    deltaY: formatToPrecision(container.center.y - item.opticalCenter.y, PATH_DECIMAL_PRECISION)
   }));
 
   // Calculate metrics
-  const totalVisualWeight = formatToPrecision(totalWeight, PATH_DECIMAL_PRECISION);
-  const asymmetryIndex = calculateAsymmetryIndex(content);
-
   const metrics: AlignmentMetrics = {
     mathematicalCenter,
-    opticalCenter,
-    horizontalBias: 0.5,
-    verticalBias: 0.5,
-    totalVisualWeight,
-    asymmetryIndex
+    opticalCenter
   };
 
   return {
     container,
     content,
-    alignmentPoint,
     offsets,
     metrics
   };
 }
 
 /**
- * Calculates asymmetry index for content items
- */
-function calculateAsymmetryIndex(content: ContentInfo[]): number {
-  if (content.length < 2) return 0;
-
-  // Calculate center of mass
-  let totalWeight = 0;
-  let centerX = 0;
-  let centerY = 0;
-
-  content.forEach(item => {
-    totalWeight += item.visualWeight;
-    centerX += item.opticalCenter.x * item.visualWeight;
-    centerY += item.opticalCenter.y * item.visualWeight;
-  });
-
-  if (totalWeight === 0) return 0;
-
-  centerX /= totalWeight;
-  centerY /= totalWeight;
-
-  // Calculate asymmetry as weighted variance from center
-  let asymmetry = 0;
-  content.forEach(item => {
-    const dx = item.opticalCenter.x - centerX;
-    const dy = item.opticalCenter.y - centerY;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    asymmetry += distance * item.visualWeight;
-  });
-
-  return formatToPrecision(asymmetry / totalWeight, PATH_DECIMAL_PRECISION);
-}
-
-/**
- * Prepares content info from elements and subpaths with visual property analysis
+ * Prepares content info from elements (simplified for 2-element alignment)
  */
 export function prepareContentInfo(
   elements: CanvasElement[],
   selectedIds: string[],
-  selectedSubpaths: Array<{ elementId: string; subpathIndex: number }> = [],
   containerInfo: ContainerInfo
 ): ContentInfo[] {
   const content: ContentInfo[] = [];
@@ -620,43 +532,17 @@ export function prepareContentInfo(
     if (element && element.type === 'path') {
       const pathData = element.data as PathData;
       const allCommands = pathData.subPaths.flat();
-      
+
       // Use element's overall opacity if available, otherwise default to 1
       const overallOpacity = 1; // TODO: Add element-level opacity if implemented
       const geometry = analyzePathGeometry(allCommands, pathData, overallOpacity);
-      
+
       content.push({
         elementId: id,
         geometry,
         opticalCenter: calculateOpticalCenter(geometry),
         visualWeight: calculateVisualWeight(geometry)
       });
-    }
-  });
-
-  // Process selected subpaths (excluding container subpath)
-  selectedSubpaths.forEach(({ elementId, subpathIndex }) => {
-    if (elementId === containerInfo.elementId && subpathIndex === containerInfo.subpathIndex) {
-      return; // Skip container subpath
-    }
-
-    const element = elements.find(el => el.id === elementId);
-    if (element && element.type === 'path') {
-      const pathData = element.data as PathData;
-      
-      if (subpathIndex < pathData.subPaths.length) {
-        const subpathCommands = pathData.subPaths[subpathIndex];
-        const overallOpacity = 1; // TODO: Add element-level opacity if implemented
-        const geometry = analyzePathGeometry(subpathCommands, pathData, overallOpacity);
-        
-        content.push({
-          elementId,
-          subpathIndex,
-          geometry,
-          opticalCenter: calculateOpticalCenter(geometry),
-          visualWeight: calculateVisualWeight(geometry)
-        });
-      }
     }
   });
 
@@ -673,8 +559,9 @@ function calculateOpticalCenter(geometry: PathGeometry): Point {
   let adjustmentX = 0;
   let adjustmentY = 0;
 
-  // Calculate the magnitude of vertical bias to determine if correction is needed
+  // Calculate the magnitude of vertical/horizontal bias to determine if correction is needed
   const verticalBiasMagnitude = Math.abs(directionalBias.vertical);
+  const horizontalBiasMagnitude = Math.abs(directionalBias.horizontal);
 
   // Visual intensity affects how much adjustment we apply
   // Higher visual intensity elements need more precise centering
@@ -683,9 +570,9 @@ function calculateOpticalCenter(geometry: PathGeometry): Point {
   switch (shapeClassification) {
     case 'triangular':
       // Triangular shapes often need adjustment based on direction
-      adjustmentX = -directionalBias.horizontal * 0.2 * visualIntensityMultiplier;
-      // Only apply vertical adjustment for significant bias
-      adjustmentY = verticalBiasMagnitude > 0.3 ? -directionalBias.vertical * 0.02 * visualIntensityMultiplier : 0;
+      adjustmentX = horizontalBiasMagnitude > 0.4 ? -directionalBias.horizontal * 0.2 * visualIntensityMultiplier : 0;
+      // Only apply vertical adjustment for significant bias, but reduce it significantly for triangles pointing up/down
+      adjustmentY = verticalBiasMagnitude > 0.3 ? -directionalBias.vertical * 0.2 * visualIntensityMultiplier : 0;
       break;
     case 'circular':
       // Circular shapes are typically well-centered, but high contrast ones might need slight adjustment
@@ -701,8 +588,8 @@ function calculateOpticalCenter(geometry: PathGeometry): Point {
       break;
     case 'irregular':
       // Irregular shapes get more significant adjustments, especially if visually prominent
-      adjustmentX = -directionalBias.horizontal * 0.25 * visualIntensityMultiplier;
-      adjustmentY = verticalBiasMagnitude > 0.5 ? -directionalBias.vertical * 0.02 * visualIntensityMultiplier : 0;
+      adjustmentX = horizontalBiasMagnitude > 0.25 ? -directionalBias.horizontal * 0.25 * visualIntensityMultiplier : 0;
+      adjustmentY = verticalBiasMagnitude > 0.25 ? -directionalBias.vertical * 0.25 * visualIntensityMultiplier : 0;
       break;
   }
 

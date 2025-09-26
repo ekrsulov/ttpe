@@ -29,173 +29,83 @@ export const OpticalAlignmentOverlay: React.FC<OpticalAlignmentOverlayProps> = (
 
   return (
     <g className="optical-alignment-overlay">
-      {/* 1. Optical center - CROSS (LARGEST, most transparent - draw first) */}
-      {showOpticalCenter && (
-        <g opacity={0.4}>
-          {/* Horizontal line */}
-          <line
-            x1={metrics.opticalCenter.x - centerMarkerSize * 0.8}
-            y1={metrics.opticalCenter.y}
-            x2={metrics.opticalCenter.x + centerMarkerSize * 0.8}
-            y2={metrics.opticalCenter.y}
-            stroke="#ff6b35"
-            strokeWidth={strokeWidth * 4}
-            strokeLinecap="round"
-          />
-          {/* Vertical line */}
-          <line
-            x1={metrics.opticalCenter.x}
-            y1={metrics.opticalCenter.y - centerMarkerSize * 0.8}
-            x2={metrics.opticalCenter.x}
-            y2={metrics.opticalCenter.y + centerMarkerSize * 0.8}
-            stroke="#ff6b35"
-            strokeWidth={strokeWidth * 4}
-            strokeLinecap="round"
-          />
-        </g>
-      )}
-
-      {/* 2. Mathematical center - SQUARE (MEDIUM, semi-transparent - draw second) */}
+      {/* Mathematical center - X */}
       {showMathematicalCenter && (
         <g opacity={0.6}>
-          <rect
-            x={metrics.mathematicalCenter.x - centerMarkerSize * 0.4}
-            y={metrics.mathematicalCenter.y - centerMarkerSize * 0.4}
-            width={centerMarkerSize * 0.8}
-            height={centerMarkerSize * 0.8}
-            fill="#6c757d"
-            stroke="#fff"
+          <line
+            x1={metrics.mathematicalCenter.x - centerMarkerSize * 0.4}
+            y1={metrics.mathematicalCenter.y - centerMarkerSize * 0.4}
+            x2={metrics.mathematicalCenter.x + centerMarkerSize * 0.4}
+            y2={metrics.mathematicalCenter.y + centerMarkerSize * 0.4}
+            stroke="#6c757d"
             strokeWidth={strokeWidth * 2}
+            strokeLinecap="round"
+          />
+          <line
+            x1={metrics.mathematicalCenter.x + centerMarkerSize * 0.4}
+            y1={metrics.mathematicalCenter.y - centerMarkerSize * 0.4}
+            x2={metrics.mathematicalCenter.x - centerMarkerSize * 0.4}
+            y2={metrics.mathematicalCenter.y + centerMarkerSize * 0.4}
+            stroke="#6c757d"
+            strokeWidth={strokeWidth * 2}
+            strokeLinecap="round"
           />
         </g>
       )}
 
-      {/* 3. Content optical centers - CIRCLES (SMALLEST, most opaque - draw last, on top) */}
-      {showOpticalCenter && content.map((item, index) => (
-        <g key={`optical-center-${index}`} opacity={0.9}>
-          <circle
-            cx={item.opticalCenter.x}
-            cy={item.opticalCenter.y}
-            r={centerMarkerSize * 0.25}
-            fill="#ffc107"
-            stroke="#2c2c2c"
-            strokeWidth={strokeWidth * 1.5}
-            opacity={0.9}
+      {/* Optical center - X */}
+      {showOpticalCenter && content.length > 0 && (
+        <g opacity={0.9}>
+          <line
+            x1={content[0].opticalCenter.x - centerMarkerSize * 0.3}
+            y1={content[0].opticalCenter.y - centerMarkerSize * 0.3}
+            x2={content[0].opticalCenter.x + centerMarkerSize * 0.3}
+            y2={content[0].opticalCenter.y + centerMarkerSize * 0.3}
+            stroke="#ffc107"
+            strokeWidth={strokeWidth * 2}
+            strokeLinecap="round"
           />
-        </g>
-      ))}
-
-      {/* Legend */}
-      {(showMathematicalCenter || showOpticalCenter) && (
-        <g transform={`translate(${container.bounds.maxX + 10 / zoom}, ${container.bounds.minY})`}>
-          <rect
-            x={0}
-            y={0}
-            width={140 / zoom}
-            height={75 / zoom}
-            fill="#fff"
-            stroke="#dee2e6"
-            strokeWidth={strokeWidth}
-            opacity={0.9}
+          <line
+            x1={content[0].opticalCenter.x + centerMarkerSize * 0.3}
+            y1={content[0].opticalCenter.y - centerMarkerSize * 0.3}
+            x2={content[0].opticalCenter.x - centerMarkerSize * 0.3}
+            y2={content[0].opticalCenter.y + centerMarkerSize * 0.3}
+            stroke="#ffc107"
+            strokeWidth={strokeWidth * 2}
+            strokeLinecap="round"
           />
-          <text
-            x={8 / zoom}
-            y={18 / zoom}
-            fontSize={13 / zoom}
-            fill="#495057"
-            fontFamily="Arial, sans-serif"
-            fontWeight="bold"
-          >
-            Centers:
-          </text>
-          {showMathematicalCenter && (
-            <g opacity={0.6}>
-              {/* Square for mathematical center - fixed size */}
-              <rect
-                x={5 / zoom}
-                y={26 / zoom}
-                width={10 / zoom}
-                height={10 / zoom}
-                fill="#6c757d"
-                stroke="#fff"
-                strokeWidth={2 / zoom}
-              />
-              <text
-                x={20 / zoom}
-                y={31 / zoom}
-                fontSize={11 / zoom}
-                fill="#6c757d"
-                fontFamily="Arial, sans-serif"
-                dominantBaseline="central"
-              >
-                Mathematical
-              </text>
-            </g>
-          )}
-          {showOpticalCenter && (
-            <g opacity={0.4}>
-              {/* Cross for optical center - fixed size */}
-              <line
-                x1={5 / zoom}
-                y1={46 / zoom}
-                x2={15 / zoom}
-                y2={46 / zoom}
-                stroke="#ff6b35"
-                strokeWidth={4 / zoom}
-                strokeLinecap="round"
-              />
-              <line
-                x1={10 / zoom}
-                y1={41 / zoom}
-                x2={10 / zoom}
-                y2={51 / zoom}
-                stroke="#ff6b35"
-                strokeWidth={4 / zoom}
-                strokeLinecap="round"
-              />
-              <text
-                x={20 / zoom}
-                y={46 / zoom}
-                fontSize={11 / zoom}
-                fill="#ff6b35"
-                fontFamily="Arial, sans-serif"
-                dominantBaseline="central"
-              >
-                Optical (Container)
-              </text>
-            </g>
-          )}
-          {showOpticalCenter && (
-            <g opacity={0.9}>
-              {/* Circle for content centers - fixed size */}
-              <circle
-                cx={10 / zoom}
-                cy={62 / zoom}
-                r={4 / zoom}
-                fill="#ffc107"
-                stroke="#2c2c2c"
-                strokeWidth={1.5 / zoom}
-              />
-              <text
-                x={20 / zoom}
-                y={62 / zoom}
-                fontSize={11 / zoom}
-                fill="#ffc107"
-                fontFamily="Arial, sans-serif"
-                dominantBaseline="central"
-              >
-                Optical (Content)
-              </text>
-            </g>
-          )}
         </g>
       )}
-      
-      {/* Distance Rules */}
+
+      {/* Content centroid - Red X */}
+      {content.length > 0 && (
+        <g opacity={0.8}>
+          <line
+            x1={content[0].geometry.centroid.x - centerMarkerSize * 0.35}
+            y1={content[0].geometry.centroid.y - centerMarkerSize * 0.35}
+            x2={content[0].geometry.centroid.x + centerMarkerSize * 0.35}
+            y2={content[0].geometry.centroid.y + centerMarkerSize * 0.35}
+            stroke="#dc3545"
+            strokeWidth={strokeWidth * 2.5}
+            strokeLinecap="round"
+          />
+          <line
+            x1={content[0].geometry.centroid.x + centerMarkerSize * 0.35}
+            y1={content[0].geometry.centroid.y - centerMarkerSize * 0.35}
+            x2={content[0].geometry.centroid.x - centerMarkerSize * 0.35}
+            y2={content[0].geometry.centroid.y + centerMarkerSize * 0.35}
+            stroke="#dc3545"
+            strokeWidth={strokeWidth * 2.5}
+            strokeLinecap="round"
+          />
+        </g>
+      )}
+
       {showDistanceRules && content.length > 0 && (
-        <g className="distance-rules" opacity={0.7}>
-          {content.map((item, index) => {
+        <g className="distance-rules">
+          {(() => {
             // Get the bounds of the content item
+            const item = content[0];
             const contentBounds = {
               minX: item.geometry.bounds.minX,
               minY: item.geometry.bounds.minY,
@@ -215,7 +125,7 @@ export const OpticalAlignmentOverlay: React.FC<OpticalAlignmentOverlayProps> = (
             const ruleStroke = 1 / zoom;
             
             return (
-              <g key={`distance-rules-${item.elementId}-${index}`}>
+              <g key={`distance-rules-${item.elementId}`}>
                 {/* Top distance */}
                 {topDistance > 5 && (
                   <g>
@@ -235,8 +145,6 @@ export const OpticalAlignmentOverlay: React.FC<OpticalAlignmentOverlayProps> = (
                       width={30 / zoom}
                       height={textSize}
                       fill="white"
-                      stroke="#ddd"
-                      strokeWidth={0.5 / zoom}
                       rx={2 / zoom}
                       ry={2 / zoom}
                     />
@@ -274,8 +182,6 @@ export const OpticalAlignmentOverlay: React.FC<OpticalAlignmentOverlayProps> = (
                       width={30 / zoom}
                       height={textSize}
                       fill="white"
-                      stroke="#ddd"
-                      strokeWidth={0.5 / zoom}
                       rx={2 / zoom}
                       ry={2 / zoom}
                     />
@@ -313,8 +219,6 @@ export const OpticalAlignmentOverlay: React.FC<OpticalAlignmentOverlayProps> = (
                       width={30 / zoom}
                       height={textSize}
                       fill="white"
-                      stroke="#ddd"
-                      strokeWidth={0.5 / zoom}
                       rx={2 / zoom}
                       ry={2 / zoom}
                     />
@@ -352,8 +256,6 @@ export const OpticalAlignmentOverlay: React.FC<OpticalAlignmentOverlayProps> = (
                       width={30 / zoom}
                       height={textSize}
                       fill="white"
-                      stroke="#ddd"
-                      strokeWidth={0.5 / zoom}
                       rx={2 / zoom}
                       ry={2 / zoom}
                     />
@@ -373,7 +275,7 @@ export const OpticalAlignmentOverlay: React.FC<OpticalAlignmentOverlayProps> = (
                 )}
               </g>
             );
-          })}
+          })()}
         </g>
       )}
     </g>

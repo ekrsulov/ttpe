@@ -1,20 +1,13 @@
 import type { StateCreator } from 'zustand';
 import type { CanvasStore } from '../../canvasStore';
-import type {
-  AlignmentResult
-} from '../../../utils/opticalAlignmentUtils';
-import {
-  detectContainer,
-  prepareContentInfo,
-  calculateOpticalAlignment
-} from '../../../utils/opticalAlignmentUtils';
+import type { AlignmentResult } from '../../../utils/opticalAlignmentUtils';
+import { detectContainer, prepareContentInfo, calculateOpticalAlignment } from '../../../utils/opticalAlignmentUtils';
 import { translateCommands } from '../../../utils/transformationUtils';
 import type { PathData, CanvasElement, SubPath } from '../../../types';
 
 // Type for alignment offset
 interface AlignmentOffset {
   elementId: string;
-  subpathIndex?: number;
   deltaX: number;
   deltaY: number;
 }
@@ -78,8 +71,7 @@ export const createOpticalAlignmentSlice: StateCreator<
     // Detect container
     const containerInfo = detectContainer(
       state.elements,
-      state.selectedIds,
-      state.selectedSubpaths
+      state.selectedIds
     );
 
     if (!containerInfo) {
@@ -91,7 +83,6 @@ export const createOpticalAlignmentSlice: StateCreator<
     const contentInfo = prepareContentInfo(
       state.elements,
       state.selectedIds,
-      state.selectedSubpaths,
       containerInfo
     );
 
@@ -115,54 +106,24 @@ export const createOpticalAlignmentSlice: StateCreator<
 
     const state = get() as CanvasStore;
 
-    // Apply offsets to elements
+    // Apply offsets to elements (simplified - only full elements, no subpaths)
     currentAlignment.offsets.forEach((offset: AlignmentOffset) => {
-      if (offset.subpathIndex !== undefined) {
-        // Apply to subpath
-        const elementIndex = state.elements.findIndex((el: CanvasElement) => el.id === offset.elementId);
-        if (elementIndex !== -1) {
-          const element = state.elements[elementIndex];
-          if (element.type === 'path') {
-            const pathData = element.data as PathData;
-            
-            if (offset.subpathIndex < pathData.subPaths.length) {
-              const translatedSubpath = translateCommands(
-                pathData.subPaths[offset.subpathIndex],
-                offset.deltaX,
-                offset.deltaY
-              );
-              
-              const updatedSubPaths = [...pathData.subPaths];
-              updatedSubPaths[offset.subpathIndex] = translatedSubpath;
-              
-              state.updateElement(offset.elementId, {
-                data: {
-                  ...pathData,
-                  subPaths: updatedSubPaths
-                }
-              });
+      const elementIndex = state.elements.findIndex((el: CanvasElement) => el.id === offset.elementId);
+      if (elementIndex !== -1) {
+        const element = state.elements[elementIndex];
+        if (element.type === 'path') {
+          const pathData = element.data as PathData;
+          
+          const translatedSubPaths = pathData.subPaths.map((subpath: SubPath) =>
+            translateCommands(subpath, offset.deltaX, offset.deltaY)
+          );
+          
+          state.updateElement(offset.elementId, {
+            data: {
+              ...pathData,
+              subPaths: translatedSubPaths
             }
-          }
-        }
-      } else {
-        // Apply to entire element
-        const elementIndex = state.elements.findIndex((el: CanvasElement) => el.id === offset.elementId);
-        if (elementIndex !== -1) {
-          const element = state.elements[elementIndex];
-          if (element.type === 'path') {
-            const pathData = element.data as PathData;
-            
-            const translatedSubPaths = pathData.subPaths.map((subpath: SubPath) =>
-              translateCommands(subpath, offset.deltaX, offset.deltaY)
-            );
-            
-            state.updateElement(offset.elementId, {
-              data: {
-                ...pathData,
-                subPaths: translatedSubPaths
-              }
-            });
-          }
+          });
         }
       }
     });
@@ -217,10 +178,8 @@ export const createOpticalAlignmentSlice: StateCreator<
   // Validation
   canPerformOpticalAlignment: () => {
     const state = get() as CanvasStore;
-    const totalSelected = state.selectedIds.length + state.selectedSubpaths.length;
-    
-    // Need at least 2 paths selected (one container + at least one content)
-    return totalSelected >= 2 && state.activePlugin === 'select';
+    // Need exactly 2 selected elements (no subpaths)
+    return state.selectedIds.length === 2 && state.selectedSubpaths.length === 0 && state.activePlugin === 'select';
   },
 
   getAlignmentValidationMessage: () => {
@@ -230,31 +189,31 @@ export const createOpticalAlignmentSlice: StateCreator<
       return 'Optical alignment is only available in select mode';
     }
     
-    const totalSelected = state.selectedIds.length + state.selectedSubpaths.length;
+    if (state.selectedSubpaths.length > 0) {
+      return 'Optical alignment does not support subpath selection. Select complete paths only.';
+    }
     
-    if (totalSelected < 2) {
-      return 'Select at least two paths (one container and one or more content paths)';
+    if (state.selectedIds.length !== 2) {
+      return 'Select exactly two paths (one container and one content path)';
     }
     
     const containerInfo = detectContainer(
       state.elements,
-      state.selectedIds,
-      state.selectedSubpaths
+      state.selectedIds
     );
     
     if (!containerInfo) {
-      return 'No valid container found. Ensure one of the selected paths contains the others';
+      return 'Could not determine container. Ensure both paths are valid.';
     }
     
     const contentInfo = prepareContentInfo(
       state.elements,
       state.selectedIds,
-      state.selectedSubpaths,
       containerInfo
     );
     
     if (contentInfo.length === 0) {
-      return 'No content paths found for alignment';
+      return 'No content path found for alignment';
     }
     
     return null; // All validation passed
