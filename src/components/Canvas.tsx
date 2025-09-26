@@ -565,8 +565,8 @@ export const Canvas: React.FC = () => {
         const newHeight = Math.round(bounds.height * finalScaleY);
         const originalWidth = Math.round(bounds.width * initialTransform.scaleX);
         const originalHeight = Math.round(bounds.height * initialTransform.scaleY);
-        let deltaX = newWidth - originalWidth;
-        let deltaY = newHeight - originalHeight;
+        const deltaX = newWidth - originalWidth;
+        const deltaY = newHeight - originalHeight;
         
         // Apply sticky resize (10-pixel increments) when Shift is pressed
         const isShiftPressed = e.shiftKey;
