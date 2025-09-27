@@ -143,6 +143,7 @@ export interface SubpathPluginSlice {
   clearSubpathSelection: () => void;
   getSelectedSubpathsCount: () => number;
   deleteSelectedSubpaths: () => void;
+  moveSelectedSubpaths: (deltaX: number, deltaY: number) => void;
 
   // Drag actions
   startDraggingSubpaths: (canvasX: number, canvasY: number) => void;
@@ -268,6 +269,45 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
 
     // Clear selection after deletion
     set({ selectedSubpaths: [] });
+  },
+
+  moveSelectedSubpaths: (deltaX: number, deltaY: number) => {
+    const state = get() as CanvasStore;
+    const selectedSubpaths = get().selectedSubpaths;
+
+    if (selectedSubpaths.length === 0) return;
+
+    // Group subpaths by element ID
+    const subpathsByElement = selectedSubpaths.reduce((acc, subpath) => {
+      if (!acc[subpath.elementId]) {
+        acc[subpath.elementId] = [];
+      }
+      acc[subpath.elementId].push(subpath.subpathIndex);
+      return acc;
+    }, {} as Record<string, number[]>);
+
+    // Process each element
+    Object.entries(subpathsByElement).forEach(([elementId, subpathIndices]) => {
+      const element = state.elements.find((el) => el.id === elementId);
+      if (element && element.type === 'path') {
+        const pathData = element.data as PathData;
+        const newSubPaths = [...pathData.subPaths];
+
+        subpathIndices.forEach(subpathIndex => {
+          if (subpathIndex < newSubPaths.length) {
+            newSubPaths[subpathIndex] = translateCommands(newSubPaths[subpathIndex], deltaX, deltaY);
+          }
+        });
+
+        state.updateElement(elementId, {
+          data: { ...pathData, subPaths: newSubPaths }
+        });
+      }
+    });
+
+    // Auto-reset optical alignment on subpath movement
+    const currentState = get() as CanvasStore;
+    currentState.autoResetOnSelectionChange();
   },
 
   // Order functions

@@ -360,6 +360,7 @@ export interface EditPluginSlice {
   setControlPointAlignmentType: (elementId: string, commandIndex1: number, pointIndex1: number, commandIndex2: number, pointIndex2: number, type: import('../../../types').ControlPointType) => void;
   applyControlPointAlignment: (elementId: string, commandIndex: number, pointIndex: number, newX: number, newY: number) => void;
   finalizePointMove: (elementId: string, commandIndex: number, pointIndex: number, newX: number, newY: number) => void;
+  moveSelectedPoints: (deltaX: number, deltaY: number) => void;
 }
 
 export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPluginSlice> = (set, get) => ({
@@ -1626,6 +1627,66 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
   finalizePointMove: (elementId: string, commandIndex: number, pointIndex: number, newX: number, newY: number) => {
     // Apply control point alignment if this point has alignment configured
     get().applyControlPointAlignment(elementId, commandIndex, pointIndex, newX, newY);
+  },
+
+  moveSelectedPoints: (deltaX: number, deltaY: number) => {
+    const state = get() as FullCanvasState;
+    const selectedCommands = get().selectedCommands;
+
+    if (selectedCommands.length === 0) return;
+
+    // Group by elementId
+    const commandsByElement = selectedCommands.reduce((acc, cmd) => {
+      if (!acc[cmd.elementId]) {
+        acc[cmd.elementId] = [];
+      }
+      acc[cmd.elementId].push(cmd);
+      return acc;
+    }, {} as Record<string, typeof selectedCommands>);
+
+    // Process each element
+    Object.entries(commandsByElement).forEach(([elementId, commands]) => {
+      const element = state.elements.find((el) => el.id === elementId);
+      if (element && element.type === 'path') {
+        const pathData = element.data as PathData;
+        const allCommands = pathData.subPaths.flat();
+        const newCommands = [...allCommands];
+
+        commands.forEach(({ commandIndex, pointIndex }) => {
+          if (commandIndex < newCommands.length) {
+            const command = newCommands[commandIndex];
+            if (command.type === 'M' || command.type === 'L') {
+              if (pointIndex === 0) {
+                command.position.x += deltaX;
+                command.position.y += deltaY;
+              }
+            } else if (command.type === 'C') {
+              if (pointIndex === 0) {
+                command.controlPoint1.x += deltaX;
+                command.controlPoint1.y += deltaY;
+              } else if (pointIndex === 1) {
+                command.controlPoint2.x += deltaX;
+                command.controlPoint2.y += deltaY;
+              } else if (pointIndex === 2) {
+                command.position.x += deltaX;
+                command.position.y += deltaY;
+              }
+            }
+          }
+        });
+
+        // Reconstruct subPaths
+        const extractedSubpaths = extractSubpaths(newCommands);
+        const newSubPaths = extractedSubpaths.map(subpath => subpath.commands);
+        state.updateElement(elementId, {
+          data: { ...pathData, subPaths: newSubPaths }
+        });
+      }
+    });
+
+    // Auto-reset optical alignment on point movement
+    const currentState = get() as FullCanvasState;
+    currentState.autoResetOnSelectionChange();
   },
 
   deleteZCommandForMPoint: (elementId: string, commandIndex: number) => {

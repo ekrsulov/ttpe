@@ -60,7 +60,9 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
   },
 
   deleteSelectedElements: () => {
-    // This function will be implemented in selection slice when needed
+    const state = get() as any;
+    state.selectedIds.forEach((id: string) => state.deleteElement(id));
+    state.clearSelection();
   },
 
   setActivePlugin: (plugin) => {

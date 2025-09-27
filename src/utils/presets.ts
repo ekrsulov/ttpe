@@ -46,15 +46,6 @@ export const PRESETS: Preset[] = [
   // Sort all presets by chromatic tone (hue value)
   ...[
     {
-      id: 'thick-black',
-      name: 'Bold Black',
-      strokeWidth: 8,
-      strokeColor: '#000000',
-      strokeOpacity: 1,
-      fillColor: 'none',
-      fillOpacity: 1
-    },
-    {
       id: 'thick-red',
       name: 'Bold Red',
       strokeWidth: 6,
@@ -64,138 +55,12 @@ export const PRESETS: Preset[] = [
       fillOpacity: 0.8
     },
     {
-      id: 'thick-blue',
-      name: 'Bold Blue',
-      strokeWidth: 7,
-      strokeColor: '#007bff',
-      strokeOpacity: 1,
-      fillColor: '#e3f2fd',
-      fillOpacity: 0.7
-    },
-    {
-      id: 'pale-pink',
-      name: 'Soft Pink',
-      strokeWidth: 2,
-      strokeColor: '#fce4ec',
-      strokeOpacity: 0.8,
-      fillColor: '#fce4ec',
-      fillOpacity: 0.4
-    },
-    {
-      id: 'pale-blue',
-      name: 'Soft Blue',
-      strokeWidth: 3,
-      strokeColor: '#e8eaf6',
-      strokeOpacity: 0.9,
-      fillColor: '#e8eaf6',
-      fillOpacity: 0.5
-    },
-    {
-      id: 'pale-green',
-      name: 'Soft Green',
-      strokeWidth: 2,
-      strokeColor: '#e8f5e8',
-      strokeOpacity: 0.8,
-      fillColor: '#e8f5e8',
-      fillOpacity: 0.4
-    },
-    {
-      id: 'vibrant-purple',
-      name: 'Vibrant Purple',
-      strokeWidth: 4,
-      strokeColor: '#9c27b0',
-      strokeOpacity: 1,
-      fillColor: '#ba68c8',
-      fillOpacity: 0.9
-    },
-    {
       id: 'bright-orange',
       name: 'Bright Orange',
       strokeWidth: 5,
       strokeColor: '#ff9800',
       strokeOpacity: 1,
       fillColor: '#ffb74d',
-      fillOpacity: 0.8
-    },
-    {
-      id: 'electric-blue',
-      name: 'Electric Blue',
-      strokeWidth: 3,
-      strokeColor: '#00bcd4',
-      strokeOpacity: 1,
-      fillColor: '#4dd0e1',
-      fillOpacity: 0.9
-    },
-    {
-      id: 'minimal-gray',
-      name: 'Minimal Gray',
-      strokeWidth: 1,
-      strokeColor: '#9e9e9e',
-      strokeOpacity: 0.7,
-      fillColor: 'none',
-      fillOpacity: 1
-    },
-    {
-      id: 'clean-white',
-      name: 'Clean White',
-      strokeWidth: 2,
-      strokeColor: '#ffffff',
-      strokeOpacity: 0.9,
-      fillColor: '#f5f5f5',
-      fillOpacity: 0.6
-    },
-    {
-      id: 'subtle-outline',
-      name: 'Subtle Outline',
-      strokeWidth: 1,
-      strokeColor: '#424242',
-      strokeOpacity: 0.5,
-      fillColor: 'none',
-      fillOpacity: 1
-    },
-    {
-      id: 'warm-autumn',
-      name: 'Warm Autumn',
-      strokeWidth: 4,
-      strokeColor: '#8d6e63',
-      strokeOpacity: 0.9,
-      fillColor: '#d7ccc8',
-      fillOpacity: 0.7
-    },
-    {
-      id: 'cool-ocean',
-      name: 'Cool Ocean',
-      strokeWidth: 3,
-      strokeColor: '#0277bd',
-      strokeOpacity: 0.8,
-      fillColor: '#b3e5fc',
-      fillOpacity: 0.6
-    },
-    {
-      id: 'sunset-glow',
-      name: 'Sunset Glow',
-      strokeWidth: 5,
-      strokeColor: '#ff5722',
-      strokeOpacity: 1,
-      fillColor: '#ffccbc',
-      fillOpacity: 0.8
-    },
-    {
-      id: 'neon-green',
-      name: 'Neon Green',
-      strokeWidth: 4,
-      strokeColor: '#00ff00',
-      strokeOpacity: 1,
-      fillColor: '#e8f5e8',
-      fillOpacity: 0.6
-    },
-    {
-      id: 'royal-purple',
-      name: 'Royal Purple',
-      strokeWidth: 6,
-      strokeColor: '#6a1b9a',
-      strokeOpacity: 1,
-      fillColor: '#ce93d8',
       fillOpacity: 0.8
     },
     {
@@ -208,42 +73,6 @@ export const PRESETS: Preset[] = [
       fillOpacity: 0.7
     },
     {
-      id: 'crimson-red',
-      name: 'Crimson Red',
-      strokeWidth: 5,
-      strokeColor: '#b71c1c',
-      strokeOpacity: 1,
-      fillColor: '#ffcdd2',
-      fillOpacity: 0.7
-    },
-    {
-      id: 'teal-aqua',
-      name: 'Teal Aqua',
-      strokeWidth: 4,
-      strokeColor: '#00695c',
-      strokeOpacity: 0.9,
-      fillColor: '#b2dfdb',
-      fillOpacity: 0.8
-    },
-    {
-      id: 'lavender-dream',
-      name: 'Lavender Dream',
-      strokeWidth: 2,
-      strokeColor: '#e1bee7',
-      strokeOpacity: 0.8,
-      fillColor: '#f3e5f5',
-      fillOpacity: 0.5
-    },
-    {
-      id: 'charcoal-gray',
-      name: 'Charcoal Gray',
-      strokeWidth: 8,
-      strokeColor: '#263238',
-      strokeOpacity: 1,
-      fillColor: '#546e7a',
-      fillOpacity: 0.9
-    },
-    {
       id: 'mint-fresh',
       name: 'Mint Fresh',
       strokeWidth: 3,
@@ -253,67 +82,58 @@ export const PRESETS: Preset[] = [
       fillOpacity: 0.6
     },
     {
-      id: 'coral-pink',
-      name: 'Coral Pink',
-      strokeWidth: 4,
-      strokeColor: '#ff7043',
-      strokeOpacity: 1,
-      fillColor: '#ffebee',
-      fillOpacity: 0.7
-    },
-    {
-      id: 'navy-blue',
-      name: 'Navy Blue',
-      strokeWidth: 6,
-      strokeColor: '#0d47a1',
-      strokeOpacity: 1,
-      fillColor: '#bbdefb',
-      fillOpacity: 0.8
-    },
-    {
-      id: 'sage-green',
-      name: 'Sage Green',
-      strokeWidth: 2,
-      strokeColor: '#689f38',
-      strokeOpacity: 0.8,
-      fillColor: '#dcedc8',
-      fillOpacity: 0.5
-    },
-    {
-      id: 'rose-gold',
-      name: 'Rose Gold',
+      id: 'electric-blue',
+      name: 'Electric Blue',
       strokeWidth: 3,
-      strokeColor: '#e91e63',
-      strokeOpacity: 0.9,
-      fillColor: '#fce4ec',
-      fillOpacity: 0.6
+      strokeColor: '#00bcd4',
+      strokeOpacity: 1,
+      fillColor: '#4dd0e1',
+      fillOpacity: 0.9
     },
     {
-      id: 'slate-blue',
-      name: 'Slate Blue',
-      strokeWidth: 5,
-      strokeColor: '#455a64',
-      strokeOpacity: 0.9,
-      fillColor: '#b0bec5',
+      id: 'thick-blue',
+      name: 'Bold Blue',
+      strokeWidth: 7,
+      strokeColor: '#007bff',
+      strokeOpacity: 1,
+      fillColor: '#e3f2fd',
       fillOpacity: 0.7
     },
     {
-      id: 'sunflower',
-      name: 'Sunflower',
+      id: 'vibrant-purple',
+      name: 'Vibrant Purple',
       strokeWidth: 4,
-      strokeColor: '#ffeb3b',
-      strokeOpacity: 0.8,
-      fillColor: '#fffde7',
-      fillOpacity: 0.6
+      strokeColor: '#9c27b0',
+      strokeOpacity: 1,
+      fillColor: '#ba68c8',
+      fillOpacity: 0.9
     },
     {
-      id: 'emerald',
-      name: 'Emerald',
-      strokeWidth: 5,
-      strokeColor: '#2e7d32',
+      id: 'royal-purple',
+      name: 'Royal Purple',
+      strokeWidth: 6,
+      strokeColor: '#6a1b9a',
       strokeOpacity: 1,
-      fillColor: '#a5d6a7',
+      fillColor: '#ce93d8',
       fillOpacity: 0.8
+    },
+    {
+      id: 'pale-pink',
+      name: 'Soft Pink',
+      strokeWidth: 2,
+      strokeColor: '#fce4ec',
+      strokeOpacity: 0.8,
+      fillColor: '#fce4ec',
+      fillOpacity: 0.4
+    },
+    {
+      id: 'minimal-gray',
+      name: 'Minimal Gray',
+      strokeWidth: 1,
+      strokeColor: '#9e9e9e',
+      strokeOpacity: 0.7,
+      fillColor: 'none',
+      fillOpacity: 1
     }
   ].sort((a, b) => {
     const colorA = getPrimaryColor(a);

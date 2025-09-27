@@ -967,6 +967,73 @@ export const Canvas: React.FC = () => {
     };
   }, []);
 
+  // Handle keyboard arrow key movement
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only handle arrow keys and delete/backspace
+      if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Delete', 'Backspace'].includes(e.key)) {
+        return;
+      }
+
+      // Prevent default to avoid page scrolling or browser back
+      e.preventDefault();
+
+      const delta = e.shiftKey ? 10 : 1;
+      let deltaX = 0;
+      let deltaY = 0;
+
+      switch (e.key) {
+        case 'ArrowUp':
+          deltaY = -delta;
+          break;
+        case 'ArrowDown':
+          deltaY = delta;
+          break;
+        case 'ArrowLeft':
+          deltaX = -delta;
+          break;
+        case 'ArrowRight':
+          deltaX = delta;
+          break;
+      }
+
+      if (deltaX !== 0 || deltaY !== 0) {
+        // Check what is selected and move accordingly
+        const state = useCanvasStore.getState();
+
+        // Priority: points > subpaths > paths
+        if (state.selectedCommands.length > 0) {
+          // Move selected points
+          state.moveSelectedPoints(deltaX, deltaY);
+        } else if (state.selectedSubpaths.length > 0) {
+          // Move selected subpaths
+          state.moveSelectedSubpaths(deltaX, deltaY);
+        } else if (state.selectedIds.length > 0) {
+          // Move selected elements (paths)
+          state.moveSelectedElements(deltaX, deltaY);
+        }
+      } else if (e.key === 'Delete' || e.key === 'Backspace') {
+        // Delete selected items
+        const state = useCanvasStore.getState();
+
+        // Priority: points > subpaths > paths
+        if (state.selectedCommands.length > 0) {
+          state.deleteSelectedCommands();
+        } else if (state.selectedSubpaths.length > 0) {
+          state.deleteSelectedSubpaths();
+        } else if (state.selectedIds.length > 0) {
+          state.deleteSelectedElements();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
   return (
     <svg
       ref={svgRef}
