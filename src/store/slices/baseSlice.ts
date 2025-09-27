@@ -1,5 +1,6 @@
 import type { StateCreator } from 'zustand';
 import type { CanvasElement } from '../../types';
+import type { CanvasStore } from '../canvasStore';
 
 export interface BaseSlice {
   // State
@@ -60,7 +61,7 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
   },
 
   deleteSelectedElements: () => {
-    const state = get() as any;
+    const state = get() as CanvasStore;
     state.selectedIds.forEach((id: string) => state.deleteElement(id));
     state.clearSelection();
   },
