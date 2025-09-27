@@ -5,6 +5,7 @@ import { extractSubpaths } from '../../../utils/pathParserUtils';
 import { measureSubpathBounds } from '../../../utils/measurementUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../../utils';
 import { translateCommands } from '../../../utils/transformationUtils';
+import { calculateGuidelines, calculateSnap, type Guideline, type ExcludeItem } from '../../../utils/guidelineUtils';
 
 // Helper interface for subpath bounds
 interface SubpathWithBounds {
@@ -135,6 +136,7 @@ export interface SubpathPluginSlice {
     currentY?: number;
     deltaX?: number;
     deltaY?: number;
+    activeGuidelines?: Guideline[];
   } | null;
 
   // Actions
@@ -816,16 +818,52 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
     const deltaX = canvasX - draggingSubpaths.startX;
     const deltaY = canvasY - draggingSubpaths.startY;
 
+    // Calculate combined bounds of all moving subpaths
+    let movingBounds = {
+      minX: Infinity,
+      minY: Infinity,
+      maxX: -Infinity,
+      maxY: -Infinity
+    };
+
+    draggingSubpaths.initialPositions.forEach(({ bounds }) => {
+      movingBounds.minX = Math.min(movingBounds.minX, bounds.minX);
+      movingBounds.minY = Math.min(movingBounds.minY, bounds.minY);
+      movingBounds.maxX = Math.max(movingBounds.maxX, bounds.maxX);
+      movingBounds.maxY = Math.max(movingBounds.maxY, bounds.maxY);
+    });
+
+    // Calculate guidelines from other subpaths in the same element only
+    const excludeItems: ExcludeItem[] = draggingSubpaths.initialPositions.map(p => ({elementId: p.elementId, subpathIndex: p.subpathIndex}));
+    // Exclude all other elements completely
+    state.elements.forEach(element => {
+      if (!excludeItems.some(item => item.elementId === element.id)) {
+        excludeItems.push({elementId: element.id});
+      }
+    });
+    const guidelines = calculateGuidelines(state.elements, excludeItems, state.viewport.zoom);
+
+    // Calculate snap
+    const snapResult = calculateSnap(deltaX, deltaY, movingBounds, guidelines);
+    const snappedDeltaX = snapResult.snappedDeltaX;
+    const snappedDeltaY = snapResult.snappedDeltaY;
+
     // Update dragging state for tracking
-    set((currentState) => ({
-      draggingSubpaths: currentState.draggingSubpaths ? {
-        ...currentState.draggingSubpaths,
-        currentX: canvasX,
-        currentY: canvasY,
-        deltaX,
-        deltaY
-      } : null
-    }));
+    set((currentState) => {
+      if (currentState.draggingSubpaths) {
+        return {
+          draggingSubpaths: {
+            ...currentState.draggingSubpaths,
+            currentX: canvasX,
+            currentY: canvasY,
+            deltaX: snappedDeltaX,
+            deltaY: snappedDeltaY,
+            activeGuidelines: snapResult.activeGuidelines
+          }
+        };
+      }
+      return currentState;
+    });
 
     // Apply transformations to all dragged subpaths
     // Group by elementId to avoid multiple updates to the same element
@@ -865,7 +903,7 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
       subpathUpdates.forEach(({ subpathIndex, originalCommands }) => {
         if (subpaths[subpathIndex]) {
           // Apply transformation to the ORIGINAL commands, not the current ones
-          const transformedCommands = translateCommands(originalCommands, deltaX, deltaY);
+          const transformedCommands = translateCommands(originalCommands, snappedDeltaX, snappedDeltaY);
           subpaths[subpathIndex] = { ...subpaths[subpathIndex], commands: transformedCommands };
         }
       });

@@ -2,10 +2,25 @@ import type { StateCreator } from 'zustand';
 import type { CanvasElement } from '../../../types';
 import type { CanvasStore } from '../../canvasStore';
 import { translatePathData } from '../../../utils/transformationUtils';
+import { calculateGuidelines, calculateSnap, type Guideline } from '../../../utils/guidelineUtils';
+import { measurePath } from '../../../utils/measurementUtils';
 
 export interface SelectionSlice {
   // State
   selectedIds: string[];
+  draggingElements: {
+    isDragging: boolean;
+    initialBounds: { minX: number; minY: number; maxX: number; maxY: number };
+    startX: number;
+    startY: number;
+    currentX?: number;
+    currentY?: number;
+    deltaX?: number;
+    deltaY?: number;
+    previousDeltaX?: number;
+    previousDeltaY?: number;
+    activeGuidelines?: Guideline[];
+  } | null;
 
   // Actions
   selectElement: (id: string, multiSelect?: boolean) => void;
@@ -15,11 +30,17 @@ export interface SelectionSlice {
   getSelectedPathsCount: () => number;
   moveSelectedElements: (deltaX: number, deltaY: number) => void;
   updateSelectedPaths: (properties: Partial<import('../../../types').PathData>) => void;
+
+  // Drag actions
+  startDraggingElements: (canvasX: number, canvasY: number) => void;
+  updateDraggingElements: (canvasX: number, canvasY: number) => void;
+  stopDraggingElements: () => void;
 }
 
 export const createSelectionSlice: StateCreator<CanvasStore, [], [], SelectionSlice> = (set, get, _api) => ({
   // Initial state
   selectedIds: [],
+  draggingElements: null,
 
   // Actions
   selectElement: (id, multiSelect = false) => {
@@ -121,5 +142,90 @@ export const createSelectionSlice: StateCreator<CanvasStore, [], [], SelectionSl
         return el;
       }),
     }));
+  },
+
+  // Drag actions
+  startDraggingElements: (canvasX: number, canvasY: number) => {
+    const state = get() as CanvasStore;
+    const selectedIds = get().selectedIds;
+
+    if (selectedIds.length === 0) return;
+
+    // Calculate combined bounds of selected elements
+    let initialBounds = {
+      minX: Infinity,
+      minY: Infinity,
+      maxX: -Infinity,
+      maxY: -Infinity
+    };
+
+    selectedIds.forEach(id => {
+      const element = state.elements.find(el => el.id === id);
+      if (element && element.type === 'path') {
+        const pathData = element.data as import('../../../types').PathData;
+        const bounds = measurePath(pathData.subPaths, pathData.strokeWidth || 1, state.viewport.zoom);
+        initialBounds.minX = Math.min(initialBounds.minX, bounds.minX);
+        initialBounds.minY = Math.min(initialBounds.minY, bounds.minY);
+        initialBounds.maxX = Math.max(initialBounds.maxX, bounds.maxX);
+        initialBounds.maxY = Math.max(initialBounds.maxY, bounds.maxY);
+      }
+    });
+
+    set({
+      draggingElements: {
+        isDragging: true,
+        initialBounds,
+        startX: canvasX,
+        startY: canvasY,
+        previousDeltaX: 0,
+        previousDeltaY: 0
+      }
+    });
+  },
+
+  updateDraggingElements: (canvasX: number, canvasY: number) => {
+    const state = get() as CanvasStore;
+    const draggingElements = get().draggingElements;
+
+    if (!draggingElements?.isDragging) return;
+
+    const deltaX = canvasX - draggingElements.startX;
+    const deltaY = canvasY - draggingElements.startY;
+
+    // Calculate guidelines from other elements
+    const guidelines = calculateGuidelines(state.elements, get().selectedIds.map(id => ({elementId: id})), state.viewport.zoom);
+
+    // Calculate snap
+    const snapResult = calculateSnap(deltaX, deltaY, draggingElements.initialBounds, guidelines);
+    const snappedDeltaX = snapResult.snappedDeltaX;
+    const snappedDeltaY = snapResult.snappedDeltaY;
+
+    // Calculate incremental delta
+    const incrementalDeltaX = snappedDeltaX - (draggingElements.previousDeltaX || 0);
+    const incrementalDeltaY = snappedDeltaY - (draggingElements.previousDeltaY || 0);
+
+    // Update dragging state
+    set((currentState) => ({
+      draggingElements: currentState.draggingElements ? {
+        ...currentState.draggingElements,
+        currentX: canvasX,
+        currentY: canvasY,
+        deltaX: snappedDeltaX,
+        deltaY: snappedDeltaY,
+        previousDeltaX: snappedDeltaX,
+        previousDeltaY: snappedDeltaY,
+        activeGuidelines: snapResult.activeGuidelines
+      } : null
+    }));
+
+    // Move elements with incremental delta
+    get().moveSelectedElements(incrementalDeltaX, incrementalDeltaY);
+  },
+
+  stopDraggingElements: () => {
+    set({ draggingElements: null });
+    // Auto-reset optical alignment on element movement completion
+    const currentState = get() as CanvasStore;
+    currentState.autoResetOnSelectionChange();
   },
 });

@@ -35,6 +35,10 @@ export const Canvas: React.FC = () => {
     startDraggingSubpaths,
     updateDraggingSubpaths,
     stopDraggingSubpaths,
+    startDraggingElements,
+    updateDraggingElements,
+    stopDraggingElements,
+    draggingElements,
     getTransformationBounds,
     isWorkingWithSubpaths,
     getFilteredEditablePoints,
@@ -56,6 +60,7 @@ export const Canvas: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<Point | null>(null);
   const [hasDragMoved, setHasDragMoved] = useState(false);
+  const [isDraggingElements, setIsDraggingElements] = useState(false);
   const [canvasSize, setCanvasSize] = useState({ width: window.innerWidth, height: window.innerHeight });
   const [justSelected, setJustSelected] = useState(false);
 
@@ -495,12 +500,23 @@ export const Canvas: React.FC = () => {
 
         // Check if we're working with subpaths
         if (isWorkingWithSubpaths()) {
+          // Update dragging subpaths if dragging
+          if (draggingSubpaths?.isDragging) {
+            const canvasPoint = screenToCanvas(point.x, point.y);
+            updateDraggingSubpaths(canvasPoint.x, canvasPoint.y);
+          }
           // Don't update dragStart when dragging subpaths to maintain absolute coordinates
           return;
         } else {
-          // Move entire selected elements
-          useCanvasStore.getState().moveSelectedElements(deltaX, deltaY);
-          setDragStart(point);
+          // Start dragging elements if not already started
+          if (!isDraggingElements) {
+            const canvasPoint = screenToCanvas(point.x, point.y);
+            startDraggingElements(canvasPoint.x, canvasPoint.y);
+            setIsDraggingElements(true);
+          }
+          // Update dragging elements
+          const canvasPoint = screenToCanvas(point.x, point.y);
+          updateDraggingElements(canvasPoint.x, canvasPoint.y);
         }
       }
       return;
@@ -787,6 +803,18 @@ export const Canvas: React.FC = () => {
       setIsDragging(false);
       setDragStart(null);
       setHasDragMoved(false); // Reset drag movement flag
+      
+      // Stop dragging elements if we were dragging them
+      if (isDraggingElements) {
+        stopDraggingElements();
+        setIsDraggingElements(false);
+      }
+
+      // Stop dragging subpaths if we were dragging them
+      if (draggingSubpaths?.isDragging) {
+        stopDraggingSubpaths();
+      }
+      
       return;
     }
 
@@ -1114,6 +1142,26 @@ export const Canvas: React.FC = () => {
           showDistanceRules={showDistanceRules}
           viewport={viewport}
         />
+      )}
+
+      {/* Guidelines Overlay */}
+      {((draggingElements?.activeGuidelines && draggingElements.activeGuidelines.length > 0) ||
+        (draggingSubpaths?.activeGuidelines && draggingSubpaths.activeGuidelines.length > 0)) && (
+        <g style={{ pointerEvents: 'none' }}>
+          {(draggingElements?.activeGuidelines || draggingSubpaths?.activeGuidelines || []).map((guideline, index) => (
+            <line
+              key={index}
+              x1={guideline.type === 'vertical' ? guideline.position : viewport.panX - 1000}
+              y1={guideline.type === 'horizontal' ? guideline.position : viewport.panY - 1000}
+              x2={guideline.type === 'vertical' ? guideline.position : viewport.panX + (canvasSize.width / viewport.zoom) + 1000}
+              y2={guideline.type === 'horizontal' ? guideline.position : viewport.panY + (canvasSize.height / viewport.zoom) + 1000}
+              stroke={draggingElements?.activeGuidelines ? "#007acc" : "#ff0000"}
+              strokeWidth="1"
+              strokeDasharray="5,5"
+              opacity="0.7"
+            />
+          ))}
+        </g>
       )}
 
       <FeedbackOverlay
