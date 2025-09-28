@@ -332,6 +332,7 @@ export interface EditPluginSlice {
   clearSelectedCommands: () => void;
   deleteSelectedCommands: () => void;
   deleteZCommandForMPoint: (elementId: string, commandIndex: number) => void;
+  convertZToLineForMPoint: (elementId: string, commandIndex: number) => void;
   moveToM: (elementId: string, commandIndex: number, pointIndex: number) => void;
   convertCommandType: (elementId: string, commandIndex: number) => void;
   alignLeftCommands: () => void;
@@ -1733,6 +1734,70 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     if (hasClosingZ && zCommandIndex !== -1) {
       // Remove the Z command
       const updatedCommands = commands.filter((_, index) => index !== zCommandIndex);
+
+      // Normalize and reconstruct path
+      const normalizedCommands = normalizePathCommands(updatedCommands);
+
+      const newSubPaths = extractSubpaths(normalizedCommands).map(s => s.commands);
+
+      // Update the element
+      (set as (fn: (state: FullCanvasState) => Partial<FullCanvasState>) => void)((currentState) => ({
+        ...currentState,
+        elements: currentState.elements.map((el) =>
+          el.id === elementId
+            ? { ...el, data: { ...pathData, subPaths: newSubPaths } }
+            : el
+        )
+      }));
+    }
+  },
+
+  convertZToLineForMPoint: (elementId: string, commandIndex: number) => {
+    const state = get() as FullCanvasState;
+    const element = state.elements.find((el: CanvasElement) => el.id === elementId);
+
+    if (!element || element.type !== 'path') return;
+
+    const pathData = element.data as PathData;
+    const commands = pathData.subPaths.flat();
+
+    // Check if the command at commandIndex is an M command
+    if (commands[commandIndex]?.type !== 'M') return;
+
+    // Find if there's a Z command that closes to this M point
+    let hasClosingZ = false;
+    let zCommandIndex = -1;
+
+    // Look for Z commands after this M command
+    for (let i = commandIndex + 1; i < commands.length; i++) {
+      if (commands[i].type === 'Z') {
+        // Check if this Z closes to our M point
+        let lastMIndex = -1;
+        for (let j = i - 1; j >= 0; j--) {
+          if (commands[j].type === 'M') {
+            lastMIndex = j;
+            break;
+          }
+        }
+
+        if (lastMIndex === commandIndex) {
+          hasClosingZ = true;
+          zCommandIndex = i;
+          break;
+        }
+      } else if (commands[i].type === 'M') {
+        // If we hit another M, stop looking
+        break;
+      }
+    }
+
+    if (hasClosingZ && zCommandIndex !== -1) {
+      // Replace the Z command with an L command to the M position
+      const updatedCommands = [...commands];
+      updatedCommands[zCommandIndex] = {
+        type: 'L' as const,
+        position: commands[commandIndex].position
+      };
 
       // Normalize and reconstruct path
       const normalizedCommands = normalizePathCommands(updatedCommands);

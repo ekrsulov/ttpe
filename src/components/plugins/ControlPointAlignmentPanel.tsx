@@ -10,6 +10,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
     activePlugin,
     elements,
     deleteZCommandForMPoint,
+    convertZToLineForMPoint,
     moveToM,
     convertCommandType,
     setControlPointAlignmentType
@@ -397,25 +398,46 @@ export const ControlPointAlignmentPanel: React.FC = () => {
           <div><strong style={{ color: '#333' }}>Position:</strong> ({singlePointInfo.point.x.toFixed(2)}, {singlePointInfo.point.y.toFixed(2)})</div>
           <div><strong style={{ color: '#333' }}>Location:</strong> {singlePointInfo.location}</div>
           {hasClosingZCommand(selectedCommands[0].elementId, selectedCommands[0].commandIndex) && (
-            <div style={{ marginTop: '8px' }}>
-              <button
-                onClick={() => deleteZCommandForMPoint(selectedCommands[0].elementId, selectedCommands[0].commandIndex)}
-                style={{
-                  padding: '6px 8px',
-                  backgroundColor: '#dc3545',
-                  color: '#fff',
-                  border: '1px solid #dc3545',
-                  borderRadius: '4px',
-                  fontSize: '11px',
-                  cursor: 'pointer',
-                  width: '100%',
-                  textAlign: 'center'
-                }}
-                title="Delete the Z command that closes this path"
-              >
-                Delete Z Command
-              </button>
-            </div>
+            <>
+              <div style={{ marginTop: '8px' }}>
+                <button
+                  onClick={() => deleteZCommandForMPoint(selectedCommands[0].elementId, selectedCommands[0].commandIndex)}
+                  style={{
+                    padding: '6px 8px',
+                    backgroundColor: '#dc3545',
+                    color: '#fff',
+                    border: '1px solid #dc3545',
+                    borderRadius: '4px',
+                    fontSize: '11px',
+                    cursor: 'pointer',
+                    width: '100%',
+                    textAlign: 'center'
+                  }}
+                  title="Delete the Z command that closes this path"
+                >
+                  Delete Z Command
+                </button>
+              </div>
+              <div style={{ marginTop: '8px' }}>
+                <button
+                  onClick={() => convertZToLineForMPoint(selectedCommands[0].elementId, selectedCommands[0].commandIndex)}
+                  style={{
+                    padding: '6px 8px',
+                    backgroundColor: '#28a745',
+                    color: '#fff',
+                    border: '1px solid #28a745',
+                    borderRadius: '4px',
+                    fontSize: '11px',
+                    cursor: 'pointer',
+                    width: '100%',
+                    textAlign: 'center'
+                  }}
+                  title="Convert the Z command to a line command"
+                >
+                  Convert Z to Line
+                </button>
+              </div>
+            </>
           )}
           {(singlePointInfo.command.type === 'L' || singlePointInfo.command.type === 'C') &&
             isLastPointOfSubpath(selectedCommands[0].elementId, selectedCommands[0].commandIndex, selectedCommands[0].pointIndex) &&

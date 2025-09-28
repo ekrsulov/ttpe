@@ -1,11 +1,11 @@
 import React from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { Plus, Scissors, Zap } from 'lucide-react';
+import { Plus, Scissors, Zap, Minus } from 'lucide-react';
 import { IconButton } from '../ui/IconButton';
 import { Tag } from '../ui/Tag';
 
 export const PathOperationsPanel: React.FC = () => {
-  const { selectedIds, selectedSubpaths, elements, performPathUnion, performPathSimplify } = useCanvasStore();
+  const { selectedIds, selectedSubpaths, elements, performPathUnion, performPathSubtraction, performPathSimplify } = useCanvasStore();
 
   // Get selected paths/subpaths
   const selectedPaths = elements.filter(el =>
@@ -29,6 +29,10 @@ export const PathOperationsPanel: React.FC = () => {
 
   const performUnion = () => {
     performPathUnion();
+  };
+
+  const performSubtraction = () => {
+    performPathSubtraction();
   };
 
   const performSimplify = () => {
@@ -65,6 +69,14 @@ export const PathOperationsPanel: React.FC = () => {
             >
               <Plus size={14} />
             </IconButton>
+            {totalSelectedItems === 2 && (
+              <IconButton
+                onPointerUp={performSubtraction}
+                title="Subtract (First - Second)"
+              >
+                <Minus size={14} />
+              </IconButton>
+            )}
           </>
         )}
       </div>
