@@ -152,7 +152,7 @@ export const createSelectionSlice: StateCreator<CanvasStore, [], [], SelectionSl
     if (selectedIds.length === 0) return;
 
     // Calculate combined bounds of selected elements
-    let initialBounds = {
+    const initialBounds = {
       minX: Infinity,
       minY: Infinity,
       maxX: -Infinity,

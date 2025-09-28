@@ -20,7 +20,7 @@ export interface BaseSlice {
   setDocumentName: (name: string) => void;
   setEnableGuidelines: (enabled: boolean) => void;
   saveDocument: () => void;
-  loadDocument: () => Promise<void>;
+  loadDocument: (append?: boolean) => Promise<void>;
   performPathUnion: () => void;
 }
 
@@ -127,7 +127,7 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
     URL.revokeObjectURL(url);
   },
 
-  loadDocument: async () => {
+  loadDocument: async (append: boolean = false) => {
     return new Promise((resolve, reject) => {
       const input = document.createElement('input');
       input.type = 'file';
@@ -151,17 +151,31 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
               if (state.clearSelection) {
                 state.clearSelection();
               }
-              set({
-                elements: documentData.elements,
-                documentName: documentData.documentName || 'Loaded Document',
-                enableGuidelines: documentData.enableGuidelines !== undefined ? documentData.enableGuidelines : true,
-                activePlugin: 'select'
-              });
+              if (append) {
+                // Append elements to existing ones, generating new IDs to avoid conflicts
+                const newElements = (documentData.elements as CanvasElement[]).map((element, index) => ({
+                  ...element,
+                  id: `element_${Date.now()}_${Math.random()}`,
+                  zIndex: state.elements.length + index
+                }));
+                set({
+                  elements: [...state.elements, ...newElements],
+                  activePlugin: 'select'
+                });
+              } else {
+                // Replace elements
+                set({
+                  elements: documentData.elements,
+                  documentName: documentData.documentName || 'Loaded Document',
+                  enableGuidelines: documentData.enableGuidelines !== undefined ? documentData.enableGuidelines : true,
+                  activePlugin: 'select'
+                });
+              }
               resolve();
             } else {
               reject(new Error('Invalid document format'));
             }
-          } catch (error) {
+          } catch (_error) {
             reject(new Error('Failed to parse document'));
           }
         };

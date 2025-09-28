@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { File, Save, FolderOpen } from 'lucide-react';
 import { useCanvasStore } from '../../store/canvasStore';
 
 export const FilePanel: React.FC = () => {
   const { saveDocument, loadDocument } = useCanvasStore();
+  const [appendMode, setAppendMode] = useState(false);
 
   const handleSave = () => {
     saveDocument();
@@ -11,7 +12,7 @@ export const FilePanel: React.FC = () => {
 
   const handleLoad = async () => {
     try {
-      await loadDocument();
+      await loadDocument(appendMode);
     } catch (error) {
       console.error('Failed to load document:', error);
       alert('Failed to load document. Please check the file format.');
@@ -46,6 +47,27 @@ export const FilePanel: React.FC = () => {
           <Save size={14} style={{ marginRight: '8px' }} />
           Save
         </button>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <input
+            type="checkbox"
+            id="append-mode"
+            checked={appendMode}
+            onChange={(e) => setAppendMode(e.target.checked)}
+            style={{ margin: 0 }}
+          />
+          <label
+            htmlFor="append-mode"
+            style={{
+              fontSize: '11px',
+              color: '#666',
+              cursor: 'pointer',
+              userSelect: 'none'
+            }}
+          >
+            Append to current document
+          </label>
+        </div>
 
         <button
           onClick={handleLoad}

@@ -819,7 +819,7 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
     const deltaY = canvasY - draggingSubpaths.startY;
 
     // Calculate combined bounds of all moving subpaths
-    let movingBounds = {
+    const movingBounds = {
       minX: Infinity,
       minY: Infinity,
       maxX: -Infinity,

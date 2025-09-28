@@ -46,7 +46,7 @@ export const Sidebar: React.FC = () => {
   const [showFilePanel, setShowFilePanel] = useState(false);
   const [showConfigPanel, setShowConfigPanel] = useState(false);
 
-  const plugins = [
+  const _plugins = [
     { name: 'select', label: 'Select', icon: MousePointer },
     { name: 'subpath', label: 'Subpath', icon: Route },
     { name: 'transformation', label: 'Transform', icon: VectorSquare },
@@ -58,7 +58,7 @@ export const Sidebar: React.FC = () => {
   ];
 
   // Helper function to render plugin buttons
-  const renderPluginButton = (plugin: typeof plugins[0]) => {
+  const renderPluginButton = (plugin: typeof _plugins[0]) => {
     const IconComponent = plugin.icon;
     const isDisabled = (plugin.name === 'transformation' || plugin.name === 'edit' || plugin.name === 'subpath') && selectedIds.length === 0;
     
