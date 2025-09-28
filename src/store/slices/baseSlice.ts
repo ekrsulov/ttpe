@@ -6,6 +6,7 @@ export interface BaseSlice {
   // State
   elements: CanvasElement[];
   activePlugin: string | null;
+  documentName: string;
 
   // Actions
   addElement: (element: Omit<CanvasElement, 'id' | 'zIndex'>) => void;
@@ -14,6 +15,9 @@ export interface BaseSlice {
   deleteSelectedElements: () => void;
   setActivePlugin: (plugin: string | null) => void;
   setMode: (mode: string) => void;
+  setDocumentName: (name: string) => void;
+  saveDocument: () => void;
+  loadDocument: () => Promise<void>;
 }
 
 type ModeRule = {
@@ -36,6 +40,7 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
   // Initial state
   elements: [],
   activePlugin: 'select',
+  documentName: 'Untitled Document',
 
   // Actions
   addElement: (element) => {
@@ -84,5 +89,74 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
     } else {
       set({ activePlugin: mode });
     }
+  },
+
+  setDocumentName: (name) => {
+    set({ documentName: name });
+  },
+
+  saveDocument: () => {
+    const state = get() as CanvasStore;
+    const documentData = {
+      documentName: state.documentName,
+      elements: state.elements,
+      viewport: state.viewport,
+      version: '1.0'
+    };
+
+    const dataStr = JSON.stringify(documentData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${state.documentName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  },
+
+  loadDocument: async () => {
+    return new Promise((resolve, reject) => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.json';
+      input.onchange = (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (!file) {
+          reject(new Error('No file selected'));
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const content = e.target?.result as string;
+            const documentData = JSON.parse(content);
+
+            if (documentData.elements && Array.isArray(documentData.elements)) {
+              const state = get() as CanvasStore;
+              // Clear current selection and set new document
+              if (state.clearSelection) {
+                state.clearSelection();
+              }
+              set({
+                elements: documentData.elements,
+                documentName: documentData.documentName || 'Loaded Document',
+                activePlugin: 'select'
+              });
+              resolve();
+            } else {
+              reject(new Error('Invalid document format'));
+            }
+          } catch (error) {
+            reject(new Error('Failed to parse document'));
+          }
+        };
+        reader.readAsText(file);
+      };
+      input.click();
+    });
   },
 });

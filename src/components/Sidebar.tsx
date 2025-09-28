@@ -11,6 +11,8 @@ import { ShapePanel } from './plugins/ShapePanel';
 import { PencilPanel } from './plugins/PencilPanel';
 import { ControlPointAlignmentPanel } from './plugins/ControlPointAlignmentPanel';
 import { OpticalAlignmentPanel } from './plugins/OpticalAlignmentPanel';
+import { FilePanel } from './plugins/FilePanel';
+import { SettingsPanel } from './plugins/SettingsPanel';
 import { IconButton } from './ui/IconButton';
 import {
   Hand,
@@ -22,7 +24,9 @@ import {
   MousePointerClick,
   ChevronUp,
   ChevronDown,
-  Route
+  Route,
+  File,
+  Settings
 } from 'lucide-react';
 
 export const Sidebar: React.FC = () => {
@@ -38,6 +42,8 @@ export const Sidebar: React.FC = () => {
     deactivateSmoothBrush
   } = useCanvasStore();
   const [isArrangeExpanded, setIsArrangeExpanded] = useState(false);
+  const [showFilePanel, setShowFilePanel] = useState(false);
+  const [showConfigPanel, setShowConfigPanel] = useState(false);
 
   const plugins = [
     { name: 'select', label: 'Select', icon: MousePointer },
@@ -54,6 +60,42 @@ export const Sidebar: React.FC = () => {
   const renderPluginButton = (plugin: typeof plugins[0]) => {
     const IconComponent = plugin.icon;
     const isDisabled = (plugin.name === 'transformation' || plugin.name === 'edit' || plugin.name === 'subpath') && selectedIds.length === 0;
+    
+    // Special handling for file and settings buttons
+    if (plugin.name === 'file') {
+      return (
+        <IconButton
+          key={plugin.name}
+          onPointerUp={() => setShowFilePanel(!showFilePanel)}
+          active={showFilePanel}
+          activeBgColor="#007bff"
+          activeColor="#fff"
+          size="custom"
+          customSize="30px"
+          title={plugin.label}
+        >
+          <IconComponent size={14} />
+        </IconButton>
+      );
+    }
+    
+    if (plugin.name === 'settings') {
+      return (
+        <IconButton
+          key={plugin.name}
+          onPointerUp={() => setShowConfigPanel(!showConfigPanel)}
+          active={showConfigPanel}
+          activeBgColor="#007bff"
+          activeColor="#fff"
+          size="custom"
+          customSize="30px"
+          title={plugin.label}
+        >
+          <IconComponent size={14} />
+        </IconButton>
+      );
+    }
+    
     return (
       <IconButton
         key={plugin.name}
@@ -71,11 +113,23 @@ export const Sidebar: React.FC = () => {
     );
   };
 
-  // Split plugins into rows of 4
-  const pluginRows = [];
-  for (let i = 0; i < plugins.length; i += 4) {
-    pluginRows.push(plugins.slice(i, i + 4));
-  }
+  // Create rows with 5 buttons each
+  const pluginRows = [
+    [
+      { name: 'select', label: 'Select', icon: MousePointer },
+      { name: 'subpath', label: 'Subpath', icon: Route },
+      { name: 'transformation', label: 'Transform', icon: VectorSquare },
+      { name: 'edit', label: 'Edit', icon: MousePointerClick },
+      { name: 'file', label: 'File', icon: File },
+    ],
+    [
+      { name: 'pan', label: 'Pan', icon: Hand },
+      { name: 'pencil', label: 'Pencil', icon: Pen },
+      { name: 'text', label: 'Text', icon: Type },
+      { name: 'shape', label: 'Shape', icon: Shapes },
+      { name: 'settings', label: 'Settings', icon: Settings },
+    ],
+  ];
 
   return (
     <div style={{
@@ -102,7 +156,7 @@ export const Sidebar: React.FC = () => {
             key={rowIndex}
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
+              gridTemplateColumns: 'repeat(5, 1fr)',
               gap: '2px',
               marginBottom: rowIndex < pluginRows.length - 1 ? '2px' : '0'
             }}
@@ -123,6 +177,8 @@ export const Sidebar: React.FC = () => {
         backgroundColor: '#fff'
       }}>
         <EditorPanel />
+        {showFilePanel && <FilePanel />}
+        {showConfigPanel && <SettingsPanel />}
         {activePlugin === 'edit' && (
           <EditPanel
             activePlugin={activePlugin}
