@@ -2,6 +2,7 @@ import type { StateCreator } from 'zustand';
 import type { CanvasElement, PathData } from '../../types';
 import type { CanvasStore } from '../canvasStore';
 import { performPathUnion as performUnionOp, performPathSubtraction } from '../../utils/pathOperationsUtils';
+import { commandsToString } from '../../utils/pathParserUtils';
 
 export interface BaseSlice {
   // State
@@ -21,6 +22,7 @@ export interface BaseSlice {
   setEnableGuidelines: (enabled: boolean) => void;
   saveDocument: () => void;
   loadDocument: (append?: boolean) => Promise<void>;
+  saveAsSvg: () => void;
   performPathUnion: () => void;
   performPathSubtraction: () => void;
 }
@@ -122,6 +124,92 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
     const link = document.createElement('a');
     link.href = url;
     link.download = `${state.documentName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  },
+
+  saveAsSvg: () => {
+    const state = get() as CanvasStore;
+    
+    // Calculate bounds of all elements
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    
+    state.elements.forEach(element => {
+      if (element.type === 'path') {
+        const pathData = element.data as PathData;
+        pathData.subPaths.forEach(subPath => {
+          subPath.forEach(command => {
+            if (command.type === 'M' || command.type === 'L') {
+              minX = Math.min(minX, command.position.x);
+              minY = Math.min(minY, command.position.y);
+              maxX = Math.max(maxX, command.position.x);
+              maxY = Math.max(maxY, command.position.y);
+            } else if (command.type === 'C') {
+              minX = Math.min(minX, command.position.x, command.controlPoint1.x, command.controlPoint2.x);
+              minY = Math.min(minY, command.position.y, command.controlPoint1.y, command.controlPoint2.y);
+              maxX = Math.max(maxX, command.position.x, command.controlPoint1.x, command.controlPoint2.x);
+              maxY = Math.max(maxY, command.position.y, command.controlPoint1.y, command.controlPoint2.y);
+            }
+          });
+        });
+      }
+    });
+    
+    // Add some padding
+    const padding = 20;
+    minX -= padding;
+    minY -= padding;
+    maxX += padding;
+    maxY += padding;
+    
+    const width = maxX - minX;
+    const height = maxY - minY;
+    
+    // Create SVG content
+    let svgContent = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+    svgContent += `<svg width="${width}" height="${height}" viewBox="${minX} ${minY} ${width} ${height}" xmlns="http://www.w3.org/2000/svg">\n`;
+    
+    // Add elements
+    state.elements.forEach(element => {
+      if (element.type === 'path') {
+        const pathData = element.data as PathData;
+        const pathD = commandsToString(pathData.subPaths.flat());
+        
+        // For pencil paths, if strokeColor is 'none', render with black
+        const effectiveStrokeColor = pathData.isPencilPath && pathData.strokeColor === 'none'
+          ? '#000000'
+          : pathData.strokeColor;
+        
+        svgContent += `  <path d="${pathD}" `;
+        svgContent += `stroke="${effectiveStrokeColor}" `;
+        svgContent += `stroke-width="${pathData.strokeWidth}" `;
+        svgContent += `fill="${pathData.fillColor}" `;
+        svgContent += `fill-opacity="${pathData.fillOpacity}" `;
+        svgContent += `stroke-opacity="${pathData.strokeOpacity}" `;
+        if (pathData.strokeLinecap) {
+          svgContent += `stroke-linecap="${pathData.strokeLinecap}" `;
+        }
+        if (pathData.strokeLinejoin) {
+          svgContent += `stroke-linejoin="${pathData.strokeLinejoin}" `;
+        }
+        svgContent += `vector-effect="non-scaling-stroke" />\n`;
+      }
+    });
+    
+    svgContent += `</svg>`;
+    
+    // Create blob and download
+    const dataBlob = new Blob([svgContent], { type: 'image/svg+xml' });
+    const url = URL.createObjectURL(dataBlob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${state.documentName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.svg`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

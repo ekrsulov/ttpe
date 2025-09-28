@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
-import { File, Save, FolderOpen } from 'lucide-react';
+import { File, Save, FolderOpen, Download } from 'lucide-react';
 import { useCanvasStore } from '../../store/canvasStore';
 
 export const FilePanel: React.FC = () => {
-  const { saveDocument, loadDocument } = useCanvasStore();
+  const { saveDocument, loadDocument, saveAsSvg } = useCanvasStore();
   const [appendMode, setAppendMode] = useState(false);
 
   const handleSave = () => {
     saveDocument();
+  };
+
+  const handleSaveAsSvg = () => {
+    saveAsSvg();
   };
 
   const handleLoad = async () => {
@@ -46,6 +50,27 @@ export const FilePanel: React.FC = () => {
         >
           <Save size={14} style={{ marginRight: '8px' }} />
           Save
+        </button>
+
+        <button
+          onClick={handleSaveAsSvg}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            padding: '8px 12px',
+            backgroundColor: '#28a745',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '12px',
+            width: '100%',
+            justifyContent: 'flex-start'
+          }}
+          title="Save as SVG"
+        >
+          <Download size={14} style={{ marginRight: '8px' }} />
+          Save as SVG
         </button>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
