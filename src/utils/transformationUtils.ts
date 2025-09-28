@@ -43,11 +43,62 @@ export function translateCommands(commands: Command[], deltaX: number, deltaY: n
 }
 
 /**
+ * Translates commands and rounds all points to integers.
+ */
+export function translateCommandsToIntegers(commands: Command[], deltaX: number, deltaY: number): Command[] {
+  return commands.map(cmd => {
+    if (cmd.type === 'M' || cmd.type === 'L') {
+      return {
+        ...cmd,
+        position: {
+          x: Math.round(cmd.position.x + deltaX),
+          y: Math.round(cmd.position.y + deltaY)
+        }
+      };
+    } else if (cmd.type === 'C') {
+      return {
+        ...cmd,
+        controlPoint1: {
+          ...cmd.controlPoint1,
+          x: Math.round(cmd.controlPoint1.x + deltaX),
+          y: Math.round(cmd.controlPoint1.y + deltaY)
+        },
+        controlPoint2: {
+          ...cmd.controlPoint2,
+          x: Math.round(cmd.controlPoint2.x + deltaX),
+          y: Math.round(cmd.controlPoint2.y + deltaY)
+        },
+        position: {
+          x: Math.round(cmd.position.x + deltaX),
+          y: Math.round(cmd.position.y + deltaY)
+        }
+      };
+    }
+    // Z commands don't need transformation
+    return cmd;
+  });
+}
+
+/**
  * Translates PathData by deltaX and deltaY using the consolidated logic.
  */
 export function translatePathData(pathData: PathData, deltaX: number, deltaY: number): PathData {
   const translatedSubPaths = pathData.subPaths.map((subPath: Command[]) =>
     translateCommands(subPath, deltaX, deltaY)
+  );
+
+  return {
+    ...pathData,
+    subPaths: translatedSubPaths
+  };
+}
+
+/**
+ * Translates PathData by deltaX and deltaY and rounds all points to integers.
+ */
+export function translatePathDataToIntegers(pathData: PathData, deltaX: number, deltaY: number): PathData {
+  const translatedSubPaths = pathData.subPaths.map((subPath: Command[]) =>
+    translateCommandsToIntegers(subPath, deltaX, deltaY)
   );
 
   return {

@@ -2,11 +2,6 @@ import type { Point, Command, SubPath, ControlPoint } from '../types';
 import { PATH_DECIMAL_PRECISION } from '../types';
 import { formatToPrecision } from './index';
 
-export interface PathCommand {
-  type: 'M' | 'L' | 'C' | 'Z';
-  points: Point[];
-}
-
 /**
  * Parse SVG path d string into commands and points
  */
@@ -828,6 +823,20 @@ export function commandsToString(commands: Command[]): string {
   }).join(' ');
 
   return result;
+}
+
+/**
+ * Convert subPaths to SVG d string
+ */
+export function subPathsToSvgD(subPaths: SubPath[]): string {
+  return subPaths.map(subPath => {
+    let d = commandsToString(subPath);
+    // Ensure the path is closed if it doesn't end with Z and has more than 1 point
+    if (subPath.length > 1 && subPath[subPath.length - 1].type !== 'Z') {
+      d += ' Z';
+    }
+    return d;
+  }).join(' ');
 }
 
 /**

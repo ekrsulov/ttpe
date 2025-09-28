@@ -59,6 +59,7 @@ export type CanvasStore = BaseSlice &
     addText: (x: number, y: number, text: string) => Promise<void>;
     deleteSelectedElements: () => void;
     createShape: (startPoint: Point, endPoint: Point) => void;
+    performPathSimplify: () => void;
   };
 
 // Create the store with all slices combined and temporal middleware
@@ -311,6 +312,75 @@ export const useCanvasStore = create<CanvasStore>()(
 
           // Auto-switch to select mode after creating shape
           get().setActivePlugin('select');
+        },
+
+        performPathSimplify: () => {
+          // Split subpaths into separate paths
+          const state = get();
+          const selectedPaths = state.elements.filter(el =>
+            state.selectedIds.includes(el.id) && el.type === 'path'
+          );
+
+          const selectedSubpathElements = state.selectedSubpaths.map(sp => {
+            const element = state.elements.find(el => el.id === sp.elementId);
+            if (element && element.type === 'path') {
+              return { element, subpathIndex: sp.subpathIndex };
+            }
+            return null;
+          }).filter(Boolean) as Array<{ element: import('../types').CanvasElement; subpathIndex: number }>;
+
+          // Handle full selected paths - split each subpath into separate paths
+          selectedPaths.forEach(pathElement => {
+            const pathData = pathElement.data as import('../types').PathData;
+            
+            if (pathData.subPaths.length > 1) {
+              // Create a new path for each subpath
+              pathData.subPaths.forEach((subPath) => {
+                const newPathData: import('../types').PathData = {
+                  ...pathData,
+                  subPaths: [subPath]
+                };
+                
+                get().addElement({
+                  type: 'path',
+                  data: newPathData
+                });
+              });
+              
+              // Remove the original path
+              get().deleteElement(pathElement.id);
+            }
+          });
+
+          // Handle selected subpaths - create new paths for each selected subpath
+          selectedSubpathElements.forEach(({ element, subpathIndex }) => {
+            const pathData = element.data as import('../types').PathData;
+            
+            // Create a new path with only the selected subpath
+            const newPathData: import('../types').PathData = {
+              ...pathData,
+              subPaths: [pathData.subPaths[subpathIndex]]
+            };
+            
+            get().addElement({
+              type: 'path',
+              data: newPathData
+            });
+            
+            // Remove the selected subpath from the original path
+            const remainingSubPaths = pathData.subPaths.filter((_, index) => index !== subpathIndex);
+            if (remainingSubPaths.length > 0) {
+              get().updateElement(element.id, {
+                data: {
+                  ...pathData,
+                  subPaths: remainingSubPaths
+                }
+              });
+            } else {
+              // If no subpaths left, remove the original path
+              get().deleteElement(element.id);
+            }
+          });
         },
       }),
       {

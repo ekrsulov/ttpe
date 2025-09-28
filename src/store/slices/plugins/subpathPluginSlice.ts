@@ -4,7 +4,7 @@ import type { PathData, Command, CanvasElement } from '../../../types';
 import { extractSubpaths } from '../../../utils/pathParserUtils';
 import { measureSubpathBounds } from '../../../utils/measurementUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../../utils';
-import { translateCommands } from '../../../utils/transformationUtils';
+import { translateCommands, translateCommandsToIntegers } from '../../../utils/transformationUtils';
 import { calculateGuidelines, calculateSnap, type Guideline, type ExcludeItem } from '../../../utils/guidelineUtils';
 
 // Helper interface for subpath bounds
@@ -297,7 +297,7 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
 
         subpathIndices.forEach(subpathIndex => {
           if (subpathIndex < newSubPaths.length) {
-            newSubPaths[subpathIndex] = translateCommands(newSubPaths[subpathIndex], deltaX, deltaY);
+            newSubPaths[subpathIndex] = translateCommandsToIntegers(newSubPaths[subpathIndex], deltaX, deltaY);
           }
         });
 

@@ -1657,19 +1657,19 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
             const command = newCommands[commandIndex];
             if (command.type === 'M' || command.type === 'L') {
               if (pointIndex === 0) {
-                command.position.x += deltaX;
-                command.position.y += deltaY;
+                command.position.x = Math.round(command.position.x + deltaX);
+                command.position.y = Math.round(command.position.y + deltaY);
               }
             } else if (command.type === 'C') {
               if (pointIndex === 0) {
-                command.controlPoint1.x += deltaX;
-                command.controlPoint1.y += deltaY;
+                command.controlPoint1.x = Math.round(command.controlPoint1.x + deltaX);
+                command.controlPoint1.y = Math.round(command.controlPoint1.y + deltaY);
               } else if (pointIndex === 1) {
-                command.controlPoint2.x += deltaX;
-                command.controlPoint2.y += deltaY;
+                command.controlPoint2.x = Math.round(command.controlPoint2.x + deltaX);
+                command.controlPoint2.y = Math.round(command.controlPoint2.y + deltaY);
               } else if (pointIndex === 2) {
-                command.position.x += deltaX;
-                command.position.y += deltaY;
+                command.position.x = Math.round(command.position.x + deltaX);
+                command.position.y = Math.round(command.position.y + deltaY);
               }
             }
           }

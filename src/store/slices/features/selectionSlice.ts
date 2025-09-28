@@ -1,7 +1,7 @@
 import type { StateCreator } from 'zustand';
 import type { CanvasElement } from '../../../types';
 import type { CanvasStore } from '../../canvasStore';
-import { translatePathData } from '../../../utils/transformationUtils';
+import { translatePathDataToIntegers } from '../../../utils/transformationUtils';
 import { calculateGuidelines, calculateSnap, type Guideline } from '../../../utils/guidelineUtils';
 import { measurePath } from '../../../utils/measurementUtils';
 
@@ -111,7 +111,7 @@ export const createSelectionSlice: StateCreator<CanvasStore, [], [], SelectionSl
             const pathData = el.data as import('../../../types').PathData;
             return {
               ...el,
-              data: translatePathData(pathData, deltaX, deltaY)
+              data: translatePathDataToIntegers(pathData, deltaX, deltaY)
             };
           }
         }
