@@ -833,7 +833,7 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
       movingBounds.maxY = Math.max(movingBounds.maxY, bounds.maxY);
     });
 
-    // Calculate guidelines from other subpaths in the same element only
+    // Calculate guidelines from other subpaths in the same element only (only if enabled)
     const excludeItems: ExcludeItem[] = draggingSubpaths.initialPositions.map(p => ({elementId: p.elementId, subpathIndex: p.subpathIndex}));
     // Exclude all other elements completely
     state.elements.forEach(element => {
@@ -841,7 +841,9 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
         excludeItems.push({elementId: element.id});
       }
     });
-    const guidelines = calculateGuidelines(state.elements, excludeItems, state.viewport.zoom);
+    const guidelines = get().enableGuidelines 
+      ? calculateGuidelines(state.elements, excludeItems, state.viewport.zoom)
+      : [];
 
     // Calculate snap
     const snapResult = calculateSnap(deltaX, deltaY, movingBounds, guidelines);

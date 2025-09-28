@@ -192,8 +192,10 @@ export const createSelectionSlice: StateCreator<CanvasStore, [], [], SelectionSl
     const deltaX = canvasX - draggingElements.startX;
     const deltaY = canvasY - draggingElements.startY;
 
-    // Calculate guidelines from other elements
-    const guidelines = calculateGuidelines(state.elements, get().selectedIds.map(id => ({elementId: id})), state.viewport.zoom);
+    // Calculate guidelines from other elements (only if enabled)
+    const guidelines = get().enableGuidelines 
+      ? calculateGuidelines(state.elements, get().selectedIds.map(id => ({elementId: id})), state.viewport.zoom)
+      : [];
 
     // Calculate snap
     const snapResult = calculateSnap(deltaX, deltaY, draggingElements.initialBounds, guidelines);

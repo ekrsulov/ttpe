@@ -1,15 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Settings, Save } from 'lucide-react';
 import { useCanvasStore } from '../../store/canvasStore';
 
 export const SettingsPanel: React.FC = () => {
-  const { documentName, setDocumentName } = useCanvasStore();
+  const { documentName, setDocumentName, enableGuidelines, setEnableGuidelines } = useCanvasStore();
   const [localDocumentName, setLocalDocumentName] = useState(documentName);
+  const [localEnableGuidelines, setLocalEnableGuidelines] = useState(enableGuidelines);
+
+  // Sync local state with store
+  useEffect(() => {
+    setLocalDocumentName(documentName);
+  }, [documentName]);
+
+  useEffect(() => {
+    setLocalEnableGuidelines(enableGuidelines);
+  }, [enableGuidelines]);
 
   const handleSaveSettings = () => {
     setDocumentName(localDocumentName);
+    setEnableGuidelines(localEnableGuidelines);
     // TODO: Implement additional settings save functionality
-    console.log('Settings saved:', { documentName: localDocumentName });
+    console.log('Settings saved:', { documentName: localDocumentName, enableGuidelines: localEnableGuidelines });
   };
 
   return (
@@ -48,6 +59,32 @@ export const SettingsPanel: React.FC = () => {
             onFocus={(e) => e.target.style.borderColor = '#007bff'}
             onBlur={(e) => e.target.style.borderColor = '#ccc'}
           />
+        </div>
+
+        {/* Enable Guidelines Checkbox */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <input
+            type="checkbox"
+            id="enableGuidelines"
+            checked={localEnableGuidelines}
+            onChange={(e) => setLocalEnableGuidelines(e.target.checked)}
+            style={{
+              width: '14px',
+              height: '14px',
+              cursor: 'pointer'
+            }}
+          />
+          <label
+            htmlFor="enableGuidelines"
+            style={{
+              fontSize: '12px',
+              color: '#333',
+              cursor: 'pointer',
+              userSelect: 'none'
+            }}
+          >
+            Enable Guidelines & Snapping
+          </label>
         </div>
 
         {/* Save Settings Button */}

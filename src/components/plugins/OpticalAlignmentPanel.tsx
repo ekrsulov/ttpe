@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { IconButton } from '../ui/IconButton';
 import {
@@ -13,10 +13,6 @@ import {
 
 export const OpticalAlignmentPanel: React.FC = () => {
   const {
-    // Basic canvas state
-    selectedIds,
-    selectedSubpaths,
-    activePlugin,
     // Optical alignment state
     currentAlignment,
     showMathematicalCenter,
@@ -35,17 +31,8 @@ export const OpticalAlignmentPanel: React.FC = () => {
     getAlignmentValidationMessage
   } = useCanvasStore();
 
-  // Local state only for UI
-  const [validationMessage, setValidationMessage] = useState<string | null>(null);
-
   // Use store state
   const hasAlignment = currentAlignment !== null;
-
-  // Validate alignment conditions
-  useEffect(() => {
-    const message = getAlignmentValidationMessage();
-    setValidationMessage(message);
-  }, [activePlugin, selectedIds.length, selectedSubpaths.length, getAlignmentValidationMessage]);
 
   // Apply alignment
   const handleApplyAlignment = () => {
@@ -66,7 +53,7 @@ export const OpticalAlignmentPanel: React.FC = () => {
     previewAlignment();
   };
 
-  if (activePlugin !== 'select') return null;
+  if (getAlignmentValidationMessage() !== null) return null;
 
   return (
     <div>
@@ -78,21 +65,6 @@ export const OpticalAlignmentPanel: React.FC = () => {
         <Target size={16} style={{ marginRight: '6px', color: '#666' }} />
         <span style={{ fontSize: '12px', fontWeight: '500', color: '#333' }}>Optical Alignment</span>
       </div>
-
-      {/* Validation Message */}
-      {validationMessage && (
-        <div style={{
-          padding: '6px 8px',
-          backgroundColor: '#fff3cd',
-          border: '1px solid #ffeaa7',
-          borderRadius: '3px',
-          marginBottom: '8px',
-          fontSize: '11px',
-          color: '#856404'
-        }}>
-          {validationMessage}
-        </div>
-      )}
 
       {/* Controls */}
       {canPerformOpticalAlignment() && (
