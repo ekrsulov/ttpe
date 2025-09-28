@@ -14,6 +14,7 @@ import { OpticalAlignmentPanel } from './plugins/OpticalAlignmentPanel';
 import { FilePanel } from './plugins/FilePanel';
 import { SettingsPanel } from './plugins/SettingsPanel';
 import { PathOperationsPanel } from './plugins/PathOperationsPanel';
+import { SubPathOperationsPanel } from './plugins/SubPathOperationsPanel';
 import { IconButton } from './ui/IconButton';
 import {
   Hand,
@@ -179,6 +180,7 @@ export const Sidebar: React.FC = () => {
       }}>
         <EditorPanel />
         <PathOperationsPanel />
+        <SubPathOperationsPanel />
         {showFilePanel && <FilePanel />}
         {showConfigPanel && <SettingsPanel />}
         {activePlugin === 'edit' && (

@@ -4,6 +4,7 @@ import { temporal } from 'zundo';
 import { textToPathCommands } from '../utils/textVectorizationUtils';
 
 import { extractSubpaths, createSquareCommands, createRectangleCommands, createCircleCommands, createTriangleCommands } from '../utils/pathParserUtils';
+import { reverseSubPath } from '../utils/pathOperationsUtils';
 import type { Point, Command } from '../types';
 import isDeepEqual from 'fast-deep-equal';
 
@@ -60,6 +61,7 @@ export type CanvasStore = BaseSlice &
     deleteSelectedElements: () => void;
     createShape: (startPoint: Point, endPoint: Point) => void;
     performPathSimplify: () => void;
+    performSubPathReverse: () => void;
   };
 
 // Create the store with all slices combined and temporal middleware
@@ -380,6 +382,35 @@ export const useCanvasStore = create<CanvasStore>()(
               // If no subpaths left, remove the original path
               get().deleteElement(element.id);
             }
+          });
+        },
+
+        performSubPathReverse: () => {
+          // Reverse selected subpaths
+          const state = get();
+          const selectedSubpathElements = state.selectedSubpaths.map(sp => {
+            const element = state.elements.find(el => el.id === sp.elementId);
+            if (element && element.type === 'path') {
+              return { element, subpathIndex: sp.subpathIndex };
+            }
+            return null;
+          }).filter(Boolean) as Array<{ element: import('../types').CanvasElement; subpathIndex: number }>;
+
+          // Reverse each selected subpath
+          selectedSubpathElements.forEach(({ element, subpathIndex }) => {
+            const pathData = element.data as import('../types').PathData;
+            const reversedSubPath = reverseSubPath(pathData.subPaths[subpathIndex]);
+            
+            // Update the subpath in the element
+            const updatedSubPaths = [...pathData.subPaths];
+            updatedSubPaths[subpathIndex] = reversedSubPath;
+            
+            get().updateElement(element.id, {
+              data: {
+                ...pathData,
+                subPaths: updatedSubPaths
+              }
+            });
           });
         },
       }),
