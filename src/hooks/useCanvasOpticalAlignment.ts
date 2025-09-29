@@ -1,5 +1,6 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
+import { OpticalAlignmentController } from '../canvasInteractions/OpticalAlignmentController';
 import type { AlignmentResult } from '../utils/opticalAlignmentUtils';
 
 export interface OpticalAlignmentState {
@@ -49,50 +50,84 @@ export const useCanvasOpticalAlignment = (): UseCanvasOpticalAlignmentReturn => 
     autoResetOnSelectionChange
   } = useCanvasStore();
 
+  const controller = useMemo(() => new OpticalAlignmentController({
+    calculateAlignment: storeCalculateAlignment,
+    applyAlignment: storeApplyAlignment,
+    previewAlignment: storePreviewAlignment,
+    resetAlignment: storeResetAlignment,
+    toggleMathematicalCenter: storeToggleMathematicalCenter,
+    toggleOpticalCenter: storeToggleOpticalCenter,
+    toggleMetrics: storeToggleMetrics,
+    toggleDistanceRules: storeToggleDistanceRules,
+    canPerformOpticalAlignment: storeCanPerformOpticalAlignment,
+    getAlignmentValidationMessage: storeGetAlignmentValidationMessage,
+    getCurrentAlignment: () => currentAlignment,
+    getShowMathematicalCenter: () => showMathematicalCenter,
+    getShowOpticalCenter: () => showOpticalCenter,
+    getShowMetrics: () => showMetrics,
+    getShowDistanceRules: () => showDistanceRules,
+  }), [
+    storeCalculateAlignment,
+    storeApplyAlignment,
+    storePreviewAlignment,
+    storeResetAlignment,
+    storeToggleMathematicalCenter,
+    storeToggleOpticalCenter,
+    storeToggleMetrics,
+    storeToggleDistanceRules,
+    storeCanPerformOpticalAlignment,
+    storeGetAlignmentValidationMessage,
+    currentAlignment,
+    showMathematicalCenter,
+    showOpticalCenter,
+    showMetrics,
+    showDistanceRules,
+  ]);
+
   // Auto-reset alignment when selection changes
   useEffect(() => {
     autoResetOnSelectionChange();
   }, [autoResetOnSelectionChange]);
 
   const calculateAlignment = useCallback(() => {
-    storeCalculateAlignment();
-  }, [storeCalculateAlignment]);
+    controller.calculate();
+  }, [controller]);
 
   const applyAlignment = useCallback(() => {
-    storeApplyAlignment();
-  }, [storeApplyAlignment]);
+    controller.apply();
+  }, [controller]);
 
   const previewAlignment = useCallback(() => {
-    storePreviewAlignment();
-  }, [storePreviewAlignment]);
+    controller.preview();
+  }, [controller]);
 
   const resetAlignment = useCallback(() => {
-    storeResetAlignment();
-  }, [storeResetAlignment]);
+    controller.reset();
+  }, [controller]);
 
   const toggleMathematicalCenter = useCallback(() => {
-    storeToggleMathematicalCenter();
-  }, [storeToggleMathematicalCenter]);
+    controller.toggleMathematicalCenter();
+  }, [controller]);
 
   const toggleOpticalCenter = useCallback(() => {
-    storeToggleOpticalCenter();
-  }, [storeToggleOpticalCenter]);
+    controller.toggleOpticalCenter();
+  }, [controller]);
 
   const toggleMetrics = useCallback(() => {
-    storeToggleMetrics();
-  }, [storeToggleMetrics]);
+    controller.toggleMetrics();
+  }, [controller]);
 
   const toggleDistanceRules = useCallback(() => {
-    storeToggleDistanceRules();
-  }, [storeToggleDistanceRules]);
+    controller.toggleDistanceRules();
+  }, [controller]);
 
   const canPerformOpticalAlignment = useCallback(() => {
-    return storeCanPerformOpticalAlignment();
-  }, [storeCanPerformOpticalAlignment]);
+    return controller.canPerform();
+  }, [controller]);
 
   const getAlignmentValidationMessage = useCallback(() => {
-    return storeGetAlignmentValidationMessage();
-  }, [storeGetAlignmentValidationMessage]);
+    return controller.getValidationMessage();
+  }, [controller]);
 
   return {
     // State

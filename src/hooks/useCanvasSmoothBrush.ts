@@ -1,5 +1,6 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useMemo } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
+import { SmoothBrushController } from '../canvasInteractions/SmoothBrushController';
 import type { Point } from '../types';
 import type { EditPluginSlice } from '../store/slices/plugins/editPluginSlice';
 
@@ -27,28 +28,30 @@ export const useCanvasSmoothBrush = (): UseCanvasSmoothBrushReturn => {
   const isActive = smoothBrush.isActive;
   const [cursorPosition, setCursorPosition] = useState<Point | null>(null);
 
+  const controller = useMemo(() => new SmoothBrushController({
+    activateSmoothBrush: () => useCanvasStore.getState().activateSmoothBrush(),
+    deactivateSmoothBrush: () => useCanvasStore.getState().deactivateSmoothBrush(),
+    updateSmoothBrushCursor: (x, y) => useCanvasStore.getState().updateSmoothBrushCursor(x, y),
+    applySmoothBrush: (x, y) => useCanvasStore.getState().applySmoothBrush(x, y),
+    isSmoothBrushActive: () => useCanvasStore.getState().smoothBrush.isActive,
+  }), []);
+
   const activateSmoothBrush = useCallback(() => {
-    useCanvasStore.getState().activateSmoothBrush();
-  }, []);
+    controller.activate();
+  }, [controller]);
 
   const deactivateSmoothBrush = useCallback(() => {
-    useCanvasStore.getState().deactivateSmoothBrush();
-  }, []);
+    controller.deactivate();
+  }, [controller]);
 
   const updateCursorPosition = useCallback((position: Point) => {
-    if (isActive) {
-      setCursorPosition(position);
-      // Also update the store's cursor position
-      useCanvasStore.getState().updateSmoothBrushCursor(position.x, position.y);
-    }
-  }, [isActive]);
+    setCursorPosition(position);
+    controller.updateCursor(position);
+  }, [controller]);
 
   const applyBrush = useCallback((position: Point) => {
-    if (!isActive) return;
-
-    // Apply smooth brush using the store's function
-    useCanvasStore.getState().applySmoothBrush(position.x, position.y);
-  }, [isActive]);
+    controller.apply(position);
+  }, [controller]);
 
   return {
     isActive,

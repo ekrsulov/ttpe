@@ -1,5 +1,6 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useMemo } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
+import { ShapeCreationController } from '../canvasInteractions/ShapeCreationController';
 import type { Point } from '../types';
 
 export interface ShapeFeedback {
@@ -59,6 +60,11 @@ export const useCanvasShapeCreation = (): UseCanvasShapeCreationReturn => {
     visible: false,
   });
 
+  const controller = useMemo(() => new ShapeCreationController({
+    createShape: (start, end) => useCanvasStore.getState().createShape(start, end),
+    getSelectedShape: () => useCanvasStore.getState().shape.selectedShape,
+  }), []);
+
   const startShapeCreation = useCallback((startPoint: Point) => {
     setIsCreatingShape(true);
     setShapeStart(startPoint);
@@ -79,55 +85,16 @@ export const useCanvasShapeCreation = (): UseCanvasShapeCreationReturn => {
 
     setShapeEnd(endPoint);
 
-    // Calculate dimensions
-    const rawWidth = Math.abs(endPoint.x - shapeStart.x);
-    const rawHeight = Math.abs(endPoint.y - shapeStart.y);
-
-    // Apply sticky creation (10-pixel increments) when Shift is pressed
-    let adjustedWidth = rawWidth;
-    let adjustedHeight = rawHeight;
-
-    if (shiftPressed) {
-      // Round to nearest 10-pixel increment
-      adjustedWidth = Math.round(rawWidth / 10) * 10;
-      adjustedHeight = Math.round(rawHeight / 10) * 10;
-    }
-
-    // Check if adjusted dimensions are multiples of 10
-    const isMultipleOf10 = (Math.abs(adjustedWidth) % 10 === 0) && (Math.abs(adjustedHeight) % 10 === 0);
-
-    // Calculate real dimensions based on shape type
-    const selectedShape = useCanvasStore.getState().shape.selectedShape;
-    let realWidth = adjustedWidth;
-    let realHeight = adjustedHeight;
-
-    if (selectedShape === 'square') {
-      // Square always has equal sides
-      const sideLength = Math.min(adjustedWidth, adjustedHeight);
-      realWidth = sideLength;
-      realHeight = sideLength;
-    } else if (selectedShape === 'circle') {
-      // Circle always has equal width and height (diameter)
-      const diameter = Math.min(adjustedWidth, adjustedHeight);
-      realWidth = diameter;
-      realHeight = diameter;
-    }
-    // For rectangle, realWidth and realHeight are already correct
-
-    setShapeFeedback({
-      width: Math.round(realWidth),
-      height: Math.round(realHeight),
-      visible: true,
-      isShiftPressed: shiftPressed,
-      isMultipleOf10,
-    });
-  }, [shapeStart]);
+    // Use controller to calculate feedback
+    const feedback = controller.calculateShapeFeedback(shapeStart, endPoint, shiftPressed);
+    setShapeFeedback(feedback);
+  }, [shapeStart, controller]);
 
   const endShapeCreation = useCallback(() => {
     if (!shapeStart || !shapeEnd) return;
 
-    // Create the shape
-    useCanvasStore.getState().createShape(shapeStart, shapeEnd);
+    // Use controller to complete shape creation
+    controller.completeShapeCreation(shapeStart, shapeEnd);
 
     // Reset state
     setIsCreatingShape(false);
@@ -140,7 +107,7 @@ export const useCanvasShapeCreation = (): UseCanvasShapeCreationReturn => {
       isShiftPressed: false,
       isMultipleOf10: false,
     });
-  }, [shapeStart, shapeEnd]);
+  }, [shapeStart, shapeEnd, controller]);
 
   const cancelShapeCreation = useCallback(() => {
     setIsCreatingShape(false);
@@ -157,12 +124,9 @@ export const useCanvasShapeCreation = (): UseCanvasShapeCreationReturn => {
 
   // Update point position feedback for edit mode
   const updatePointPositionFeedback = useCallback((x: number, y: number, visible: boolean) => {
-    setPointPositionFeedback({
-      x: Math.round(x),
-      y: Math.round(y),
-      visible,
-    });
-  }, []);
+    const feedback = controller.createPointPositionFeedback(x, y, visible);
+    setPointPositionFeedback(feedback);
+  }, [controller]);
 
   return {
     isCreatingShape,
