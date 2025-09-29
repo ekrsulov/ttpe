@@ -22,8 +22,6 @@ export interface ControlPointInfo {
 export interface ControlPoint extends Point, ControlPointInfo { }
 
 // Path command types
-export type CommandType = 'M' | 'L' | 'C' | 'Z';
-
 export type Command =
   | { type: 'M' | 'L'; position: Point }
   | { type: 'C'; controlPoint1: ControlPoint; controlPoint2: ControlPoint; position: Point }
@@ -66,37 +64,4 @@ export interface Viewport {
   zoom: number;
   panX: number;
   panY: number;
-}
-
-export interface PluginState {
-  pan: {
-    offsetX: number;
-    offsetY: number;
-  };
-  zoom: {
-    level: number;
-  };
-  pencil: {
-    strokeWidth: number;
-    strokeColor: string;
-    strokeOpacity: number;
-  };
-  text: {
-    text: string;
-    fontSize: number;
-    fontFamily: string;
-    fontWeight: 'normal' | 'bold';
-    fontStyle: 'normal' | 'italic';
-  };
-  select: {
-    selectedIds: string[];
-  };
-  delete: Record<string, never>; // no state
-}
-
-export interface CanvasState {
-  elements: CanvasElement[];
-  viewport: Viewport;
-  plugins: PluginState;
-  activePlugin: string | null;
 }
