@@ -19,9 +19,9 @@ export const SettingsPanel: React.FC = () => {
 
   return (
     <div style={{ backgroundColor: '#fff' }}>
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px', backgroundColor: '#f5f5f5', padding: '4px 8px', borderRadius: '4px' }}>
         <Settings size={16} style={{ marginRight: '6px', color: '#666' }} />
-        <span style={{ fontSize: '12px', fontWeight: '500', color: '#333' }}>Settings</span>
+        <span style={{ fontSize: '12px', fontWeight: '800', color: '#333' }}>Settings</span>
       </div>
 
       <div style={{ display: 'grid', gap: '6px' }}>
@@ -31,7 +31,6 @@ export const SettingsPanel: React.FC = () => {
             fontSize: '11px',
             fontWeight: '500',
             color: '#666',
-            textTransform: 'uppercase',
             letterSpacing: '0.5px'
           }}>
             Document Name
@@ -63,9 +62,9 @@ export const SettingsPanel: React.FC = () => {
             alignItems: 'center',
             justifyContent: 'center',
             padding: '8px 12px',
-            backgroundColor: '#6c757d',
-            color: 'white',
-            border: 'none',
+            backgroundColor: '#f8f9fa',
+            color: '#333',
+            border: '1px solid #dee2e6',
             borderRadius: '4px',
             cursor: 'pointer',
             fontSize: '12px',

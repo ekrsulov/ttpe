@@ -202,10 +202,8 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
         if (isWorkingWithSubpaths()) {
           // Move selected subpaths if we have a drag start
           if (dragStart && selectedSubpaths.length > 0) {
-            const canvasStart = screenToCanvas(dragStart.x, dragStart.y);
-            const canvasCurrent = screenToCanvas(point.x, point.y);
-            const deltaX = canvasCurrent.x - canvasStart.x;
-            const deltaY = canvasCurrent.y - canvasStart.y;
+            const deltaX = point.x - dragStart.x;
+            const deltaY = point.y - dragStart.y;
             moveSelectedSubpaths(deltaX, deltaY);
             setDragStart(point);
           }
@@ -291,9 +289,9 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     // Only handle dragging if it hasn't been handled by element click already
     if (isDragging) {
       setIsDragging(false);
-      setDragStart(null);
-      setHasDragMoved(false);
     }
+    setDragStart(null);
+    setHasDragMoved(false);
 
     if (isSelecting) {
       completeSelectionRectangle();

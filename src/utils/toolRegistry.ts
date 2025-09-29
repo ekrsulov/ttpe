@@ -69,9 +69,12 @@ export const toolRegistry: ToolRegistry = {
     },
   },
   select: {
-    handler: (_e, point, target, _isSmoothBrushActive, beginSelectionRectangle, _startShapeCreation) => {
+    handler: (e, point, target, _isSmoothBrushActive, beginSelectionRectangle, _startShapeCreation) => {
       // Only start selection rectangle if clicking on SVG canvas, not on elements
       if (target.tagName === 'svg') {
+        if (!e.shiftKey) {
+          useCanvasStore.getState().clearSelection();
+        }
         beginSelectionRectangle(point);
       }
     },

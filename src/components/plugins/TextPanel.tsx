@@ -74,10 +74,10 @@ export const TextPanel: React.FC = () => {
 
   return (
     <div style={{ backgroundColor: '#fff' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', backgroundColor: '#f5f5f5', padding: '4px 8px', borderRadius: '4px' }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <Type size={16} style={{ marginRight: '6px', color: '#666' }} />
-          <span style={{ fontSize: '12px', fontWeight: '500', color: '#333' }}>Text</span>
+          <span style={{ fontSize: '12px', fontWeight: '800', color: '#333' }}>Text</span>
         </div>
       </div>
 

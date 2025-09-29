@@ -2,7 +2,6 @@ import React from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Plus, Scissors, Zap, Minus, CirclePlus, Square, X, SplitSquareHorizontal } from 'lucide-react';
 import { IconButton } from '../ui/IconButton';
-import { Tag } from '../ui/Tag';
 import type { PathData } from '../../types';
 
 export const PathOperationsPanel: React.FC = () => {
@@ -61,14 +60,9 @@ export const PathOperationsPanel: React.FC = () => {
 
   return (
     <div style={{ backgroundColor: '#fff' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <Scissors size={16} style={{ marginRight: '6px', color: '#666' }} />
-          <span style={{ fontSize: '12px', fontWeight: '500', color: '#333' }}>Path Operations</span>
-        </div>
-        <Tag badge={true}>
-          {totalSelectedItems}
-        </Tag>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px', backgroundColor: '#f5f5f5', padding: '4px 8px', borderRadius: '4px' }}>
+        <Scissors size={16} style={{ marginRight: '6px', color: '#666' }} />
+        <span style={{ fontSize: '12px', fontWeight: '800', color: '#333' }}>Path Operations</span>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>

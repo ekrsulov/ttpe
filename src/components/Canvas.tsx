@@ -225,7 +225,7 @@ export const Canvas: React.FC = () => {
               }}
             />
             {/* Selection overlay */}
-            {isSelected && (activePlugin !== 'transformation' || isWorkingWithSubpaths()) && (
+            {isSelected && (activePlugin !== 'transformation' || selectedSubpaths.some(sp => sp.elementId === element.id)) && (
               <SelectionOverlay
                 element={element}
                 bounds={getTransformedBounds(element)}
@@ -251,7 +251,7 @@ export const Canvas: React.FC = () => {
             </div>
 
             {/* Edit overlay - always render but control visibility */}
-            <div style={{ display: isSelected && activePlugin === 'edit' ? 'block' : 'none' }}>
+            {(isSelected || selectedSubpaths.some(sp => sp.elementId === element.id)) && activePlugin === 'edit' && (
               <EditPointsOverlay
                 element={element}
                 selectedCommands={selectedCommands}
@@ -264,10 +264,10 @@ export const Canvas: React.FC = () => {
                 onStartDraggingPoint={startDraggingPoint}
                 onSelectCommand={selectCommand}
               />
-            </div>
+            )}
 
             {/* Subpath overlay - always render but control visibility */}
-            <div style={{ display: isSelected && activePlugin === 'subpath' ? 'block' : 'none' }}>
+            {activePlugin === 'subpath' && element.type === 'path' && (element.data as import('../types').PathData).subPaths?.length > 1 && (
               <SubpathOverlay
                 element={element}
                 selectedSubpaths={selectedSubpaths}
@@ -276,7 +276,7 @@ export const Canvas: React.FC = () => {
                 onSelectSubpath={selectSubpath}
                 onSetDragStart={setDragStart}
               />
-            </div>
+            )}
           </g>
         );
       }
@@ -416,8 +416,8 @@ export const Canvas: React.FC = () => {
       )}
 
       {/* Transformation Overlay */}
-      {((selectedIds.length > 0 && !isWorkingWithSubpaths()) || (selectedSubpaths.length > 0 && isWorkingWithSubpaths())) &&
-        (isWorkingWithSubpaths() ? selectedSubpaths : selectedIds).map(item => {
+      {((selectedIds.length > 0 && selectedSubpaths.length === 0) || selectedSubpaths.length > 0) &&
+        (selectedSubpaths.length > 0 ? selectedSubpaths : selectedIds).map(item => {
           const elementId = typeof item === 'string' ? item : item.elementId;
           const element = elements.find(el => el.id === elementId);
           if (!element) return null;
@@ -425,7 +425,7 @@ export const Canvas: React.FC = () => {
           // Calculate bounds for the element or subpath
           let bounds = null;
           if (element.type === 'path') {
-            if (isWorkingWithSubpaths()) {
+            if (selectedSubpaths.length > 0) {
               // For subpaths, calculate bounds for the specific subpath
               const subpathIndex = typeof item === 'string' ? 0 : item.subpathIndex;
               const pathData = element.data as import('../types').PathData;
@@ -442,14 +442,14 @@ export const Canvas: React.FC = () => {
 
           return (
             <TransformationOverlay
-              key={isWorkingWithSubpaths() ? `subpath-${elementId}-${typeof item === 'string' ? 0 : item.subpathIndex}` : elementId}
+              key={selectedSubpaths.length > 0 ? `subpath-${elementId}-${typeof item === 'string' ? 0 : item.subpathIndex}` : elementId}
               element={element}
               bounds={bounds}
               selectedSubpaths={selectedSubpaths}
               viewport={viewport}
               activePlugin={activePlugin}
               transformation={transformation}
-              isWorkingWithSubpaths={isWorkingWithSubpaths()}
+              isWorkingWithSubpaths={selectedSubpaths.length > 0}
               onTransformationHandlerPointerDown={handleTransformationHandlerPointerDown}
               onTransformationHandlerPointerUp={handleTransformationHandlerPointerUp}
             />

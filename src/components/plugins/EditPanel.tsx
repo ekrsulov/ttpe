@@ -55,10 +55,13 @@ export const EditPanel: React.FC<EditPanelProps> = ({
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        marginBottom: '8px'
+        marginBottom: '8px',
+        backgroundColor: '#f5f5f5',
+        padding: '4px 8px',
+        borderRadius: '4px'
       }}>
         <PaintBucket size={16} style={{ marginRight: '6px', color: '#666' }} />
-        <span style={{ fontSize: '12px', fontWeight: '500', color: '#333' }}>Smooth Brush</span>
+        <span style={{ fontSize: '12px', fontWeight: '800', color: '#333' }}>Smooth Brush</span>
       </div>
 
       {/* Brush Mode Toggle */}
@@ -188,9 +191,9 @@ export const EditPanel: React.FC<EditPanelProps> = ({
           style={{
             width: '100%',
             padding: '6px 8px',
-            backgroundColor: '#007bff',
-            color: 'white',
-            border: 'none',
+            backgroundColor: '#f8f9fa',
+            color: '#333',
+            border: '1px solid #dee2e6',
             borderRadius: '4px',
             fontSize: '12px',
             cursor: 'pointer'
@@ -220,17 +223,19 @@ export const EditPanel: React.FC<EditPanelProps> = ({
 
       {/* Path Simplification Section */}
       <div style={{
-        borderTop: '1px solid #e0e0e0',
         marginTop: '12px',
         paddingTop: '8px'
       }}>
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          marginBottom: '8px'
+          marginBottom: '8px',
+          backgroundColor: '#f5f5f5',
+          padding: '4px 8px',
+          borderRadius: '4px'
         }}>
           <Zap size={16} style={{ marginRight: '6px', color: '#666' }} />
-          <span style={{ fontSize: '12px', fontWeight: '500', color: '#333' }}>Path Simplification</span>
+          <span style={{ fontSize: '12px', fontWeight: '800', color: '#333' }}>Path Simplification</span>
         </div>
 
         <SliderControl
@@ -251,9 +256,9 @@ export const EditPanel: React.FC<EditPanelProps> = ({
           style={{
             width: '100%',
             padding: '6px 8px',
-            backgroundColor: '#28a745',
-            color: 'white',
-            border: 'none',
+            backgroundColor: '#f8f9fa',
+            color: '#333',
+            border: '1px solid #dee2e6',
             borderRadius: '4px',
             fontSize: '12px',
             cursor: 'pointer',

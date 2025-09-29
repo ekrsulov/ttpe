@@ -851,7 +851,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
   // Get filtered editable points - either from selected subpaths or all points
   getFilteredEditablePoints: (elementId: string) => {
     const state = get() as FullCanvasState;
-    const isSubpathMode = (get() as FullCanvasState).isWorkingWithSubpaths();
+    const hasSelectedSubpaths = state.selectedSubpaths && state.selectedSubpaths.length > 0;
 
     const element = state.elements.find((el) => el.id === elementId);
     if (!element || element.type !== 'path') return [];
@@ -860,7 +860,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     const commands = pathData.subPaths.flat();
     const allPoints = extractEditablePoints(commands);
 
-    if (!isSubpathMode) {
+    if (!hasSelectedSubpaths) {
       // Normal mode: return all points
       return allPoints;
     }

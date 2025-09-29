@@ -19,10 +19,10 @@ export const TransformationPanel: React.FC = () => {
 
   return (
     <div style={{ backgroundColor: '#fff' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', backgroundColor: '#f5f5f5', padding: '4px 8px', borderRadius: '4px' }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <VectorSquare size={16} style={{ marginRight: '6px', color: '#666' }} />
-          <span style={{ fontSize: '12px', fontWeight: '500', color: '#333' }}>Transform</span>
+          <span style={{ fontSize: '12px', fontWeight: '800', color: '#333' }}>Transform</span>
           {isSubpathMode && (
             <span style={{ fontSize: '10px', color: '#8b5cf6', marginLeft: '4px', backgroundColor: '#f3f4f6', padding: '1px 4px', borderRadius: '3px' }}>
               Subpath

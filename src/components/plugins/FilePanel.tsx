@@ -25,30 +25,31 @@ export const FilePanel: React.FC = () => {
 
   return (
     <div style={{ backgroundColor: '#fff' }}>
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px', backgroundColor: '#f5f5f5', padding: '4px 8px', borderRadius: '4px' }}>
         <File size={16} style={{ marginRight: '6px', color: '#666' }} />
-        <span style={{ fontSize: '12px', fontWeight: '500', color: '#333' }}>File</span>
+        <span style={{ fontSize: '12px', fontWeight: '800', color: '#333' }}>File</span>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+      <div style={{ display: 'flex', flexDirection: 'row', gap: '4px' }}>
         <button
           onClick={handleSave}
           style={{
             display: 'flex',
             alignItems: 'center',
+            justifyContent: 'center',
             padding: '8px 12px',
-            backgroundColor: '#007bff',
-            color: 'white',
-            border: 'none',
+            backgroundColor: '#f8f9fa',
+            color: '#333',
+            border: '1px solid #dee2e6',
             borderRadius: '4px',
             cursor: 'pointer',
             fontSize: '12px',
-            width: '100%',
-            justifyContent: 'flex-start'
+            flex: 1,
+            minWidth: 0
           }}
           title="Save"
         >
-          <Save size={14} style={{ marginRight: '8px' }} />
+          <Save size={14} style={{ marginRight: '4px' }} />
           Save
         </button>
 
@@ -57,63 +58,65 @@ export const FilePanel: React.FC = () => {
           style={{
             display: 'flex',
             alignItems: 'center',
+            justifyContent: 'center',
             padding: '8px 12px',
-            backgroundColor: '#28a745',
-            color: 'white',
-            border: 'none',
+            backgroundColor: '#f8f9fa',
+            color: '#333',
+            border: '1px solid #dee2e6',
             borderRadius: '4px',
             cursor: 'pointer',
             fontSize: '12px',
-            width: '100%',
-            justifyContent: 'flex-start'
+            flex: 1,
+            minWidth: 0
           }}
           title="Save as SVG"
         >
-          <Download size={14} style={{ marginRight: '8px' }} />
-          Save as SVG
+          <Download size={14} style={{ marginRight: '4px' }} />
+          Svg
         </button>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <input
-            type="checkbox"
-            id="append-mode"
-            checked={appendMode}
-            onChange={(e) => setAppendMode(e.target.checked)}
-            style={{ margin: 0 }}
-          />
-          <label
-            htmlFor="append-mode"
-            style={{
-              fontSize: '11px',
-              color: '#666',
-              cursor: 'pointer',
-              userSelect: 'none'
-            }}
-          >
-            Append to current document
-          </label>
-        </div>
 
         <button
           onClick={handleLoad}
           style={{
             display: 'flex',
             alignItems: 'center',
+            justifyContent: 'center',
             padding: '8px 12px',
-            backgroundColor: '#28a745',
-            color: 'white',
-            border: 'none',
+            backgroundColor: '#f8f9fa',
+            color: '#333',
+            border: '1px solid #dee2e6',
             borderRadius: '4px',
             cursor: 'pointer',
             fontSize: '12px',
-            width: '100%',
-            justifyContent: 'flex-start'
+            flex: 1,
+            minWidth: 0
           }}
           title="Load"
         >
-          <FolderOpen size={14} style={{ marginRight: '8px' }} />
+          <FolderOpen size={14} style={{ marginRight: '4px' }} />
           Load
         </button>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+        <input
+          type="checkbox"
+          id="append-mode"
+          checked={appendMode}
+          onChange={(e) => setAppendMode(e.target.checked)}
+          style={{ margin: 0 }}
+        />
+        <label
+          htmlFor="append-mode"
+          style={{
+            fontSize: '11px',
+            color: '#666',
+            cursor: 'pointer',
+            userSelect: 'none'
+          }}
+        >
+          Append to current document
+        </label>
       </div>
     </div>
   );

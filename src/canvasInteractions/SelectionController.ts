@@ -139,6 +139,8 @@ export class SelectionController {
 
     if (selectedElementIds.length > 0) {
       this.callbacks.selectElements(selectedElementIds, isShiftPressed);
+    } else if (!isShiftPressed) {
+      this.callbacks.selectElements([], false);
     }
   }
 }

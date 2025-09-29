@@ -50,6 +50,7 @@ export const EditorPanel: React.FC = () => {
   const activePlugin = useCanvasStore(state => state.activePlugin);
   const deleteSelectedSubpaths = useCanvasStore(state => state.deleteSelectedSubpaths);
   const getSelectedSubpathsCount = useCanvasStore(state => state.getSelectedSubpathsCount);
+  const getSelectedElements = useCanvasStore(state => state.getSelectedElements);
 
   const { undo, redo, pastStates, futureStates } = useTemporalState();
 
@@ -60,6 +61,7 @@ export const EditorPanel: React.FC = () => {
   const canRedo = useMemo(() => futureStates.length > 0, [futureStates.length]);
   const selectedPathsCount = useMemo(() => getSelectedPathsCount(), [getSelectedPathsCount]);
   const selectedSubpathsCount = useMemo(() => getSelectedSubpathsCount(), [getSelectedSubpathsCount]);
+  const selectedElements = useMemo(() => getSelectedElements(), [getSelectedElements]);
 
   const zoomFactor = 1.2;
   const [isExpanded, setIsExpanded] = useState(false);
@@ -161,11 +163,11 @@ export const EditorPanel: React.FC = () => {
   };
 
   // Get current values from selected elements or plugin defaults
-  const currentStrokeWidth = useMemo(() => getSelectedPathProperty('strokeWidth', pencil.strokeWidth), [pencil.strokeWidth]);
-  const currentStrokeColor = useMemo(() => getSelectedPathProperty('strokeColor', pencil.strokeColor), [pencil.strokeColor]);
-  const currentOpacity = useMemo(() => getSelectedPathProperty('strokeOpacity', pencil.strokeOpacity), [pencil.strokeOpacity]);
-  const currentFillColor = useMemo(() => getSelectedPathProperty('fillColor', pencil.fillColor), [pencil.fillColor]);
-  const currentFillOpacity = useMemo(() => getSelectedPathProperty('fillOpacity', pencil.fillOpacity), [pencil.fillOpacity]);
+  const currentStrokeWidth = useMemo(() => getSelectedPathProperty('strokeWidth', pencil.strokeWidth, selectedElements), [pencil.strokeWidth, selectedElements]);
+  const currentStrokeColor = useMemo(() => getSelectedPathProperty('strokeColor', pencil.strokeColor, selectedElements), [pencil.strokeColor, selectedElements]);
+  const currentOpacity = useMemo(() => getSelectedPathProperty('strokeOpacity', pencil.strokeOpacity, selectedElements), [pencil.strokeOpacity, selectedElements]);
+  const currentFillColor = useMemo(() => getSelectedPathProperty('fillColor', pencil.fillColor, selectedElements), [pencil.fillColor, selectedElements]);
+  const currentFillOpacity = useMemo(() => getSelectedPathProperty('fillOpacity', pencil.fillOpacity, selectedElements), [pencil.fillOpacity, selectedElements]);
 
   return (
     <div style={{ backgroundColor: '#fff' }}>
