@@ -26,18 +26,18 @@ export const FontSelector: React.FC<FontSelectorProps> = ({
     font.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Close dropdown when clicking outside
+  // Auto-scroll to selected font when dropdown opens
   useEffect(() => {
-    const handleClickOutside = (event: PointerEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-        setSearchTerm('');
-      }
-    };
-
-    document.addEventListener('pointerdown', handleClickOutside);
-    return () => document.removeEventListener('pointerdown', handleClickOutside);
-  }, []);
+    if (isOpen && value) {
+      // Small delay to ensure the dropdown is rendered
+      setTimeout(() => {
+        const selectedElement = dropdownRef.current?.querySelector('[data-selected="true"]') as HTMLElement;
+        if (selectedElement) {
+          selectedElement.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        }
+      }, 0);
+    }
+  }, [isOpen, value]);
 
   // Handle keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -172,6 +172,7 @@ export const FontSelector: React.FC<FontSelectorProps> = ({
             filteredFonts.map((font) => (
               <div
                 key={font}
+                data-selected={font === value ? "true" : undefined}
                 onPointerUp={() => handleFontSelect(font)}
                 style={{
                   padding: '8px 12px',

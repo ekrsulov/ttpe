@@ -33,8 +33,8 @@ export const Tag: React.FC<TagProps> = ({
     style.border = 'none';
     style.borderRadius = '12px';
     style.padding = '1px 6px';
-    style.fontWeight = '600';
-    style.fontSize = '9px';
+    style.fontWeight = '800';
+    style.fontSize = '10px';
   }
 
   return (

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Type, Bold, Italic } from 'lucide-react';
 import { getAvailableFonts } from '../../utils';
-import { FontSelector } from '../FontSelector';
+import { FontSelector } from '../ui/FontSelector';
 import { IconButton } from '../ui/IconButton';
 
 export const TextPanel: React.FC = () => {
@@ -124,8 +124,7 @@ export const TextPanel: React.FC = () => {
                 e.stopPropagation();
               }
             }}
-            min="8"
-            max="72"
+            min="4"
             style={{
               width: '50px',
               padding: '4px',
