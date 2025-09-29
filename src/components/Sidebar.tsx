@@ -39,9 +39,12 @@ export const Sidebar: React.FC = () => {
     setMode,
     selectedIds,
     smoothBrush,
+    pathSimplification,
     selectedCommands,
     updateSmoothBrush,
+    updatePathSimplification,
     applySmoothBrush,
+    applyPathSimplification,
     activateSmoothBrush,
     deactivateSmoothBrush
   } = useCanvasStore();
@@ -190,9 +193,12 @@ export const Sidebar: React.FC = () => {
             <EditPanel
               activePlugin={activePlugin}
               smoothBrush={smoothBrush}
+              pathSimplification={pathSimplification}
               selectedCommands={selectedCommands}
               updateSmoothBrush={updateSmoothBrush}
+              updatePathSimplification={updatePathSimplification}
               applySmoothBrush={applySmoothBrush}
+              applyPathSimplification={applyPathSimplification}
               activateSmoothBrush={activateSmoothBrush}
               deactivateSmoothBrush={deactivateSmoothBrush}
             />

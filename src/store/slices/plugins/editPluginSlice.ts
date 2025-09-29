@@ -1,5 +1,6 @@
 import type { StateCreator } from 'zustand';
 import { extractEditablePoints, updateCommands, normalizePathCommands, extractSubpaths, simplifyPoints, findPairedControlPoint, determineControlPointAlignment, adjustControlPointForAlignment } from '../../../utils/pathParserUtils';
+import { performPathSimplifyPaperJS } from '../../../utils/pathOperationsUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../../utils';
 import type { CanvasElement, PathData, Point, Command, SubPath } from '../../../types';
 import type { CanvasStore } from '../../canvasStore';
@@ -316,6 +317,9 @@ export interface EditPluginSlice {
       y: number;
     }>;
   };
+  pathSimplification: {
+    tolerance: number;
+  };
   controlPointAlignment: {
     enabled: boolean;
     controlPoints: Record<string, import('../../../types').ControlPointInfo>;
@@ -356,6 +360,8 @@ export interface EditPluginSlice {
   activateSmoothBrush: () => void;
   deactivateSmoothBrush: () => void;
   updateSmoothBrushCursor: (x: number, y: number) => void;
+  updatePathSimplification: (settings: Partial<EditPluginSlice['pathSimplification']>) => void;
+  applyPathSimplification: () => void;
   updateControlPointAlignment: (elementId: string, commandIndex: number, pointIndex: number) => void;
   getControlPointInfo: (elementId: string, commandIndex: number, pointIndex: number) => import('../../../types').ControlPointInfo | null;
   setControlPointAlignmentType: (elementId: string, commandIndex1: number, pointIndex1: number, commandIndex2: number, pointIndex2: number, type: import('../../../types').ControlPointType) => void;
@@ -379,6 +385,9 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     simplificationTolerance: 0.3,
     minDistance: 0.5,
     affectedPoints: [],
+  },
+  pathSimplification: {
+    tolerance: 1.0,
   },
   controlPointAlignment: {
     enabled: true,
@@ -1210,6 +1219,88 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     set((state) => ({
       smoothBrush: { ...state.smoothBrush, cursorX: x, cursorY: y },
     }));
+  },
+
+  updatePathSimplification: (settings) => {
+    set((state) => ({
+      pathSimplification: { ...state.pathSimplification, ...settings },
+    }));
+  },
+
+  applyPathSimplification: () => {
+    const state = get() as FullCanvasState;
+    const { tolerance } = state.pathSimplification;
+
+    // Find the active element (first selected or the one being edited)
+    let targetElementId = null;
+    if (state.selectedCommands.length > 0) {
+      targetElementId = state.selectedCommands[0].elementId;
+    } else if (state.editingPoint) {
+      targetElementId = state.editingPoint.elementId;
+    }
+
+    if (!targetElementId) return;
+
+    const element = state.elements.find((el) => el.id === targetElementId);
+    if (!element || element.type !== 'path') return;
+
+    const pathData = element.data as import('../../../types').PathData;
+    const allCommands = pathData.subPaths.flat();
+
+    if (state.selectedCommands.length > 0) {
+      // Simplify only the selected portion of the path
+      const selectedElementId = state.selectedCommands[0].elementId;
+      const selectedCommands = state.selectedCommands.filter(cmd => cmd.elementId === selectedElementId);
+
+      // Get the range of commands that contain the selected points
+      const commandIndices = selectedCommands.map(cmd => cmd.commandIndex);
+      const minCommandIndex = Math.min(...commandIndices);
+      const maxCommandIndex = Math.max(...commandIndices);
+
+      // Extract the subpath containing the selected commands
+      const selectedSubPath = allCommands.slice(minCommandIndex, maxCommandIndex + 1);
+
+      // Create a temporary path data with just the selected subpath
+      const tempPathData: import('../../../types').PathData = {
+        ...pathData,
+        subPaths: [selectedSubPath]
+      };
+
+      // Simplify the selected portion
+      const simplifiedTempPath = performPathSimplifyPaperJS(tempPathData, tolerance);
+
+      if (simplifiedTempPath && simplifiedTempPath.subPaths.length > 0) {
+        const simplifiedCommands = simplifiedTempPath.subPaths[0];
+
+        // Replace the original commands with the simplified ones
+        const newCommands = [...allCommands];
+        newCommands.splice(minCommandIndex, maxCommandIndex - minCommandIndex + 1, ...simplifiedCommands);
+
+        // Reconstruct subpaths
+        const newSubPaths = extractSubpaths(newCommands).map(s => s.commands);
+
+        // Update the element
+        (get() as FullCanvasState).updateElement(targetElementId, {
+          data: {
+            ...pathData,
+            subPaths: newSubPaths
+          },
+        });
+
+        // Clear selection after simplification
+        state.clearSelectedCommands();
+      }
+    } else {
+      // No selection - simplify the entire path
+      const simplifiedPathData = performPathSimplifyPaperJS(pathData, tolerance);
+
+      if (simplifiedPathData) {
+        // Update the element with the simplified path
+        (get() as FullCanvasState).updateElement(targetElementId, {
+          data: simplifiedPathData,
+        });
+      }
+    }
   },
 
   updateControlPointAlignment: (elementId: string, commandIndex: number, pointIndex: number) => {

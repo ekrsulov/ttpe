@@ -221,7 +221,33 @@ function convertPathDataToPaperPath(pathData: PathData): paper.Path | paper.Comp
   }
 }
 
-function convertPaperPathToPathData(paperPath: paper.Path): PathData {
+function convertPaperPathToPathData(paperPath: paper.Path | paper.CompoundPath): PathData {
+  if (paperPath instanceof paper.CompoundPath) {
+    // Handle CompoundPath by combining all children into a single PathData with multiple subPaths
+    const pathData: PathData = {
+      subPaths: [],
+      strokeWidth: paperPath.strokeWidth || 1,
+      strokeColor: paperPath.strokeColor ? (paperPath.strokeColor as paper.Color).toCSS(true) : '#000000',
+      strokeOpacity: 1,
+      fillColor: paperPath.fillColor ? (paperPath.fillColor as paper.Color).toCSS(true) : '#000000',
+      fillOpacity: 1,
+    };
+
+    for (const child of paperPath.children) {
+      if (child instanceof paper.Path) {
+        const childData = convertSinglePaperPathToPathData(child);
+        pathData.subPaths.push(...childData.subPaths);
+      }
+    }
+
+    return pathData;
+  } else {
+    // Handle single Path
+    return convertSinglePaperPathToPathData(paperPath);
+  }
+}
+
+function convertSinglePaperPathToPathData(paperPath: paper.Path): PathData {
   const pathData: PathData = {
     subPaths: [],
     strokeWidth: paperPath.strokeWidth || 1,
@@ -238,16 +264,18 @@ function convertPaperPathToPathData(paperPath: paper.Path): PathData {
     // M at first point
     subPath.push({ type: 'M', position: { x: Math.round(segments[0].point.x), y: Math.round(segments[0].point.y) } });
     
-    // C for each segment
-    for (let i = 0; i < segments.length; i++) {
-      const nextIndex = (i + 1) % segments.length;
+    // Process segments (for closed paths, the last segment connects back to first, so we handle it with Z)
+    const numSegmentsToProcess = paperPath.closed ? segments.length - 1 : segments.length - 1;
+    
+    for (let i = 0; i < numSegmentsToProcess; i++) {
+      const nextIndex = i + 1;
       const cp1x = segments[i].point.x + segments[i].handleOut.x;
       const cp1y = segments[i].point.y + segments[i].handleOut.y;
       const cp2x = segments[nextIndex].point.x + segments[nextIndex].handleIn.x;
       const cp2y = segments[nextIndex].point.y + segments[nextIndex].handleIn.y;
       
-      const hasHandles = Math.abs(segments[i].handleOut.x) > 0 || Math.abs(segments[i].handleOut.y) > 0 ||
-                         Math.abs(segments[nextIndex].handleIn.x) > 0 || Math.abs(segments[nextIndex].handleIn.y) > 0;
+      const hasHandles = Math.abs(segments[i].handleOut.x) > 0.01 || Math.abs(segments[i].handleOut.y) > 0.01 ||
+                         Math.abs(segments[nextIndex].handleIn.x) > 0.01 || Math.abs(segments[nextIndex].handleIn.y) > 0.01;
       
       if (hasHandles) {
         subPath.push({
@@ -261,8 +289,10 @@ function convertPaperPathToPathData(paperPath: paper.Path): PathData {
       }
     }
     
-    // For closed paths, the last command closes to start, which is correct
-    // Don't remove it
+    // Close the path if it was closed in Paper.js
+    if (paperPath.closed) {
+      subPath.push({ type: 'Z' });
+    }
     
     pathData.subPaths.push(subPath);
   }
@@ -426,6 +456,33 @@ export function performPathDivide(path1: PathData, path2: PathData): PathData | 
     return null;
   } catch (error) {
     console.error('Error performing path divide:', error);
+    return null;
+  }
+}
+
+/**
+ * Simplify a path using Paper.js simplify method
+ */
+export function performPathSimplifyPaperJS(pathData: PathData, tolerance: number = 2.5): PathData | null {
+  try {
+    const paperPath = convertPathDataToPaperPath(pathData);
+    
+    if (paperPath instanceof paper.Path) {
+      paperPath.simplify(tolerance);
+      return convertPaperPathToPathData(paperPath);
+    } else if (paperPath instanceof paper.CompoundPath) {
+      // For compound paths, simplify each child path
+      for (const child of paperPath.children) {
+        if (child instanceof paper.Path) {
+          child.simplify(tolerance);
+        }
+      }
+      return convertPaperPathToPathData(paperPath);
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error simplifying path with Paper.js:', error);
     return null;
   }
 }

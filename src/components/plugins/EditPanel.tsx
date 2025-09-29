@@ -1,5 +1,5 @@
 import React from 'react';
-import { PaintBucket } from 'lucide-react';
+import { PaintBucket, Zap } from 'lucide-react';
 import { SliderControl } from '../ui/SliderControl';
 
 interface EditPanelProps {
@@ -20,13 +20,18 @@ interface EditPanelProps {
       y: number;
     }>;
   };
+  pathSimplification: {
+    tolerance: number;
+  };
   selectedCommands: Array<{
     elementId: string;
     commandIndex: number;
     pointIndex: number;
   }>;
   updateSmoothBrush: (brush: Partial<EditPanelProps['smoothBrush']>) => void;
+  updatePathSimplification: (settings: Partial<EditPanelProps['pathSimplification']>) => void;
   applySmoothBrush: () => void;
+  applyPathSimplification: () => void;
   activateSmoothBrush: () => void;
   deactivateSmoothBrush: () => void;
 }
@@ -34,9 +39,12 @@ interface EditPanelProps {
 export const EditPanel: React.FC<EditPanelProps> = ({
   activePlugin,
   smoothBrush,
+  pathSimplification,
   selectedCommands,
   updateSmoothBrush,
+  updatePathSimplification,
   applySmoothBrush,
+  applyPathSimplification,
   activateSmoothBrush,
   deactivateSmoothBrush,
 }) => {
@@ -209,6 +217,52 @@ export const EditPanel: React.FC<EditPanelProps> = ({
           }
         </div>
       )}
+
+      {/* Path Simplification Section */}
+      <div style={{
+        borderTop: '1px solid #e0e0e0',
+        marginTop: '12px',
+        paddingTop: '8px'
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          marginBottom: '8px'
+        }}>
+          <Zap size={16} style={{ marginRight: '6px', color: '#666' }} />
+          <span style={{ fontSize: '12px', fontWeight: '500', color: '#333' }}>Path Simplification</span>
+        </div>
+
+        <SliderControl
+          label="Tolerance:"
+          value={pathSimplification.tolerance}
+          min={0.01}
+          max={10}
+          step={0.01}
+          onChange={(value) => updatePathSimplification({ tolerance: value })}
+          formatter={(value) => value.toFixed(2)}
+          labelWidth="50px"
+          valueWidth="35px"
+        />
+
+        {/* Apply Button */}
+        <button
+          onClick={() => applyPathSimplification()}
+          style={{
+            width: '100%',
+            padding: '6px 8px',
+            backgroundColor: '#28a745',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            fontSize: '12px',
+            cursor: 'pointer',
+            marginTop: '8px'
+          }}
+        >
+          Simplify Path
+        </button>
+      </div>
     </div>
   );
 };
