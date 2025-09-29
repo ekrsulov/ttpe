@@ -1,7 +1,7 @@
 import type { StateCreator } from 'zustand';
 import type { CanvasElement, PathData } from '../../types';
 import type { CanvasStore } from '../canvasStore';
-import { performPathUnion as performUnionOp, performPathSubtraction } from '../../utils/pathOperationsUtils';
+import { performPathUnion as performUnionOp, performPathSubtraction, performPathUnionPaperJS } from '../../utils/pathOperationsUtils';
 import { commandsToString } from '../../utils/pathParserUtils';
 
 export interface BaseSlice {
@@ -24,6 +24,7 @@ export interface BaseSlice {
   loadDocument: (append?: boolean) => Promise<void>;
   saveAsSvg: () => void;
   performPathUnion: () => void;
+  performPathUnionPaperJS: () => void;
   performPathSubtraction: () => void;
 }
 
@@ -302,6 +303,54 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
     if (allPaths.length < 2) return;
 
     const result = performUnionOp(allPaths);
+    if (result) {
+      // Replace the first selected element with the result
+      const firstSelectedId = state.selectedIds[0] || selectedSubpathElements[0]?.element.id;
+      if (firstSelectedId) {
+        state.updateElement(firstSelectedId, { data: result });
+        
+        // Remove other selected elements
+        const idsToRemove = [
+          ...state.selectedIds.filter(id => id !== firstSelectedId),
+          ...selectedSubpathElements.slice(1).map(se => se.element.id)
+        ].filter((id, index, arr) => arr.indexOf(id) === index); // Remove duplicates
+        
+        idsToRemove.forEach(id => {
+          state.deleteElement(id);
+        });
+      }
+    }
+    // If result is null, do nothing (operation not supported for these paths)
+  },
+
+  performPathUnionPaperJS: () => {
+    const state = get() as CanvasStore;
+    const selectedPaths = state.elements.filter(el =>
+      state.selectedIds.includes(el.id) && el.type === 'path'
+    ).map(el => el.data as PathData);
+
+    const selectedSubpathElements = state.selectedSubpaths.map(sp => {
+      const element = state.elements.find(el => el.id === sp.elementId);
+      if (element && element.type === 'path') {
+        return { element, subpathIndex: sp.subpathIndex };
+      }
+      return null;
+    }).filter(Boolean) as Array<{ element: CanvasElement; subpathIndex: number }>;
+
+    // Handle selected subpaths by extracting them as separate paths
+    const subpathPaths = selectedSubpathElements.map(({ element, subpathIndex }) => {
+      const pathData = element.data as PathData;
+      return {
+        ...pathData,
+        subPaths: [pathData.subPaths[subpathIndex]]
+      };
+    });
+
+    const allPaths = [...selectedPaths, ...subpathPaths];
+
+    if (allPaths.length < 2) return;
+
+    const result = performPathUnionPaperJS(allPaths);
     if (result) {
       // Replace the first selected element with the result
       const firstSelectedId = state.selectedIds[0] || selectedSubpathElements[0]?.element.id;

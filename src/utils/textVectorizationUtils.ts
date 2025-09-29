@@ -2,7 +2,7 @@
 import { potrace, init } from 'esm-potrace-wasm';
 import { parsePath, serialize, absolutize, normalize } from 'path-data-parser';
 import { PATH_DECIMAL_PRECISION, formatToPrecision } from './index';
-import type { Command } from '../types';
+import type { Command, Point } from '../types';
 import { parsePathD } from './pathParserUtils';
 
 // Cache for text vectorization to improve performance
@@ -323,8 +323,47 @@ export const textToPathCommands = async (
   }
 
   // Parse the string into commands
-  return parsePathD(pathString);
+  const commands = parsePathD(pathString);
+
+  // Post-process to remove unnecessary Z commands
+  return removeUnnecessaryZCommands(commands);
 };
+
+/**
+ * Remove Z commands where the last point is already at the starting point of the subpath
+ */
+function removeUnnecessaryZCommands(commands: Command[]): Command[] {
+  const result: Command[] = [];
+  let currentSubpathStart: Point | null = null;
+
+  for (let i = 0; i < commands.length; i++) {
+    const command = commands[i];
+
+    if (command.type === 'M') {
+      currentSubpathStart = command.position;
+      result.push(command);
+    } else if (command.type === 'Z') {
+      // Check if we need to keep this Z
+      if (currentSubpathStart && i > 0) {
+        const lastCommand = commands[i - 1];
+        if (lastCommand.type !== 'Z' && lastCommand.position) {
+          // Check if last point equals start point
+          const lastPoint = lastCommand.position;
+          if (Math.abs(lastPoint.x - currentSubpathStart.x) < 0.001 &&
+              Math.abs(lastPoint.y - currentSubpathStart.y) < 0.001) {
+            // Skip this Z as it's unnecessary
+            continue;
+          }
+        }
+      }
+      result.push(command);
+    } else {
+      result.push(command);
+    }
+  }
+
+  return result;
+}
 
 
 

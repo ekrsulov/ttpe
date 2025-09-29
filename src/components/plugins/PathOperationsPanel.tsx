@@ -1,11 +1,11 @@
 import React from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { Plus, Scissors, Zap, Minus } from 'lucide-react';
+import { Plus, Scissors, Zap, Minus, CirclePlus } from 'lucide-react';
 import { IconButton } from '../ui/IconButton';
 import { Tag } from '../ui/Tag';
 
 export const PathOperationsPanel: React.FC = () => {
-  const { selectedIds, selectedSubpaths, elements, performPathUnion, performPathSubtraction, performPathSimplify } = useCanvasStore();
+  const { selectedIds, selectedSubpaths, elements, performPathUnion, performPathSubtraction, performPathSimplify, performPathUnionPaperJS } = useCanvasStore();
 
   // Get selected paths/subpaths
   const selectedPaths = elements.filter(el =>
@@ -29,6 +29,10 @@ export const PathOperationsPanel: React.FC = () => {
 
   const performUnion = () => {
     performPathUnion();
+  };
+
+  const performUnionPaperJS = () => {
+    performPathUnionPaperJS();
   };
 
   const performSubtraction = () => {
@@ -65,9 +69,15 @@ export const PathOperationsPanel: React.FC = () => {
           <>
             <IconButton
               onPointerUp={performUnion}
-              title="Union (Add all paths)"
+              title="Union (Simple)"
             >
               <Plus size={14} />
+            </IconButton>
+            <IconButton
+              onPointerUp={performUnionPaperJS}
+              title="Union (Paper.js)"
+            >
+              <CirclePlus size={14} />
             </IconButton>
             {totalSelectedItems === 2 && (
               <IconButton

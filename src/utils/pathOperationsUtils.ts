@@ -30,6 +30,47 @@ export function performPathUnion(paths: PathData[]): PathData | null {
 }
 
 /**
+ * Perform union operation on multiple paths using Paper.js boolean operations
+ */
+export function performPathUnionPaperJS(paths: PathData[]): PathData | null {
+  if (paths.length === 0) return null;
+  if (paths.length === 1) return paths[0];
+
+  try {
+    // Use boolean union for all cases
+    const paperPaths = paths.map(p => convertPathDataToPaperPath(p));
+    let result: paper.PathItem = paperPaths[0];
+    for (let i = 1; i < paperPaths.length; i++) {
+      result = result.unite(paperPaths[i]);
+    }
+
+    if (result instanceof paper.Path) {
+      return convertPaperPathToPathData(result);
+    } else if (result instanceof paper.CompoundPath) {
+      const combinedPathData: PathData = {
+        subPaths: [],
+        strokeWidth: 1,
+        strokeColor: '#000000',
+        strokeOpacity: 1,
+        fillColor: '#000000',
+        fillOpacity: 1,
+      };
+      for (const child of result.children) {
+        if (child instanceof paper.Path) {
+          const childData = convertPaperPathToPathData(child);
+          combinedPathData.subPaths.push(...childData.subPaths);
+        }
+      }
+      return combinedPathData;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error performing path union with Paper.js:', error);
+    return null;
+  }
+}
+
+/**
  * Reverse the direction of a subpath
  */
 export function reverseSubPath(subPath: SubPath): SubPath {
@@ -106,9 +147,11 @@ function convertPathDataToPaperPath(pathData: PathData): paper.Path | paper.Comp
     paperPath.strokeWidth = pathData.strokeWidth || 1;
 
     const subPath = pathData.subPaths[0];
+    let firstPosition: { x: number, y: number } | null = null;
     for (const cmd of subPath) {
       switch (cmd.type) {
         case 'M':
+          firstPosition = cmd.position;
           paperPath.moveTo(new paper.Point(cmd.position.x, cmd.position.y));
           break;
         case 'L':
@@ -126,6 +169,13 @@ function convertPathDataToPaperPath(pathData: PathData): paper.Path | paper.Comp
           break;
       }
     }
+    // If the path ends at the starting point, close it
+    if (firstPosition && subPath.length > 1) {
+      const lastCmd = subPath[subPath.length - 1];
+      if (lastCmd.type !== 'Z' && lastCmd.position && Math.abs(lastCmd.position.x - firstPosition.x) < 0.001 && Math.abs(lastCmd.position.y - firstPosition.y) < 0.001) {
+        paperPath.closePath();
+      }
+    }
     return paperPath;
   } else {
     // Multiple subPaths, create CompoundPath
@@ -136,9 +186,11 @@ function convertPathDataToPaperPath(pathData: PathData): paper.Path | paper.Comp
       childPath.strokeColor = pathData.strokeColor ? new paper.Color(pathData.strokeColor) : null;
       childPath.strokeWidth = pathData.strokeWidth || 1;
 
+      let firstPosition: { x: number, y: number } | null = null;
       for (const cmd of subPath) {
         switch (cmd.type) {
           case 'M':
+            firstPosition = cmd.position;
             childPath.moveTo(new paper.Point(cmd.position.x, cmd.position.y));
             break;
           case 'L':
@@ -154,6 +206,13 @@ function convertPathDataToPaperPath(pathData: PathData): paper.Path | paper.Comp
           case 'Z':
             childPath.closePath();
             break;
+        }
+      }
+      // If the path ends at the starting point, close it
+      if (firstPosition && subPath.length > 1) {
+        const lastCmd = subPath[subPath.length - 1];
+        if (lastCmd.type !== 'Z' && lastCmd.position && Math.abs(lastCmd.position.x - firstPosition.x) < 0.001 && Math.abs(lastCmd.position.y - firstPosition.y) < 0.001) {
+          childPath.closePath();
         }
       }
       compoundPath.children.push(childPath);
@@ -176,68 +235,45 @@ function convertPaperPathToPathData(paperPath: paper.Path): PathData {
   const segments = paperPath.segments;
   if (segments.length > 0) {
     const subPath: SubPath = [];
+    // M at first point
+    subPath.push({ type: 'M', position: { x: Math.round(segments[0].point.x), y: Math.round(segments[0].point.y) } });
+    
+    // C for each segment
     for (let i = 0; i < segments.length; i++) {
-      const segment = segments[i];
-      if (i === 0) {
-        subPath.push({ type: 'M', position: { x: Math.round(segment.point.x), y: Math.round(segment.point.y) } });
+      const nextIndex = (i + 1) % segments.length;
+      const cp1x = segments[i].point.x + segments[i].handleOut.x;
+      const cp1y = segments[i].point.y + segments[i].handleOut.y;
+      const cp2x = segments[nextIndex].point.x + segments[nextIndex].handleIn.x;
+      const cp2y = segments[nextIndex].point.y + segments[nextIndex].handleIn.y;
+      
+      const hasHandles = Math.abs(segments[i].handleOut.x) > 0 || Math.abs(segments[i].handleOut.y) > 0 ||
+                         Math.abs(segments[nextIndex].handleIn.x) > 0 || Math.abs(segments[nextIndex].handleIn.y) > 0;
+      
+      if (hasHandles) {
+        subPath.push({
+          type: 'C',
+          controlPoint1: { x: Math.round(cp1x), y: Math.round(cp1y), commandIndex: 0, pointIndex: 0, type: 'independent' as const, anchor: { x: Math.round(segments[nextIndex].point.x), y: Math.round(segments[nextIndex].point.y) }, isControl: true },
+          controlPoint2: { x: Math.round(cp2x), y: Math.round(cp2y), commandIndex: 0, pointIndex: 0, type: 'independent' as const, anchor: { x: Math.round(segments[nextIndex].point.x), y: Math.round(segments[nextIndex].point.y) }, isControl: true },
+          position: { x: Math.round(segments[nextIndex].point.x), y: Math.round(segments[nextIndex].point.y) }
+        });
       } else {
-        if (segment.handleIn && segment.handleOut) {
-          let isCurve = false;
-          let cp1x = 0, cp1y = 0, cp2x = 0, cp2y = 0;
-          if (i > 0) {
-            const prevSegment = segments[i - 1];
-            cp1x = prevSegment.handleOut.x + prevSegment.point.x;
-            cp1y = prevSegment.handleOut.y + prevSegment.point.y;
-            cp2x = segment.handleIn.x + segment.point.x;
-            cp2y = segment.handleIn.y + segment.point.y;
-            isCurve = Math.abs(prevSegment.handleOut.x) > 15.0 || Math.abs(prevSegment.handleOut.y) > 15.0 || Math.abs(segment.handleIn.x) > 15.0 || Math.abs(segment.handleIn.y) > 15.0;
-            if (isCurve) {
-              const prevPoint = segments[i - 1].point;
-              const cp1 = new paper.Point(cp1x, cp1y);
-              const cp2 = new paper.Point(cp2x, cp2y);
-              const dist1 = distanceToLine(cp1, prevPoint, segment.point);
-              const dist2 = distanceToLine(cp2, prevPoint, segment.point);
-              isCurve = isCurve && (dist1 > 0.1 || dist2 > 0.1);
-            }
-          }
-          if (isCurve) {
-            // It's a curve
-            subPath.push({
-              type: 'C',
-              controlPoint1: { x: Math.round(cp1x), y: Math.round(cp1y), commandIndex: 0, pointIndex: 0, type: 'independent' as const, anchor: { x: Math.round(segment.point.x), y: Math.round(segment.point.y) }, isControl: true },
-              controlPoint2: { x: Math.round(cp2x), y: Math.round(cp2y), commandIndex: 0, pointIndex: 0, type: 'independent' as const, anchor: { x: Math.round(segment.point.x), y: Math.round(segment.point.y) }, isControl: true },
-              position: { x: Math.round(segment.point.x), y: Math.round(segment.point.y) }
-            });
-          } else {
-            subPath.push({ type: 'L', position: { x: Math.round(segment.point.x), y: Math.round(segment.point.y) } });
-          }
-        } else {
-          subPath.push({ type: 'L', position: { x: Math.round(segment.point.x), y: Math.round(segment.point.y) } });
-        }
+        subPath.push({ type: 'L', position: { x: Math.round(segments[nextIndex].point.x), y: Math.round(segments[nextIndex].point.y) } });
       }
     }
-    if (paperPath.closed) {
-      subPath.push({ type: 'Z' });
-    }
+    
+    // For closed paths, the last command closes to start, which is correct
+    // Don't remove it
+    
     pathData.subPaths.push(subPath);
   }
 
   return pathData;
-}
-
-export function performPathSubtraction(path1: PathData, path2: PathData): PathData | null {
+}export function performPathSubtraction(path1: PathData, path2: PathData): PathData | null {
   try {
     const paperPath1 = convertPathDataToPaperPath(path1);
     const paperPath2 = convertPathDataToPaperPath(path2);
 
     let result = paperPath1.subtract(paperPath2);
-
-    // Resolve crossings to handle self-intersections and knots
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (result && typeof (result as any).resolveCrossings === 'function') {
-      // @ts-expect-error resolveCrossings exists in runtime but not in types
-      result = result.resolveCrossings();
-    }
 
     if (result instanceof paper.Path) {
       return convertPaperPathToPathData(result);
@@ -273,9 +309,3 @@ export function performPathSubtraction(path1: PathData, path2: PathData): PathDa
   }
 }
 
-function distanceToLine(point: paper.Point, lineStart: paper.Point, lineEnd: paper.Point): number {
-  const A = lineStart.y - lineEnd.y;
-  const B = lineEnd.x - lineStart.x;
-  const C = lineStart.x * lineEnd.y - lineEnd.x * lineStart.y;
-  return Math.abs(A * point.x + B * point.y + C) / Math.sqrt(A * A + B * B);
-}
