@@ -9,7 +9,6 @@ export interface BaseSlice {
   elements: CanvasElement[];
   activePlugin: string | null;
   documentName: string;
-  enableGuidelines: boolean;
 
   // Actions
   addElement: (element: Omit<CanvasElement, 'id' | 'zIndex'>) => void;
@@ -19,7 +18,6 @@ export interface BaseSlice {
   setActivePlugin: (plugin: string | null) => void;
   setMode: (mode: string) => void;
   setDocumentName: (name: string) => void;
-  setEnableGuidelines: (enabled: boolean) => void;
   saveDocument: () => void;
   loadDocument: (append?: boolean) => Promise<void>;
   saveAsSvg: () => void;
@@ -52,7 +50,6 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
   elements: [],
   activePlugin: 'select',
   documentName: 'Untitled Document',
-  enableGuidelines: true,
 
   // Actions
   addElement: (element) => {
@@ -107,17 +104,12 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
     set({ documentName: name });
   },
 
-  setEnableGuidelines: (enabled) => {
-    set({ enableGuidelines: enabled });
-  },
-
   saveDocument: () => {
     const state = get() as CanvasStore;
     const documentData = {
       documentName: state.documentName,
       elements: state.elements,
       viewport: state.viewport,
-      enableGuidelines: state.enableGuidelines,
       version: '1.0'
     };
 
@@ -260,7 +252,6 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
                 set({
                   elements: documentData.elements,
                   documentName: documentData.documentName || 'Loaded Document',
-                  enableGuidelines: documentData.enableGuidelines !== undefined ? documentData.enableGuidelines : true,
                   activePlugin: 'select'
                 });
               }

@@ -2,7 +2,7 @@ import React from 'react';
 import { getContrastingColor, getEffectiveColorForContrast } from '../../utils/canvasColorUtils';
 import { commandsToString } from '../../utils/pathParserUtils';
 import { mapSvgToCanvas } from '../../utils/coordinateUtils';
-import type { Command, PathData, SubPath } from '../../types';
+import type { PathData, SubPath, Point } from '../../types';
 
 interface SubpathOverlayProps {
   element: {
@@ -15,21 +15,6 @@ interface SubpathOverlayProps {
     elementId: string;
     subpathIndex: number;
   }>;
-  draggingSubpaths: {
-    isDragging: boolean;
-    initialPositions: Array<{
-      elementId: string;
-      subpathIndex: number;
-      bounds: { minX: number; minY: number; maxX: number; maxY: number };
-      originalCommands: Command[];
-    }>;
-    startX: number;
-    startY: number;
-    currentX?: number;
-    currentY?: number;
-    deltaX?: number;
-    deltaY?: number;
-  } | null;
   viewport: {
     zoom: number;
     panX: number;
@@ -39,19 +24,16 @@ interface SubpathOverlayProps {
     isActive: boolean;
   };
   onSelectSubpath: (elementId: string, subpathIndex: number, multiSelect?: boolean) => void;
-  onStartDraggingSubpaths: (canvasX: number, canvasY: number) => void;
-  onStopDraggingSubpaths: () => void;
+  onSetDragStart: (point: Point) => void;
 }
 
 export const SubpathOverlay: React.FC<SubpathOverlayProps> = ({
   element,
   selectedSubpaths,
-  draggingSubpaths,
   viewport,
   smoothBrush,
   onSelectSubpath,
-  onStartDraggingSubpaths,
-  onStopDraggingSubpaths,
+  onSetDragStart,
 }) => {
   if (element.type !== 'path') return null;
 
@@ -135,21 +117,14 @@ export const SubpathOverlay: React.FC<SubpathOverlayProps> = ({
                   // Convert to canvas coordinates
                   const canvasPoint = mapSvgToCanvas(svgX, svgY, viewport);
 
-                  // Start dragging subpaths
-                  onStartDraggingSubpaths(canvasPoint.x, canvasPoint.y);
+                  // Set drag start for subpaths
+                  onSetDragStart(canvasPoint);
                 }
               }
             }}
             onPointerMove={() => {
               // Let Canvas handle all pointer move events for subpaths
               // The overlay just needs to ensure the drag is started correctly
-            }}
-            onPointerUp={(e) => {
-              e.stopPropagation();
-              // Ensure subpath dragging is stopped when releasing on the overlay
-              if (draggingSubpaths?.isDragging) {
-                onStopDraggingSubpaths();
-              }
             }}
           />
         );

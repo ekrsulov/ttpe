@@ -1,8 +1,7 @@
 import type { StateCreator } from 'zustand';
 import type { CanvasElement } from '../../../types';
 import type { CanvasStore } from '../../canvasStore';
-import { translatePathDataToIntegers } from '../../../utils/transformationUtils';
-import { calculateGuidelines, calculateSnap, type Guideline } from '../../../utils/guidelineUtils';
+import { translatePathData } from '../../../utils/transformationUtils';
 import { measurePath } from '../../../utils/measurementUtils';
 
 export interface SelectionSlice {
@@ -19,7 +18,6 @@ export interface SelectionSlice {
     deltaY?: number;
     previousDeltaX?: number;
     previousDeltaY?: number;
-    activeGuidelines?: Guideline[];
   } | null;
 
   // Actions
@@ -111,7 +109,7 @@ export const createSelectionSlice: StateCreator<CanvasStore, [], [], SelectionSl
             const pathData = el.data as import('../../../types').PathData;
             return {
               ...el,
-              data: translatePathDataToIntegers(pathData, deltaX, deltaY)
+              data: translatePathData(pathData, deltaX, deltaY)
             };
           }
         }
@@ -184,7 +182,6 @@ export const createSelectionSlice: StateCreator<CanvasStore, [], [], SelectionSl
   },
 
   updateDraggingElements: (canvasX: number, canvasY: number) => {
-    const state = get() as CanvasStore;
     const draggingElements = get().draggingElements;
 
     if (!draggingElements?.isDragging) return;
@@ -192,19 +189,12 @@ export const createSelectionSlice: StateCreator<CanvasStore, [], [], SelectionSl
     const deltaX = canvasX - draggingElements.startX;
     const deltaY = canvasY - draggingElements.startY;
 
-    // Calculate guidelines from other elements (only if enabled)
-    const guidelines = get().enableGuidelines 
-      ? calculateGuidelines(state.elements, get().selectedIds.map(id => ({elementId: id})), state.viewport.zoom)
-      : [];
+    // Calculate incremental delta (unsnapped)
+    const incrementalDeltaX = deltaX - (draggingElements.previousDeltaX || 0);
+    const incrementalDeltaY = deltaY - (draggingElements.previousDeltaY || 0);
 
-    // Calculate snap
-    const snapResult = calculateSnap(deltaX, deltaY, draggingElements.initialBounds, guidelines);
-    const snappedDeltaX = snapResult.snappedDeltaX;
-    const snappedDeltaY = snapResult.snappedDeltaY;
-
-    // Calculate incremental delta
-    const incrementalDeltaX = snappedDeltaX - (draggingElements.previousDeltaX || 0);
-    const incrementalDeltaY = snappedDeltaY - (draggingElements.previousDeltaY || 0);
+    // Move elements with incremental delta
+    get().moveSelectedElements(incrementalDeltaX, incrementalDeltaY);
 
     // Update dragging state
     set((currentState) => ({
@@ -212,16 +202,12 @@ export const createSelectionSlice: StateCreator<CanvasStore, [], [], SelectionSl
         ...currentState.draggingElements,
         currentX: canvasX,
         currentY: canvasY,
-        deltaX: snappedDeltaX,
-        deltaY: snappedDeltaY,
-        previousDeltaX: snappedDeltaX,
-        previousDeltaY: snappedDeltaY,
-        activeGuidelines: snapResult.activeGuidelines
+        deltaX,
+        deltaY,
+        previousDeltaX: deltaX,
+        previousDeltaY: deltaY
       } : null
     }));
-
-    // Move elements with incremental delta
-    get().moveSelectedElements(incrementalDeltaX, incrementalDeltaY);
   },
 
   stopDraggingElements: () => {

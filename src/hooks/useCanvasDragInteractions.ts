@@ -7,8 +7,8 @@ import type { CanvasElement, SubPath, Point, ControlPointInfo, Command, PathData
 interface DragCallbacks {
   onUpdateDraggingPoint: (x: number, y: number) => void;
   onStopDraggingPoint: () => void;
-  onUpdateDraggingSubpaths: (x: number, y: number) => void;
-  onStopDraggingSubpaths: () => void;
+  onUpdateDraggingSubpaths?: (x: number, y: number) => void;
+  onStopDraggingSubpaths?: () => void;
   onUpdateElement: (id: string, updates: Partial<CanvasElement>) => void;
   getControlPointInfo: (elementId: string, commandIndex: number, pointIndex: number) => ControlPointInfo | null;
 }
@@ -35,7 +35,7 @@ interface DragState {
     startX: number;
     startY: number;
   } | null;
-  draggingSubpaths: {
+  draggingSubpaths?: {
     isDragging: boolean;
     initialPositions: Array<{
       elementId: string;
@@ -115,7 +115,7 @@ export const useCanvasDragInteractions = ({
             );
           } else if (draggingSubpaths?.isDragging) {
             // Update subpath dragging
-            callbacks.onUpdateDraggingSubpaths(
+            callbacks.onUpdateDraggingSubpaths?.(
               formatToPrecision(canvasX, PATH_DECIMAL_PRECISION),
               formatToPrecision(canvasY, PATH_DECIMAL_PRECISION)
             );
@@ -451,7 +451,7 @@ export const useCanvasDragInteractions = ({
         } else if (draggingSelection?.isDragging) {
           callbacks.onStopDraggingPoint(); // This will handle draggingSelection cleanup
         } else if (draggingSubpaths?.isDragging) {
-          callbacks.onStopDraggingSubpaths();
+          callbacks.onStopDraggingSubpaths?.();
         }
       }
     };
@@ -467,7 +467,7 @@ export const useCanvasDragInteractions = ({
       } else if (draggingSelection?.isDragging) {
         callbacks.onStopDraggingPoint();
       } else if (draggingSubpaths?.isDragging) {
-        callbacks.onStopDraggingSubpaths();
+        callbacks.onStopDraggingSubpaths?.();
       }
     };
 

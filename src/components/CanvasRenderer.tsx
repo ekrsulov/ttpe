@@ -1,7 +1,7 @@
 import React from 'react';
 import { measurePath } from '../utils/measurementUtils';
 import { commandsToString } from '../utils/pathParserUtils';
-import type { Point, CanvasElement, ControlPointInfo, Command } from '../types';
+import type { Point, CanvasElement, ControlPointInfo } from '../types';
 import { useCanvasDragInteractions } from '../hooks/useCanvasDragInteractions';
 import { SelectionOverlay, EditPointsOverlay, SubpathOverlay, ShapePreview } from './overlays';
 import { TransformationOverlay } from './overlays/TransformationOverlay';
@@ -22,21 +22,6 @@ interface CanvasRendererProps {
     elementId: string;
     subpathIndex: number;
   }>;
-  draggingSubpaths: {
-    isDragging: boolean;
-    initialPositions: Array<{
-      elementId: string;
-      subpathIndex: number;
-      bounds: { minX: number; minY: number; maxX: number; maxY: number };
-      originalCommands: Command[];
-    }>;
-    startX: number;
-    startY: number;
-    currentX?: number;
-    currentY?: number;
-    deltaX?: number;
-    deltaY?: number;
-  } | null;
   transformation: {
     showCoordinates?: boolean;
     showRulers?: boolean;
@@ -88,9 +73,7 @@ interface CanvasRendererProps {
   onUpdateElement: (id: string, updates: Partial<CanvasElement>) => void;
   onSelectCommand: (command: { elementId: string; commandIndex: number; pointIndex: number }, multiSelect?: boolean) => void;
   onSelectSubpath: (elementId: string, subpathIndex: number, multiSelect?: boolean) => void;
-  onStartDraggingSubpaths: (canvasX: number, canvasY: number) => void;
-  onUpdateDraggingSubpaths: (canvasX: number, canvasY: number) => void;
-  onStopDraggingSubpaths: () => void;
+  onSetDragStart: (point: Point) => void;
   getTransformationBounds: () => { minX: number; minY: number; maxX: number; maxY: number } | null;
   isWorkingWithSubpaths: () => boolean;
   getFilteredEditablePoints: (elementId: string) => Array<{
@@ -121,7 +104,6 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   selectedIds,
   selectedCommands,
   selectedSubpaths,
-  draggingSubpaths,
   transformation,
   shape,
   elements,
@@ -144,9 +126,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   onUpdateElement,
   onSelectCommand,
   onSelectSubpath,
-  onStartDraggingSubpaths,
-  onUpdateDraggingSubpaths,
-  onStopDraggingSubpaths,
+  onSetDragStart,
   isWorkingWithSubpaths,
   getFilteredEditablePoints,
   getControlPointInfo,
@@ -156,8 +136,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
   const { dragPosition } = useCanvasDragInteractions({
     dragState: {
       editingPoint,
-      draggingSelection,
-      draggingSubpaths
+      draggingSelection
     },
     viewport,
     elements: elements as CanvasElement[],
@@ -165,8 +144,6 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
     callbacks: {
       onUpdateDraggingPoint,
       onStopDraggingPoint,
-      onUpdateDraggingSubpaths,
-      onStopDraggingSubpaths,
       onUpdateElement,
       getControlPointInfo
     }
@@ -260,12 +237,10 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = ({
               <SubpathOverlay
                 element={element}
                 selectedSubpaths={selectedSubpaths}
-                draggingSubpaths={draggingSubpaths}
                 viewport={viewport}
                 smoothBrush={smoothBrush}
                 onSelectSubpath={onSelectSubpath}
-                onStartDraggingSubpaths={onStartDraggingSubpaths}
-                onStopDraggingSubpaths={onStopDraggingSubpaths}
+                onSetDragStart={onSetDragStart}
               />
             )}
           </g>
