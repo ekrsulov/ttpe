@@ -1,6 +1,7 @@
 import React, { useState, Suspense } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
 import { IconButton } from './ui/IconButton';
+import type { PathData } from '../types';
 import {
   Hand,
   Pen,
@@ -38,6 +39,8 @@ export const Sidebar: React.FC = () => {
     activePlugin,
     setMode,
     selectedIds,
+    selectedSubpaths,
+    elements,
     smoothBrush,
     pathSimplification,
     selectedCommands,
@@ -66,7 +69,19 @@ export const Sidebar: React.FC = () => {
   // Helper function to render plugin buttons
   const renderPluginButton = (plugin: typeof _plugins[0]) => {
     const IconComponent = plugin.icon;
-    const isDisabled = (plugin.name === 'transformation' || plugin.name === 'edit' || plugin.name === 'subpath') && selectedIds.length === 0;
+    
+    let isDisabled = false;
+    if (plugin.name === 'transformation' || plugin.name === 'edit') {
+      // Enable only if exactly one path is selected OR exactly one subpath is selected,
+      // but disable if more than one subpath is selected
+      isDisabled = !(selectedIds.length === 1 || selectedSubpaths.length === 1) || selectedSubpaths.length > 1;
+    } else if (plugin.name === 'subpath') {
+      // Enable only if exactly one path is selected and it has subpaths
+      const selectedElements = elements.filter(el => selectedIds.includes(el.id));
+      isDisabled = !(selectedElements.length === 1 && 
+                     selectedElements[0].type === 'path' && 
+                     (selectedElements[0].data as PathData).subPaths?.length > 0);
+    }
     
     // Special handling for file and settings buttons
     if (plugin.name === 'file') {
@@ -185,7 +200,7 @@ export const Sidebar: React.FC = () => {
       }}>
         <Suspense fallback={<div style={{ height: '20px', backgroundColor: '#f8f9fa' }} />}>
           <EditorPanel />
-          <PathOperationsPanel />
+          {activePlugin === 'select' && <PathOperationsPanel />}
           <SubPathOperationsPanel />
           {showFilePanel && <FilePanel />}
           {showConfigPanel && <SettingsPanel />}
