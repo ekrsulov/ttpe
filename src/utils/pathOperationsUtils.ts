@@ -264,11 +264,11 @@ function convertSinglePaperPathToPathData(paperPath: paper.Path): PathData {
     // M at first point
     subPath.push({ type: 'M', position: { x: Math.round(segments[0].point.x), y: Math.round(segments[0].point.y) } });
     
-    // Process segments (for closed paths, the last segment connects back to first, so we handle it with Z)
-    const numSegmentsToProcess = paperPath.closed ? segments.length - 1 : segments.length - 1;
+    // Process segments
+    const numSegmentsToProcess = paperPath.closed ? segments.length : segments.length - 1;
     
     for (let i = 0; i < numSegmentsToProcess; i++) {
-      const nextIndex = i + 1;
+      const nextIndex = paperPath.closed ? (i + 1) % segments.length : i + 1;
       const cp1x = segments[i].point.x + segments[i].handleOut.x;
       const cp1y = segments[i].point.y + segments[i].handleOut.y;
       const cp2x = segments[nextIndex].point.x + segments[nextIndex].handleIn.x;
