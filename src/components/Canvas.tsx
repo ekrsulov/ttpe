@@ -155,6 +155,8 @@ export const Canvas: React.FC = () => {
 
   const {
     handleElementClick,
+    handleElementDoubleClick,
+    handleSubpathDoubleClick,
     handleElementPointerDown,
     handleTransformationHandlerPointerDown,
     handleTransformationHandlerPointerUp,
@@ -220,6 +222,7 @@ export const Canvas: React.FC = () => {
               opacity={pathData.strokeOpacity}
               onPointerUp={(e) => handleElementClick(element.id, e)}
               onPointerDown={(e) => handleElementPointerDown(element.id, e)}
+              onDoubleClick={(e) => handleElementDoubleClick(element.id, e)}
               style={{
                 cursor: activePlugin === 'select' ? (isSelected ? 'move' : 'pointer') : 'default',
                 pointerEvents: activePlugin === 'subpath' ? 'none' : 'auto'
@@ -276,6 +279,7 @@ export const Canvas: React.FC = () => {
                 smoothBrush={smoothBrush}
                 onSelectSubpath={selectSubpath}
                 onSetDragStart={setDragStart}
+                onSubpathDoubleClick={handleSubpathDoubleClick}
               />
             )}
           </g>

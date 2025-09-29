@@ -25,6 +25,7 @@ interface SubpathOverlayProps {
   };
   onSelectSubpath: (elementId: string, subpathIndex: number, multiSelect?: boolean) => void;
   onSetDragStart: (point: Point) => void;
+  onSubpathDoubleClick: (elementId: string, subpathIndex: number, e: React.MouseEvent<SVGPathElement>) => void;
 }
 
 export const SubpathOverlay: React.FC<SubpathOverlayProps> = ({
@@ -34,6 +35,7 @@ export const SubpathOverlay: React.FC<SubpathOverlayProps> = ({
   smoothBrush,
   onSelectSubpath,
   onSetDragStart,
+  onSubpathDoubleClick,
 }) => {
   if (element.type !== 'path') return null;
 
@@ -114,6 +116,7 @@ export const SubpathOverlay: React.FC<SubpathOverlayProps> = ({
               // Let Canvas handle all pointer move events for subpaths
               // The overlay just needs to ensure the drag is started correctly
             }}
+            onDoubleClick={(e) => onSubpathDoubleClick(element.id, index, e)}
           />
         );
       })}

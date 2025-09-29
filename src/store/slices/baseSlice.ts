@@ -168,6 +168,13 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
 
   setActivePlugin: (plugin) => {
     set({ activePlugin: plugin });
+    // When switching to select mode, clear any subpath selections
+    if (plugin === 'select') {
+      const state = get() as any;
+      if (state.clearSubpathSelection) {
+        state.clearSubpathSelection();
+      }
+    }
   },
 
   setMode: (mode) => {
@@ -179,10 +186,24 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
         // Apagar, pero pasar al fallback o al mismo
         const fallback = rule.defaultFallback || mode;
         set({ activePlugin: fallback });
+        // When switching to select mode, clear any subpath selections
+        if (fallback === 'select') {
+          const state = get() as any;
+          if (state.clearSubpathSelection) {
+            state.clearSubpathSelection();
+          }
+        }
       }
       // Para modos que no se pueden apagar, no hacer nada
     } else {
       set({ activePlugin: mode });
+      // When switching to select mode, clear any subpath selections
+      if (mode === 'select') {
+        const state = get() as any;
+        if (state.clearSubpathSelection) {
+          state.clearSubpathSelection();
+        }
+      }
     }
   },
 

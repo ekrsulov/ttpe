@@ -119,6 +119,60 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     }
   }, [activePlugin, isDragging, dragStart, selectedIds, selectElement, setIsDragging, setDragStart, setHasDragMoved, hasDragMoved]);
 
+  // Handle element double click
+  const handleElementDoubleClick = useCallback((elementId: string, e: React.MouseEvent<SVGPathElement>) => {
+    e.stopPropagation();
+    e.preventDefault();
+
+    const state = useCanvasStore.getState();
+    const element = state.elements.find(el => el.id === elementId);
+
+    if (!element || element.type !== 'path') return;
+
+    const pathData = element.data as import('../types').PathData;
+
+    // Ensure the element is selected
+    if (!state.selectedIds.includes(elementId)) {
+      state.selectElement(elementId, false);
+    }
+
+    if (activePlugin === 'select') {
+      // Only proceed if this element is selected and it's the only one selected
+      if (state.selectedIds.length === 1 && state.selectedIds[0] === elementId) {
+        if (pathData.subPaths.length === 1) {
+          // Single subpath -> go to transformation mode
+          state.setActivePlugin('transformation');
+        } else if (pathData.subPaths.length > 1) {
+          // Multiple subpaths -> go to subpath mode
+          state.setActivePlugin('subpath');
+        }
+      }
+    } else if (activePlugin === 'transformation') {
+      // In transformation mode -> go to edit mode
+      state.setActivePlugin('edit');
+    }
+  }, [activePlugin]);
+
+  // Handle subpath double click
+  const handleSubpathDoubleClick = useCallback((elementId: string, subpathIndex: number, e: React.MouseEvent<SVGPathElement>) => {
+    e.stopPropagation();
+    e.preventDefault();
+
+    const state = useCanvasStore.getState();
+
+    if (activePlugin === 'subpath') {
+      // Check if this specific subpath is selected and it's the only one selected
+      const selectedSubpath = state.selectedSubpaths.find(
+        sp => sp.elementId === elementId && sp.subpathIndex === subpathIndex
+      );
+
+      if (selectedSubpath && state.selectedSubpaths.length === 1) {
+        // Single subpath selected -> go to transformation mode
+        state.setActivePlugin('transformation');
+      }
+    }
+  }, [activePlugin]);
+
   // Handle element pointer down for drag
   const handleElementPointerDown = useCallback((elementId: string, e: React.PointerEvent) => {
     if (activePlugin === 'select') {
@@ -319,10 +373,45 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
 
   // Handle keyboard events for tools
   const handleKeyboard = useCallback((e: KeyboardEvent) => {
+    // Handle Escape key to clear selections or go back to select mode
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      
+      const store = useCanvasStore.getState();
+      
+      // If in select mode and there are element selections, clear them first
+      if (activePlugin === 'select' && selectedIds.length > 0) {
+        store.clearSelection();
+        return;
+      }
+      
+      // If in subpath mode and there are subpath selections, clear them first
+      if (activePlugin === 'subpath' && selectedSubpaths.length > 0) {
+        store.clearSubpathSelection();
+        return;
+      }
+      
+      // If in edit mode and there are selected commands, clear them first
+      if (activePlugin === 'edit' && store.selectedCommands.length > 0) {
+        store.clearSelectedCommands();
+        return;
+      }
+      
+      // If in transformation or edit mode and there are subpath selections, go to subpath mode
+      if ((activePlugin === 'transformation' || activePlugin === 'edit') && selectedSubpaths.length > 0) {
+        store.setActivePlugin('subpath');
+        return;
+      }
+      
+      // If no selections to clear, go back to select mode
+      store.setActivePlugin('select');
+      return;
+    }
+
     if (activePlugin) {
       pluginManager.handleKeyboardEvent(activePlugin, e);
     }
-  }, [activePlugin, pluginManager]);
+  }, [activePlugin, pluginManager, selectedIds, selectedSubpaths]);
 
   // Handle wheel
   const handleWheel = useCallback((e: React.WheelEvent<SVGSVGElement>) => {
@@ -338,6 +427,8 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
 
   return {
     handleElementClick,
+    handleElementDoubleClick,
+    handleSubpathDoubleClick,
     handleElementPointerDown,
     handleTransformationHandlerPointerDown,
     handleTransformationHandlerPointerUp,
