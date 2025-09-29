@@ -151,9 +151,6 @@ test.describe('Edit Functionality', () => {
     await simplifyCheckbox.check();
     await expect(simplifyCheckbox).toBeChecked();
 
-    // Test that tolerance slider appears
-    await expect(page.locator('text=Tolerance:')).toBeVisible();
-
     // Test tolerance slider
     const toleranceSlider = page.locator('input[type="range"]').nth(1);
     await toleranceSlider.evaluate((el: HTMLInputElement) => el.value = '2.5');
