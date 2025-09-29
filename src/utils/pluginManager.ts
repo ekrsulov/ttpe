@@ -1,0 +1,88 @@
+import React from 'react';
+import type { ToolRegistry, ToolConfig } from './toolRegistry';
+import type { Point } from '../types';
+
+export class PluginManager {
+  private registry: ToolRegistry = {};
+
+  constructor(initialRegistry: ToolRegistry) {
+    this.registry = { ...initialRegistry };
+  }
+
+  /**
+   * Register a new tool
+   */
+  registerTool(name: string, config: ToolConfig): void {
+    this.registry[name] = config;
+  }
+
+  /**
+   * Unregister a tool
+   */
+  unregisterTool(name: string): void {
+    delete this.registry[name];
+  }
+
+  /**
+   * Get tool config
+   */
+  getTool(name: string): ToolConfig | undefined {
+    return this.registry[name];
+  }
+
+  /**
+   * Get all registered tools
+   */
+  getAllTools(): ToolRegistry {
+    return { ...this.registry };
+  }
+
+  /**
+   * Check if tool exists
+   */
+  hasTool(name: string): boolean {
+    return name in this.registry;
+  }
+
+  /**
+   * Handle keyboard event for active tool
+   */
+  handleKeyboardEvent(toolName: string, e: KeyboardEvent): void {
+    const tool = this.registry[toolName];
+    if (tool?.keyboardShortcuts?.[e.key]) {
+      tool.keyboardShortcuts[e.key](e);
+    }
+  }
+
+  /**
+   * Get cursor for tool
+   */
+  getCursor(toolName: string): string {
+    return this.registry[toolName]?.feedback?.cursor || 'default';
+  }
+
+  /**
+   * Get overlays for tool
+   */
+  getOverlays(toolName: string): React.ComponentType<Record<string, unknown>>[] {
+    return this.registry[toolName]?.overlays || [];
+  }
+
+  /**
+   * Execute tool handler
+   */
+  executeHandler(
+    toolName: string,
+    e: React.PointerEvent,
+    point: Point,
+    target: Element,
+    isSmoothBrushActive: boolean,
+    beginSelectionRectangle: (point: Point, shiftKey?: boolean, subpathMode?: boolean) => void,
+    startShapeCreation: (point: Point) => void
+  ): void {
+    const tool = this.registry[toolName];
+    if (tool) {
+      tool.handler(e, point, target, isSmoothBrushActive, beginSelectionRectangle, startShapeCreation);
+    }
+  }
+}

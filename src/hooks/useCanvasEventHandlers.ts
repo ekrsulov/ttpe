@@ -1,6 +1,7 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
 import { toolRegistry } from '../utils/toolRegistry';
+import { PluginManager } from '../utils/pluginManager';
 import type { Point } from '../types';
 
 interface EventHandlerDeps {
@@ -40,6 +41,7 @@ interface EventHandlerDeps {
 }
 
 export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
+  const pluginManager = useMemo(() => new PluginManager(toolRegistry), []);
   const {
     svgRef,
     screenToCanvas,
@@ -159,10 +161,10 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       return;
     }
 
-    if (activePlugin && toolRegistry[activePlugin]) {
-      toolRegistry[activePlugin](e, point, target, isSmoothBrushActive, beginSelectionRectangle, startShapeCreation);
+    if (activePlugin && pluginManager.hasTool(activePlugin)) {
+      pluginManager.executeHandler(activePlugin, e, point, target, isSmoothBrushActive, beginSelectionRectangle, startShapeCreation);
     }
-  }, [activePlugin, screenToCanvas, isSpacePressed, beginSelectionRectangle, startShapeCreation, isSmoothBrushActive]);
+  }, [activePlugin, screenToCanvas, isSpacePressed, beginSelectionRectangle, startShapeCreation, isSmoothBrushActive, pluginManager]);
 
   // Handle pointer move
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
@@ -317,6 +319,13 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     endTransformation,
   ]);
 
+  // Handle keyboard events for tools
+  const handleKeyboard = useCallback((e: KeyboardEvent) => {
+    if (activePlugin) {
+      pluginManager.handleKeyboardEvent(activePlugin, e);
+    }
+  }, [activePlugin, pluginManager]);
+
   // Handle wheel
   const handleWheel = useCallback((e: WheelEvent) => {
     e.preventDefault();
@@ -338,5 +347,6 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     handlePointerMove,
     handlePointerUp,
     handleWheel,
+    handleKeyboard,
   };
 };

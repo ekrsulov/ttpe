@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useState, useEffect } from 'react';
+import React, { useRef, useCallback, useState, useEffect, useMemo } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
 import { measurePath, measureSubpathBounds } from '../utils/measurementUtils';
 import { extractEditablePoints } from '../utils/pathParserUtils';
@@ -13,10 +13,13 @@ import { useCanvasShapeCreation } from '../hooks/useCanvasShapeCreation';
 import { useCanvasOpticalAlignment } from '../hooks/useCanvasOpticalAlignment';
 import { useCanvasSmoothBrush } from '../hooks/useCanvasSmoothBrush';
 import { useCanvasEventHandlers } from '../hooks/useCanvasEventHandlers';
+import { PluginManager } from '../utils/pluginManager';
+import { toolRegistry } from '../utils/toolRegistry';
 import type { Point, PathData, CanvasElement } from '../types';
 
 export const Canvas: React.FC = () => {
   const svgRef = useRef<SVGSVGElement>(null);
+  const pluginManager = useMemo(() => new PluginManager(toolRegistry), []);
   const { isSpacePressed, isShiftPressed } = useCanvasKeyboardControls();
   const {
     isSelecting,
@@ -81,7 +84,7 @@ export const Canvas: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<Point | null>(null);
   const [hasDragMoved, setHasDragMoved] = useState(false);
-  const [canvasSize, setCanvasSize] = useState({ width: window.innerWidth, height: window.innerHeight });
+  const [canvasSize] = useState({ width: window.innerWidth, height: window.innerHeight });
 
   // Helper functions for event handlers
   const moveSelectedElements = useCallback((deltaX: number, deltaY: number) => {
@@ -154,6 +157,7 @@ export const Canvas: React.FC = () => {
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
+    handleKeyboard,
   } = useCanvasEventHandlers(eventHandlerDeps);
 
   // Use the custom hook for drag interactions
@@ -273,15 +277,15 @@ export const Canvas: React.FC = () => {
     }
   };
 
-  // Handle window resize
+  // Handle keyboard events
   useEffect(() => {
-    const handleResize = () => {
-      setCanvasSize({ width: window.innerWidth, height: window.innerHeight });
+    const handleKeyDown = (e: KeyboardEvent) => {
+      handleKeyboard(e);
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyboard]);
 
   // Update point position feedback when selection changes
   useEffect(() => {
@@ -345,9 +349,7 @@ export const Canvas: React.FC = () => {
         height: '100%',
         border: 'none',
         cursor: (isSpacePressed || activePlugin === 'pan') ? 'grabbing' :
-          activePlugin === 'select' ? 'crosshair' :
-            activePlugin === 'shape' ? 'crosshair' :
-              (activePlugin === 'edit' && isSmoothBrushActive) ? 'none' : 'default'
+          pluginManager.getCursor(activePlugin || 'select')
       }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
@@ -454,6 +456,11 @@ export const Canvas: React.FC = () => {
         shapeFeedback={shapeFeedback.shape}
         pointPositionFeedback={shapeFeedback.pointPosition}
       />
+
+      {/* Tool-specific overlays */}
+      {activePlugin && pluginManager.getOverlays(activePlugin).map((OverlayComponent, index) => (
+        <OverlayComponent key={index} viewport={viewport} />
+      ))}
     </svg>
   );
 };
