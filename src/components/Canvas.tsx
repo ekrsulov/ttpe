@@ -11,6 +11,7 @@ import { useCanvasPointerSelection } from '../hooks/useCanvasPointerSelection';
 import { useCanvasTransformControls } from '../hooks/useCanvasTransformControls';
 import { useCanvasShapeCreation } from '../hooks/useCanvasShapeCreation';
 import { useCanvasOpticalAlignment } from '../hooks/useCanvasOpticalAlignment';
+import { useCanvasSmoothBrush } from '../hooks/useCanvasSmoothBrush';
 import type { Point, PathData, CanvasElement } from '../types';
 
 export const Canvas: React.FC = () => {
@@ -40,7 +41,6 @@ export const Canvas: React.FC = () => {
     startShapeCreation,
     updateShapeCreation,
     endShapeCreation,
-    // cancelShapeCreation, // TODO: Implement when needed
     updatePointPositionFeedback
   } = useCanvasShapeCreation();
   const {
@@ -48,16 +48,13 @@ export const Canvas: React.FC = () => {
     showMathematicalCenter,
     showOpticalCenter,
     showDistanceRules,
-    // calculateAlignment, // TODO: Expose via toolbar/menu when needed
-    // applyAlignment, // TODO: Expose via toolbar/menu when needed
-    // previewAlignment, // TODO: Expose via toolbar/menu when needed
-    // resetAlignment, // TODO: Expose via toolbar/menu when needed
-    // toggleMathematicalCenter, // TODO: Expose via settings when needed
-    // toggleOpticalCenter, // TODO: Expose via settings when needed
-    // toggleDistanceRules, // TODO: Expose via settings when needed
-    // canPerformOpticalAlignment, // TODO: Use for validation when needed
-    // getAlignmentValidationMessage // TODO: Use for error messages when needed
   } = useCanvasOpticalAlignment();
+  const {
+    isActive: isSmoothBrushActive,
+    smoothBrush,
+    applyBrush,
+    updateCursorPosition
+  } = useCanvasSmoothBrush();
   const {
     elements,
     viewport,
@@ -82,15 +79,7 @@ export const Canvas: React.FC = () => {
     getTransformationBounds,
     isWorkingWithSubpaths,
     getFilteredEditablePoints,
-    smoothBrush,
-    applySmoothBrush,
-    updateSmoothBrushCursor,
     getControlPointInfo
-    // Optical Alignment State - now handled by useCanvasOpticalAlignment hook
-    // currentAlignment,
-    // showMathematicalCenter,
-    // showOpticalCenter,
-    // showDistanceRules
   } = useCanvasStore();
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<Point | null>(null);
@@ -202,9 +191,6 @@ export const Canvas: React.FC = () => {
         useCanvasStore.getState().selectElement(elementId, false);
       }
       // If element is already selected and no shift, keep it selected (no action needed)
-
-      // Mark that we just made a selection to prevent immediate clearing
-      // Note: justSelected is now managed by useCanvasPointerSelection hook
     }
   }, [activePlugin, isDragging, hasDragMoved, dragStart]);
 
@@ -317,7 +303,7 @@ export const Canvas: React.FC = () => {
         break;
       case 'edit':
         // Start command selection rectangle if clicking on SVG canvas (only when smooth brush is not active)
-        if (target.tagName === 'svg' && !useCanvasStore.getState().smoothBrush.isActive) {
+        if (target.tagName === 'svg' && !isSmoothBrushActive) {
           beginSelectionRectangle(point, !e.shiftKey, false);
         }
         break;
@@ -396,13 +382,13 @@ export const Canvas: React.FC = () => {
     }
 
     // Handle smooth brush in edit mode
-    if (activePlugin === 'edit' && useCanvasStore.getState().smoothBrush.isActive && e.buttons === 1) {
-      applySmoothBrush(point.x, point.y);
+    if (activePlugin === 'edit' && isSmoothBrushActive && e.buttons === 1) {
+      applyBrush(point);
     }
 
     // Update smooth brush cursor position
-    if (activePlugin === 'edit' && useCanvasStore.getState().smoothBrush.isActive) {
-      updateSmoothBrushCursor(point.x, point.y);
+    if (activePlugin === 'edit' && isSmoothBrushActive) {
+      updateCursorPosition(point);
     }
 
     if (isSelecting && selectionStart) {
@@ -423,7 +409,7 @@ export const Canvas: React.FC = () => {
       setDragStart(point);
       return;
     }
-  }, [activePlugin, screenToCanvas, isSpacePressed, isSelecting, selectionStart, viewport.zoom, isDragging, dragStart, isCreatingShape, shapeStart, transformState.isTransforming, updateTransformation, getElementBounds, getSubpathBounds, applySmoothBrush, updateSmoothBrushCursor]);
+  }, [activePlugin, screenToCanvas, isSpacePressed, isSelecting, selectionStart, viewport.zoom, isDragging, dragStart, isCreatingShape, shapeStart, transformState.isTransforming, updateTransformation, getElementBounds, getSubpathBounds, applyBrush, updateCursorPosition]);
   /* eslint-enable react-hooks/exhaustive-deps */
 
   /* eslint-disable react-hooks/exhaustive-deps */
@@ -538,7 +524,7 @@ export const Canvas: React.FC = () => {
         cursor: (isSpacePressed || activePlugin === 'pan') ? 'grabbing' :
           activePlugin === 'select' ? 'crosshair' :
             activePlugin === 'shape' ? 'crosshair' :
-              (activePlugin === 'edit' && smoothBrush.isActive) ? 'none' : 'default'
+              (activePlugin === 'edit' && isSmoothBrushActive) ? 'none' : 'default'
       }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
@@ -580,7 +566,7 @@ export const Canvas: React.FC = () => {
       />
 
       {/* Smooth Brush Cursor */}
-      {activePlugin === 'edit' && smoothBrush.isActive && (
+      {activePlugin === 'edit' && isSmoothBrushActive && (
         <ellipse
           cx={smoothBrush.cursorX}
           cy={smoothBrush.cursorY}

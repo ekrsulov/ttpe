@@ -1,10 +1,12 @@
 import { useCallback, useState } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
 import type { Point } from '../types';
+import type { EditPluginSlice } from '../store/slices/plugins/editPluginSlice';
 
 export interface SmoothBrushState {
   isActive: boolean;
   cursorPosition: Point | null;
+  smoothBrush: EditPluginSlice['smoothBrush'];
 }
 
 export interface SmoothBrushActions {
@@ -51,6 +53,7 @@ export const useCanvasSmoothBrush = (): UseCanvasSmoothBrushReturn => {
   return {
     isActive,
     cursorPosition,
+    smoothBrush,
     activateSmoothBrush,
     deactivateSmoothBrush,
     updateCursorPosition,
