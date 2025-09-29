@@ -216,6 +216,20 @@ export const createOpticalAlignmentSlice: StateCreator<
       return 'No content path found for alignment';
     }
     
+    // Check if the content is actually contained within the container
+    const containerBounds = containerInfo.bounds;
+    const isContained = contentInfo.every(content => {
+      const contentBounds = content.geometry.bounds;
+      return contentBounds.minX >= containerBounds.minX &&
+             contentBounds.minY >= containerBounds.minY &&
+             contentBounds.maxX <= containerBounds.maxX &&
+             contentBounds.maxY <= containerBounds.maxY;
+    });
+    
+    if (!isContained) {
+      return 'The content path must be completely contained within the container path';
+    }
+    
     return null; // All validation passed
   }
 });

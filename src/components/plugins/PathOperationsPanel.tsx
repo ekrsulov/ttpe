@@ -3,6 +3,7 @@ import { useCanvasStore } from '../../store/canvasStore';
 import { Plus, Scissors, Zap, Minus, CirclePlus, Square, X, SplitSquareHorizontal } from 'lucide-react';
 import { IconButton } from '../ui/IconButton';
 import { Tag } from '../ui/Tag';
+import type { PathData } from '../../types';
 
 export const PathOperationsPanel: React.FC = () => {
   const { selectedIds, selectedSubpaths, elements, performPathUnion, performPathSubtraction, performPathSimplify, performPathUnionPaperJS, performPathIntersect, performPathExclude, performPathDivide } = useCanvasStore();
@@ -22,8 +23,11 @@ export const PathOperationsPanel: React.FC = () => {
 
   const totalSelectedItems = selectedPaths.length + selectedSubpathElements.length;
 
-  // Show if at least 1 path/subpath is selected
-  if (totalSelectedItems < 1) {
+  // Check if any selected path has more than one subpath
+  const hasPathWithMultipleSubpaths = selectedPaths.some(pathEl => (pathEl.data as PathData).subPaths?.length > 1);
+
+  // Show panel only if there are buttons to display
+  if (!hasPathWithMultipleSubpaths && totalSelectedItems < 2) {
     return null;
   }
 
@@ -68,13 +72,15 @@ export const PathOperationsPanel: React.FC = () => {
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
-        {/* Simplify operation - available with 1+ items */}
-        <IconButton
-          onPointerUp={performSimplify}
-          title="Split subpaths into separate paths"
-        >
-          <Zap size={14} />
-        </IconButton>
+        {/* Split subpaths operation - available only if a selected path has multiple subpaths */}
+        {hasPathWithMultipleSubpaths && (
+          <IconButton
+            onPointerUp={performSimplify}
+            title="Split subpaths into separate paths"
+          >
+            <Zap size={14} />
+          </IconButton>
+        )}
 
         {/* Boolean operations - require 2+ items */}
         {totalSelectedItems >= 2 && (
