@@ -1,5 +1,5 @@
 import React from 'react';
-import { getContrastingColor, getEffectiveColorForContrast } from '../../utils/canvasColorUtils';
+import { deriveElementSelectionColors } from '../../utils/canvasColorUtils';
 import { commandsToString } from '../../utils/pathParserUtils';
 import { mapSvgToCanvas } from '../../utils/coordinateUtils';
 import type { PathData, SubPath, Point } from '../../types';
@@ -43,19 +43,7 @@ export const SubpathOverlay: React.FC<SubpathOverlayProps> = ({
   const subpaths = pathData.subPaths;
 
   // Calculate contrasting colors for the overlay based on element's colors
-  const elementStrokeColor = pathData.strokeColor || '#000000';
-  const elementFillColor = pathData.fillColor || 'none';
-  const elementStrokeWidth = pathData.strokeWidth || 0;
-  const elementOpacity = pathData.strokeOpacity || 1;
-
-  const colorForContrast = getEffectiveColorForContrast(
-    elementStrokeColor,
-    elementFillColor,
-    elementStrokeWidth,
-    elementOpacity
-  );
-
-  const overlayColor = getContrastingColor(colorForContrast);
+  const { selectionColor: overlayColor, elementStrokeWidth } = deriveElementSelectionColors(element);
 
   return (
     <g>

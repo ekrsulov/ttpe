@@ -62,6 +62,21 @@ const alignElements = (
   });
 };
 
+// Helper function for parameterized alignment
+const performAlignment = (
+  set: (updater: (state: CanvasStore) => Partial<CanvasStore>) => void,
+  get: () => ArrangeSlice,
+  targetCalculator: import('../../../utils/transformationUtils').TargetCalculator,
+  axis: import('../../../utils/transformationUtils').Axis
+) => {
+  const fullState = get() as CanvasStore;
+  const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+
+  setStore((state) => ({
+    elements: alignElements(state.elements, fullState.selectedIds, fullState.viewport.zoom, targetCalculator, axis)
+  }));
+};
+
 // Helper interface for element bounds
 interface ElementWithBounds {
   element: CanvasElement;
@@ -171,57 +186,27 @@ export interface ArrangeSlice {
 export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) => ({
   // Actions
   alignLeft: () => {
-    const fullState = get() as CanvasStore;
-    const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
-
-    setStore((state) => ({
-      elements: alignElements(state.elements, fullState.selectedIds, fullState.viewport.zoom, alignmentTargets.left, 'x')
-    }));
+    performAlignment(set, get, alignmentTargets.left, 'x');
   },
 
   alignCenter: () => {
-    const fullState = get() as CanvasStore;
-    const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
-
-    setStore((state) => ({
-      elements: alignElements(state.elements, fullState.selectedIds, fullState.viewport.zoom, alignmentTargets.center, 'x')
-    }));
+    performAlignment(set, get, alignmentTargets.center, 'x');
   },
 
   alignRight: () => {
-    const fullState = get() as CanvasStore;
-    const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
-
-    setStore((state) => ({
-      elements: alignElements(state.elements, fullState.selectedIds, fullState.viewport.zoom, alignmentTargets.right, 'x')
-    }));
+    performAlignment(set, get, alignmentTargets.right, 'x');
   },
 
   alignTop: () => {
-    const fullState = get() as CanvasStore;
-    const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
-
-    setStore((state) => ({
-      elements: alignElements(state.elements, fullState.selectedIds, fullState.viewport.zoom, alignmentTargets.top, 'y')
-    }));
+    performAlignment(set, get, alignmentTargets.top, 'y');
   },
 
   alignMiddle: () => {
-    const fullState = get() as CanvasStore;
-    const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
-
-    setStore((state) => ({
-      elements: alignElements(state.elements, fullState.selectedIds, fullState.viewport.zoom, alignmentTargets.middle, 'y')
-    }));
+    performAlignment(set, get, alignmentTargets.middle, 'y');
   },
 
   alignBottom: () => {
-    const fullState = get() as CanvasStore;
-    const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
-
-    setStore((state) => ({
-      elements: alignElements(state.elements, fullState.selectedIds, fullState.viewport.zoom, alignmentTargets.bottom, 'y')
-    }));
+    performAlignment(set, get, alignmentTargets.bottom, 'y');
   },
 
   distributeHorizontally: () => {

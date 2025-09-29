@@ -71,6 +71,62 @@ const getSelectedPaths = (state: CanvasStore): PathData[] => {
   return [...selectedPaths, ...subpathPaths];
 };
 
+// Generic handler for boolean path operations
+const performBooleanOperation = (
+  state: CanvasStore,
+  operation: (paths: PathData[]) => PathData | null,
+  minPaths: number = 2
+) => {
+  const allPaths = getSelectedPaths(state);
+
+  if (allPaths.length < minPaths) return;
+
+  const result = operation(allPaths);
+  if (result) {
+    // Replace the first selected element with the result
+    const firstSelectedId = state.selectedIds[0] || state.selectedSubpaths[0]?.elementId;
+    if (firstSelectedId) {
+      state.updateElement(firstSelectedId, { data: result });
+      
+      // Remove other selected elements
+      const idsToRemove = [
+        ...state.selectedIds.filter(id => id !== firstSelectedId),
+        ...state.selectedSubpaths.slice(1).map(sp => sp.elementId)
+      ].filter((id, index, arr) => arr.indexOf(id) === index); // Remove duplicates
+      
+      idsToRemove.forEach(id => {
+        state.deleteElement(id);
+      });
+    }
+  }
+  // If result is null, do nothing (operation not supported for these paths)
+};
+
+// Generic handler for binary boolean path operations
+const performBinaryBooleanOperation = (
+  state: CanvasStore,
+  operation: (path1: PathData, path2: PathData) => PathData | null
+) => {
+  const allPaths = getSelectedPaths(state);
+
+  if (allPaths.length !== 2) return;
+
+  const result = operation(allPaths[0], allPaths[1]);
+  if (result) {
+    // Replace the first selected element with the result
+    const firstSelectedId = state.selectedIds[0] || state.selectedSubpaths[0]?.elementId;
+    if (firstSelectedId) {
+      state.updateElement(firstSelectedId, { data: result });
+      
+      // Remove the second selected element
+      const secondSelectedId = state.selectedIds[1] || state.selectedSubpaths[1]?.elementId;
+      if (secondSelectedId && secondSelectedId !== firstSelectedId) {
+        state.deleteElement(secondSelectedId);
+      }
+    }
+  }
+};
+
 export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
   // Initial state
   elements: [],
@@ -297,143 +353,31 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
 
   performPathUnion: () => {
     const state = get() as CanvasStore;
-    const allPaths = getSelectedPaths(state);
-
-    if (allPaths.length < 2) return;
-
-    const result = performUnionOp(allPaths);
-    if (result) {
-      // Replace the first selected element with the result
-      const firstSelectedId = state.selectedIds[0] || state.selectedSubpaths[0]?.elementId;
-      if (firstSelectedId) {
-        state.updateElement(firstSelectedId, { data: result });
-        
-        // Remove other selected elements
-        const idsToRemove = [
-          ...state.selectedIds.filter(id => id !== firstSelectedId),
-          ...state.selectedSubpaths.slice(1).map(sp => sp.elementId)
-        ].filter((id, index, arr) => arr.indexOf(id) === index); // Remove duplicates
-        
-        idsToRemove.forEach(id => {
-          state.deleteElement(id);
-        });
-      }
-    }
-    // If result is null, do nothing (operation not supported for these paths)
+    performBooleanOperation(state, performUnionOp, 2);
   },
 
   performPathUnionPaperJS: () => {
     const state = get() as CanvasStore;
-    const allPaths = getSelectedPaths(state);
-
-    if (allPaths.length < 2) return;
-
-    const result = performPathUnionPaperJS(allPaths);
-    if (result) {
-      // Replace the first selected element with the result
-      const firstSelectedId = state.selectedIds[0] || state.selectedSubpaths[0]?.elementId;
-      if (firstSelectedId) {
-        state.updateElement(firstSelectedId, { data: result });
-        
-        // Remove other selected elements
-        const idsToRemove = [
-          ...state.selectedIds.filter(id => id !== firstSelectedId),
-          ...state.selectedSubpaths.slice(1).map(sp => sp.elementId)
-        ].filter((id, index, arr) => arr.indexOf(id) === index); // Remove duplicates
-        
-        idsToRemove.forEach(id => {
-          state.deleteElement(id);
-        });
-      }
-    }
-    // If result is null, do nothing (operation not supported for these paths)
+    performBooleanOperation(state, performPathUnionPaperJS, 2);
   },
 
   performPathSubtraction: () => {
     const state = get() as CanvasStore;
-    const allPaths = getSelectedPaths(state);
-
-    if (allPaths.length !== 2) return;
-
-    const result = performPathSubtraction(allPaths[0], allPaths[1]);
-    if (result) {
-      // Replace the first selected element with the result
-      const firstSelectedId = state.selectedIds[0] || state.selectedSubpaths[0]?.elementId;
-      if (firstSelectedId) {
-        state.updateElement(firstSelectedId, { data: result });
-        
-        // Remove the second selected element
-        const secondSelectedId = state.selectedIds[1] || state.selectedSubpaths[1]?.elementId;
-        if (secondSelectedId && secondSelectedId !== firstSelectedId) {
-          state.deleteElement(secondSelectedId);
-        }
-      }
-    }
+    performBinaryBooleanOperation(state, performPathSubtraction);
   },
 
   performPathIntersect: () => {
     const state = get() as CanvasStore;
-    const allPaths = getSelectedPaths(state);
-
-    if (allPaths.length !== 2) return;
-
-    const result = performPathIntersect(allPaths[0], allPaths[1]);
-    if (result) {
-      // Replace the first selected element with the result
-      const firstSelectedId = state.selectedIds[0] || state.selectedSubpaths[0]?.elementId;
-      if (firstSelectedId) {
-        state.updateElement(firstSelectedId, { data: result });
-        
-        // Remove the second selected element
-        const secondSelectedId = state.selectedIds[1] || state.selectedSubpaths[1]?.elementId;
-        if (secondSelectedId && secondSelectedId !== firstSelectedId) {
-          state.deleteElement(secondSelectedId);
-        }
-      }
-    }
+    performBinaryBooleanOperation(state, performPathIntersect);
   },
 
   performPathExclude: () => {
     const state = get() as CanvasStore;
-    const allPaths = getSelectedPaths(state);
-
-    if (allPaths.length !== 2) return;
-
-    const result = performPathExclude(allPaths[0], allPaths[1]);
-    if (result) {
-      // Replace the first selected element with the result
-      const firstSelectedId = state.selectedIds[0] || state.selectedSubpaths[0]?.elementId;
-      if (firstSelectedId) {
-        state.updateElement(firstSelectedId, { data: result });
-        
-        // Remove the second selected element
-        const secondSelectedId = state.selectedIds[1] || state.selectedSubpaths[1]?.elementId;
-        if (secondSelectedId && secondSelectedId !== firstSelectedId) {
-          state.deleteElement(secondSelectedId);
-        }
-      }
-    }
+    performBinaryBooleanOperation(state, performPathExclude);
   },
 
   performPathDivide: () => {
     const state = get() as CanvasStore;
-    const allPaths = getSelectedPaths(state);
-
-    if (allPaths.length !== 2) return;
-
-    const result = performPathDivide(allPaths[0], allPaths[1]);
-    if (result) {
-      // Replace the first selected element with the result
-      const firstSelectedId = state.selectedIds[0] || state.selectedSubpaths[0]?.elementId;
-      if (firstSelectedId) {
-        state.updateElement(firstSelectedId, { data: result });
-        
-        // Remove the second selected element
-        const secondSelectedId = state.selectedIds[1] || state.selectedSubpaths[1]?.elementId;
-        if (secondSelectedId && secondSelectedId !== firstSelectedId) {
-          state.deleteElement(secondSelectedId);
-        }
-      }
-    }
+    performBinaryBooleanOperation(state, performPathDivide);
   },
 });

@@ -100,6 +100,48 @@ export const getEffectiveColorForContrast = (
 export const SUBPATH_SELECTION_COLOR = '#8b5cf6'; // Purple to indicate subpath mode
 
 /**
+ * Extract element colors and calculate selection color for overlays
+ */
+export const deriveElementSelectionColors = (element: {
+  type: string;
+  data: unknown;
+}) => {
+  // Extract element colors for contrast calculation
+  const elementStrokeColor = element.type === 'path' && element.data && typeof element.data === 'object' && 'strokeColor' in element.data
+    ? (element.data as { strokeColor?: string }).strokeColor || '#000000'
+    : '#000000';
+
+  const elementFillColor = element.type === 'path' && element.data && typeof element.data === 'object' && 'fillColor' in element.data
+    ? (element.data as { fillColor?: string }).fillColor || 'none'
+    : 'none';
+
+  const elementStrokeWidth = element.type === 'path' && element.data && typeof element.data === 'object' && 'strokeWidth' in element.data
+    ? (element.data as { strokeWidth?: number }).strokeWidth || 0
+    : 0;
+
+  const elementOpacity = element.type === 'path' && element.data && typeof element.data === 'object' && 'strokeOpacity' in element.data
+    ? (element.data as { strokeOpacity?: number }).strokeOpacity || 1
+    : 1;
+
+  const colorForContrast = getEffectiveColorForContrast(
+    elementStrokeColor,
+    elementFillColor,
+    elementStrokeWidth,
+    elementOpacity
+  );
+
+  const selectionColor = getContrastingColor(colorForContrast);
+
+  return {
+    elementStrokeColor,
+    elementFillColor,
+    elementStrokeWidth,
+    elementOpacity,
+    selectionColor
+  };
+};
+
+/**
  * Convert a hex color string to its HSL representation.
  *
  * This helper centralises the logic used by multiple modules that need to work

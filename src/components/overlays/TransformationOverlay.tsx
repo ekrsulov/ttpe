@@ -1,5 +1,5 @@
 import React from 'react';
-import { getContrastingColor, getEffectiveColorForContrast, SUBPATH_SELECTION_COLOR } from '../../utils/canvasColorUtils';
+import { deriveElementSelectionColors, SUBPATH_SELECTION_COLOR } from '../../utils/canvasColorUtils';
 import { measureSubpathBounds } from '../../utils/measurementUtils';
 import { TransformationHandlers } from '../TransformationHandlers';
 import type { PathData } from '../../types';
@@ -44,31 +44,8 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
 }) => {
   if (!bounds || activePlugin !== 'transformation') return null;
 
-  // Extract element colors for contrast calculation
-  const elementStrokeColor = element.type === 'path' && element.data && typeof element.data === 'object' && 'strokeColor' in element.data
-    ? (element.data as { strokeColor?: string }).strokeColor || '#000000'
-    : '#000000';
-
-  const elementFillColor = element.type === 'path' && element.data && typeof element.data === 'object' && 'fillColor' in element.data
-    ? (element.data as { fillColor?: string }).fillColor || 'none'
-    : 'none';
-
-  const elementStrokeWidth = element.type === 'path' && element.data && typeof element.data === 'object' && 'strokeWidth' in element.data
-    ? (element.data as { strokeWidth?: number }).strokeWidth || 0
-    : 0;
-
-  const elementOpacity = element.type === 'path' && element.data && typeof element.data === 'object' && 'strokeOpacity' in element.data
-    ? (element.data as { strokeOpacity?: number }).strokeOpacity || 1
-    : 1;
-
-  const colorForContrast = getEffectiveColorForContrast(
-    elementStrokeColor,
-    elementFillColor,
-    elementStrokeWidth,
-    elementOpacity
-  );
-
-  const selectionColor = getContrastingColor(colorForContrast);
+  // Extract element colors and calculate selection color
+  const { selectionColor } = deriveElementSelectionColors(element);
 
   const strokeWidth = 1 / viewport.zoom;
   const offset = 5 / viewport.zoom;
