@@ -1,4 +1,4 @@
-import React, { useState, Suspense } from 'react';
+import React, { useState, Suspense, useMemo } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
 import { IconButton } from './ui/IconButton';
 import type { PathData } from '../types';
@@ -35,28 +35,27 @@ const PathOperationsPanel = React.lazy(() => import('./plugins/PathOperationsPan
 const SubPathOperationsPanel = React.lazy(() => import('./plugins/SubPathOperationsPanel').then(module => ({ default: module.SubPathOperationsPanel })));
 
 export const Sidebar: React.FC = () => {
-  const {
-    activePlugin,
-    setMode,
-    selectedIds,
-    selectedSubpaths,
-    elements,
-    smoothBrush,
-    pathSimplification,
-    selectedCommands,
-    updateSmoothBrush,
-    updatePathSimplification,
-    applySmoothBrush,
-    applyPathSimplification,
-    activateSmoothBrush,
-    deactivateSmoothBrush,
-    setActivePlugin
-  } = useCanvasStore();
+  // Use specific selectors instead of destructuring the entire store
+  const activePlugin = useCanvasStore(state => state.activePlugin);
+  const setMode = useCanvasStore(state => state.setMode);
+  const selectedIds = useCanvasStore(state => state.selectedIds);
+  const selectedSubpaths = useCanvasStore(state => state.selectedSubpaths);
+  const elements = useCanvasStore(state => state.elements);
+  const smoothBrush = useCanvasStore(state => state.smoothBrush);
+  const pathSimplification = useCanvasStore(state => state.pathSimplification);
+  const selectedCommands = useCanvasStore(state => state.selectedCommands);
+  const updateSmoothBrush = useCanvasStore(state => state.updateSmoothBrush);
+  const updatePathSimplification = useCanvasStore(state => state.updatePathSimplification);
+  const applySmoothBrush = useCanvasStore(state => state.applySmoothBrush);
+  const applyPathSimplification = useCanvasStore(state => state.applyPathSimplification);
+  const activateSmoothBrush = useCanvasStore(state => state.activateSmoothBrush);
+  const deactivateSmoothBrush = useCanvasStore(state => state.deactivateSmoothBrush);
+  const setActivePlugin = useCanvasStore(state => state.setActivePlugin);
   const [isArrangeExpanded, setIsArrangeExpanded] = useState(false);
   const [showFilePanel, setShowFilePanel] = useState(false);
   const [showConfigPanel, setShowConfigPanel] = useState(false);
 
-  const _plugins = [
+  const _plugins = useMemo(() => [
     { name: 'select', label: 'Select', icon: MousePointer },
     { name: 'subpath', label: 'Subpath', icon: Route },
     { name: 'transformation', label: 'Transform', icon: VectorSquare },
@@ -65,24 +64,30 @@ export const Sidebar: React.FC = () => {
     { name: 'pencil', label: 'Pencil', icon: Pen },
     { name: 'text', label: 'Text', icon: Type },
     { name: 'shape', label: 'Shape', icon: Shapes },
-  ];
+  ], []);
+
+  // Memoize disabled state calculations to prevent unnecessary re-renders
+  const pluginDisabledStates = useMemo(() => {
+    const selectedElements = elements.filter(el => selectedIds.includes(el.id));
+    
+    return _plugins.reduce((acc, plugin) => {
+      let isDisabled = false;
+      if (plugin.name === 'transformation' || plugin.name === 'edit') {
+        isDisabled = !(selectedIds.length === 1 || selectedSubpaths.length === 1) || selectedSubpaths.length > 1;
+      } else if (plugin.name === 'subpath') {
+        isDisabled = !(selectedElements.length === 1 && 
+                       selectedElements[0].type === 'path' && 
+                       (selectedElements[0].data as PathData).subPaths?.length > 1);
+      }
+      acc[plugin.name] = isDisabled;
+      return acc;
+    }, {} as Record<string, boolean>);
+  }, [selectedIds, selectedSubpaths, elements, _plugins]);
 
   // Helper function to render plugin buttons
   const renderPluginButton = (plugin: typeof _plugins[0]) => {
     const IconComponent = plugin.icon;
-    
-    let isDisabled = false;
-    if (plugin.name === 'transformation' || plugin.name === 'edit') {
-      // Enable only if exactly one path is selected OR exactly one subpath is selected,
-      // but disable if more than one subpath is selected
-      isDisabled = !(selectedIds.length === 1 || selectedSubpaths.length === 1) || selectedSubpaths.length > 1;
-    } else if (plugin.name === 'subpath') {
-      // Enable only if exactly one path is selected and it has more than one subpath
-      const selectedElements = elements.filter(el => selectedIds.includes(el.id));
-      isDisabled = !(selectedElements.length === 1 && 
-                     selectedElements[0].type === 'path' && 
-                     (selectedElements[0].data as PathData).subPaths?.length > 1);
-    }
+    const isDisabled = pluginDisabledStates[plugin.name];
     
     // Special handling for file and settings buttons
     if (plugin.name === 'file') {
@@ -230,11 +235,17 @@ export const Sidebar: React.FC = () => {
       }}>
         <Suspense fallback={<div style={{ height: '20px', backgroundColor: '#f8f9fa' }} />}>
           <EditorPanel />
-          {activePlugin === 'select' && <PathOperationsPanel />}
+          <div style={{ display: activePlugin === 'select' ? 'block' : 'none' }}>
+            <PathOperationsPanel />
+          </div>
           <SubPathOperationsPanel />
-          {showFilePanel && <FilePanel />}
-          {showConfigPanel && <SettingsPanel />}
-          {activePlugin === 'edit' && (
+          <div style={{ display: showFilePanel ? 'block' : 'none' }}>
+            <FilePanel />
+          </div>
+          <div style={{ display: showConfigPanel ? 'block' : 'none' }}>
+            <SettingsPanel />
+          </div>
+          <div style={{ display: activePlugin === 'edit' ? 'block' : 'none' }}>
             <EditPanel
               activePlugin={activePlugin}
               smoothBrush={smoothBrush}
@@ -247,14 +258,28 @@ export const Sidebar: React.FC = () => {
               activateSmoothBrush={activateSmoothBrush}
               deactivateSmoothBrush={deactivateSmoothBrush}
             />
-          )}
-          {activePlugin === 'edit' && <ControlPointAlignmentPanel />}
-          {activePlugin === 'select' && <OpticalAlignmentPanel />}
-          {activePlugin === 'pan' && <PanPanel />}
-          {activePlugin === 'pencil' && <PencilPanel />}
-          {activePlugin === 'transformation' && <TransformationPanel />}
-          {activePlugin === 'text' && <TextPanel />}
-          {activePlugin === 'shape' && <ShapePanel />}
+          </div>
+          <div style={{ display: activePlugin === 'edit' ? 'block' : 'none' }}>
+            <ControlPointAlignmentPanel />
+          </div>
+          <div style={{ display: activePlugin === 'select' ? 'block' : 'none' }}>
+            <OpticalAlignmentPanel />
+          </div>
+          <div style={{ display: activePlugin === 'pan' ? 'block' : 'none' }}>
+            <PanPanel />
+          </div>
+          <div style={{ display: activePlugin === 'pencil' ? 'block' : 'none' }}>
+            <PencilPanel />
+          </div>
+          <div style={{ display: activePlugin === 'transformation' ? 'block' : 'none' }}>
+            <TransformationPanel />
+          </div>
+          <div style={{ display: activePlugin === 'text' ? 'block' : 'none' }}>
+            <TextPanel />
+          </div>
+          <div style={{ display: activePlugin === 'shape' ? 'block' : 'none' }}>
+            <ShapePanel />
+          </div>
         </Suspense>
       </div>
 

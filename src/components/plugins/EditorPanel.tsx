@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import {
   Undo2,
@@ -35,34 +35,33 @@ const useTemporalState = () => {
 };
 
 export const EditorPanel: React.FC = () => {
-  const {
-    selectedIds,
-    selectedCommands,
-    deleteSelectedElements,
-    deleteSelectedCommands,
-    viewport,
-    zoom,
-    resetZoom,
-    pencil,
-    updatePencilState,
-    getSelectedPathsCount,
-    updateSelectedPaths,
-    activePlugin,
-    deleteSelectedSubpaths,
-    getSelectedSubpathsCount,
-  } = useCanvasStore();
+  // Use specific selectors instead of destructuring the entire store
+  const selectedIds = useCanvasStore(state => state.selectedIds);
+  const selectedCommands = useCanvasStore(state => state.selectedCommands);
+  const deleteSelectedElements = useCanvasStore(state => state.deleteSelectedElements);
+  const deleteSelectedCommands = useCanvasStore(state => state.deleteSelectedCommands);
+  const viewport = useCanvasStore(state => state.viewport);
+  const zoom = useCanvasStore(state => state.zoom);
+  const resetZoom = useCanvasStore(state => state.resetZoom);
+  const pencil = useCanvasStore(state => state.pencil);
+  const updatePencilState = useCanvasStore(state => state.updatePencilState);
+  const getSelectedPathsCount = useCanvasStore(state => state.getSelectedPathsCount);
+  const updateSelectedPaths = useCanvasStore(state => state.updateSelectedPaths);
+  const activePlugin = useCanvasStore(state => state.activePlugin);
+  const deleteSelectedSubpaths = useCanvasStore(state => state.deleteSelectedSubpaths);
+  const getSelectedSubpathsCount = useCanvasStore(state => state.getSelectedSubpathsCount);
 
   const { undo, redo, pastStates, futureStates } = useTemporalState();
 
-  // Computed values
-  const selectedCount = selectedIds.length;
-  const selectedCommandsCount = selectedCommands.length;
-  const canUndo = pastStates.length > 0;
-  const canRedo = futureStates.length > 0;
-  const zoomFactor = 1.2;
-  const selectedPathsCount = getSelectedPathsCount();
-  const selectedSubpathsCount = getSelectedSubpathsCount();
+  // Memoize computed values to prevent unnecessary re-renders
+  const selectedCount = useMemo(() => selectedIds.length, [selectedIds]);
+  const selectedCommandsCount = useMemo(() => selectedCommands.length, [selectedCommands]);
+  const canUndo = useMemo(() => pastStates.length > 0, [pastStates.length]);
+  const canRedo = useMemo(() => futureStates.length > 0, [futureStates.length]);
+  const selectedPathsCount = useMemo(() => getSelectedPathsCount(), [getSelectedPathsCount]);
+  const selectedSubpathsCount = useMemo(() => getSelectedSubpathsCount(), [getSelectedSubpathsCount]);
 
+  const zoomFactor = 1.2;
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Handle delete action based on active plugin
@@ -77,9 +76,12 @@ export const EditorPanel: React.FC = () => {
   };
 
   // Determine if delete button should be enabled
-  const canDelete = (activePlugin === 'edit' && selectedCommandsCount > 0) ||
+  const canDelete = useMemo(() => 
+    (activePlugin === 'edit' && selectedCommandsCount > 0) ||
     (activePlugin === 'select' && selectedCount > 0) ||
-    (activePlugin === 'subpath' && selectedSubpathsCount > 0);
+    (activePlugin === 'subpath' && selectedSubpathsCount > 0),
+    [activePlugin, selectedCommandsCount, selectedCount, selectedSubpathsCount]
+  );
 
   // Pencil properties handlers
   const handleStrokeWidthChange = (value: number) => {
@@ -159,11 +161,11 @@ export const EditorPanel: React.FC = () => {
   };
 
   // Get current values from selected elements or plugin defaults
-  const getCurrentStrokeWidth = () => getSelectedPathProperty('strokeWidth', pencil.strokeWidth);
-  const getCurrentStrokeColor = () => getSelectedPathProperty('strokeColor', pencil.strokeColor);
-  const getCurrentOpacity = () => getSelectedPathProperty('strokeOpacity', pencil.strokeOpacity);
-  const getCurrentFillColor = () => getSelectedPathProperty('fillColor', pencil.fillColor);
-  const getCurrentFillOpacity = () => getSelectedPathProperty('fillOpacity', pencil.fillOpacity);
+  const currentStrokeWidth = useMemo(() => getSelectedPathProperty('strokeWidth', pencil.strokeWidth), [pencil.strokeWidth]);
+  const currentStrokeColor = useMemo(() => getSelectedPathProperty('strokeColor', pencil.strokeColor), [pencil.strokeColor]);
+  const currentOpacity = useMemo(() => getSelectedPathProperty('strokeOpacity', pencil.strokeOpacity), [pencil.strokeOpacity]);
+  const currentFillColor = useMemo(() => getSelectedPathProperty('fillColor', pencil.fillColor), [pencil.fillColor]);
+  const currentFillOpacity = useMemo(() => getSelectedPathProperty('fillOpacity', pencil.fillOpacity), [pencil.fillOpacity]);
 
   return (
     <div style={{ backgroundColor: '#fff' }}>
@@ -318,7 +320,7 @@ export const EditorPanel: React.FC = () => {
           {/* Stroke Width */}
           <SliderControl
             icon={<Circle size={14} />}
-            value={getCurrentStrokeWidth()}
+            value={currentStrokeWidth}
             min={0}
             max={20}
             onChange={handleStrokeWidthChange}
@@ -332,7 +334,7 @@ export const EditorPanel: React.FC = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
               <input
                 type="color"
-                value={getCurrentStrokeColor() === 'none' ? '#000000' : getCurrentStrokeColor()}
+                value={currentStrokeColor === 'none' ? '#000000' : currentStrokeColor}
                 onChange={(e) => handleStrokeColorChange(e.target.value)}
                 style={{
                   width: '24px',
@@ -340,14 +342,14 @@ export const EditorPanel: React.FC = () => {
                   border: '1px solid #ccc',
                   borderRadius: '3px',
                   cursor: 'pointer',
-                  opacity: getCurrentStrokeColor() === 'none' ? 0.5 : 1
+                  opacity: currentStrokeColor === 'none' ? 0.5 : 1
                 }}
                 title="Stroke Color"
               />
               <IconButton
                 onPointerUp={handleStrokeNone}
-                disabled={getCurrentFillColor() === 'none'}
-                active={getCurrentStrokeColor() === 'none'}
+                disabled={currentFillColor === 'none'}
+                active={currentStrokeColor === 'none'}
                 activeBgColor="#007bff"
                 activeColor="#fff"
                 size="custom"
@@ -360,7 +362,7 @@ export const EditorPanel: React.FC = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', minWidth: '120px' }}>
               <SliderControl
                 icon={<Eye size={14} />}
-                value={getCurrentOpacity()}
+                value={currentOpacity}
                 min={0}
                 max={1}
                 step={0.1}
@@ -381,7 +383,7 @@ export const EditorPanel: React.FC = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
               <input
                 type="color"
-                value={getCurrentFillColor() === 'none' ? '#000000' : getCurrentFillColor()}
+                value={currentFillColor === 'none' ? '#000000' : currentFillColor}
                 onChange={(e) => handleFillColorChange(e.target.value)}
                 style={{
                   width: '24px',
@@ -389,13 +391,13 @@ export const EditorPanel: React.FC = () => {
                   border: '1px solid #ccc',
                   borderRadius: '3px',
                   cursor: 'pointer',
-                  opacity: getCurrentFillColor() === 'none' ? 0.5 : 1
+                  opacity: currentFillColor === 'none' ? 0.5 : 1
                 }}
                 title="Fill Color"
               />
               <IconButton
                 onPointerUp={handleFillNone}
-                active={getCurrentFillColor() === 'none'}
+                active={currentFillColor === 'none'}
                 activeBgColor="#007bff"
                 activeColor="#fff"
                 size="custom"
@@ -408,7 +410,7 @@ export const EditorPanel: React.FC = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', minWidth: '120px' }}>
               <SliderControl
                 icon={<Eye size={14} />}
-                value={getCurrentFillOpacity()}
+                value={currentFillOpacity}
                 min={0}
                 max={1}
                 step={0.1}

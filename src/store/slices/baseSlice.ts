@@ -27,6 +27,10 @@ export interface BaseSlice {
   performPathIntersect: () => void;
   performPathExclude: () => void;
   performPathDivide: () => void;
+
+  // Selectors
+  selectAllElements: () => CanvasElement[];
+  selectActivePlugin: () => string | null;
 }
 
 type ModeRule = {
@@ -380,4 +384,8 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
     const state = get() as CanvasStore;
     performBinaryBooleanOperation(state, performPathDivide);
   },
+
+  // Selectors
+  selectAllElements: () => get().elements,
+  selectActivePlugin: () => get().activePlugin,
 });

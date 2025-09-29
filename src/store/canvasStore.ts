@@ -434,3 +434,19 @@ export const useCanvasStore = create<CanvasStore>()(
   }
   )
 );
+
+// Namespaced selectors for better organization
+export const canvasSelectors = {
+  base: {
+    selectAllElements: () => useCanvasStore.getState().selectAllElements(),
+    selectActivePlugin: () => useCanvasStore.getState().selectActivePlugin(),
+  },
+  selection: {
+    selectSelectedIds: () => useCanvasStore.getState().selectSelectedIds(),
+    selectSelectedElements: () => useCanvasStore.getState().selectSelectedElements(),
+  },
+  viewport: {
+    selectViewport: () => useCanvasStore.getState().selectViewport(),
+    selectZoom: () => useCanvasStore.getState().selectZoom(),
+  },
+};

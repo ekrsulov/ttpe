@@ -12,6 +12,10 @@ export interface ViewportSlice {
   zoom: (factor: number, centerX?: number, centerY?: number) => void;
   resetPan: () => void;
   resetZoom: () => void;
+
+  // Selectors
+  selectViewport: () => Viewport;
+  selectZoom: () => number;
 }
 
 export const createViewportSlice: StateCreator<ViewportSlice> = (set, _get, _api) => ({
@@ -75,4 +79,8 @@ export const createViewportSlice: StateCreator<ViewportSlice> = (set, _get, _api
       },
     }));
   },
+
+  // Selectors
+  selectViewport: () => _get().viewport,
+  selectZoom: () => _get().viewport.zoom,
 });

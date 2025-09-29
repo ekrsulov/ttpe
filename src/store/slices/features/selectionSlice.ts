@@ -15,6 +15,10 @@ export interface SelectionSlice {
   getSelectedPathsCount: () => number;
   moveSelectedElements: (deltaX: number, deltaY: number) => void;
   updateSelectedPaths: (properties: Partial<import('../../../types').PathData>) => void;
+
+  // Selectors
+  selectSelectedIds: () => string[];
+  selectSelectedElements: () => CanvasElement[];
 }
 
 export const createSelectionSlice: StateCreator<CanvasStore, [], [], SelectionSlice> = (set, get, _api) => ({
@@ -121,5 +125,13 @@ export const createSelectionSlice: StateCreator<CanvasStore, [], [], SelectionSl
         return el;
       }),
     }));
+  },
+
+  // Selectors
+  selectSelectedIds: () => get().selectedIds,
+  selectSelectedElements: () => {
+    const selectedIds = get().selectedIds;
+    const elements = (get() as CanvasStore).elements;
+    return elements.filter((el: CanvasElement) => selectedIds.includes(el.id));
   },
 });

@@ -59,32 +59,36 @@ export const Canvas: React.FC = () => {
     updateCursorPosition
   } = useCanvasSmoothBrush();
 
-  const {
-    elements,
-    viewport,
-    activePlugin,
-    transformation,
-    shape,
-    selectedIds,
-    editingPoint,
-    selectedCommands,
-    selectedSubpaths,
-    draggingSelection,
-    updateElement,
-    startDraggingPoint,
-    updateDraggingPoint,
-    stopDraggingPoint,
-    emergencyCleanupDrag,
-    selectCommand,
-    selectSubpath,
-    isWorkingWithSubpaths,
-    getFilteredEditablePoints,
-    getControlPointInfo
-  } = useCanvasStore();
+  // Use specific selectors instead of destructuring the entire store
+  const elements = useCanvasStore(state => state.elements);
+  const viewport = useCanvasStore(state => state.viewport);
+  const activePlugin = useCanvasStore(state => state.activePlugin);
+  const transformation = useCanvasStore(state => state.transformation);
+  const shape = useCanvasStore(state => state.shape);
+  const selectedIds = useCanvasStore(state => state.selectedIds);
+  const editingPoint = useCanvasStore(state => state.editingPoint);
+  const selectedCommands = useCanvasStore(state => state.selectedCommands);
+  const selectedSubpaths = useCanvasStore(state => state.selectedSubpaths);
+  const draggingSelection = useCanvasStore(state => state.draggingSelection);
+  const updateElement = useCanvasStore(state => state.updateElement);
+  const startDraggingPoint = useCanvasStore(state => state.startDraggingPoint);
+  const updateDraggingPoint = useCanvasStore(state => state.updateDraggingPoint);
+  const stopDraggingPoint = useCanvasStore(state => state.stopDraggingPoint);
+  const emergencyCleanupDrag = useCanvasStore(state => state.emergencyCleanupDrag);
+  const selectCommand = useCanvasStore(state => state.selectCommand);
+  const selectSubpath = useCanvasStore(state => state.selectSubpath);
+  const isWorkingWithSubpaths = useCanvasStore(state => state.isWorkingWithSubpaths);
+  const getFilteredEditablePoints = useCanvasStore(state => state.getFilteredEditablePoints);
+  const getControlPointInfo = useCanvasStore(state => state.getControlPointInfo);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<Point | null>(null);
   const [hasDragMoved, setHasDragMoved] = useState(false);
   const [canvasSize] = useState({ width: window.innerWidth, height: window.innerHeight });
+
+  // Memoize sorted elements to prevent unnecessary re-renders
+  const sortedElements = useMemo(() => {
+    return [...elements].sort((a, b) => a.zIndex - b.zIndex);
+  }, [elements]);
 
   // Helper functions for event handlers
   const moveSelectedElements = useCallback((deltaX: number, deltaY: number) => {
@@ -231,8 +235,8 @@ export const Canvas: React.FC = () => {
               />
             )}
 
-            {/* Transformation overlay - handles all transformation-related UI */}
-            {isSelected && activePlugin === 'transformation' && (
+            {/* Transformation overlay - always render but control visibility */}
+            <div style={{ display: isSelected && activePlugin === 'transformation' ? 'block' : 'none' }}>
               <TransformationOverlay
                 element={element}
                 bounds={getTransformedBounds(element)}
@@ -244,8 +248,10 @@ export const Canvas: React.FC = () => {
                 onTransformationHandlerPointerDown={handleTransformationHandlerPointerDown}
                 onTransformationHandlerPointerUp={handleTransformationHandlerPointerUp}
               />
-            )}
-            {isSelected && activePlugin === 'edit' && (
+            </div>
+
+            {/* Edit overlay - always render but control visibility */}
+            <div style={{ display: isSelected && activePlugin === 'edit' ? 'block' : 'none' }}>
               <EditPointsOverlay
                 element={element}
                 selectedCommands={selectedCommands}
@@ -258,8 +264,10 @@ export const Canvas: React.FC = () => {
                 onStartDraggingPoint={startDraggingPoint}
                 onSelectCommand={selectCommand}
               />
-            )}
-            {isSelected && activePlugin === 'subpath' && (
+            </div>
+
+            {/* Subpath overlay - always render but control visibility */}
+            <div style={{ display: isSelected && activePlugin === 'subpath' ? 'block' : 'none' }}>
               <SubpathOverlay
                 element={element}
                 selectedSubpaths={selectedSubpaths}
@@ -268,7 +276,7 @@ export const Canvas: React.FC = () => {
                 onSelectSubpath={selectSubpath}
                 onSetDragStart={setDragStart}
               />
-            )}
+            </div>
           </g>
         );
       }
@@ -356,7 +364,7 @@ export const Canvas: React.FC = () => {
       onPointerUp={handlePointerUp}
     >
       {/* Sort elements by zIndex */}
-      {[...elements].sort((a, b) => a.zIndex - b.zIndex).map(renderElement)}
+      {sortedElements.map(renderElement)}
 
       {/* Selection rectangle */}
       {isSelecting && selectionStart && selectionEnd && (
