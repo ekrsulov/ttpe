@@ -161,6 +161,7 @@ export const Canvas: React.FC = () => {
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
+    handleWheel,
     handleKeyboard,
   } = useCanvasEventHandlers(eventHandlerDeps);
 
@@ -362,6 +363,7 @@ export const Canvas: React.FC = () => {
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
+      onWheel={handleWheel}
     >
       {/* Sort elements by zIndex */}
       {sortedElements.map(renderElement)}

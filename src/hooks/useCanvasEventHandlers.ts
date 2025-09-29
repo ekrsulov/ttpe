@@ -325,7 +325,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
   }, [activePlugin, pluginManager]);
 
   // Handle wheel
-  const handleWheel = useCallback((e: WheelEvent) => {
+  const handleWheel = useCallback((e: React.WheelEvent<SVGSVGElement>) => {
     e.preventDefault();
     const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
     const rect = svgRef.current?.getBoundingClientRect();
