@@ -98,3 +98,45 @@ export const getEffectiveColorForContrast = (
  * Special subpath selection color
  */
 export const SUBPATH_SELECTION_COLOR = '#8b5cf6'; // Purple to indicate subpath mode
+
+/**
+ * Convert a hex color string to its HSL representation.
+ *
+ * This helper centralises the logic used by multiple modules that need to work
+ * with chromatic values (e.g. optical alignment metrics and preset sorting).
+ * Returning a consistent object shape prevents repeated tuple/object
+ * conversions in the callers.
+ */
+export function hexToHsl(hex: string): { h: number; s: number; l: number } {
+  const normalized = hex.replace('#', '');
+
+  const r = parseInt(normalized.substring(0, 2), 16) / 255;
+  const g = parseInt(normalized.substring(2, 4), 16) / 255;
+  const b = parseInt(normalized.substring(4, 6), 16) / 255;
+
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  let h = 0;
+  let s = 0;
+
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+
+    switch (max) {
+      case r:
+        h = (g - b) / d + (g < b ? 6 : 0);
+        break;
+      case g:
+        h = (b - r) / d + 2;
+        break;
+      case b:
+        h = (r - g) / d + 4;
+        break;
+    }
+    h /= 6;
+  }
+
+  return { h: h * 360, s: s * 100, l: l * 100 };
+}
