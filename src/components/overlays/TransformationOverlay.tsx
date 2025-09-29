@@ -42,7 +42,13 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
   onTransformationHandlerPointerDown,
   onTransformationHandlerPointerUp,
 }) => {
-  if (!bounds || activePlugin !== 'transformation') return null;
+  // Show handlers for complete elements when in transformation mode
+  // Show handlers for subpaths only when in transformation mode AND exactly one subpath is selected
+  const shouldShowHandlers = !isWorkingWithSubpaths
+    ? activePlugin === 'transformation'
+    : activePlugin === 'transformation' && selectedSubpaths.length === 1;
+
+  if (!bounds || !shouldShowHandlers) return null;
 
   // Extract element colors and calculate selection color
   const { selectionColor } = deriveElementSelectionColors(element);
@@ -64,8 +70,8 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
 
   return (
     <g key={`transformation-${element.id}`}>
-      {/* Selection rectangle - only show when working with subpaths */}
-      {isWorkingWithSubpaths && adjustedWidth > 0 && adjustedHeight > 0 && (
+      {/* Selection rectangle - only show when working with subpaths but NOT in transformation mode with exactly one subpath selected */}
+      {isWorkingWithSubpaths && !(activePlugin === 'transformation' && selectedSubpaths.length === 1) && adjustedWidth > 0 && adjustedHeight > 0 && (
         <rect
           x={adjustedX}
           y={adjustedY}

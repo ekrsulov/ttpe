@@ -1,16 +1,63 @@
 import React, { useRef, useCallback, useState, useEffect } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
 import { measurePath, measureSubpathBounds } from '../utils/measurementUtils';
-import { transformPathData, transformSubpathsData, transformSingleSubpath } from '../utils/transformationUtils';
 import { extractEditablePoints } from '../utils/pathParserUtils';
 import { mapPointerToCanvas } from '../utils/coordinateUtils';
 import { CanvasRenderer } from './CanvasRenderer';
 import { OpticalAlignmentOverlay, FeedbackOverlay } from './overlays';
-import { transformManager, type TransformBounds } from '../utils/transformManager';
+import { TransformationOverlay } from './overlays/TransformationOverlay';
+import { useCanvasKeyboardControls } from '../hooks/useCanvasKeyboardControls';
+import { useCanvasPointerSelection } from '../hooks/useCanvasPointerSelection';
+import { useCanvasTransformControls } from '../hooks/useCanvasTransformControls';
+import { useCanvasShapeCreation } from '../hooks/useCanvasShapeCreation';
+import { useCanvasOpticalAlignment } from '../hooks/useCanvasOpticalAlignment';
 import type { Point, PathData, CanvasElement } from '../types';
 
 export const Canvas: React.FC = () => {
   const svgRef = useRef<SVGSVGElement>(null);
+  const { isSpacePressed, isShiftPressed } = useCanvasKeyboardControls();
+  const {
+    isSelecting,
+    selectionStart,
+    selectionEnd,
+    justSelected,
+    beginSelectionRectangle,
+    updateSelectionRectangle,
+    completeSelectionRectangle
+  } = useCanvasPointerSelection(isShiftPressed);
+  const {
+    transformState,
+    feedback,
+    startTransformation,
+    updateTransformation,
+    endTransformation
+  } = useCanvasTransformControls();
+  const {
+    isCreatingShape,
+    shapeStart,
+    shapeEnd,
+    feedback: shapeFeedback,
+    startShapeCreation,
+    updateShapeCreation,
+    endShapeCreation,
+    // cancelShapeCreation, // TODO: Implement when needed
+    updatePointPositionFeedback
+  } = useCanvasShapeCreation();
+  const {
+    currentAlignment,
+    showMathematicalCenter,
+    showOpticalCenter,
+    showDistanceRules,
+    // calculateAlignment, // TODO: Expose via toolbar/menu when needed
+    // applyAlignment, // TODO: Expose via toolbar/menu when needed
+    // previewAlignment, // TODO: Expose via toolbar/menu when needed
+    // resetAlignment, // TODO: Expose via toolbar/menu when needed
+    // toggleMathematicalCenter, // TODO: Expose via settings when needed
+    // toggleOpticalCenter, // TODO: Expose via settings when needed
+    // toggleDistanceRules, // TODO: Expose via settings when needed
+    // canPerformOpticalAlignment, // TODO: Use for validation when needed
+    // getAlignmentValidationMessage // TODO: Use for error messages when needed
+  } = useCanvasOpticalAlignment();
   const {
     elements,
     viewport,
@@ -29,50 +76,26 @@ export const Canvas: React.FC = () => {
     emergencyCleanupDrag,
     selectCommand,
     clearSelectedCommands,
-    deleteSelectedCommands,
     selectSubpath,
+    clearSubpathSelection,
+    clearSelection,
     getTransformationBounds,
     isWorkingWithSubpaths,
     getFilteredEditablePoints,
     smoothBrush,
     applySmoothBrush,
     updateSmoothBrushCursor,
-    getControlPointInfo,
-    // Optical Alignment State
-    currentAlignment,
-    showMathematicalCenter,
-    showOpticalCenter,
-    showDistanceRules
+    getControlPointInfo
+    // Optical Alignment State - now handled by useCanvasOpticalAlignment hook
+    // currentAlignment,
+    // showMathematicalCenter,
+    // showOpticalCenter,
+    // showDistanceRules
   } = useCanvasStore();
-
-  const [isSpacePressed, setIsSpacePressed] = useState(false);
-  const [isSelecting, setIsSelecting] = useState(false);
-  const [selectionStart, setSelectionStart] = useState<Point | null>(null);
-  const [selectionEnd, setSelectionEnd] = useState<Point | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<Point | null>(null);
   const [hasDragMoved, setHasDragMoved] = useState(false);
   const [canvasSize, setCanvasSize] = useState({ width: window.innerWidth, height: window.innerHeight });
-  const [justSelected, setJustSelected] = useState(false);
-
-  // State for shape creation
-  const [shapeStart, setShapeStart] = useState<Point | null>(null);
-  const [shapeEnd, setShapeEnd] = useState<Point | null>(null);
-  const [isCreatingShape, setIsCreatingShape] = useState(false);
-
-  // State for transformation
-  const [isTransforming, setIsTransforming] = useState(false);
-  const [transformStart, setTransformStart] = useState<Point | null>(null);
-  const [transformElementId, setTransformElementId] = useState<string | null>(null);
-  const [transformHandler, setTransformHandler] = useState<string | null>(null);
-  const [originalBounds, setOriginalBounds] = useState<{ minX: number; minY: number; maxX: number; maxY: number } | null>(null);
-  const [transformedBounds, setTransformedBounds] = useState<{ minX: number; minY: number; maxX: number; maxY: number } | null>(null);
-  const [initialTransform, setInitialTransform] = useState<{ scaleX: number; scaleY: number; rotation: number; translateX: number; translateY: number } | null>(null);
-  const [originalElementData, setOriginalElementData] = useState<PathData | null>(null);
-  const [rotationFeedback, setRotationFeedback] = useState<{ degrees: number; visible: boolean; isShiftPressed: boolean; isMultipleOf15: boolean }>({ degrees: 0, visible: false, isShiftPressed: false, isMultipleOf15: false });
-  const [resizeFeedback, setResizeFeedback] = useState<{ deltaX: number; deltaY: number; visible: boolean; isShiftPressed: boolean; isMultipleOf10: boolean }>({ deltaX: 0, deltaY: 0, visible: false, isShiftPressed: false, isMultipleOf10: false });
-  const [shapeFeedback, setShapeFeedback] = useState<{ width: number; height: number; visible: boolean; isShiftPressed: boolean; isMultipleOf10: boolean }>({ width: 0, height: 0, visible: false, isShiftPressed: false, isMultipleOf10: false });
-  const [pointPositionFeedback, setPointPositionFeedback] = useState<{ x: number; y: number; visible: boolean }>({ x: 0, y: 0, visible: false });
 
   // Handle window resize
   useEffect(() => {
@@ -102,67 +125,15 @@ export const Canvas: React.FC = () => {
         );
         
         if (point) {
-          setPointPositionFeedback({
-            x: Math.round(point.x),
-            y: Math.round(point.y),
-            visible: true
-          });
+          updatePointPositionFeedback(point.x, point.y, true);
           return;
         }
       }
     }
     
     // Hide feedback if conditions not met
-    setPointPositionFeedback({ x: 0, y: 0, visible: false });
-  }, [activePlugin, selectedCommands, elements]);
-
-  // Handle keyboard events
-  /* eslint-disable react-hooks/exhaustive-deps */
-  useEffect(() => {
-    // Utility function to check if focus is on a text input field
-    const isTextFieldFocused = (): boolean => {
-      const activeElement = document.activeElement;
-      return !!(activeElement && (
-        activeElement.tagName === 'INPUT' ||
-        activeElement.tagName === 'TEXTAREA' ||
-        (activeElement as HTMLElement).contentEditable === 'true'
-      ));
-    };
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't activate pan mode if user is typing in an input or textarea
-      if (e.code === 'Space' && !e.repeat) {
-        if (!isTextFieldFocused()) {
-          setIsSpacePressed(true);
-          e.preventDefault();
-        }
-      }
-
-      // Handle Delete key for deleting selected commands
-      if (e.code === 'Delete' || e.code === 'Backspace') {
-        // Only delete if not typing in an input and we have selected commands
-        if (!isTextFieldFocused() && selectedCommands.length > 0) {
-          deleteSelectedCommands();
-          e.preventDefault();
-        }
-      }
-    };
-
-    const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.code === 'Space') {
-        setIsSpacePressed(false);
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    document.addEventListener('keyup', handleKeyUp);
-
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      document.removeEventListener('keyup', handleKeyUp);
-    };
-  }, []);
-  /* eslint-enable react-hooks/exhaustive-deps */
+    updatePointPositionFeedback(0, 0, false);
+  }, [activePlugin, selectedCommands, elements, updatePointPositionFeedback]);
 
   // Emergency cleanup listeners for drag states
   useEffect(() => {
@@ -193,7 +164,6 @@ export const Canvas: React.FC = () => {
   }, [viewport]);
 
   // Handle element click
-  /* eslint-disable react-hooks/exhaustive-deps */
   const handleElementClick = useCallback((elementId: string, e: React.PointerEvent) => {
     e.stopPropagation();
 
@@ -234,11 +204,9 @@ export const Canvas: React.FC = () => {
       // If element is already selected and no shift, keep it selected (no action needed)
 
       // Mark that we just made a selection to prevent immediate clearing
-      setJustSelected(true);
-      setTimeout(() => setJustSelected(false), 100);
+      // Note: justSelected is now managed by useCanvasPointerSelection hook
     }
-  }, [activePlugin, screenToCanvas, isDragging, hasDragMoved, dragStart]);
-  /* eslint-enable react-hooks/exhaustive-deps */
+  }, [activePlugin, isDragging, hasDragMoved, dragStart]);
 
   // Handle element pointer down for drag
   const handleElementPointerDown = useCallback((elementId: string, e: React.PointerEvent) => {
@@ -270,19 +238,6 @@ export const Canvas: React.FC = () => {
     return null;
   };
 
-  // Helper function to get current element transform (now always returns defaults since transforms are applied directly)
-  const getCurrentTransform = () => {
-    // Since we now apply transformations directly to element coordinates,
-    // we always return default transform values
-    return {
-      scaleX: 1,
-      scaleY: 1,
-      rotation: 0,
-      translateX: 0,
-      translateY: 0
-    };
-  };
-
   // Get bounds for a specific subpath
   const getSubpathBounds = (element: CanvasElement, subpathIndex: number) => {
     if (element.type !== 'path') return null;
@@ -301,76 +256,23 @@ export const Canvas: React.FC = () => {
   };
 
   // Handle transformation handler pointer down
-  /* eslint-disable react-hooks/exhaustive-deps */
+   
   const handleTransformationHandlerPointerDown = useCallback((e: React.PointerEvent, elementId: string, handler: string) => {
     e.stopPropagation();
-    
+
     // Capture the pointer to ensure we receive pointerup events even if the pointer moves outside the handler
     if (e.currentTarget && 'setPointerCapture' in e.currentTarget) {
       e.currentTarget.setPointerCapture(e.pointerId);
     }
-    
+
     const point = screenToCanvas(e.clientX, e.clientY);
-
-    // Check if we're working with individual subpaths
-    const isSubpathTransformation = elementId.startsWith('subpath:');
-    let actualElementId: string;
-
-    if (isSubpathTransformation) {
-      // New format: "subpath:elementId:subpathIndex"
-      const parts = elementId.split(':');
-      actualElementId = parts[1];
-    } else {
-      // Legacy or regular element format
-      actualElementId = elementId.replace('subpaths:', '');
-    }
-
-    const element = elements.find(el => el.id === actualElementId);
-
-    if (element) {
-      let bounds;
-      let transformedBounds;
-
-      // For individual subpaths, use the specific subpath bounds instead of the entire element bounds
-      if (isSubpathTransformation && elementId.startsWith('subpath:')) {
-        const parts = elementId.split(':');
-        const subpathIndex = parseInt(parts[2]);
-        const subpathBounds = getSubpathBounds(element, subpathIndex);
-
-        if (subpathBounds) {
-          bounds = subpathBounds;
-          transformedBounds = subpathBounds;
-        } else {
-          // Fallback to element bounds if subpath bounds calculation fails
-          bounds = getElementBounds(element);
-          transformedBounds = getElementBounds(element);
-        }
-      } else {
-        // Use element bounds for regular elements or legacy subpath format
-        bounds = getElementBounds(element);
-        transformedBounds = getElementBounds(element);
-      }
-
-      if (bounds && transformedBounds) {
-        setIsTransforming(true);
-        setTransformStart(point);
-        setTransformElementId(elementId); // Keep the full elementId including 'subpaths:' prefix
-        setTransformHandler(handler);
-        setOriginalBounds(bounds); // Use original bounds for scale calculation
-        setTransformedBounds(transformedBounds); // Use transformed bounds for transform origin
-        setOriginalElementData(element.data); // Store original element data to prevent accumulation
-
-        // Store current transform state to build upon it
-        const currentTransform = getCurrentTransform();
-        setInitialTransform(currentTransform);
-      }
-    }
-  }, [elements, screenToCanvas, getElementBounds, getSubpathBounds, getCurrentTransform, getTransformationBounds]);
-  /* eslint-enable react-hooks/exhaustive-deps */
+    startTransformation(elementId, handler, point);
+  }, [screenToCanvas, startTransformation]);
+   
 
   const handleTransformationHandlerPointerUp = useCallback((e: React.PointerEvent) => {
     e.stopPropagation();
-    
+
     // Release pointer capture if it was set
     if (e.currentTarget && 'releasePointerCapture' in e.currentTarget) {
       try {
@@ -380,20 +282,8 @@ export const Canvas: React.FC = () => {
       }
     }
 
-    // Reset all transformation state
-    setIsTransforming(false);
-    setTransformStart(null);
-    setTransformElementId(null);
-    setTransformHandler(null);
-    setOriginalBounds(null);
-    setTransformedBounds(null);
-    setInitialTransform(null);
-    setOriginalElementData(null);
-    setRotationFeedback({ degrees: 0, visible: false, isShiftPressed: false, isMultipleOf15: false });
-    setResizeFeedback({ deltaX: 0, deltaY: 0, visible: false, isShiftPressed: false, isMultipleOf10: false });
-    setShapeFeedback({ width: 0, height: 0, visible: false, isShiftPressed: false, isMultipleOf10: false });
-    setPointPositionFeedback({ x: 0, y: 0, visible: false });
-  }, []);
+    endTransformation();
+  }, [endTransformation]);
 
   // Handle pointer events
   /* eslint-disable react-hooks/exhaustive-deps */
@@ -406,20 +296,6 @@ export const Canvas: React.FC = () => {
       return;
     }
 
-    // Helper function to begin selection rectangle
-    const beginSelectionRectangle = (point: Point, shouldClearCommands = false, shouldClearSubpaths = false) => {
-      setIsSelecting(true);
-      setSelectionStart(point);
-      setSelectionEnd(point);
-
-      if (shouldClearCommands) {
-        clearSelectedCommands();
-      }
-      if (shouldClearSubpaths) {
-        useCanvasStore.getState().clearSubpathSelection();
-      }
-    };
-
     switch (activePlugin) {
       case 'pencil':
         useCanvasStore.getState().startPath(point);
@@ -431,9 +307,7 @@ export const Canvas: React.FC = () => {
       }
       case 'shape':
         // Start creating a shape
-        setIsCreatingShape(true);
-        setShapeStart(point);
-        setShapeEnd(point);
+        startShapeCreation(point);
         break;
       case 'select':
         // Only start selection rectangle if clicking on SVG canvas, not on elements
@@ -443,14 +317,14 @@ export const Canvas: React.FC = () => {
         break;
       case 'edit':
         // Start command selection rectangle if clicking on SVG canvas (only when smooth brush is not active)
-        if (target.tagName === 'svg' && !smoothBrush.isActive) {
-          beginSelectionRectangle(point, true, false);
+        if (target.tagName === 'svg' && !useCanvasStore.getState().smoothBrush.isActive) {
+          beginSelectionRectangle(point, !e.shiftKey, false);
         }
         break;
       case 'subpath':
         // Start subpath selection rectangle if clicking on SVG canvas
         if (target.tagName === 'svg') {
-          beginSelectionRectangle(point, false, true);
+          beginSelectionRectangle(point, false, !e.shiftKey);
         }
         break;
     }
@@ -478,7 +352,7 @@ export const Canvas: React.FC = () => {
     }
 
     // Check for potential element dragging (when we have dragStart but may not be isDragging yet)
-    if (dragStart && !isTransforming && !isSelecting && !isCreatingShape) {
+    if (dragStart && !transformState.isTransforming && !isSelecting && !isCreatingShape) {
       const deltaX = point.x - dragStart.x;
       const deltaY = point.y - dragStart.y;
 
@@ -512,194 +386,8 @@ export const Canvas: React.FC = () => {
       return;
     }
 
-    if (isTransforming && transformStart && transformElementId && transformHandler && originalBounds && transformedBounds && initialTransform && originalElementData) {
-      // Check if we're working with subpaths
-      const isSubpathTransformation = transformElementId.startsWith('subpath:') || transformElementId.startsWith('subpaths:');
-      let actualElementId: string;
-      let targetSubpathIndex: number | null = null;
-
-      if (transformElementId.startsWith('subpath:')) {
-        // New format: "subpath:elementId:subpathIndex"
-        const parts = transformElementId.split(':');
-        actualElementId = parts[1];
-        targetSubpathIndex = parseInt(parts[2]);
-      } else {
-        // Legacy format
-        actualElementId = isSubpathTransformation ? transformElementId.replace('subpaths:', '') : transformElementId;
-      }
-
-      // Handle transformation
-      const element = elements.find(el => el.id === actualElementId);
-      if (!element) return;
-
-      // Create transform bounds for the manager
-      const bounds: TransformBounds = {
-        x: originalBounds.minX,
-        y: originalBounds.minY,
-        width: originalBounds.maxX - originalBounds.minX,
-        height: originalBounds.maxY - originalBounds.minY,
-        center: {
-          x: (originalBounds.minX + originalBounds.maxX) / 2,
-          y: (originalBounds.minY + originalBounds.maxY) / 2
-        }
-      };
-
-      let newScaleX = initialTransform.scaleX;
-      let newScaleY = initialTransform.scaleY;
-      let newRotation = initialTransform.rotation;
-      let transformOriginX = bounds.center.x;
-      let transformOriginY = bounds.center.y;
-
-      // Use the transform manager for natural calculations
-      if (transformHandler.startsWith('corner-') || transformHandler.startsWith('midpoint-')) {
-        // Use the same scale calculation for both paths and subpaths since bounds are identical
-        const scaleResult = transformManager.calculateScale(
-          transformHandler,
-          point,
-          transformStart,
-          bounds
-        );
-
-        // Calculate original scales from transform manager
-        let finalScaleX = scaleResult.scaleX;
-        let finalScaleY = scaleResult.scaleY;
-        transformOriginX = scaleResult.originX;
-        transformOriginY = scaleResult.originY;
-
-        // Update resize feedback - show relative change from start
-        const newWidth = Math.round(bounds.width * finalScaleX);
-        const newHeight = Math.round(bounds.height * finalScaleY);
-        const originalWidth = Math.round(bounds.width * initialTransform.scaleX);
-        const originalHeight = Math.round(bounds.height * initialTransform.scaleY);
-        const deltaX = newWidth - originalWidth;
-        const deltaY = newHeight - originalHeight;
-        
-        // Apply sticky resize (10-pixel increments) when Shift is pressed
-        const isShiftPressed = e.shiftKey;
-        let adjustedDeltaX = deltaX;
-        let adjustedDeltaY = deltaY;
-        if (isShiftPressed) {
-          // Round to nearest 10-pixel increment
-          adjustedDeltaX = Math.round(deltaX / 10) * 10;
-          adjustedDeltaY = Math.round(deltaY / 10) * 10;
-          
-          // Recalculate scales based on adjusted deltas
-          finalScaleX = initialTransform.scaleX * (originalWidth + adjustedDeltaX) / originalWidth;
-          finalScaleY = initialTransform.scaleY * (originalHeight + adjustedDeltaY) / originalHeight;
-        }
-        
-        // Check if adjusted deltas are multiples of 10
-        const isMultipleOf10 = (Math.abs(adjustedDeltaX) % 10 === 0) && (Math.abs(adjustedDeltaY) % 10 === 0);
-        
-        // Apply the final scales
-        newScaleX = finalScaleX;
-        newScaleY = finalScaleY;
-        
-        setResizeFeedback({ deltaX: adjustedDeltaX, deltaY: adjustedDeltaY, visible: true, isShiftPressed, isMultipleOf10 });
-
-      } else if (transformHandler.startsWith('rotate-')) {
-        // Calculate rotation using the transform manager
-        const rotationResult = transformManager.calculateRotation(
-          point,
-          transformStart,
-          bounds
-        );
-
-        let calculatedRotation = initialTransform.rotation + rotationResult.angle;
-
-        // Apply sticky rotation (15-degree increments) when Shift is pressed
-        const isShiftPressed = e.shiftKey;
-        if (isShiftPressed) {
-          // Round to nearest 15-degree increment
-          calculatedRotation = Math.round(calculatedRotation / 15) * 15;
-        }
-
-        newRotation = calculatedRotation;
-        transformOriginX = rotationResult.centerX;
-        transformOriginY = rotationResult.centerY;
-
-        // Keep rotation within reasonable bounds (-180 to 180)
-        while (newRotation > 180) newRotation -= 360;
-        while (newRotation < -180) newRotation += 360;
-
-        // Update rotation feedback - show total rotation in 0-360 range
-        const normalizedDegrees = newRotation < 0 ? newRotation + 360 : newRotation;
-        const isMultipleOf15 = Math.round(normalizedDegrees) % 15 === 0;
-        setRotationFeedback({ 
-          degrees: Math.round(normalizedDegrees), 
-          visible: true, 
-          isShiftPressed,
-          isMultipleOf15 
-        });
-      }
-
-      // Apply transformation directly to element data instead of using SVG transforms
-      if (isSubpathTransformation && targetSubpathIndex !== null) {
-        // Apply transformation to the specific subpath using individual subpath transformation
-        const pathData = originalElementData as PathData;
-        const transformedData = transformSingleSubpath(
-          pathData,
-          targetSubpathIndex,
-          newScaleX,
-          newScaleY,
-          transformOriginX,
-          transformOriginY,
-          newRotation
-        );
-
-        useCanvasStore.getState().updateElement(actualElementId, {
-          data: transformedData
-        });
-      } else if (isSubpathTransformation) {
-        // Legacy: transform all selected subpaths
-        const pathData = originalElementData as PathData;
-        const transformedData = transformSubpathsData(
-          pathData,
-          newScaleX,
-          newScaleY,
-          transformOriginX,
-          transformOriginY,
-          newRotation,
-          selectedSubpaths // Pass the selected subpaths
-        );
-
-        useCanvasStore.getState().updateElement(actualElementId, {
-          data: transformedData
-        });
-      } else {
-        // Apply transformation to the entire element (original behavior)
-        let transformedData;
-
-        if (element.type === 'path') {
-          // Use original element data to prevent accumulation
-          const pathData = originalElementData as PathData;
-          transformedData = transformPathData(
-            pathData,
-            newScaleX,
-            newScaleY,
-            transformOriginX,
-            transformOriginY,
-            newRotation
-          );
-        } else {
-          // Fallback to transform approach for other element types
-          transformedData = {
-            ...originalElementData,
-            transform: {
-              scaleX: newScaleX,
-              scaleY: newScaleY,
-              rotation: newRotation,
-              translateX: transformOriginX,
-              translateY: transformOriginY,
-            }
-          };
-        }
-
-        useCanvasStore.getState().updateElement(actualElementId, {
-          data: transformedData
-        });
-      }
-
+    if (transformState.isTransforming) {
+      updateTransformation(point, e.shiftKey);
       return;
     }
 
@@ -708,78 +396,21 @@ export const Canvas: React.FC = () => {
     }
 
     // Handle smooth brush in edit mode
-    if (activePlugin === 'edit' && smoothBrush.isActive && e.buttons === 1) {
+    if (activePlugin === 'edit' && useCanvasStore.getState().smoothBrush.isActive && e.buttons === 1) {
       applySmoothBrush(point.x, point.y);
     }
 
     // Update smooth brush cursor position
-    if (activePlugin === 'edit' && smoothBrush.isActive) {
+    if (activePlugin === 'edit' && useCanvasStore.getState().smoothBrush.isActive) {
       updateSmoothBrushCursor(point.x, point.y);
     }
 
     if (isSelecting && selectionStart) {
-      setSelectionEnd(point);
+      updateSelectionRectangle(point);
     }
 
     if (isCreatingShape && shapeStart) {
-      let endPoint = point;
-      
-      // Calculate current dimensions
-      const currentWidth = Math.abs(point.x - shapeStart.x);
-      const currentHeight = Math.abs(point.y - shapeStart.y);
-      
-      // Get selected shape type
-      const selectedShape = useCanvasStore.getState().shape.selectedShape;
-      
-      // Apply sticky shape creation (10-pixel increments) when Shift is pressed
-      const isShiftPressed = e.shiftKey;
-      let adjustedWidth = currentWidth;
-      let adjustedHeight = currentHeight;
-      
-      if (isShiftPressed) {
-        // Round to nearest 10-pixel increment
-        adjustedWidth = Math.round(currentWidth / 10) * 10;
-        adjustedHeight = Math.round(currentHeight / 10) * 10;
-        
-        // Calculate new end point based on adjusted dimensions
-        // Maintain the direction from start to current point
-        const dirX = point.x >= shapeStart.x ? 1 : -1;
-        const dirY = point.y >= shapeStart.y ? 1 : -1;
-        
-        endPoint = {
-          x: shapeStart.x + dirX * adjustedWidth,
-          y: shapeStart.y + dirY * adjustedHeight
-        };
-      }
-      
-      // Check if adjusted dimensions are multiples of 10
-      const isMultipleOf10 = (Math.abs(adjustedWidth) % 10 === 0) && (Math.abs(adjustedHeight) % 10 === 0);
-      
-      // Calculate real dimensions based on shape type
-      let realWidth = adjustedWidth;
-      let realHeight = adjustedHeight;
-      
-      if (selectedShape === 'square') {
-        // Square always has equal sides
-        const sideLength = Math.min(adjustedWidth, adjustedHeight);
-        realWidth = sideLength;
-        realHeight = sideLength;
-      } else if (selectedShape === 'circle') {
-        // Circle always has equal width and height (diameter)
-        const diameter = Math.min(adjustedWidth, adjustedHeight);
-        realWidth = diameter;
-        realHeight = diameter;
-      }
-      // For rectangle, realWidth and realHeight are already correct
-      
-      setShapeEnd(endPoint);
-      setShapeFeedback({ 
-        width: Math.round(realWidth), 
-        height: Math.round(realHeight), 
-        visible: true, 
-        isShiftPressed, 
-        isMultipleOf10 
-      });
+      updateShapeCreation(point, e.shiftKey);
     }
 
     // Handle subpath dragging
@@ -792,7 +423,7 @@ export const Canvas: React.FC = () => {
       setDragStart(point);
       return;
     }
-  }, [activePlugin, screenToCanvas, isSpacePressed, isSelecting, selectionStart, viewport.zoom, isDragging, dragStart, isCreatingShape, shapeStart, isTransforming, transformStart, transformElementId, transformHandler, originalBounds, initialTransform, originalElementData, useCanvasStore.getState().transformation, getElementBounds, getSubpathBounds, smoothBrush.isActive, applySmoothBrush, updateSmoothBrushCursor]);
+  }, [activePlugin, screenToCanvas, isSpacePressed, isSelecting, selectionStart, viewport.zoom, isDragging, dragStart, isCreatingShape, shapeStart, transformState.isTransforming, updateTransformation, getElementBounds, getSubpathBounds, applySmoothBrush, updateSmoothBrushCursor]);
   /* eslint-enable react-hooks/exhaustive-deps */
 
   /* eslint-disable react-hooks/exhaustive-deps */
@@ -808,19 +439,8 @@ export const Canvas: React.FC = () => {
       return;
     }
 
-    if (isTransforming) {
-      setIsTransforming(false);
-      setTransformStart(null);
-      setTransformElementId(null);
-      setTransformHandler(null);
-      setOriginalBounds(null);
-      setTransformedBounds(null); // Reset transformed bounds as well
-      setInitialTransform(null);
-      setOriginalElementData(null);
-      setRotationFeedback({ degrees: 0, visible: false, isShiftPressed: false, isMultipleOf15: false });
-      setResizeFeedback({ deltaX: 0, deltaY: 0, visible: false, isShiftPressed: false, isMultipleOf10: false });
-      setShapeFeedback({ width: 0, height: 0, visible: false, isShiftPressed: false, isMultipleOf10: false });
-      setPointPositionFeedback({ x: 0, y: 0, visible: false });
+    if (transformState.isTransforming) {
+      endTransformation();
       return;
     }
 
@@ -831,127 +451,47 @@ export const Canvas: React.FC = () => {
 
     if (isCreatingShape && shapeStart && shapeEnd) {
       // Create the shape
-      useCanvasStore.getState().createShape(shapeStart, shapeEnd);
-
-      // Reset shape creation state
-      setIsCreatingShape(false);
-      setShapeStart(null);
-      setShapeEnd(null);
-      setShapeFeedback({ width: 0, height: 0, visible: false, isShiftPressed: false, isMultipleOf10: false });
+      endShapeCreation();
       return;
     }
 
     if (isSelecting && selectionStart && selectionEnd) {
-      // Prevent the click event from firing after selection
-      e.preventDefault();
-      e.stopPropagation();
+      // Check if this was a click (no significant movement)
+      const movementThreshold = 5; // pixels
+      const deltaX = Math.abs(selectionEnd.x - selectionStart.x);
+      const deltaY = Math.abs(selectionEnd.y - selectionStart.y);
+      const isClick = deltaX < movementThreshold && deltaY < movementThreshold;
 
-      // Calculate selection box in canvas coordinates
-      const selectionMinX = Math.min(selectionStart.x, selectionEnd.x);
-      const selectionMaxX = Math.max(selectionStart.x, selectionEnd.x);
-      const selectionMinY = Math.min(selectionStart.y, selectionEnd.y);
-      const selectionMaxY = Math.max(selectionStart.y, selectionEnd.y);
+      if (isClick && activePlugin === 'select') {
+        // For select mode, treat clicks on empty space as deselection
+        const target = e.target as Element;
+        const isCanvasClick = target.tagName === 'svg' || target === e.currentTarget;
 
-      if (activePlugin === 'edit') {
-        // Select commands within the selection box
-        const selectedCommands: Array<{ elementId: string, commandIndex: number, pointIndex: number }> = [];
-
-        elements.forEach(el => {
-          if (el.type === 'path') {
-            const pathData = el.data as PathData;
-            const commands = pathData.subPaths.flat();
-            const points = extractEditablePoints(commands);
-
-            points.forEach(point => {
-              if (point.x >= selectionMinX && point.x <= selectionMaxX &&
-                point.y >= selectionMinY && point.y <= selectionMaxY) {
-                selectedCommands.push({
-                  elementId: el.id,
-                  commandIndex: point.commandIndex,
-                  pointIndex: point.pointIndex
-                });
-              }
-            });
-          }
-        });
-
-        // Select all found commands
-        selectedCommands.forEach(command => selectCommand(command, true));
-      } else if (activePlugin === 'subpath') {
-        // Select subpaths within the selection box
-        const selectedSubpathsList: Array<{ elementId: string, subpathIndex: number }> = [];
-
-        elements.forEach(el => {
-          if (el.type === 'path' && selectedIds.includes(el.id)) {
-            const pathData = el.data as PathData;
-
-            pathData.subPaths.forEach((subpathData, index) => {
-              // Check if subpath intersects with selection box
-              const subpathBounds = measurePath([subpathData], pathData.strokeWidth || 1, viewport.zoom);
-
-              const intersects = !(subpathBounds.maxX < selectionMinX ||
-                subpathBounds.minX > selectionMaxX ||
-                subpathBounds.maxY < selectionMinY ||
-                subpathBounds.minY > selectionMaxY);
-
-              if (intersects) {
-                selectedSubpathsList.push({
-                  elementId: el.id,
-                  subpathIndex: index
-                });
-              }
-            });
-          }
-        });
-
-        // Select all found subpaths (clear previous selection if not shift-selecting)
-        if (selectedSubpathsList.length > 0) {
-          useCanvasStore.getState().selectSubpaths(selectedSubpathsList);
+        if (isCanvasClick && !isCreatingShape && !transformState.isTransforming && !e.shiftKey) {
+          clearSelection();
+          // Reset selection state to prevent mouse from staying "captured"
+          completeSelectionRectangle();
         }
       } else {
-        // Original element selection logic
-        const selectedIds = elements
-          .filter(el => {
-            if (el.type === 'path') {
-              const pathData = el.data as import('../types').PathData;
-              // Check if the path bounds intersect with the selection box
-              const pathBounds = measurePath(pathData.subPaths, pathData.strokeWidth, viewport.zoom);
+        // Prevent the click event from firing after selection
+        e.preventDefault();
+        e.stopPropagation();
 
-              // Check for intersection between path bounds and selection bounds
-              const intersects = !(pathBounds.maxX < selectionMinX ||
-                pathBounds.minX > selectionMaxX ||
-                pathBounds.maxY < selectionMinY ||
-                pathBounds.minY > selectionMaxY);
-
-              return intersects;
-            }
-            return false;
-          })
-          .map(el => el.id);
-
-        useCanvasStore.getState().selectElements(selectedIds);
+        completeSelectionRectangle();
       }
-
-      // Mark that we just made a selection to prevent immediate clearing
-      setJustSelected(true);
-      setTimeout(() => setJustSelected(false), 100);
     }
 
-    setIsSelecting(false);
-    setSelectionStart(null);
-    setSelectionEnd(null);
-
-    // Handle canvas click (deselection) only if clicking on empty space
-    // and not currently in any other interaction mode
+    // Handle canvas click (deselection) for edit and subpath modes only
+    // (select mode is handled above in the selection completion logic)
     const target = e.target as Element;
     const isCanvasClick = target.tagName === 'svg' || target === e.currentTarget;
 
-    if (activePlugin === 'select' && isCanvasClick && !justSelected &&
-      !isSelecting && !isCreatingShape && !isTransforming) {
-      useCanvasStore.getState().clearSelection();
-    } else if (activePlugin === 'edit' && isCanvasClick && !justSelected &&
-      !isSelecting && !isCreatingShape && !isTransforming) {
+    if (activePlugin === 'edit' && isCanvasClick && !justSelected &&
+      !isSelecting && !isCreatingShape && !transformState.isTransforming && !e.shiftKey) {
       clearSelectedCommands();
+    } else if (activePlugin === 'subpath' && isCanvasClick && !justSelected &&
+      !isSelecting && !isCreatingShape && !transformState.isTransforming && !e.shiftKey) {
+      clearSubpathSelection();
     }
 
     // Clean up any remaining drag state (in case of click without drag)
@@ -959,7 +499,7 @@ export const Canvas: React.FC = () => {
       setDragStart(null);
       setHasDragMoved(false);
     }
-  }, [isDragging, isSelecting, selectionStart, selectionEnd, elements, activePlugin, isCreatingShape, shapeStart, shapeEnd, isTransforming, justSelected, dragStart]);
+  }, [isDragging, isSelecting, selectionStart, selectionEnd, elements, activePlugin, isCreatingShape, shapeStart, shapeEnd, transformState.isTransforming, justSelected, dragStart]);
   /* eslint-enable react-hooks/exhaustive-deps */
 
   // Handle wheel events with passive: false to allow preventDefault
@@ -982,73 +522,6 @@ export const Canvas: React.FC = () => {
 
     return () => {
       svgElement.removeEventListener('wheel', handleWheel);
-    };
-  }, []);
-
-  // Handle keyboard arrow key movement
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Only handle arrow keys and delete/backspace
-      if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Delete', 'Backspace'].includes(e.key)) {
-        return;
-      }
-
-      // Prevent default to avoid page scrolling or browser back
-      e.preventDefault();
-
-      const delta = e.shiftKey ? 10 : 1;
-      let deltaX = 0;
-      let deltaY = 0;
-
-      switch (e.key) {
-        case 'ArrowUp':
-          deltaY = -delta;
-          break;
-        case 'ArrowDown':
-          deltaY = delta;
-          break;
-        case 'ArrowLeft':
-          deltaX = -delta;
-          break;
-        case 'ArrowRight':
-          deltaX = delta;
-          break;
-      }
-
-      if (deltaX !== 0 || deltaY !== 0) {
-        // Check what is selected and move accordingly
-        const state = useCanvasStore.getState();
-
-        // Priority: points > subpaths > paths
-        if (state.selectedCommands.length > 0) {
-          // Move selected points
-          state.moveSelectedPoints(deltaX, deltaY);
-        } else if (state.selectedSubpaths.length > 0) {
-          // Move selected subpaths
-          state.moveSelectedSubpaths(deltaX, deltaY);
-        } else if (state.selectedIds.length > 0) {
-          // Move selected elements (paths)
-          state.moveSelectedElements(deltaX, deltaY);
-        }
-      } else if (e.key === 'Delete' || e.key === 'Backspace') {
-        // Delete selected items
-        const state = useCanvasStore.getState();
-
-        // Priority: points > subpaths > paths
-        if (state.selectedCommands.length > 0) {
-          state.deleteSelectedCommands();
-        } else if (state.selectedSubpaths.length > 0) {
-          state.deleteSelectedSubpaths();
-        } else if (state.selectedIds.length > 0) {
-          state.deleteSelectedElements();
-        }
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
 
@@ -1131,13 +604,54 @@ export const Canvas: React.FC = () => {
         />
       )}
 
+      {/* Transformation Overlay */}
+      {((selectedIds.length > 0 && !isWorkingWithSubpaths()) || (selectedSubpaths.length > 0 && isWorkingWithSubpaths())) &&
+        (isWorkingWithSubpaths() ? selectedSubpaths : selectedIds).map(item => {
+          const elementId = typeof item === 'string' ? item : item.elementId;
+          const element = elements.find(el => el.id === elementId);
+          if (!element) return null;
+
+          // Calculate bounds for the element or subpath
+          let bounds = null;
+          if (element.type === 'path') {
+            if (isWorkingWithSubpaths()) {
+              // For subpaths, calculate bounds for the specific subpath
+              const subpathIndex = typeof item === 'string' ? 0 : item.subpathIndex;
+              const pathData = element.data as import('../types').PathData;
+              bounds = measureSubpathBounds(
+                pathData.subPaths[subpathIndex],
+                pathData.strokeWidth || 1,
+                viewport.zoom
+              );
+            } else {
+              // For regular elements, calculate full bounds
+              bounds = getElementBounds(element);
+            }
+          }
+
+          return (
+            <TransformationOverlay
+              key={isWorkingWithSubpaths() ? `subpath-${elementId}-${typeof item === 'string' ? 0 : item.subpathIndex}` : elementId}
+              element={element}
+              bounds={bounds}
+              selectedSubpaths={selectedSubpaths}
+              viewport={viewport}
+              activePlugin={activePlugin}
+              transformation={transformation}
+              isWorkingWithSubpaths={isWorkingWithSubpaths()}
+              onTransformationHandlerPointerDown={handleTransformationHandlerPointerDown}
+              onTransformationHandlerPointerUp={handleTransformationHandlerPointerUp}
+            />
+          );
+        })}
+
       <FeedbackOverlay
         viewport={viewport}
         canvasSize={canvasSize}
-        rotationFeedback={rotationFeedback}
-        resizeFeedback={resizeFeedback}
-        shapeFeedback={shapeFeedback}
-        pointPositionFeedback={pointPositionFeedback}
+        rotationFeedback={feedback.rotation}
+        resizeFeedback={feedback.resize}
+        shapeFeedback={shapeFeedback.shape}
+        pointPositionFeedback={shapeFeedback.pointPosition}
       />
     </svg>
   );
