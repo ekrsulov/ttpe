@@ -1,7 +1,7 @@
 import type { StateCreator } from 'zustand';
 import type { CanvasElement, PathData } from '../../types';
 import type { CanvasStore } from '../canvasStore';
-import { performPathUnion as performUnionOp, performPathSubtraction, performPathUnionPaperJS } from '../../utils/pathOperationsUtils';
+import { performPathUnion as performUnionOp, performPathSubtraction, performPathUnionPaperJS, performPathIntersect, performPathExclude, performPathDivide } from '../../utils/pathOperationsUtils';
 import { commandsToString } from '../../utils/pathParserUtils';
 
 export interface BaseSlice {
@@ -26,6 +26,9 @@ export interface BaseSlice {
   performPathUnion: () => void;
   performPathUnionPaperJS: () => void;
   performPathSubtraction: () => void;
+  performPathIntersect: () => void;
+  performPathExclude: () => void;
+  performPathDivide: () => void;
 }
 
 type ModeRule = {
@@ -399,6 +402,135 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
     if (allPaths.length !== 2) return;
 
     const result = performPathSubtraction(allPaths[0], allPaths[1]);
+    if (result) {
+      // Replace the first selected element with the result
+      const firstSelectedId = state.selectedIds[0] || selectedSubpathElements[0]?.element.id;
+      if (firstSelectedId) {
+        state.updateElement(firstSelectedId, { data: result });
+        
+        // Remove the second selected element
+        const secondSelectedId = state.selectedIds[1] || selectedSubpathElements[1]?.element.id;
+        if (secondSelectedId && secondSelectedId !== firstSelectedId) {
+          state.deleteElement(secondSelectedId);
+        }
+      }
+    }
+  },
+
+  performPathIntersect: () => {
+    const state = get() as CanvasStore;
+    const selectedPaths = state.elements.filter(el =>
+      state.selectedIds.includes(el.id) && el.type === 'path'
+    ).map(el => el.data as PathData);
+
+    const selectedSubpathElements = state.selectedSubpaths.map(sp => {
+      const element = state.elements.find(el => el.id === sp.elementId);
+      if (element && element.type === 'path') {
+        return { element, subpathIndex: sp.subpathIndex };
+      }
+      return null;
+    }).filter(Boolean) as Array<{ element: CanvasElement; subpathIndex: number }>;
+
+    // Handle selected subpaths by extracting them as separate paths
+    const subpathPaths = selectedSubpathElements.map(({ element, subpathIndex }) => {
+      const pathData = element.data as PathData;
+      return {
+        ...pathData,
+        subPaths: [pathData.subPaths[subpathIndex]]
+      };
+    });
+
+    const allPaths = [...selectedPaths, ...subpathPaths];
+
+    if (allPaths.length !== 2) return;
+
+    const result = performPathIntersect(allPaths[0], allPaths[1]);
+    if (result) {
+      // Replace the first selected element with the result
+      const firstSelectedId = state.selectedIds[0] || selectedSubpathElements[0]?.element.id;
+      if (firstSelectedId) {
+        state.updateElement(firstSelectedId, { data: result });
+        
+        // Remove the second selected element
+        const secondSelectedId = state.selectedIds[1] || selectedSubpathElements[1]?.element.id;
+        if (secondSelectedId && secondSelectedId !== firstSelectedId) {
+          state.deleteElement(secondSelectedId);
+        }
+      }
+    }
+  },
+
+  performPathExclude: () => {
+    const state = get() as CanvasStore;
+    const selectedPaths = state.elements.filter(el =>
+      state.selectedIds.includes(el.id) && el.type === 'path'
+    ).map(el => el.data as PathData);
+
+    const selectedSubpathElements = state.selectedSubpaths.map(sp => {
+      const element = state.elements.find(el => el.id === sp.elementId);
+      if (element && element.type === 'path') {
+        return { element, subpathIndex: sp.subpathIndex };
+      }
+      return null;
+    }).filter(Boolean) as Array<{ element: CanvasElement; subpathIndex: number }>;
+
+    // Handle selected subpaths by extracting them as separate paths
+    const subpathPaths = selectedSubpathElements.map(({ element, subpathIndex }) => {
+      const pathData = element.data as PathData;
+      return {
+        ...pathData,
+        subPaths: [pathData.subPaths[subpathIndex]]
+      };
+    });
+
+    const allPaths = [...selectedPaths, ...subpathPaths];
+
+    if (allPaths.length !== 2) return;
+
+    const result = performPathExclude(allPaths[0], allPaths[1]);
+    if (result) {
+      // Replace the first selected element with the result
+      const firstSelectedId = state.selectedIds[0] || selectedSubpathElements[0]?.element.id;
+      if (firstSelectedId) {
+        state.updateElement(firstSelectedId, { data: result });
+        
+        // Remove the second selected element
+        const secondSelectedId = state.selectedIds[1] || selectedSubpathElements[1]?.element.id;
+        if (secondSelectedId && secondSelectedId !== firstSelectedId) {
+          state.deleteElement(secondSelectedId);
+        }
+      }
+    }
+  },
+
+  performPathDivide: () => {
+    const state = get() as CanvasStore;
+    const selectedPaths = state.elements.filter(el =>
+      state.selectedIds.includes(el.id) && el.type === 'path'
+    ).map(el => el.data as PathData);
+
+    const selectedSubpathElements = state.selectedSubpaths.map(sp => {
+      const element = state.elements.find(el => el.id === sp.elementId);
+      if (element && element.type === 'path') {
+        return { element, subpathIndex: sp.subpathIndex };
+      }
+      return null;
+    }).filter(Boolean) as Array<{ element: CanvasElement; subpathIndex: number }>;
+
+    // Handle selected subpaths by extracting them as separate paths
+    const subpathPaths = selectedSubpathElements.map(({ element, subpathIndex }) => {
+      const pathData = element.data as PathData;
+      return {
+        ...pathData,
+        subPaths: [pathData.subPaths[subpathIndex]]
+      };
+    });
+
+    const allPaths = [...selectedPaths, ...subpathPaths];
+
+    if (allPaths.length !== 2) return;
+
+    const result = performPathDivide(allPaths[0], allPaths[1]);
     if (result) {
       // Replace the first selected element with the result
       const firstSelectedId = state.selectedIds[0] || selectedSubpathElements[0]?.element.id;

@@ -19,6 +19,28 @@ export default defineConfig(() => {
     plugins: [react()],
     server: {
       host: '0.0.0.0'
+    },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            // React core libraries
+            'react-vendor': ['react', 'react-dom'],
+            // State management
+            'state-vendor': ['zustand', 'zundo'],
+            // Vector graphics (Paper.js is quite large)
+            'paper-vendor': ['paper'],
+            // Icons
+            'icons-vendor': ['lucide-react'],
+            // Image processing
+            'image-vendor': ['esm-potrace-wasm', 'path-data-parser'],
+            // Utilities
+            'utils-vendor': ['fast-deep-equal']
+          }
+        }
+      },
+      // Increase chunk size warning limit to 750KB
+      chunkSizeWarningLimit: 750
     }
   }
 })

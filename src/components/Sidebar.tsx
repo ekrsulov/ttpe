@@ -1,20 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
-import { EditorPanel } from './plugins/EditorPanel';
-import { EditPanel } from './plugins/EditPanel';
-import { ArrangePanel } from './plugins/ArrangePanel';
-import { PanPanel } from './plugins/PanPanel';
-import { TransformationPanel } from './plugins/TransformationPanel';
-import { TextPanel } from './plugins/TextPanel';
-import { SelectPanel } from './plugins/SelectPanel';
-import { ShapePanel } from './plugins/ShapePanel';
-import { PencilPanel } from './plugins/PencilPanel';
-import { ControlPointAlignmentPanel } from './plugins/ControlPointAlignmentPanel';
-import { OpticalAlignmentPanel } from './plugins/OpticalAlignmentPanel';
-import { FilePanel } from './plugins/FilePanel';
-import { SettingsPanel } from './plugins/SettingsPanel';
-import { PathOperationsPanel } from './plugins/PathOperationsPanel';
-import { SubPathOperationsPanel } from './plugins/SubPathOperationsPanel';
 import { IconButton } from './ui/IconButton';
 import {
   Hand,
@@ -30,6 +15,23 @@ import {
   File,
   Settings
 } from 'lucide-react';
+
+// Lazy load panel components
+const EditorPanel = React.lazy(() => import('./plugins/EditorPanel').then(module => ({ default: module.EditorPanel })));
+const EditPanel = React.lazy(() => import('./plugins/EditPanel').then(module => ({ default: module.EditPanel })));
+const ArrangePanel = React.lazy(() => import('./plugins/ArrangePanel').then(module => ({ default: module.ArrangePanel })));
+const PanPanel = React.lazy(() => import('./plugins/PanPanel').then(module => ({ default: module.PanPanel })));
+const TransformationPanel = React.lazy(() => import('./plugins/TransformationPanel').then(module => ({ default: module.TransformationPanel })));
+const TextPanel = React.lazy(() => import('./plugins/TextPanel').then(module => ({ default: module.TextPanel })));
+const SelectPanel = React.lazy(() => import('./plugins/SelectPanel').then(module => ({ default: module.SelectPanel })));
+const ShapePanel = React.lazy(() => import('./plugins/ShapePanel').then(module => ({ default: module.ShapePanel })));
+const PencilPanel = React.lazy(() => import('./plugins/PencilPanel').then(module => ({ default: module.PencilPanel })));
+const ControlPointAlignmentPanel = React.lazy(() => import('./plugins/ControlPointAlignmentPanel').then(module => ({ default: module.ControlPointAlignmentPanel })));
+const OpticalAlignmentPanel = React.lazy(() => import('./plugins/OpticalAlignmentPanel').then(module => ({ default: module.OpticalAlignmentPanel })));
+const FilePanel = React.lazy(() => import('./plugins/FilePanel').then(module => ({ default: module.FilePanel })));
+const SettingsPanel = React.lazy(() => import('./plugins/SettingsPanel').then(module => ({ default: module.SettingsPanel })));
+const PathOperationsPanel = React.lazy(() => import('./plugins/PathOperationsPanel').then(module => ({ default: module.PathOperationsPanel })));
+const SubPathOperationsPanel = React.lazy(() => import('./plugins/SubPathOperationsPanel').then(module => ({ default: module.SubPathOperationsPanel })));
 
 export const Sidebar: React.FC = () => {
   const {
@@ -178,29 +180,31 @@ export const Sidebar: React.FC = () => {
         gap: '8px',
         backgroundColor: '#fff'
       }}>
-        <EditorPanel />
-        <PathOperationsPanel />
-        <SubPathOperationsPanel />
-        {showFilePanel && <FilePanel />}
-        {showConfigPanel && <SettingsPanel />}
-        {activePlugin === 'edit' && (
-          <EditPanel
-            activePlugin={activePlugin}
-            smoothBrush={smoothBrush}
-            selectedCommands={selectedCommands}
-            updateSmoothBrush={updateSmoothBrush}
-            applySmoothBrush={applySmoothBrush}
-            activateSmoothBrush={activateSmoothBrush}
-            deactivateSmoothBrush={deactivateSmoothBrush}
-          />
-        )}
-        {activePlugin === 'edit' && <ControlPointAlignmentPanel />}
-        {activePlugin === 'select' && <OpticalAlignmentPanel />}
-        {activePlugin === 'pan' && <PanPanel />}
-        {activePlugin === 'pencil' && <PencilPanel />}
-        {activePlugin === 'transformation' && <TransformationPanel />}
-        {activePlugin === 'text' && <TextPanel />}
-        {activePlugin === 'shape' && <ShapePanel />}
+        <Suspense fallback={<div style={{ height: '20px', backgroundColor: '#f8f9fa' }} />}>
+          <EditorPanel />
+          <PathOperationsPanel />
+          <SubPathOperationsPanel />
+          {showFilePanel && <FilePanel />}
+          {showConfigPanel && <SettingsPanel />}
+          {activePlugin === 'edit' && (
+            <EditPanel
+              activePlugin={activePlugin}
+              smoothBrush={smoothBrush}
+              selectedCommands={selectedCommands}
+              updateSmoothBrush={updateSmoothBrush}
+              applySmoothBrush={applySmoothBrush}
+              activateSmoothBrush={activateSmoothBrush}
+              deactivateSmoothBrush={deactivateSmoothBrush}
+            />
+          )}
+          {activePlugin === 'edit' && <ControlPointAlignmentPanel />}
+          {activePlugin === 'select' && <OpticalAlignmentPanel />}
+          {activePlugin === 'pan' && <PanPanel />}
+          {activePlugin === 'pencil' && <PencilPanel />}
+          {activePlugin === 'transformation' && <TransformationPanel />}
+          {activePlugin === 'text' && <TextPanel />}
+          {activePlugin === 'shape' && <ShapePanel />}
+        </Suspense>
       </div>
 
       {/* Fixed SelectPanel at bottom */}

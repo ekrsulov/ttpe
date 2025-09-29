@@ -1,11 +1,11 @@
 import React from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { Plus, Scissors, Zap, Minus, CirclePlus } from 'lucide-react';
+import { Plus, Scissors, Zap, Minus, CirclePlus, Square, X, SplitSquareHorizontal } from 'lucide-react';
 import { IconButton } from '../ui/IconButton';
 import { Tag } from '../ui/Tag';
 
 export const PathOperationsPanel: React.FC = () => {
-  const { selectedIds, selectedSubpaths, elements, performPathUnion, performPathSubtraction, performPathSimplify, performPathUnionPaperJS } = useCanvasStore();
+  const { selectedIds, selectedSubpaths, elements, performPathUnion, performPathSubtraction, performPathSimplify, performPathUnionPaperJS, performPathIntersect, performPathExclude, performPathDivide } = useCanvasStore();
 
   // Get selected paths/subpaths
   const selectedPaths = elements.filter(el =>
@@ -37,6 +37,18 @@ export const PathOperationsPanel: React.FC = () => {
 
   const performSubtraction = () => {
     performPathSubtraction();
+  };
+
+  const performIntersect = () => {
+    performPathIntersect();
+  };
+
+  const performExclude = () => {
+    performPathExclude();
+  };
+
+  const performDivide = () => {
+    performPathDivide();
   };
 
   const performSimplify = () => {
@@ -80,12 +92,32 @@ export const PathOperationsPanel: React.FC = () => {
               <CirclePlus size={14} />
             </IconButton>
             {totalSelectedItems === 2 && (
-              <IconButton
-                onPointerUp={performSubtraction}
-                title="Subtract (First - Second)"
-              >
-                <Minus size={14} />
-              </IconButton>
+              <>
+                <IconButton
+                  onPointerUp={performSubtraction}
+                  title="Subtract (First - Second)"
+                >
+                  <Minus size={14} />
+                </IconButton>
+                <IconButton
+                  onPointerUp={performIntersect}
+                  title="Intersect (First ∩ Second)"
+                >
+                  <Square size={14} />
+                </IconButton>
+                <IconButton
+                  onPointerUp={performExclude}
+                  title="Exclude (First ⊕ Second)"
+                >
+                  <X size={14} />
+                </IconButton>
+                <IconButton
+                  onPointerUp={performDivide}
+                  title="Divide (Split at intersections)"
+                >
+                  <SplitSquareHorizontal size={14} />
+                </IconButton>
+              </>
             )}
           </>
         )}

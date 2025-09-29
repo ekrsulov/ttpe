@@ -273,7 +273,7 @@ function convertPaperPathToPathData(paperPath: paper.Path): PathData {
     const paperPath1 = convertPathDataToPaperPath(path1);
     const paperPath2 = convertPathDataToPaperPath(path2);
 
-    let result = paperPath1.subtract(paperPath2);
+    const result = paperPath1.subtract(paperPath2);
 
     if (result instanceof paper.Path) {
       return convertPaperPathToPathData(result);
@@ -305,6 +305,127 @@ function convertPaperPathToPathData(paperPath: paper.Path): PathData {
     return null;
   } catch (error) {
     console.error('Error performing path subtraction:', error);
+    return null;
+  }
+}export function performPathIntersect(path1: PathData, path2: PathData): PathData | null {
+  try {
+    const paperPath1 = convertPathDataToPaperPath(path1);
+    const paperPath2 = convertPathDataToPaperPath(path2);
+
+    const result = paperPath1.intersect(paperPath2);
+
+    if (result instanceof paper.Path) {
+      return convertPaperPathToPathData(result);
+    } else if (result instanceof paper.CompoundPath) {
+      const combinedPathData: PathData = {
+        subPaths: [],
+        strokeWidth: 1,
+        strokeColor: '#000000',
+        strokeOpacity: 1,
+        fillColor: '#000000',
+        fillOpacity: 1,
+      };
+      for (const child of result.children) {
+        if (child instanceof paper.Path) {
+          const childData = convertPaperPathToPathData(child);
+          combinedPathData.subPaths.push(...childData.subPaths);
+          // Take properties from the first child
+          if (combinedPathData.subPaths.length === childData.subPaths.length) {
+            combinedPathData.strokeWidth = childData.strokeWidth;
+            combinedPathData.strokeColor = childData.strokeColor;
+            combinedPathData.strokeOpacity = childData.strokeOpacity;
+            combinedPathData.fillColor = childData.fillColor;
+            combinedPathData.fillOpacity = childData.fillOpacity;
+          }
+        }
+      }
+      return combinedPathData;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error performing path intersect:', error);
+    return null;
+  }
+}
+
+export function performPathExclude(path1: PathData, path2: PathData): PathData | null {
+  try {
+    const paperPath1 = convertPathDataToPaperPath(path1);
+    const paperPath2 = convertPathDataToPaperPath(path2);
+
+    const result = paperPath1.exclude(paperPath2);
+
+    if (result instanceof paper.Path) {
+      return convertPaperPathToPathData(result);
+    } else if (result instanceof paper.CompoundPath) {
+      const combinedPathData: PathData = {
+        subPaths: [],
+        strokeWidth: 1,
+        strokeColor: '#000000',
+        strokeOpacity: 1,
+        fillColor: '#000000',
+        fillOpacity: 1,
+      };
+      for (const child of result.children) {
+        if (child instanceof paper.Path) {
+          const childData = convertPaperPathToPathData(child);
+          combinedPathData.subPaths.push(...childData.subPaths);
+          // Take properties from the first child
+          if (combinedPathData.subPaths.length === childData.subPaths.length) {
+            combinedPathData.strokeWidth = childData.strokeWidth;
+            combinedPathData.strokeColor = childData.strokeColor;
+            combinedPathData.strokeOpacity = childData.strokeOpacity;
+            combinedPathData.fillColor = childData.fillColor;
+            combinedPathData.fillOpacity = childData.fillOpacity;
+          }
+        }
+      }
+      return combinedPathData;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error performing path exclude:', error);
+    return null;
+  }
+}
+
+export function performPathDivide(path1: PathData, path2: PathData): PathData | null {
+  try {
+    const paperPath1 = convertPathDataToPaperPath(path1);
+    const paperPath2 = convertPathDataToPaperPath(path2);
+
+    const result = paperPath1.divide(paperPath2);
+
+    if (result instanceof paper.Path) {
+      return convertPaperPathToPathData(result);
+    } else if (result instanceof paper.CompoundPath) {
+      const combinedPathData: PathData = {
+        subPaths: [],
+        strokeWidth: 1,
+        strokeColor: '#000000',
+        strokeOpacity: 1,
+        fillColor: '#000000',
+        fillOpacity: 1,
+      };
+      for (const child of result.children) {
+        if (child instanceof paper.Path) {
+          const childData = convertPaperPathToPathData(child);
+          combinedPathData.subPaths.push(...childData.subPaths);
+          // Take properties from the first child
+          if (combinedPathData.subPaths.length === childData.subPaths.length) {
+            combinedPathData.strokeWidth = childData.strokeWidth;
+            combinedPathData.strokeColor = childData.strokeColor;
+            combinedPathData.strokeOpacity = childData.strokeOpacity;
+            combinedPathData.fillColor = childData.fillColor;
+            combinedPathData.fillOpacity = childData.fillOpacity;
+          }
+        }
+      }
+      return combinedPathData;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error performing path divide:', error);
     return null;
   }
 }
