@@ -3,7 +3,9 @@ import { useCanvasStore } from '../store/canvasStore';
 import { measurePath, measureSubpathBounds } from '../utils/measurementUtils';
 import { extractEditablePoints } from '../utils/pathParserUtils';
 import { mapPointerToCanvas } from '../utils/coordinateUtils';
-import { CanvasRenderer } from './CanvasRenderer';
+import { commandsToString } from '../utils/pathParserUtils';
+import { useCanvasDragInteractions } from '../hooks/useCanvasDragInteractions';
+import { SelectionOverlay, EditPointsOverlay, SubpathOverlay, ShapePreview } from './overlays';
 import { OpticalAlignmentOverlay, FeedbackOverlay } from './overlays';
 import { TransformationOverlay } from './overlays/TransformationOverlay';
 import { useCanvasKeyboardControls } from '../hooks/useCanvasKeyboardControls';
@@ -12,6 +14,7 @@ import { useCanvasTransformControls } from '../hooks/useCanvasTransformControls'
 import { useCanvasShapeCreation } from '../hooks/useCanvasShapeCreation';
 import { useCanvasOpticalAlignment } from '../hooks/useCanvasOpticalAlignment';
 import { useCanvasSmoothBrush } from '../hooks/useCanvasSmoothBrush';
+import { useCanvasEventHandlers } from '../hooks/useCanvasEventHandlers';
 import type { Point, PathData, CanvasElement } from '../types';
 
 export const Canvas: React.FC = () => {
@@ -21,7 +24,6 @@ export const Canvas: React.FC = () => {
     isSelecting,
     selectionStart,
     selectionEnd,
-    justSelected,
     beginSelectionRectangle,
     updateSelectionRectangle,
     completeSelectionRectangle
@@ -55,6 +57,7 @@ export const Canvas: React.FC = () => {
     applyBrush,
     updateCursorPosition
   } = useCanvasSmoothBrush();
+
   const {
     elements,
     viewport,
@@ -72,11 +75,7 @@ export const Canvas: React.FC = () => {
     stopDraggingPoint,
     emergencyCleanupDrag,
     selectCommand,
-    clearSelectedCommands,
     selectSubpath,
-    clearSubpathSelection,
-    clearSelection,
-    getTransformationBounds,
     isWorkingWithSubpaths,
     getFilteredEditablePoints,
     getControlPointInfo
@@ -85,6 +84,196 @@ export const Canvas: React.FC = () => {
   const [dragStart, setDragStart] = useState<Point | null>(null);
   const [hasDragMoved, setHasDragMoved] = useState(false);
   const [canvasSize, setCanvasSize] = useState({ width: window.innerWidth, height: window.innerHeight });
+
+  // Helper functions for event handlers
+  const moveSelectedElements = useCallback((deltaX: number, deltaY: number) => {
+    useCanvasStore.getState().moveSelectedElements(deltaX, deltaY);
+  }, []);
+
+  const moveSelectedSubpaths = useCallback((deltaX: number, deltaY: number) => {
+    useCanvasStore.getState().moveSelectedSubpaths(deltaX, deltaY);
+  }, []);
+
+  const selectElement = useCallback((elementId: string, toggle: boolean) => {
+    useCanvasStore.getState().selectElement(elementId, toggle);
+  }, []);
+
+  // Transform screen coordinates to canvas coordinates
+  const screenToCanvas = useCallback((screenX: number, screenY: number): Point => {
+    return mapPointerToCanvas(svgRef.current, viewport, screenX, screenY);
+  }, [viewport]);
+
+  // Helper function to get element bounds considering current transform
+  const getElementBounds = (element: typeof elements[0]) => {
+    if (element.type === 'path') {
+      const pathData = element.data as import('../types').PathData;
+      return measurePath(pathData.subPaths, pathData.strokeWidth, viewport.zoom);
+    }
+    return null;
+  };
+
+  const eventHandlerDeps = {
+    svgRef,
+    screenToCanvas,
+    isSpacePressed,
+    activePlugin,
+    isSelecting,
+    selectionStart,
+    isDragging,
+    dragStart,
+    hasDragMoved,
+    isCreatingShape,
+    shapeStart,
+    transformStateIsTransforming: transformState.isTransforming,
+    updateTransformation,
+    applyBrush,
+    updateCursorPosition,
+    beginSelectionRectangle,
+    startShapeCreation,
+    isSmoothBrushActive,
+    setIsDragging,
+    setDragStart,
+    setHasDragMoved,
+    moveSelectedElements,
+    moveSelectedSubpaths,
+    isWorkingWithSubpaths,
+    selectedSubpaths,
+    selectedIds,
+    selectElement,
+    startTransformation,
+    endTransformation,
+    completeSelectionRectangle,
+    updateSelectionRectangle,
+    updateShapeCreation,
+    endShapeCreation,
+  };
+
+  const {
+    handleElementClick,
+    handleElementPointerDown,
+    handleTransformationHandlerPointerDown,
+    handleTransformationHandlerPointerUp,
+    handlePointerDown,
+    handlePointerMove,
+    handlePointerUp,
+  } = useCanvasEventHandlers(eventHandlerDeps);
+
+  // Use the custom hook for drag interactions
+  const { dragPosition } = useCanvasDragInteractions({
+    dragState: {
+      editingPoint,
+      draggingSelection
+    },
+    viewport,
+    elements: elements as CanvasElement[],
+    smoothBrush,
+    callbacks: {
+      onUpdateDraggingPoint: updateDraggingPoint,
+      onStopDraggingPoint: stopDraggingPoint,
+      onUpdateElement: updateElement,
+      getControlPointInfo
+    }
+  });
+
+  // Helper function to get transformed bounds
+  const getTransformedBounds = (element: typeof elements[0]) => {
+    if (element.type === 'path') {
+      const pathData = element.data as PathData;
+      return measurePath(pathData.subPaths, pathData.strokeWidth, viewport.zoom);
+    }
+    return null;
+  };
+
+  // Render elements
+  const renderElement = (element: typeof elements[0]) => {
+    const { data, type } = element;
+    const isSelected = selectedIds.includes(element.id);
+
+    switch (type) {
+      case 'path': {
+        const pathData = data as PathData;
+        // For pencil paths, if strokeColor is 'none', render with black
+        const effectiveStrokeColor = pathData.isPencilPath && pathData.strokeColor === 'none'
+          ? '#000000'
+          : pathData.strokeColor;
+
+        const pathD = commandsToString(pathData.subPaths.flat());
+
+        return (
+          <g key={element.id}>
+            <path
+              d={pathD}
+              stroke={effectiveStrokeColor}
+              strokeWidth={pathData.strokeWidth}
+              fill={pathData.fillColor}
+              fillOpacity={pathData.fillOpacity}
+              strokeLinecap={pathData.strokeLinecap || "round"}
+              strokeLinejoin={pathData.strokeLinejoin || "round"}
+              vectorEffect="non-scaling-stroke"
+              opacity={pathData.strokeOpacity}
+              onPointerUp={(e) => handleElementClick(element.id, e)}
+              onPointerDown={(e) => handleElementPointerDown(element.id, e)}
+              style={{
+                cursor: activePlugin === 'select' ? (isSelected ? 'move' : 'pointer') : 'default',
+                pointerEvents: activePlugin === 'subpath' ? 'none' : 'auto'
+              }}
+            />
+            {/* Selection overlay */}
+            {isSelected && (activePlugin !== 'transformation' || isWorkingWithSubpaths()) && (
+              <SelectionOverlay
+                element={element}
+                bounds={getTransformedBounds(element)}
+                viewport={viewport}
+                selectedSubpaths={selectedSubpaths}
+                activePlugin={activePlugin}
+              />
+            )}
+
+            {/* Transformation overlay - handles all transformation-related UI */}
+            {isSelected && activePlugin === 'transformation' && (
+              <TransformationOverlay
+                element={element}
+                bounds={getTransformedBounds(element)}
+                selectedSubpaths={selectedSubpaths}
+                viewport={viewport}
+                activePlugin={activePlugin}
+                transformation={transformation}
+                isWorkingWithSubpaths={isWorkingWithSubpaths()}
+                onTransformationHandlerPointerDown={handleTransformationHandlerPointerDown}
+                onTransformationHandlerPointerUp={handleTransformationHandlerPointerUp}
+              />
+            )}
+            {isSelected && activePlugin === 'edit' && (
+              <EditPointsOverlay
+                element={element}
+                selectedCommands={selectedCommands}
+                editingPoint={editingPoint}
+                draggingSelection={draggingSelection}
+                dragPosition={dragPosition}
+                viewport={viewport}
+                smoothBrush={smoothBrush}
+                getFilteredEditablePoints={getFilteredEditablePoints}
+                onStartDraggingPoint={startDraggingPoint}
+                onSelectCommand={selectCommand}
+              />
+            )}
+            {isSelected && activePlugin === 'subpath' && (
+              <SubpathOverlay
+                element={element}
+                selectedSubpaths={selectedSubpaths}
+                viewport={viewport}
+                smoothBrush={smoothBrush}
+                onSelectSubpath={selectSubpath}
+                onSetDragStart={setDragStart}
+              />
+            )}
+          </g>
+        );
+      }
+      default:
+        return null;
+    }
+  };
 
   // Handle window resize
   useEffect(() => {
@@ -147,370 +336,6 @@ export const Canvas: React.FC = () => {
     };
   }, [editingPoint?.isDragging, draggingSelection?.isDragging, emergencyCleanupDrag]);
 
-  // Transform screen coordinates to canvas coordinates
-  const screenToCanvas = useCallback((screenX: number, screenY: number): Point => {
-    return mapPointerToCanvas(svgRef.current, viewport, screenX, screenY);
-  }, [viewport]);
-
-  // Handle element click
-  const handleElementClick = useCallback((elementId: string, e: React.PointerEvent) => {
-    e.stopPropagation();
-
-    // If we were dragging and moved, just end the drag - don't process as a click
-    if (isDragging && hasDragMoved) {
-      setIsDragging(false);
-      setDragStart(null);
-      setHasDragMoved(false);
-      return;
-    }
-
-    // If we have dragStart but no movement, it was just a click - clean up
-    if (dragStart && !hasDragMoved) {
-      setDragStart(null);
-      setIsDragging(false);
-    }
-
-    // Only process click if we're in select mode and either not dragging, or dragging but haven't moved
-    if (activePlugin === 'select' && (!isDragging || !hasDragMoved)) {
-      const selectedIds = useCanvasStore.getState().selectedIds;
-      const isElementSelected = selectedIds.includes(elementId);
-      const hasMultipleSelection = selectedIds.length > 1;
-
-      // If clicking on an already selected element within a multi-selection and no shift, keep the multi-selection
-      if (isElementSelected && hasMultipleSelection && !e.shiftKey) {
-        // Don't change selection - this was already handled in pointerDown
-        return;
-      }
-
-      // Handle selection logic
-      if (e.shiftKey) {
-        // Shift+click: toggle selection (add/remove from selection)
-        useCanvasStore.getState().selectElement(elementId, true);
-      } else if (!isElementSelected) {
-        // Normal click on unselected element: select it (clear others)
-        useCanvasStore.getState().selectElement(elementId, false);
-      }
-      // If element is already selected and no shift, keep it selected (no action needed)
-    }
-  }, [activePlugin, isDragging, hasDragMoved, dragStart]);
-
-  // Handle element pointer down for drag
-  const handleElementPointerDown = useCallback((elementId: string, e: React.PointerEvent) => {
-    if (activePlugin === 'select') {
-      e.stopPropagation(); // Prevent handlePointerDown from starting selection rectangle
-
-      const selectedIds = useCanvasStore.getState().selectedIds;
-      const isElementSelected = selectedIds.includes(elementId);
-
-      // If element is not selected and shift is not pressed, select it for dragging
-      // (if shift is pressed, let handleElementClick handle the selection)
-      if (!isElementSelected && !e.shiftKey) {
-        useCanvasStore.getState().selectElement(elementId, false);
-      }
-
-      const point = screenToCanvas(e.clientX, e.clientY);
-      // Don't set isDragging=true yet - only prepare for potential drag
-      setHasDragMoved(false); // Reset drag movement flag
-      setDragStart(point); // Store start point for potential drag
-    }
-  }, [activePlugin, screenToCanvas]);
-
-  // Helper function to get element bounds considering current transform
-  const getElementBounds = (element: typeof elements[0]) => {
-    if (element.type === 'path') {
-      const pathData = element.data as import('../types').PathData;
-      return measurePath(pathData.subPaths, pathData.strokeWidth, viewport.zoom);
-    }
-    return null;
-  };
-
-  // Get bounds for a specific subpath
-  const getSubpathBounds = (element: CanvasElement, subpathIndex: number) => {
-    if (element.type !== 'path') return null;
-
-    try {
-      const pathData = element.data as PathData;
-
-      if (subpathIndex >= pathData.subPaths.length) return null;
-
-      const subpath = pathData.subPaths[subpathIndex];
-      return measureSubpathBounds(subpath, pathData.strokeWidth || 1, viewport.zoom);
-    } catch (error) {
-      console.warn('Failed to calculate individual subpath bounds:', error);
-      return null;
-    }
-  };
-
-  // Handle transformation handler pointer down
-   
-  const handleTransformationHandlerPointerDown = useCallback((e: React.PointerEvent, elementId: string, handler: string) => {
-    e.stopPropagation();
-
-    // Capture the pointer to ensure we receive pointerup events even if the pointer moves outside the handler
-    if (e.currentTarget && 'setPointerCapture' in e.currentTarget) {
-      e.currentTarget.setPointerCapture(e.pointerId);
-    }
-
-    const point = screenToCanvas(e.clientX, e.clientY);
-    startTransformation(elementId, handler, point);
-  }, [screenToCanvas, startTransformation]);
-   
-
-  const handleTransformationHandlerPointerUp = useCallback((e: React.PointerEvent) => {
-    e.stopPropagation();
-
-    // Release pointer capture if it was set
-    if (e.currentTarget && 'releasePointerCapture' in e.currentTarget) {
-      try {
-        e.currentTarget.releasePointerCapture(e.pointerId);
-      } catch (_error) {
-        // Ignore errors if pointer capture was not set or already released
-      }
-    }
-
-    endTransformation();
-  }, [endTransformation]);
-
-  // Handle pointer events
-  /* eslint-disable react-hooks/exhaustive-deps */
-  const handlePointerDown = useCallback((e: React.PointerEvent) => {
-    const point = screenToCanvas(e.clientX, e.clientY);
-    const target = e.target as Element;
-
-    if (isSpacePressed || activePlugin === 'pan') {
-      // Start panning
-      return;
-    }
-
-    switch (activePlugin) {
-      case 'pencil':
-        useCanvasStore.getState().startPath(point);
-        break;
-      case 'text': {
-        const state = useCanvasStore.getState();
-        state.addText(point.x, point.y, state.text.text);
-        break;
-      }
-      case 'shape':
-        // Start creating a shape
-        startShapeCreation(point);
-        break;
-      case 'select':
-        // Only start selection rectangle if clicking on SVG canvas, not on elements
-        if (target.tagName === 'svg') {
-          beginSelectionRectangle(point);
-        }
-        break;
-      case 'edit':
-        // Start command selection rectangle if clicking on SVG canvas (only when smooth brush is not active)
-        if (target.tagName === 'svg' && !isSmoothBrushActive) {
-          beginSelectionRectangle(point, !e.shiftKey, false);
-        }
-        break;
-      case 'subpath':
-        // Start subpath selection rectangle if clicking on SVG canvas
-        if (target.tagName === 'svg') {
-          beginSelectionRectangle(point, false, !e.shiftKey);
-        }
-        break;
-    }
-  }, [activePlugin, screenToCanvas, isSpacePressed, useCanvasStore.getState().text.text]);
-  /* eslint-enable react-hooks/exhaustive-deps */
-
-  /* eslint-disable react-hooks/exhaustive-deps */
-  const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    const point = screenToCanvas(e.clientX, e.clientY);
-
-    if (isSpacePressed && e.buttons === 1) {
-      // Pan the canvas with spacebar + pointer button
-      const deltaX = e.movementX;
-      const deltaY = e.movementY;
-      useCanvasStore.getState().pan(deltaX, deltaY);
-      return;
-    }
-
-    if (activePlugin === 'pan' && e.buttons === 1) {
-      // Pan the canvas with pan tool + pointer button
-      const deltaX = e.movementX;
-      const deltaY = e.movementY;
-      useCanvasStore.getState().pan(deltaX, deltaY);
-      return;
-    }
-
-    // Check for potential element dragging (when we have dragStart but may not be isDragging yet)
-    if (dragStart && !transformState.isTransforming && !isSelecting && !isCreatingShape) {
-      const deltaX = point.x - dragStart.x;
-      const deltaY = point.y - dragStart.y;
-
-      // Only start actual dragging if we've moved more than a threshold
-      if (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3) {
-        if (!isDragging) {
-          setIsDragging(true); // Start dragging now
-        }
-        setHasDragMoved(true);
-
-        // Check if we're working with subpaths
-        if (isWorkingWithSubpaths()) {
-          // Move selected subpaths if we have a drag start
-          if (dragStart && selectedSubpaths.length > 0) {
-            const canvasStart = screenToCanvas(dragStart.x, dragStart.y);
-            const canvasCurrent = screenToCanvas(point.x, point.y);
-            const deltaX = canvasCurrent.x - canvasStart.x;
-            const deltaY = canvasCurrent.y - canvasStart.y;
-            useCanvasStore.getState().moveSelectedSubpaths(deltaX, deltaY);
-            setDragStart(point);
-          }
-          return;
-        } else {
-          // Move entire selected elements
-          const deltaX = point.x - dragStart.x;
-          const deltaY = point.y - dragStart.y;
-          useCanvasStore.getState().moveSelectedElements(deltaX, deltaY);
-          setDragStart(point);
-        }
-      }
-      return;
-    }
-
-    if (transformState.isTransforming) {
-      updateTransformation(point, e.shiftKey);
-      return;
-    }
-
-    if (activePlugin === 'pencil' && e.buttons === 1) {
-      useCanvasStore.getState().addPointToPath(point);
-    }
-
-    // Handle smooth brush in edit mode
-    if (activePlugin === 'edit' && isSmoothBrushActive && e.buttons === 1) {
-      applyBrush(point);
-    }
-
-    // Update smooth brush cursor position
-    if (activePlugin === 'edit' && isSmoothBrushActive) {
-      updateCursorPosition(point);
-    }
-
-    if (isSelecting && selectionStart) {
-      updateSelectionRectangle(point);
-    }
-
-    if (isCreatingShape && shapeStart) {
-      updateShapeCreation(point, e.shiftKey);
-    }
-
-    // Handle subpath dragging
-    if (isWorkingWithSubpaths() && dragStart && selectedSubpaths.length > 0) {
-      const canvasStart = screenToCanvas(dragStart.x, dragStart.y);
-      const canvasCurrent = screenToCanvas(point.x, point.y);
-      const deltaX = canvasCurrent.x - canvasStart.x;
-      const deltaY = canvasCurrent.y - canvasStart.y;
-      useCanvasStore.getState().moveSelectedSubpaths(deltaX, deltaY);
-      setDragStart(point);
-      return;
-    }
-  }, [activePlugin, screenToCanvas, isSpacePressed, isSelecting, selectionStart, viewport.zoom, isDragging, dragStart, isCreatingShape, shapeStart, transformState.isTransforming, updateTransformation, getElementBounds, getSubpathBounds, applyBrush, updateCursorPosition]);
-  /* eslint-enable react-hooks/exhaustive-deps */
-
-  /* eslint-disable react-hooks/exhaustive-deps */
-  const handlePointerUp = useCallback((e: React.PointerEvent) => {
-    // Subpath dragging functionality removed - will be reimplemented
-
-    // Only handle dragging if it hasn't been handled by element click already
-    if (isDragging) {
-      setIsDragging(false);
-      setDragStart(null);
-      setHasDragMoved(false); // Reset drag movement flag
-      
-      return;
-    }
-
-    if (transformState.isTransforming) {
-      endTransformation();
-      return;
-    }
-
-    // Auto-switch to select mode after drawing with pencil
-    if (activePlugin === 'pencil') {
-      useCanvasStore.getState().setActivePlugin('select');
-    }
-
-    if (isCreatingShape && shapeStart && shapeEnd) {
-      // Create the shape
-      endShapeCreation();
-      return;
-    }
-
-    if (isSelecting && selectionStart && selectionEnd) {
-      // Check if this was a click (no significant movement)
-      const movementThreshold = 5; // pixels
-      const deltaX = Math.abs(selectionEnd.x - selectionStart.x);
-      const deltaY = Math.abs(selectionEnd.y - selectionStart.y);
-      const isClick = deltaX < movementThreshold && deltaY < movementThreshold;
-
-      if (isClick && activePlugin === 'select') {
-        // For select mode, treat clicks on empty space as deselection
-        const target = e.target as Element;
-        const isCanvasClick = target.tagName === 'svg' || target === e.currentTarget;
-
-        if (isCanvasClick && !isCreatingShape && !transformState.isTransforming && !e.shiftKey) {
-          clearSelection();
-          // Reset selection state to prevent mouse from staying "captured"
-          completeSelectionRectangle();
-        }
-      } else {
-        // Prevent the click event from firing after selection
-        e.preventDefault();
-        e.stopPropagation();
-
-        completeSelectionRectangle();
-      }
-    }
-
-    // Handle canvas click (deselection) for edit and subpath modes only
-    // (select mode is handled above in the selection completion logic)
-    const target = e.target as Element;
-    const isCanvasClick = target.tagName === 'svg' || target === e.currentTarget;
-
-    if (activePlugin === 'edit' && isCanvasClick && !justSelected &&
-      !isSelecting && !isCreatingShape && !transformState.isTransforming && !e.shiftKey) {
-      clearSelectedCommands();
-    } else if (activePlugin === 'subpath' && isCanvasClick && !justSelected &&
-      !isSelecting && !isCreatingShape && !transformState.isTransforming && !e.shiftKey) {
-      clearSubpathSelection();
-    }
-
-    // Clean up any remaining drag state (in case of click without drag)
-    if (dragStart && !isDragging) {
-      setDragStart(null);
-      setHasDragMoved(false);
-    }
-  }, [isDragging, isSelecting, selectionStart, selectionEnd, elements, activePlugin, isCreatingShape, shapeStart, shapeEnd, transformState.isTransforming, justSelected, dragStart]);
-  /* eslint-enable react-hooks/exhaustive-deps */
-
-  // Handle wheel events with passive: false to allow preventDefault
-  useEffect(() => {
-    const svgElement = svgRef.current;
-    if (!svgElement) return;
-
-    const handleWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      const rect = svgElement.getBoundingClientRect();
-
-      const centerX = e.clientX - rect.left;
-      const centerY = e.clientY - rect.top;
-      const factor = e.deltaY > 0 ? 0.9 : 1.1;
-
-      useCanvasStore.getState().zoom(factor, centerX, centerY);
-    };
-
-    svgElement.addEventListener('wheel', handleWheel, { passive: false });
-
-    return () => {
-      svgElement.removeEventListener('wheel', handleWheel);
-    };
-  }, []);
-
   return (
     <svg
       ref={svgRef}
@@ -530,40 +355,32 @@ export const Canvas: React.FC = () => {
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
     >
-      <CanvasRenderer
-        viewport={viewport}
-        selectedIds={selectedIds}
-        selectedCommands={selectedCommands}
-        selectedSubpaths={selectedSubpaths}
-        transformation={transformation}
-        shape={shape}
-        elements={elements}
-        activePlugin={activePlugin}
-        editingPoint={editingPoint}
-        draggingSelection={draggingSelection}
-        isSelecting={isSelecting}
-        selectionStart={selectionStart}
-        selectionEnd={selectionEnd}
-        isCreatingShape={isCreatingShape}
-        shapeStart={shapeStart}
-        shapeEnd={shapeEnd}
-        onElementClick={handleElementClick}
-        onElementPointerDown={handleElementPointerDown}
-        onTransformationHandlerPointerDown={handleTransformationHandlerPointerDown}
-        onTransformationHandlerPointerUp={handleTransformationHandlerPointerUp}
-        onStartDraggingPoint={startDraggingPoint}
-        onUpdateDraggingPoint={updateDraggingPoint}
-        onStopDraggingPoint={stopDraggingPoint}
-        onUpdateElement={updateElement}
-        onSelectCommand={selectCommand}
-        onSelectSubpath={selectSubpath}
-        onSetDragStart={setDragStart}
-        getTransformationBounds={getTransformationBounds}
-        isWorkingWithSubpaths={isWorkingWithSubpaths}
-        getFilteredEditablePoints={getFilteredEditablePoints}
-        getControlPointInfo={getControlPointInfo}
-        smoothBrush={smoothBrush}
-      />
+      {/* Sort elements by zIndex */}
+      {[...elements].sort((a, b) => a.zIndex - b.zIndex).map(renderElement)}
+
+      {/* Selection rectangle */}
+      {isSelecting && selectionStart && selectionEnd && (
+        <rect
+          x={Math.min(selectionStart.x, selectionEnd.x)}
+          y={Math.min(selectionStart.y, selectionEnd.y)}
+          width={Math.abs(selectionEnd.x - selectionStart.x)}
+          height={Math.abs(selectionEnd.y - selectionStart.y)}
+          fill="rgba(0, 123, 255, 0.1)"
+          stroke="#007bff"
+          strokeWidth={1 / viewport.zoom}
+          strokeDasharray={`${2 / viewport.zoom} ${2 / viewport.zoom}`}
+        />
+      )}
+
+      {/* Shape preview */}
+      {isCreatingShape && shapeStart && shapeEnd && (
+        <ShapePreview
+          selectedShape={shape?.selectedShape}
+          shapeStart={shapeStart}
+          shapeEnd={shapeEnd}
+          viewport={viewport}
+        />
+      )}
 
       {/* Smooth Brush Cursor */}
       {activePlugin === 'edit' && isSmoothBrushActive && (
