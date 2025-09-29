@@ -49,7 +49,8 @@ export const Sidebar: React.FC = () => {
     applySmoothBrush,
     applyPathSimplification,
     activateSmoothBrush,
-    deactivateSmoothBrush
+    deactivateSmoothBrush,
+    setActivePlugin
   } = useCanvasStore();
   const [isArrangeExpanded, setIsArrangeExpanded] = useState(false);
   const [showFilePanel, setShowFilePanel] = useState(false);
@@ -76,11 +77,11 @@ export const Sidebar: React.FC = () => {
       // but disable if more than one subpath is selected
       isDisabled = !(selectedIds.length === 1 || selectedSubpaths.length === 1) || selectedSubpaths.length > 1;
     } else if (plugin.name === 'subpath') {
-      // Enable only if exactly one path is selected and it has subpaths
+      // Enable only if exactly one path is selected and it has more than one subpath
       const selectedElements = elements.filter(el => selectedIds.includes(el.id));
       isDisabled = !(selectedElements.length === 1 && 
                      selectedElements[0].type === 'path' && 
-                     (selectedElements[0].data as PathData).subPaths?.length > 0);
+                     (selectedElements[0].data as PathData).subPaths?.length > 1);
     }
     
     // Special handling for file and settings buttons
@@ -88,7 +89,18 @@ export const Sidebar: React.FC = () => {
       return (
         <IconButton
           key={plugin.name}
-          onPointerUp={() => setShowFilePanel(!showFilePanel)}
+          onPointerUp={() => {
+            if (showFilePanel) {
+              // If closing file panel, go to select mode
+              setMode('select');
+              setShowFilePanel(false);
+            } else {
+              // If opening file panel, turn off current mode and close settings
+              setActivePlugin(null);
+              setShowConfigPanel(false);
+              setShowFilePanel(true);
+            }
+          }}
           active={showFilePanel}
           activeBgColor="#007bff"
           activeColor="#fff"
@@ -105,7 +117,18 @@ export const Sidebar: React.FC = () => {
       return (
         <IconButton
           key={plugin.name}
-          onPointerUp={() => setShowConfigPanel(!showConfigPanel)}
+          onPointerUp={() => {
+            if (showConfigPanel) {
+              // If closing settings panel, go to select mode
+              setMode('select');
+              setShowConfigPanel(false);
+            } else {
+              // If opening settings panel, turn off current mode and close file
+              setActivePlugin(null);
+              setShowFilePanel(false);
+              setShowConfigPanel(true);
+            }
+          }}
           active={showConfigPanel}
           activeBgColor="#007bff"
           activeColor="#fff"
@@ -121,7 +144,14 @@ export const Sidebar: React.FC = () => {
     return (
       <IconButton
         key={plugin.name}
-        onPointerUp={() => !isDisabled && setMode(plugin.name)}
+        onPointerUp={() => {
+          if (!isDisabled) {
+            setMode(plugin.name);
+            // Close file and settings panels when switching to another mode
+            setShowFilePanel(false);
+            setShowConfigPanel(false);
+          }
+        }}
         disabled={isDisabled}
         active={activePlugin === plugin.name}
         activeBgColor="#007bff"
