@@ -56,7 +56,6 @@ export type CanvasStore = BaseSlice &
     // Additional actions that need cross-slice functionality
     startPath: (point: Point) => void;
     addPointToPath: (point: Point) => void;
-    finishPath: () => void;
     addText: (x: number, y: number, text: string) => Promise<void>;
     deleteSelectedElements: () => void;
     createShape: (startPoint: Point, endPoint: Point) => void;
@@ -189,10 +188,6 @@ export const useCanvasStore = create<CanvasStore>()(
               },
             });
           }
-        },
-
-        finishPath: () => {
-          // Path is already added, nothing special to do
         },
 
         addText: async (x, y, text) => {

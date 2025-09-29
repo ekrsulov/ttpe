@@ -1,6 +1,7 @@
 import type { Point, Command, PathData, CanvasElement } from '../types';
 import { measurePath } from './measurementUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from './index';
+import { hexToHsl } from './canvasColorUtils';
 
 // Types for optical alignment
 export interface PathGeometry {
@@ -287,38 +288,6 @@ function calculateWeightVariance(weights: QuadrantWeights): number {
   const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
   const variance = values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length;
   return formatToPrecision(variance, PATH_DECIMAL_PRECISION);
-}
-
-/**
- * Converts a hex color to HSL for better visual weight calculation
- */
-function hexToHsl(hex: string): { h: number; s: number; l: number } {
-  // Remove # if present
-  hex = hex.replace('#', '');
-  
-  // Convert to RGB
-  const r = parseInt(hex.substr(0, 2), 16) / 255;
-  const g = parseInt(hex.substr(2, 2), 16) / 255;
-  const b = parseInt(hex.substr(4, 2), 16) / 255;
-  
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  const l = (max + min) / 2
-  let h = 0, s = 0;
-  
-  if (max !== min) {
-    const d = max - min;
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-    
-    switch (max) {
-      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-      case g: h = (b - r) / d + 2; break;
-      case b: h = (r - g) / d + 4; break;
-    }
-    h /= 6;
-  }
-  
-  return { h: h * 360, s: s * 100, l: l * 100 };
 }
 
 /**
