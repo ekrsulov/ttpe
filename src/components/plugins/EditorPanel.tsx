@@ -50,7 +50,8 @@ export const EditorPanel: React.FC = () => {
   const activePlugin = useCanvasStore(state => state.activePlugin);
   const deleteSelectedSubpaths = useCanvasStore(state => state.deleteSelectedSubpaths);
   const getSelectedSubpathsCount = useCanvasStore(state => state.getSelectedSubpathsCount);
-  const getSelectedElements = useCanvasStore(state => state.getSelectedElements);
+  const elements = useCanvasStore(state => state.elements);
+  const selectedSubpaths = useCanvasStore(state => state.selectedSubpaths);
 
   const { undo, redo, pastStates, futureStates } = useTemporalState();
 
@@ -59,9 +60,8 @@ export const EditorPanel: React.FC = () => {
   const selectedCommandsCount = useMemo(() => selectedCommands.length, [selectedCommands]);
   const canUndo = useMemo(() => pastStates.length > 0, [pastStates.length]);
   const canRedo = useMemo(() => futureStates.length > 0, [futureStates.length]);
-  const selectedPathsCount = useMemo(() => getSelectedPathsCount(), [getSelectedPathsCount]);
-  const selectedSubpathsCount = useMemo(() => getSelectedSubpathsCount(), [getSelectedSubpathsCount]);
-  const selectedElements = useMemo(() => getSelectedElements(), [getSelectedElements]);
+  const selectedPathsCount = useMemo(() => getSelectedPathsCount(), [selectedIds, elements]); // eslint-disable-line react-hooks/exhaustive-deps
+  const selectedSubpathsCount = useMemo(() => getSelectedSubpathsCount(), [selectedSubpaths]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const zoomFactor = 1.2;
   const [isExpanded, setIsExpanded] = useState(false);
@@ -163,11 +163,11 @@ export const EditorPanel: React.FC = () => {
   };
 
   // Get current values from selected elements or plugin defaults
-  const currentStrokeWidth = useMemo(() => getSelectedPathProperty('strokeWidth', pencil.strokeWidth, selectedElements), [pencil.strokeWidth, selectedElements]);
-  const currentStrokeColor = useMemo(() => getSelectedPathProperty('strokeColor', pencil.strokeColor, selectedElements), [pencil.strokeColor, selectedElements]);
-  const currentOpacity = useMemo(() => getSelectedPathProperty('strokeOpacity', pencil.strokeOpacity, selectedElements), [pencil.strokeOpacity, selectedElements]);
-  const currentFillColor = useMemo(() => getSelectedPathProperty('fillColor', pencil.fillColor, selectedElements), [pencil.fillColor, selectedElements]);
-  const currentFillOpacity = useMemo(() => getSelectedPathProperty('fillOpacity', pencil.fillOpacity, selectedElements), [pencil.fillOpacity, selectedElements]);
+  const currentStrokeWidth = useMemo(() => getSelectedPathProperty('strokeWidth', pencil.strokeWidth), [pencil.strokeWidth]);
+  const currentStrokeColor = useMemo(() => getSelectedPathProperty('strokeColor', pencil.strokeColor), [pencil.strokeColor]);
+  const currentOpacity = useMemo(() => getSelectedPathProperty('strokeOpacity', pencil.strokeOpacity), [pencil.strokeOpacity]);
+  const currentFillColor = useMemo(() => getSelectedPathProperty('fillColor', pencil.fillColor), [pencil.fillColor]);
+  const currentFillOpacity = useMemo(() => getSelectedPathProperty('fillOpacity', pencil.fillOpacity), [pencil.fillOpacity]);
 
   return (
     <div style={{ backgroundColor: '#fff' }}>

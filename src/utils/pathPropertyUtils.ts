@@ -1,12 +1,11 @@
 import { useCanvasStore } from '../store/canvasStore';
-import type { PathData, CanvasElement } from '../types';
+import type { PathData } from '../types';
 
 export function getSelectedPathProperty<T extends keyof PathData>(
   property: T,
-  fallbackValue: PathData[T],
-  selectedElements?: CanvasElement[]
+  fallbackValue: PathData[T]
 ): PathData[T] {
-  const elements = selectedElements || useCanvasStore.getState().getSelectedElements();
+  const elements = useCanvasStore.getState().getSelectedElements();
   const pathElements = elements.filter(el => el.type === 'path');
 
   if (pathElements.length > 0) {
