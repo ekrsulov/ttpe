@@ -1,11 +1,14 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useState } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { extractEditablePoints } from '../../utils/path';
 import type { Command, Point, ControlPoint } from '../../types';
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw, Move, Link, Copy, ChevronDown, ChevronUp } from 'lucide-react';
 import { PanelWithHeader } from '../ui/PanelComponents';
+import { IconButton } from '../ui/IconButton';
 
 export const ControlPointAlignmentPanel: React.FC = () => {
+  const [showDetails, setShowDetails] = useState(false);
+  
   const {
     selectedCommands,
     activePlugin,
@@ -387,9 +390,73 @@ export const ControlPointAlignmentPanel: React.FC = () => {
     }
   };
 
-  return (
-    <PanelWithHeader icon={<RotateCcw size={16} />} title="Control Point Alignment">
-      {singlePointInfo.isAnchor ? (
+  const renderAlignmentButtons = () => {
+    if (singlePointInfo.isAnchor || !singlePointInfo.pairedPoint) {
+      return null;
+    }
+
+    return (
+      <>
+        <div style={{ 
+          display: 'flex', 
+          gap: '4px', 
+          marginBottom: '8px',
+          alignItems: 'center'
+        }}>
+          <IconButton
+            size="small"
+            onClick={() => handleAlignmentChange('independent')}
+            active={(singlePointInfo.info?.type || 'independent') === 'independent'}
+            title="Independent - Control points move freely"
+          >
+            <Move size={14} />
+          </IconButton>
+
+          <IconButton
+            size="small"
+            onClick={() => handleAlignmentChange('aligned')}
+            active={(singlePointInfo.info?.type || 'independent') === 'aligned'}
+            title="Aligned - Control points maintain opposite directions"
+          >
+            <Link size={14} />
+          </IconButton>
+
+          <IconButton
+            size="small"
+            onClick={() => handleAlignmentChange('mirrored')}
+            active={(singlePointInfo.info?.type || 'independent') === 'mirrored'}
+            title="Mirrored - Control points are perfectly mirrored"
+          >
+            <Copy size={14} />
+          </IconButton>
+
+          <div style={{ marginLeft: 'auto' }}>
+            <IconButton
+              size="small"
+              onClick={() => setShowDetails(!showDetails)}
+              active={showDetails}
+              title={showDetails ? "Hide Details" : "Show Details"}
+            >
+              {showDetails ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+            </IconButton>
+          </div>
+        </div>
+
+        {/* Etiqueta descriptiva siempre visible */}
+        <div style={{ fontSize: '11px', color: '#666', marginBottom: '8px' }}>
+          {(singlePointInfo.info?.type || 'independent') === 'independent' && 'Points move independently'}
+          {(singlePointInfo.info?.type || 'independent') === 'aligned' && 'Points maintain opposite directions'}
+          {(singlePointInfo.info?.type || 'independent') === 'mirrored' && 'Points are mirrored across anchor'}
+        </div>
+      </>
+    );
+  };
+
+  const renderDetailContent = () => {
+    if (!showDetails) return null;
+
+    if (singlePointInfo.isAnchor) {
+      return (
         <div style={{ fontSize: '11px', color: '#666', lineHeight: '1.4' }}>
           <div><strong style={{ color: '#333' }}>Position:</strong> ({singlePointInfo.point.x.toFixed(2)}, {singlePointInfo.point.y.toFixed(2)})</div>
           <div><strong style={{ color: '#333' }}>Location:</strong> {singlePointInfo.location}</div>
@@ -480,7 +547,11 @@ export const ControlPointAlignmentPanel: React.FC = () => {
             </div>
           )}
         </div>
-      ) : singlePointInfo.pairedPoint ? (
+      );
+    }
+
+    if (singlePointInfo.pairedPoint) {
+      return (
         <>
           <div style={{ fontSize: '11px', color: '#666', lineHeight: '1.4' }}>
             <div><strong style={{ color: '#333' }}>Position:</strong> ({singlePointInfo.point.x.toFixed(2)}, {singlePointInfo.point.y.toFixed(2)})</div>
@@ -518,77 +589,24 @@ export const ControlPointAlignmentPanel: React.FC = () => {
               </>
             )}
           </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <button
-              onClick={() => handleAlignmentChange('independent')}
-              style={{
-                padding: '6px 8px',
-                backgroundColor: (singlePointInfo.info?.type || 'independent') === 'independent' ? '#007bff' : '#f8f9fa',
-                color: (singlePointInfo.info?.type || 'independent') === 'independent' ? '#fff' : '#333',
-                border: '1px solid #dee2e6',
-                borderRadius: '4px',
-                fontSize: '11px',
-                cursor: 'pointer',
-                width: '100%',
-                textAlign: 'center'
-              }}
-              title="Independent - Control points move freely"
-            >
-              Independent
-            </button>
-
-            <button
-              onClick={() => handleAlignmentChange('aligned')}
-              style={{
-                padding: '6px 8px',
-                backgroundColor: (singlePointInfo.info?.type || 'independent') === 'aligned' ? '#007bff' : '#f8f9fa',
-                color: (singlePointInfo.info?.type || 'independent') === 'aligned' ? '#fff' : '#333',
-                border: '1px solid #dee2e6',
-                borderRadius: '4px',
-                fontSize: '11px',
-                cursor: 'pointer',
-                width: '100%',
-                textAlign: 'center'
-              }}
-              title="Aligned - Control points maintain opposite directions"
-            >
-              Aligned
-            </button>
-
-            <button
-              onClick={() => handleAlignmentChange('mirrored')}
-              style={{
-                padding: '6px 8px',
-                backgroundColor: (singlePointInfo.info?.type || 'independent') === 'mirrored' ? '#007bff' : '#f8f9fa',
-                color: (singlePointInfo.info?.type || 'independent') === 'mirrored' ? '#fff' : '#333',
-                border: '1px solid #dee2e6',
-                borderRadius: '4px',
-                fontSize: '11px',
-                cursor: 'pointer',
-                width: '100%',
-                textAlign: 'center'
-              }}
-              title="Mirrored - Control points are perfectly mirrored"
-            >
-              Mirrored
-            </button>
-          </div>
-
-          <div style={{ fontSize: '11px', color: '#666', marginTop: '8px' }}>
-            {(singlePointInfo.info?.type || 'independent') === 'independent' && 'Points move independently'}
-            {(singlePointInfo.info?.type || 'independent') === 'aligned' && 'Points maintain opposite directions'}
-            {(singlePointInfo.info?.type || 'independent') === 'mirrored' && 'Points are mirrored across anchor'}
-          </div>
         </>
-      ) : (
-        <div style={{ fontSize: '11px', color: '#666', lineHeight: '1.4' }}>
-          <div><strong style={{ color: '#333' }}>Position:</strong> ({singlePointInfo.point.x.toFixed(2)}, {singlePointInfo.point.y.toFixed(2)})</div>
-          <div><strong style={{ color: '#333' }}>Command:</strong> {singlePointInfo.command.type} at index {singlePointInfo.point.commandIndex}</div>
-          <div><strong style={{ color: '#333' }}>Point Index:</strong> {singlePointInfo.point.pointIndex}</div>
-          <div><strong style={{ color: '#333' }}>Alignment:</strong> {singlePointInfo.info?.type || 'independent'}</div>
-        </div>
-      )}
+      );
+    }
+
+    return (
+      <div style={{ fontSize: '11px', color: '#666', lineHeight: '1.4' }}>
+        <div><strong style={{ color: '#333' }}>Position:</strong> ({singlePointInfo.point.x.toFixed(2)}, {singlePointInfo.point.y.toFixed(2)})</div>
+        <div><strong style={{ color: '#333' }}>Command:</strong> {singlePointInfo.command.type} at index {singlePointInfo.point.commandIndex}</div>
+        <div><strong style={{ color: '#333' }}>Point Index:</strong> {singlePointInfo.point.pointIndex}</div>
+        <div><strong style={{ color: '#333' }}>Alignment:</strong> {singlePointInfo.info?.type || 'independent'}</div>
+      </div>
+    );
+  };
+
+  return (
+    <PanelWithHeader icon={<RotateCcw size={16} />} title="Control Point Alignment">
+      {renderAlignmentButtons()}
+      {renderDetailContent()}
     </PanelWithHeader>
   );
 };
