@@ -18,6 +18,7 @@ export const Sidebar: React.FC = () => {
   const applyPathSimplification = useCanvasStore(state => state.applyPathSimplification);
   const activateSmoothBrush = useCanvasStore(state => state.activateSmoothBrush);
   const deactivateSmoothBrush = useCanvasStore(state => state.deactivateSmoothBrush);
+  const resetSmoothBrush = useCanvasStore(state => state.resetSmoothBrush);
   
   // Local state for panels
   const [showFilePanel, setShowFilePanel] = useState<boolean>(false);
@@ -95,6 +96,7 @@ export const Sidebar: React.FC = () => {
         applyPathSimplification={applyPathSimplification}
         activateSmoothBrush={activateSmoothBrush}
         deactivateSmoothBrush={deactivateSmoothBrush}
+        resetSmoothBrush={resetSmoothBrush}
       />
 
       {/* Footer with ArrangePanel and SelectPanel - hide in special panel mode */}

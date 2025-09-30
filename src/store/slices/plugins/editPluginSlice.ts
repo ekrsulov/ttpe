@@ -359,6 +359,7 @@ export interface EditPluginSlice {
   applySmoothBrush: (centerX?: number, centerY?: number) => void;
   activateSmoothBrush: () => void;
   deactivateSmoothBrush: () => void;
+  resetSmoothBrush: () => void;
   updateSmoothBrushCursor: (x: number, y: number) => void;
   updatePathSimplification: (settings: Partial<EditPluginSlice['pathSimplification']>) => void;
   applyPathSimplification: () => void;
@@ -1075,43 +1076,127 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
       if (shouldSimplifyPoints) {
 
         if (state.selectedCommands.length > 0) {
-          // When points are selected, get all points after partial smoothing to apply simplification
+          
+          // When points are selected, simplify only the updated points (those that were smoothed)
+          // First, create a map of the updated points for quick lookup
+          const updatedPointsMap = new Map<string, typeof updatedPoints[0]>();
+          updatedPoints.forEach(p => {
+            const key = `${p.commandIndex}-${p.pointIndex}`;
+            updatedPointsMap.set(key, p);
+          });
+
+          // Apply updates to get intermediate state
           const smoothedCommands = updateCommands(commands, updatedPoints.map(u => ({ ...u, type: 'independent' as const, anchor: { x: u.x, y: u.y } })));
           const allPointsAfterSmoothing = extractEditablePoints(smoothedCommands);
 
-          // Simplify all points
-          const simplifiedPoints = simplifyPoints(allPointsAfterSmoothing, simplificationTolerance, minDistance);
+          // Filter to only the points that were actually updated (smoothed)
+          const pointsToSimplify = allPointsAfterSmoothing.filter(p => {
+            const key = `${p.commandIndex}-${p.pointIndex}`;
+            return updatedPointsMap.has(key);
+          });
 
-          // Rebuild the path from simplified points
-          simplifiedPointsForRebuild = simplifiedPoints;
+          // Simplify only the updated points
+          const simplifiedUpdatedPoints = simplifyPoints(pointsToSimplify, simplificationTolerance, minDistance);
+
+          // Create final points array by replacing selected points with simplified points
+          const finalPointsAfterSimplification: typeof allPointsAfterSmoothing = [];
+          
+          // Create a set of command-point keys that were simplified
+          const originalSelectedKeys = new Set(updatedPoints.map(p => `${p.commandIndex}-${p.pointIndex}`));
+          
+          // First, add all points that were NOT in the original selection
+          allPointsAfterSmoothing.forEach(p => {
+            const key = `${p.commandIndex}-${p.pointIndex}`;
+            if (!originalSelectedKeys.has(key)) {
+              finalPointsAfterSimplification.push(p);
+            }
+          });
+          
+          // Then, add all the simplified points (this replaces the original selected points)
+          // Convert simplified points to the proper format
+          simplifiedUpdatedPoints.forEach(sp => {
+            finalPointsAfterSimplification.push({
+              commandIndex: sp.commandIndex,
+              pointIndex: sp.pointIndex,
+              x: sp.x,
+              y: sp.y,
+              isControl: sp.isControl,
+              type: 'independent' as const,
+              anchor: { x: sp.x, y: sp.y }
+            });
+          });
+          
+          // Sort by command index to maintain order
+          finalPointsAfterSimplification.sort((a, b) => {
+            if (a.commandIndex !== b.commandIndex) {
+              return a.commandIndex - b.commandIndex;
+            }
+            return a.pointIndex - b.pointIndex;
+          });
+
+          // Rebuild the path from the mixed points (original + simplified selected)
+          simplifiedPointsForRebuild = finalPointsAfterSimplification;
           rebuildPath = true;
         } else {
-          // When no points are selected, simplify all points after smoothing
+          // When no points are selected (brush mode), apply the same logic as with selected points
+          // but using the brush-affected points instead of selected points
+          
+          // Create a map of the updated points for quick lookup
+          const updatedPointsMap = new Map<string, typeof updatedPoints[0]>();
+          updatedPoints.forEach(p => {
+            const key = `${p.commandIndex}-${p.pointIndex}`;
+            updatedPointsMap.set(key, p);
+          });
 
-          if (centerX !== undefined && centerY !== undefined) {
-            // When clicking in brush mode, get all points after partial smoothing to apply simplification
-            const smoothedCommands = updateCommands(commands, updatedPoints.map(u => ({ ...u, type: 'independent' as const, anchor: { x: u.x, y: u.y } })));
-            const allPointsAfterSmoothing = extractEditablePoints(smoothedCommands);
+          // Apply updates to get intermediate state
+          const smoothedCommands = updateCommands(commands, updatedPoints.map(u => ({ ...u, type: 'independent' as const, anchor: { x: u.x, y: u.y } })));
+          const allPointsAfterSmoothing = extractEditablePoints(smoothedCommands);
 
-            // Simplify all points
-            const simplifiedPoints = simplifyPoints(allPointsAfterSmoothing, simplificationTolerance, minDistance);
+          // Filter to only the points that were actually updated (affected by brush)
+          const pointsToSimplify = allPointsAfterSmoothing.filter(p => {
+            const key = `${p.commandIndex}-${p.pointIndex}`;
+            return updatedPointsMap.has(key);
+          });
 
-            // Rebuild the path from simplified points
-            simplifiedPointsForRebuild = simplifiedPoints;
-            rebuildPath = true;
-          } else {
-            // When dragging in brush mode, simplify all points after smoothing
-            // Get all editable points after smoothing to apply simplification
-            const smoothedCommands = updateCommands(commands, updatedPoints.map(u => ({ ...u, type: 'independent' as const, anchor: { x: u.x, y: u.y } })));
-            const allPointsAfterSmoothing = extractEditablePoints(smoothedCommands);
+          // Simplify only the brush-affected points
+          const simplifiedUpdatedPoints = simplifyPoints(pointsToSimplify, simplificationTolerance, minDistance);
 
-            // Simplify the points
-            const simplifiedPoints = simplifyPoints(allPointsAfterSmoothing, simplificationTolerance, minDistance);
+          // Create final points array by replacing brush-affected points with simplified points
+          const finalPointsAfterSimplification: typeof allPointsAfterSmoothing = [];
+          const originalBrushKeys = new Set(updatedPoints.map(p => `${p.commandIndex}-${p.pointIndex}`));
+          
+          // First, add all points that were NOT affected by the brush
+          allPointsAfterSmoothing.forEach(p => {
+            const key = `${p.commandIndex}-${p.pointIndex}`;
+            if (!originalBrushKeys.has(key)) {
+              finalPointsAfterSimplification.push(p);
+            }
+          });
+          
+          // Then, add all the simplified points (this replaces the original brush-affected points)
+          simplifiedUpdatedPoints.forEach(sp => {
+            finalPointsAfterSimplification.push({
+              commandIndex: sp.commandIndex,
+              pointIndex: sp.pointIndex,
+              x: sp.x,
+              y: sp.y,
+              isControl: sp.isControl,
+              type: 'independent' as const,
+              anchor: { x: sp.x, y: sp.y }
+            });
+          });
+          
+          // Sort by command index to maintain order
+          finalPointsAfterSimplification.sort((a, b) => {
+            if (a.commandIndex !== b.commandIndex) {
+              return a.commandIndex - b.commandIndex;
+            }
+            return a.pointIndex - b.pointIndex;
+          });
 
-            // For brush mode, rebuild the path from simplified points
-            simplifiedPointsForRebuild = simplifiedPoints;
-            rebuildPath = true;
-          }
+          // Rebuild the path from the mixed points (original + simplified brush-affected)
+          simplifiedPointsForRebuild = finalPointsAfterSimplification;
+          rebuildPath = true;
         }
       }
 
@@ -1212,6 +1297,22 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
   deactivateSmoothBrush: () => {
     set((state) => ({
       smoothBrush: { ...state.smoothBrush, isActive: false, affectedPoints: [] },
+    }));
+  },
+
+  resetSmoothBrush: () => {
+    set(() => ({
+      smoothBrush: {
+        radius: 18,
+        strength: 0.35,
+        isActive: false,
+        cursorX: 0,
+        cursorY: 0,
+        simplifyPoints: false,
+        simplificationTolerance: 0.3,
+        minDistance: 0.5,
+        affectedPoints: [],
+      },
     }));
   },
 

@@ -58,6 +58,7 @@ interface SidebarPanelsProps {
   applyPathSimplification: () => void;
   activateSmoothBrush: () => void;
   deactivateSmoothBrush: () => void;
+  resetSmoothBrush: () => void;
 }
 
 /**
@@ -76,6 +77,7 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
   applyPathSimplification,
   activateSmoothBrush,
   deactivateSmoothBrush,
+  resetSmoothBrush,
 }) => {
   // Check if we're in special panel mode (file or settings)
   const isInSpecialPanelMode = showFilePanel || showSettingsPanel;
@@ -117,6 +119,7 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
             applyPathSimplification={applyPathSimplification}
             activateSmoothBrush={activateSmoothBrush}
             deactivateSmoothBrush={deactivateSmoothBrush}
+            resetSmoothBrush={resetSmoothBrush}
           />
         </ConditionalPanel>
         

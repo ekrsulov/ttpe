@@ -34,6 +34,7 @@ interface EditPanelProps {
   applyPathSimplification: () => void;
   activateSmoothBrush: () => void;
   deactivateSmoothBrush: () => void;
+  resetSmoothBrush: () => void;
 }
 
 export const EditPanel: React.FC<EditPanelProps> = ({
@@ -47,6 +48,7 @@ export const EditPanel: React.FC<EditPanelProps> = ({
   applyPathSimplification,
   activateSmoothBrush,
   deactivateSmoothBrush,
+  resetSmoothBrush,
 }) => {
   if (activePlugin !== 'edit') return null;
 
@@ -91,6 +93,23 @@ export const EditPanel: React.FC<EditPanelProps> = ({
           }}
         >
           {smoothBrush.isActive ? 'ON' : 'OFF'}
+        </button>
+        
+        <button
+          onClick={resetSmoothBrush}
+          style={{
+            padding: '4px 8px',
+            backgroundColor: '#f8f9fa',
+            color: '#666',
+            border: '1px solid #dee2e6',
+            borderRadius: '4px',
+            fontSize: '11px',
+            cursor: 'pointer',
+            marginLeft: '4px'
+          }}
+          title="Reset all smooth brush settings to defaults"
+        >
+          Reset
         </button>
       </div>
 
