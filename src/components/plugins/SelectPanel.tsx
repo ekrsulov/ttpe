@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { Pen, RotateCcw, Minus, Copy, Clipboard } from 'lucide-react';
+import { Pen, Minus, Copy, Clipboard } from 'lucide-react';
 import { IconButton } from '../ui/IconButton';
 import { extractEditablePoints, extractSubpaths, commandsToString, translateCommands } from '../../utils/path';
 import type { CanvasElement, PathData } from '../../types';
@@ -178,9 +178,7 @@ export const SelectPanel: React.FC = () => {
             alignItems: 'center',
             justifyContent: 'center'
           }}>
-            <IconButton onClick={() => { localStorage.removeItem('canvas-app-state'); window.location.reload(); }} title="Reset">
-              <RotateCcw size={12} /> Reset
-            </IconButton>
+            Select elements to see details and options
           </div>
         )}
       </div>

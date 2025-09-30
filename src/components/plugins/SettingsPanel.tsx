@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, ChevronDown } from 'lucide-react';
+import { Settings, ChevronDown, RotateCcw } from 'lucide-react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { logger, LogLevel } from '../../utils';
 import { PanelWithHeader } from '../ui/PanelComponents';
@@ -247,6 +247,45 @@ export const SettingsPanel: React.FC = () => {
             marginTop: '2px'
           }}>
             Decimal places when moving with arrow keys (0-10)
+          </div>
+        </div>
+
+        {/* Reset Application */}
+        <div style={{
+          marginTop: '12px',
+          paddingTop: '12px',
+          borderTop: '1px solid #e9ecef'
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <button
+              onClick={() => { 
+                localStorage.removeItem('canvas-app-state'); 
+                window.location.reload(); 
+              }} 
+              title="Reset Application - This will clear all data and reload the page"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                fontSize: '12px',
+                fontWeight: '700',
+                backgroundColor: '#dc3545',
+                color: '#fff',
+                border: '1px solid #dc3545',
+                borderRadius: '3px',
+                padding: '4px 4px',
+                cursor: 'pointer',
+                width: '100%'
+              }}
+            >
+              <RotateCcw size={16} /> 
+              Reset App
+            </button>
           </div>
         </div>
 
