@@ -20,7 +20,7 @@ import { SliderControl } from '../ui/SliderControl';
 import { Tag } from '../ui/Tag';
 import { PresetButton } from '../ui/PresetButton';
 import { PRESETS, type Preset } from '../../utils/presets';
-import { getSelectedPathProperty } from '../../utils/path';
+import { useSelectedPathProperty } from '../../utils/path';
 
 // Custom hook to subscribe to temporal state changes
 const useTemporalState = () => {
@@ -163,11 +163,11 @@ export const EditorPanel: React.FC = () => {
   };
 
   // Get current values from selected elements or plugin defaults
-  const currentStrokeWidth = useMemo(() => getSelectedPathProperty('strokeWidth', pencil.strokeWidth), [pencil.strokeWidth]);
-  const currentStrokeColor = useMemo(() => getSelectedPathProperty('strokeColor', pencil.strokeColor), [pencil.strokeColor]);
-  const currentOpacity = useMemo(() => getSelectedPathProperty('strokeOpacity', pencil.strokeOpacity), [pencil.strokeOpacity]);
-  const currentFillColor = useMemo(() => getSelectedPathProperty('fillColor', pencil.fillColor), [pencil.fillColor]);
-  const currentFillOpacity = useMemo(() => getSelectedPathProperty('fillOpacity', pencil.fillOpacity), [pencil.fillOpacity]);
+  const currentStrokeWidth = useSelectedPathProperty('strokeWidth', pencil.strokeWidth);
+  const currentStrokeColor = useSelectedPathProperty('strokeColor', pencil.strokeColor);
+  const currentOpacity = useSelectedPathProperty('strokeOpacity', pencil.strokeOpacity);
+  const currentFillColor = useSelectedPathProperty('fillColor', pencil.fillColor);
+  const currentFillOpacity = useSelectedPathProperty('fillOpacity', pencil.fillOpacity);
 
   return (
     <div style={{ backgroundColor: '#fff' }}>
