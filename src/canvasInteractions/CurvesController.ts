@@ -602,6 +602,9 @@ export class CurvesController {
       } else {
         path += ` L ${firstPoint.x} ${firstPoint.y}`;
       }
+      
+      // Add Z command to properly close the path
+      path += ' Z';
     }
 
     return path;

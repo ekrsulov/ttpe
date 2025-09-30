@@ -105,7 +105,7 @@ export const SelectPanel: React.FC = () => {
     if (pathData) {
       try {
         await navigator.clipboard.writeText(pathData);
-        logger.debug('Path copied to clipboard', pathData);
+        logger.info('Path copied to clipboard', pathData);
       } catch (err) {
         logger.error('Failed to copy path to clipboard', err);
       }

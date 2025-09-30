@@ -996,7 +996,7 @@ export function createSquareCommands(centerX: number, centerY: number, halfSize:
     createLineCommand(centerX + halfSize, centerY - halfSize),
     createLineCommand(centerX + halfSize, centerY + halfSize),
     createLineCommand(centerX - halfSize, centerY + halfSize),
-    createLineCommand(centerX - halfSize, centerY - halfSize)
+    { type: 'Z' }
   ];
 }
 
@@ -1006,7 +1006,7 @@ export function createRectangleCommands(startX: number, startY: number, endX: nu
     createLineCommand(endX, startY),
     createLineCommand(endX, endY),
     createLineCommand(startX, endY),
-    createLineCommand(startX, startY)
+    { type: 'Z' }
   ];
 }
 
@@ -1119,7 +1119,8 @@ export function createCircleCommands(centerX: number, centerY: number, radius: n
         isControl: true
       },
       position: { x: formatToPrecision(centerX - radius, precision), y: formatToPrecision(centerY, precision) }
-    }
+    },
+    { type: 'Z' }
   ];
 }
 
@@ -1128,6 +1129,6 @@ export function createTriangleCommands(centerX: number, startY: number, endX: nu
     createMoveCommand(centerX, startY),
     createLineCommand(endX, endY),
     createLineCommand(startX, endY),
-    createLineCommand(centerX, startY)
+    { type: 'Z' }
   ];
 }

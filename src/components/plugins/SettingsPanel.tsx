@@ -1,44 +1,200 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Save } from 'lucide-react';
+import { Settings, ChevronDown } from 'lucide-react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { logger } from '../../utils';
+import { logger, LogLevel } from '../../utils';
 import { PanelWithHeader } from '../ui/PanelComponents';
-import { TextInput, Button } from '../ui/FormComponents';
+import { TextInput, Checkbox } from '../ui/FormComponents';
 
 export const SettingsPanel: React.FC = () => {
   const { documentName, setDocumentName } = useCanvasStore();
   const [localDocumentName, setLocalDocumentName] = useState(documentName);
+  const [logLevel, setLogLevel] = useState<LogLevel>(LogLevel.WARN); // Default log level
+  const [showLogLevelDropdown, setShowLogLevelDropdown] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showCallerInfo, setShowCallerInfo] = useState(false);
 
   // Sync local state with store
   useEffect(() => {
     setLocalDocumentName(documentName);
   }, [documentName]);
 
-  const handleSaveSettings = () => {
-    setDocumentName(localDocumentName);
-    // TODO: Implement additional settings save functionality
-    logger.debug('Settings saved', { documentName: localDocumentName });
+  // Initialize log level and caller info from current logger config
+  useEffect(() => {
+    const currentLevel = logger.getLogLevel();
+    setLogLevel(currentLevel);
+    
+    const currentShowCallerInfo = logger.getShowCallerInfo();
+    setShowCallerInfo(currentShowCallerInfo);
+  }, []);
+
+  // Auto-save document name when it changes
+  useEffect(() => {
+    if (localDocumentName !== documentName) {
+      setIsSaving(true);
+      const timeoutId = setTimeout(() => {
+        setDocumentName(localDocumentName);
+        setIsSaving(false);
+        logger.debug('Document name auto-saved', { documentName: localDocumentName });
+      }, 500); // Debounce for 500ms
+
+      return () => {
+        clearTimeout(timeoutId);
+        setIsSaving(false);
+      };
+    }
+  }, [localDocumentName, documentName, setDocumentName]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showLogLevelDropdown && !(event.target as Element)?.closest('[data-log-level-selector]')) {
+        setShowLogLevelDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showLogLevelDropdown]);
+
+
+
+  const handleLogLevelChange = (newLevel: LogLevel) => {
+    setLogLevel(newLevel);
+    // Apply the log level change immediately (online)
+    logger.setConfig({ level: newLevel });
+    setShowLogLevelDropdown(false);
+    logger.info('Log level changed to', getLogLevelName(newLevel));
+  };
+
+  const handleCallerInfoToggle = (enabled: boolean) => {
+    setShowCallerInfo(enabled);
+    // Apply the caller info setting immediately (online)
+    logger.setShowCallerInfo(enabled);
+    logger.info('Caller info display', enabled ? 'enabled' : 'disabled');
+  };
+
+  const getLogLevelName = (level: LogLevel): string => {
+    switch (level) {
+      case LogLevel.DEBUG: return 'DEBUG';
+      case LogLevel.INFO: return 'INFO';
+      case LogLevel.WARN: return 'WARN';
+      case LogLevel.ERROR: return 'ERROR';
+      default: return 'WARN';
+    }
   };
 
   return (
     <PanelWithHeader icon={<Settings size={16} />} title="Settings">
       <div style={{ display: 'grid', gap: '6px' }}>
-        <TextInput
-          label="Document Name"
-          value={localDocumentName}
-          onChange={setLocalDocumentName}
-          placeholder="Enter document name"
+        <div style={{ position: 'relative' }}>
+          <TextInput
+            label="Document Name"
+            value={localDocumentName}
+            onChange={setLocalDocumentName}
+            placeholder="Enter document name"
+          />
+          {isSaving && (
+            <div style={{
+              position: 'absolute',
+              right: '8px',
+              top: '28px',
+              fontSize: '10px',
+              color: '#666',
+              backgroundColor: '#fff',
+              padding: '2px 4px',
+              borderRadius: '2px',
+              pointerEvents: 'none'
+            }}>
+              Saving...
+            </div>
+          )}
+        </div>
+
+        {/* Log Level Selector */}
+        <div style={{ position: 'relative' }} data-log-level-selector>
+          <label style={{
+            fontSize: '11px',
+            fontWeight: '500',
+            color: '#666',
+            letterSpacing: '0.5px',
+            display: 'block',
+            marginBottom: '4px'
+          }}>
+            Log Level
+          </label>
+          <div
+            onClick={() => setShowLogLevelDropdown(!showLogLevelDropdown)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '6px 8px',
+              border: '1px solid #ccc',
+              borderRadius: '3px',
+              fontSize: '12px',
+              color: '#333',
+              backgroundColor: '#fff',
+              cursor: 'pointer'
+            }}
+          >
+            <span>{getLogLevelName(logLevel)}</span>
+            <ChevronDown 
+              size={14} 
+              style={{ 
+                transform: showLogLevelDropdown ? 'rotate(180deg)' : 'rotate(0deg)',
+                transition: 'transform 0.2s'
+              }} 
+            />
+          </div>
+          
+          {showLogLevelDropdown && (
+            <div style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              right: 0,
+              backgroundColor: '#fff',
+              border: '1px solid #ccc',
+              borderRadius: '3px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              zIndex: 1000,
+              marginTop: '1px'
+            }}>
+              {[LogLevel.DEBUG, LogLevel.INFO, LogLevel.WARN, LogLevel.ERROR].map(level => (
+                <div
+                  key={level}
+                  onClick={() => handleLogLevelChange(level)}
+                  style={{
+                    padding: '8px 12px',
+                    cursor: 'pointer',
+                    fontSize: '12px',
+                    backgroundColor: logLevel === level ? '#e3f2fd' : 'transparent',
+                    borderBottom: '1px solid #f0f0f0'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (logLevel !== level) {
+                      e.currentTarget.style.backgroundColor = '#f8f9fa';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = logLevel === level ? '#e3f2fd' : 'transparent';
+                  }}
+                >
+                  {getLogLevelName(level)}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Show Caller Info Checkbox */}
+        <Checkbox
+          id="show-caller-info"
+          checked={showCallerInfo}
+          onChange={handleCallerInfoToggle}
+          label="Show caller info in logs"
         />
 
-        <Button
-          onClick={handleSaveSettings}
-          variant="secondary"
-          icon={<Save size={14} />}
-          title="Save Settings"
-          style={{ width: '100%' }}
-        >
-          Save Settings
-        </Button>
       </div>
     </PanelWithHeader>
   );
