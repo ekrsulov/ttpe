@@ -131,6 +131,9 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
 
     const pathData = element.data as import('../types').PathData;
 
+    // Check if this element was already the only selected element
+    const wasAlreadySelected = state.selectedIds.length === 1 && state.selectedIds[0] === elementId;
+
     // Ensure the element is selected
     if (!state.selectedIds.includes(elementId)) {
       state.selectElement(elementId, false);
@@ -148,8 +151,16 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
         }
       }
     } else if (activePlugin === 'transformation') {
-      // In transformation mode -> go to edit mode
-      state.setActivePlugin('edit');
+      if (wasAlreadySelected) {
+        // Same element -> go to edit mode (existing cycle)
+        state.setActivePlugin('edit');
+      }
+      // If different element, selection changed but stay in transformation mode
+    } else if (activePlugin === 'edit') {
+      if (!wasAlreadySelected) {
+        // Different element -> selection changed, stay in edit mode
+      }
+      // If same element, do nothing
     }
   }, [activePlugin]);
 
@@ -160,20 +171,35 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
 
     const state = useCanvasStore.getState();
 
-    if (activePlugin === 'subpath') {
-      // Check if this specific subpath is selected and it's the only one selected
-      const selectedSubpath = state.selectedSubpaths.find(
-        sp => sp.elementId === elementId && sp.subpathIndex === subpathIndex
-      );
+    // Check if this subpath was already selected
+    const wasAlreadySelected = state.selectedSubpaths.length === 1 &&
+      state.selectedSubpaths[0].elementId === elementId &&
+      state.selectedSubpaths[0].subpathIndex === subpathIndex;
 
-      if (selectedSubpath && state.selectedSubpaths.length === 1) {
-        // Single subpath selected -> go to transformation mode
+    if (activePlugin === 'subpath') {
+      if (wasAlreadySelected) {
+        // Same subpath -> go to transformation mode
         state.setActivePlugin('transformation');
       }
+      // If different subpath, selection already changed but stay in subpath mode
+    } else if (activePlugin === 'transformation') {
+      if (wasAlreadySelected) {
+        // Same subpath -> go to edit mode (existing cycle)
+        state.setActivePlugin('edit');
+      } else {
+        // Different subpath -> select this specific subpath and stay in transformation mode
+        const subpathSelection = [{ elementId, subpathIndex }];
+        useCanvasStore.setState({ selectedSubpaths: subpathSelection });
+      }
+    } else if (activePlugin === 'edit') {
+      if (!wasAlreadySelected) {
+        // Different subpath -> select this specific subpath and stay in edit mode
+        const subpathSelection = [{ elementId, subpathIndex }];
+        useCanvasStore.setState({ selectedSubpaths: subpathSelection });
+      }
+      // If same subpath, do nothing
     }
-  }, [activePlugin]);
-
-  // Handle element pointer down for drag
+  }, [activePlugin]);  // Handle element pointer down for drag
   const handleElementPointerDown = useCallback((elementId: string, e: React.PointerEvent) => {
     if (activePlugin === 'select') {
       e.stopPropagation(); // Prevent handlePointerDown from starting selection rectangle

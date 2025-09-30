@@ -26,6 +26,7 @@ interface SubpathOverlayProps {
   onSelectSubpath: (elementId: string, subpathIndex: number, multiSelect?: boolean) => void;
   onSetDragStart: (point: Point) => void;
   onSubpathDoubleClick: (elementId: string, subpathIndex: number, e: React.MouseEvent<SVGPathElement>) => void;
+  isVisible?: boolean; // New prop to control visibility
 }
 
 export const SubpathOverlay: React.FC<SubpathOverlayProps> = ({
@@ -36,6 +37,7 @@ export const SubpathOverlay: React.FC<SubpathOverlayProps> = ({
   onSelectSubpath,
   onSetDragStart,
   onSubpathDoubleClick,
+  isVisible = true,
 }) => {
   if (element.type !== 'path') return null;
 
@@ -56,9 +58,9 @@ export const SubpathOverlay: React.FC<SubpathOverlayProps> = ({
         );
 
         // Different colors for selected and unselected subpaths
-        const overlayFill = isSubpathSelected ? `${overlayColor}40` : `${overlayColor}15`; // More opacity for selected
-        const overlayStroke = isSubpathSelected ? `${overlayColor}80` : `${overlayColor}40`; // Stronger stroke for selected
-        const strokeWidth = isSubpathSelected ? elementStrokeWidth + 1 : elementStrokeWidth;
+        const overlayFill = isVisible ? (isSubpathSelected ? `${overlayColor}40` : `${overlayColor}15`) : 'transparent'; // More opacity for selected
+        const overlayStroke = isVisible ? (isSubpathSelected ? `${overlayColor}80` : `${overlayColor}40`) : 'transparent'; // Stronger stroke for selected
+        const strokeWidth = isVisible ? (isSubpathSelected ? elementStrokeWidth + 1 : elementStrokeWidth) : 0;
 
         return (
           <path
@@ -74,7 +76,7 @@ export const SubpathOverlay: React.FC<SubpathOverlayProps> = ({
               cursor: 'pointer'
               // Removed the transform - the overlay should follow the updated path data
             }}
-            onPointerDown={(e) => {
+            onPointerDown={isVisible ? (e) => {
               // Don't stop propagation - let Canvas handlePointerDown also run to set dragStart
 
               // Disable subpath interaction when smooth brush is active
@@ -111,11 +113,11 @@ export const SubpathOverlay: React.FC<SubpathOverlayProps> = ({
                   onSetDragStart(canvasPoint);
                 }
               }
-            }}
-            onPointerMove={() => {
+            } : undefined}
+            onPointerMove={isVisible ? () => {
               // Let Canvas handle all pointer move events for subpaths
               // The overlay just needs to ensure the drag is started correctly
-            }}
+            } : undefined}
             onDoubleClick={(e) => onSubpathDoubleClick(element.id, index, e)}
           />
         );

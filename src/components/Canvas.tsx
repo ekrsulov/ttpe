@@ -270,8 +270,8 @@ export const Canvas: React.FC = () => {
               />
             )}
 
-            {/* Subpath overlay - always render but control visibility */}
-            {activePlugin === 'subpath' && element.type === 'path' && (element.data as import('../types').PathData).subPaths?.length > 1 && (
+            {/* Subpath overlay - render in subpath mode, and also in transformation/edit mode for double-click handling */}
+            {((activePlugin === 'subpath') || (activePlugin === 'transformation') || (activePlugin === 'edit')) && element.type === 'path' && (element.data as import('../types').PathData).subPaths?.length > 1 && (
               <SubpathOverlay
                 element={element}
                 selectedSubpaths={selectedSubpaths}
@@ -280,6 +280,7 @@ export const Canvas: React.FC = () => {
                 onSelectSubpath={selectSubpath}
                 onSetDragStart={setDragStart}
                 onSubpathDoubleClick={handleSubpathDoubleClick}
+                isVisible={activePlugin === 'subpath'}
               />
             )}
           </g>
