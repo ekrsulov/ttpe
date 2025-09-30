@@ -4,7 +4,7 @@ import type { PathData, Command, CanvasElement } from '../../../types';
 import { extractSubpaths } from '../../../utils/pathParserUtils';
 import { measureSubpathBounds } from '../../../utils/measurementUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../../utils';
-import { translateCommands, translateCommandsToIntegers, translateCommandsUnified } from '../../../utils/transformationUtils';
+import { translateCommands, translateCommandsUnified } from '../../../utils/transformationUtils';
 
 // Helper interface for subpath bounds
 interface SubpathWithBounds {

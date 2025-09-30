@@ -1,7 +1,7 @@
 import type { StateCreator } from 'zustand';
 import type { CanvasElement } from '../../../types';
 import type { CanvasStore } from '../../canvasStore';
-import { translatePathData, translatePathDataUnified } from '../../../utils/transformationUtils';
+import { translatePathDataUnified } from '../../../utils/transformationUtils';
 
 export interface SelectionSlice {
   // State

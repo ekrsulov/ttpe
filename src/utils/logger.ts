@@ -46,7 +46,7 @@ class Logger {
       if (savedCallerInfo !== null) {
         savedShowCallerInfo = savedCallerInfo === 'true';
       }
-    } catch (error) {
+    } catch (_error) {
       // Ignore localStorage errors
     }
 
@@ -132,7 +132,7 @@ class Logger {
           return result;
         }
       }
-    } catch (error) {
+    } catch (_error) {
       // If stack trace extraction fails, silently continue without caller info
     }
     return '';
@@ -150,7 +150,7 @@ class Logger {
       if (savedCallerInfo !== null) {
         showCallerInfo = savedCallerInfo === 'true';
       }
-    } catch (error) {
+    } catch (_error) {
       // Ignore localStorage errors
     }
     
@@ -224,7 +224,7 @@ class Logger {
     if (config.level !== undefined) {
       try {
         localStorage.setItem('ttpe-log-level', config.level.toString());
-      } catch (error) {
+      } catch (_error) {
         // Ignore localStorage errors in case it's not available
       }
     }
@@ -237,7 +237,7 @@ class Logger {
     // Persist showCallerInfo to localStorage
     try {
       localStorage.setItem('ttpe-show-caller-info', showCallerInfo.toString());
-    } catch (error) {
+    } catch (_error) {
       // Ignore localStorage errors in case it's not available
     }
   }
