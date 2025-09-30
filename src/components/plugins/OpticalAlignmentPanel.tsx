@@ -172,10 +172,6 @@ export const OpticalAlignmentPanel: React.FC = () => {
           {/* Metrics Display */}
           {showMetrics && currentAlignment && (
             <div style={{
-              padding: '6px 8px',
-              backgroundColor: '#f8f9fa',
-              border: '1px solid #dee2e6',
-              borderRadius: '3px',
               fontSize: '10px'
             }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', marginBottom: '4px' }}>
