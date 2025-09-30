@@ -551,6 +551,8 @@ export class CurvesController {
         fillOpacity: 0,
         strokeLinecap: 'round' as const,
         strokeLinejoin: 'round' as const,
+        fillRule: 'nonzero' as const,
+        strokeDasharray: 'none',
       },
       zIndex: Date.now(), // This will be overridden by addElement
     };

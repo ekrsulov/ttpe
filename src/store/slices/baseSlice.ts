@@ -314,6 +314,12 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
         if (pathData.strokeLinejoin) {
           svgContent += `stroke-linejoin="${pathData.strokeLinejoin}" `;
         }
+        if (pathData.fillRule) {
+          svgContent += `fill-rule="${pathData.fillRule}" `;
+        }
+        if (pathData.strokeDasharray && pathData.strokeDasharray !== 'none') {
+          svgContent += `stroke-dasharray="${pathData.strokeDasharray}" `;
+        }
         svgContent += `vector-effect="non-scaling-stroke" />\n`;
       }
     });

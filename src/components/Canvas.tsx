@@ -221,10 +221,12 @@ export const Canvas: React.FC = () => {
               strokeWidth={pathData.strokeWidth}
               fill={pathData.fillColor}
               fillOpacity={pathData.fillOpacity}
+              strokeOpacity={pathData.strokeOpacity}
               strokeLinecap={pathData.strokeLinecap || "round"}
               strokeLinejoin={pathData.strokeLinejoin || "round"}
+              fillRule={pathData.fillRule || "nonzero"}
+              strokeDasharray={pathData.strokeDasharray && pathData.strokeDasharray !== 'none' ? pathData.strokeDasharray : undefined}
               vectorEffect="non-scaling-stroke"
-              opacity={pathData.strokeOpacity}
               onPointerUp={(e) => handleElementClick(element.id, e)}
               onPointerDown={(e) => handleElementPointerDown(element.id, e)}
               onDoubleClick={(e) => handleElementDoubleClick(element.id, e)}

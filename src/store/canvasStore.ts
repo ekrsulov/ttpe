@@ -141,8 +141,10 @@ export const useCanvasStore = create<CanvasStore>()(
                 strokeOpacity,
                 fillColor: 'none',  // Always no fill for pencil strokes
                 fillOpacity: 1,     // Always 100% fill opacity for pencil strokes
-                strokeLinecap: 'round',
-                strokeLinejoin: 'round',
+                strokeLinecap: get().pencil.strokeLinecap || 'round',
+                strokeLinejoin: get().pencil.strokeLinejoin || 'round',
+                fillRule: get().pencil.fillRule || 'nonzero',
+                strokeDasharray: get().pencil.strokeDasharray || 'none',
                 isPencilPath: true, // Mark this as a pencil-created path
               },
             });
@@ -225,8 +227,10 @@ export const useCanvasStore = create<CanvasStore>()(
                   strokeOpacity,
                   fillColor,
                   fillOpacity,
-                  strokeLinecap: 'round',
-                  strokeLinejoin: 'round',
+                  strokeLinecap: get().pencil.strokeLinecap || 'round',
+                  strokeLinejoin: get().pencil.strokeLinejoin || 'round',
+                  fillRule: get().pencil.fillRule || 'nonzero',
+                  strokeDasharray: get().pencil.strokeDasharray || 'none',
                 },
               });
             } else {
@@ -307,8 +311,10 @@ export const useCanvasStore = create<CanvasStore>()(
               strokeOpacity,
               fillColor,
               fillOpacity,
-              strokeLinecap: 'round',
-              strokeLinejoin: 'round',
+              strokeLinecap: get().pencil.strokeLinecap || 'round',
+              strokeLinejoin: get().pencil.strokeLinejoin || 'round',
+              fillRule: get().pencil.fillRule || 'nonzero',
+              strokeDasharray: get().pencil.strokeDasharray || 'none',
             },
           });
 

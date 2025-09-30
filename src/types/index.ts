@@ -41,6 +41,8 @@ export interface PathData {
   fillOpacity: number;
   strokeLinecap?: 'butt' | 'round' | 'square'; // SVG stroke-linecap property
   strokeLinejoin?: 'miter' | 'round' | 'bevel'; // SVG stroke-linejoin property
+  fillRule?: 'nonzero' | 'evenodd'; // SVG fill-rule property
+  strokeDasharray?: string; // SVG stroke-dasharray property for dash patterns
   isPencilPath?: boolean; // Indicates if this path was created with the pencil tool
   transform?: {
     scaleX: number;

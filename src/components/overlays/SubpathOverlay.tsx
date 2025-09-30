@@ -71,6 +71,8 @@ export const SubpathOverlay: React.FC<SubpathOverlayProps> = ({
             strokeWidth={strokeWidth}
             strokeLinecap={pathData.strokeLinecap || "round"}
             strokeLinejoin={pathData.strokeLinejoin || "round"}
+            fillRule={pathData.fillRule || "nonzero"}
+            strokeDasharray={pathData.strokeDasharray && pathData.strokeDasharray !== 'none' ? pathData.strokeDasharray : undefined}
             vectorEffect="non-scaling-stroke"
             style={{
               cursor: 'pointer'

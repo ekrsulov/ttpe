@@ -228,6 +228,10 @@ function convertPaperPathToPathData(paperPath: paper.Path | paper.CompoundPath):
       strokeOpacity: 1,
       fillColor: paperPath.fillColor ? (paperPath.fillColor as paper.Color).toCSS(true) : '#000000',
       fillOpacity: 1,
+      strokeLinecap: 'round',
+      strokeLinejoin: 'round',
+      fillRule: 'nonzero',
+      strokeDasharray: 'none',
     };
 
     for (const child of paperPath.children) {
@@ -252,6 +256,10 @@ function convertSinglePaperPathToPathData(paperPath: paper.Path): PathData {
     strokeOpacity: 1,
     fillColor: paperPath.fillColor ? (paperPath.fillColor as paper.Color).toCSS(true) : '#000000',
     fillOpacity: 1,
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+    fillRule: 'nonzero',
+    strokeDasharray: 'none',
   };
 
   // Paper.js paths can have multiple segments, but for simplicity, assume one subpath

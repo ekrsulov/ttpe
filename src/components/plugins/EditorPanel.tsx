@@ -19,8 +19,12 @@ import { IconButton } from '../ui/IconButton';
 import { SliderControl } from '../ui/SliderControl';
 import { Tag } from '../ui/Tag';
 import { PresetButton } from '../ui/PresetButton';
+import { LinecapSelector } from '../ui/LinecapSelector';
+import { LinejoinSelector } from '../ui/LinejoinSelector';
+import { FillRuleSelector } from '../ui/FillRuleSelector';
+import { DashArrayCustomInput, DashArrayPresets } from '../ui/DashArraySelector';
 import { PRESETS, type Preset } from '../../utils/presets';
-import { useSelectedPathProperty } from '../../utils/path';
+import { useSelectedPathProperty } from '../../utils/pathPropertyUtils';
 
 // Custom hook to subscribe to temporal state changes
 const useTemporalState = () => {
@@ -162,12 +166,49 @@ export const EditorPanel: React.FC = () => {
     }
   };
 
+  // Handlers for new stroke properties
+  const handleStrokeLinecapChange = (value: 'butt' | 'round' | 'square') => {
+    if (selectedPathsCount > 0) {
+      updateSelectedPaths({ strokeLinecap: value });
+    } else {
+      updatePencilState({ strokeLinecap: value });
+    }
+  };
+
+  const handleStrokeLinejoinChange = (value: 'miter' | 'round' | 'bevel') => {
+    if (selectedPathsCount > 0) {
+      updateSelectedPaths({ strokeLinejoin: value });
+    } else {
+      updatePencilState({ strokeLinejoin: value });
+    }
+  };
+
+  const handleFillRuleChange = (value: 'nonzero' | 'evenodd') => {
+    if (selectedPathsCount > 0) {
+      updateSelectedPaths({ fillRule: value });
+    } else {
+      updatePencilState({ fillRule: value });
+    }
+  };
+
+  const handleStrokeDasharrayChange = (value: string) => {
+    if (selectedPathsCount > 0) {
+      updateSelectedPaths({ strokeDasharray: value });
+    } else {
+      updatePencilState({ strokeDasharray: value });
+    }
+  };
+
   // Get current values from selected elements or plugin defaults
   const currentStrokeWidth = useSelectedPathProperty('strokeWidth', pencil.strokeWidth);
   const currentStrokeColor = useSelectedPathProperty('strokeColor', pencil.strokeColor);
   const currentOpacity = useSelectedPathProperty('strokeOpacity', pencil.strokeOpacity);
   const currentFillColor = useSelectedPathProperty('fillColor', pencil.fillColor);
   const currentFillOpacity = useSelectedPathProperty('fillOpacity', pencil.fillOpacity);
+  const currentStrokeLinecap = useSelectedPathProperty('strokeLinecap', pencil.strokeLinecap);
+  const currentStrokeLinejoin = useSelectedPathProperty('strokeLinejoin', pencil.strokeLinejoin);
+  const currentFillRule = useSelectedPathProperty('fillRule', pencil.fillRule);
+  const currentStrokeDasharray = useSelectedPathProperty('strokeDasharray', pencil.strokeDasharray);
 
   return (
     <div style={{ backgroundColor: '#fff' }}>
@@ -318,20 +359,36 @@ export const EditorPanel: React.FC = () => {
 
       {/* Pencil Properties Section */}
       {isExpanded && (
-        <div style={{}}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {/* Stroke Width */}
-          <SliderControl
-            icon={<Circle size={14} />}
-            value={currentStrokeWidth}
-            min={0}
-            max={20}
-            onChange={handleStrokeWidthChange}
-            formatter={(value) => `${value}px`}
-            title="Stroke Width"
-          />
+          <div style={{ 
+            minHeight: '32px', 
+            display: 'flex', 
+            alignItems: 'center',
+            justifyContent: 'flex-start'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+              <SliderControl
+                icon={<Circle size={14} />}
+                value={currentStrokeWidth}
+                min={0}
+                max={20}
+                onChange={handleStrokeWidthChange}
+                formatter={(value) => `${value}px`}
+                title="Stroke Width"
+                inline={true}
+              />
+            </div>
+          </div>
 
           {/* Stroke Color & Opacity */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+          <div style={{ 
+            minHeight: '32px', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'flex-start',
+            gap: '8px' 
+          }}>
             <Pen size={14} style={{ color: '#666', flexShrink: 0 }} />
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
               <input
@@ -380,7 +437,13 @@ export const EditorPanel: React.FC = () => {
           </div>
 
           {/* Fill Color & Opacity */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ 
+            minHeight: '32px', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'flex-start',
+            gap: '8px' 
+          }}>
             <PaintBucket size={14} style={{ color: '#666', flexShrink: 0 }} />
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
               <input
@@ -425,6 +488,111 @@ export const EditorPanel: React.FC = () => {
                 gap="4px"
               />
             </div>
+          </div>
+
+          {/* Advanced Stroke Properties - C and J in one line */}
+          <div style={{ 
+            minHeight: '32px', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'space-between'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ 
+                fontSize: '13px', 
+                fontWeight: '500', 
+                color: '#666', 
+                minWidth: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                height: '24px'
+              }} title="Stroke Linecap">
+                C:
+              </div>
+              <LinecapSelector
+                value={currentStrokeLinecap || 'round'}
+                onChange={handleStrokeLinecapChange}
+                title="Stroke Linecap"
+              />
+            </div>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ 
+                fontSize: '13px', 
+                fontWeight: '500', 
+                color: '#666', 
+                minWidth: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                height: '24px'
+              }} title="Stroke Linejoin">
+                J:
+              </div>
+              <LinejoinSelector
+                value={currentStrokeLinejoin || 'round'}
+                onChange={handleStrokeLinejoinChange}
+                title="Stroke Linejoin"
+              />
+            </div>
+          </div>
+
+          {/* R and Custom Dash Array in second line */}
+          <div style={{ 
+            minHeight: '32px', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'flex-start',
+            gap: '8px' 
+          }}>
+            <div style={{ 
+              fontSize: '13px', 
+              fontWeight: '500', 
+              color: '#666', 
+              minWidth: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              height: '24px'
+            }} title="Fill Rule">
+              R:
+            </div>
+            <FillRuleSelector
+              value={currentFillRule || 'nonzero'}
+              onChange={handleFillRuleChange}
+              title="Fill Rule"
+            />
+            
+            <div style={{ 
+              fontSize: '13px', 
+              fontWeight: '500', 
+              color: '#666', 
+              minWidth: '12px', 
+              marginLeft: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              height: '24px'
+            }} title="Custom Dash Array">
+              D:
+            </div>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+              <DashArrayCustomInput
+                value={currentStrokeDasharray || 'none'}
+                onChange={handleStrokeDasharrayChange}
+                title="Custom dash array (e.g., 5,3,2,3)"
+              />
+            </div>
+          </div>
+
+          {/* Dash Array Presets - Third line */}
+          <div style={{ 
+            minHeight: '32px', 
+            display: 'flex', 
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}>
+            <DashArrayPresets
+              value={currentStrokeDasharray || 'none'}
+              onChange={handleStrokeDasharrayChange}
+            />
           </div>
         </div>
       )}

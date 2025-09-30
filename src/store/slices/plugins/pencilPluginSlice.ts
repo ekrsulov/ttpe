@@ -8,6 +8,10 @@ export interface PencilPluginSlice {
     strokeOpacity: number;
     fillColor: string;
     fillOpacity: number;
+    strokeLinecap: 'butt' | 'round' | 'square';
+    strokeLinejoin: 'miter' | 'round' | 'bevel';
+    fillRule: 'nonzero' | 'evenodd';
+    strokeDasharray: string;
     reusePath: boolean;
   };
 
@@ -23,6 +27,10 @@ export const createPencilPluginSlice: StateCreator<PencilPluginSlice, [], [], Pe
     strokeOpacity: 1,
     fillColor: 'none',
     fillOpacity: 1,
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+    fillRule: 'nonzero',
+    strokeDasharray: 'none',
     reusePath: false,
   },
 
