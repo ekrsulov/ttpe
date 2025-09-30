@@ -9,6 +9,8 @@ export interface BaseSlice {
   elements: CanvasElement[];
   activePlugin: string | null;
   documentName: string;
+  showFilePanel: boolean;
+  showSettingsPanel: boolean;
 
   // Actions
   addElement: (element: Omit<CanvasElement, 'id' | 'zIndex'>) => void;
@@ -18,6 +20,8 @@ export interface BaseSlice {
   setActivePlugin: (plugin: string | null) => void;
   setMode: (mode: string) => void;
   setDocumentName: (name: string) => void;
+  setShowFilePanel: (show: boolean) => void;
+  setShowSettingsPanel: (show: boolean) => void;
   saveDocument: () => void;
   loadDocument: (append?: boolean) => Promise<void>;
   saveAsSvg: () => void;
@@ -136,6 +140,8 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
   elements: [],
   activePlugin: 'select',
   documentName: 'Untitled Document',
+  showFilePanel: false,
+  showSettingsPanel: false,
 
   // Actions
   addElement: (element) => {
@@ -209,6 +215,14 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
 
   setDocumentName: (name) => {
     set({ documentName: name });
+  },
+
+  setShowFilePanel: (show) => {
+    set({ showFilePanel: show });
+  },
+
+  setShowSettingsPanel: (show) => {
+    set({ showSettingsPanel: show });
   },
 
   saveDocument: () => {

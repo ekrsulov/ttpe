@@ -405,6 +405,20 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       
       const store = useCanvasStore.getState();
       
+      // If file panel is open, close it and go to select mode
+      if (store.showFilePanel) {
+        store.setShowFilePanel(false);
+        store.setActivePlugin('select');
+        return;
+      }
+      
+      // If settings panel is open, close it and go to select mode
+      if (store.showSettingsPanel) {
+        store.setShowSettingsPanel(false);
+        store.setActivePlugin('select');
+        return;
+      }
+      
       // If in select mode and there are element selections, clear them first
       if (activePlugin === 'select' && selectedIds.length > 0) {
         store.clearSelection();

@@ -51,9 +51,11 @@ export const Sidebar: React.FC = () => {
   const activateSmoothBrush = useCanvasStore(state => state.activateSmoothBrush);
   const deactivateSmoothBrush = useCanvasStore(state => state.deactivateSmoothBrush);
   const setActivePlugin = useCanvasStore(state => state.setActivePlugin);
+  const showFilePanel = useCanvasStore(state => state.showFilePanel);
+  const showSettingsPanel = useCanvasStore(state => state.showSettingsPanel);
+  const setShowFilePanel = useCanvasStore(state => state.setShowFilePanel);
+  const setShowSettingsPanel = useCanvasStore(state => state.setShowSettingsPanel);
   const [isArrangeExpanded, setIsArrangeExpanded] = useState(false);
-  const [showFilePanel, setShowFilePanel] = useState(false);
-  const [showConfigPanel, setShowConfigPanel] = useState(false);
 
   const _plugins = useMemo(() => [
     { name: 'select', label: 'Select', icon: MousePointer },
@@ -102,7 +104,7 @@ export const Sidebar: React.FC = () => {
             } else {
               // If opening file panel, turn off current mode and close settings
               setActivePlugin(null);
-              setShowConfigPanel(false);
+              setShowSettingsPanel(false);
               setShowFilePanel(true);
             }
           }}
@@ -123,18 +125,18 @@ export const Sidebar: React.FC = () => {
         <IconButton
           key={plugin.name}
           onPointerUp={() => {
-            if (showConfigPanel) {
+            if (showSettingsPanel) {
               // If closing settings panel, go to select mode
               setMode('select');
-              setShowConfigPanel(false);
+              setShowSettingsPanel(false);
             } else {
               // If opening settings panel, turn off current mode and close file
               setActivePlugin(null);
               setShowFilePanel(false);
-              setShowConfigPanel(true);
+              setShowSettingsPanel(true);
             }
           }}
-          active={showConfigPanel}
+          active={showSettingsPanel}
           activeBgColor="#007bff"
           activeColor="#fff"
           size="custom"
@@ -154,7 +156,7 @@ export const Sidebar: React.FC = () => {
             setMode(plugin.name);
             // Close file and settings panels when switching to another mode
             setShowFilePanel(false);
-            setShowConfigPanel(false);
+            setShowSettingsPanel(false);
           }
         }}
         disabled={isDisabled}
@@ -242,7 +244,7 @@ export const Sidebar: React.FC = () => {
           <div style={{ display: showFilePanel ? 'block' : 'none' }}>
             <FilePanel />
           </div>
-          <div style={{ display: showConfigPanel ? 'block' : 'none' }}>
+          <div style={{ display: showSettingsPanel ? 'block' : 'none' }}>
             <SettingsPanel />
           </div>
           <div style={{ display: activePlugin === 'edit' ? 'block' : 'none' }}>
