@@ -176,7 +176,7 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
     set({ activePlugin: plugin });
     // When switching to select mode, clear any subpath selections
     if (plugin === 'select') {
-      const state = get() as any;
+      const state = get() as CanvasStore;
       if (state.clearSubpathSelection) {
         state.clearSubpathSelection();
       }
@@ -194,7 +194,7 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
         set({ activePlugin: fallback });
         // When switching to select mode, clear any subpath selections
         if (fallback === 'select') {
-          const state = get() as any;
+          const state = get() as CanvasStore;
           if (state.clearSubpathSelection) {
             state.clearSubpathSelection();
           }
@@ -205,7 +205,7 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
       set({ activePlugin: mode });
       // When switching to select mode, clear any subpath selections
       if (mode === 'select') {
-        const state = get() as any;
+        const state = get() as CanvasStore;
         if (state.clearSubpathSelection) {
           state.clearSubpathSelection();
         }
