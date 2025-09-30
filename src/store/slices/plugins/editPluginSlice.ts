@@ -1338,6 +1338,9 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
       targetElementId = state.selectedCommands[0].elementId;
     } else if (state.editingPoint) {
       targetElementId = state.editingPoint.elementId;
+    } else if ((state as CanvasStore).selectedIds && (state as CanvasStore).selectedIds.length > 0) {
+      // Fallback to first selected element
+      targetElementId = (state as CanvasStore).selectedIds[0];
     }
 
     if (!targetElementId) return;
@@ -1359,7 +1362,37 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
       const maxCommandIndex = Math.max(...commandIndices);
 
       // Extract the subpath containing the selected commands
-      const selectedSubPath = allCommands.slice(minCommandIndex, maxCommandIndex + 1);
+      let selectedSubPath = allCommands.slice(minCommandIndex, maxCommandIndex + 1);
+      let addedArtificialM = false;
+
+      // Ensure the subpath starts with M command for Paper.js compatibility
+      if (selectedSubPath.length > 0 && selectedSubPath[0].type !== 'M') {
+        // Find the position to start from - get it from the previous command or the first command's position
+        let startPosition: { x: number; y: number } = { x: 0, y: 0 };
+        
+        if (minCommandIndex > 0) {
+          // Get position from the previous command
+          const prevCommand = allCommands[minCommandIndex - 1];
+          if (prevCommand.type !== 'Z' && 'position' in prevCommand) {
+            startPosition = prevCommand.position;
+          }
+        }
+        
+        // If we couldn't get position from previous command, try the first selected command
+        if (startPosition.x === 0 && startPosition.y === 0) {
+          const firstCmd = selectedSubPath[0];
+          if (firstCmd.type !== 'Z' && 'position' in firstCmd) {
+            startPosition = firstCmd.position;
+          }
+        }
+
+        // Prepend M command to ensure Paper.js compatibility
+        selectedSubPath = [
+          { type: 'M' as const, position: startPosition },
+          ...selectedSubPath
+        ];
+        addedArtificialM = true;
+      }
 
       // Create a temporary path data with just the selected subpath
       const tempPathData: import('../../../types').PathData = {
@@ -1371,7 +1404,21 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
       const simplifiedTempPath = performPathSimplifyPaperJS(tempPathData, tolerance);
 
       if (simplifiedTempPath && simplifiedTempPath.subPaths.length > 0) {
-        const simplifiedCommands = simplifiedTempPath.subPaths[0];
+        let simplifiedCommands = simplifiedTempPath.subPaths[0];
+
+        // If we added an artificial M command, remove it from the simplified result
+        if (addedArtificialM && simplifiedCommands.length > 0 && simplifiedCommands[0].type === 'M') {
+          simplifiedCommands = simplifiedCommands.slice(1);
+        }
+
+        // Fix continuity: if we're not at the beginning of the path and the first simplified command is M,
+        // convert it to L to maintain path continuity
+        if (minCommandIndex > 0 && simplifiedCommands.length > 0 && simplifiedCommands[0].type === 'M') {
+          simplifiedCommands = [
+            { type: 'L', position: simplifiedCommands[0].position },
+            ...simplifiedCommands.slice(1)
+          ];
+        }
 
         // Replace the original commands with the simplified ones
         const newCommands = [...allCommands];

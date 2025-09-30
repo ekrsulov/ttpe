@@ -226,7 +226,7 @@ function convertPaperPathToPathData(paperPath: paper.Path | paper.CompoundPath):
       strokeWidth: paperPath.strokeWidth || 1,
       strokeColor: paperPath.strokeColor ? (paperPath.strokeColor as paper.Color).toCSS(true) : '#000000',
       strokeOpacity: 1,
-      fillColor: paperPath.fillColor ? (paperPath.fillColor as paper.Color).toCSS(true) : '#000000',
+      fillColor: paperPath.fillColor ? (paperPath.fillColor as paper.Color).toCSS(true) : 'none',
       fillOpacity: 1,
       strokeLinecap: 'round',
       strokeLinejoin: 'round',
@@ -254,7 +254,7 @@ function convertSinglePaperPathToPathData(paperPath: paper.Path): PathData {
     strokeWidth: paperPath.strokeWidth || 1,
     strokeColor: paperPath.strokeColor ? (paperPath.strokeColor as paper.Color).toCSS(true) : '#000000',
     strokeOpacity: 1,
-    fillColor: paperPath.fillColor ? (paperPath.fillColor as paper.Color).toCSS(true) : '#000000',
+    fillColor: paperPath.fillColor ? (paperPath.fillColor as paper.Color).toCSS(true) : 'none',
     fillOpacity: 1,
     strokeLinecap: 'round',
     strokeLinejoin: 'round',
@@ -346,7 +346,20 @@ export function performPathSimplifyPaperJS(pathData: PathData, tolerance: number
     
     if (paperPath instanceof paper.Path) {
       paperPath.simplify(tolerance);
-      return convertPaperPathToPathData(paperPath);
+      const simplifiedData = convertPaperPathToPathData(paperPath);
+      // Preserve original style properties
+      return {
+        ...simplifiedData,
+        strokeColor: pathData.strokeColor,
+        strokeWidth: pathData.strokeWidth,
+        strokeOpacity: pathData.strokeOpacity,
+        fillColor: pathData.fillColor,
+        fillOpacity: pathData.fillOpacity,
+        strokeLinecap: pathData.strokeLinecap,
+        strokeLinejoin: pathData.strokeLinejoin,
+        fillRule: pathData.fillRule,
+        strokeDasharray: pathData.strokeDasharray,
+      };
     } else if (paperPath instanceof paper.CompoundPath) {
       // For compound paths, simplify each child path
       for (const child of paperPath.children) {
@@ -354,7 +367,20 @@ export function performPathSimplifyPaperJS(pathData: PathData, tolerance: number
           child.simplify(tolerance);
         }
       }
-      return convertPaperPathToPathData(paperPath);
+      const simplifiedData = convertPaperPathToPathData(paperPath);
+      // Preserve original style properties
+      return {
+        ...simplifiedData,
+        strokeColor: pathData.strokeColor,
+        strokeWidth: pathData.strokeWidth,
+        strokeOpacity: pathData.strokeOpacity,
+        fillColor: pathData.fillColor,
+        fillOpacity: pathData.fillOpacity,
+        strokeLinecap: pathData.strokeLinecap,
+        strokeLinejoin: pathData.strokeLinejoin,
+        fillRule: pathData.fillRule,
+        strokeDasharray: pathData.strokeDasharray,
+      };
     }
     
     return null;
