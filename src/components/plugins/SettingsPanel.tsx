@@ -6,17 +6,23 @@ import { PanelWithHeader } from '../ui/PanelComponents';
 import { TextInput, Checkbox } from '../ui/FormComponents';
 
 export const SettingsPanel: React.FC = () => {
-  const { documentName, setDocumentName } = useCanvasStore();
+  const { documentName, setDocumentName, settings, updateSettings } = useCanvasStore();
   const [localDocumentName, setLocalDocumentName] = useState(documentName);
   const [logLevel, setLogLevel] = useState<LogLevel>(LogLevel.WARN); // Default log level
   const [showLogLevelDropdown, setShowLogLevelDropdown] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showCallerInfo, setShowCallerInfo] = useState(false);
+  const [keyboardPrecision, setKeyboardPrecision] = useState(settings.keyboardMovementPrecision);
 
   // Sync local state with store
   useEffect(() => {
     setLocalDocumentName(documentName);
   }, [documentName]);
+
+  // Sync keyboard precision with settings
+  useEffect(() => {
+    setKeyboardPrecision(settings.keyboardMovementPrecision);
+  }, [settings.keyboardMovementPrecision]);
 
   // Initialize log level and caller info from current logger config
   useEffect(() => {
@@ -71,6 +77,16 @@ export const SettingsPanel: React.FC = () => {
     // Apply the caller info setting immediately (online)
     logger.setShowCallerInfo(enabled);
     logger.info('Caller info display', enabled ? 'enabled' : 'disabled');
+  };
+
+  const handleKeyboardPrecisionChange = (value: string) => {
+    const numValue = parseInt(value, 10);
+    // Validate the input: must be between 0 and 10
+    if (!isNaN(numValue) && numValue >= 0 && numValue <= 10) {
+      setKeyboardPrecision(numValue);
+      updateSettings({ keyboardMovementPrecision: numValue });
+      logger.debug('Keyboard movement precision changed to', numValue);
+    }
   };
 
   const getLogLevelName = (level: LogLevel): string => {
@@ -194,6 +210,45 @@ export const SettingsPanel: React.FC = () => {
           onChange={handleCallerInfoToggle}
           label="Show caller info in logs"
         />
+
+        {/* Keyboard Movement Precision */}
+        <div>
+          <label style={{
+            fontSize: '11px',
+            fontWeight: '500',
+            color: '#666',
+            letterSpacing: '0.5px',
+            display: 'block',
+            marginBottom: '4px'
+          }}>
+            Keyboard Movement Precision
+          </label>
+          <input
+            type="number"
+            min="0"
+            max="10"
+            step="1"
+            value={keyboardPrecision}
+            onChange={(e) => handleKeyboardPrecisionChange(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '6px 8px',
+              border: '1px solid #ccc',
+              borderRadius: '3px',
+              fontSize: '12px',
+              color: '#333',
+              backgroundColor: '#fff'
+            }}
+            title="Number of decimal places for keyboard movement (0 = integers only)"
+          />
+          <div style={{
+            fontSize: '10px',
+            color: '#888',
+            marginTop: '2px'
+          }}>
+            Decimal places when moving with arrow keys (0-10)
+          </div>
+        </div>
 
       </div>
     </PanelWithHeader>

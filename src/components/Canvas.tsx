@@ -206,10 +206,17 @@ export const Canvas: React.FC = () => {
     switch (type) {
       case 'path': {
         const pathData = data as PathData;
-        // For pencil paths, if strokeColor is 'none', render with black
-        const effectiveStrokeColor = pathData.isPencilPath && pathData.strokeColor === 'none'
-          ? '#000000'
-          : pathData.strokeColor;
+        
+        // Handle stroke color rendering
+        let effectiveStrokeColor = pathData.strokeColor;
+        if (pathData.strokeColor === 'none') {
+          // For paths with stroke='none', use almost transparent black to make them selectable
+          // Exception: pencil paths with stroke='none' use solid black for visibility
+          effectiveStrokeColor = pathData.isPencilPath ? '#000000' : '#00000001';
+        }
+
+        // For paths with fill='none', use almost transparent white to make them selectable
+        const effectiveFillColor = pathData.fillColor === 'none' ? '#ffffff01' : pathData.fillColor;
 
         const pathD = commandsToString(pathData.subPaths.flat());
 
@@ -219,7 +226,7 @@ export const Canvas: React.FC = () => {
               d={pathD}
               stroke={effectiveStrokeColor}
               strokeWidth={pathData.strokeWidth}
-              fill={pathData.fillColor}
+              fill={effectiveFillColor}
               fillOpacity={pathData.fillOpacity}
               strokeOpacity={pathData.strokeOpacity}
               strokeLinecap={pathData.strokeLinecap || "round"}

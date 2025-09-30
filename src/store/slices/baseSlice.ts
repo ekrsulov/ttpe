@@ -10,6 +10,11 @@ export interface BaseSlice {
   documentName: string;
   showFilePanel: boolean;
   showSettingsPanel: boolean;
+  
+  // Settings
+  settings: {
+    keyboardMovementPrecision: number; // Number of decimal places for keyboard movement (0 = integers)
+  };
 
   // Actions
   addElement: (element: Omit<CanvasElement, 'id' | 'zIndex'>) => string;
@@ -21,6 +26,7 @@ export interface BaseSlice {
   setDocumentName: (name: string) => void;
   setShowFilePanel: (show: boolean) => void;
   setShowSettingsPanel: (show: boolean) => void;
+  updateSettings: (updates: Partial<BaseSlice['settings']>) => void;
   saveDocument: () => void;
   loadDocument: (append?: boolean) => Promise<void>;
   saveAsSvg: () => void;
@@ -141,6 +147,11 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
   documentName: 'Untitled Document',
   showFilePanel: false,
   showSettingsPanel: false,
+  
+  // Settings with defaults
+  settings: {
+    keyboardMovementPrecision: 0, // Default to 0 (integers only)
+  },
 
   // Actions
   addElement: (element) => {
@@ -223,6 +234,12 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
 
   setShowSettingsPanel: (show) => {
     set({ showSettingsPanel: show });
+  },
+
+  updateSettings: (updates) => {
+    set((state) => ({
+      settings: { ...state.settings, ...updates }
+    }));
   },
 
   saveDocument: () => {

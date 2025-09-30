@@ -1,7 +1,7 @@
 import type { StateCreator } from 'zustand';
 import type { CanvasElement } from '../../../types';
 import type { CanvasStore } from '../../canvasStore';
-import { translatePathData } from '../../../utils/transformationUtils';
+import { translatePathData, translatePathDataUnified } from '../../../utils/transformationUtils';
 
 export interface SelectionSlice {
   // State
@@ -86,6 +86,8 @@ export const createSelectionSlice: StateCreator<CanvasStore, [], [], SelectionSl
 
   moveSelectedElements: (deltaX, deltaY) => {
     const selectedIds = get().selectedIds;
+    const state = get() as CanvasStore;
+    const precision = state.settings.keyboardMovementPrecision;
     const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
     setStore((currentState) => ({
       elements: currentState.elements.map((el: CanvasElement) => {
@@ -94,7 +96,10 @@ export const createSelectionSlice: StateCreator<CanvasStore, [], [], SelectionSl
             const pathData = el.data as import('../../../types').PathData;
             return {
               ...el,
-              data: translatePathData(pathData, deltaX, deltaY)
+              data: translatePathDataUnified(pathData, deltaX, deltaY, {
+                precision: precision,
+                roundToIntegers: precision === 0
+              })
             };
           }
         }
@@ -103,8 +108,8 @@ export const createSelectionSlice: StateCreator<CanvasStore, [], [], SelectionSl
     }));
     
     // Auto-reset optical alignment on element movement
-    const currentState = get() as CanvasStore;
-    currentState.autoResetOnSelectionChange();
+    const finalState = get() as CanvasStore;
+    finalState.autoResetOnSelectionChange();
   },
 
   updateSelectedPaths: (properties) => {

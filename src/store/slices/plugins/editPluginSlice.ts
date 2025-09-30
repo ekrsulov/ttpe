@@ -1724,6 +1724,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
   moveSelectedPoints: (deltaX: number, deltaY: number) => {
     const state = get() as FullCanvasState;
     const selectedCommands = get().selectedCommands;
+    const precision = state.settings.keyboardMovementPrecision;
 
     if (selectedCommands.length === 0) return;
 
@@ -1749,19 +1750,19 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
             const command = newCommands[commandIndex];
             if (command.type === 'M' || command.type === 'L') {
               if (pointIndex === 0) {
-                command.position.x = Math.round(command.position.x + deltaX);
-                command.position.y = Math.round(command.position.y + deltaY);
+                command.position.x = formatToPrecision(command.position.x + deltaX, precision);
+                command.position.y = formatToPrecision(command.position.y + deltaY, precision);
               }
             } else if (command.type === 'C') {
               if (pointIndex === 0) {
-                command.controlPoint1.x = Math.round(command.controlPoint1.x + deltaX);
-                command.controlPoint1.y = Math.round(command.controlPoint1.y + deltaY);
+                command.controlPoint1.x = formatToPrecision(command.controlPoint1.x + deltaX, precision);
+                command.controlPoint1.y = formatToPrecision(command.controlPoint1.y + deltaY, precision);
               } else if (pointIndex === 1) {
-                command.controlPoint2.x = Math.round(command.controlPoint2.x + deltaX);
-                command.controlPoint2.y = Math.round(command.controlPoint2.y + deltaY);
+                command.controlPoint2.x = formatToPrecision(command.controlPoint2.x + deltaX, precision);
+                command.controlPoint2.y = formatToPrecision(command.controlPoint2.y + deltaY, precision);
               } else if (pointIndex === 2) {
-                command.position.x = Math.round(command.position.x + deltaX);
-                command.position.y = Math.round(command.position.y + deltaY);
+                command.position.x = formatToPrecision(command.position.x + deltaX, precision);
+                command.position.y = formatToPrecision(command.position.y + deltaY, precision);
               }
             }
           }

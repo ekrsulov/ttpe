@@ -8,6 +8,7 @@ export const useCanvasKeyboardControls = () => {
     selectedCommands,
     selectedSubpaths,
     selectedIds,
+    settings,
     deleteSelectedCommands,
     deleteSelectedSubpaths,
     deleteSelectedElements,
@@ -105,17 +106,22 @@ export const useCanvasKeyboardControls = () => {
       }
 
       if (deltaX !== 0 || deltaY !== 0) {
+        // Apply precision rounding based on settings
+        const precision = settings.keyboardMovementPrecision;
+        const roundedDeltaX = precision === 0 ? Math.round(deltaX) : parseFloat(deltaX.toFixed(precision));
+        const roundedDeltaY = precision === 0 ? Math.round(deltaY) : parseFloat(deltaY.toFixed(precision));
+
         // Check what is selected and move accordingly
         // Priority: points > subpaths > paths
         if (selectedCommands.length > 0) {
           // Move selected points
-          moveSelectedPoints(deltaX, deltaY);
+          moveSelectedPoints(roundedDeltaX, roundedDeltaY);
         } else if (selectedSubpaths.length > 0) {
           // Move selected subpaths
-          moveSelectedSubpaths(deltaX, deltaY);
+          moveSelectedSubpaths(roundedDeltaX, roundedDeltaY);
         } else if (selectedIds.length > 0) {
           // Move selected elements (paths)
-          moveSelectedElements(deltaX, deltaY);
+          moveSelectedElements(roundedDeltaX, roundedDeltaY);
         }
       } else if (e.key === 'Delete' || e.key === 'Backspace') {
         // Delete selected items
@@ -135,7 +141,7 @@ export const useCanvasKeyboardControls = () => {
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [selectedCommands.length, selectedSubpaths.length, selectedIds.length, moveSelectedPoints, moveSelectedSubpaths, moveSelectedElements, deleteSelectedCommands, deleteSelectedSubpaths, deleteSelectedElements]);
+  }, [selectedCommands.length, selectedSubpaths.length, selectedIds.length, settings.keyboardMovementPrecision, moveSelectedPoints, moveSelectedSubpaths, moveSelectedElements, deleteSelectedCommands, deleteSelectedSubpaths, deleteSelectedElements]);
 
   return {
     isSpacePressed,

@@ -93,6 +93,25 @@ export function translatePathDataToIntegers(pathData: PathData, deltaX: number, 
 }
 
 /**
+ * Translates PathData by deltaX and deltaY with configurable formatting options.
+ */
+export function translatePathDataUnified(
+  pathData: PathData, 
+  deltaX: number, 
+  deltaY: number,
+  options: { roundToIntegers?: boolean; precision?: number } = {}
+): PathData {
+  const translatedSubPaths = pathData.subPaths.map((subPath: Command[]) =>
+    translateCommandsUnified(subPath, deltaX, deltaY, options)
+  );
+
+  return {
+    ...pathData,
+    subPaths: translatedSubPaths
+  };
+}
+
+/**
  * Helper type for alignment operations
  */
 export type TargetCalculator = (bounds: { minX: number; minY: number; maxX: number; maxY: number }[]) => number;

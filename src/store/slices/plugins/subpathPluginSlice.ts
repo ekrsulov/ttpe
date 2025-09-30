@@ -4,7 +4,7 @@ import type { PathData, Command, CanvasElement } from '../../../types';
 import { extractSubpaths } from '../../../utils/pathParserUtils';
 import { measureSubpathBounds } from '../../../utils/measurementUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../../utils';
-import { translateCommands, translateCommandsToIntegers } from '../../../utils/transformationUtils';
+import { translateCommands, translateCommandsToIntegers, translateCommandsUnified } from '../../../utils/transformationUtils';
 
 // Helper interface for subpath bounds
 interface SubpathWithBounds {
@@ -276,6 +276,7 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
   moveSelectedSubpaths: (deltaX: number, deltaY: number) => {
     const state = get() as CanvasStore;
     const selectedSubpaths = get().selectedSubpaths;
+    const precision = state.settings.keyboardMovementPrecision;
 
     if (selectedSubpaths.length === 0) return;
 
@@ -297,7 +298,10 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
 
         subpathIndices.forEach(subpathIndex => {
           if (subpathIndex < newSubPaths.length) {
-            newSubPaths[subpathIndex] = translateCommandsToIntegers(newSubPaths[subpathIndex], deltaX, deltaY);
+            newSubPaths[subpathIndex] = translateCommandsUnified(newSubPaths[subpathIndex], deltaX, deltaY, { 
+              precision: precision,
+              roundToIntegers: precision === 0 
+            });
           }
         });
 
