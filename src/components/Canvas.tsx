@@ -167,7 +167,6 @@ export const Canvas: React.FC = () => {
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
-    handleWheel,
     handleKeyboard,
     handleCanvasDoubleClick,
   } = useCanvasEventHandlers(eventHandlerDeps);
@@ -366,6 +365,29 @@ export const Canvas: React.FC = () => {
     };
   }, [editingPoint?.isDragging, draggingSelection?.isDragging, emergencyCleanupDrag]);
 
+  // Handle wheel event with passive: false to allow preventDefault
+  useEffect(() => {
+    const svgElement = svgRef.current;
+    if (!svgElement) return;
+
+    const wheelHandler = (e: WheelEvent) => {
+      e.preventDefault();
+      const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+      const rect = svgElement.getBoundingClientRect();
+      if (rect) {
+        const centerX = e.clientX - rect.left;
+        const centerY = e.clientY - rect.top;
+        useCanvasStore.getState().zoom(zoomFactor, centerX, centerY);
+      }
+    };
+
+    svgElement.addEventListener('wheel', wheelHandler, { passive: false });
+
+    return () => {
+      svgElement.removeEventListener('wheel', wheelHandler);
+    };
+  }, []);
+
   return (
     <svg
       ref={svgRef}
@@ -382,7 +404,6 @@ export const Canvas: React.FC = () => {
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
-      onWheel={handleWheel}
       onDoubleClick={handleCanvasDoubleClick}
     >
       {/* Sort elements by zIndex */}
