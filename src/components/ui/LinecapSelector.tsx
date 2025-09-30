@@ -11,7 +11,7 @@ interface LinecapSelectorProps {
 export const LinecapSelector: React.FC<LinecapSelectorProps> = ({
   value,
   onChange,
-  title = "Stroke Linecap"
+  title: _title = "Stroke Linecap"
 }) => {
   const linecapOptions: Array<{
     value: 'butt' | 'round' | 'square';
