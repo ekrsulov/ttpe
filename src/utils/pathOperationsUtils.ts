@@ -1,11 +1,38 @@
 import type { PathData, SubPath, Command } from '../types';
 import paper from 'paper';
+import { logger } from './logger';
 
 // Setup Paper.js for in-memory operations
 paper.setup(new paper.Size(1, 1));
 
 /**
- * Perform union operation on multiple paths
+ * Generic function to perform boolean operations on paths using Paper.js
+ */
+function performBooleanOperation(
+  paths: PathData[],
+  operation: (path1: paper.Path | paper.CompoundPath, path2: paper.Path | paper.CompoundPath) => paper.PathItem,
+  operationName: string
+): PathData | null {
+  if (paths.length === 0) return null;
+  if (paths.length === 1) return paths[0];
+
+  try {
+    const paperPaths = paths.map(p => convertPathDataToPaperPath(p));
+    let result = paperPaths[0];
+    
+    for (let i = 1; i < paperPaths.length; i++) {
+      result = operation(result, paperPaths[i]) as paper.Path | paper.CompoundPath;
+    }
+
+    return convertPaperPathToPathData(result);
+  } catch (error) {
+    logger.error(`Error in ${operationName}`, error);
+    return null;
+  }
+}
+
+/**
+ * Perform union operation on multiple paths (simple concatenation)
  */
 export function performPathUnion(paths: PathData[]): PathData | null {
   if (paths.length === 0) return null;
@@ -24,7 +51,7 @@ export function performPathUnion(paths: PathData[]): PathData | null {
       subPaths: allSubPaths
     };
   } catch (error) {
-    console.error('Error performing path union:', error);
+    logger.error('Error performing path union', error);
     return null;
   }
 }
@@ -33,41 +60,11 @@ export function performPathUnion(paths: PathData[]): PathData | null {
  * Perform union operation on multiple paths using Paper.js boolean operations
  */
 export function performPathUnionPaperJS(paths: PathData[]): PathData | null {
-  if (paths.length === 0) return null;
-  if (paths.length === 1) return paths[0];
-
-  try {
-    // Use boolean union for all cases
-    const paperPaths = paths.map(p => convertPathDataToPaperPath(p));
-    let result: paper.PathItem = paperPaths[0];
-    for (let i = 1; i < paperPaths.length; i++) {
-      result = result.unite(paperPaths[i]);
-    }
-
-    if (result instanceof paper.Path) {
-      return convertPaperPathToPathData(result);
-    } else if (result instanceof paper.CompoundPath) {
-      const combinedPathData: PathData = {
-        subPaths: [],
-        strokeWidth: 1,
-        strokeColor: '#000000',
-        strokeOpacity: 1,
-        fillColor: '#000000',
-        fillOpacity: 1,
-      };
-      for (const child of result.children) {
-        if (child instanceof paper.Path) {
-          const childData = convertPaperPathToPathData(child);
-          combinedPathData.subPaths.push(...childData.subPaths);
-        }
-      }
-      return combinedPathData;
-    }
-    return null;
-  } catch (error) {
-    console.error('Error performing path union with Paper.js:', error);
-    return null;
-  }
+  return performBooleanOperation(
+    paths, 
+    (path1, path2) => path1.unite(path2), 
+    'union'
+  );
 }
 
 /**
@@ -298,166 +295,38 @@ function convertSinglePaperPathToPathData(paperPath: paper.Path): PathData {
   }
 
   return pathData;
-}export function performPathSubtraction(path1: PathData, path2: PathData): PathData | null {
-  try {
-    const paperPath1 = convertPathDataToPaperPath(path1);
-    const paperPath2 = convertPathDataToPaperPath(path2);
+}
 
-    const result = paperPath1.subtract(paperPath2);
+export function performPathSubtraction(path1: PathData, path2: PathData): PathData | null {
+  return performBooleanOperation(
+    [path1, path2], 
+    (pathA, pathB) => pathA.subtract(pathB), 
+    'subtraction'
+  );
+}
 
-    if (result instanceof paper.Path) {
-      return convertPaperPathToPathData(result);
-    } else if (result instanceof paper.CompoundPath) {
-      const combinedPathData: PathData = {
-        subPaths: [],
-        strokeWidth: 1,
-        strokeColor: '#000000',
-        strokeOpacity: 1,
-        fillColor: '#000000',
-        fillOpacity: 1,
-      };
-      for (const child of result.children) {
-        if (child instanceof paper.Path) {
-          const childData = convertPaperPathToPathData(child);
-          combinedPathData.subPaths.push(...childData.subPaths);
-          // Take properties from the first child
-          if (combinedPathData.subPaths.length === childData.subPaths.length) {
-            combinedPathData.strokeWidth = childData.strokeWidth;
-            combinedPathData.strokeColor = childData.strokeColor;
-            combinedPathData.strokeOpacity = childData.strokeOpacity;
-            combinedPathData.fillColor = childData.fillColor;
-            combinedPathData.fillOpacity = childData.fillOpacity;
-          }
-        }
-      }
-      return combinedPathData;
-    }
-    return null;
-  } catch (error) {
-    console.error('Error performing path subtraction:', error);
-    return null;
-  }
-}export function performPathIntersect(path1: PathData, path2: PathData): PathData | null {
-  try {
-    const paperPath1 = convertPathDataToPaperPath(path1);
-    const paperPath2 = convertPathDataToPaperPath(path2);
-
-    const result = paperPath1.intersect(paperPath2);
-
-    if (result instanceof paper.Path) {
-      return convertPaperPathToPathData(result);
-    } else if (result instanceof paper.CompoundPath) {
-      const combinedPathData: PathData = {
-        subPaths: [],
-        strokeWidth: 1,
-        strokeColor: '#000000',
-        strokeOpacity: 1,
-        fillColor: '#000000',
-        fillOpacity: 1,
-      };
-      for (const child of result.children) {
-        if (child instanceof paper.Path) {
-          const childData = convertPaperPathToPathData(child);
-          combinedPathData.subPaths.push(...childData.subPaths);
-          // Take properties from the first child
-          if (combinedPathData.subPaths.length === childData.subPaths.length) {
-            combinedPathData.strokeWidth = childData.strokeWidth;
-            combinedPathData.strokeColor = childData.strokeColor;
-            combinedPathData.strokeOpacity = childData.strokeOpacity;
-            combinedPathData.fillColor = childData.fillColor;
-            combinedPathData.fillOpacity = childData.fillOpacity;
-          }
-        }
-      }
-      return combinedPathData;
-    }
-    return null;
-  } catch (error) {
-    console.error('Error performing path intersect:', error);
-    return null;
-  }
+export function performPathIntersect(path1: PathData, path2: PathData): PathData | null {
+  return performBooleanOperation(
+    [path1, path2], 
+    (pathA, pathB) => pathA.intersect(pathB), 
+    'intersect'
+  );
 }
 
 export function performPathExclude(path1: PathData, path2: PathData): PathData | null {
-  try {
-    const paperPath1 = convertPathDataToPaperPath(path1);
-    const paperPath2 = convertPathDataToPaperPath(path2);
-
-    const result = paperPath1.exclude(paperPath2);
-
-    if (result instanceof paper.Path) {
-      return convertPaperPathToPathData(result);
-    } else if (result instanceof paper.CompoundPath) {
-      const combinedPathData: PathData = {
-        subPaths: [],
-        strokeWidth: 1,
-        strokeColor: '#000000',
-        strokeOpacity: 1,
-        fillColor: '#000000',
-        fillOpacity: 1,
-      };
-      for (const child of result.children) {
-        if (child instanceof paper.Path) {
-          const childData = convertPaperPathToPathData(child);
-          combinedPathData.subPaths.push(...childData.subPaths);
-          // Take properties from the first child
-          if (combinedPathData.subPaths.length === childData.subPaths.length) {
-            combinedPathData.strokeWidth = childData.strokeWidth;
-            combinedPathData.strokeColor = childData.strokeColor;
-            combinedPathData.strokeOpacity = childData.strokeOpacity;
-            combinedPathData.fillColor = childData.fillColor;
-            combinedPathData.fillOpacity = childData.fillOpacity;
-          }
-        }
-      }
-      return combinedPathData;
-    }
-    return null;
-  } catch (error) {
-    console.error('Error performing path exclude:', error);
-    return null;
-  }
+  return performBooleanOperation(
+    [path1, path2], 
+    (pathA, pathB) => pathA.exclude(pathB), 
+    'exclude'
+  );
 }
 
 export function performPathDivide(path1: PathData, path2: PathData): PathData | null {
-  try {
-    const paperPath1 = convertPathDataToPaperPath(path1);
-    const paperPath2 = convertPathDataToPaperPath(path2);
-
-    const result = paperPath1.divide(paperPath2);
-
-    if (result instanceof paper.Path) {
-      return convertPaperPathToPathData(result);
-    } else if (result instanceof paper.CompoundPath) {
-      const combinedPathData: PathData = {
-        subPaths: [],
-        strokeWidth: 1,
-        strokeColor: '#000000',
-        strokeOpacity: 1,
-        fillColor: '#000000',
-        fillOpacity: 1,
-      };
-      for (const child of result.children) {
-        if (child instanceof paper.Path) {
-          const childData = convertPaperPathToPathData(child);
-          combinedPathData.subPaths.push(...childData.subPaths);
-          // Take properties from the first child
-          if (combinedPathData.subPaths.length === childData.subPaths.length) {
-            combinedPathData.strokeWidth = childData.strokeWidth;
-            combinedPathData.strokeColor = childData.strokeColor;
-            combinedPathData.strokeOpacity = childData.strokeOpacity;
-            combinedPathData.fillColor = childData.fillColor;
-            combinedPathData.fillOpacity = childData.fillOpacity;
-          }
-        }
-      }
-      return combinedPathData;
-    }
-    return null;
-  } catch (error) {
-    console.error('Error performing path divide:', error);
-    return null;
-  }
+  return performBooleanOperation(
+    [path1, path2], 
+    (pathA, pathB) => pathA.divide(pathB), 
+    'divide'
+  );
 }
 
 /**
@@ -482,7 +351,7 @@ export function performPathSimplifyPaperJS(pathData: PathData, tolerance: number
     
     return null;
   } catch (error) {
-    console.error('Error simplifying path with Paper.js:', error);
+    logger.error('Error simplifying path with Paper.js', error);
     return null;
   }
 }

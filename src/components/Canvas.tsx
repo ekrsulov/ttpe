@@ -1,9 +1,7 @@
 import React, { useRef, useCallback, useState, useEffect, useMemo } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
-import { measurePath, measureSubpathBounds } from '../utils/measurementUtils';
-import { extractEditablePoints } from '../utils/pathParserUtils';
-import { mapPointerToCanvas } from '../utils/coordinateUtils';
-import { commandsToString } from '../utils/pathParserUtils';
+import { measurePath, measureSubpathBounds, mapPointerToCanvas } from '../utils/geometry';
+import { extractEditablePoints, commandsToString } from '../utils/path';
 import { useCanvasDragInteractions } from '../hooks/useCanvasDragInteractions';
 import { SelectionOverlay, EditPointsOverlay, SubpathOverlay, ShapePreview, OpticalAlignmentOverlay, FeedbackOverlay, TransformationOverlay } from './overlays';
 import { CurvesRenderer } from './CurvesRenderer';
@@ -104,6 +102,10 @@ export const Canvas: React.FC = () => {
     useCanvasStore.getState().selectElement(elementId, toggle);
   }, []);
 
+  const setMode = useCallback((mode: string) => {
+    useCanvasStore.getState().setMode(mode);
+  }, []);
+
   // Transform screen coordinates to canvas coordinates
   const screenToCanvas = useCallback((screenX: number, screenY: number): Point => {
     return mapPointerToCanvas(svgRef.current, viewport, screenX, screenY);
@@ -152,6 +154,7 @@ export const Canvas: React.FC = () => {
     updateSelectionRectangle,
     updateShapeCreation,
     endShapeCreation,
+    setMode,
   };
 
   const {
@@ -166,6 +169,7 @@ export const Canvas: React.FC = () => {
     handlePointerUp,
     handleWheel,
     handleKeyboard,
+    handleCanvasDoubleClick,
   } = useCanvasEventHandlers(eventHandlerDeps);
 
   // Use the custom hook for drag interactions
@@ -370,6 +374,7 @@ export const Canvas: React.FC = () => {
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onWheel={handleWheel}
+      onDoubleClick={handleCanvasDoubleClick}
     >
       {/* Sort elements by zIndex */}
       {sortedElements.map(renderElement)}

@@ -93,5 +93,3 @@ export const getAvailableFonts = (): string[] => {
   }
   return fontCache;
 };
-
-// Removed unused clearFontCache function - no active calls found

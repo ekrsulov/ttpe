@@ -2,9 +2,9 @@ import React from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Pen, RotateCcw, Minus, Copy, Clipboard } from 'lucide-react';
 import { IconButton } from '../ui/IconButton';
-import { extractEditablePoints, extractSubpaths, commandsToString } from '../../utils/pathParserUtils';
-import { translateCommands } from '../../utils/transformationUtils';
+import { extractEditablePoints, extractSubpaths, commandsToString, translateCommands } from '../../utils/path';
 import type { CanvasElement, PathData } from '../../types';
+import { logger } from '../../utils';
 
 export const SelectPanel: React.FC = () => {
   const { elements, selectedIds, selectedSubpaths, addElement } = useCanvasStore();
@@ -105,9 +105,9 @@ export const SelectPanel: React.FC = () => {
     if (pathData) {
       try {
         await navigator.clipboard.writeText(pathData);
-        console.log('Path copied to clipboard:', pathData);
+        logger.debug('Path copied to clipboard', pathData);
       } catch (err) {
-        console.error('Failed to copy path to clipboard:', err);
+        logger.error('Failed to copy path to clipboard', err);
       }
     }
   };

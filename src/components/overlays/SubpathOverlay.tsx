@@ -1,7 +1,7 @@
 import React from 'react';
-import { deriveElementSelectionColors } from '../../utils/canvasColorUtils';
-import { commandsToString } from '../../utils/pathParserUtils';
-import { mapSvgToCanvas } from '../../utils/coordinateUtils';
+import { deriveElementSelectionColors } from '../../utils/canvas';
+import { commandsToString } from '../../utils/path';
+import { mapSvgToCanvas } from '../../utils/geometry';
 import type { PathData, SubPath, Point } from '../../types';
 
 interface SubpathOverlayProps {

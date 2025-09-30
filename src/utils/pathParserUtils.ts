@@ -970,27 +970,43 @@ export function findPairedControlPoint(
 }
 
 /**
+ * Helper functions for creating formatted points and commands
+ */
+function createFormattedPoint(x: number, y: number): Point {
+  return {
+    x: formatToPrecision(x, PATH_DECIMAL_PRECISION),
+    y: formatToPrecision(y, PATH_DECIMAL_PRECISION)
+  };
+}
+
+function createMoveCommand(x: number, y: number): Command {
+  return { type: 'M', position: createFormattedPoint(x, y) };
+}
+
+function createLineCommand(x: number, y: number): Command {
+  return { type: 'L', position: createFormattedPoint(x, y) };
+}
+
+/**
  * Generate shape commands directly without SVG serialization
  */
 export function createSquareCommands(centerX: number, centerY: number, halfSize: number): Command[] {
-  const precision = PATH_DECIMAL_PRECISION;
   return [
-    { type: 'M', position: { x: formatToPrecision(centerX - halfSize, precision), y: formatToPrecision(centerY - halfSize, precision) } },
-    { type: 'L', position: { x: formatToPrecision(centerX + halfSize, precision), y: formatToPrecision(centerY - halfSize, precision) } },
-    { type: 'L', position: { x: formatToPrecision(centerX + halfSize, precision), y: formatToPrecision(centerY + halfSize, precision) } },
-    { type: 'L', position: { x: formatToPrecision(centerX - halfSize, precision), y: formatToPrecision(centerY + halfSize, precision) } },
-    { type: 'L', position: { x: formatToPrecision(centerX - halfSize, precision), y: formatToPrecision(centerY - halfSize, precision) } }
+    createMoveCommand(centerX - halfSize, centerY - halfSize),
+    createLineCommand(centerX + halfSize, centerY - halfSize),
+    createLineCommand(centerX + halfSize, centerY + halfSize),
+    createLineCommand(centerX - halfSize, centerY + halfSize),
+    createLineCommand(centerX - halfSize, centerY - halfSize)
   ];
 }
 
 export function createRectangleCommands(startX: number, startY: number, endX: number, endY: number): Command[] {
-  const precision = PATH_DECIMAL_PRECISION;
   return [
-    { type: 'M', position: { x: formatToPrecision(startX, precision), y: formatToPrecision(startY, precision) } },
-    { type: 'L', position: { x: formatToPrecision(endX, precision), y: formatToPrecision(startY, precision) } },
-    { type: 'L', position: { x: formatToPrecision(endX, precision), y: formatToPrecision(endY, precision) } },
-    { type: 'L', position: { x: formatToPrecision(startX, precision), y: formatToPrecision(endY, precision) } },
-    { type: 'L', position: { x: formatToPrecision(startX, precision), y: formatToPrecision(startY, precision) } }
+    createMoveCommand(startX, startY),
+    createLineCommand(endX, startY),
+    createLineCommand(endX, endY),
+    createLineCommand(startX, endY),
+    createLineCommand(startX, startY)
   ];
 }
 
@@ -1108,11 +1124,10 @@ export function createCircleCommands(centerX: number, centerY: number, radius: n
 }
 
 export function createTriangleCommands(centerX: number, startY: number, endX: number, endY: number, startX: number): Command[] {
-  const precision = PATH_DECIMAL_PRECISION;
   return [
-    { type: 'M', position: { x: formatToPrecision(centerX, precision), y: formatToPrecision(startY, precision) } },
-    { type: 'L', position: { x: formatToPrecision(endX, precision), y: formatToPrecision(endY, precision) } },
-    { type: 'L', position: { x: formatToPrecision(startX, precision), y: formatToPrecision(endY, precision) } },
-    { type: 'L', position: { x: formatToPrecision(centerX, precision), y: formatToPrecision(startY, precision) } }
+    createMoveCommand(centerX, startY),
+    createLineCommand(endX, endY),
+    createLineCommand(startX, endY),
+    createLineCommand(centerX, startY)
   ];
 }

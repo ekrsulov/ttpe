@@ -1,8 +1,9 @@
 import React, { useMemo, useCallback } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { extractEditablePoints } from '../../utils/pathParserUtils';
+import { extractEditablePoints } from '../../utils/path';
 import type { Command, Point, ControlPoint } from '../../types';
 import { RotateCcw } from 'lucide-react';
+import { PanelWithHeader } from '../ui/PanelComponents';
 
 export const ControlPointAlignmentPanel: React.FC = () => {
   const {
@@ -387,12 +388,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
   };
 
   return (
-    <div style={{ backgroundColor: '#fff' }}>
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px', backgroundColor: '#f5f5f5', padding: '4px 8px', borderRadius: '4px' }}>
-        <RotateCcw size={16} style={{ marginRight: '6px', color: '#666' }} />
-        <span style={{ fontSize: '12px', fontWeight: '800', color: '#333' }}>Control Point Alignment</span>
-      </div>
-
+    <PanelWithHeader icon={<RotateCcw size={16} />} title="Control Point Alignment">
       {singlePointInfo.isAnchor ? (
         <div style={{ fontSize: '11px', color: '#666', lineHeight: '1.4' }}>
           <div><strong style={{ color: '#333' }}>Position:</strong> ({singlePointInfo.point.x.toFixed(2)}, {singlePointInfo.point.y.toFixed(2)})</div>
@@ -593,6 +589,6 @@ export const ControlPointAlignmentPanel: React.FC = () => {
           <div><strong style={{ color: '#333' }}>Alignment:</strong> {singlePointInfo.info?.type || 'independent'}</div>
         </div>
       )}
-    </div>
+    </PanelWithHeader>
   );
 };

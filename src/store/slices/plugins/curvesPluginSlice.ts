@@ -101,7 +101,7 @@ export const createCurvesPluginSlice: StateCreator<CurvesPluginSlice, [], [], Cu
   },
 
   finishCurve: () => {
-    // TODO: Convertir puntos en path SVG y crear elemento
+    // Convert points to SVG path and create element (not implemented)
     set(() => ({
       curveState: {
         mode: 'inactive',

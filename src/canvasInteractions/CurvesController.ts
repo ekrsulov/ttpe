@@ -1,5 +1,6 @@
 import type { Point, CurvePoint, CurveState, CurvePointType, CanvasElement } from '../types';
-import { parsePathD, extractSubpaths } from '../utils/pathParserUtils';
+import { parsePathD, extractSubpaths } from '../utils/path';
+import { logger } from '../utils';
 
 export interface CurvesCallbacks {
   addElement: (element: CanvasElement) => string;
@@ -42,7 +43,7 @@ export class CurvesController {
       try {
         listener();
       } catch (error) {
-        console.error('Error in curves controller listener:', error);
+        logger.error('Error in curves controller listener', error);
       }
     });
   }

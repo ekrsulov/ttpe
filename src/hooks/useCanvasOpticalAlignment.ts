@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
 import { OpticalAlignmentController } from '../canvasInteractions/OpticalAlignmentController';
-import type { AlignmentResult } from '../utils/opticalAlignmentUtils';
+import type { AlignmentResult } from '../utils/geometry';
 
 export interface OpticalAlignmentState {
   currentAlignment: AlignmentResult | null;

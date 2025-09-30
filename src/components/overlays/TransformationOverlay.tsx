@@ -1,8 +1,9 @@
 import React from 'react';
-import { deriveElementSelectionColors, SUBPATH_SELECTION_COLOR } from '../../utils/canvasColorUtils';
-import { measureSubpathBounds } from '../../utils/measurementUtils';
+import { deriveElementSelectionColors, SUBPATH_SELECTION_COLOR } from '../../utils/canvas';
+import { measureSubpathBounds } from '../../utils/geometry';
 import { TransformationHandlers } from '../TransformationHandlers';
 import type { PathData } from '../../types';
+import { logger } from '../../utils';
 
 interface TransformationOverlayProps {
   element: {
@@ -393,7 +394,7 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
                 </g>
               );
             } catch (error) {
-              console.warn('Failed to calculate subpath bounds:', error);
+              logger.warn('Failed to calculate subpath bounds', error);
               return null;
             }
           })

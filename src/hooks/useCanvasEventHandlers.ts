@@ -39,6 +39,7 @@ interface EventHandlerDeps {
   updateSelectionRectangle: (point: Point) => void;
   updateShapeCreation: (point: Point, shiftPressed: boolean) => void;
   endShapeCreation: () => void;
+  setMode: (mode: string) => void;
 }
 
 export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
@@ -78,6 +79,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     updateSelectionRectangle,
     updateShapeCreation,
     endShapeCreation,
+    setMode,
   } = deps;
 
   // Handle element click
@@ -487,6 +489,19 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     }
   }, [svgRef]);
 
+  // Handle double click on empty canvas to return to select mode
+  const handleCanvasDoubleClick = useCallback((e: React.MouseEvent) => {
+    // Only handle double click if we're in specific modes and clicked on empty space
+    const target = e.target as Element;
+    const isEmptySpace = target.tagName === 'svg' || target.classList.contains('canvas-background');
+    
+    if (isEmptySpace && (activePlugin === 'subpath' || activePlugin === 'transformation' || activePlugin === 'edit')) {
+      e.preventDefault();
+      e.stopPropagation();
+      setMode('select');
+    }
+  }, [activePlugin, setMode]);
+
   return {
     handleElementClick,
     handleElementDoubleClick,
@@ -499,5 +514,6 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     handlePointerUp,
     handleWheel,
     handleKeyboard,
+    handleCanvasDoubleClick,
   };
 };

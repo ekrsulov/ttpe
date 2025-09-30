@@ -4,6 +4,8 @@ import { Type, Bold, Italic } from 'lucide-react';
 import { getAvailableFonts } from '../../utils';
 import { FontSelector } from '../ui/FontSelector';
 import { IconButton } from '../ui/IconButton';
+import { PanelWithHeader } from '../ui/PanelComponents';
+import { logger } from '../../utils';
 
 export const TextPanel: React.FC = () => {
   const { text, updateTextState } = useCanvasStore();
@@ -20,7 +22,7 @@ export const TextPanel: React.FC = () => {
         const fonts = getAvailableFonts();
         setAvailableFonts(fonts);
       } catch (error) {
-        console.error('Error detecting fonts:', error);
+        logger.error('Error detecting fonts', error);
         // Fallback to basic fonts if detection fails
         setAvailableFonts(['Arial', 'Helvetica', 'Times New Roman', 'Courier New', 'Georgia']);
       } finally {
@@ -73,14 +75,7 @@ export const TextPanel: React.FC = () => {
   };
 
   return (
-    <div style={{ backgroundColor: '#fff' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', backgroundColor: '#f5f5f5', padding: '4px 8px', borderRadius: '4px' }}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <Type size={16} style={{ marginRight: '6px', color: '#666' }} />
-          <span style={{ fontSize: '12px', fontWeight: '800', color: '#333' }}>Text</span>
-        </div>
-      </div>
-
+    <PanelWithHeader icon={<Type size={16} />} title="Text">
       <div style={{ display: 'grid', gap: '6px' }}>
         {/* Text Input */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -158,6 +153,6 @@ export const TextPanel: React.FC = () => {
         </div>
 
       </div>
-    </div>
+    </PanelWithHeader>
   );
 }

@@ -2,6 +2,7 @@ import React from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Square, Circle, Triangle, Shapes, type LucideIcon } from 'lucide-react';
 import { IconButton } from '../ui/IconButton';
+import { PanelWithHeader } from '../ui/PanelComponents';
 import type { ShapeType } from '../../store/slices/plugins/shapePluginSlice';
 
 export const ShapePanel: React.FC = () => {
@@ -21,12 +22,7 @@ export const ShapePanel: React.FC = () => {
   };
 
   return (
-    <div style={{ backgroundColor: '#fff' }}>
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px', backgroundColor: '#f5f5f5', padding: '4px 8px', borderRadius: '4px' }}>
-        <Shapes size={16} style={{ marginRight: '6px', color: '#666' }} />
-        <span style={{ fontSize: '12px', fontWeight: '800', color: '#333' }}>Shape</span>
-      </div>
-
+    <PanelWithHeader icon={<Shapes size={16} />} title="Shape">
       <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
         {shapes.map((shapeItem) => {
           const IconComponent = shapeItem.icon;
@@ -49,6 +45,6 @@ export const ShapePanel: React.FC = () => {
           );
         })}
       </div>
-    </div>
+    </PanelWithHeader>
   );
 };

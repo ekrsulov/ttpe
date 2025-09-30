@@ -1,0 +1,16 @@
+/**
+ * Geometry utilities module
+ * Centralizes geometric calculations and operations
+ */
+
+// Re-export coordinate helpers
+export * from '../coordinateHelpers';
+
+// Re-export measurement utilities
+export { measurePath, measureSubpathBounds } from '../measurementUtils';
+
+// Re-export coordinate transformations
+export { mapPointerToCanvas, mapSvgToCanvas } from '../coordinateUtils';
+
+// Re-export optical alignment utilities
+export * from '../opticalAlignmentUtils';

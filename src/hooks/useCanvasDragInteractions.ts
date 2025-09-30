@@ -1,7 +1,7 @@
 import React from 'react';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../utils';
-import { extractEditablePoints, updateCommands, extractSubpaths } from '../utils/pathParserUtils';
-import { mapSvgToCanvas } from '../utils/coordinateUtils';
+import { extractEditablePoints, updateCommands, extractSubpaths } from '../utils/path';
+import { mapSvgToCanvas } from '../utils/geometry';
 import type { CanvasElement, SubPath, Point, ControlPointInfo, Command, PathData } from '../types';
 
 interface DragCallbacks {

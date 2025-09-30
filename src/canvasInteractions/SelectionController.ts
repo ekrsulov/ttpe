@@ -1,5 +1,5 @@
-import { extractEditablePoints } from '../utils/pathParserUtils';
-import { measurePath } from '../utils/measurementUtils';
+import { extractEditablePoints } from '../utils/path';
+import { measurePath } from '../utils/geometry';
 import type { Point, PathData, CanvasElement } from '../types';
 
 export interface SelectionCallbacks {

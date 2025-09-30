@@ -1,5 +1,5 @@
 import React from 'react';
-import type { AlignmentResult } from '../../utils/opticalAlignmentUtils';
+import type { AlignmentResult } from '../../utils/geometry';
 
 interface OpticalAlignmentOverlayProps {
   alignment: AlignmentResult | null;

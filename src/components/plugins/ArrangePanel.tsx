@@ -1,5 +1,6 @@
 import React from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
+import { useArrangeHandlers } from '../../hooks/useArrangeHandlers';
 import {
   Triangle,
   ChevronUp,
@@ -27,40 +28,10 @@ export const ArrangePanel: React.FC = () => {
     selectedIds,
     selectedCommands,
     activePlugin,
-    bringToFront,
-    sendForward,
-    sendBackward,
-    sendToBack,
-    alignLeft,
-    alignCenter,
-    alignRight,
-    alignTop,
-    alignMiddle,
-    alignBottom,
-    distributeHorizontally,
-    distributeVertically,
-    alignLeftCommands,
-    alignCenterCommands,
-    alignRightCommands,
-    alignTopCommands,
-    alignMiddleCommands,
-    alignBottomCommands,
-    distributeHorizontallyCommands,
-    distributeVerticallyCommands,
     getSelectedSubpathsCount,
-    bringSubpathToFront,
-    sendSubpathForward,
-    sendSubpathBackward,
-    sendSubpathToBack,
-    alignLeftSubpaths,
-    alignCenterSubpaths,
-    alignRightSubpaths,
-    alignTopSubpaths,
-    alignMiddleSubpaths,
-    alignBottomSubpaths,
-    distributeHorizontallySubpaths,
-    distributeVerticallySubpaths
   } = useCanvasStore();
+
+  const currentHandlers = useArrangeHandlers();
 
   const selectedCount = selectedIds.length;
   const selectedCommandsCount = selectedCommands.length;
@@ -71,54 +42,6 @@ export const ArrangePanel: React.FC = () => {
   const canDistribute = selectedCount >= 3 ||
     (activePlugin === 'edit' && selectedCommandsCount >= 3) ||
     (activePlugin === 'subpath' && selectedSubpathsCount >= 3);
-
-  // Define handlers based on active plugin
-  const handlers = {
-    select: {
-      distributeHorizontally,
-      distributeVertically,
-      bringToFront,
-      sendForward,
-      sendBackward,
-      sendToBack,
-      alignLeft,
-      alignCenter,
-      alignRight,
-      alignTop,
-      alignMiddle,
-      alignBottom
-    },
-    edit: {
-      distributeHorizontally: distributeHorizontallyCommands,
-      distributeVertically: distributeVerticallyCommands,
-      bringToFront: () => { }, // Not applicable for edit mode
-      sendForward: () => { },
-      sendBackward: () => { },
-      sendToBack: () => { },
-      alignLeft: alignLeftCommands,
-      alignCenter: alignCenterCommands,
-      alignRight: alignRightCommands,
-      alignTop: alignTopCommands,
-      alignMiddle: alignMiddleCommands,
-      alignBottom: alignBottomCommands
-    },
-    subpath: {
-      distributeHorizontally: distributeHorizontallySubpaths,
-      distributeVertically: distributeVerticallySubpaths,
-      bringToFront: bringSubpathToFront,
-      sendForward: sendSubpathForward,
-      sendBackward: sendSubpathBackward,
-      sendToBack: sendSubpathToBack,
-      alignLeft: alignLeftSubpaths,
-      alignCenter: alignCenterSubpaths,
-      alignRight: alignRightSubpaths,
-      alignTop: alignTopSubpaths,
-      alignMiddle: alignMiddleSubpaths,
-      alignBottom: alignBottomSubpaths
-    }
-  };
-
-  const currentHandlers = handlers[activePlugin as keyof typeof handlers] || handlers.select;
 
   // Button configurations - now using the consolidated handlers
   const distributionButtons: ButtonConfig[] = [

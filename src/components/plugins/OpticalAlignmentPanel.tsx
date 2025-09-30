@@ -1,6 +1,7 @@
 import React from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { IconButton } from '../ui/IconButton';
+import { PanelWithHeader } from '../ui/PanelComponents';
 import {
   Target,
   Play,
@@ -56,19 +57,7 @@ export const OpticalAlignmentPanel: React.FC = () => {
   if (getAlignmentValidationMessage() !== null) return null;
 
   return (
-    <div>
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        marginBottom: '8px',
-        backgroundColor: '#f5f5f5',
-        padding: '4px 8px',
-        borderRadius: '4px'
-      }}>
-        <Target size={16} style={{ marginRight: '6px', color: '#666' }} />
-        <span style={{ fontSize: '12px', fontWeight: '800', color: '#333' }}>Optical Alignment</span>
-      </div>
-
+    <PanelWithHeader icon={<Target size={16} />} title="Optical Alignment">
       {/* Controls */}
       {canPerformOpticalAlignment() && (
         <>
@@ -320,6 +309,6 @@ export const OpticalAlignmentPanel: React.FC = () => {
           )}
         </>
       )}
-    </div>
+    </PanelWithHeader>
   );
 };

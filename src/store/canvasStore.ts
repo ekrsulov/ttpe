@@ -1,10 +1,10 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { temporal } from 'zundo';
-import { textToPathCommands } from '../utils/textVectorizationUtils';
+import { textToPathCommands } from '../utils/canvas';
+import { logger } from '../utils';
 
-import { extractSubpaths, createSquareCommands, createRectangleCommands, createCircleCommands, createTriangleCommands } from '../utils/pathParserUtils';
-import { reverseSubPath } from '../utils/pathOperationsUtils';
+import { extractSubpaths, createSquareCommands, createRectangleCommands, createCircleCommands, createTriangleCommands, reverseSubPath } from '../utils/path';
 import type { Point, Command } from '../types';
 import isDeepEqual from 'fast-deep-equal';
 
@@ -230,10 +230,10 @@ export const useCanvasStore = create<CanvasStore>()(
                 },
               });
             } else {
-              console.error('Failed to convert text to path');
+              logger.error('Failed to convert text to path');
             }
           } catch (error) {
-            console.error('Error converting text to path:', error);
+            logger.error('Error converting text to path', error);
           }
 
           // Auto-switch to select mode after adding text

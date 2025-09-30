@@ -2,6 +2,7 @@ import React from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Plus, Scissors, Zap, Minus, CirclePlus, Square, X, SplitSquareHorizontal } from 'lucide-react';
 import { IconButton } from '../ui/IconButton';
+import { PanelWithHeader } from '../ui/PanelComponents';
 import type { PathData } from '../../types';
 
 export const PathOperationsPanel: React.FC = () => {
@@ -59,12 +60,7 @@ export const PathOperationsPanel: React.FC = () => {
   };
 
   return (
-    <div style={{ backgroundColor: '#fff' }}>
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px', backgroundColor: '#f5f5f5', padding: '4px 8px', borderRadius: '4px' }}>
-        <Scissors size={16} style={{ marginRight: '6px', color: '#666' }} />
-        <span style={{ fontSize: '12px', fontWeight: '800', color: '#333' }}>Path Operations</span>
-      </div>
-
+    <PanelWithHeader icon={<Scissors size={16} />} title="Path Operations">
       <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
         {/* Split subpaths operation - available only if a selected path has multiple subpaths */}
         {hasPathWithMultipleSubpaths && (
@@ -122,6 +118,6 @@ export const PathOperationsPanel: React.FC = () => {
           </>
         )}
       </div>
-    </div>
+    </PanelWithHeader>
   );
 };

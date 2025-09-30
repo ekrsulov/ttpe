@@ -198,16 +198,7 @@ export function calculateQuadrantWeights(points: Point[], centroid: Point): Quad
     else weights.bottomRight += weight;
   });
 
-  // Normalize weights
-  const total = weights.topLeft + weights.topRight + weights.bottomLeft + weights.bottomRight;
-  if (total > 0) {
-    weights.topLeft = formatToPrecision(weights.topLeft / total, PATH_DECIMAL_PRECISION);
-    weights.topRight = formatToPrecision(weights.topRight / total, PATH_DECIMAL_PRECISION);
-    weights.bottomLeft = formatToPrecision(weights.bottomLeft / total, PATH_DECIMAL_PRECISION);
-    weights.bottomRight = formatToPrecision(weights.bottomRight / total, PATH_DECIMAL_PRECISION);
-  }
-
-  return weights;
+  return normalizeQuadrantWeights(weights);
 }
 
 /**
@@ -278,6 +269,20 @@ function isValidTriangle(points: Point[]): boolean {
   
   // Allow for some floating point tolerance
   return area > 1e-6;
+}
+
+/**
+ * Helper function to normalize quadrant weights
+ */
+function normalizeQuadrantWeights(weights: QuadrantWeights): QuadrantWeights {
+  const total = weights.topLeft + weights.topRight + weights.bottomLeft + weights.bottomRight;
+  if (total > 0) {
+    weights.topLeft = formatToPrecision(weights.topLeft / total, PATH_DECIMAL_PRECISION);
+    weights.topRight = formatToPrecision(weights.topRight / total, PATH_DECIMAL_PRECISION);
+    weights.bottomLeft = formatToPrecision(weights.bottomLeft / total, PATH_DECIMAL_PRECISION);
+    weights.bottomRight = formatToPrecision(weights.bottomRight / total, PATH_DECIMAL_PRECISION);
+  }
+  return weights;
 }
 
 /**
@@ -503,7 +508,7 @@ export function prepareContentInfo(
       const allCommands = pathData.subPaths.flat();
 
       // Use element's overall opacity if available, otherwise default to 1
-      const overallOpacity = 1; // TODO: Add element-level opacity if implemented
+      const overallOpacity = 1; // Element-level opacity not implemented yet
       const geometry = analyzePathGeometry(allCommands, pathData, overallOpacity);
 
       content.push({

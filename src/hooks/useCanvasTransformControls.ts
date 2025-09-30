@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
 import { TransformController, type TransformState, type TransformFeedback } from '../canvasInteractions/TransformController';
-import { measurePath, measureSubpathBounds } from '../utils/measurementUtils';
+import { measurePath, measureSubpathBounds } from '../utils/geometry';
 import type { Point, PathData } from '../types';
 
 export const useCanvasTransformControls = () => {

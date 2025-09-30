@@ -1,4 +1,4 @@
-import type { AlignmentResult } from '../utils/opticalAlignmentUtils';
+import type { AlignmentResult } from '../utils/geometry';
 
 export interface OpticalAlignmentCallbacks {
   calculateAlignment: () => void;

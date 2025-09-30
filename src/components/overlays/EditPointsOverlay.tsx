@@ -1,6 +1,6 @@
 import React from 'react';
-import { getCommandStartPoint } from '../../utils/pathParserUtils';
-import { mapSvgToCanvas } from '../../utils/coordinateUtils';
+import { getCommandStartPoint } from '../../utils/path';
+import { mapSvgToCanvas } from '../../utils/geometry';
 import type { Point, PathData, Command } from '../../types';
 
 interface EditPointsOverlayProps {

@@ -1,8 +1,7 @@
 import type { StateCreator } from 'zustand';
 import type { CanvasElement, PathData } from '../../types';
 import type { CanvasStore } from '../canvasStore';
-import { performPathUnion as performUnionOp, performPathSubtraction, performPathUnionPaperJS, performPathIntersect, performPathExclude, performPathDivide } from '../../utils/pathOperationsUtils';
-import { commandsToString } from '../../utils/pathParserUtils';
+import { performPathUnion as performUnionOp, performPathSubtraction, performPathUnionPaperJS, performPathIntersect, performPathExclude, performPathDivide, commandsToString } from '../../utils/path';
 
 export interface BaseSlice {
   // State

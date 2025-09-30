@@ -20,7 +20,7 @@ import { SliderControl } from '../ui/SliderControl';
 import { Tag } from '../ui/Tag';
 import { PresetButton } from '../ui/PresetButton';
 import { PRESETS, type Preset } from '../../utils/presets';
-import { getSelectedPathProperty } from '../../utils/pathPropertyUtils';
+import { getSelectedPathProperty } from '../../utils/path';
 
 // Custom hook to subscribe to temporal state changes
 const useTemporalState = () => {

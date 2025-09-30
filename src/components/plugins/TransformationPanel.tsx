@@ -1,6 +1,9 @@
 import React from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { VectorSquare } from 'lucide-react';
+import { PanelWithHeader } from '../ui/PanelComponents';
+import { SelectionInfo } from '../ui/PanelHelpers';
+import { Checkbox } from '../ui/FormComponents';
 
 export const TransformationPanel: React.FC = () => {
   const {
@@ -13,64 +16,40 @@ export const TransformationPanel: React.FC = () => {
   const { showCoordinates, showRulers } = transformation;
 
   const isSubpathMode = isWorkingWithSubpaths();
-  const hasSelection = isSubpathMode ? selectedSubpaths.length > 0 : selectedIds.length > 0;
-  const selectionText = isSubpathMode ? 'subpath' : 'element';
-  const selectionCount = isSubpathMode ? selectedSubpaths.length : selectedIds.length;
+  const selectedCount = isSubpathMode ? selectedSubpaths.length : selectedIds.length;
 
   return (
-    <div style={{ backgroundColor: '#fff' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', backgroundColor: '#f5f5f5', padding: '4px 8px', borderRadius: '4px' }}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <VectorSquare size={16} style={{ marginRight: '6px', color: '#666' }} />
-          <span style={{ fontSize: '12px', fontWeight: '800', color: '#333' }}>Transform</span>
-          {isSubpathMode && (
-            <span style={{ fontSize: '10px', color: '#8b5cf6', marginLeft: '4px', backgroundColor: '#f3f4f6', padding: '1px 4px', borderRadius: '3px' }}>
-              Subpath
-            </span>
-          )}
-        </div>
-      </div>
-
-      {!hasSelection ? (
-        <div style={{ fontSize: '11px', color: '#666', textAlign: 'center' }}>
-          Select {isSubpathMode ? 'a subpath' : 'an element'} to transform
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          {/* Selection info */}
-          <div style={{ fontSize: '10px', color: '#666', marginBottom: '4px' }}>
-            {selectionCount} {selectionText}{selectionCount !== 1 ? 's' : ''} selected
-          </div>
-
-          {/* Show Coordinates Toggle */}
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <input
-              type="checkbox"
-              id="showCoordinates"
-              checked={showCoordinates}
-              onChange={(e) => updateTransformationState({ showCoordinates: e.target.checked })}
-              style={{ marginRight: '6px' }}
-            />
-            <label htmlFor="showCoordinates" style={{ fontSize: '11px', color: '#666', cursor: 'pointer' }}>
-              Coordinates
-            </label>
-          </div>
-
-          {/* Show Rulers Toggle */}
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <input
-              type="checkbox"
-              id="showRulers"
-              checked={showRulers}
-              onChange={(e) => updateTransformationState({ showRulers: e.target.checked })}
-              style={{ marginRight: '6px' }}
-            />
-            <label htmlFor="showRulers" style={{ fontSize: '11px', color: '#666', cursor: 'pointer' }}>
-              Rulers
-            </label>
-          </div>
-        </div>
+    <PanelWithHeader 
+      icon={<VectorSquare size={16} />} 
+      title="Transform"
+      headerActions={isSubpathMode && (
+        <span style={{ fontSize: '10px', color: '#8b5cf6', marginLeft: '4px', backgroundColor: '#f3f4f6', padding: '1px 4px', borderRadius: '3px' }}>
+          Subpath
+        </span>
       )}
-    </div>
+    >
+      <SelectionInfo 
+        activePlugin="transformation"
+        selectedCount={selectedCount}
+        isSubpathMode={isSubpathMode}
+        noSelectionMessage={`Select ${isSubpathMode ? 'a subpath' : 'an element'} to transform`}
+      />
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+        <Checkbox
+          id="showCoordinates"
+          checked={showCoordinates}
+          onChange={(checked) => updateTransformationState({ showCoordinates: checked })}
+          label="Coordinates"
+        />
+
+        <Checkbox
+          id="showRulers"
+          checked={showRulers}
+          onChange={(checked) => updateTransformationState({ showRulers: checked })}
+          label="Rulers"
+        />
+      </div>
+    </PanelWithHeader>
   );
 };

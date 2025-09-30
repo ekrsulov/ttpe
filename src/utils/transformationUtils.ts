@@ -3,19 +3,27 @@ import { formatToPrecision, PATH_DECIMAL_PRECISION } from './index';
 import { extractSubpaths } from './pathParserUtils';
 import { measurePath } from './measurementUtils';
 import { transformCommands, calculateScaledStrokeWidth } from './sharedTransformUtils';
+import { logger } from './logger';
 
 /**
- * Consolidated utility for translating SVG path commands.
- * Replaces duplicated logic in arrangeSlice, subpathPluginSlice, and selectionSlice.
+ * Translates commands by deltaX and deltaY with configurable formatting options.
  */
-export function translateCommands(commands: Command[], deltaX: number, deltaY: number): Command[] {
+export function translateCommandsUnified(
+  commands: Command[], 
+  deltaX: number, 
+  deltaY: number,
+  options: { roundToIntegers?: boolean; precision?: number } = {}
+): Command[] {
+  const { roundToIntegers = false, precision = PATH_DECIMAL_PRECISION } = options;
+  const formatter = roundToIntegers ? Math.round : (n: number) => formatToPrecision(n, precision);
+  
   return commands.map(cmd => {
     if (cmd.type === 'M' || cmd.type === 'L') {
       return {
         ...cmd,
         position: {
-          x: formatToPrecision(cmd.position.x + deltaX, PATH_DECIMAL_PRECISION),
-          y: formatToPrecision(cmd.position.y + deltaY, PATH_DECIMAL_PRECISION)
+          x: formatter(cmd.position.x + deltaX),
+          y: formatter(cmd.position.y + deltaY)
         }
       };
     } else if (cmd.type === 'C') {
@@ -23,17 +31,17 @@ export function translateCommands(commands: Command[], deltaX: number, deltaY: n
         ...cmd,
         controlPoint1: {
           ...cmd.controlPoint1,
-          x: formatToPrecision(cmd.controlPoint1.x + deltaX, PATH_DECIMAL_PRECISION),
-          y: formatToPrecision(cmd.controlPoint1.y + deltaY, PATH_DECIMAL_PRECISION)
+          x: formatter(cmd.controlPoint1.x + deltaX),
+          y: formatter(cmd.controlPoint1.y + deltaY)
         },
         controlPoint2: {
           ...cmd.controlPoint2,
-          x: formatToPrecision(cmd.controlPoint2.x + deltaX, PATH_DECIMAL_PRECISION),
-          y: formatToPrecision(cmd.controlPoint2.y + deltaY, PATH_DECIMAL_PRECISION)
+          x: formatter(cmd.controlPoint2.x + deltaX),
+          y: formatter(cmd.controlPoint2.y + deltaY)
         },
         position: {
-          x: formatToPrecision(cmd.position.x + deltaX, PATH_DECIMAL_PRECISION),
-          y: formatToPrecision(cmd.position.y + deltaY, PATH_DECIMAL_PRECISION)
+          x: formatter(cmd.position.x + deltaX),
+          y: formatter(cmd.position.y + deltaY)
         }
       };
     }
@@ -43,40 +51,17 @@ export function translateCommands(commands: Command[], deltaX: number, deltaY: n
 }
 
 /**
- * Translates commands and rounds all points to integers.
+ * Translates commands by deltaX and deltaY (backward compatibility).
+ */
+export function translateCommands(commands: Command[], deltaX: number, deltaY: number): Command[] {
+  return translateCommandsUnified(commands, deltaX, deltaY);
+}
+
+/**
+ * Translates commands and rounds all points to integers (backward compatibility).
  */
 export function translateCommandsToIntegers(commands: Command[], deltaX: number, deltaY: number): Command[] {
-  return commands.map(cmd => {
-    if (cmd.type === 'M' || cmd.type === 'L') {
-      return {
-        ...cmd,
-        position: {
-          x: Math.round(cmd.position.x + deltaX),
-          y: Math.round(cmd.position.y + deltaY)
-        }
-      };
-    } else if (cmd.type === 'C') {
-      return {
-        ...cmd,
-        controlPoint1: {
-          ...cmd.controlPoint1,
-          x: Math.round(cmd.controlPoint1.x + deltaX),
-          y: Math.round(cmd.controlPoint1.y + deltaY)
-        },
-        controlPoint2: {
-          ...cmd.controlPoint2,
-          x: Math.round(cmd.controlPoint2.x + deltaX),
-          y: Math.round(cmd.controlPoint2.y + deltaY)
-        },
-        position: {
-          x: Math.round(cmd.position.x + deltaX),
-          y: Math.round(cmd.position.y + deltaY)
-        }
-      };
-    }
-    // Z commands don't need transformation
-    return cmd;
-  });
+  return translateCommandsUnified(commands, deltaX, deltaY, { roundToIntegers: true });
 }
 
 /**
@@ -133,12 +118,6 @@ export const alignmentTargets = {
     Math.max(...bounds.map(b => b.maxY))
 } as const;
 
-// Removed unused rebuildPathString function - commandsToString is used instead
-
-// Removed unused translatePoint function - translatePathData is used instead
-
-// Removed unused rebuildPathString function - commandsToString is used instead
-
 export function transformPathData(
   pathData: PathData,
   scaleX: number,
@@ -173,7 +152,7 @@ export function transformPathData(
     };
 
   } catch (error) {
-    console.warn('Path transformation failed:', error);
+    logger.warn('Path transformation failed', error);
     return pathData; // Return original if transformation fails
   }
 }
@@ -258,7 +237,7 @@ export function transformSubpathsData(
     };
 
   } catch (error) {
-    console.warn('Subpath transformation failed, falling back to full path transformation:', error);
+    logger.warn('Subpath transformation failed, falling back to full path transformation', error);
     return transformPathData(pathData, scaleX, scaleY, originX, originY, rotation);
   }
 }
@@ -283,7 +262,7 @@ export function transformSingleSubpath(
     const subpaths = extractSubpaths(commands);
 
     if (subpathIndex >= subpaths.length) {
-      console.warn('Subpath index out of bounds, falling back to full path transformation');
+      logger.warn('Subpath index out of bounds, falling back to full path transformation');
       return transformPathData(pathData, scaleX, scaleY, originX, originY, rotation);
     }
 
@@ -333,7 +312,7 @@ export function transformSingleSubpath(
     };
 
   } catch (error) {
-    console.warn('Single subpath transformation failed, falling back to full path transformation:', error);
+    logger.warn('Single subpath transformation failed, falling back to full path transformation', error);
     return transformPathData(pathData, scaleX, scaleY, originX, originY, rotation);
   }
 }
