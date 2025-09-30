@@ -78,6 +78,12 @@ export const DASH_PRESETS: DashPreset[] = [
     name: 'Railroad',
     dashArray: '6,2,2,2,6,2',
     description: 'Railroad track style pattern'
+  },
+  {
+    id: 'dense-dots',
+    name: 'Dense Dots',
+    dashArray: '10,3',
+    description: 'Medium dashes with short gaps'
   }
 ];
 

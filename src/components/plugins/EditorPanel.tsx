@@ -490,14 +490,38 @@ export const EditorPanel: React.FC = () => {
             </div>
           </div>
 
-          {/* Advanced Stroke Properties - C and J in one line */}
+          {/* Color Presets */}
+          <div style={{ 
+            minHeight: '32px', 
+            display: 'flex', 
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingTop: '4px'
+          }}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(10, 1fr)',
+              gap: '3px',
+              maxWidth: '230px'
+            }}>
+              {PRESETS.map((preset) => (
+                <PresetButton
+                  key={preset.id}
+                  preset={preset}
+                  onClick={handlePresetSelect}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Advanced Properties - C, J and R in one line */}
           <div style={{ 
             minHeight: '32px', 
             display: 'flex', 
             alignItems: 'center', 
             justifyContent: 'space-between'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
               <div style={{ 
                 fontSize: '13px', 
                 fontWeight: '500', 
@@ -516,7 +540,7 @@ export const EditorPanel: React.FC = () => {
               />
             </div>
             
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
               <div style={{ 
                 fontSize: '13px', 
                 fontWeight: '500', 
@@ -534,90 +558,64 @@ export const EditorPanel: React.FC = () => {
                 title="Stroke Linejoin"
               />
             </div>
-          </div>
 
-          {/* R and Custom Dash Array in second line */}
-          <div style={{ 
-            minHeight: '32px', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'flex-start',
-            gap: '8px' 
-          }}>
-            <div style={{ 
-              fontSize: '13px', 
-              fontWeight: '500', 
-              color: '#666', 
-              minWidth: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              height: '24px'
-            }} title="Fill Rule">
-              R:
-            </div>
-            <FillRuleSelector
-              value={currentFillRule || 'nonzero'}
-              onChange={handleFillRuleChange}
-              title="Fill Rule"
-            />
-            
-            <div style={{ 
-              fontSize: '13px', 
-              fontWeight: '500', 
-              color: '#666', 
-              minWidth: '12px', 
-              marginLeft: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              height: '24px'
-            }} title="Custom Dash Array">
-              D:
-            </div>
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
-              <DashArrayCustomInput
-                value={currentStrokeDasharray || 'none'}
-                onChange={handleStrokeDasharrayChange}
-                title="Custom dash array (e.g., 5,3,2,3)"
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <div style={{ 
+                fontSize: '13px', 
+                fontWeight: '500', 
+                color: '#666', 
+                minWidth: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                height: '24px'
+              }} title="Fill Rule">
+                R:
+              </div>
+              <FillRuleSelector
+                value={currentFillRule || 'nonzero'}
+                onChange={handleFillRuleChange}
+                title="Fill Rule"
               />
             </div>
           </div>
 
-          {/* Dash Array Presets - Third line */}
+          {/* Dash Array Presets and Custom Input in one line */}
           <div style={{ 
             minHeight: '32px', 
             display: 'flex', 
             alignItems: 'center',
-            justifyContent: 'space-between'
+            justifyContent: 'space-between',
+            gap: '8px'
           }}>
             <DashArrayPresets
               value={currentStrokeDasharray || 'none'}
               onChange={handleStrokeDasharrayChange}
             />
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <div style={{ 
+                fontSize: '13px', 
+                fontWeight: '500', 
+                color: '#666', 
+                minWidth: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                height: '24px'
+              }} title="Custom Dash Array">
+                D:
+              </div>
+              <div style={{ width: '80px' }}>
+                <DashArrayCustomInput
+                  value={currentStrokeDasharray || 'none'}
+                  onChange={handleStrokeDasharrayChange}
+                  title="Custom dash array (e.g., 5,3,2,3)"
+                />
+              </div>
+            </div>
           </div>
-        </div>
-      )}
 
-      {/* Smooth Brush controls moved to EditPanel in Sidebar */}
-
-      {/* Presets Section */}
-      {isExpanded && (
-        <div style={{ paddingTop: '8px', marginTop: '4px' }}>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(10, 1fr)',
-            gap: '3px',
-            maxWidth: '230px'
-          }}>
-            {PRESETS.map((preset) => (
-              <PresetButton
-                key={preset.id}
-                preset={preset}
-                onClick={handlePresetSelect}
-              />
-            ))}
-          </div>
+          {/* Bottom border */}
           <div style={{ borderTop: '1px solid #eee', marginTop: '8px' }}></div>
-
         </div>
       )}
 

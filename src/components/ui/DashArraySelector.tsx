@@ -49,16 +49,13 @@ export const DashArrayPresets: React.FC<DashArrayPresetsProps> = ({
   value,
   onChange
 }) => {
-  // Select 8 diverse and useful dash presets
+  // Select 5 most useful dash presets
   const commonPresets = [
     DASH_PRESETS[0],  // Solid
     DASH_PRESETS[1],  // Dashed
     DASH_PRESETS[2],  // Dotted
     DASH_PRESETS[3],  // Dash-Dot
-    DASH_PRESETS[4],  // Long Dash
-    DASH_PRESETS[5],  // Short Dash
-    DASH_PRESETS[8],  // Fine Dots (new)
-    DASH_PRESETS[9],  // Thick Dash (new)
+    DASH_PRESETS[12], // Dense Dots (new)
   ];
 
   return (
