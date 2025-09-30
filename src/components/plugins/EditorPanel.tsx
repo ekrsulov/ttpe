@@ -51,7 +51,6 @@ export const EditorPanel: React.FC = () => {
   const deleteSelectedSubpaths = useCanvasStore(state => state.deleteSelectedSubpaths);
   const getSelectedSubpathsCount = useCanvasStore(state => state.getSelectedSubpathsCount);
   const getSelectedElements = useCanvasStore(state => state.getSelectedElements);
-  const selectedSubpaths = useCanvasStore(state => state.selectedSubpaths);
 
   const { undo, redo, pastStates, futureStates } = useTemporalState();
 
@@ -61,7 +60,7 @@ export const EditorPanel: React.FC = () => {
   const canUndo = useMemo(() => pastStates.length > 0, [pastStates.length]);
   const canRedo = useMemo(() => futureStates.length > 0, [futureStates.length]);
   const selectedPathsCount = useMemo(() => getSelectedPathsCount(), [getSelectedPathsCount]);
-  const selectedSubpathsCount = useMemo(() => getSelectedSubpathsCount(), [getSelectedSubpathsCount, selectedSubpaths]);
+  const selectedSubpathsCount = useMemo(() => getSelectedSubpathsCount(), [getSelectedSubpathsCount]);
   const selectedElements = useMemo(() => getSelectedElements(), [getSelectedElements]);
 
   const zoomFactor = 1.2;

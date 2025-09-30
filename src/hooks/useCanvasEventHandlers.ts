@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
 import { toolRegistry } from '../utils/toolRegistry';
 import { PluginManager } from '../utils/pluginManager';
+import { useCanvasCurves } from './useCanvasCurves';
 import type { Point } from '../types';
 
 interface EventHandlerDeps {
@@ -42,6 +43,7 @@ interface EventHandlerDeps {
 
 export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
   const pluginManager = useMemo(() => new PluginManager(toolRegistry), []);
+  const { handlePointerDown: handleCurvesPointerDown, handlePointerMove: handleCurvesPointerMove, handlePointerUp: handleCurvesPointerUp } = useCanvasCurves();
   const {
     svgRef,
     screenToCanvas,
@@ -241,10 +243,16 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       return;
     }
 
+    // Handle curves tool
+    if (activePlugin === 'curves') {
+      handleCurvesPointerDown(point);
+      return;
+    }
+
     if (activePlugin && pluginManager.hasTool(activePlugin)) {
       pluginManager.executeHandler(activePlugin, e, point, target, isSmoothBrushActive, beginSelectionRectangle, startShapeCreation);
     }
-  }, [activePlugin, screenToCanvas, isSpacePressed, beginSelectionRectangle, startShapeCreation, isSmoothBrushActive, pluginManager]);
+  }, [activePlugin, screenToCanvas, isSpacePressed, beginSelectionRectangle, startShapeCreation, isSmoothBrushActive, pluginManager, handleCurvesPointerDown]);
 
   // Handle pointer move
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
@@ -304,6 +312,12 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       return;
     }
 
+    // Handle curves tool
+    if (activePlugin === 'curves') {
+      handleCurvesPointerMove(point);
+      return;
+    }
+
     if (activePlugin === 'pencil' && e.buttons === 1) {
       useCanvasStore.getState().addPointToPath(point);
     }
@@ -342,6 +356,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     isSpacePressed,
     dragStart,
     transformStateIsTransforming,
+    handleCurvesPointerMove,
     isSelecting,
     isCreatingShape,
     isDragging,
@@ -364,6 +379,11 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
 
   // Handle pointer up
   const handlePointerUp = useCallback((_e: React.PointerEvent) => {
+    // Handle curves tool
+    if (activePlugin === 'curves') {
+      handleCurvesPointerUp();
+    }
+
     // Subpath dragging functionality removed - will be reimplemented
 
     // Only handle dragging if it hasn't been handled by element click already
@@ -385,6 +405,8 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       endTransformation();
     }
   }, [
+    activePlugin,
+    handleCurvesPointerUp,
     isDragging,
     setIsDragging,
     setDragStart,

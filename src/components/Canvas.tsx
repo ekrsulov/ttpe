@@ -6,6 +6,7 @@ import { mapPointerToCanvas } from '../utils/coordinateUtils';
 import { commandsToString } from '../utils/pathParserUtils';
 import { useCanvasDragInteractions } from '../hooks/useCanvasDragInteractions';
 import { SelectionOverlay, EditPointsOverlay, SubpathOverlay, ShapePreview, OpticalAlignmentOverlay, FeedbackOverlay, TransformationOverlay } from './overlays';
+import { CurvesRenderer } from './CurvesRenderer';
 import { useCanvasKeyboardControls } from '../hooks/useCanvasKeyboardControls';
 import { useCanvasPointerSelection } from '../hooks/useCanvasPointerSelection';
 import { useCanvasTransformControls } from '../hooks/useCanvasTransformControls';
@@ -396,6 +397,9 @@ export const Canvas: React.FC = () => {
           viewport={viewport}
         />
       )}
+
+      {/* Curves Renderer */}
+      {activePlugin === 'curves' && <CurvesRenderer />}
 
       {/* Smooth Brush Cursor */}
       {activePlugin === 'edit' && isSmoothBrushActive && (

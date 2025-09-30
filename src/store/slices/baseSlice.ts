@@ -13,7 +13,7 @@ export interface BaseSlice {
   showSettingsPanel: boolean;
 
   // Actions
-  addElement: (element: Omit<CanvasElement, 'id' | 'zIndex'>) => void;
+  addElement: (element: Omit<CanvasElement, 'id' | 'zIndex'>) => string;
   updateElement: (id: string, updates: Partial<CanvasElement>) => void;
   deleteElement: (id: string) => void;
   deleteSelectedElements: () => void;
@@ -150,6 +150,7 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
     set((state) => ({
       elements: [...state.elements, { ...element, id, zIndex }],
     }));
+    return id;
   },
 
   updateElement: (id, updates) => {

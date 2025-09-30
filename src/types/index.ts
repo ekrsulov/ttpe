@@ -65,3 +65,37 @@ export interface Viewport {
   panX: number;
   panY: number;
 }
+
+// Curve tool types
+export type CurvePointType = 'corner' | 'smooth' | 'asymmetric';
+
+export interface CurvePoint {
+  id: string;
+  x: number;
+  y: number;
+  type: CurvePointType;
+  handleIn?: Point;  // Handle entrante (para curvas)
+  handleOut?: Point; // Handle saliente (para curvas)
+  selected?: boolean;
+}
+
+export type CurveMode = 'inactive' | 'creating' | 'editing' | 'dragging_point' | 'dragging_handle';
+
+export interface CurveDragState {
+  pointId: string;
+  dragType: 'point' | 'handle_in' | 'handle_out' | 'adjust_curvature' | 'adjust_last_segment' | 'adjust_closing_segment';
+  startPoint: Point;
+  startHandleIn?: Point;
+  startHandleOut?: Point;
+}
+
+export interface CurveState {
+  mode: CurveMode;
+  isActive: boolean;
+  points: CurvePoint[];
+  selectedPointId?: string;
+  dragState?: CurveDragState;
+  previewPoint?: Point;
+  previewHandle?: Point;
+  isClosingPath?: boolean;
+}

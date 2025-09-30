@@ -1,5 +1,6 @@
 import type { Point } from '../types';
 import { useCanvasStore } from '../store/canvasStore';
+import React from 'react';
 
 export type ToolHandler = (
   e: React.PointerEvent,

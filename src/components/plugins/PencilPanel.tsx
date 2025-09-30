@@ -1,13 +1,21 @@
 import React from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { Pen, Route, Square } from 'lucide-react';
+import { Pen, Route, Square, PenTool } from 'lucide-react';
 import { IconButton } from '../ui/IconButton';
 
 export const PencilPanel: React.FC = () => {
-  const { pencil, updatePencilState } = useCanvasStore();
+  const { pencil, updatePencilState, setMode, activePlugin } = useCanvasStore();
 
   const handleReusePathToggle = () => {
     updatePencilState({ reusePath: !pencil.reusePath });
+  };
+
+  const handleCurvesToggle = () => {
+    if (activePlugin === 'curves') {
+      setMode('pencil');
+    } else {
+      setMode('curves');
+    }
   };
 
   return (
@@ -45,6 +53,21 @@ export const PencilPanel: React.FC = () => {
             <Route size={12} />
           </IconButton>
         </div>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <span style={{ fontSize: '11px', color: '#666' }}>Curves:</span>
+        <IconButton
+          onPointerUp={handleCurvesToggle}
+          active={activePlugin === 'curves'}
+          activeBgColor="#007bff"
+          activeColor="#fff"
+          size="custom"
+          customSize="24px"
+          title="Draw Curves"
+        >
+          <PenTool size={12} />
+        </IconButton>
       </div>
     </div>
   );
