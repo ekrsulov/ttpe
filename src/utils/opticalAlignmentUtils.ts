@@ -1,5 +1,5 @@
-import type { Point, Command, PathData, CanvasElement } from '../types';
-import { measurePath } from './measurementUtils';
+import type { Command, PathData, Point, CanvasElement } from '../types';
+import { measurePath, measureSubpathBounds } from './measurementUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from './index';
 import { hexToHsl } from './canvasColorUtils';
 
@@ -366,7 +366,7 @@ function analyzeVisualProperties(pathData: PathData, overallOpacity: number = 1)
  * Analyzes a path and extracts geometric properties
  */
 export function analyzePathGeometry(commands: Command[], pathData: PathData, overallOpacity: number = 1): PathGeometry {
-  const bounds = measurePath([commands], pathData.strokeWidth, 1); // Use zoom = 1 for true coordinates
+  const bounds = measureSubpathBounds(commands, pathData.strokeWidth, 1); // Use zoom = 1 for true coordinates
   const points = commandsToPoints(commands);
   
   const area = calculateArea(points);

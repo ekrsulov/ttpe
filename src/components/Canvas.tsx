@@ -12,13 +12,11 @@ import { useCanvasShapeCreation } from '../hooks/useCanvasShapeCreation';
 import { useCanvasOpticalAlignment } from '../hooks/useCanvasOpticalAlignment';
 import { useCanvasSmoothBrush } from '../hooks/useCanvasSmoothBrush';
 import { useCanvasEventHandlers } from '../hooks/useCanvasEventHandlers';
-import { PluginManager } from '../utils/pluginManager';
-import { toolRegistry } from '../utils/toolRegistry';
+import { pluginManager } from '../utils/pluginManager';
 import type { Point, PathData, CanvasElement } from '../types';
 
 export const Canvas: React.FC = () => {
   const svgRef = useRef<SVGSVGElement>(null);
-  const pluginManager = useMemo(() => new PluginManager(toolRegistry), []);
   const { isSpacePressed, isShiftPressed } = useCanvasKeyboardControls();
   const {
     isSelecting,

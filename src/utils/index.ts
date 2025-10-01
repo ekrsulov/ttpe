@@ -2,10 +2,6 @@
 export { measurePath } from './measurementUtils';
 
 export {
-  textToPath
-} from './textVectorizationUtils';
-
-export {
   getAvailableFonts,
   FONTS_TO_CHECK
 } from './fontDetectionUtils';
@@ -17,6 +13,9 @@ export * from './coordinateHelpers';
 
 // Export logger
 export { logger, LogLevel } from './logger';
+
+// Export type guards
+export * from './typeGuards';
 
 // Export modular utilities
 export * from './geometry';

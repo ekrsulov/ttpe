@@ -1,7 +1,6 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
-import { toolRegistry } from '../utils/toolRegistry';
-import { PluginManager } from '../utils/pluginManager';
+import { pluginManager } from '../utils/pluginManager';
 import { useCanvasCurves } from './useCanvasCurves';
 import type { Point } from '../types';
 
@@ -43,7 +42,6 @@ interface EventHandlerDeps {
 }
 
 export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
-  const pluginManager = useMemo(() => new PluginManager(toolRegistry), []);
   const { handlePointerDown: handleCurvesPointerDown, handlePointerMove: handleCurvesPointerMove, handlePointerUp: handleCurvesPointerUp } = useCanvasCurves();
   const {
     svgRef,
@@ -254,7 +252,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     if (activePlugin && pluginManager.hasTool(activePlugin)) {
       pluginManager.executeHandler(activePlugin, e, point, target, isSmoothBrushActive, beginSelectionRectangle, startShapeCreation);
     }
-  }, [activePlugin, screenToCanvas, isSpacePressed, beginSelectionRectangle, startShapeCreation, isSmoothBrushActive, pluginManager, handleCurvesPointerDown]);
+  }, [activePlugin, screenToCanvas, isSpacePressed, beginSelectionRectangle, startShapeCreation, isSmoothBrushActive, handleCurvesPointerDown]);
 
   // Handle pointer move
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
@@ -475,7 +473,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     if (activePlugin) {
       pluginManager.handleKeyboardEvent(activePlugin, e);
     }
-  }, [activePlugin, pluginManager, selectedIds, selectedSubpaths]);
+  }, [activePlugin, selectedIds, selectedSubpaths]);
 
   // Handle wheel
   const handleWheel = useCallback((e: React.WheelEvent<SVGSVGElement>) => {

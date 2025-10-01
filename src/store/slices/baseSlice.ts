@@ -413,6 +413,7 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
     });
   },
 
+  // Boolean path operations - consolidated with helper function
   performPathUnion: () => {
     const state = get() as CanvasStore;
     performBooleanOperation(state, performUnionOp, 2);

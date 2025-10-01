@@ -1,14 +1,23 @@
 import type { PathData, Command } from '../types';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from './index';
 import { extractSubpaths } from './pathParserUtils';
-import { measurePath } from './measurementUtils';
+import { measureSubpathBounds } from './measurementUtils';
 import { transformCommands, calculateScaledStrokeWidth } from './sharedTransformUtils';
 import { logger } from './logger';
 
 /**
  * Translates commands by deltaX and deltaY with configurable formatting options.
+ * This is the main translation function - use this for all translation operations.
+ * 
+ * @param commands - Array of path commands to translate
+ * @param deltaX - X-axis translation amount
+ * @param deltaY - Y-axis translation amount
+ * @param options - Optional formatting configuration
+ * @param options.roundToIntegers - If true, rounds all coordinates to integers
+ * @param options.precision - Number of decimal places (default: PATH_DECIMAL_PRECISION)
+ * @returns Translated commands array
  */
-export function translateCommandsUnified(
+export function translateCommands(
   commands: Command[], 
   deltaX: number, 
   deltaY: number,
@@ -51,25 +60,46 @@ export function translateCommandsUnified(
 }
 
 /**
- * Translates commands by deltaX and deltaY (backward compatibility).
- */
-export function translateCommands(commands: Command[], deltaX: number, deltaY: number): Command[] {
-  return translateCommandsUnified(commands, deltaX, deltaY);
-}
-
-/**
- * Translates commands and rounds all points to integers (backward compatibility).
+ * @deprecated Use translateCommands(commands, deltaX, deltaY, { roundToIntegers: true }) instead
+ * Translates commands and rounds all points to integers.
  */
 export function translateCommandsToIntegers(commands: Command[], deltaX: number, deltaY: number): Command[] {
-  return translateCommandsUnified(commands, deltaX, deltaY, { roundToIntegers: true });
+  return translateCommands(commands, deltaX, deltaY, { roundToIntegers: true });
 }
 
 /**
- * Translates PathData by deltaX and deltaY using the consolidated logic.
+ * @deprecated Use translateCommands() directly - this alias is no longer needed
+ * Translates commands by deltaX and deltaY with configurable formatting options.
  */
-export function translatePathData(pathData: PathData, deltaX: number, deltaY: number): PathData {
+export function translateCommandsUnified(
+  commands: Command[], 
+  deltaX: number, 
+  deltaY: number,
+  options: { roundToIntegers?: boolean; precision?: number } = {}
+): Command[] {
+  return translateCommands(commands, deltaX, deltaY, options);
+}
+
+/**
+ * Translates PathData by deltaX and deltaY with configurable formatting options.
+ * This is the main path translation function - use this for all path translation operations.
+ * 
+ * @param pathData - PathData object to translate
+ * @param deltaX - X-axis translation amount
+ * @param deltaY - Y-axis translation amount
+ * @param options - Optional formatting configuration
+ * @param options.roundToIntegers - If true, rounds all coordinates to integers
+ * @param options.precision - Number of decimal places (default: PATH_DECIMAL_PRECISION)
+ * @returns Translated PathData
+ */
+export function translatePathData(
+  pathData: PathData, 
+  deltaX: number, 
+  deltaY: number,
+  options: { roundToIntegers?: boolean; precision?: number } = {}
+): PathData {
   const translatedSubPaths = pathData.subPaths.map((subPath: Command[]) =>
-    translateCommands(subPath, deltaX, deltaY)
+    translateCommands(subPath, deltaX, deltaY, options)
   );
 
   return {
@@ -79,20 +109,15 @@ export function translatePathData(pathData: PathData, deltaX: number, deltaY: nu
 }
 
 /**
+ * @deprecated Use translatePathData(pathData, deltaX, deltaY, { roundToIntegers: true }) instead
  * Translates PathData by deltaX and deltaY and rounds all points to integers.
  */
 export function translatePathDataToIntegers(pathData: PathData, deltaX: number, deltaY: number): PathData {
-  const translatedSubPaths = pathData.subPaths.map((subPath: Command[]) =>
-    translateCommandsToIntegers(subPath, deltaX, deltaY)
-  );
-
-  return {
-    ...pathData,
-    subPaths: translatedSubPaths
-  };
+  return translatePathData(pathData, deltaX, deltaY, { roundToIntegers: true });
 }
 
 /**
+ * @deprecated Use translatePathData() directly - this alias is no longer needed
  * Translates PathData by deltaX and deltaY with configurable formatting options.
  */
 export function translatePathDataUnified(
@@ -101,14 +126,7 @@ export function translatePathDataUnified(
   deltaY: number,
   options: { roundToIntegers?: boolean; precision?: number } = {}
 ): PathData {
-  const translatedSubPaths = pathData.subPaths.map((subPath: Command[]) =>
-    translateCommandsUnified(subPath, deltaX, deltaY, options)
-  );
-
-  return {
-    ...pathData,
-    subPaths: translatedSubPaths
-  };
+  return translatePathData(pathData, deltaX, deltaY, options);
 }
 
 /**
@@ -219,7 +237,7 @@ export function transformSubpathsData(
 
         if (rotation !== 0) {
           // Get bounds of this specific subpath for rotation center
-          const subpathBounds = measurePath([subpath.commands], 1, 1);
+          const subpathBounds = measureSubpathBounds(subpath.commands, 1, 1);
           subpathCenterX = (subpathBounds.minX + subpathBounds.maxX) / 2;
           subpathCenterY = (subpathBounds.minY + subpathBounds.maxY) / 2;
         }
@@ -296,7 +314,7 @@ export function transformSingleSubpath(
 
     if (rotation !== 0) {
       // Get bounds of this specific subpath for rotation center
-      const subpathBounds = measurePath([subpath.commands], 1, 1);
+      const subpathBounds = measureSubpathBounds(subpath.commands, 1, 1);
       subpathCenterX = (subpathBounds.minX + subpathBounds.maxX) / 2;
       subpathCenterY = (subpathBounds.minY + subpathBounds.maxY) / 2;
     }

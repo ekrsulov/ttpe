@@ -1,5 +1,5 @@
 import { extractEditablePoints } from '../utils/path';
-import { measurePath } from '../utils/geometry';
+import { measurePath, measureSubpathBounds } from '../utils/geometry';
 import type { Point, PathData, CanvasElement } from '../types';
 
 export interface SelectionCallbacks {
@@ -91,7 +91,7 @@ export class SelectionController {
         const pathData = el.data as PathData;
 
         pathData.subPaths.forEach((subpathData, index) => {
-          const subpathBounds = measurePath([subpathData], pathData.strokeWidth, viewportZoom);
+          const subpathBounds = measureSubpathBounds(subpathData, pathData.strokeWidth, viewportZoom);
 
           const intersects = !(subpathBounds.maxX < minX ||
             subpathBounds.minX > maxX ||

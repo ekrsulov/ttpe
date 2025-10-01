@@ -1,6 +1,7 @@
 import React from 'react';
 import type { ToolRegistry, ToolConfig } from './toolRegistry';
 import type { Point } from '../types';
+import { toolRegistry } from './toolRegistry';
 
 export class PluginManager {
   private registry: ToolRegistry = {};
@@ -86,3 +87,9 @@ export class PluginManager {
     }
   }
 }
+
+/**
+ * Singleton instance of PluginManager with the default tool registry
+ * Use this instead of creating new instances to ensure consistency
+ */
+export const pluginManager = new PluginManager(toolRegistry);
