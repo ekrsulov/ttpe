@@ -9,7 +9,7 @@ async function expandArrangePanel(page: any) {
     await expandButton.click();
     await page.waitForTimeout(200);
     console.log('Successfully expanded controls panel');
-  } catch (error) {
+  } catch (_error) {
     try {
       // If that doesn't work, try "Expand Arrange" (legacy)
       const expandButton = page.locator('[title="Expand Arrange"]');
@@ -17,7 +17,7 @@ async function expandArrangePanel(page: any) {
       await expandButton.click();
       await page.waitForTimeout(200);
       console.log('Successfully expanded arrange panel');
-    } catch (error2) {
+    } catch (_error2) {
       console.log('Neither Expand Controls nor Expand Arrange button found, panel may already be expanded');
       // The arrange panel might already be expanded, so we continue
       await page.waitForTimeout(500);

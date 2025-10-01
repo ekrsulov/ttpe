@@ -7,7 +7,7 @@ async function expandArrangePanel(page: any) {
     await expandButton.waitFor({ timeout: 10000 });
     await expandButton.click();
     await page.waitForTimeout(200);
-  } catch (error) {
+  } catch (_error) {
     console.log('Expand Arrange button not found, trying alternative approach');
     // Try to find and click any expand button or skip if panel is already expanded
     await page.waitForTimeout(500);
