@@ -21,7 +21,7 @@ test.describe('Text Functionality', () => {
     const initialPaths = await canvas.locator('path').count();
 
     // Set font properties before adding text
-    const fontSizeInput = page.locator('input[type="number"]');
+    const fontSizeInput = page.locator('input[type="number"][min="4"]');
     await fontSizeInput.clear();
     await fontSizeInput.fill('96');
     await expect(fontSizeInput).toHaveValue('96');

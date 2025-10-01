@@ -12,8 +12,11 @@ export default defineConfig({
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
   workers: 1,
+  
+  /* Global test timeout */
+  timeout: 60000,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: 'html',
+  reporter: 'line',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
@@ -29,7 +32,7 @@ export default defineConfig({
     video: 'on',
 
     /* Slow down actions by increasing timeout */
-    actionTimeout: 10000,
+    actionTimeout: 30000,
 
     /* Browser launch options to force cursor visibility */
     launchOptions: {

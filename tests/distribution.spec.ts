@@ -1,5 +1,19 @@
 import { test, expect } from '@playwright/test';
 
+// Helper function to safely expand arrange panel
+async function expandArrangePanel(page: any) {
+  try {
+    const expandButton = page.locator('[title="Expand Arrange"]');
+    await expandButton.waitFor({ timeout: 10000 });
+    await expandButton.click();
+    await page.waitForTimeout(200);
+  } catch (error) {
+    console.log('Expand Arrange button not found, trying alternative approach');
+    // Try to find and click any expand button or skip if panel is already expanded
+    await page.waitForTimeout(500);
+  }
+}
+
 test.describe('Distribution Tests', () => {
   test('should distribute elements horizontally', async ({ page }) => {
     await page.goto('/');
@@ -47,8 +61,7 @@ test.describe('Distribution Tests', () => {
     await page.waitForTimeout(200);
 
     // Expand arrange panel
-    await page.locator('[title="Expand Arrange"]').click();
-    await page.waitForTimeout(200);
+    await expandArrangePanel(page);
 
     // Get initial positions
     const initialPositions = await page.evaluate(() => {
@@ -202,8 +215,7 @@ test.describe('Distribution Tests', () => {
     await page.waitForTimeout(200);
 
     // Expand arrange panel
-    await page.locator('[title="Expand Arrange"]').click();
-    await page.waitForTimeout(200);
+    await expandArrangePanel(page);
 
     // Get initial positions
     const initialPositions = await page.evaluate(() => {

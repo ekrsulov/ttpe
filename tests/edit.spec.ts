@@ -94,8 +94,8 @@ test.describe('Edit Functionality', () => {
     await brushModeButton.click();
     await expect(page.locator('button', { hasText: 'ON' })).toBeVisible();
 
-    // Test that radius slider appears when brush is active
-    await expect(page.locator('text=Radius:')).toBeVisible();
+    // Test that radius slider appears when brush is active (use first occurrence for Smooth Brush)
+    await expect(page.locator('text=Radius:').first()).toBeVisible();
   });
 
   test('should adjust smooth brush settings', async ({ page }) => {
@@ -207,5 +207,48 @@ test.describe('Edit Functionality', () => {
 
     // Click apply (though it may not do much without selected points)
     await applyButton.click();
+  });
+
+  test('should show round path functionality', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('networkidle');
+
+    // Create a path using pencil tool
+    await page.locator('[title="Pencil"]').click();
+
+    const canvas = page.locator('svg[viewBox*="0 0"]').first();
+    const canvasBox = await canvas.boundingBox();
+    if (!canvasBox) throw new Error('SVG canvas not found');
+
+    // Draw a simple square path
+    const startX = canvasBox.x + canvasBox.width * 0.3;
+    const startY = canvasBox.y + canvasBox.height * 0.3;
+    const endX = canvasBox.x + canvasBox.width * 0.7;
+    const endY = canvasBox.y + canvasBox.height * 0.7;
+
+    await page.mouse.move(startX, startY);
+    await page.mouse.down();
+    await page.mouse.move(endX, startY, { steps: 10 });
+    await page.mouse.move(endX, endY, { steps: 10 });
+    await page.mouse.move(startX, endY, { steps: 10 });
+    await page.mouse.move(startX, startY, { steps: 10 });
+    await page.mouse.up();
+
+    // Switch to edit mode to access Round Path
+    const editButton = page.locator('[title="Edit"]');
+    await expect(editButton).toBeEnabled();
+    await editButton.click();
+
+    // Look for the Round Path section header
+    const roundPathSection = page.locator('span', { hasText: 'Round Path' });
+    await expect(roundPathSection).toBeVisible();
+
+    // Test apply button for Round Path
+    const roundButton = page.locator('button', { hasText: 'Round Path' });
+    await expect(roundButton).toBeVisible();
+    await roundButton.click({ force: true });
+
+    // Wait for the rounding operation to complete
+    await page.waitForTimeout(500);
   });
 });

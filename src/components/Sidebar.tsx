@@ -11,11 +11,14 @@ export const Sidebar: React.FC = () => {
   const setMode = useCanvasStore(state => state.setMode);
   const smoothBrush = useCanvasStore(state => state.smoothBrush);
   const pathSimplification = useCanvasStore(state => state.pathSimplification);
+  const pathRounding = useCanvasStore(state => state.pathRounding);
   const selectedCommands = useCanvasStore(state => state.selectedCommands);
   const updateSmoothBrush = useCanvasStore(state => state.updateSmoothBrush);
   const updatePathSimplification = useCanvasStore(state => state.updatePathSimplification);
+  const updatePathRounding = useCanvasStore(state => state.updatePathRounding);
   const applySmoothBrush = useCanvasStore(state => state.applySmoothBrush);
   const applyPathSimplification = useCanvasStore(state => state.applyPathSimplification);
+  const applyPathRounding = useCanvasStore(state => state.applyPathRounding);
   const activateSmoothBrush = useCanvasStore(state => state.activateSmoothBrush);
   const deactivateSmoothBrush = useCanvasStore(state => state.deactivateSmoothBrush);
   const resetSmoothBrush = useCanvasStore(state => state.resetSmoothBrush);
@@ -89,11 +92,14 @@ export const Sidebar: React.FC = () => {
         showSettingsPanel={showSettingsPanel}
         smoothBrush={smoothBrush}
         pathSimplification={pathSimplification}
+        pathRounding={pathRounding}
         selectedCommands={selectedCommands}
         updateSmoothBrush={updateSmoothBrush}
         updatePathSimplification={updatePathSimplification}
+        updatePathRounding={updatePathRounding}
         applySmoothBrush={applySmoothBrush}
         applyPathSimplification={applyPathSimplification}
+        applyPathRounding={applyPathRounding}
         activateSmoothBrush={activateSmoothBrush}
         deactivateSmoothBrush={deactivateSmoothBrush}
         resetSmoothBrush={resetSmoothBrush}

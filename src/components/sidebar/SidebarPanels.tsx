@@ -38,6 +38,10 @@ interface PathSimplification {
   tolerance: number;
 }
 
+interface PathRounding {
+  radius: number;
+}
+
 interface SelectedCommand {
   elementId: string;
   commandIndex: number;
@@ -51,11 +55,14 @@ interface SidebarPanelsProps {
   // EditPanel props
   smoothBrush: SmoothBrush;
   pathSimplification: PathSimplification;
+  pathRounding: PathRounding;
   selectedCommands: SelectedCommand[];
   updateSmoothBrush: (config: Partial<SmoothBrush>) => void;
   updatePathSimplification: (config: Partial<PathSimplification>) => void;
+  updatePathRounding: (config: Partial<PathRounding>) => void;
   applySmoothBrush: () => void;
   applyPathSimplification: () => void;
+  applyPathRounding: () => void;
   activateSmoothBrush: () => void;
   deactivateSmoothBrush: () => void;
   resetSmoothBrush: () => void;
@@ -70,11 +77,14 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
   showSettingsPanel,
   smoothBrush,
   pathSimplification,
+  pathRounding,
   selectedCommands,
   updateSmoothBrush,
   updatePathSimplification,
+  updatePathRounding,
   applySmoothBrush,
   applyPathSimplification,
+  applyPathRounding,
   activateSmoothBrush,
   deactivateSmoothBrush,
   resetSmoothBrush,
@@ -112,11 +122,14 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
             activePlugin={activePlugin}
             smoothBrush={smoothBrush}
             pathSimplification={pathSimplification}
+            pathRounding={pathRounding}
             selectedCommands={selectedCommands}
             updateSmoothBrush={updateSmoothBrush}
             updatePathSimplification={updatePathSimplification}
+            updatePathRounding={updatePathRounding}
             applySmoothBrush={applySmoothBrush}
             applyPathSimplification={applyPathSimplification}
+            applyPathRounding={applyPathRounding}
             activateSmoothBrush={activateSmoothBrush}
             deactivateSmoothBrush={deactivateSmoothBrush}
             resetSmoothBrush={resetSmoothBrush}

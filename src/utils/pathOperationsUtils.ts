@@ -390,3 +390,145 @@ export function performPathSimplifyPaperJS(pathData: PathData, tolerance: number
   }
 }
 
+/**
+ * Round the corners of a path by converting sharp angles to smooth curves
+ */
+export function performPathRound(pathData: PathData, radius: number = 5): PathData | null {
+  try {
+    const paperPath = convertPathDataToPaperPath(pathData);
+    
+    if (paperPath instanceof paper.Path) {
+      // Create a new path with rounded corners
+      const roundedPath = new paper.Path();
+      // Copy basic attributes
+      roundedPath.strokeColor = paperPath.strokeColor;
+      roundedPath.fillColor = paperPath.fillColor;
+      roundedPath.strokeWidth = paperPath.strokeWidth;
+      
+      const segments = paperPath.segments;
+      if (segments.length < 3) {
+        // Not enough points to round
+        return pathData;
+      }
+      
+      for (let i = 0; i < segments.length; i++) {
+        const prevIndex = (i - 1 + segments.length) % segments.length;
+        const currIndex = i;
+        const nextIndex = (i + 1) % segments.length;
+        
+        const prevSeg = segments[prevIndex];
+        const currSeg = segments[currIndex];
+        const nextSeg = segments[nextIndex];
+        
+        // Calculate vectors from current point to previous and next
+        const toPrev = prevSeg.point.subtract(currSeg.point).normalize();
+        const toNext = nextSeg.point.subtract(currSeg.point).normalize();
+        
+        // Calculate the angle between the vectors
+        const angle = Math.abs(toPrev.getAngle(toNext));
+        const isSharpCorner = angle > 30 && angle < 150; // Only round corners within this angle range
+        
+        if (isSharpCorner && !paperPath.closed && (i === 0 || i === segments.length - 1)) {
+          // Don't round the first or last point of an open path
+          roundedPath.add(currSeg.point);
+        } else if (isSharpCorner) {
+          // Calculate the distance to move inward from the corner
+          const effectiveRadius = Math.min(radius, 
+            currSeg.point.getDistance(prevSeg.point) * 0.4,
+            currSeg.point.getDistance(nextSeg.point) * 0.4
+          );
+          
+          // Calculate points along the edges
+          const pointToPrev = currSeg.point.add(toPrev.multiply(effectiveRadius));
+          const pointToNext = currSeg.point.add(toNext.multiply(effectiveRadius));
+          
+          // Add the rounded corner as a curve
+          if (roundedPath.segments.length === 0) {
+            roundedPath.moveTo(pointToPrev);
+          } else {
+            roundedPath.lineTo(pointToPrev);
+          }
+          
+          // Create a smooth curve through the corner
+          const controlDistance = effectiveRadius * 0.5522847498; // Magic number for circle approximation
+          const prevControl = pointToPrev.add(toPrev.multiply(-controlDistance));
+          const nextControl = pointToNext.add(toNext.multiply(-controlDistance));
+          
+          roundedPath.cubicCurveTo(prevControl, nextControl, pointToNext);
+        } else {
+          // Keep the original point for non-sharp corners
+          if (roundedPath.segments.length === 0) {
+            roundedPath.moveTo(currSeg.point);
+          } else {
+            roundedPath.lineTo(currSeg.point);
+          }
+        }
+      }
+      
+      // Close the path if the original was closed
+      if (paperPath.closed) {
+        roundedPath.closePath();
+      }
+      
+      const roundedData = convertPaperPathToPathData(roundedPath);
+      
+      // Preserve original style properties
+      return {
+        ...roundedData,
+        strokeColor: pathData.strokeColor,
+        strokeWidth: pathData.strokeWidth,
+        strokeOpacity: pathData.strokeOpacity,
+        fillColor: pathData.fillColor,
+        fillOpacity: pathData.fillOpacity,
+        strokeLinecap: pathData.strokeLinecap,
+        strokeLinejoin: pathData.strokeLinejoin,
+        fillRule: pathData.fillRule,
+        strokeDasharray: pathData.strokeDasharray,
+      };
+    } else if (paperPath instanceof paper.CompoundPath) {
+      // For compound paths, round each child path
+      const roundedChildren: paper.Path[] = [];
+      
+      for (const child of paperPath.children) {
+        if (child instanceof paper.Path) {
+          const childData = convertSinglePaperPathToPathData(child);
+          const roundedChildData = performPathRound(childData, radius);
+          if (roundedChildData) {
+            const roundedChildPath = convertPathDataToPaperPath(roundedChildData);
+            if (roundedChildPath instanceof paper.Path) {
+              roundedChildren.push(roundedChildPath);
+            }
+          }
+        }
+      }
+      
+      if (roundedChildren.length > 0) {
+        const compoundPath = new paper.CompoundPath({
+          children: roundedChildren
+        });
+        
+        const roundedData = convertPaperPathToPathData(compoundPath);
+        
+        // Preserve original style properties
+        return {
+          ...roundedData,
+          strokeColor: pathData.strokeColor,
+          strokeWidth: pathData.strokeWidth,
+          strokeOpacity: pathData.strokeOpacity,
+          fillColor: pathData.fillColor,
+          fillOpacity: pathData.fillOpacity,
+          strokeLinecap: pathData.strokeLinecap,
+          strokeLinejoin: pathData.strokeLinejoin,
+          fillRule: pathData.fillRule,
+          strokeDasharray: pathData.strokeDasharray,
+        };
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    logger.error('Error rounding path with Paper.js', error);
+    return null;
+  }
+}
+

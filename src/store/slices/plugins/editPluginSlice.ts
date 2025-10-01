@@ -1,6 +1,6 @@
 import type { StateCreator } from 'zustand';
 import { extractEditablePoints, updateCommands, normalizePathCommands, extractSubpaths, simplifyPoints, findPairedControlPoint, determineControlPointAlignment, adjustControlPointForAlignment } from '../../../utils/pathParserUtils';
-import { performPathSimplifyPaperJS } from '../../../utils/pathOperationsUtils';
+import { performPathSimplifyPaperJS, performPathRound } from '../../../utils/pathOperationsUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../../utils';
 import type { CanvasElement, PathData, Point, Command, SubPath } from '../../../types';
 import type { CanvasStore } from '../../canvasStore';
@@ -320,6 +320,9 @@ export interface EditPluginSlice {
   pathSimplification: {
     tolerance: number;
   };
+  pathRounding: {
+    radius: number;
+  };
   controlPointAlignment: {
     enabled: boolean;
     controlPoints: Record<string, import('../../../types').ControlPointInfo>;
@@ -363,6 +366,8 @@ export interface EditPluginSlice {
   updateSmoothBrushCursor: (x: number, y: number) => void;
   updatePathSimplification: (settings: Partial<EditPluginSlice['pathSimplification']>) => void;
   applyPathSimplification: () => void;
+  updatePathRounding: (settings: Partial<EditPluginSlice['pathRounding']>) => void;
+  applyPathRounding: () => void;
   updateControlPointAlignment: (elementId: string, commandIndex: number, pointIndex: number) => void;
   getControlPointInfo: (elementId: string, commandIndex: number, pointIndex: number) => import('../../../types').ControlPointInfo | null;
   setControlPointAlignmentType: (elementId: string, commandIndex1: number, pointIndex1: number, commandIndex2: number, pointIndex2: number, type: import('../../../types').ControlPointType) => void;
@@ -389,6 +394,9 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
   },
   pathSimplification: {
     tolerance: 1.0,
+  },
+  pathRounding: {
+    radius: 5.0,
   },
   controlPointAlignment: {
     enabled: true,
@@ -2239,5 +2247,47 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
           : el
       )
     }));
+  },
+
+  updatePathRounding: (settings) => {
+    set((state) => ({
+      pathRounding: { ...state.pathRounding, ...settings },
+    }));
+  },
+
+  applyPathRounding: () => {
+    const state = get() as FullCanvasState;
+    const { radius } = state.pathRounding;
+
+    // Find the active element (first selected or the one being edited)
+    let targetElementId = null;
+    if (state.selectedCommands.length > 0) {
+      targetElementId = state.selectedCommands[0].elementId;
+    } else if (state.editingPoint) {
+      targetElementId = state.editingPoint.elementId;
+    } else if ((state as CanvasStore).selectedIds && (state as CanvasStore).selectedIds.length > 0) {
+      // Fallback to first selected element
+      targetElementId = (state as CanvasStore).selectedIds[0];
+    }
+
+    if (!targetElementId) return;
+
+    const element = state.elements.find((el) => el.id === targetElementId);
+    if (!element || element.type !== 'path') return;
+
+    const pathData = element.data as import('../../../types').PathData;
+
+    // Apply path rounding using the utility function
+    const roundedPathData = performPathRound(pathData, radius);
+
+    if (roundedPathData) {
+      // Update the element with the rounded path
+      (get() as FullCanvasState).updateElement(targetElementId, {
+        data: roundedPathData,
+      });
+
+      // Clear selection after rounding
+      state.clearSelectedCommands();
+    }
   },
 });

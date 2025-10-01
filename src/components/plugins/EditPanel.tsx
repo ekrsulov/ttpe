@@ -1,5 +1,5 @@
 import React from 'react';
-import { PaintBucket, Zap } from 'lucide-react';
+import { PaintBucket, Zap, RotateCcw } from 'lucide-react';
 import { SliderControl } from '../ui/SliderControl';
 
 interface EditPanelProps {
@@ -23,6 +23,9 @@ interface EditPanelProps {
   pathSimplification: {
     tolerance: number;
   };
+  pathRounding: {
+    radius: number;
+  };
   selectedCommands: Array<{
     elementId: string;
     commandIndex: number;
@@ -30,8 +33,10 @@ interface EditPanelProps {
   }>;
   updateSmoothBrush: (brush: Partial<EditPanelProps['smoothBrush']>) => void;
   updatePathSimplification: (settings: Partial<EditPanelProps['pathSimplification']>) => void;
+  updatePathRounding: (settings: Partial<EditPanelProps['pathRounding']>) => void;
   applySmoothBrush: () => void;
   applyPathSimplification: () => void;
+  applyPathRounding: () => void;
   activateSmoothBrush: () => void;
   deactivateSmoothBrush: () => void;
   resetSmoothBrush: () => void;
@@ -41,11 +46,14 @@ export const EditPanel: React.FC<EditPanelProps> = ({
   activePlugin,
   smoothBrush,
   pathSimplification,
+  pathRounding,
   selectedCommands,
   updateSmoothBrush,
   updatePathSimplification,
+  updatePathRounding,
   applySmoothBrush,
   applyPathSimplification,
+  applyPathRounding,
   activateSmoothBrush,
   deactivateSmoothBrush,
   resetSmoothBrush,
@@ -285,6 +293,54 @@ export const EditPanel: React.FC<EditPanelProps> = ({
           }}
         >
           Simplify Path
+        </button>
+      </div>
+
+      {/* Round Path Section */}
+      <div style={{
+        marginTop: '12px',
+        paddingTop: '8px'
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          marginBottom: '8px',
+          backgroundColor: '#f5f5f5',
+          padding: '4px 8px',
+          borderRadius: '4px'
+        }}>
+          <RotateCcw size={16} style={{ marginRight: '6px', color: '#666' }} />
+          <span style={{ fontSize: '12px', fontWeight: '800', color: '#333' }}>Round Path</span>
+        </div>
+
+        <SliderControl
+          label="Radius:"
+          value={pathRounding.radius}
+          min={0.1}
+          max={50}
+          step={0.1}
+          onChange={(value) => updatePathRounding({ radius: value })}
+          formatter={(value) => value.toFixed(1)}
+          labelWidth="50px"
+          valueWidth="35px"
+        />
+
+        {/* Apply Button */}
+        <button
+          onClick={() => applyPathRounding()}
+          style={{
+            width: '100%',
+            padding: '6px 8px',
+            backgroundColor: '#f8f9fa',
+            color: '#333',
+            border: '1px solid #dee2e6',
+            borderRadius: '4px',
+            fontSize: '12px',
+            cursor: 'pointer',
+            marginTop: '8px'
+          }}
+        >
+          Round Path
         </button>
       </div>
     </div>

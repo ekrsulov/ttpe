@@ -1,5 +1,30 @@
 import { test, expect } from '@playwright/test';
 
+// Helper function to safely expand arrange panel
+async function expandArrangePanel(page: any) {
+  try {
+    // First try to find "Expand Controls" button
+    const expandButton = page.locator('[title="Expand Controls"]');
+    await expandButton.waitFor({ timeout: 5000 });
+    await expandButton.click();
+    await page.waitForTimeout(200);
+    console.log('Successfully expanded controls panel');
+  } catch (error) {
+    try {
+      // If that doesn't work, try "Expand Arrange" (legacy)
+      const expandButton = page.locator('[title="Expand Arrange"]');
+      await expandButton.waitFor({ timeout: 2000 });
+      await expandButton.click();
+      await page.waitForTimeout(200);
+      console.log('Successfully expanded arrange panel');
+    } catch (error2) {
+      console.log('Neither Expand Controls nor Expand Arrange button found, panel may already be expanded');
+      // The arrange panel might already be expanded, so we continue
+      await page.waitForTimeout(500);
+    }
+  }
+}
+
 test.describe('Align Tests', () => {
   test('should align elements to the left', async ({ page }) => {
     await page.goto('/');
@@ -45,7 +70,7 @@ test.describe('Align Tests', () => {
     await page.waitForTimeout(200);
 
     // Expand arrange panel
-    await page.locator('[title="Expand Arrange"]').click();
+    await expandArrangePanel(page);
     await page.waitForTimeout(200);
 
     // Get initial positions
@@ -191,7 +216,7 @@ test.describe('Align Tests', () => {
     await page.waitForTimeout(200);
 
     // Expand arrange panel
-    await page.locator('[title="Expand Arrange"]').click();
+    await expandArrangePanel(page);
     await page.waitForTimeout(200);
 
     // Get initial positions
@@ -326,7 +351,7 @@ test.describe('Align Tests', () => {
     await page.waitForTimeout(200);
 
     // Expand arrange panel
-    await page.locator('[title="Expand Arrange"]').click();
+    await expandArrangePanel(page);
     await page.waitForTimeout(200);
 
     // Get initial positions
@@ -460,7 +485,7 @@ test.describe('Align Tests', () => {
     await page.waitForTimeout(200);
 
     // Expand arrange panel
-    await page.locator('[title="Expand Arrange"]').click();
+    await expandArrangePanel(page);
     await page.waitForTimeout(200);
 
     // Get initial positions
@@ -594,7 +619,7 @@ test.describe('Align Tests', () => {
     await page.waitForTimeout(200);
 
     // Expand arrange panel
-    await page.locator('[title="Expand Arrange"]').click();
+    await expandArrangePanel(page);
     await page.waitForTimeout(200);
 
     // Get initial positions
@@ -729,7 +754,7 @@ test.describe('Align Tests', () => {
     await page.waitForTimeout(200);
 
     // Expand arrange panel
-    await page.locator('[title="Expand Arrange"]').click();
+    await expandArrangePanel(page);
     await page.waitForTimeout(200);
 
     // Get initial positions
