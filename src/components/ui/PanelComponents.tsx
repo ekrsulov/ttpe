@@ -20,7 +20,7 @@ export const PANEL_STYLES = {
     alignItems: 'center',
     marginBottom: '8px',
     backgroundColor: '#f5f5f5',
-    padding: '4px 8px',
+    padding: '2px 8px',
     borderRadius: '4px'
   } as React.CSSProperties,
 
