@@ -67,7 +67,7 @@ export const PANEL_STYLES = {
     overflowY: 'auto' as const,
     display: 'flex',
     flexDirection: 'column' as const,
-    gap: '8px',
+    gap: '2px',
     backgroundColor: '#fff'
   } as React.CSSProperties,
 

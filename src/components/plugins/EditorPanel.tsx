@@ -212,7 +212,7 @@ export const EditorPanel: React.FC = () => {
   return (
     <div style={{ backgroundColor: '#fff' }}>
       {/* Main toolbar with essential buttons */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px', marginTop: '2px', gap: '8px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px', marginTop: '2px', gap: '8px' }}>
         {/* Undo/Redo Group */}
         <div style={{ display: 'flex', gap: '2px' }}>
           <IconButton
@@ -305,7 +305,7 @@ export const EditorPanel: React.FC = () => {
             display: 'flex', 
             alignItems: 'center',
             justifyContent: 'center',
-            paddingTop: '4px'
+            marginTop: '2px'
           }}>
             <div style={{
               display: 'grid',
@@ -582,9 +582,6 @@ export const EditorPanel: React.FC = () => {
               )}
             </>
           )}
-
-          {/* Bottom border */}
-          <div style={{ borderTop: '1px solid #eee', marginTop: '8px' }}></div>
         </div>
 
     </div>
