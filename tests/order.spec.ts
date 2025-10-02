@@ -91,7 +91,7 @@ test.describe('Bring to Front and Send to Back', () => {
     expect(firstSelectionCount).toBe(1);
 
     // Expand the editor panel by clicking the chevron
-    await page.locator('[title="Expand Controls"]').click();
+    await page.locator('[title="Expand Color Controls"]').click();
     await page.waitForTimeout(200);
 
     // Find and set fill color for first shape using the color input
@@ -104,7 +104,7 @@ test.describe('Bring to Front and Send to Back', () => {
     await page.waitForTimeout(300);
 
     // Collapse the editor panel
-    await page.locator('[title="Collapse Controls"]').click();
+    await page.locator('[title="Collapse Color Controls"]').click();
     await page.waitForTimeout(100);
 
     // Clear any existing selection by clicking empty area
@@ -134,7 +134,7 @@ test.describe('Bring to Front and Send to Back', () => {
     expect(secondSelectionCount).toBe(1);
 
     // Expand the editor panel again
-    await page.locator('[title="Expand Controls"]').click();
+    await page.locator('[title="Expand Color Controls"]').click();
     await page.waitForTimeout(200);
 
     // Set blue color for second shape using the same color input
@@ -144,7 +144,7 @@ test.describe('Bring to Front and Send to Back', () => {
     await page.waitForTimeout(300);
 
     // Collapse the editor panel
-    await page.locator('[title="Collapse Controls"]').click();
+    await page.locator('[title="Collapse Color Controls"]').click();
     await page.waitForTimeout(100);
 
     // Expand arrange panel
