@@ -6,7 +6,6 @@ import {
   Trash2,
   ZoomIn,
   ZoomOut,
-  RotateCcw,
   Pen,
   Eye,
   Circle,
@@ -17,7 +16,6 @@ import {
 } from 'lucide-react';
 import { IconButton } from '../ui/IconButton';
 import { SliderControl } from '../ui/SliderControl';
-import { Tag } from '../ui/Tag';
 import { PresetButton } from '../ui/PresetButton';
 import { LinecapSelector } from '../ui/LinecapSelector';
 import { LinejoinSelector } from '../ui/LinejoinSelector';
@@ -68,7 +66,8 @@ export const EditorPanel: React.FC = () => {
   const selectedSubpathsCount = useMemo(() => getSelectedSubpathsCount(), [selectedSubpaths]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const zoomFactor = 1.2;
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [colorControlsExpanded, setColorControlsExpanded] = useState(false);
+  const [advancedStrokeExpanded, setAdvancedStrokeExpanded] = useState(false);
 
   // Handle delete action based on active plugin
   const handleDelete = () => {
@@ -212,34 +211,8 @@ export const EditorPanel: React.FC = () => {
 
   return (
     <div style={{ backgroundColor: '#fff' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-        <Tag
-          badge
-          width="40px"
-          title="History: Undos/Redos available"
-          textAlign="left"
-        >
-          {pastStates.length === 0 && futureStates.length === 0 ? '\u00A0' : `${pastStates.length}/${futureStates.length}`}
-        </Tag>
-        <Tag
-          badge
-          width="40px"
-          title={`Zoom: ${Math.round((viewport.zoom as number) * 100)}%`}
-          textAlign="center"
-        >
-          {Math.round((viewport.zoom as number) * 100)}%
-        </Tag>
-        <Tag
-          badge
-          width="40px"
-          title={`Selected elements: ${selectedCount}`}
-        >
-          {selectedCount === 0 ? '\u00A0' : selectedCount}
-        </Tag>
-      </div>
-
       {/* Main toolbar with essential buttons */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px', gap: '8px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px', marginTop: '2px', gap: '8px' }}>
         {/* Undo/Redo Group */}
         <div style={{ display: 'flex', gap: '2px' }}>
           <IconButton
@@ -249,10 +222,13 @@ export const EditorPanel: React.FC = () => {
             activeBgColor="#007bff"
             activeColor="#fff"
             size="custom"
-            customSize="32px"
+            customSize="24px"
             title="Undo"
           >
-            <Undo2 size={14} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+              <Undo2 size={14} />
+              <span style={{ fontSize: '10px', lineHeight: '10px', minWidth: '20px', textAlign: 'right' }}>{pastStates.length}</span>
+            </div>
           </IconButton>
           <IconButton
             onPointerUp={() => redo()}
@@ -261,10 +237,13 @@ export const EditorPanel: React.FC = () => {
             activeBgColor="#007bff"
             activeColor="#fff"
             size="custom"
-            customSize="32px"
+            customSize="24px"
             title="Redo"
           >
-            <Redo2 size={14} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+              <Redo2 size={14} />
+              <span style={{ fontSize: '10px', lineHeight: '10px', minWidth: '20px', textAlign: 'right' }}>{futureStates.length}</span>
+            </div>
           </IconButton>
         </div>
 
@@ -273,7 +252,7 @@ export const EditorPanel: React.FC = () => {
           <IconButton
             onPointerUp={() => zoom(1 / zoomFactor, window.innerWidth / 2, window.innerHeight / 2)}
             size="custom"
-            customSize="32px"
+            customSize="24px"
             title="Zoom Out"
           >
             <ZoomOut size={14} />
@@ -281,15 +260,15 @@ export const EditorPanel: React.FC = () => {
           <IconButton
             onPointerUp={resetZoom}
             size="custom"
-            customSize="32px"
+            customSize="24px"
             title="Reset Zoom"
           >
-            <RotateCcw size={14} />
+            <span style={{ fontSize: '10px', lineHeight: '10px', minWidth: '32px', textAlign: 'center' }}>{Math.round((viewport.zoom as number) * 100)}%</span>
           </IconButton>
           <IconButton
             onPointerUp={() => zoom(zoomFactor, window.innerWidth / 2, window.innerHeight / 2)}
             size="custom"
-            customSize="32px"
+            customSize="24px"
             title="Zoom In"
           >
             <ZoomIn size={14} />
@@ -304,195 +283,25 @@ export const EditorPanel: React.FC = () => {
           activeBgColor="#dc3545"
           activeColor="#fff"
           size="custom"
-          customSize="32px"
+          customSize="24px"
           title={
             activePlugin === 'edit' ? "Delete Selected Points" :
               activePlugin === 'subpath' ? "Delete Selected Subpaths" :
                 "Delete Selected"
           }
         >
-          <Trash2 size={14} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+            <span style={{ fontSize: '10px', lineHeight: '10px', minWidth: '20px', textAlign: 'left' }}>{selectedCount}</span>
+            <Trash2 size={14} />
+          </div>
         </IconButton>
       </div>
 
-      {/* Expand/Collapse Chevron */}
-      <div style={{ position: 'relative', margin: '0 0' }}>
-        {/* Horizontal line */}
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          left: 0,
-          right: 0,
-          height: '1px',
-          backgroundColor: '#dee2e6',
-          zIndex: 1
-        }} />
-
-        {/* Circular button in the center */}
-        <div style={{
-          position: 'relative',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 2
-        }}>
-          <div
-            onClick={() => setIsExpanded(!isExpanded)}
-            style={{
-              width: '24px',
-              height: '24px',
-              borderRadius: '50%',
-              backgroundColor: '#fff',
-              border: '1px solid #dee2e6',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease'
-            }}
-            title={isExpanded ? "Collapse Controls" : "Expand Controls"}
-          >
-            {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-          </div>
-        </div>
-      </div>
-
       {/* Pencil Properties Section */}
-      {isExpanded && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {/* Stroke Width */}
-          <div style={{ 
-            minHeight: '32px', 
-            display: 'flex', 
-            alignItems: 'center',
-            justifyContent: 'flex-start'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-              <SliderControl
-                icon={<Circle size={14} />}
-                value={currentStrokeWidth}
-                min={0}
-                max={20}
-                onChange={handleStrokeWidthChange}
-                formatter={(value) => `${value}px`}
-                title="Stroke Width"
-                inline={true}
-              />
-            </div>
-          </div>
-
-          {/* Stroke Color & Opacity */}
-          <div style={{ 
-            minHeight: '32px', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'flex-start',
-            gap: '8px' 
-          }}>
-            <Pen size={14} style={{ color: '#666', flexShrink: 0 }} />
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
-              <input
-                type="color"
-                value={currentStrokeColor === 'none' ? '#000000' : currentStrokeColor}
-                onChange={(e) => handleStrokeColorChange(e.target.value)}
-                style={{
-                  width: '24px',
-                  height: '24px',
-                  border: '1px solid #ccc',
-                  borderRadius: '3px',
-                  cursor: 'pointer',
-                  opacity: currentStrokeColor === 'none' ? 0.5 : 1
-                }}
-                title="Stroke Color"
-              />
-              <IconButton
-                onPointerUp={handleStrokeNone}
-                disabled={currentFillColor === 'none'}
-                active={currentStrokeColor === 'none'}
-                activeBgColor="#007bff"
-                activeColor="#fff"
-                size="custom"
-                customSize="20px"
-                title="No Stroke"
-              >
-                <X size={12} />
-              </IconButton>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', minWidth: '120px' }}>
-              <SliderControl
-                icon={<Eye size={14} />}
-                value={currentOpacity}
-                min={0}
-                max={1}
-                step={0.1}
-                onChange={handleOpacityChange}
-                formatter={(value) => `${Math.round(value * 100)}%`}
-                title="Stroke Opacity"
-                minWidth="50px"
-                valueWidth="35px"
-                inline={true}
-                gap="4px"
-              />
-            </div>
-          </div>
-
-          {/* Fill Color & Opacity */}
-          <div style={{ 
-            minHeight: '32px', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'flex-start',
-            gap: '8px' 
-          }}>
-            <PaintBucket size={14} style={{ color: '#666', flexShrink: 0 }} />
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
-              <input
-                type="color"
-                value={currentFillColor === 'none' ? '#000000' : currentFillColor}
-                onChange={(e) => handleFillColorChange(e.target.value)}
-                style={{
-                  width: '24px',
-                  height: '24px',
-                  border: '1px solid #ccc',
-                  borderRadius: '3px',
-                  cursor: 'pointer',
-                  opacity: currentFillColor === 'none' ? 0.5 : 1
-                }}
-                title="Fill Color"
-              />
-              <IconButton
-                onPointerUp={handleFillNone}
-                active={currentFillColor === 'none'}
-                activeBgColor="#007bff"
-                activeColor="#fff"
-                size="custom"
-                customSize="20px"
-                title="No Fill"
-              >
-                <X size={12} />
-              </IconButton>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', minWidth: '120px' }}>
-              <SliderControl
-                icon={<Eye size={14} />}
-                value={currentFillOpacity}
-                min={0}
-                max={1}
-                step={0.1}
-                onChange={handleFillOpacityChange}
-                formatter={(value) => `${Math.round(value * 100)}%`}
-                title="Fill Opacity"
-                minWidth="50px"
-                valueWidth="35px"
-                inline={true}
-                gap="4px"
-              />
-            </div>
-          </div>
-
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           {/* Color Presets */}
           <div style={{ 
-            minHeight: '32px', 
+            minHeight: '24px', 
             display: 'flex', 
             alignItems: 'center',
             justifyContent: 'center',
@@ -512,112 +321,271 @@ export const EditorPanel: React.FC = () => {
                 />
               ))}
             </div>
-          </div>
-
-          {/* Advanced Properties - C, J and R in one line */}
-          <div style={{ 
-            minHeight: '32px', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'space-between'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <div style={{ 
-                fontSize: '13px', 
-                fontWeight: '500', 
-                color: '#666', 
-                minWidth: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                height: '24px'
-              }} title="Stroke Linecap">
-                C:
-              </div>
-              <LinecapSelector
-                value={currentStrokeLinecap || 'round'}
-                onChange={handleStrokeLinecapChange}
-                title="Stroke Linecap"
-              />
-            </div>
-            
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <div style={{ 
-                fontSize: '13px', 
-                fontWeight: '500', 
-                color: '#666', 
-                minWidth: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                height: '24px'
-              }} title="Stroke Linejoin">
-                J:
-              </div>
-              <LinejoinSelector
-                value={currentStrokeLinejoin || 'round'}
-                onChange={handleStrokeLinejoinChange}
-                title="Stroke Linejoin"
-              />
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <div style={{ 
-                fontSize: '13px', 
-                fontWeight: '500', 
-                color: '#666', 
-                minWidth: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                height: '24px'
-              }} title="Fill Rule">
-                R:
-              </div>
-              <FillRuleSelector
-                value={currentFillRule || 'nonzero'}
-                onChange={handleFillRuleChange}
-                title="Fill Rule"
-              />
+            <div style={{ marginLeft: '8px' }}>
+              <IconButton
+                onPointerUp={() => setColorControlsExpanded(!colorControlsExpanded)}
+                size="custom"
+                customSize="20px"
+                title={colorControlsExpanded ? "Collapse Color Controls" : "Expand Color Controls"}
+              >
+                {colorControlsExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+              </IconButton>
             </div>
           </div>
 
-          {/* Dash Array Presets and Custom Input in one line */}
-          <div style={{ 
-            minHeight: '32px', 
-            display: 'flex', 
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '8px'
-          }}>
-            <DashArrayPresets
-              value={currentStrokeDasharray || 'none'}
-              onChange={handleStrokeDasharrayChange}
-            />
-            
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          {/* Color Controls */}
+          {colorControlsExpanded && (
+            <>
+              {/* Fill Color & Opacity */}
               <div style={{ 
-                fontSize: '13px', 
-                fontWeight: '500', 
-                color: '#666', 
-                minWidth: '12px',
-                display: 'flex',
+                minHeight: '24px', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'flex-start',
+                gap: '8px' 
+              }}>
+                <PaintBucket size={14} style={{ color: '#666', flexShrink: 0 }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+                  <input
+                    type="color"
+                    value={currentFillColor === 'none' ? '#000000' : currentFillColor}
+                    onChange={(e) => handleFillColorChange(e.target.value)}
+                    style={{
+                      width: '20px',
+                      height: '20px',
+                      border: '1px solid #ccc',
+                      borderRadius: '3px',
+                      cursor: 'pointer',
+                      opacity: currentFillColor === 'none' ? 0.5 : 1
+                    }}
+                    title="Fill Color"
+                  />
+                  <IconButton
+                    onPointerUp={handleFillNone}
+                    active={currentFillColor === 'none'}
+                    activeBgColor="#007bff"
+                    activeColor="#fff"
+                    size="custom"
+                    customSize="20px"
+                    title="No Fill"
+                  >
+                    <X size={12} />
+                  </IconButton>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', minWidth: '120px' }}>
+                  <SliderControl
+                    icon={<Eye size={14} />}
+                    value={currentFillOpacity}
+                    min={0}
+                    max={1}
+                    step={0.1}
+                    onChange={handleFillOpacityChange}
+                    formatter={(value) => `${Math.round(value * 100)}%`}
+                    title="Fill Opacity"
+                    minWidth="50px"
+                    valueWidth="35px"
+                    inline={true}
+                    gap="4px"
+                  />
+                </div>
+              </div>
+
+              {/* Stroke Color & Opacity */}
+              <div style={{ 
+                minHeight: '24px', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'flex-start',
+                gap: '8px' 
+              }}>
+                <Pen size={14} style={{ color: '#666', flexShrink: 0 }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+                  <input
+                    type="color"
+                    value={currentStrokeColor === 'none' ? '#000000' : currentStrokeColor}
+                    onChange={(e) => handleStrokeColorChange(e.target.value)}
+                    style={{
+                      width: '20px',
+                      height: '20px',
+                      border: '1px solid #ccc',
+                      borderRadius: '3px',
+                      cursor: 'pointer',
+                      opacity: currentStrokeColor === 'none' ? 0.5 : 1
+                    }}
+                    title="Stroke Color"
+                  />
+                  <IconButton
+                    onPointerUp={handleStrokeNone}
+                    disabled={currentFillColor === 'none'}
+                    active={currentStrokeColor === 'none'}
+                    activeBgColor="#007bff"
+                    activeColor="#fff"
+                    size="custom"
+                    customSize="20px"
+                    title="No Stroke"
+                  >
+                    <X size={12} />
+                  </IconButton>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', minWidth: '120px' }}>
+                  <SliderControl
+                    icon={<Eye size={14} />}
+                    value={currentOpacity}
+                    min={0}
+                    max={1}
+                    step={0.1}
+                    onChange={handleOpacityChange}
+                    formatter={(value) => `${Math.round(value * 100)}%`}
+                    title="Stroke Opacity"
+                    minWidth="50px"
+                    valueWidth="35px"
+                    inline={true}
+                    gap="4px"
+                  />
+                </div>
+              </div>
+
+              {/* Stroke Width */}
+              <div style={{ 
+                minHeight: '24px', 
+                display: 'flex', 
                 alignItems: 'center',
-                height: '24px'
-              }} title="Custom Dash Array">
-                D:
+                justifyContent: 'flex-start'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                  <SliderControl
+                    icon={<Circle size={14} />}
+                    value={currentStrokeWidth}
+                    min={0}
+                    max={20}
+                    onChange={handleStrokeWidthChange}
+                    formatter={(value) => `${value}px`}
+                    title="Stroke Width"
+                    inline={true}
+                  />
+                  <div style={{ marginLeft: '8px' }}>
+                    <IconButton
+                      onPointerUp={() => setAdvancedStrokeExpanded(!advancedStrokeExpanded)}
+                      size="custom"
+                      customSize="20px"
+                      title={advancedStrokeExpanded ? "Collapse Advanced Stroke" : "Expand Advanced Stroke"}
+                    >
+                      {advancedStrokeExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                    </IconButton>
+                  </div>
+                </div>
               </div>
-              <div style={{ width: '80px' }}>
-                <DashArrayCustomInput
-                  value={currentStrokeDasharray || 'none'}
-                  onChange={handleStrokeDasharrayChange}
-                  title="Custom dash array (e.g., 5,3,2,3)"
-                />
-              </div>
-            </div>
-          </div>
+
+              {/* Advanced Stroke Properties */}
+              {advancedStrokeExpanded && (
+                <>
+                  {/* Advanced Properties - C, J and R in one line */}
+                  <div style={{ 
+                    minHeight: '24px', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'space-between'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <div style={{ 
+                        fontSize: '13px', 
+                        fontWeight: '500', 
+                        color: '#666', 
+                        minWidth: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        height: '24px'
+                      }} title="Stroke Linecap">
+                        C:
+                      </div>
+                      <LinecapSelector
+                        value={currentStrokeLinecap || 'round'}
+                        onChange={handleStrokeLinecapChange}
+                        title="Stroke Linecap"
+                      />
+                    </div>
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <div style={{ 
+                        fontSize: '13px', 
+                        fontWeight: '500', 
+                        color: '#666', 
+                        minWidth: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        height: '24px'
+                      }} title="Stroke Linejoin">
+                        J:
+                      </div>
+                      <LinejoinSelector
+                        value={currentStrokeLinejoin || 'round'}
+                        onChange={handleStrokeLinejoinChange}
+                        title="Stroke Linejoin"
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <div style={{ 
+                        fontSize: '13px', 
+                        fontWeight: '500', 
+                        color: '#666', 
+                        minWidth: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        height: '24px'
+                      }} title="Fill Rule">
+                        R:
+                      </div>
+                      <FillRuleSelector
+                        value={currentFillRule || 'nonzero'}
+                        onChange={handleFillRuleChange}
+                        title="Fill Rule"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Dash Array Presets and Custom Input in one line */}
+                  <div style={{ 
+                    minHeight: '24px', 
+                    display: 'flex', 
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '8px'
+                  }}>
+                    <DashArrayPresets
+                      value={currentStrokeDasharray || 'none'}
+                      onChange={handleStrokeDasharrayChange}
+                    />
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <div style={{ 
+                        fontSize: '13px', 
+                        fontWeight: '500', 
+                        color: '#666', 
+                        minWidth: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        height: '24px'
+                      }} title="Custom Dash Array">
+                        D:
+                      </div>
+                      <div style={{ width: '80px' }}>
+                        <DashArrayCustomInput
+                          value={currentStrokeDasharray || 'none'}
+                          onChange={handleStrokeDasharrayChange}
+                          title="Custom dash array (e.g., 5,3,2,3)"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </>
+          )}
 
           {/* Bottom border */}
           <div style={{ borderTop: '1px solid #eee', marginTop: '8px' }}></div>
         </div>
-      )}
 
     </div>
   );

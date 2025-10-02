@@ -46,8 +46,6 @@ export const SidebarToolGrid: React.FC<SidebarToolGridProps> = ({
       { name: 'transformation', label: 'Transform', icon: VectorSquare },
       { name: 'edit', label: 'Edit', icon: MousePointerClick },
       { name: 'file', label: 'File', icon: File },
-    ],
-    [
       { name: 'pan', label: 'Pan', icon: Hand },
       { name: 'pencil', label: 'Pencil', icon: Pen },
       { name: 'text', label: 'Text', icon: Type },
@@ -90,7 +88,7 @@ export const SidebarToolGrid: React.FC<SidebarToolGridProps> = ({
         active={isActive}
         title={plugin.label}
         size="custom"
-        customSize="36px"
+        customSize="20px"
         activeBgColor="#007bff"
       >
         <IconComponent size={16} />

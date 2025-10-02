@@ -76,15 +76,6 @@ export const PRESETS: Preset[] = [
       fillOpacity: 0.7
     },
     {
-      id: 'vibrant-purple',
-      name: 'Vibrant Purple',
-      strokeWidth: 4,
-      strokeColor: '#9c27b0',
-      strokeOpacity: 1,
-      fillColor: '#ba68c8',
-      fillOpacity: 0.9
-    },
-    {
       id: 'royal-purple',
       name: 'Royal Purple',
       strokeWidth: 6,
