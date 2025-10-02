@@ -65,13 +65,39 @@ export const EditPanel: React.FC<EditPanelProps> = ({
       <div style={{
         display: 'flex',
         alignItems: 'center',
+        justifyContent: 'space-between',
         marginBottom: '8px',
         backgroundColor: '#f5f5f5',
         padding: '4px 8px',
         borderRadius: '4px'
       }}>
-        <PaintBucket size={16} style={{ marginRight: '6px', color: '#666' }} />
-        <span style={{ fontSize: '12px', fontWeight: '800', color: '#333' }}>Smooth Brush</span>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <PaintBucket size={16} style={{ marginRight: '6px', color: '#666' }} />
+          <span style={{ fontSize: '12px', fontWeight: '800', color: '#333' }}>Smooth Brush</span>
+        </div>
+        {(!smoothBrush.isActive || (smoothBrush.isActive && selectedCommands.length > 0)) && (
+          <button
+            onClick={() => {
+              applySmoothBrush();
+            }}
+            style={{
+              padding: '0px 6px',
+              backgroundColor: '#f8f9fa',
+              color: '#333',
+              border: '1px solid #dee2e6',
+              borderRadius: '4px',
+              fontSize: '10px',
+              cursor: 'pointer',
+              height: '20px'
+            }}
+            title={smoothBrush.isActive && selectedCommands.length > 0
+              ? `Apply Smooth to ${selectedCommands.length} Selected Point${selectedCommands.length === 1 ? '' : 's'}`
+              : 'Apply Smooth Brush'
+            }
+          >
+            Apply
+          </button>
+        )}
       </div>
 
       {/* Brush Mode Toggle */}
@@ -209,29 +235,7 @@ export const EditPanel: React.FC<EditPanelProps> = ({
         />
       )}
 
-      {/* Apply Button - show when brush mode is OFF or when brush is ON but has selected points */}
-      {(!smoothBrush.isActive || (smoothBrush.isActive && selectedCommands.length > 0)) && (
-        <button
-          onClick={() => {
-            applySmoothBrush();
-          }}
-          style={{
-            width: '100%',
-            padding: '6px 8px',
-            backgroundColor: '#f8f9fa',
-            color: '#333',
-            border: '1px solid #dee2e6',
-            borderRadius: '4px',
-            fontSize: '12px',
-            cursor: 'pointer'
-          }}
-        >
-          {smoothBrush.isActive && selectedCommands.length > 0
-            ? `Apply Smooth to ${selectedCommands.length} Selected Point${selectedCommands.length === 1 ? '' : 's'}`
-            : 'Apply Smooth Brush'
-          }
-        </button>
-      )}
+
 
       {/* Instructions */}
       {smoothBrush.isActive && (
@@ -256,13 +260,32 @@ export const EditPanel: React.FC<EditPanelProps> = ({
         <div style={{
           display: 'flex',
           alignItems: 'center',
+          justifyContent: 'space-between',
           marginBottom: '8px',
           backgroundColor: '#f5f5f5',
           padding: '4px 8px',
           borderRadius: '4px'
         }}>
-          <Zap size={16} style={{ marginRight: '6px', color: '#666' }} />
-          <span style={{ fontSize: '12px', fontWeight: '800', color: '#333' }}>Path Simplification</span>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <Zap size={16} style={{ marginRight: '6px', color: '#666' }} />
+            <span style={{ fontSize: '12px', fontWeight: '800', color: '#333' }}>Path Simplification</span>
+          </div>
+          <button
+            onClick={() => applyPathSimplification()}
+            style={{
+              padding: '0px 6px',
+              backgroundColor: '#f8f9fa',
+              color: '#333',
+              border: '1px solid #dee2e6',
+              borderRadius: '4px',
+              fontSize: '10px',
+              cursor: 'pointer',
+              height: '20px'
+            }}
+            title="Simplify Path"
+          >
+            Apply
+          </button>
         </div>
 
         <SliderControl
@@ -277,23 +300,7 @@ export const EditPanel: React.FC<EditPanelProps> = ({
           valueWidth="35px"
         />
 
-        {/* Apply Button */}
-        <button
-          onClick={() => applyPathSimplification()}
-          style={{
-            width: '100%',
-            padding: '6px 8px',
-            backgroundColor: '#f8f9fa',
-            color: '#333',
-            border: '1px solid #dee2e6',
-            borderRadius: '4px',
-            fontSize: '12px',
-            cursor: 'pointer',
-            marginTop: '8px'
-          }}
-        >
-          Simplify Path
-        </button>
+
       </div>
 
       {/* Round Path Section */}
@@ -304,13 +311,32 @@ export const EditPanel: React.FC<EditPanelProps> = ({
         <div style={{
           display: 'flex',
           alignItems: 'center',
+          justifyContent: 'space-between',
           marginBottom: '8px',
           backgroundColor: '#f5f5f5',
           padding: '4px 8px',
           borderRadius: '4px'
         }}>
-          <RotateCcw size={16} style={{ marginRight: '6px', color: '#666' }} />
-          <span style={{ fontSize: '12px', fontWeight: '800', color: '#333' }}>Round Path</span>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <RotateCcw size={16} style={{ marginRight: '6px', color: '#666' }} />
+            <span style={{ fontSize: '12px', fontWeight: '800', color: '#333' }}>Round Path</span>
+          </div>
+          <button
+            onClick={() => applyPathRounding()}
+            style={{
+              padding: '0px 6px',
+              backgroundColor: '#f8f9fa',
+              color: '#333',
+              border: '1px solid #dee2e6',
+              borderRadius: '4px',
+              fontSize: '10px',
+              cursor: 'pointer',
+              height: '20px'
+            }}
+            title="Round Path"
+          >
+            Apply
+          </button>
         </div>
 
         <SliderControl
@@ -325,23 +351,7 @@ export const EditPanel: React.FC<EditPanelProps> = ({
           valueWidth="35px"
         />
 
-        {/* Apply Button */}
-        <button
-          onClick={() => applyPathRounding()}
-          style={{
-            width: '100%',
-            padding: '6px 8px',
-            backgroundColor: '#f8f9fa',
-            color: '#333',
-            border: '1px solid #dee2e6',
-            borderRadius: '4px',
-            fontSize: '12px',
-            cursor: 'pointer',
-            marginTop: '8px'
-          }}
-        >
-          Round Path
-        </button>
+
       </div>
     </div>
   );
