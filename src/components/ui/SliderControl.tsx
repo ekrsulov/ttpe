@@ -63,7 +63,7 @@ export const SliderControl: React.FC<SliderControlProps> = ({
       )}
       {label && (
         <Text
-          fontSize="11px"
+          fontSize="12px"
           color="gray.600"
           minW={labelWidth}
           flexShrink={0}
@@ -87,7 +87,7 @@ export const SliderControl: React.FC<SliderControlProps> = ({
         <SliderThumb boxSize="12px" />
       </Slider>
       <Text
-        fontSize="10px"
+        fontSize="12px"
         color="gray.600"
         w={valueWidth}
         textAlign="right"

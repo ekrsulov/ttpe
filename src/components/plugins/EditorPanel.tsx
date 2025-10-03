@@ -170,15 +170,15 @@ export const EditorPanel: React.FC = () => {
   const presetMaxWidth = useBreakpointValue({ base: '180px', md: '230px' }) || '230px';
 
   return (
-    <Box bg="white" pr={2} pb={2}>
+    <Box bg="white" pb={1}>
       {/* Pencil Properties Section */}
-      <VStack spacing={1} align="stretch" mt={1}>
+      <VStack spacing={1} align="stretch">
         {/* Color Presets */}
-        <HStack justify="space-between" minH="24px" mt={1}>
+        <HStack justify="space-between" minH="24px">
           <Box
             display="grid"
             gridTemplateColumns={`repeat(${presetColumns}, 1fr)`}
-            gap={0.75}
+            gap={1.5}
             maxW={presetMaxWidth}
             flex={1}
           >
@@ -192,12 +192,14 @@ export const EditorPanel: React.FC = () => {
           </Box>
           <ChakraIconButton
             aria-label={isColorControlsOpen ? "Collapse Color Controls" : "Expand Color Controls"}
-            icon={isColorControlsOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+            icon={isColorControlsOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             onClick={onColorControlsToggle}
+            variant="ghost"
             size="xs"
             h="20px"
             minW="20px"
             flexShrink={0}
+            bg="transparent"
           />
         </HStack>
 
@@ -235,7 +237,7 @@ export const EditorPanel: React.FC = () => {
                     minW="20px"
                   />
                 </HStack>
-                <Box flex={1} minW="100px">
+                <Box flex={1} minW="120px">
                   <SliderControl
                     icon={<Eye size={14} />}
                     value={currentFillOpacity}
@@ -246,7 +248,7 @@ export const EditorPanel: React.FC = () => {
                     formatter={(value) => `${Math.round(value * 100)}%`}
                     title="Fill Opacity"
                     minWidth="50px"
-                    valueWidth="35px"
+                    valueWidth="40px"
                     inline={true}
                     gap="4px"
                   />
@@ -286,7 +288,7 @@ export const EditorPanel: React.FC = () => {
                     minW="20px"
                   />
                 </HStack>
-                <Box flex={1} minW="100px">
+                <Box flex={1} minW="120px">
                   <SliderControl
                     icon={<Eye size={14} />}
                     value={currentOpacity}
@@ -297,7 +299,7 @@ export const EditorPanel: React.FC = () => {
                     formatter={(value) => `${Math.round(value * 100)}%`}
                     title="Stroke Opacity"
                     minWidth="50px"
-                    valueWidth="35px"
+                    valueWidth="40px"
                     inline={true}
                     gap="4px"
                   />
@@ -321,12 +323,14 @@ export const EditorPanel: React.FC = () => {
               </Box>
               <ChakraIconButton
                 aria-label={isAdvancedStrokeOpen ? "Collapse Advanced Stroke" : "Expand Advanced Stroke"}
-                icon={isAdvancedStrokeOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                icon={isAdvancedStrokeOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 onClick={onAdvancedStrokeToggle}
+                variant="ghost"
                 size="xs"
                 h="20px"
                 minW="20px"
                 flexShrink={0}
+                bg="transparent"
               />
             </HStack>
 

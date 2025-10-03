@@ -33,11 +33,12 @@ export const PanelHeader: React.FC<PanelHeaderProps> = ({
   return (
     <Flex
       align="center"
-      bg="sidebar.headerBg"
-      px={2}
-      py={0.5}
+      bg="transparent"
+      px={0}
+      py={title === 'Optical Alignment' ? 0 : 0.5}
       borderRadius="md"
       mb={2}
+      minH="24px"
       cursor={isCollapsible ? 'pointer' : 'default'}
       onClick={isCollapsible ? onToggle : undefined}
       _hover={isCollapsible ? { bg: 'gray.200' } : undefined}

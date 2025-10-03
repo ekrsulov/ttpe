@@ -29,26 +29,16 @@ export const PresetButton: React.FC<PresetButtonProps> = ({ preset, onClick, isA
       title={preset.name}
     >
       <svg
-        width="16"
-        height="16"
-        viewBox="0 0 32 32"
+        width="18"
+        height="18"
+        viewBox="0 0 20 20"
         style={{ borderRadius: '2px' }}
       >
-        {/* Background */}
-        <rect
-          x="0"
-          y="0"
-          width="32"
-          height="32"
-          fill="#f8f9fa"
-          rx="2"
-        />
-
-        {/* Sample shape with preset styling */}
+        {/* Sample shape with preset styling - full size */}
         <circle
-          cx="16"
-          cy="16"
-          r="8"
+          cx="10"
+          cy="10"
+          r="9"
           fill={preset.fillColor === 'none' ? 'transparent' : preset.fillColor}
           fillOpacity={preset.fillOpacity}
           stroke={preset.strokeColor === 'none' ? 'transparent' : preset.strokeColor}
@@ -59,8 +49,8 @@ export const PresetButton: React.FC<PresetButtonProps> = ({ preset, onClick, isA
         {/* Inner accent for better visibility */}
         {preset.fillColor !== 'none' && (
           <circle
-            cx="16"
-            cy="16"
+            cx="10"
+            cy="10"
             r="4"
             fill="rgba(255,255,255,0.3)"
           />

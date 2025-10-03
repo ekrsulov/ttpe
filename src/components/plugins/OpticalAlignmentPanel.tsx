@@ -14,9 +14,7 @@ import { useCanvasStore } from '../../store/canvasStore';
 import { Panel } from '../ui/Panel';
 import {
   Target,
-  Play,
   RotateCcw,
-  Eye,
   Crosshair,
   BarChart3,
   Ruler
@@ -67,14 +65,27 @@ export const OpticalAlignmentPanel: React.FC = () => {
   if (getAlignmentValidationMessage() !== null) return null;
 
   return (
-    <Panel icon={<Target size={16} />} title="Optical Alignment">
+    <Panel 
+      icon={<Target size={16} />} 
+      title="Optical Alignment"
+      headerActions={
+        <Button
+          onClick={handleApplyAlignment}
+          isDisabled={!hasAlignment}
+          size="xs"
+          variant="outline"
+          fontSize="12px"
+          py={0}
+        >
+          Apply
+        </Button>
+      }
+    >
       {/* Controls */}
       {canPerformOpticalAlignment() && (
         <VStack spacing={2} align="stretch">
           {/* Visualization Controls */}
           <HStack spacing={2}>
-            <Text fontSize="xs" color="gray.600">Show:</Text>
-
             <Tooltip label="Mathematical Center" fontSize="xs">
               <ChakraIconButton
                 aria-label="Mathematical Center"
@@ -82,7 +93,8 @@ export const OpticalAlignmentPanel: React.FC = () => {
                 size="sm"
                 onClick={toggleMathematicalCenter}
                 colorScheme={showMathematicalCenter ? 'brand' : 'gray'}
-                variant={showMathematicalCenter ? 'solid' : 'outline'}
+                variant={showMathematicalCenter ? 'solid' : 'ghost'}
+                bg={showMathematicalCenter ? undefined : 'transparent'}
               />
             </Tooltip>
 
@@ -93,7 +105,8 @@ export const OpticalAlignmentPanel: React.FC = () => {
                 size="sm"
                 onClick={toggleOpticalCenter}
                 colorScheme={showOpticalCenter ? 'brand' : 'gray'}
-                variant={showOpticalCenter ? 'solid' : 'outline'}
+                variant={showOpticalCenter ? 'solid' : 'ghost'}
+                bg={showOpticalCenter ? undefined : 'transparent'}
               />
             </Tooltip>
 
@@ -104,7 +117,8 @@ export const OpticalAlignmentPanel: React.FC = () => {
                 size="sm"
                 onClick={toggleMetrics}
                 colorScheme={showMetrics ? 'brand' : 'gray'}
-                variant={showMetrics ? 'solid' : 'outline'}
+                variant={showMetrics ? 'solid' : 'ghost'}
+                bg={showMetrics ? undefined : 'transparent'}
               />
             </Tooltip>
 
@@ -115,33 +129,22 @@ export const OpticalAlignmentPanel: React.FC = () => {
                 size="sm"
                 onClick={toggleDistanceRules}
                 colorScheme={showDistanceRules ? 'brand' : 'gray'}
-                variant={showDistanceRules ? 'solid' : 'outline'}
+                variant={showDistanceRules ? 'solid' : 'ghost'}
+                bg={showDistanceRules ? undefined : 'transparent'}
               />
             </Tooltip>
-          </HStack>
 
-          {/* Action Buttons */}
-          <HStack spacing={1.5}>
             <Button
               onClick={handlePreviewAlignment}
               isDisabled={!canPerformOpticalAlignment()}
-              colorScheme="green"
-              size="sm"
-              flex={1}
-              leftIcon={<Eye size={12} />}
-            >
-              Preview
-            </Button>
-
-            <Button
-              onClick={handleApplyAlignment}
-              isDisabled={!hasAlignment}
               colorScheme="brand"
               size="sm"
-              flex={1}
-              leftIcon={<Play size={12} />}
+              variant="ghost"
+              bg="transparent"
+              border="1px solid"
+              borderColor="gray.300"
             >
-              Apply
+              Preview
             </Button>
 
             <Tooltip label="Reset" fontSize="xs">
@@ -151,7 +154,8 @@ export const OpticalAlignmentPanel: React.FC = () => {
                 size="sm"
                 onClick={handleResetAlignment}
                 isDisabled={!hasAlignment}
-                variant="outline"
+                variant="ghost"
+                bg="transparent"
               />
             </Tooltip>
           </HStack>

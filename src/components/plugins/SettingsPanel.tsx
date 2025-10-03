@@ -8,7 +8,6 @@ import {
   Button,
   Select,
   Text,
-  FormHelperText,
   Divider,
   Box
 } from '@chakra-ui/react';
@@ -16,6 +15,7 @@ import { Settings, RotateCcw } from 'lucide-react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { logger, LogLevel } from '../../utils';
 import { Panel } from '../ui/Panel';
+import { SliderControl } from '../ui/SliderControl';
 
 export const SettingsPanel: React.FC = () => {
   const { documentName, settings, updateSettings } = useCanvasStore();
@@ -60,13 +60,12 @@ export const SettingsPanel: React.FC = () => {
     logger.info('Caller info display', enabled ? 'enabled' : 'disabled');
   };
 
-  const handleKeyboardPrecisionChange = (value: string) => {
-    const numValue = parseInt(value, 10);
+  const handleKeyboardPrecisionChange = (value: number) => {
     // Validate the input: must be between 0 and 10
-    if (!isNaN(numValue) && numValue >= 0 && numValue <= 10) {
-      setKeyboardPrecision(numValue);
-      updateSettings({ keyboardMovementPrecision: numValue });
-      logger.debug('Keyboard movement precision changed to', numValue);
+    if (value >= 0 && value <= 10) {
+      setKeyboardPrecision(value);
+      updateSettings({ keyboardMovementPrecision: value });
+      logger.debug('Keyboard movement precision changed to', value);
     }
   };
 
@@ -98,7 +97,7 @@ export const SettingsPanel: React.FC = () => {
       <VStack spacing={3} align="stretch">
         {/* Document Name */}
         <FormControl position="relative">
-          <FormLabel fontSize="xs" fontWeight="medium" color="gray.600" mb={1}>
+          <FormLabel fontSize="12px" fontWeight="medium" color="gray.600" mb={1}>
             Document Name
           </FormLabel>
           <Input
@@ -112,7 +111,7 @@ export const SettingsPanel: React.FC = () => {
               position="absolute"
               right={2}
               top="28px"
-              fontSize="xs"
+              fontSize="12px"
               color="gray.500"
               bg="white"
               px={1}
@@ -125,7 +124,7 @@ export const SettingsPanel: React.FC = () => {
 
         {/* Log Level Selector */}
         <FormControl>
-          <FormLabel fontSize="xs" fontWeight="medium" color="gray.600" mb={1}>
+          <FormLabel fontSize="12px" fontWeight="medium" color="gray.600" mb={1}>
             Log Level
           </FormLabel>
           <Select
@@ -150,24 +149,15 @@ export const SettingsPanel: React.FC = () => {
         </ChakraCheckbox>
 
         {/* Keyboard Movement Precision */}
-        <FormControl>
-          <FormLabel fontSize="xs" fontWeight="medium" color="gray.600" mb={1}>
-            Keyboard Movement Precision
-          </FormLabel>
-          <Input
-            type="number"
-            min={0}
-            max={10}
-            step={1}
-            value={keyboardPrecision}
-            onChange={(e) => handleKeyboardPrecisionChange(e.target.value)}
-            size="sm"
-            title="Number of decimal places for keyboard movement (0 = integers only)"
-          />
-          <FormHelperText fontSize="xs" mt={1}>
-            Decimal places when moving with arrow keys (0-10)
-          </FormHelperText>
-        </FormControl>
+        <SliderControl
+          label="Precision"
+          value={keyboardPrecision}
+          min={0}
+          max={10}
+          step={1}
+          onChange={handleKeyboardPrecisionChange}
+          title="Number of decimal places for keyboard movement (0 = integers only)"
+        />
 
         {/* Reset Application */}
         <Box pt={3}>

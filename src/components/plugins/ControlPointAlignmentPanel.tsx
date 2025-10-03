@@ -389,9 +389,10 @@ export const ControlPointAlignmentPanel: React.FC = () => {
 
   const singlePointInfo = useMemo(() => getSinglePointInfo(), [getSinglePointInfo]);
 
-  if (!singlePointInfo) {
-    return null;
-  }
+  // Always show the panel, even when no control point is selected
+  // if (!singlePointInfo) {
+  //   return null;
+  // }
 
   const handleAlignmentChange = (type: 'independent' | 'aligned' | 'mirrored') => {
     if (singlePointInfo && singlePointInfo.pairedPoint) {
@@ -407,7 +408,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
   };
 
   const renderAlignmentButtons = () => {
-    if (singlePointInfo.isAnchor || !singlePointInfo.pairedPoint) {
+    if (!singlePointInfo || singlePointInfo.isAnchor || !singlePointInfo.pairedPoint) {
       return null;
     }
 
@@ -419,7 +420,8 @@ export const ControlPointAlignmentPanel: React.FC = () => {
             icon={<Move size={14} />}
             onClick={() => handleAlignmentChange('independent')}
             colorScheme={(singlePointInfo.info?.type || 'independent') === 'independent' ? 'blue' : 'gray'}
-            variant={(singlePointInfo.info?.type || 'independent') === 'independent' ? 'solid' : 'outline'}
+            variant={(singlePointInfo.info?.type || 'independent') === 'independent' ? 'solid' : 'ghost'}
+            bg={(singlePointInfo.info?.type || 'independent') === 'independent' ? undefined : 'transparent'}
             size="sm"
           />
 
@@ -428,7 +430,8 @@ export const ControlPointAlignmentPanel: React.FC = () => {
             icon={<Link size={14} />}
             onClick={() => handleAlignmentChange('aligned')}
             colorScheme={(singlePointInfo.info?.type || 'independent') === 'aligned' ? 'blue' : 'gray'}
-            variant={(singlePointInfo.info?.type || 'independent') === 'aligned' ? 'solid' : 'outline'}
+            variant={(singlePointInfo.info?.type || 'independent') === 'aligned' ? 'solid' : 'ghost'}
+            bg={(singlePointInfo.info?.type || 'independent') === 'aligned' ? undefined : 'transparent'}
             size="sm"
           />
 
@@ -437,24 +440,26 @@ export const ControlPointAlignmentPanel: React.FC = () => {
             icon={<Copy size={14} />}
             onClick={() => handleAlignmentChange('mirrored')}
             colorScheme={(singlePointInfo.info?.type || 'independent') === 'mirrored' ? 'blue' : 'gray'}
-            variant={(singlePointInfo.info?.type || 'independent') === 'mirrored' ? 'solid' : 'outline'}
+            variant={(singlePointInfo.info?.type || 'independent') === 'mirrored' ? 'solid' : 'ghost'}
+            bg={(singlePointInfo.info?.type || 'independent') === 'mirrored' ? undefined : 'transparent'}
             size="sm"
           />
 
           <Box ml="auto">
             <ChakraIconButton
               aria-label={showDetails ? "Hide Details" : "Show Details"}
-              icon={showDetails ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              icon={showDetails ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
               onClick={toggleDetails}
               colorScheme={showDetails ? 'blue' : 'gray'}
-              variant={showDetails ? 'solid' : 'outline'}
+              variant={showDetails ? 'solid' : 'ghost'}
+              bg={showDetails ? undefined : 'transparent'}
               size="sm"
             />
           </Box>
         </HStack>
 
         {/* Etiqueta descriptiva siempre visible */}
-        <Text fontSize="11px" color="gray.600">
+        <Text fontSize="12px" color="gray.600">
           {(singlePointInfo.info?.type || 'independent') === 'independent' && 'Points move independently'}
           {(singlePointInfo.info?.type || 'independent') === 'aligned' && 'Points maintain opposite directions'}
           {(singlePointInfo.info?.type || 'independent') === 'mirrored' && 'Points are mirrored across anchor'}
@@ -464,13 +469,12 @@ export const ControlPointAlignmentPanel: React.FC = () => {
   };
 
   const renderDetailContent = () => {
-    if (!showDetails) return null;
+    if (!singlePointInfo || !showDetails) return null;
 
     if (singlePointInfo.isAnchor) {
       return (
         <Collapse in={showDetails} animateOpacity>
           <VStack spacing={2} align="stretch" fontSize="11px" color="gray.600" lineHeight="1.4">
-            <Text><Text as="strong" color="gray.700">Position:</Text> ({singlePointInfo.point.x.toFixed(2)}, {singlePointInfo.point.y.toFixed(2)})</Text>
             <Text><Text as="strong" color="gray.700">Location:</Text> {singlePointInfo.location}</Text>
             {hasClosingZCommand(selectedCommands[0].elementId, selectedCommands[0].commandIndex) && (
               <>
@@ -478,8 +482,10 @@ export const ControlPointAlignmentPanel: React.FC = () => {
                   onClick={() => deleteZCommandForMPoint(selectedCommands[0].elementId, selectedCommands[0].commandIndex)}
                   colorScheme="red"
                   size="xs"
-                  fontSize="11px"
+                  fontSize="12px"
                   w="full"
+                  variant="ghost"
+                  bg="transparent"
                   title="Delete the Z command that closes this path"
                 >
                   Delete Z Command
@@ -488,8 +494,10 @@ export const ControlPointAlignmentPanel: React.FC = () => {
                   onClick={() => convertZToLineForMPoint(selectedCommands[0].elementId, selectedCommands[0].commandIndex)}
                   colorScheme="green"
                   size="xs"
-                  fontSize="11px"
+                  fontSize="12px"
                   w="full"
+                  variant="ghost"
+                  bg="transparent"
                   title="Convert the Z command to a line command"
                 >
                   Convert Z to Line
@@ -503,8 +511,10 @@ export const ControlPointAlignmentPanel: React.FC = () => {
                   onClick={() => moveToM(selectedCommands[0].elementId, selectedCommands[0].commandIndex, selectedCommands[0].pointIndex)}
                   colorScheme="green"
                   size="xs"
-                  fontSize="11px"
+                  fontSize="12px"
                   w="full"
+                  variant="ghost"
+                  bg="transparent"
                   title="Move this point to start a new subpath"
                 >
                   Move to M
@@ -515,8 +525,10 @@ export const ControlPointAlignmentPanel: React.FC = () => {
                 onClick={() => convertCommandType(selectedCommands[0].elementId, selectedCommands[0].commandIndex)}
                 colorScheme="cyan"
                 size="xs"
-                fontSize="11px"
+                fontSize="12px"
                 w="full"
+                variant="ghost"
+                bg="transparent"
                 title={`Change to ${singlePointInfo.command.type === 'L' ? 'Curve' : 'Line'}`}
               >
                 Change to {singlePointInfo.command.type === 'L' ? 'Curve' : 'Line'}
@@ -530,9 +542,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
     if (singlePointInfo.pairedPoint) {
       return (
         <Collapse in={showDetails} animateOpacity>
-          <VStack spacing={2} align="stretch" fontSize="11px" color="gray.600" lineHeight="1.4">
-            <Text><Text as="strong" color="gray.700">Position:</Text> ({singlePointInfo.point.x.toFixed(2)}, {singlePointInfo.point.y.toFixed(2)})</Text>
-            <Text><Text as="strong" color="gray.700">Command:</Text> {singlePointInfo.command.type} at index {singlePointInfo.point.commandIndex}</Text>
+          <VStack spacing={2} align="stretch" fontSize="12px" color="gray.600" lineHeight="1.4">
             <Text><Text as="strong" color="gray.700">Point Index:</Text> {singlePointInfo.point.pointIndex}</Text>
             <Text><Text as="strong" color="gray.700">Anchor:</Text> ({singlePointInfo.anchor1?.x.toFixed(2) || '0'}, {singlePointInfo.anchor1?.y.toFixed(2) || '0'})</Text>
             <Text><Text as="strong" color="gray.700">Direction:</Text> {singlePointInfo.angle1?.toFixed(1) || '0'}°</Text>
@@ -543,24 +553,24 @@ export const ControlPointAlignmentPanel: React.FC = () => {
                 <Text><Text as="strong" color="gray.700">Paired Point:</Text> ({singlePointInfo.pairedPoint.x.toFixed(2)}, {singlePointInfo.pairedPoint.y.toFixed(2)}) at command {singlePointInfo.pairedInfo?.commandIndex}, point {singlePointInfo.pairedInfo?.pointIndex}</Text>
                 <Text><Text as="strong" color="gray.700">Paired Anchor:</Text> ({singlePointInfo.anchor2?.x.toFixed(2)}, {singlePointInfo.anchor2?.y.toFixed(2)})</Text>
                 <TableContainer>
-                  <Table size="sm" fontSize="11px" mt={2}>
+                  <Table size="sm" fontSize="12px" mt={2}>
                     <Thead>
                       <Tr>
-                        <Th fontSize="11px" p={1} bg="gray.100" borderColor="gray.300">Property</Th>
-                        <Th fontSize="11px" p={1} bg="gray.100" borderColor="gray.300">Current</Th>
-                        <Th fontSize="11px" p={1} bg="gray.100" borderColor="gray.300">Paired</Th>
+                        <Th fontSize="12px" p={1} bg="gray.100" borderColor="gray.300" textTransform="none">Property</Th>
+                        <Th fontSize="12px" p={1} bg="gray.100" borderColor="gray.300" textTransform="none">Current</Th>
+                        <Th fontSize="12px" p={1} bg="gray.100" borderColor="gray.300" textTransform="none">Paired</Th>
                       </Tr>
                     </Thead>
                     <Tbody>
                       <Tr>
-                        <Td fontSize="11px" p={1} borderColor="gray.300">Direction</Td>
-                        <Td fontSize="11px" p={1} borderColor="gray.300">{singlePointInfo.angle1?.toFixed(1) || '0'}°</Td>
-                        <Td fontSize="11px" p={1} borderColor="gray.300">{singlePointInfo.angle2?.toFixed(1) || '0'}°</Td>
+                        <Td fontSize="12px" p={1} borderColor="gray.300">Direction</Td>
+                        <Td fontSize="12px" p={1} borderColor="gray.300">{singlePointInfo.angle1?.toFixed(1) || '0'}°</Td>
+                        <Td fontSize="12px" p={1} borderColor="gray.300">{singlePointInfo.angle2?.toFixed(1) || '0'}°</Td>
                       </Tr>
                       <Tr>
-                        <Td fontSize="11px" p={1} borderColor="gray.300">Size</Td>
-                        <Td fontSize="11px" p={1} borderColor="gray.300">{singlePointInfo.mag1?.toFixed(2) || '0'}</Td>
-                        <Td fontSize="11px" p={1} borderColor="gray.300">{singlePointInfo.mag2?.toFixed(2)}</Td>
+                        <Td fontSize="12px" p={1} borderColor="gray.300">Size</Td>
+                        <Td fontSize="12px" p={1} borderColor="gray.300">{singlePointInfo.mag1?.toFixed(2) || '0'}</Td>
+                        <Td fontSize="12px" p={1} borderColor="gray.300">{singlePointInfo.mag2?.toFixed(2)}</Td>
                       </Tr>
                     </Tbody>
                   </Table>
@@ -574,9 +584,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
 
     return (
       <Collapse in={showDetails} animateOpacity>
-        <VStack spacing={1} align="stretch" fontSize="11px" color="gray.600" lineHeight="1.4">
-          <Text><Text as="strong" color="gray.700">Position:</Text> ({singlePointInfo.point.x.toFixed(2)}, {singlePointInfo.point.y.toFixed(2)})</Text>
-          <Text><Text as="strong" color="gray.700">Command:</Text> {singlePointInfo.command.type} at index {singlePointInfo.point.commandIndex}</Text>
+        <VStack spacing={1} align="stretch" fontSize="12px" color="gray.600" lineHeight="1.4">
           <Text><Text as="strong" color="gray.700">Point Index:</Text> {singlePointInfo.point.pointIndex}</Text>
           <Text><Text as="strong" color="gray.700">Alignment:</Text> {singlePointInfo.info?.type || 'independent'}</Text>
         </VStack>
@@ -587,6 +595,15 @@ export const ControlPointAlignmentPanel: React.FC = () => {
   return (
     <Panel icon={<RotateCcw size={16} />} title="Control Point Alignment">
       {renderAlignmentButtons()}
+      
+      {/* Always visible Position and Command info */}
+      {singlePointInfo && (
+        <VStack spacing={1} align="stretch" fontSize="12px" color="gray.600" lineHeight="1.4" mb={2}>
+          <Text><Text as="strong" color="gray.700">Position:</Text> ({singlePointInfo.point.x.toFixed(2)}, {singlePointInfo.point.y.toFixed(2)})</Text>
+          <Text><Text as="strong" color="gray.700">Command:</Text> {singlePointInfo.command.type} at index {singlePointInfo.point.commandIndex}</Text>
+        </VStack>
+      )}
+      
       {renderDetailContent()}
     </Panel>
   );

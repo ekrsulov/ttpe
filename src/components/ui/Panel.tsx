@@ -45,12 +45,12 @@ export const Panel: React.FC<PanelProps> = ({
       
       {isCollapsible ? (
         <Collapse in={isOpen} animateOpacity>
-          <Box px={2} pb={2}>
+          <Box pb={2}>
             {children}
           </Box>
         </Collapse>
       ) : (
-        <Box px={2} pb={2}>
+        <Box pb={2}>
           {children}
         </Box>
       )}

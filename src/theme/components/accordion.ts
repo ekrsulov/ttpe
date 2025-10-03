@@ -12,16 +12,16 @@ export const Accordion = {
       fontSize: 'sm',
       fontWeight: 'extrabold',
       color: 'gray.700',
-      px: 2,
+      px: 0,
       py: 1,
-      bg: 'sidebar.headerBg',
+      bg: 'transparent',
       borderRadius: 'md',
       transition: 'all 0.2s ease',
       _hover: {
         bg: 'gray.200',
       },
       _expanded: {
-        bg: 'sidebar.headerBg',
+        bg: 'transparent',
       },
       _focusVisible: {
         boxShadow: 'outline',

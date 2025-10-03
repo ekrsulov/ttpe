@@ -3,6 +3,7 @@ import { Box, Flex, IconButton, Divider } from '@chakra-ui/react';
 import { ArrangePanel } from '../plugins/ArrangePanel';
 import { SelectPanel } from '../plugins/SelectPanel';
 import { ChevronUp, ChevronDown } from 'lucide-react';
+import { useCanvasStore } from '../../store/canvasStore';
 
 interface SidebarFooterProps {
   isArrangeExpanded: boolean;
@@ -16,6 +17,15 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
   isArrangeExpanded,
   setIsArrangeExpanded,
 }) => {
+  const { selectedIds, selectedCommands, selectedSubpaths } = useCanvasStore();
+  
+  // Show panels only when something is selected (elements, commands, or subpaths)
+  const hasSelection = selectedIds.length > 0 || selectedCommands.length > 0 || selectedSubpaths.length > 0;
+  
+  if (!hasSelection) {
+    return null;
+  }
+
   return (
     <Box
       position="absolute"

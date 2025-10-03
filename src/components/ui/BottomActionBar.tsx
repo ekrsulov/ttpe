@@ -114,9 +114,9 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
               {pastStates.length > 0 && (
                 <Box
                   position="absolute"
-                  top="-4px"
+                  top="-8px"
                   right="-4px"
-                  bg="blue.500"
+                  bg="rgba(59, 130, 246, 0.7)"
                   color="white"
                   borderRadius="full"
                   minW="16px"
@@ -148,9 +148,9 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
               {futureStates.length > 0 && (
                 <Box
                   position="absolute"
-                  top="-4px"
+                  top="-8px"
                   right="-4px"
-                  bg="blue.500"
+                  bg="rgba(59, 130, 246, 0.7)"
                   color="white"
                   borderRadius="full"
                   minW="16px"
@@ -195,10 +195,10 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
               {isZoomDifferent && (
                 <Box
                   position="absolute"
-                  top="-6px"
+                  top="-10px"
                   left="50%"
                   transform="translateX(-50%)"
-                  bg="gray.600"
+                  bg="rgba(75, 85, 99, 0.7)"
                   color="white"
                   borderRadius="full"
                   minW="28px"
@@ -243,9 +243,9 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
             {deleteCount > 0 && (
               <Box
                 position="absolute"
-                top="-4px"
+                top="-8px"
                 right="-4px"
-                bg="red.500"
+                bg="rgba(239, 68, 68, 0.7)"
                 color="white"
                 borderRadius="full"
                 minW="16px"

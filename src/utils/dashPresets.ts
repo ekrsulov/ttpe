@@ -84,6 +84,24 @@ export const DASH_PRESETS: DashPreset[] = [
     name: 'Dense Dots',
     dashArray: '10,3',
     description: 'Medium dashes with short gaps'
+  },
+  {
+    id: 'zigzag',
+    name: 'Zigzag',
+    dashArray: '4,2,1,2',
+    description: 'Alternating short and tiny dashes'
+  },
+  {
+    id: 'micro-dash',
+    name: 'Micro Dash',
+    dashArray: '2,1',
+    description: 'Very short dashes with tiny gaps'
+  },
+  {
+    id: 'dash-triple-dot',
+    name: 'Dash Triple Dot',
+    dashArray: '8,2,1,2,1,2,1,2',
+    description: 'Dash followed by three tiny dots'
   }
 ];
 

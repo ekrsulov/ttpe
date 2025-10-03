@@ -131,7 +131,8 @@ export const TextPanel: React.FC = () => {
             isActive={getCurrentFontWeight() === 'bold'}
             colorScheme={getCurrentFontWeight() === 'bold' ? 'brand' : 'gray'}
             size="sm"
-            variant={getCurrentFontWeight() === 'bold' ? 'solid' : 'outline'}
+            variant={getCurrentFontWeight() === 'bold' ? 'solid' : 'ghost'}
+            bg={getCurrentFontWeight() === 'bold' ? '#007bff' : 'transparent'}
           />
           
           <ChakraIconButton
@@ -141,7 +142,8 @@ export const TextPanel: React.FC = () => {
             isActive={getCurrentFontStyle() === 'italic'}
             colorScheme={getCurrentFontStyle() === 'italic' ? 'brand' : 'gray'}
             size="sm"
-            variant={getCurrentFontStyle() === 'italic' ? 'solid' : 'outline'}
+            variant={getCurrentFontStyle() === 'italic' ? 'solid' : 'ghost'}
+            bg={getCurrentFontStyle() === 'italic' ? '#007bff' : 'transparent'}
           />
         </HStack>
       </VStack>

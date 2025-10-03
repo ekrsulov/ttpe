@@ -1,6 +1,7 @@
 import React, { Suspense } from 'react';
 import { Box } from '@chakra-ui/react';
 import { ConditionalPanel } from '../ui/ConditionalPanel';
+import { useCanvasStore } from '../../store/canvasStore';
 
 // Lazy load panel components
 const EditorPanel = React.lazy(() => import('../plugins/EditorPanel').then(module => ({ default: module.EditorPanel })));
@@ -89,15 +90,20 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
   deactivateSmoothBrush,
   resetSmoothBrush,
 }) => {
+  const { selectedIds, selectedSubpaths } = useCanvasStore();
+  
   // Check if we're in special panel mode (file or settings)
   const isInSpecialPanelMode = showFilePanel || showSettingsPanel;
+  
+  // Check if footer should be shown (when something is selected)
+  const hasSelection = selectedIds.length > 0 || selectedCommands.length > 0 || selectedSubpaths.length > 0;
 
   return (
     <Box
       flex={1}
       px={2}
       pb={2}
-      mb="120px" // Reserve space for footer (ArrangePanel + SelectPanel)
+      mb={hasSelection ? "120px" : "0px"} // Reserve space for footer only when something is selected
       overflowY="auto"
       overflowX="hidden"
       display="flex"

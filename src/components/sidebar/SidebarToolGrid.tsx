@@ -86,10 +86,10 @@ export const SidebarToolGrid: React.FC<SidebarToolGridProps> = ({
           variant="tool"
           size="sm"
           data-active={isActive}
-          bg={isActive ? 'brand.500' : 'sidebar.toolBg'}
+          bg={isActive ? 'brand.500' : 'transparent'}
           color={isActive ? 'white' : 'gray.700'}
           _hover={{
-            bg: isActive ? 'brand.600' : 'sidebar.toolHover'
+            bg: isActive ? 'brand.600' : 'gray.50'
           }}
           sx={{
             minH: '32px',
@@ -101,13 +101,13 @@ export const SidebarToolGrid: React.FC<SidebarToolGridProps> = ({
   };
 
   return (
-    <Box p={2} bg="white" borderBottom="1px solid" borderColor="gray.200">
+    <Box pt={2} pr={2} pl={2} bg="white">
       {pluginRows.map((row, rowIndex) => (
         <SimpleGrid
           key={rowIndex}
           columns={isDesktop ? 4 : 3} // 4 columns on desktop (includes pin), 3 on mobile
           spacing={1}
-          mb={rowIndex < pluginRows.length - 1 ? 1 : 0}
+          mb={rowIndex === 0 ? 2 : (rowIndex < pluginRows.length - 1 ? 1 : 0)}
         >
           {row.map(renderPluginButton)}
           
@@ -120,10 +120,10 @@ export const SidebarToolGrid: React.FC<SidebarToolGridProps> = ({
                 onClick={onTogglePin}
                 variant="tool"
                 size="sm"
-                bg="sidebar.toolBg"
+                bg="transparent"
                 color="gray.700"
                 _hover={{
-                  bg: 'sidebar.toolHover'
+                  bg: 'gray.50'
                 }}
                 sx={{
                   minH: '32px',

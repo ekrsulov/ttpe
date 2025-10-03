@@ -37,7 +37,8 @@ export const ShapePanel: React.FC = () => {
                 icon={<IconComponent size={14} />}
                 onClick={() => handleShapeSelect(shapeItem.type)}
                 colorScheme={shouldHighlight ? 'brand' : 'gray'}
-                variant={shouldHighlight ? 'solid' : 'outline'}
+                variant={shouldHighlight ? 'solid' : 'ghost'}
+                bg={shouldHighlight ? undefined : 'transparent'}
                 size="sm"
               />
             </Tooltip>

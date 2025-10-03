@@ -24,14 +24,15 @@ export const PencilPanel: React.FC = () => {
       <VStack spacing={2} align="stretch">
         {/* Path Mode Selection */}
         <HStack spacing={1} justify="space-between">
-          <Text fontSize="xs" color="gray.600">Path Mode:</Text>
+          <Text fontSize="12px" color="gray.600">Path Mode:</Text>
           <HStack spacing={1}>
             <ChakraIconButton
               aria-label="New Path"
               icon={<Square size={12} />}
               onClick={handleReusePathToggle}
               colorScheme={!pencil.reusePath ? 'brand' : 'gray'}
-              variant={!pencil.reusePath ? 'solid' : 'outline'}
+              variant={!pencil.reusePath ? 'solid' : 'ghost'}
+              bg={!pencil.reusePath ? undefined : 'transparent'}
               size="sm"
             />
             <ChakraIconButton
@@ -39,7 +40,8 @@ export const PencilPanel: React.FC = () => {
               icon={<Route size={12} />}
               onClick={handleReusePathToggle}
               colorScheme={pencil.reusePath ? 'brand' : 'gray'}
-              variant={pencil.reusePath ? 'solid' : 'outline'}
+              variant={pencil.reusePath ? 'solid' : 'ghost'}
+              bg={pencil.reusePath ? undefined : 'transparent'}
               size="sm"
             />
           </HStack>
@@ -47,13 +49,14 @@ export const PencilPanel: React.FC = () => {
 
         {/* Curves Mode */}
         <HStack spacing={1} justify="space-between">
-          <Text fontSize="xs" color="gray.600">Curves:</Text>
+          <Text fontSize="12px" color="gray.600">Curves:</Text>
           <ChakraIconButton
             aria-label="Draw Curves"
             icon={<PenTool size={12} />}
             onClick={handleCurvesToggle}
             colorScheme={activePlugin === 'curves' ? 'brand' : 'gray'}
-            variant={activePlugin === 'curves' ? 'solid' : 'outline'}
+            variant={activePlugin === 'curves' ? 'solid' : 'ghost'}
+            bg={activePlugin === 'curves' ? undefined : 'transparent'}
             size="sm"
           />
         </HStack>

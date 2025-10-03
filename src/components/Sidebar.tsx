@@ -188,7 +188,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <SidebarResizer
           onResize={handleResize}
           onReset={handleReset}
-          minWidth={200}
+          minWidth={260}
           maxWidth={600}
         />
         

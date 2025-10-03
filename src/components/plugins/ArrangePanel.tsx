@@ -76,6 +76,8 @@ export const ArrangePanel: React.FC = () => {
           isDisabled={button.disabled}
           size="xs"
           flex={1}
+          variant="ghost"
+          bg="transparent"
         />
       ))}
     </HStack>

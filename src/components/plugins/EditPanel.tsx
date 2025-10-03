@@ -71,17 +71,18 @@ export const EditPanel: React.FC<EditPanelProps> = ({
   if (activePlugin !== 'edit') return null;
 
   return (
-    <VStack spacing={3} align="stretch">
+    <VStack spacing={2} align="stretch">
       {/* Smooth Brush Section */}
       <Box>
         <Flex 
           align="center" 
           justify="space-between" 
           mb={2} 
-          bg="gray.100" 
-          px={2} 
-          py={1} 
+          bg="transparent" 
+          py={0} 
+          px={0}
           borderRadius="md"
+          minH="24px"
         >
           <HStack spacing={1.5}>
             <PaintBucket size={16} color="#666" />
@@ -92,7 +93,7 @@ export const EditPanel: React.FC<EditPanelProps> = ({
               onClick={applySmoothBrush}
               size="xs"
               variant="outline"
-              fontSize="xs"
+              fontSize="12px"
               title={smoothBrush.isActive && selectedCommands.length > 0
                 ? `Apply Smooth to ${selectedCommands.length} Selected Point${selectedCommands.length === 1 ? '' : 's'}`
                 : 'Apply Smooth Brush'
@@ -105,7 +106,7 @@ export const EditPanel: React.FC<EditPanelProps> = ({
 
         {/* Brush Mode Toggle */}
         <HStack spacing={2} mb={2}>
-          <Text fontSize="xs" color="gray.600">Brush Mode:</Text>
+          <Text fontSize="12px" color="gray.600">Brush Mode:</Text>
           <Button
             onClick={() => {
               if (smoothBrush.isActive) {
@@ -118,7 +119,7 @@ export const EditPanel: React.FC<EditPanelProps> = ({
             colorScheme={smoothBrush.isActive ? 'brand' : 'gray'}
             variant={smoothBrush.isActive ? 'solid' : 'outline'}
           >
-            {smoothBrush.isActive ? 'ON' : 'OFF'}
+            {smoothBrush.isActive ? 'On' : 'Off'}
           </Button>
           
           <Button
@@ -202,7 +203,7 @@ export const EditPanel: React.FC<EditPanelProps> = ({
 
         {/* Instructions */}
         {smoothBrush.isActive && (
-          <Text fontSize="xs" color="gray.600" mt={2} lineHeight="tall">
+          <Text fontSize="12px" color="gray.600" mt={2} lineHeight="tall">
             {selectedCommands.length > 0
               ? `Click "Apply Smooth" to smooth ${selectedCommands.length} selected point${selectedCommands.length === 1 ? '' : 's'}.`
               : 'Click and drag to apply smoothing. Points within the brush radius will be smoothed.'
@@ -212,14 +213,14 @@ export const EditPanel: React.FC<EditPanelProps> = ({
       </Box>
 
       {/* Path Simplification Section */}
-      <Box pt={3}>
+      <Box>
         <Flex 
           align="center" 
           justify="space-between" 
           mb={2} 
-          bg="gray.100" 
-          px={2} 
-          py={1} 
+          bg="transparent" 
+          py={0} 
+          px={0}
           borderRadius="md"
         >
           <HStack spacing={1.5}>
@@ -230,7 +231,7 @@ export const EditPanel: React.FC<EditPanelProps> = ({
             onClick={applyPathSimplification}
             size="xs"
             variant="outline"
-            fontSize="xs"
+            fontSize="12px"
             title="Simplify Path"
           >
             Apply
@@ -251,14 +252,14 @@ export const EditPanel: React.FC<EditPanelProps> = ({
       </Box>
 
       {/* Round Path Section */}
-      <Box pt={3}>
+      <Box>
         <Flex 
           align="center" 
           justify="space-between" 
           mb={2} 
-          bg="gray.100" 
-          px={2} 
-          py={1} 
+          bg="transparent" 
+          py={0} 
+          px={0}
           borderRadius="md"
         >
           <HStack spacing={1.5}>
@@ -269,7 +270,7 @@ export const EditPanel: React.FC<EditPanelProps> = ({
             onClick={applyPathRounding}
             size="xs"
             variant="outline"
-            fontSize="xs"
+            fontSize="12px"
             title="Round Path"
           >
             Apply
