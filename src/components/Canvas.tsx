@@ -13,6 +13,7 @@ import { useCanvasOpticalAlignment } from '../hooks/useCanvasOpticalAlignment';
 import { useCanvasSmoothBrush } from '../hooks/useCanvasSmoothBrush';
 import { useCanvasEventHandlers } from '../hooks/useCanvasEventHandlers';
 import { pluginManager } from '../utils/pluginManager';
+import { logger } from '../utils';
 import type { Point, PathData, CanvasElement } from '../types';
 
 export const Canvas: React.FC = () => {
@@ -366,10 +367,11 @@ export const Canvas: React.FC = () => {
     updatePointPositionFeedback(0, 0, false);
   }, [activePlugin, selectedCommands, elements, updatePointPositionFeedback]);
 
-  // Emergency cleanup listeners for drag states
+    // Emergency cleanup listeners for drag states
   useEffect(() => {
     const handleEmergencyCleanup = () => {
       if (editingPoint?.isDragging || draggingSelection?.isDragging) {
+        logger.warn('Emergency cleanup triggered - force stopping drag');
         emergencyCleanupDrag();
       }
     };
@@ -388,6 +390,93 @@ export const Canvas: React.FC = () => {
       window.removeEventListener('beforeunload', handleEmergencyCleanup);
     };
   }, [editingPoint?.isDragging, draggingSelection?.isDragging, emergencyCleanupDrag]);
+
+  // Native DOM event listeners for pencil tool (bypassing React's synthetic events)
+  useEffect(() => {
+    const svgElement = svgRef.current;
+    if (!svgElement || activePlugin !== 'pencil') return;
+
+    let isDrawing = false;
+    let tempPath: SVGPathElement | null = null;
+    let allPoints: Point[] = [];
+
+    const nativePointerDown = (e: PointerEvent) => {
+      const point = screenToCanvas(e.clientX, e.clientY);
+      isDrawing = true;
+      allPoints = [point];
+
+      // Create temporary SVG path for immediate visual feedback
+      tempPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      const { strokeWidth, strokeColor, strokeOpacity } = useCanvasStore.getState().pencil;
+      const effectiveStrokeColor = strokeColor === 'none' ? '#000000' : strokeColor;
+      
+      tempPath.setAttribute('fill', 'none');
+      tempPath.setAttribute('stroke', effectiveStrokeColor);
+      tempPath.setAttribute('stroke-width', strokeWidth.toString());
+      tempPath.setAttribute('stroke-opacity', strokeOpacity.toString());
+      tempPath.setAttribute('stroke-linecap', 'round');
+      tempPath.setAttribute('stroke-linejoin', 'round');
+      tempPath.setAttribute('d', `M ${point.x} ${point.y}`);
+      
+      svgElement.appendChild(tempPath);
+    };
+
+    const nativePointerMove = (e: PointerEvent) => {
+      if (!isDrawing || !tempPath) return;
+
+      const point = screenToCanvas(e.clientX, e.clientY);
+      allPoints.push(point);
+
+      // Update temporary path with all points
+      const pathD = allPoints.map((p, i) => 
+        i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`
+      ).join(' ');
+      
+      tempPath.setAttribute('d', pathD);
+    };
+
+    const nativePointerUp = () => {
+      if (!isDrawing) return;
+      isDrawing = false;
+
+      // Remove temporary path
+      if (tempPath) {
+        tempPath.remove();
+        tempPath = null;
+      }
+
+      // Add all points to store in ONE update
+      if (allPoints.length > 0) {
+        const state = useCanvasStore.getState();
+        state.startPath(allPoints[0]);
+        
+        // Add remaining points (skip first one as it's used in startPath)
+        for (let i = 1; i < allPoints.length; i++) {
+          state.addPointToPath(allPoints[i]);
+        }
+      }
+
+      allPoints = [];
+    };
+
+    // Add native event listeners with passive: true for better performance
+    svgElement.addEventListener('pointerdown', nativePointerDown, { passive: true });
+    svgElement.addEventListener('pointermove', nativePointerMove, { passive: true });
+    svgElement.addEventListener('pointerup', nativePointerUp, { passive: true });
+    svgElement.addEventListener('pointercancel', nativePointerUp, { passive: true });
+
+    return () => {
+      svgElement.removeEventListener('pointerdown', nativePointerDown);
+      svgElement.removeEventListener('pointermove', nativePointerMove);
+      svgElement.removeEventListener('pointerup', nativePointerUp);
+      svgElement.removeEventListener('pointercancel', nativePointerUp);
+      
+      // Cleanup temp path if it exists
+      if (tempPath) {
+        tempPath.remove();
+      }
+    };
+  }, [activePlugin, screenToCanvas]);
 
   // Handle wheel event with passive: false to allow preventDefault
   useEffect(() => {

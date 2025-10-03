@@ -318,8 +318,10 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       return;
     }
 
-    if (activePlugin === 'pencil' && e.buttons === 1) {
-      useCanvasStore.getState().addPointToPath(point);
+    // Pencil tool is handled by native DOM listeners in Canvas.tsx
+    // Skip React event handling for pencil to avoid conflicts
+    if (activePlugin === 'pencil') {
+      return;
     }
 
     // Handle smooth brush in edit mode
