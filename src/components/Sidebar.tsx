@@ -1,11 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { Box, useBreakpointValue } from '@chakra-ui/react';
+import {
+  Drawer,
+  DrawerBody,
+  DrawerOverlay,
+  DrawerContent,
+  useDisclosure,
+  IconButton,
+  HStack,
+  Box
+} from '@chakra-ui/react';
+import { Menu, X, Pin, PinOff } from 'lucide-react';
 import { useCanvasStore } from '../store/canvasStore';
 import { SidebarToolGrid } from './sidebar/SidebarToolGrid';
 import { SidebarPanels } from './sidebar/SidebarPanels';
 import { SidebarFooter } from './sidebar/SidebarFooter';
 
 export const Sidebar: React.FC = () => {
+  const { isOpen, onOpen, onClose } = useDisclosure({ defaultIsOpen: true });
+  const [isPinned, setIsPinned] = useState(false);
+  
   // Use specific selectors instead of destructuring the entire store
   const activePlugin = useCanvasStore(state => state.activePlugin);
   const setMode = useCanvasStore(state => state.setMode);
@@ -27,9 +40,6 @@ export const Sidebar: React.FC = () => {
   const [showFilePanel, setShowFilePanel] = useState<boolean>(false);
   const [showSettingsPanel, setShowSettingsPanel] = useState<boolean>(false);
   const [isArrangeExpanded, setIsArrangeExpanded] = useState(true);
-
-  // Responsive width
-  const sidebarWidth = useBreakpointValue({ base: '100%', sm: '280px', md: '250px' });
 
   // Handle Escape key to return to select mode when in file/settings mode
   useEffect(() => {
@@ -77,57 +87,200 @@ export const Sidebar: React.FC = () => {
     }
   };
 
+  // When pinned, use a fixed Box instead of Drawer to avoid overlay blocking
+  if (isPinned && isOpen) {
+    return (
+      <Box
+        position="fixed"
+        right={0}
+        top={0}
+        bottom={0}
+        width="sm"
+        h="100vh"
+        bg="white"
+        borderLeft="1px solid"
+        borderColor="gray.200"
+        boxShadow="lg"
+        display="flex"
+        flexDirection="column"
+        zIndex={1000}
+      >
+        {/* Header with Pin and Close buttons */}
+        <Box 
+          p={2} 
+          borderBottom="1px solid" 
+          borderColor="gray.200"
+          bg="gray.50"
+        >
+          <HStack spacing={1} justify="flex-end">
+            <IconButton
+              aria-label="Pin sidebar"
+              icon={<Pin size={16} />}
+              onClick={() => setIsPinned(false)}
+              size="sm"
+              variant="ghost"
+              colorScheme="blue"
+              title="Unpin sidebar"
+            />
+            <IconButton
+              aria-label="Close sidebar"
+              icon={<X size={16} />}
+              onClick={onClose}
+              size="sm"
+              variant="ghost"
+              colorScheme="gray"
+              title="Close sidebar"
+            />
+          </HStack>
+        </Box>
+
+        <Box p={0} display="flex" flexDirection="column" flex="1" overflow="auto">
+          {/* Tools Grid */}
+          <SidebarToolGrid 
+            activePlugin={activePlugin}
+            setMode={setMode}
+            onToolClick={handleToolClick}
+            showFilePanel={showFilePanel}
+            showSettingsPanel={showSettingsPanel}
+          />
+
+          {/* Main Panels */}
+          <SidebarPanels
+            activePlugin={activePlugin}
+            showFilePanel={showFilePanel}
+            showSettingsPanel={showSettingsPanel}
+            smoothBrush={smoothBrush}
+            pathSimplification={pathSimplification}
+            pathRounding={pathRounding}
+            selectedCommands={selectedCommands}
+            updateSmoothBrush={updateSmoothBrush}
+            updatePathSimplification={updatePathSimplification}
+            updatePathRounding={updatePathRounding}
+            applySmoothBrush={applySmoothBrush}
+            applyPathSimplification={applyPathSimplification}
+            applyPathRounding={applyPathRounding}
+            activateSmoothBrush={activateSmoothBrush}
+            deactivateSmoothBrush={deactivateSmoothBrush}
+            resetSmoothBrush={resetSmoothBrush}
+          />
+
+          {/* Footer with ArrangePanel and SelectPanel - hide in special panel mode */}
+          {!showFilePanel && !showSettingsPanel && (
+            <SidebarFooter
+              isArrangeExpanded={isArrangeExpanded}
+              setIsArrangeExpanded={setIsArrangeExpanded}
+            />
+          )}
+        </Box>
+      </Box>
+    );
+  }
+
+  // Normal drawer mode (not pinned)
   return (
-    <Box
-      position="absolute"
-      top={0}
-      right={0}
-      w={sidebarWidth}
-      h="100vh"
-      bg="sidebar.bg"
-      backdropFilter="blur(10px)"
-      borderLeft="1px solid"
-      borderColor="sidebar.border"
-      zIndex={1000}
-      display="flex"
-      flexDirection="column"
-    >
-      {/* Tools Grid */}
-      <SidebarToolGrid 
-        activePlugin={activePlugin}
-        setMode={setMode}
-        onToolClick={handleToolClick}
-        showFilePanel={showFilePanel}
-        showSettingsPanel={showSettingsPanel}
-      />
-
-      {/* Main Panels */}
-      <SidebarPanels
-        activePlugin={activePlugin}
-        showFilePanel={showFilePanel}
-        showSettingsPanel={showSettingsPanel}
-        smoothBrush={smoothBrush}
-        pathSimplification={pathSimplification}
-        pathRounding={pathRounding}
-        selectedCommands={selectedCommands}
-        updateSmoothBrush={updateSmoothBrush}
-        updatePathSimplification={updatePathSimplification}
-        updatePathRounding={updatePathRounding}
-        applySmoothBrush={applySmoothBrush}
-        applyPathSimplification={applyPathSimplification}
-        applyPathRounding={applyPathRounding}
-        activateSmoothBrush={activateSmoothBrush}
-        deactivateSmoothBrush={deactivateSmoothBrush}
-        resetSmoothBrush={resetSmoothBrush}
-      />
-
-      {/* Footer with ArrangePanel and SelectPanel - hide in special panel mode */}
-      {!showFilePanel && !showSettingsPanel && (
-        <SidebarFooter
-          isArrangeExpanded={isArrangeExpanded}
-          setIsArrangeExpanded={setIsArrangeExpanded}
+    <>
+      {/* Hamburger menu button - only show when drawer is closed */}
+      {!isOpen && (
+        <IconButton
+          aria-label="Open sidebar"
+          icon={<Menu size={20} />}
+          onClick={onOpen}
+          position="fixed"
+          top={4}
+          right={4}
+          zIndex={999}
+          colorScheme="blue"
+          size="md"
         />
       )}
-    </Box>
+
+      <Drawer
+        isOpen={isOpen}
+        placement="right"
+        onClose={onClose}
+        closeOnOverlayClick={true}
+        closeOnEsc={true}
+        size="sm"
+      >
+        <DrawerOverlay />
+        <DrawerContent
+          h="100vh"
+          bg="white"
+          borderLeft="1px solid"
+          borderColor="gray.200"
+          boxShadow="lg"
+          display="flex"
+          flexDirection="column"
+        >
+          {/* Header with Pin and Close buttons */}
+          <Box 
+            p={2} 
+            borderBottom="1px solid" 
+            borderColor="gray.200"
+            bg="gray.50"
+          >
+            <HStack spacing={1} justify="flex-end">
+              <IconButton
+                aria-label="Pin sidebar"
+                icon={<PinOff size={16} />}
+                onClick={() => setIsPinned(true)}
+                size="sm"
+                variant="ghost"
+                colorScheme="gray"
+                title="Pin sidebar (prevents auto-close)"
+              />
+              <IconButton
+                aria-label="Close sidebar"
+                icon={<X size={16} />}
+                onClick={onClose}
+                size="sm"
+                variant="ghost"
+                colorScheme="gray"
+                title="Close sidebar"
+              />
+            </HStack>
+          </Box>
+
+          <DrawerBody p={0} display="flex" flexDirection="column">
+            {/* Tools Grid */}
+            <SidebarToolGrid 
+              activePlugin={activePlugin}
+              setMode={setMode}
+              onToolClick={handleToolClick}
+              showFilePanel={showFilePanel}
+              showSettingsPanel={showSettingsPanel}
+            />
+
+            {/* Main Panels */}
+            <SidebarPanels
+              activePlugin={activePlugin}
+              showFilePanel={showFilePanel}
+              showSettingsPanel={showSettingsPanel}
+              smoothBrush={smoothBrush}
+              pathSimplification={pathSimplification}
+              pathRounding={pathRounding}
+              selectedCommands={selectedCommands}
+              updateSmoothBrush={updateSmoothBrush}
+              updatePathSimplification={updatePathSimplification}
+              updatePathRounding={updatePathRounding}
+              applySmoothBrush={applySmoothBrush}
+              applyPathSimplification={applyPathSimplification}
+              applyPathRounding={applyPathRounding}
+              activateSmoothBrush={activateSmoothBrush}
+              deactivateSmoothBrush={deactivateSmoothBrush}
+              resetSmoothBrush={resetSmoothBrush}
+            />
+
+            {/* Footer with ArrangePanel and SelectPanel - hide in special panel mode */}
+            {!showFilePanel && !showSettingsPanel && (
+              <SidebarFooter
+                isArrangeExpanded={isArrangeExpanded}
+                setIsArrangeExpanded={setIsArrangeExpanded}
+              />
+            )}
+          </DrawerBody>
+        </DrawerContent>
+      </Drawer>
+    </>
   );
 };
