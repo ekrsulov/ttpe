@@ -1,8 +1,8 @@
 import React from 'react';
+import { HStack, IconButton as ChakraIconButton, Tooltip } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Plus, Scissors, Zap, Minus, CirclePlus, Square, X, SplitSquareHorizontal } from 'lucide-react';
-import { IconButton } from '../ui/IconButton';
-import { PanelWithHeader } from '../ui/PanelComponents';
+import { Panel } from '../ui/Panel';
 import type { PathData } from '../../types';
 
 export const PathOperationsPanel: React.FC = () => {
@@ -60,64 +60,90 @@ export const PathOperationsPanel: React.FC = () => {
   };
 
   return (
-    <PanelWithHeader icon={<Scissors size={16} />} title="Path Operations">
-      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
+    <Panel icon={<Scissors size={16} />} title="Path Operations">
+      <HStack spacing={1} wrap="wrap">
         {/* Split subpaths operation - available only if a selected path has multiple subpaths */}
         {hasPathWithMultipleSubpaths && (
-          <IconButton
-            onPointerUp={performSimplify}
-            title="Split subpaths into separate paths"
-          >
-            <Zap size={14} />
-          </IconButton>
+          <Tooltip label="Split subpaths into separate paths" fontSize="xs">
+            <ChakraIconButton
+              aria-label="Split subpaths"
+              icon={<Zap size={14} />}
+              onClick={performSimplify}
+              size="sm"
+              variant="secondary"
+            />
+          </Tooltip>
         )}
 
         {/* Boolean operations - require 2+ items */}
         {totalSelectedItems >= 2 && (
           <>
-            <IconButton
-              onPointerUp={performUnion}
-              title="Union (Simple)"
-            >
-              <Plus size={14} />
-            </IconButton>
-            <IconButton
-              onPointerUp={performUnionPaperJS}
-              title="Union (Paper.js)"
-            >
-              <CirclePlus size={14} />
-            </IconButton>
+            <Tooltip label="Union (Simple)" fontSize="xs">
+              <ChakraIconButton
+                aria-label="Union (Simple)"
+                icon={<Plus size={14} />}
+                onClick={performUnion}
+                size="sm"
+                variant="secondary"
+              />
+            </Tooltip>
+            
+            <Tooltip label="Union (Paper.js)" fontSize="xs">
+              <ChakraIconButton
+                aria-label="Union (Paper.js)"
+                icon={<CirclePlus size={14} />}
+                onClick={performUnionPaperJS}
+                size="sm"
+                variant="secondary"
+              />
+            </Tooltip>
+            
             {totalSelectedItems === 2 && (
               <>
-                <IconButton
-                  onPointerUp={performSubtraction}
-                  title="Subtract (First - Second)"
-                >
-                  <Minus size={14} />
-                </IconButton>
-                <IconButton
-                  onPointerUp={performIntersect}
-                  title="Intersect (First ∩ Second)"
-                >
-                  <Square size={14} />
-                </IconButton>
-                <IconButton
-                  onPointerUp={performExclude}
-                  title="Exclude (First ⊕ Second)"
-                >
-                  <X size={14} />
-                </IconButton>
-                <IconButton
-                  onPointerUp={performDivide}
-                  title="Divide (Split at intersections)"
-                >
-                  <SplitSquareHorizontal size={14} />
-                </IconButton>
+                <Tooltip label="Subtract (First - Second)" fontSize="xs">
+                  <ChakraIconButton
+                    aria-label="Subtract"
+                    icon={<Minus size={14} />}
+                    onClick={performSubtraction}
+                    size="sm"
+                    variant="secondary"
+                  />
+                </Tooltip>
+                
+                <Tooltip label="Intersect (First ∩ Second)" fontSize="xs">
+                  <ChakraIconButton
+                    aria-label="Intersect"
+                    icon={<Square size={14} />}
+                    onClick={performIntersect}
+                    size="sm"
+                    variant="secondary"
+                  />
+                </Tooltip>
+                
+                <Tooltip label="Exclude (First ⊕ Second)" fontSize="xs">
+                  <ChakraIconButton
+                    aria-label="Exclude"
+                    icon={<X size={14} />}
+                    onClick={performExclude}
+                    size="sm"
+                    variant="secondary"
+                  />
+                </Tooltip>
+                
+                <Tooltip label="Divide (Split at intersections)" fontSize="xs">
+                  <ChakraIconButton
+                    aria-label="Divide"
+                    icon={<SplitSquareHorizontal size={14} />}
+                    onClick={performDivide}
+                    size="sm"
+                    variant="secondary"
+                  />
+                </Tooltip>
               </>
             )}
           </>
         )}
-      </div>
-    </PanelWithHeader>
+      </HStack>
+    </Panel>
   );
 };

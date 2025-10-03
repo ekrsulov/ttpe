@@ -1,5 +1,5 @@
 import React from 'react';
-import { IconButton } from './IconButton';
+import { IconButton as ChakraIconButton } from '@chakra-ui/react';
 import { Square, Circle, Minus } from 'lucide-react';
 
 interface LinecapSelectorProps {
@@ -29,18 +29,18 @@ export const LinecapSelector: React.FC<LinecapSelectorProps> = ({
       {linecapOptions.map(option => {
         const IconComponent = option.icon;
         return (
-                  <IconButton
-          key={option.value}
-          onPointerUp={() => onChange(option.value)}
-          active={value === option.value}
-          activeBgColor="#007bff"
-          activeColor="#fff"
-          size="custom"
-          customSize="20px"
-          title={`${option.label}: ${option.description}`}
-        >
-            <IconComponent size={12} />
-          </IconButton>
+          <ChakraIconButton
+            key={option.value}
+            aria-label={`${option.label}: ${option.description}`}
+            onPointerUp={() => onChange(option.value)}
+            colorScheme={value === option.value ? 'blue' : 'gray'}
+            variant={value === option.value ? 'solid' : 'outline'}
+            size="xs"
+            minW="20px"
+            h="20px"
+            title={`${option.label}: ${option.description}`}
+            icon={<IconComponent size={12} />}
+          />
         );
       })}
     </div>

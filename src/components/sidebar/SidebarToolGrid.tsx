@@ -1,6 +1,5 @@
 import React from 'react';
-import { IconButton } from '../ui/IconButton';
-import { PANEL_STYLES } from '../ui/PanelComponents';
+import { Box, SimpleGrid, IconButton as ChakraIconButton, Tooltip } from '@chakra-ui/react';
 import {
   Hand,
   Pen,
@@ -82,33 +81,36 @@ export const SidebarToolGrid: React.FC<SidebarToolGridProps> = ({
     }
     
     return (
-      <IconButton
-        key={plugin.name}
-        onClick={handleClick}
-        active={isActive}
-        title={plugin.label}
-        size="custom"
-        customSize="20px"
-        activeBgColor="#007bff"
-      >
-        <IconComponent size={16} />
-      </IconButton>
+      <Tooltip key={plugin.name} label={plugin.label} placement="left" hasArrow>
+        <ChakraIconButton
+          aria-label={plugin.label}
+          icon={<IconComponent size={16} />}
+          onClick={handleClick}
+          variant="tool"
+          size="md"
+          data-active={isActive}
+          bg={isActive ? 'brand.500' : 'sidebar.toolBg'}
+          color={isActive ? 'white' : 'gray.700'}
+          _hover={{
+            bg: isActive ? 'brand.600' : 'sidebar.toolHover'
+          }}
+        />
+      </Tooltip>
     );
   };
 
   return (
-    <div style={PANEL_STYLES.toolsSection}>
+    <Box p={2} bg="white">
       {pluginRows.map((row, rowIndex) => (
-        <div
+        <SimpleGrid
           key={rowIndex}
-          style={{
-            ...PANEL_STYLES.pluginGrid,
-            marginBottom: rowIndex < pluginRows.length - 1 ? '2px' : '0'
-          }}
+          columns={5}
+          spacing={0.5}
+          mb={rowIndex < pluginRows.length - 1 ? 0.5 : 0}
         >
           {row.map(renderPluginButton)}
-        </div>
+        </SimpleGrid>
       ))}
-    </div>
+    </Box>
   );
 };

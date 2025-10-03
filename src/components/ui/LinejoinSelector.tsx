@@ -1,5 +1,5 @@
 import React from 'react';
-import { IconButton } from './IconButton';
+import { IconButton as ChakraIconButton } from '@chakra-ui/react';
 import { Square, Circle, ChevronRight } from 'lucide-react';
 
 interface LinejoinSelectorProps {
@@ -29,18 +29,18 @@ export const LinejoinSelector: React.FC<LinejoinSelectorProps> = ({
       {linejoinOptions.map(option => {
         const IconComponent = option.icon;
         return (
-          <IconButton
+          <ChakraIconButton
             key={option.value}
+            aria-label={`${title}: ${option.description}`}
             onPointerUp={() => onChange(option.value)}
-            active={value === option.value}
-            activeBgColor="#007bff"
-            activeColor="#fff"
-            size="custom"
-            customSize="20px"
+            colorScheme={value === option.value ? 'blue' : 'gray'}
+            variant={value === option.value ? 'solid' : 'outline'}
+            size="xs"
+            minW="20px"
+            h="20px"
             title={`${title}: ${option.description}`}
-          >
-            <IconComponent size={12} />
-          </IconButton>
+            icon={<IconComponent size={12} />}
+          />
         );
       })}
     </div>

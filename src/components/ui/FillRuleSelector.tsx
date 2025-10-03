@@ -1,5 +1,5 @@
 import React from 'react';
-import { IconButton } from './IconButton';
+import { IconButton as ChakraIconButton } from '@chakra-ui/react';
 
 interface FillRuleSelectorProps {
   value: 'nonzero' | 'evenodd';
@@ -25,20 +25,22 @@ export const FillRuleSelector: React.FC<FillRuleSelectorProps> = ({
     <div style={{ display: 'flex', gap: '2px' }}>
       {fillRuleOptions.map(option => {
         return (
-          <IconButton
+          <ChakraIconButton
             key={option.value}
+            aria-label={`${title}: ${option.description}`}
             onPointerUp={() => onChange(option.value)}
-            active={value === option.value}
-            activeBgColor="#007bff"
-            activeColor="#fff"
-            size="custom"
-            customSize="20px"
+            colorScheme={value === option.value ? 'blue' : 'gray'}
+            variant={value === option.value ? 'solid' : 'outline'}
+            size="xs"
+            minW="20px"
+            h="20px"
             title={`${title}: ${option.description}`}
-          >
-            <span style={{ fontSize: '10px', fontWeight: 'bold' }}>
-              {option.label}
-            </span>
-          </IconButton>
+            icon={
+              <span style={{ fontSize: '10px', fontWeight: 'bold' }}>
+                {option.label}
+              </span>
+            }
+          />
         );
       })}
     </div>

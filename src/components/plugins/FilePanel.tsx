@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
+import { Button as ChakraButton, Checkbox as ChakraCheckbox, HStack, VStack } from '@chakra-ui/react';
 import { File, Save, FolderOpen, Download } from 'lucide-react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { logger } from '../../utils';
-import { PanelWithHeader } from '../ui/PanelComponents';
-import { Button, Checkbox } from '../ui/FormComponents';
+import { Panel } from '../ui/Panel';
 
 export const FilePanel: React.FC = () => {
   const { saveDocument, loadDocument, saveAsSvg } = useCanvasStore();
@@ -27,47 +27,49 @@ export const FilePanel: React.FC = () => {
   };
 
   return (
-    <PanelWithHeader icon={<File size={16} />} title="File">
-      <div style={{ display: 'flex', flexDirection: 'row', gap: '4px' }}>
-        <Button
-          onClick={handleSave}
-          variant="secondary"
-          icon={<Save size={14} />}
-          title="Save"
-          style={{ flex: 1, minWidth: 0 }}
-        >
-          Save
-        </Button>
+    <Panel icon={<File size={16} />} title="File">
+      <VStack spacing={2} align="stretch">
+        <HStack spacing={1}>
+          <ChakraButton
+            onClick={handleSave}
+            variant="secondary"
+            leftIcon={<Save size={14} />}
+            flex={1}
+            size="sm"
+          >
+            Save
+          </ChakraButton>
 
-        <Button
-          onClick={handleSaveAsSvg}
-          variant="secondary"
-          icon={<Download size={14} />}
-          title="Save as SVG"
-          style={{ flex: 1, minWidth: 0 }}
-        >
-          Svg
-        </Button>
+          <ChakraButton
+            onClick={handleSaveAsSvg}
+            variant="secondary"
+            leftIcon={<Download size={14} />}
+            flex={1}
+            size="sm"
+          >
+            Svg
+          </ChakraButton>
 
-        <Button
-          onClick={handleLoad}
-          variant="secondary"
-          icon={<FolderOpen size={14} />}
-          title="Load"
-          style={{ flex: 1, minWidth: 0 }}
-        >
-          Load
-        </Button>
-      </div>
+          <ChakraButton
+            onClick={handleLoad}
+            variant="secondary"
+            leftIcon={<FolderOpen size={14} />}
+            flex={1}
+            size="sm"
+          >
+            Load
+          </ChakraButton>
+        </HStack>
 
-      <div style={{ marginTop: '8px' }}>
-        <Checkbox
+        <ChakraCheckbox
           id="append-mode"
-          checked={appendMode}
-          onChange={setAppendMode}
-          label="Append to current document"
-        />
-      </div>
-    </PanelWithHeader>
+          isChecked={appendMode}
+          onChange={(e) => setAppendMode(e.target.checked)}
+          size="sm"
+        >
+          Append to current document
+        </ChakraCheckbox>
+      </VStack>
+    </Panel>
   );
 };

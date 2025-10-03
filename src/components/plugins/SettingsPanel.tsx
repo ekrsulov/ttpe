@@ -1,15 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, ChevronDown, RotateCcw } from 'lucide-react';
+import {
+  VStack,
+  FormControl,
+  FormLabel,
+  Input,
+  Checkbox as ChakraCheckbox,
+  Button,
+  Select,
+  Text,
+  FormHelperText,
+  Divider,
+  Box
+} from '@chakra-ui/react';
+import { Settings, RotateCcw } from 'lucide-react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { logger, LogLevel } from '../../utils';
-import { PanelWithHeader } from '../ui/PanelComponents';
-import { TextInput, Checkbox } from '../ui/FormComponents';
+import { Panel } from '../ui/Panel';
 
 export const SettingsPanel: React.FC = () => {
-  const { documentName, setDocumentName, settings, updateSettings } = useCanvasStore();
+  const { documentName, settings, updateSettings } = useCanvasStore();
   const [localDocumentName, setLocalDocumentName] = useState(documentName);
   const [logLevel, setLogLevel] = useState<LogLevel>(LogLevel.WARN); // Default log level
-  const [showLogLevelDropdown, setShowLogLevelDropdown] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showCallerInfo, setShowCallerInfo] = useState(false);
   const [keyboardPrecision, setKeyboardPrecision] = useState(settings.keyboardMovementPrecision);
@@ -33,42 +44,12 @@ export const SettingsPanel: React.FC = () => {
     setShowCallerInfo(currentShowCallerInfo);
   }, []);
 
-  // Auto-save document name when it changes
-  useEffect(() => {
-    if (localDocumentName !== documentName) {
-      setIsSaving(true);
-      const timeoutId = setTimeout(() => {
-        setDocumentName(localDocumentName);
-        setIsSaving(false);
-        logger.debug('Document name auto-saved', { documentName: localDocumentName });
-      }, 500); // Debounce for 500ms
-
-      return () => {
-        clearTimeout(timeoutId);
-        setIsSaving(false);
-      };
-    }
-  }, [localDocumentName, documentName, setDocumentName]);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (showLogLevelDropdown && !(event.target as Element)?.closest('[data-log-level-selector]')) {
-        setShowLogLevelDropdown(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showLogLevelDropdown]);
-
 
 
   const handleLogLevelChange = (newLevel: LogLevel) => {
     setLogLevel(newLevel);
     // Apply the log level change immediately (online)
     logger.setConfig({ level: newLevel });
-    setShowLogLevelDropdown(false);
     logger.info('Log level changed to', getLogLevelName(newLevel));
   };
 
@@ -99,197 +80,113 @@ export const SettingsPanel: React.FC = () => {
     }
   };
 
+  const handleDocumentNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newName = e.target.value;
+    setLocalDocumentName(newName);
+    setIsSaving(true);
+    
+    // Debounced save
+    setTimeout(() => {
+      useCanvasStore.getState().setDocumentName(newName);
+      setIsSaving(false);
+      logger.debug('Document name auto-saved', { documentName: newName });
+    }, 500);
+  };
+
   return (
-    <PanelWithHeader icon={<Settings size={16} />} title="Settings">
-      <div style={{ display: 'grid', gap: '6px' }}>
-        <div style={{ position: 'relative' }}>
-          <TextInput
-            label="Document Name"
+    <Panel icon={<Settings size={16} />} title="Settings">
+      <VStack spacing={3} align="stretch">
+        {/* Document Name */}
+        <FormControl position="relative">
+          <FormLabel fontSize="xs" fontWeight="medium" color="gray.600" mb={1}>
+            Document Name
+          </FormLabel>
+          <Input
             value={localDocumentName}
-            onChange={setLocalDocumentName}
+            onChange={handleDocumentNameChange}
             placeholder="Enter document name"
+            size="sm"
           />
           {isSaving && (
-            <div style={{
-              position: 'absolute',
-              right: '8px',
-              top: '28px',
-              fontSize: '10px',
-              color: '#666',
-              backgroundColor: '#fff',
-              padding: '2px 4px',
-              borderRadius: '2px',
-              pointerEvents: 'none'
-            }}>
+            <Text
+              position="absolute"
+              right={2}
+              top="28px"
+              fontSize="xs"
+              color="gray.500"
+              bg="white"
+              px={1}
+              pointerEvents="none"
+            >
               Saving...
-            </div>
+            </Text>
           )}
-        </div>
+        </FormControl>
 
         {/* Log Level Selector */}
-        <div style={{ position: 'relative' }} data-log-level-selector>
-          <label style={{
-            fontSize: '11px',
-            fontWeight: '500',
-            color: '#666',
-            letterSpacing: '0.5px',
-            display: 'block',
-            marginBottom: '4px'
-          }}>
+        <FormControl>
+          <FormLabel fontSize="xs" fontWeight="medium" color="gray.600" mb={1}>
             Log Level
-          </label>
-          <div
-            onClick={() => setShowLogLevelDropdown(!showLogLevelDropdown)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '6px 8px',
-              border: '1px solid #ccc',
-              borderRadius: '3px',
-              fontSize: '12px',
-              color: '#333',
-              backgroundColor: '#fff',
-              cursor: 'pointer'
-            }}
+          </FormLabel>
+          <Select
+            value={logLevel}
+            onChange={(e) => handleLogLevelChange(parseInt(e.target.value) as LogLevel)}
+            size="sm"
           >
-            <span>{getLogLevelName(logLevel)}</span>
-            <ChevronDown 
-              size={14} 
-              style={{ 
-                transform: showLogLevelDropdown ? 'rotate(180deg)' : 'rotate(0deg)',
-                transition: 'transform 0.2s'
-              }} 
-            />
-          </div>
-          
-          {showLogLevelDropdown && (
-            <div style={{
-              position: 'absolute',
-              top: '100%',
-              left: 0,
-              right: 0,
-              backgroundColor: '#fff',
-              border: '1px solid #ccc',
-              borderRadius: '3px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              zIndex: 1000,
-              marginTop: '1px'
-            }}>
-              {[LogLevel.DEBUG, LogLevel.INFO, LogLevel.WARN, LogLevel.ERROR].map(level => (
-                <div
-                  key={level}
-                  onClick={() => handleLogLevelChange(level)}
-                  style={{
-                    padding: '8px 12px',
-                    cursor: 'pointer',
-                    fontSize: '12px',
-                    backgroundColor: logLevel === level ? '#e3f2fd' : 'transparent',
-                    borderBottom: '1px solid #f0f0f0'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (logLevel !== level) {
-                      e.currentTarget.style.backgroundColor = '#f8f9fa';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = logLevel === level ? '#e3f2fd' : 'transparent';
-                  }}
-                >
-                  {getLogLevelName(level)}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+            <option value={LogLevel.DEBUG}>DEBUG</option>
+            <option value={LogLevel.INFO}>INFO</option>
+            <option value={LogLevel.WARN}>WARN</option>
+            <option value={LogLevel.ERROR}>ERROR</option>
+          </Select>
+        </FormControl>
 
         {/* Show Caller Info Checkbox */}
-        <Checkbox
-          id="show-caller-info"
-          checked={showCallerInfo}
-          onChange={handleCallerInfoToggle}
-          label="Show caller info in logs"
-        />
+        <ChakraCheckbox
+          isChecked={showCallerInfo}
+          onChange={(e) => handleCallerInfoToggle(e.target.checked)}
+          size="sm"
+        >
+          Show caller info in logs
+        </ChakraCheckbox>
 
         {/* Keyboard Movement Precision */}
-        <div>
-          <label style={{
-            fontSize: '11px',
-            fontWeight: '500',
-            color: '#666',
-            letterSpacing: '0.5px',
-            display: 'block',
-            marginBottom: '4px'
-          }}>
+        <FormControl>
+          <FormLabel fontSize="xs" fontWeight="medium" color="gray.600" mb={1}>
             Keyboard Movement Precision
-          </label>
-          <input
+          </FormLabel>
+          <Input
             type="number"
-            min="0"
-            max="10"
-            step="1"
+            min={0}
+            max={10}
+            step={1}
             value={keyboardPrecision}
             onChange={(e) => handleKeyboardPrecisionChange(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '6px 8px',
-              border: '1px solid #ccc',
-              borderRadius: '3px',
-              fontSize: '12px',
-              color: '#333',
-              backgroundColor: '#fff'
-            }}
+            size="sm"
             title="Number of decimal places for keyboard movement (0 = integers only)"
           />
-          <div style={{
-            fontSize: '10px',
-            color: '#888',
-            marginTop: '2px'
-          }}>
+          <FormHelperText fontSize="xs" mt={1}>
             Decimal places when moving with arrow keys (0-10)
-          </div>
-        </div>
+          </FormHelperText>
+        </FormControl>
 
         {/* Reset Application */}
-        <div style={{
-          marginTop: '12px',
-          paddingTop: '12px',
-          borderTop: '1px solid #e9ecef'
-        }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
-            <button
-              onClick={() => { 
-                localStorage.removeItem('canvas-app-state'); 
-                window.location.reload(); 
-              }} 
-              title="Reset Application - This will clear all data and reload the page"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                fontSize: '12px',
-                fontWeight: '700',
-                backgroundColor: '#dc3545',
-                color: '#fff',
-                border: '1px solid #dc3545',
-                borderRadius: '3px',
-                padding: '4px 4px',
-                cursor: 'pointer',
-                width: '100%'
-              }}
-            >
-              <RotateCcw size={16} /> 
-              Reset App
-            </button>
-          </div>
-        </div>
-
-      </div>
-    </PanelWithHeader>
+        <Box pt={3}>
+          <Divider mb={3} />
+          <Button
+            onClick={() => {
+              localStorage.removeItem('canvas-app-state');
+              window.location.reload();
+            }}
+            colorScheme="red"
+            leftIcon={<RotateCcw size={16} />}
+            size="sm"
+            width="full"
+            title="Reset Application - This will clear all data and reload the page"
+          >
+            Reset App
+          </Button>
+        </Box>
+      </VStack>
+    </Panel>
   );
 };

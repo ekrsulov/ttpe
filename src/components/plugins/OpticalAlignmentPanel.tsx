@@ -1,7 +1,17 @@
 import React from 'react';
+import {
+  VStack,
+  HStack,
+  Button,
+  IconButton as ChakraIconButton,
+  Text,
+  Box,
+  Grid,
+  GridItem,
+  Tooltip
+} from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { IconButton } from '../ui/IconButton';
-import { PanelWithHeader } from '../ui/PanelComponents';
+import { Panel } from '../ui/Panel';
 import {
   Target,
   Play,
@@ -57,254 +67,233 @@ export const OpticalAlignmentPanel: React.FC = () => {
   if (getAlignmentValidationMessage() !== null) return null;
 
   return (
-    <PanelWithHeader icon={<Target size={16} />} title="Optical Alignment">
+    <Panel icon={<Target size={16} />} title="Optical Alignment">
       {/* Controls */}
       {canPerformOpticalAlignment() && (
-        <>
+        <VStack spacing={2} align="stretch">
           {/* Visualization Controls */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            marginBottom: '8px',
-            gap: '8px'
-          }}>
-            <span style={{ fontSize: '11px', color: '#666' }}>Show:</span>
+          <HStack spacing={2}>
+            <Text fontSize="xs" color="gray.600">Show:</Text>
 
-            <IconButton
-              size="small"
-              onClick={toggleMathematicalCenter}
-              active={showMathematicalCenter}
-              title="Mathematical Center"
-            >
-              <Crosshair size={16} />
-            </IconButton>
+            <Tooltip label="Mathematical Center" fontSize="xs">
+              <ChakraIconButton
+                aria-label="Mathematical Center"
+                icon={<Crosshair size={16} />}
+                size="sm"
+                onClick={toggleMathematicalCenter}
+                colorScheme={showMathematicalCenter ? 'brand' : 'gray'}
+                variant={showMathematicalCenter ? 'solid' : 'outline'}
+              />
+            </Tooltip>
 
-            <IconButton
-              size="small"
-              onClick={toggleOpticalCenter}
-              active={showOpticalCenter}
-              title="Optical Center"
-            >
-              <Target size={16} />
-            </IconButton>
+            <Tooltip label="Optical Center" fontSize="xs">
+              <ChakraIconButton
+                aria-label="Optical Center"
+                icon={<Target size={16} />}
+                size="sm"
+                onClick={toggleOpticalCenter}
+                colorScheme={showOpticalCenter ? 'brand' : 'gray'}
+                variant={showOpticalCenter ? 'solid' : 'outline'}
+              />
+            </Tooltip>
 
-            <IconButton
-              size="small"
-              onClick={toggleMetrics}
-              active={showMetrics}
-              title="Show Metrics"
-            >
-              <BarChart3 size={16} />
-            </IconButton>
+            <Tooltip label="Show Metrics" fontSize="xs">
+              <ChakraIconButton
+                aria-label="Show Metrics"
+                icon={<BarChart3 size={16} />}
+                size="sm"
+                onClick={toggleMetrics}
+                colorScheme={showMetrics ? 'brand' : 'gray'}
+                variant={showMetrics ? 'solid' : 'outline'}
+              />
+            </Tooltip>
 
-            <IconButton
-              size="small"
-              onClick={toggleDistanceRules}
-              active={showDistanceRules}
-              title="Show Distance Rules"
-            >
-              <Ruler size={16} />
-            </IconButton>
-          </div>
+            <Tooltip label="Show Distance Rules" fontSize="xs">
+              <ChakraIconButton
+                aria-label="Show Distance Rules"
+                icon={<Ruler size={16} />}
+                size="sm"
+                onClick={toggleDistanceRules}
+                colorScheme={showDistanceRules ? 'brand' : 'gray'}
+                variant={showDistanceRules ? 'solid' : 'outline'}
+              />
+            </Tooltip>
+          </HStack>
 
           {/* Action Buttons */}
-          <div style={{
-            display: 'flex',
-            gap: '6px',
-            marginBottom: '8px'
-          }}>
-            <button
+          <HStack spacing={1.5}>
+            <Button
               onClick={handlePreviewAlignment}
-              disabled={!canPerformOpticalAlignment()}
-              style={{
-                flex: 1,
-                padding: '6px 8px',
-                backgroundColor: '#28a745',
-                color: 'white',
-                border: 'none',
-                borderRadius: '3px',
-                fontSize: '11px',
-                cursor: canPerformOpticalAlignment() ? 'pointer' : 'not-allowed',
-                opacity: canPerformOpticalAlignment() ? 1 : 0.6,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '4px'
-              }}
+              isDisabled={!canPerformOpticalAlignment()}
+              colorScheme="green"
+              size="sm"
+              flex={1}
+              leftIcon={<Eye size={12} />}
             >
-              <Eye size={12} />
               Preview
-            </button>
+            </Button>
 
-            <button
+            <Button
               onClick={handleApplyAlignment}
-              disabled={!hasAlignment}
-              style={{
-                flex: 1,
-                padding: '6px 8px',
-                backgroundColor: '#007bff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '3px',
-                fontSize: '11px',
-                cursor: hasAlignment ? 'pointer' : 'not-allowed',
-                opacity: hasAlignment ? 1 : 0.6,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '4px'
-              }}
+              isDisabled={!hasAlignment}
+              colorScheme="brand"
+              size="sm"
+              flex={1}
+              leftIcon={<Play size={12} />}
             >
-              <Play size={12} />
               Apply
-            </button>
+            </Button>
 
-            <IconButton
-              size="small"
-              onClick={handleResetAlignment}
-              disabled={!hasAlignment}
-              title="Reset"
-            >
-              <RotateCcw size={16} />
-            </IconButton>
-          </div>
+            <Tooltip label="Reset" fontSize="xs">
+              <ChakraIconButton
+                aria-label="Reset"
+                icon={<RotateCcw size={16} />}
+                size="sm"
+                onClick={handleResetAlignment}
+                isDisabled={!hasAlignment}
+                variant="outline"
+              />
+            </Tooltip>
+          </HStack>
 
           {/* Metrics Display */}
           {showMetrics && currentAlignment && (
-            <div style={{
-              fontSize: '10px'
-            }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', marginBottom: '4px' }}>
-                <div>
-                  <div style={{ color: '#6c757d' }}>Math Center:</div>
-                  <div style={{ fontFamily: 'monospace', fontSize: '9px' }}>
+            <Box fontSize="xs">
+              <Grid templateColumns="1fr 1fr" gap={1} mb={1}>
+                <GridItem>
+                  <Text color="gray.600" fontSize="xs">Math Center:</Text>
+                  <Text fontFamily="mono" fontSize="2xs">
                     ({currentAlignment.metrics.mathematicalCenter.x.toFixed(1)}, {currentAlignment.metrics.mathematicalCenter.y.toFixed(1)})
-                  </div>
-                </div>
-                <div>
-                  <div style={{ color: '#6c757d' }}>Optical Center:</div>
-                  <div style={{ fontFamily: 'monospace', fontSize: '9px' }}>
+                  </Text>
+                </GridItem>
+                <GridItem>
+                  <Text color="gray.600" fontSize="xs">Optical Center:</Text>
+                  <Text fontFamily="mono" fontSize="2xs">
                     ({currentAlignment.metrics.opticalCenter.x.toFixed(1)}, {currentAlignment.metrics.opticalCenter.y.toFixed(1)})
-                  </div>
-                </div>
-              </div>
+                  </Text>
+                </GridItem>
+              </Grid>
 
               {currentAlignment.content.length > 0 && (
-                <div style={{ marginTop: '4px', paddingTop: '4px', borderTop: '1px solid #e9ecef' }}>
+                <Box mt={1} pt={1} borderTop="1px solid" borderColor="gray.200">
                   {/* Container Information */}
-                  <div style={{ marginBottom: '8px' }}>
-                    <div style={{ color: '#666', marginBottom: '4px', fontWeight: 'bold' }}>Container - {currentAlignment.container.geometry.shapeClassification}:</div>
+                  <Box mb={2}>
+                    <Text color="gray.600" mb={1} fontWeight="bold" fontSize="xs">
+                      Container - {currentAlignment.container.geometry.shapeClassification}:
+                    </Text>
                     
                     {/* Basic Geometry */}
-                    <div style={{ fontSize: '9px', marginBottom: '4px' }}>
-                      <div style={{ fontFamily: 'monospace' }}>
+                    <Box fontSize="2xs" mb={1}>
+                      <Text fontFamily="mono">
                         Area: {currentAlignment.container.geometry.area.toFixed(1)}px², 
                         Perimeter: {currentAlignment.container.geometry.perimeter.toFixed(1)}px
-                      </div>
-                      <div style={{ fontFamily: 'monospace' }}>
+                      </Text>
+                      <Text fontFamily="mono">
                         Bounds: [{currentAlignment.container.geometry.bounds.minX.toFixed(1)}, {currentAlignment.container.geometry.bounds.minY.toFixed(1)}] → [{currentAlignment.container.geometry.bounds.maxX.toFixed(1)}, {currentAlignment.container.geometry.bounds.maxY.toFixed(1)}]
-                      </div>
-                      <div style={{ fontFamily: 'monospace' }}>
+                      </Text>
+                      <Text fontFamily="mono">
                         Centroid: ({currentAlignment.container.geometry.centroid.x.toFixed(1)}, {currentAlignment.container.geometry.centroid.y.toFixed(1)})
-                      </div>
-                    </div>
+                      </Text>
+                    </Box>
 
                     {/* Advanced Geometry */}
-                    <div style={{ fontSize: '9px', marginBottom: '4px' }}>
-                      <div style={{ fontFamily: 'monospace' }}>
+                    <Box fontSize="2xs" mb={1}>
+                      <Text fontFamily="mono">
                         Compactness: {currentAlignment.container.geometry.compactness.toFixed(3)}, 
                         Vertices: {currentAlignment.container.geometry.vertexCount}
-                      </div>
-                      <div style={{ fontFamily: 'monospace' }}>
+                      </Text>
+                      <Text fontFamily="mono">
                         Quadrant Weights: TL:{currentAlignment.container.geometry.quadrantWeights.topLeft.toFixed(2)} TR:{currentAlignment.container.geometry.quadrantWeights.topRight.toFixed(2)} BL:{currentAlignment.container.geometry.quadrantWeights.bottomLeft.toFixed(2)} BR:{currentAlignment.container.geometry.quadrantWeights.bottomRight.toFixed(2)}
-                      </div>
-                      <div style={{ fontFamily: 'monospace' }}>
+                      </Text>
+                      <Text fontFamily="mono">
                         Directional Bias: H:{currentAlignment.container.geometry.directionalBias.horizontal.toFixed(2)} V:{currentAlignment.container.geometry.directionalBias.vertical.toFixed(2)}
-                      </div>
-                    </div>
+                      </Text>
+                    </Box>
 
                     {/* Visual Properties */}
-                    <div style={{ fontSize: '9px' }}>
-                      <div style={{ fontFamily: 'monospace' }}>
+                    <Box fontSize="2xs">
+                      <Text fontFamily="mono">
                         Stroke: {currentAlignment.container.geometry.visualProperties.strokeWidth}px {currentAlignment.container.geometry.visualProperties.strokeColor} ({(currentAlignment.container.geometry.visualProperties.strokeOpacity * 100).toFixed(0)}%)
-                      </div>
-                      <div style={{ fontFamily: 'monospace' }}>
+                      </Text>
+                      <Text fontFamily="mono">
                         Fill: {currentAlignment.container.geometry.visualProperties.fillColor} ({(currentAlignment.container.geometry.visualProperties.fillOpacity * 100).toFixed(0)}%)
-                      </div>
-                      <div style={{ fontFamily: 'monospace' }}>
+                      </Text>
+                      <Text fontFamily="mono">
                         Visual: Intensity {currentAlignment.container.geometry.visualProperties.visualIntensity.toFixed(2)}, Contrast {currentAlignment.container.geometry.visualProperties.contrastWeight.toFixed(2)}
-                      </div>
-                    </div>
-                  </div>
+                      </Text>
+                    </Box>
+                  </Box>
 
                   {/* Content Information */}
-                  <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #e9ecef' }}>
-                    <div style={{ color: '#666', marginBottom: '4px', fontWeight: 'bold' }}>Content Item - {currentAlignment.content[0].geometry.shapeClassification}:</div>
+                  <Box mt={2} pt={2} borderTop="1px solid" borderColor="gray.200">
+                    <Text color="gray.600" mb={1} fontWeight="bold" fontSize="xs">
+                      Content Item - {currentAlignment.content[0].geometry.shapeClassification}:
+                    </Text>
                     
                     {(() => {
                       const item = currentAlignment.content[0];
                       return (
-                        <div>
+                        <Box>
                           {/* Basic Geometry */}
-                          <div style={{ fontSize: '9px', marginBottom: '4px' }}>
-                            <div style={{ fontFamily: 'monospace' }}>
+                          <Box fontSize="2xs" mb={1}>
+                            <Text fontFamily="mono">
                               Area: {item.geometry.area.toFixed(1)}px², 
                               Perimeter: {item.geometry.perimeter.toFixed(1)}px
-                            </div>
-                            <div style={{ fontFamily: 'monospace' }}>
+                            </Text>
+                            <Text fontFamily="mono">
                               Bounds: [{item.geometry.bounds.minX.toFixed(1)}, {item.geometry.bounds.minY.toFixed(1)}] → [{item.geometry.bounds.maxX.toFixed(1)}, {item.geometry.bounds.maxY.toFixed(1)}]
-                            </div>
-                            <div style={{ fontFamily: 'monospace' }}>
+                            </Text>
+                            <Text fontFamily="mono">
                               Centroid: ({item.geometry.centroid.x.toFixed(1)}, {item.geometry.centroid.y.toFixed(1)})
-                            </div>
-                            <div style={{ fontFamily: 'monospace' }}>
+                            </Text>
+                            <Text fontFamily="mono">
                               Optical Center: ({item.opticalCenter.x.toFixed(1)}, {item.opticalCenter.y.toFixed(1)})
-                            </div>
-                          </div>
+                            </Text>
+                          </Box>
 
                           {/* Advanced Geometry */}
-                          <div style={{ fontSize: '9px', marginBottom: '4px' }}>
-                            <div style={{ fontFamily: 'monospace' }}>
+                          <Box fontSize="2xs" mb={1}>
+                            <Text fontFamily="mono">
                               Compactness: {item.geometry.compactness.toFixed(3)}, 
                               Vertices: {item.geometry.vertexCount}
-                            </div>
-                            <div style={{ fontFamily: 'monospace' }}>
+                            </Text>
+                            <Text fontFamily="mono">
                               Quadrant Weights: TL:{item.geometry.quadrantWeights.topLeft.toFixed(2)} TR:{item.geometry.quadrantWeights.topRight.toFixed(2)} BL:{item.geometry.quadrantWeights.bottomLeft.toFixed(2)} BR:{item.geometry.quadrantWeights.bottomRight.toFixed(2)}
-                            </div>
-                            <div style={{ fontFamily: 'monospace' }}>
+                            </Text>
+                            <Text fontFamily="mono">
                               Directional Bias: H:{item.geometry.directionalBias.horizontal.toFixed(2)} V:{item.geometry.directionalBias.vertical.toFixed(2)}
-                            </div>
-                          </div>
+                            </Text>
+                          </Box>
 
                           {/* Visual Properties */}
-                          <div style={{ fontSize: '9px', marginBottom: '4px' }}>
-                            <div style={{ fontFamily: 'monospace' }}>
+                          <Box fontSize="2xs" mb={1}>
+                            <Text fontFamily="mono">
                               Stroke: {item.geometry.visualProperties.strokeWidth}px {item.geometry.visualProperties.strokeColor} ({(item.geometry.visualProperties.strokeOpacity * 100).toFixed(0)}%)
-                            </div>
-                            <div style={{ fontFamily: 'monospace' }}>
+                            </Text>
+                            <Text fontFamily="mono">
                               Fill: {item.geometry.visualProperties.fillColor} ({(item.geometry.visualProperties.fillOpacity * 100).toFixed(0)}%)
-                            </div>
-                            <div style={{ fontFamily: 'monospace' }}>
+                            </Text>
+                            <Text fontFamily="mono">
                               Visual: Intensity {item.geometry.visualProperties.visualIntensity.toFixed(2)}, Contrast {item.geometry.visualProperties.contrastWeight.toFixed(2)}
-                            </div>
-                          </div>
+                            </Text>
+                          </Box>
 
                           {/* Weight Information */}
-                          <div style={{ fontSize: '9px' }}>
-                            <div style={{ fontFamily: 'monospace' }}>
+                          <Box fontSize="2xs">
+                            <Text fontFamily="mono">
                               Visual Weight: {item.visualWeight.toFixed(2)}
-                            </div>
-                          </div>
-                        </div>
+                            </Text>
+                          </Box>
+                        </Box>
                       );
                     })()}
-                  </div>
-                </div>
+                  </Box>
+                </Box>
               )}
-            </div>
+            </Box>
           )}
-        </>
+        </VStack>
       )}
-    </PanelWithHeader>
+    </Panel>
   );
 };

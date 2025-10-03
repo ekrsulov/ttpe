@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { Box, useBreakpointValue } from '@chakra-ui/react';
 import { useCanvasStore } from '../store/canvasStore';
 import { SidebarToolGrid } from './sidebar/SidebarToolGrid';
 import { SidebarPanels } from './sidebar/SidebarPanels';
 import { SidebarFooter } from './sidebar/SidebarFooter';
-import { PANEL_STYLES } from './ui/PanelComponents';
 
 export const Sidebar: React.FC = () => {
   // Use specific selectors instead of destructuring the entire store
@@ -27,6 +27,9 @@ export const Sidebar: React.FC = () => {
   const [showFilePanel, setShowFilePanel] = useState<boolean>(false);
   const [showSettingsPanel, setShowSettingsPanel] = useState<boolean>(false);
   const [isArrangeExpanded, setIsArrangeExpanded] = useState(true);
+
+  // Responsive width
+  const sidebarWidth = useBreakpointValue({ base: '100%', sm: '280px', md: '250px' });
 
   // Handle Escape key to return to select mode when in file/settings mode
   useEffect(() => {
@@ -75,7 +78,20 @@ export const Sidebar: React.FC = () => {
   };
 
   return (
-    <div style={PANEL_STYLES.sidebarContainer}>
+    <Box
+      position="absolute"
+      top={0}
+      right={0}
+      w={sidebarWidth}
+      h="100vh"
+      bg="sidebar.bg"
+      backdropFilter="blur(10px)"
+      borderLeft="1px solid"
+      borderColor="sidebar.border"
+      zIndex={1000}
+      display="flex"
+      flexDirection="column"
+    >
       {/* Tools Grid */}
       <SidebarToolGrid 
         activePlugin={activePlugin}
@@ -112,6 +128,6 @@ export const Sidebar: React.FC = () => {
           setIsArrangeExpanded={setIsArrangeExpanded}
         />
       )}
-    </div>
+    </Box>
   );
 };

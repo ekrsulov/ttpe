@@ -1,7 +1,7 @@
 import React from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Pen, Minus, Copy, Clipboard } from 'lucide-react';
-import { IconButton } from '../ui/IconButton';
+import { VStack, HStack, Box, Text, IconButton as ChakraIconButton } from '@chakra-ui/react';
 import { extractEditablePoints, extractSubpaths, commandsToString, translateCommands } from '../../utils/path';
 import type { CanvasElement, PathData } from '../../types';
 import { logger } from '../../utils';
@@ -113,75 +113,73 @@ export const SelectPanel: React.FC = () => {
   };
 
   return (
-    <div style={{
-      backgroundColor: '#fff',
-      padding: '0 8px 0 8px',
-      display: 'flex',
-      flexDirection: 'column'
-    }}>
-      <div style={{
-        height: '94px', // Fixed height for ~2.5 elements (25% larger)
-        overflowY: 'auto'
-      }}>
+    <Box bg="white" px={2}>
+      <Box h="94px" overflowY="auto">
         {items.length > 0 ? (
-          items.map((item) => (
-            <div key={`${item.element.id}-${item.type}-${item.subpathIndex || 0}`} style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              padding: item.type === 'subpath' ? '2px 4px 2px 16px' : '2px 4px',
-              backgroundColor: '#f8f9fa',
-              borderRadius: '3px',
-              fontSize: '11px',
-              marginBottom: '4px'
-            }}>
-              {item.type === 'element' ? (
-                item.element.type === 'path' ? <Pen size={12} /> : <Pen size={12} />
-              ) : (
-                <Minus size={12} />
-              )}
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: '500' }}>
-                  {item.type === 'element'
-                    ? `${item.element.type} (z: ${item.element.zIndex})`
-                    : `Subpath ${item.subpathIndex}`
-                  }
-                </div>
-                <div style={{ fontSize: '10px', color: '#666' }}>
-                  {item.pointCount} points
-                </div>
-              </div>
-              <IconButton
-                onClick={() => duplicateItem(item)}
-                title="Duplicate"
-                size="small"
+          <VStack spacing={1} align="stretch">
+            {items.map((item) => (
+              <HStack
+                key={`${item.element.id}-${item.type}-${item.subpathIndex || 0}`}
+                spacing={1}
+                px={item.type === 'subpath' ? 4 : 1}
+                pl={item.type === 'subpath' ? 4 : 1}
+                py={0.5}
+                bg="gray.50"
+                borderRadius="sm"
+                fontSize="11px"
               >
-                <Copy size={10} />
-              </IconButton>
-              <IconButton
-                onClick={() => copyPathToClipboard(item)}
-                title="Copy Path to Clipboard"
-                size="small"
-              >
-                <Clipboard size={10} />
-              </IconButton>
-            </div>
-          ))
+                {item.type === 'element' ? (
+                  item.element.type === 'path' ? <Pen size={12} /> : <Pen size={12} />
+                ) : (
+                  <Minus size={12} />
+                )}
+                <Box flex={1}>
+                  <Text fontWeight="500" fontSize="11px">
+                    {item.type === 'element'
+                      ? `${item.element.type} (z: ${item.element.zIndex})`
+                      : `Subpath ${item.subpathIndex}`
+                    }
+                  </Text>
+                  <Text fontSize="10px" color="gray.600">
+                    {item.pointCount} points
+                  </Text>
+                </Box>
+                <ChakraIconButton
+                  aria-label="Duplicate"
+                  icon={<Copy size={10} />}
+                  onClick={() => duplicateItem(item)}
+                  size="xs"
+                  minW="auto"
+                  h="auto"
+                  p={1}
+                />
+                <ChakraIconButton
+                  aria-label="Copy Path to Clipboard"
+                  icon={<Clipboard size={10} />}
+                  onClick={() => copyPathToClipboard(item)}
+                  size="xs"
+                  minW="auto"
+                  h="auto"
+                  p={1}
+                />
+              </HStack>
+            ))}
+          </VStack>
         ) : (
-          <div style={{
-            fontSize: '11px',
-            color: '#666',
-            textAlign: 'center',
-            padding: '8px',
-            height: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
+          <Box
+            fontSize="11px"
+            color="gray.600"
+            textAlign="center"
+            p={2}
+            h="full"
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+          >
             Select elements to see details and options
-          </div>
+          </Box>
         )}
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 };

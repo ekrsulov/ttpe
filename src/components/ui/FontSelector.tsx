@@ -1,4 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
+import {
+  Box,
+  Input,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  InputGroup,
+  InputRightElement,
+  Text,
+  useDisclosure
+} from '@chakra-ui/react';
 import { ChevronDown } from 'lucide-react';
 
 interface FontSelectorProps {
@@ -16,10 +28,9 @@ export const FontSelector: React.FC<FontSelectorProps> = ({
   disabled = false,
   loading = false
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const { isOpen, onOpen, onClose } = useDisclosure();
   const [searchTerm, setSearchTerm] = useState('');
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const menuListRef = useRef<HTMLDivElement>(null);
 
   // Filter fonts based on search term
   const filteredFonts = fonts.filter(font =>
@@ -29,9 +40,8 @@ export const FontSelector: React.FC<FontSelectorProps> = ({
   // Auto-scroll to selected font when dropdown opens
   useEffect(() => {
     if (isOpen && value) {
-      // Small delay to ensure the dropdown is rendered
       setTimeout(() => {
-        const selectedElement = dropdownRef.current?.querySelector('[data-selected="true"]') as HTMLElement;
+        const selectedElement = menuListRef.current?.querySelector('[data-selected="true"]') as HTMLElement;
         if (selectedElement) {
           selectedElement.scrollIntoView({ block: 'nearest', inline: 'nearest' });
         }
@@ -39,186 +49,120 @@ export const FontSelector: React.FC<FontSelectorProps> = ({
     }
   }, [isOpen, value]);
 
-  // Handle keyboard navigation
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      setIsOpen(false);
-      setSearchTerm('');
-    } else if (e.key === 'Enter' && filteredFonts.length > 0) {
-      onChange(filteredFonts[0]);
-      setIsOpen(false);
-      setSearchTerm('');
-    }
-  };
-
   const handleFontSelect = (font: string) => {
     onChange(font);
-    setIsOpen(false);
+    onClose();
     setSearchTerm('');
-  };
-
-  const handleInputFocus = () => {
-    setIsOpen(true);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
-    setIsOpen(true);
+    if (!isOpen) onOpen();
   };
 
   if (loading) {
     return (
-      <div style={{
-        flex: 1,
-        maxWidth: '200px',
-        padding: '4px 8px',
-        border: '1px solid #ccc',
-        borderRadius: '3px',
-        fontSize: '12px',
-        backgroundColor: '#f8f9fa',
-        color: '#666',
-        display: 'flex',
-        alignItems: 'center',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap'
-      }}>
+      <Box
+        flex={1}
+        maxW="200px"
+        p="4px 8px"
+        border="1px solid"
+        borderColor="gray.300"
+        borderRadius="md"
+        fontSize="xs"
+        bg="gray.50"
+        color="gray.600"
+      >
         Loading fonts...
-      </div>
+      </Box>
     );
   }
 
   return (
-    <div ref={dropdownRef} style={{ position: 'relative', flex: 1, maxWidth: '200px' }}>
-      {/* Trigger/Input */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          padding: '4px 8px',
-          border: '1px solid #ccc',
-          borderRadius: '3px',
-          backgroundColor: disabled ? '#f8f9fa' : '#fff',
-          cursor: disabled ? 'not-allowed' : 'pointer',
-          fontSize: '12px',
-          minWidth: 0 // Allow flex shrinking
-        }}
-        onPointerUp={() => !disabled && setIsOpen(!isOpen)}
+    <Menu isOpen={isOpen} onClose={() => { onClose(); setSearchTerm(''); }}>
+      <MenuButton
+        as={Box}
+        position="relative"
+        flex={1}
+        maxW="200px"
+        onClick={disabled ? undefined : onOpen}
+        cursor={disabled ? 'not-allowed' : 'pointer'}
       >
-        <input
-          ref={inputRef}
-          type="text"
-          value={isOpen ? searchTerm : value}
-          onChange={handleInputChange}
-          onFocus={handleInputFocus}
-          onKeyDown={handleKeyDown}
-          placeholder={isOpen ? "Search fonts..." : value}
-          disabled={disabled}
-          style={{
-            flex: 1,
-            border: 'none',
-            outline: 'none',
-            background: 'transparent',
-            fontSize: '12px',
-            fontFamily: isOpen ? 'inherit' : 'inherit', // Always use default font when closed
-            cursor: disabled ? 'not-allowed' : 'text',
-            minWidth: 0,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap'
-          }}
-        />
-        <ChevronDown
-          size={14}
-          style={{
-            marginLeft: '4px',
-            color: '#666',
-            transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-            transition: 'transform 0.2s',
-            flexShrink: 0
-          }}
-        />
-      </div>
+        <InputGroup size="sm">
+          <Input
+            value={isOpen ? searchTerm : value}
+            onChange={handleInputChange}
+            onFocus={onOpen}
+            placeholder={isOpen ? "Search fonts..." : value}
+            isDisabled={disabled}
+            fontSize="xs"
+            bg={disabled ? 'gray.50' : 'white'}
+            borderColor="gray.300"
+            _hover={{ borderColor: 'gray.400' }}
+            _focus={{ borderColor: 'blue.500', boxShadow: '0 0 0 1px var(--chakra-colors-blue-500)' }}
+          />
+          <InputRightElement h="full">
+            <ChevronDown
+              size={14}
+              style={{
+                color: '#666',
+                transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                transition: 'transform 0.2s'
+              }}
+            />
+          </InputRightElement>
+        </InputGroup>
+      </MenuButton>
 
-      {/* Dropdown */}
-      {isOpen && !disabled && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '100%',
-            left: 0,
-            right: 0,
-            maxHeight: '200px',
-            overflowY: 'auto',
-            backgroundColor: '#fff',
-            border: '1px solid #ccc',
-            borderRadius: '3px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            zIndex: 1000,
-            marginTop: '1px',
-            maxWidth: '300px'
-          }}
-        >
-          {filteredFonts.length === 0 ? (
-            <div style={{
-              padding: '8px 12px',
-              color: '#666',
-              fontSize: '12px',
-              textAlign: 'center'
-            }}>
+      <MenuList
+        ref={menuListRef}
+        maxH="200px"
+        overflowY="auto"
+        maxW="300px"
+        zIndex={1000}
+      >
+        {filteredFonts.length === 0 ? (
+          <Box p={2} textAlign="center">
+            <Text fontSize="xs" color="gray.600">
               No fonts found
-            </div>
-          ) : (
-            filteredFonts.map((font) => (
-              <div
-                key={font}
-                data-selected={font === value ? "true" : undefined}
-                onPointerUp={() => handleFontSelect(font)}
-                style={{
-                  padding: '8px 12px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontFamily: font,
-                  borderBottom: '1px solid #f0f0f0',
-                  backgroundColor: font === value ? '#e3f2fd' : 'transparent',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  minHeight: '32px'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f8f9fa';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = font === value ? '#e3f2fd' : 'transparent';
-                }}
-                title={font} // Tooltip para mostrar el nombre completo
+            </Text>
+          </Box>
+        ) : (
+          filteredFonts.map((font) => (
+            <MenuItem
+              key={font}
+              data-selected={font === value ? "true" : undefined}
+              onClick={() => handleFontSelect(font)}
+              fontSize="sm"
+              fontFamily={font}
+              bg={font === value ? 'blue.50' : 'transparent'}
+              _hover={{ bg: 'gray.50' }}
+              minH="32px"
+              title={font}
+            >
+              <Text
+                flex={1}
+                fontFamily={font}
+                overflow="hidden"
+                textOverflow="ellipsis"
+                whiteSpace="nowrap"
               >
-                <span style={{
-                  fontFamily: font,
-                  flex: 1,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap'
-                }}>
-                  {font}
-                </span>
-                {font === value && (
-                  <span style={{
-                    color: '#007bff',
-                    fontSize: '12px',
-                    fontWeight: 'bold',
-                    flexShrink: 0,
-                    marginLeft: '8px'
-                  }}>
-                    ✓
-                  </span>
-                )}
-              </div>
-            ))
-          )}
-        </div>
-      )}
-    </div>
+                {font}
+              </Text>
+              {font === value && (
+                <Text
+                  color="blue.500"
+                  fontSize="xs"
+                  fontWeight="bold"
+                  ml={2}
+                >
+                  ✓
+                </Text>
+              )}
+            </MenuItem>
+          ))
+        )}
+      </MenuList>
+    </Menu>
   );
 };

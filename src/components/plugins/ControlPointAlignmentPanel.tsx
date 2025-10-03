@@ -1,13 +1,29 @@
-import React, { useMemo, useCallback, useState } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { extractEditablePoints } from '../../utils/path';
 import type { Command, Point, ControlPoint } from '../../types';
 import { RotateCcw, Move, Link, Copy, ChevronDown, ChevronUp } from 'lucide-react';
-import { PanelWithHeader } from '../ui/PanelComponents';
-import { IconButton } from '../ui/IconButton';
+import {
+  VStack,
+  HStack,
+  Box,
+  Text,
+  IconButton as ChakraIconButton,
+  Button,
+  Table,
+  Thead,
+  Tbody,
+  Tr,
+  Th,
+  Td,
+  TableContainer,
+  Collapse,
+  useDisclosure
+} from '@chakra-ui/react';
+import { Panel } from '../ui/Panel';
 
 export const ControlPointAlignmentPanel: React.FC = () => {
-  const [showDetails, setShowDetails] = useState(false);
+  const { isOpen: showDetails, onToggle: toggleDetails } = useDisclosure({ defaultIsOpen: false });
   
   const {
     selectedCommands,
@@ -396,59 +412,54 @@ export const ControlPointAlignmentPanel: React.FC = () => {
     }
 
     return (
-      <>
-        <div style={{ 
-          display: 'flex', 
-          gap: '4px', 
-          marginBottom: '8px',
-          alignItems: 'center'
-        }}>
-          <IconButton
-            size="small"
+      <VStack spacing={2} align="stretch" mb={2}>
+        <HStack spacing={1}>
+          <ChakraIconButton
+            aria-label="Independent - Control points move freely"
+            icon={<Move size={14} />}
             onClick={() => handleAlignmentChange('independent')}
-            active={(singlePointInfo.info?.type || 'independent') === 'independent'}
-            title="Independent - Control points move freely"
-          >
-            <Move size={14} />
-          </IconButton>
+            colorScheme={(singlePointInfo.info?.type || 'independent') === 'independent' ? 'blue' : 'gray'}
+            variant={(singlePointInfo.info?.type || 'independent') === 'independent' ? 'solid' : 'outline'}
+            size="sm"
+          />
 
-          <IconButton
-            size="small"
+          <ChakraIconButton
+            aria-label="Aligned - Control points maintain opposite directions"
+            icon={<Link size={14} />}
             onClick={() => handleAlignmentChange('aligned')}
-            active={(singlePointInfo.info?.type || 'independent') === 'aligned'}
-            title="Aligned - Control points maintain opposite directions"
-          >
-            <Link size={14} />
-          </IconButton>
+            colorScheme={(singlePointInfo.info?.type || 'independent') === 'aligned' ? 'blue' : 'gray'}
+            variant={(singlePointInfo.info?.type || 'independent') === 'aligned' ? 'solid' : 'outline'}
+            size="sm"
+          />
 
-          <IconButton
-            size="small"
+          <ChakraIconButton
+            aria-label="Mirrored - Control points are perfectly mirrored"
+            icon={<Copy size={14} />}
             onClick={() => handleAlignmentChange('mirrored')}
-            active={(singlePointInfo.info?.type || 'independent') === 'mirrored'}
-            title="Mirrored - Control points are perfectly mirrored"
-          >
-            <Copy size={14} />
-          </IconButton>
+            colorScheme={(singlePointInfo.info?.type || 'independent') === 'mirrored' ? 'blue' : 'gray'}
+            variant={(singlePointInfo.info?.type || 'independent') === 'mirrored' ? 'solid' : 'outline'}
+            size="sm"
+          />
 
-          <div style={{ marginLeft: 'auto' }}>
-            <IconButton
-              size="small"
-              onClick={() => setShowDetails(!showDetails)}
-              active={showDetails}
-              title={showDetails ? "Hide Details" : "Show Details"}
-            >
-              {showDetails ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-            </IconButton>
-          </div>
-        </div>
+          <Box ml="auto">
+            <ChakraIconButton
+              aria-label={showDetails ? "Hide Details" : "Show Details"}
+              icon={showDetails ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              onClick={toggleDetails}
+              colorScheme={showDetails ? 'blue' : 'gray'}
+              variant={showDetails ? 'solid' : 'outline'}
+              size="sm"
+            />
+          </Box>
+        </HStack>
 
         {/* Etiqueta descriptiva siempre visible */}
-        <div style={{ fontSize: '11px', color: '#666', marginBottom: '8px' }}>
+        <Text fontSize="11px" color="gray.600">
           {(singlePointInfo.info?.type || 'independent') === 'independent' && 'Points move independently'}
           {(singlePointInfo.info?.type || 'independent') === 'aligned' && 'Points maintain opposite directions'}
           {(singlePointInfo.info?.type || 'independent') === 'mirrored' && 'Points are mirrored across anchor'}
-        </div>
-      </>
+        </Text>
+      </VStack>
     );
   };
 
@@ -457,156 +468,126 @@ export const ControlPointAlignmentPanel: React.FC = () => {
 
     if (singlePointInfo.isAnchor) {
       return (
-        <div style={{ fontSize: '11px', color: '#666', lineHeight: '1.4' }}>
-          <div><strong style={{ color: '#333' }}>Position:</strong> ({singlePointInfo.point.x.toFixed(2)}, {singlePointInfo.point.y.toFixed(2)})</div>
-          <div><strong style={{ color: '#333' }}>Location:</strong> {singlePointInfo.location}</div>
-          {hasClosingZCommand(selectedCommands[0].elementId, selectedCommands[0].commandIndex) && (
-            <>
-              <div style={{ marginTop: '8px' }}>
-                <button
+        <Collapse in={showDetails} animateOpacity>
+          <VStack spacing={2} align="stretch" fontSize="11px" color="gray.600" lineHeight="1.4">
+            <Text><Text as="strong" color="gray.700">Position:</Text> ({singlePointInfo.point.x.toFixed(2)}, {singlePointInfo.point.y.toFixed(2)})</Text>
+            <Text><Text as="strong" color="gray.700">Location:</Text> {singlePointInfo.location}</Text>
+            {hasClosingZCommand(selectedCommands[0].elementId, selectedCommands[0].commandIndex) && (
+              <>
+                <Button
                   onClick={() => deleteZCommandForMPoint(selectedCommands[0].elementId, selectedCommands[0].commandIndex)}
-                  style={{
-                    padding: '6px 8px',
-                    backgroundColor: '#dc3545',
-                    color: '#fff',
-                    border: '1px solid #dc3545',
-                    borderRadius: '4px',
-                    fontSize: '11px',
-                    cursor: 'pointer',
-                    width: '100%',
-                    textAlign: 'center'
-                  }}
+                  colorScheme="red"
+                  size="xs"
+                  fontSize="11px"
+                  w="full"
                   title="Delete the Z command that closes this path"
                 >
                   Delete Z Command
-                </button>
-              </div>
-              <div style={{ marginTop: '8px' }}>
-                <button
+                </Button>
+                <Button
                   onClick={() => convertZToLineForMPoint(selectedCommands[0].elementId, selectedCommands[0].commandIndex)}
-                  style={{
-                    padding: '6px 8px',
-                    backgroundColor: '#28a745',
-                    color: '#fff',
-                    border: '1px solid #28a745',
-                    borderRadius: '4px',
-                    fontSize: '11px',
-                    cursor: 'pointer',
-                    width: '100%',
-                    textAlign: 'center'
-                  }}
+                  colorScheme="green"
+                  size="xs"
+                  fontSize="11px"
+                  w="full"
                   title="Convert the Z command to a line command"
                 >
                   Convert Z to Line
-                </button>
-              </div>
-            </>
-          )}
-          {(singlePointInfo.command.type === 'L' || singlePointInfo.command.type === 'C') &&
-            isLastPointOfSubpath(selectedCommands[0].elementId, selectedCommands[0].commandIndex, selectedCommands[0].pointIndex) &&
-            !isAtMPosition(selectedCommands[0].elementId, selectedCommands[0].commandIndex, selectedCommands[0].pointIndex) && (
-              <div style={{ marginTop: '8px' }}>
-                <button
+                </Button>
+              </>
+            )}
+            {(singlePointInfo.command.type === 'L' || singlePointInfo.command.type === 'C') &&
+              isLastPointOfSubpath(selectedCommands[0].elementId, selectedCommands[0].commandIndex, selectedCommands[0].pointIndex) &&
+              !isAtMPosition(selectedCommands[0].elementId, selectedCommands[0].commandIndex, selectedCommands[0].pointIndex) && (
+                <Button
                   onClick={() => moveToM(selectedCommands[0].elementId, selectedCommands[0].commandIndex, selectedCommands[0].pointIndex)}
-                  style={{
-                    padding: '6px 8px',
-                    backgroundColor: '#28a745',
-                    color: '#fff',
-                    border: '1px solid #28a745',
-                    borderRadius: '4px',
-                    fontSize: '11px',
-                    cursor: 'pointer',
-                    width: '100%',
-                    textAlign: 'center'
-                  }}
+                  colorScheme="green"
+                  size="xs"
+                  fontSize="11px"
+                  w="full"
                   title="Move this point to start a new subpath"
                 >
                   Move to M
-                </button>
-              </div>
-            )}
-          {(singlePointInfo.command.type === 'L' || singlePointInfo.command.type === 'C') && (
-            <div style={{ marginTop: '8px' }}>
-              <button
+                </Button>
+              )}
+            {(singlePointInfo.command.type === 'L' || singlePointInfo.command.type === 'C') && (
+              <Button
                 onClick={() => convertCommandType(selectedCommands[0].elementId, selectedCommands[0].commandIndex)}
-                style={{
-                  padding: '6px 8px',
-                  backgroundColor: '#17a2b8',
-                  color: '#fff',
-                  border: '1px solid #17a2b8',
-                  borderRadius: '4px',
-                  fontSize: '11px',
-                  cursor: 'pointer',
-                  width: '100%',
-                  textAlign: 'center'
-                }}
+                colorScheme="cyan"
+                size="xs"
+                fontSize="11px"
+                w="full"
                 title={`Change to ${singlePointInfo.command.type === 'L' ? 'Curve' : 'Line'}`}
               >
                 Change to {singlePointInfo.command.type === 'L' ? 'Curve' : 'Line'}
-              </button>
-            </div>
-          )}
-        </div>
+              </Button>
+            )}
+          </VStack>
+        </Collapse>
       );
     }
 
     if (singlePointInfo.pairedPoint) {
       return (
-        <>
-          <div style={{ fontSize: '11px', color: '#666', lineHeight: '1.4' }}>
-            <div><strong style={{ color: '#333' }}>Position:</strong> ({singlePointInfo.point.x.toFixed(2)}, {singlePointInfo.point.y.toFixed(2)})</div>
-            <div><strong style={{ color: '#333' }}>Command:</strong> {singlePointInfo.command.type} at index {singlePointInfo.point.commandIndex}</div>
-            <div><strong style={{ color: '#333' }}>Point Index:</strong> {singlePointInfo.point.pointIndex}</div>
-            <div><strong style={{ color: '#333' }}>Anchor:</strong> ({singlePointInfo.anchor1?.x.toFixed(2) || '0'}, {singlePointInfo.anchor1?.y.toFixed(2) || '0'})</div>
-            <div><strong style={{ color: '#333' }}>Direction:</strong> {singlePointInfo.angle1?.toFixed(1) || '0'}°</div>
-            <div><strong style={{ color: '#333' }}>Size:</strong> {singlePointInfo.mag1?.toFixed(2) || '0'}</div>
-            <div><strong style={{ color: '#333' }}>Alignment:</strong> {singlePointInfo.info?.type || 'independent'}</div>
+        <Collapse in={showDetails} animateOpacity>
+          <VStack spacing={2} align="stretch" fontSize="11px" color="gray.600" lineHeight="1.4">
+            <Text><Text as="strong" color="gray.700">Position:</Text> ({singlePointInfo.point.x.toFixed(2)}, {singlePointInfo.point.y.toFixed(2)})</Text>
+            <Text><Text as="strong" color="gray.700">Command:</Text> {singlePointInfo.command.type} at index {singlePointInfo.point.commandIndex}</Text>
+            <Text><Text as="strong" color="gray.700">Point Index:</Text> {singlePointInfo.point.pointIndex}</Text>
+            <Text><Text as="strong" color="gray.700">Anchor:</Text> ({singlePointInfo.anchor1?.x.toFixed(2) || '0'}, {singlePointInfo.anchor1?.y.toFixed(2) || '0'})</Text>
+            <Text><Text as="strong" color="gray.700">Direction:</Text> {singlePointInfo.angle1?.toFixed(1) || '0'}°</Text>
+            <Text><Text as="strong" color="gray.700">Size:</Text> {singlePointInfo.mag1?.toFixed(2) || '0'}</Text>
+            <Text><Text as="strong" color="gray.700">Alignment:</Text> {singlePointInfo.info?.type || 'independent'}</Text>
             {singlePointInfo.pairedPoint && (
               <>
-                <div><strong style={{ color: '#333' }}>Paired Point:</strong> ({singlePointInfo.pairedPoint.x.toFixed(2)}, {singlePointInfo.pairedPoint.y.toFixed(2)}) at command {singlePointInfo.pairedInfo?.commandIndex}, point {singlePointInfo.pairedInfo?.pointIndex}</div>
-                <div><strong style={{ color: '#333' }}>Paired Anchor:</strong> ({singlePointInfo.anchor2?.x.toFixed(2)}, {singlePointInfo.anchor2?.y.toFixed(2)})</div>
-                <table style={{ fontSize: '11px', borderCollapse: 'collapse', marginTop: '8px', width: '100%' }}>
-                  <thead>
-                    <tr>
-                      <th style={{ border: '1px solid #ddd', padding: '4px', backgroundColor: '#f8f9fa' }}>Property</th>
-                      <th style={{ border: '1px solid #ddd', padding: '4px', backgroundColor: '#f8f9fa' }}>Current</th>
-                      <th style={{ border: '1px solid #ddd', padding: '4px', backgroundColor: '#f8f9fa' }}>Paired</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td style={{ border: '1px solid #ddd', padding: '4px' }}>Direction</td>
-                      <td style={{ border: '1px solid #ddd', padding: '4px' }}>{singlePointInfo.angle1?.toFixed(1) || '0'}°</td>
-                      <td style={{ border: '1px solid #ddd', padding: '4px' }}>{singlePointInfo.angle2?.toFixed(1) || '0'}°</td>
-                    </tr>
-                    <tr>
-                      <td style={{ border: '1px solid #ddd', padding: '4px' }}>Size</td>
-                      <td style={{ border: '1px solid #ddd', padding: '4px' }}>{singlePointInfo.mag1?.toFixed(2) || '0'}</td>
-                      <td style={{ border: '1px solid #ddd', padding: '4px' }}>{singlePointInfo.mag2?.toFixed(2)}</td>
-                    </tr>
-                  </tbody>
-                </table>
+                <Text><Text as="strong" color="gray.700">Paired Point:</Text> ({singlePointInfo.pairedPoint.x.toFixed(2)}, {singlePointInfo.pairedPoint.y.toFixed(2)}) at command {singlePointInfo.pairedInfo?.commandIndex}, point {singlePointInfo.pairedInfo?.pointIndex}</Text>
+                <Text><Text as="strong" color="gray.700">Paired Anchor:</Text> ({singlePointInfo.anchor2?.x.toFixed(2)}, {singlePointInfo.anchor2?.y.toFixed(2)})</Text>
+                <TableContainer>
+                  <Table size="sm" fontSize="11px" mt={2}>
+                    <Thead>
+                      <Tr>
+                        <Th fontSize="11px" p={1} bg="gray.100" borderColor="gray.300">Property</Th>
+                        <Th fontSize="11px" p={1} bg="gray.100" borderColor="gray.300">Current</Th>
+                        <Th fontSize="11px" p={1} bg="gray.100" borderColor="gray.300">Paired</Th>
+                      </Tr>
+                    </Thead>
+                    <Tbody>
+                      <Tr>
+                        <Td fontSize="11px" p={1} borderColor="gray.300">Direction</Td>
+                        <Td fontSize="11px" p={1} borderColor="gray.300">{singlePointInfo.angle1?.toFixed(1) || '0'}°</Td>
+                        <Td fontSize="11px" p={1} borderColor="gray.300">{singlePointInfo.angle2?.toFixed(1) || '0'}°</Td>
+                      </Tr>
+                      <Tr>
+                        <Td fontSize="11px" p={1} borderColor="gray.300">Size</Td>
+                        <Td fontSize="11px" p={1} borderColor="gray.300">{singlePointInfo.mag1?.toFixed(2) || '0'}</Td>
+                        <Td fontSize="11px" p={1} borderColor="gray.300">{singlePointInfo.mag2?.toFixed(2)}</Td>
+                      </Tr>
+                    </Tbody>
+                  </Table>
+                </TableContainer>
               </>
             )}
-          </div>
-        </>
+          </VStack>
+        </Collapse>
       );
     }
 
     return (
-      <div style={{ fontSize: '11px', color: '#666', lineHeight: '1.4' }}>
-        <div><strong style={{ color: '#333' }}>Position:</strong> ({singlePointInfo.point.x.toFixed(2)}, {singlePointInfo.point.y.toFixed(2)})</div>
-        <div><strong style={{ color: '#333' }}>Command:</strong> {singlePointInfo.command.type} at index {singlePointInfo.point.commandIndex}</div>
-        <div><strong style={{ color: '#333' }}>Point Index:</strong> {singlePointInfo.point.pointIndex}</div>
-        <div><strong style={{ color: '#333' }}>Alignment:</strong> {singlePointInfo.info?.type || 'independent'}</div>
-      </div>
+      <Collapse in={showDetails} animateOpacity>
+        <VStack spacing={1} align="stretch" fontSize="11px" color="gray.600" lineHeight="1.4">
+          <Text><Text as="strong" color="gray.700">Position:</Text> ({singlePointInfo.point.x.toFixed(2)}, {singlePointInfo.point.y.toFixed(2)})</Text>
+          <Text><Text as="strong" color="gray.700">Command:</Text> {singlePointInfo.command.type} at index {singlePointInfo.point.commandIndex}</Text>
+          <Text><Text as="strong" color="gray.700">Point Index:</Text> {singlePointInfo.point.pointIndex}</Text>
+          <Text><Text as="strong" color="gray.700">Alignment:</Text> {singlePointInfo.info?.type || 'independent'}</Text>
+        </VStack>
+      </Collapse>
     );
   };
 
   return (
-    <PanelWithHeader icon={<RotateCcw size={16} />} title="Control Point Alignment">
+    <Panel icon={<RotateCcw size={16} />} title="Control Point Alignment">
       {renderAlignmentButtons()}
       {renderDetailContent()}
-    </PanelWithHeader>
+    </Panel>
   );
 };

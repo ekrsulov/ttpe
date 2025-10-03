@@ -1,4 +1,5 @@
 import React from 'react';
+import { Button } from '@chakra-ui/react';
 import type { Preset } from '../../utils/presets';
 
 interface PresetButtonProps {
@@ -13,29 +14,19 @@ export const PresetButton: React.FC<PresetButtonProps> = ({ preset, onClick, isA
   };
 
   return (
-    <button
+    <Button
       onClick={handleClick}
-      style={{
-        width: '20px',
-        height: '20px',
-        border: 'none',
-        borderRadius: '3px',
-        backgroundColor: '#fff',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '1px',
-        transition: 'all 0.2s ease',
-        boxShadow: isActive ? '0 0 0 1px #007bff' : 'none'
-      }}
+      w="20px"
+      h="20px"
+      minW="20px"
+      p="1px"
+      bg="white"
+      borderRadius="md"
+      border="none"
+      boxShadow={isActive ? '0 0 0 1px var(--chakra-colors-blue-500)' : 'none'}
+      _hover={{ transform: 'scale(1.05)' }}
+      transition="all 0.2s ease"
       title={preset.name}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'scale(1.05)';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'scale(1)';
-      }}
     >
       <svg
         width="16"
@@ -75,6 +66,6 @@ export const PresetButton: React.FC<PresetButtonProps> = ({ preset, onClick, isA
           />
         )}
       </svg>
-    </button>
+    </Button>
   );
 };

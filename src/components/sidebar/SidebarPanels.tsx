@@ -1,6 +1,6 @@
 import React, { Suspense } from 'react';
+import { Box } from '@chakra-ui/react';
 import { ConditionalPanel } from '../ui/ConditionalPanel';
-import { PANEL_STYLES } from '../ui/PanelComponents';
 
 // Lazy load panel components
 const EditorPanel = React.lazy(() => import('../plugins/EditorPanel').then(module => ({ default: module.EditorPanel })));
@@ -93,8 +93,32 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
   const isInSpecialPanelMode = showFilePanel || showSettingsPanel;
 
   return (
-    <div style={PANEL_STYLES.scrollablePanels}>
-      <Suspense fallback={<div style={{ height: '20px', backgroundColor: '#f8f9fa' }} />}>
+    <Box
+      flex={1}
+      px={2}
+      pb={2}
+      overflowY="auto"
+      display="flex"
+      flexDirection="column"
+      gap={0.5}
+      bg="white"
+      css={{
+        '&::-webkit-scrollbar': {
+          width: '8px',
+        },
+        '&::-webkit-scrollbar-track': {
+          background: '#f1f1f1',
+        },
+        '&::-webkit-scrollbar-thumb': {
+          background: '#888',
+          borderRadius: '4px',
+        },
+        '&::-webkit-scrollbar-thumb:hover': {
+          background: '#555',
+        },
+      }}
+    >
+      <Suspense fallback={<Box h="20px" bg="gray.100" />}>
         {/* Special panel modes - show only the specific panel */}
         <ConditionalPanel condition={showFilePanel}>
           <FilePanel />
@@ -164,6 +188,6 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
           <ShapePanel />
         </ConditionalPanel>
       </Suspense>
-    </div>
+    </Box>
   );
 };

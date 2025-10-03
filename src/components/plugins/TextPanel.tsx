@@ -1,10 +1,17 @@
 import React, { useState, useEffect } from 'react';
+import {
+  VStack,
+  HStack,
+  Input,
+  IconButton as ChakraIconButton,
+  NumberInput,
+  NumberInputField,
+} from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Type, Bold, Italic } from 'lucide-react';
 import { getAvailableFonts } from '../../utils';
 import { FontSelector } from '../ui/FontSelector';
-import { IconButton } from '../ui/IconButton';
-import { PanelWithHeader } from '../ui/PanelComponents';
+import { Panel } from '../ui/Panel';
 import { logger } from '../../utils';
 
 export const TextPanel: React.FC = () => {
@@ -75,29 +82,20 @@ export const TextPanel: React.FC = () => {
   };
 
   return (
-    <PanelWithHeader icon={<Type size={16} />} title="Text">
-      <div style={{ display: 'grid', gap: '6px' }}>
+    <Panel icon={<Type size={16} />} title="Text">
+      <VStack spacing={2} align="stretch">
         {/* Text Input */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <input
-            type="text"
-            value={getCurrentText()}
-            onChange={(e) => handleTextChange(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.code === 'Space') {
-                e.stopPropagation();
-              }
-            }}
-            placeholder="Enter text"
-            style={{
-              flex: 1,
-              padding: '4px 6px',
-              border: '1px solid #ccc',
-              borderRadius: '3px',
-              fontSize: '12px'
-            }}
-          />
-        </div>
+        <Input
+          value={getCurrentText()}
+          onChange={(e) => handleTextChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.code === 'Space') {
+              e.stopPropagation();
+            }
+          }}
+          placeholder="Enter text"
+          size="sm"
+        />
 
         {/* Font Selector */}
         <FontSelector
@@ -109,50 +107,44 @@ export const TextPanel: React.FC = () => {
         />
 
         {/* Font Size and Style Controls */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <input
-            type="number"
+        <HStack spacing={1}>
+          <NumberInput
             value={getCurrentFontSize()}
-            onChange={(e) => handleFontSizeChange(parseInt(e.target.value) || 12)}
-            onKeyDown={(e) => {
-              if (e.code === 'Space') {
-                e.stopPropagation();
-              }
-            }}
-            min="4"
-            style={{
-              width: '50px',
-              padding: '4px',
-              border: '1px solid #ccc',
-              borderRadius: '3px',
-              fontSize: '12px'
-            }}
+            onChange={(_, valueNumber) => handleFontSizeChange(valueNumber || 12)}
+            min={4}
+            size="sm"
+            width="60px"
+          >
+            <NumberInputField
+              onKeyDown={(e) => {
+                if (e.code === 'Space') {
+                  e.stopPropagation();
+                }
+              }}
+            />
+          </NumberInput>
+          
+          <ChakraIconButton
+            aria-label="Bold"
+            icon={<Bold size={12} />}
+            onClick={() => handleFontWeightChange(getCurrentFontWeight() === 'bold' ? 'normal' : 'bold')}
+            isActive={getCurrentFontWeight() === 'bold'}
+            colorScheme={getCurrentFontWeight() === 'bold' ? 'brand' : 'gray'}
+            size="sm"
+            variant={getCurrentFontWeight() === 'bold' ? 'solid' : 'outline'}
           />
-          <IconButton
-            onPointerUp={() => handleFontWeightChange(getCurrentFontWeight() === 'bold' ? 'normal' : 'bold')}
-            active={getCurrentFontWeight() === 'bold'}
-            activeBgColor="#007bff"
-            activeColor="#fff"
-            size="custom"
-            customSize="22px"
-            title="Bold"
-          >
-            <Bold size={12} />
-          </IconButton>
-          <IconButton
-            onPointerUp={() => handleFontStyleChange(getCurrentFontStyle() === 'italic' ? 'normal' : 'italic')}
-            active={getCurrentFontStyle() === 'italic'}
-            activeBgColor="#007bff"
-            activeColor="#fff"
-            size="custom"
-            customSize="22px"
-            title="Italic"
-          >
-            <Italic size={12} />
-          </IconButton>
-        </div>
-
-      </div>
-    </PanelWithHeader>
+          
+          <ChakraIconButton
+            aria-label="Italic"
+            icon={<Italic size={12} />}
+            onClick={() => handleFontStyleChange(getCurrentFontStyle() === 'italic' ? 'normal' : 'italic')}
+            isActive={getCurrentFontStyle() === 'italic'}
+            colorScheme={getCurrentFontStyle() === 'italic' ? 'brand' : 'gray'}
+            size="sm"
+            variant={getCurrentFontStyle() === 'italic' ? 'solid' : 'outline'}
+          />
+        </HStack>
+      </VStack>
+    </Panel>
   );
 }

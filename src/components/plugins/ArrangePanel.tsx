@@ -14,11 +14,11 @@ import {
   MoveHorizontal,
   MoveVertical
 } from 'lucide-react';
-import { IconButton } from '../ui/IconButton';
+import { VStack, HStack, IconButton as ChakraIconButton, Box } from '@chakra-ui/react';
 
 interface ButtonConfig {
   handler: () => void;
-  icon: React.ReactNode;
+  icon: React.ReactElement;
   title: string;
   disabled?: boolean;
 }
@@ -66,45 +66,40 @@ export const ArrangePanel: React.FC = () => {
   ];
 
   const renderButtonRow = (buttons: ButtonConfig[]) => (
-    <div style={{ display: 'flex', gap: '2px' }}>
+    <HStack spacing={0.5} w="full">
       {buttons.map((button, index) => (
-        <div key={index} style={{ flex: 1 }}>
-          <IconButton
-            onClick={button.handler}
-            disabled={button.disabled}
-            title={button.title}
-          >
-            {button.icon}
-          </IconButton>
-        </div>
+        <ChakraIconButton
+          key={index}
+          aria-label={button.title}
+          icon={button.icon}
+          onClick={button.handler}
+          isDisabled={button.disabled}
+          size="xs"
+          flex={1}
+        />
       ))}
-    </div>
+    </HStack>
   );
 
   return (
-    <div style={{
-      backgroundColor: '#fff',
-      padding: '8px 8px 0 8px',
-      borderTop: '1px solid #ddd',
-      width: '100%'
-    }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+    <Box bg="white" px={2} pt={2} borderTop="1px solid" borderColor="gray.300" w="full">
+      <VStack spacing={1} align="stretch">
         {/* Row 1: Distribution & Order buttons */}
         {activePlugin === 'edit' ? (
           /* Edit mode has different layout */
-          <div style={{ display: 'flex', gap: '2px', justifyContent: 'space-between' }}>
+          <HStack spacing={0.5} justify="space-between">
             {renderButtonRow(distributionButtons)}
-          </div>
+          </HStack>
         ) : (
           /* Normal layout for select and subpath modes */
-          <div style={{ display: 'flex', gap: '2px' }}>
+          <HStack spacing={0.5}>
             {renderButtonRow([...distributionButtons, ...orderButtons])}
-          </div>
+          </HStack>
         )}
 
         {/* Row 2: Align buttons */}
         {renderButtonRow(alignmentButtons)}
-      </div>
-    </div>
+      </VStack>
+    </Box>
   );
 };

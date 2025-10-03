@@ -1,4 +1,13 @@
 import React from 'react';
+import {
+  Box,
+  HStack,
+  Slider,
+  SliderTrack,
+  SliderFilledTrack,
+  SliderThumb,
+  Text
+} from '@chakra-ui/react';
 
 interface SliderControlProps {
   icon?: React.ReactNode;
@@ -35,63 +44,57 @@ export const SliderControl: React.FC<SliderControlProps> = ({
   inline = false,
   gap = '8px'
 }) => {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = step < 1 ? parseFloat(e.target.value) : parseInt(e.target.value);
+  const handleChange = (newValue: number) => {
     onChange(newValue);
   };
 
   const formattedValue = formatter ? formatter(value) : (step < 1 ? value.toFixed(2) : value.toString());
 
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap,
-      marginBottom: inline ? '0' : marginBottom,
-      width: inline ? '100%' : undefined
-    }}>
+    <HStack
+      spacing={gap}
+      mb={inline ? 0 : marginBottom}
+      w={inline ? '100%' : undefined}
+    >
       {icon && (
-        <div style={{ color: '#666', flexShrink: 0 }}>
+        <Box color="gray.600" flexShrink={0}>
           {icon}
-        </div>
+        </Box>
       )}
       {label && (
-        <span style={{
-          fontSize: '11px',
-          color: '#666',
-          minWidth: labelWidth,
-          flexShrink: 0
-        }}>
+        <Text
+          fontSize="11px"
+          color="gray.600"
+          minW={labelWidth}
+          flexShrink={0}
+        >
           {label}
-        </span>
+        </Text>
       )}
-      <input
-        type="range"
+      <Slider
+        flex={1}
         min={min}
         max={max}
         step={step}
         value={value}
         onChange={handleChange}
-        style={{
-          flex: 1,
-          height: '4px',
-          borderRadius: '2px',
-          background: '#ddd',
-          outline: 'none',
-          cursor: 'pointer',
-          minWidth
-        }}
+        minW={minWidth}
         title={title}
-      />
-      <span style={{
-        fontSize: '10px',
-        color: '#666',
-        width: valueWidth,
-        textAlign: 'right',
-        flexShrink: 0
-      }}>
+      >
+        <SliderTrack h="4px" borderRadius="2px" bg="gray.300">
+          <SliderFilledTrack bg="blue.500" />
+        </SliderTrack>
+        <SliderThumb boxSize="12px" />
+      </Slider>
+      <Text
+        fontSize="10px"
+        color="gray.600"
+        w={valueWidth}
+        textAlign="right"
+        flexShrink={0}
+      >
         {formattedValue}
-      </span>
-    </div>
+      </Text>
+    </HStack>
   );
 };

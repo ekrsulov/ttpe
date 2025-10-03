@@ -1,4 +1,14 @@
 import React from 'react';
+import {
+  VStack,
+  HStack,
+  Button,
+  Checkbox as ChakraCheckbox,
+  Text,
+  Box,
+  Flex,
+  Heading
+} from '@chakra-ui/react';
 import { PaintBucket, Zap, RotateCcw } from 'lucide-react';
 import { SliderControl } from '../ui/SliderControl';
 
@@ -61,232 +71,171 @@ export const EditPanel: React.FC<EditPanelProps> = ({
   if (activePlugin !== 'edit') return null;
 
   return (
-    <div>
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: '8px',
-        backgroundColor: '#f5f5f5',
-        padding: '4px 8px',
-        borderRadius: '4px'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <PaintBucket size={16} style={{ marginRight: '6px', color: '#666' }} />
-          <span style={{ fontSize: '12px', fontWeight: '800', color: '#333' }}>Smooth Brush</span>
-        </div>
-        {(!smoothBrush.isActive || (smoothBrush.isActive && selectedCommands.length > 0)) && (
-          <button
+    <VStack spacing={3} align="stretch">
+      {/* Smooth Brush Section */}
+      <Box>
+        <Flex 
+          align="center" 
+          justify="space-between" 
+          mb={2} 
+          bg="gray.100" 
+          px={2} 
+          py={1} 
+          borderRadius="md"
+        >
+          <HStack spacing={1.5}>
+            <PaintBucket size={16} color="#666" />
+            <Heading size="xs" fontWeight="extrabold">Smooth Brush</Heading>
+          </HStack>
+          {(!smoothBrush.isActive || (smoothBrush.isActive && selectedCommands.length > 0)) && (
+            <Button
+              onClick={applySmoothBrush}
+              size="xs"
+              variant="outline"
+              fontSize="xs"
+              title={smoothBrush.isActive && selectedCommands.length > 0
+                ? `Apply Smooth to ${selectedCommands.length} Selected Point${selectedCommands.length === 1 ? '' : 's'}`
+                : 'Apply Smooth Brush'
+              }
+            >
+              Apply
+            </Button>
+          )}
+        </Flex>
+
+        {/* Brush Mode Toggle */}
+        <HStack spacing={2} mb={2}>
+          <Text fontSize="xs" color="gray.600">Brush Mode:</Text>
+          <Button
             onClick={() => {
-              applySmoothBrush();
+              if (smoothBrush.isActive) {
+                deactivateSmoothBrush();
+              } else {
+                activateSmoothBrush();
+              }
             }}
-            style={{
-              padding: '0px 6px',
-              backgroundColor: '#f8f9fa',
-              color: '#333',
-              border: '1px solid #dee2e6',
-              borderRadius: '4px',
-              fontSize: '10px',
-              cursor: 'pointer',
-              height: '20px'
-            }}
-            title={smoothBrush.isActive && selectedCommands.length > 0
-              ? `Apply Smooth to ${selectedCommands.length} Selected Point${selectedCommands.length === 1 ? '' : 's'}`
-              : 'Apply Smooth Brush'
-            }
+            size="xs"
+            colorScheme={smoothBrush.isActive ? 'brand' : 'gray'}
+            variant={smoothBrush.isActive ? 'solid' : 'outline'}
           >
-            Apply
-          </button>
+            {smoothBrush.isActive ? 'ON' : 'OFF'}
+          </Button>
+          
+          <Button
+            onClick={resetSmoothBrush}
+            size="xs"
+            variant="outline"
+            colorScheme="gray"
+            title="Reset all smooth brush settings to defaults"
+          >
+            Reset
+          </Button>
+        </HStack>
+
+        {/* Radius Slider - only show when brush mode is active */}
+        {smoothBrush.isActive && (
+          <SliderControl
+            label="Radius:"
+            value={smoothBrush.radius}
+            min={6}
+            max={60}
+            step={1}
+            onChange={(value) => updateSmoothBrush({ radius: value })}
+            labelWidth="40px"
+            valueWidth="25px"
+          />
         )}
-      </div>
 
-      {/* Brush Mode Toggle */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        marginBottom: '8px',
-        gap: '8px'
-      }}>
-        <span style={{ fontSize: '11px', color: '#666' }}>Brush Mode:</span>
-        <button
-          onClick={() => {
-            if (smoothBrush.isActive) {
-              deactivateSmoothBrush();
-            } else {
-              activateSmoothBrush();
-            }
-          }}
-          style={{
-            padding: '4px 8px',
-            backgroundColor: smoothBrush.isActive ? '#007bff' : '#f8f9fa',
-            color: smoothBrush.isActive ? 'white' : '#333',
-            border: '1px solid #dee2e6',
-            borderRadius: '4px',
-            fontSize: '11px',
-            cursor: 'pointer'
-          }}
-        >
-          {smoothBrush.isActive ? 'ON' : 'OFF'}
-        </button>
-        
-        <button
-          onClick={resetSmoothBrush}
-          style={{
-            padding: '4px 8px',
-            backgroundColor: '#f8f9fa',
-            color: '#666',
-            border: '1px solid #dee2e6',
-            borderRadius: '4px',
-            fontSize: '11px',
-            cursor: 'pointer',
-            marginLeft: '4px'
-          }}
-          title="Reset all smooth brush settings to defaults"
-        >
-          Reset
-        </button>
-      </div>
-
-      {/* Radius Slider - only show when brush mode is active */}
-      {smoothBrush.isActive && (
+        {/* Strength Slider */}
         <SliderControl
-          label="Radius:"
-          value={smoothBrush.radius}
-          min={6}
-          max={60}
-          step={1}
-          onChange={(value) => updateSmoothBrush({ radius: value })}
+          label="Strength:"
+          value={smoothBrush.strength}
+          min={0}
+          max={1}
+          step={0.01}
+          onChange={(value) => updateSmoothBrush({ strength: value })}
+          formatter={(value) => `${(value * 100).toFixed(0)}%`}
           labelWidth="40px"
-          valueWidth="25px"
+          valueWidth="35px"
         />
-      )}
 
-      {/* Strength Slider */}
-      <SliderControl
-        label="Strength:"
-        value={smoothBrush.strength}
-        min={0}
-        max={1}
-        step={0.01}
-        onChange={(value) => updateSmoothBrush({ strength: value })}
-        formatter={(value) => `${(value * 100).toFixed(0)}%`}
-        labelWidth="40px"
-        valueWidth="35px"
-      />
-
-      {/* Simplify Points Checkbox */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        marginBottom: '8px',
-        gap: '8px'
-      }}>
-        <input
-          type="checkbox"
+        {/* Simplify Points Checkbox */}
+        <ChakraCheckbox
           id="simplifyPoints"
-          checked={smoothBrush.simplifyPoints}
+          isChecked={smoothBrush.simplifyPoints}
           onChange={(e) => updateSmoothBrush({ simplifyPoints: e.target.checked })}
-          style={{
-            width: '12px',
-            height: '12px',
-            cursor: 'pointer'
-          }}
-        />
-        <label
-          htmlFor="simplifyPoints"
-          style={{
-            fontSize: '11px',
-            color: '#666',
-            cursor: 'pointer',
-            userSelect: 'none'
-          }}
+          size="sm"
+          mb={smoothBrush.simplifyPoints ? 2 : 0}
         >
           Simplify Points
-        </label>
-      </div>
+        </ChakraCheckbox>
 
-      {/* Simplification Tolerance Slider - only show when simplify points is enabled */}
-      {smoothBrush.simplifyPoints && (
-        <SliderControl
-          label="Tolerance:"
-          value={smoothBrush.simplificationTolerance}
-          min={0.1}
-          max={10}
-          step={0.1}
-          onChange={(value) => updateSmoothBrush({ simplificationTolerance: value })}
-          formatter={(value) => value.toFixed(1)}
-          labelWidth="40px"
-          valueWidth="30px"
-        />
-      )}
+        {/* Simplification Tolerance Slider - only show when simplify points is enabled */}
+        {smoothBrush.simplifyPoints && (
+          <SliderControl
+            label="Tolerance:"
+            value={smoothBrush.simplificationTolerance}
+            min={0.1}
+            max={10}
+            step={0.1}
+            onChange={(value) => updateSmoothBrush({ simplificationTolerance: value })}
+            formatter={(value) => value.toFixed(1)}
+            labelWidth="40px"
+            valueWidth="30px"
+          />
+        )}
 
-      {/* Minimum Distance Slider - only show when simplify points is enabled */}
-      {smoothBrush.simplifyPoints && (
-        <SliderControl
-          label="Min Dist:"
-          value={smoothBrush.minDistance}
-          min={0.1}
-          max={5.0}
-          step={0.1}
-          onChange={(value) => updateSmoothBrush({ minDistance: value })}
-          formatter={(value) => value.toFixed(1)}
-          labelWidth="40px"
-          valueWidth="30px"
-        />
-      )}
+        {/* Minimum Distance Slider - only show when simplify points is enabled */}
+        {smoothBrush.simplifyPoints && (
+          <SliderControl
+            label="Min Dist:"
+            value={smoothBrush.minDistance}
+            min={0.1}
+            max={5.0}
+            step={0.1}
+            onChange={(value) => updateSmoothBrush({ minDistance: value })}
+            formatter={(value) => value.toFixed(1)}
+            labelWidth="40px"
+            valueWidth="30px"
+          />
+        )}
 
-
-
-      {/* Instructions */}
-      {smoothBrush.isActive && (
-        <div style={{
-          fontSize: '11px',
-          color: '#666',
-          marginTop: '8px',
-          lineHeight: '1.4'
-        }}>
-          {selectedCommands.length > 0
-            ? `Click "Apply Smooth" to smooth ${selectedCommands.length} selected point${selectedCommands.length === 1 ? '' : 's'}.`
-            : 'Click and drag to apply smoothing. Points within the brush radius will be smoothed.'
-          }
-        </div>
-      )}
+        {/* Instructions */}
+        {smoothBrush.isActive && (
+          <Text fontSize="xs" color="gray.600" mt={2} lineHeight="tall">
+            {selectedCommands.length > 0
+              ? `Click "Apply Smooth" to smooth ${selectedCommands.length} selected point${selectedCommands.length === 1 ? '' : 's'}.`
+              : 'Click and drag to apply smoothing. Points within the brush radius will be smoothed.'
+            }
+          </Text>
+        )}
+      </Box>
 
       {/* Path Simplification Section */}
-      <div style={{
-        marginTop: '12px',
-        paddingTop: '8px'
-      }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: '8px',
-          backgroundColor: '#f5f5f5',
-          padding: '4px 8px',
-          borderRadius: '4px'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <Zap size={16} style={{ marginRight: '6px', color: '#666' }} />
-            <span style={{ fontSize: '12px', fontWeight: '800', color: '#333' }}>Path Simplification</span>
-          </div>
-          <button
-            onClick={() => applyPathSimplification()}
-            style={{
-              padding: '0px 6px',
-              backgroundColor: '#f8f9fa',
-              color: '#333',
-              border: '1px solid #dee2e6',
-              borderRadius: '4px',
-              fontSize: '10px',
-              cursor: 'pointer',
-              height: '20px'
-            }}
+      <Box pt={3}>
+        <Flex 
+          align="center" 
+          justify="space-between" 
+          mb={2} 
+          bg="gray.100" 
+          px={2} 
+          py={1} 
+          borderRadius="md"
+        >
+          <HStack spacing={1.5}>
+            <Zap size={16} color="#666" />
+            <Heading size="xs" fontWeight="extrabold">Path Simplification</Heading>
+          </HStack>
+          <Button
+            onClick={applyPathSimplification}
+            size="xs"
+            variant="outline"
+            fontSize="xs"
             title="Simplify Path"
           >
             Apply
-          </button>
-        </div>
+          </Button>
+        </Flex>
 
         <SliderControl
           label="Tolerance:"
@@ -299,45 +248,33 @@ export const EditPanel: React.FC<EditPanelProps> = ({
           labelWidth="50px"
           valueWidth="35px"
         />
-
-
-      </div>
+      </Box>
 
       {/* Round Path Section */}
-      <div style={{
-        marginTop: '12px',
-        paddingTop: '8px'
-      }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: '8px',
-          backgroundColor: '#f5f5f5',
-          padding: '4px 8px',
-          borderRadius: '4px'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <RotateCcw size={16} style={{ marginRight: '6px', color: '#666' }} />
-            <span style={{ fontSize: '12px', fontWeight: '800', color: '#333' }}>Round Path</span>
-          </div>
-          <button
-            onClick={() => applyPathRounding()}
-            style={{
-              padding: '0px 6px',
-              backgroundColor: '#f8f9fa',
-              color: '#333',
-              border: '1px solid #dee2e6',
-              borderRadius: '4px',
-              fontSize: '10px',
-              cursor: 'pointer',
-              height: '20px'
-            }}
+      <Box pt={3}>
+        <Flex 
+          align="center" 
+          justify="space-between" 
+          mb={2} 
+          bg="gray.100" 
+          px={2} 
+          py={1} 
+          borderRadius="md"
+        >
+          <HStack spacing={1.5}>
+            <RotateCcw size={16} color="#666" />
+            <Heading size="xs" fontWeight="extrabold">Round Path</Heading>
+          </HStack>
+          <Button
+            onClick={applyPathRounding}
+            size="xs"
+            variant="outline"
+            fontSize="xs"
             title="Round Path"
           >
             Apply
-          </button>
-        </div>
+          </Button>
+        </Flex>
 
         <SliderControl
           label="Radius:"
@@ -350,9 +287,7 @@ export const EditPanel: React.FC<EditPanelProps> = ({
           labelWidth="50px"
           valueWidth="35px"
         />
-
-
-      </div>
-    </div>
+      </Box>
+    </VStack>
   );
 };

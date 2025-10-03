@@ -1,8 +1,8 @@
 import React from 'react';
+import { HStack, IconButton as ChakraIconButton, Tooltip } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Square, Circle, Triangle, Shapes, type LucideIcon } from 'lucide-react';
-import { IconButton } from '../ui/IconButton';
-import { PanelWithHeader } from '../ui/PanelComponents';
+import { Panel } from '../ui/Panel';
 import type { ShapeType } from '../../store/slices/plugins/shapePluginSlice';
 
 export const ShapePanel: React.FC = () => {
@@ -22,8 +22,8 @@ export const ShapePanel: React.FC = () => {
   };
 
   return (
-    <PanelWithHeader icon={<Shapes size={16} />} title="Shape">
-      <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+    <Panel icon={<Shapes size={16} />} title="Shape">
+      <HStack spacing={1}>
         {shapes.map((shapeItem) => {
           const IconComponent = shapeItem.icon;
           const isShapeSelected = shape.selectedShape === shapeItem.type;
@@ -31,20 +31,19 @@ export const ShapePanel: React.FC = () => {
           const shouldHighlight = isShapeModeActive && isShapeSelected;
 
           return (
-            <IconButton
-              key={shapeItem.type}
-              onPointerUp={() => handleShapeSelect(shapeItem.type)}
-              active={shouldHighlight}
-              activeBgColor="#007bff"
-              activeColor="#fff"
-              transition="all 0.2s ease"
-              title={`${shapeItem.label} - Click and drag to create`}
-            >
-              <IconComponent size={14} />
-            </IconButton>
+            <Tooltip key={shapeItem.type} label={`${shapeItem.label} - Click and drag to create`} fontSize="xs">
+              <ChakraIconButton
+                aria-label={shapeItem.label}
+                icon={<IconComponent size={14} />}
+                onClick={() => handleShapeSelect(shapeItem.type)}
+                colorScheme={shouldHighlight ? 'brand' : 'gray'}
+                variant={shouldHighlight ? 'solid' : 'outline'}
+                size="sm"
+              />
+            </Tooltip>
           );
         })}
-      </div>
-    </PanelWithHeader>
+      </HStack>
+    </Panel>
   );
 };

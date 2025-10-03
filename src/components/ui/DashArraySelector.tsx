@@ -1,5 +1,5 @@
 import React from 'react';
-import { IconButton } from './IconButton';
+import { IconButton as ChakraIconButton } from '@chakra-ui/react';
 import { Minus } from 'lucide-react';
 import { DASH_PRESETS } from '../../utils/dashPresets';
 
@@ -66,18 +66,18 @@ export const DashArrayPresets: React.FC<DashArrayPresetsProps> = ({
       flexWrap: 'nowrap' // Keep all buttons in one line
     }}>
       {commonPresets.map(preset => (
-        <IconButton
+        <ChakraIconButton
           key={preset.id}
+          aria-label={`${preset.name}: ${preset.description}`}
           onPointerUp={() => onChange(preset.dashArray)}
-          active={value === preset.dashArray}
-          activeBgColor="#007bff"
-          activeColor="#fff"
-          size="custom"
-          customSize="20px"
+          colorScheme={value === preset.dashArray ? 'blue' : 'gray'}
+          variant={value === preset.dashArray ? 'solid' : 'outline'}
+          size="xs"
+          minW="20px"
+          h="20px"
           title={`${preset.name}: ${preset.description}`}
-        >
-          <DashPreview dashArray={preset.dashArray} />
-        </IconButton>
+          icon={<DashPreview dashArray={preset.dashArray} />}
+        />
       ))}
     </div>
   );
@@ -106,18 +106,18 @@ export const DashArraySelector: React.FC<DashArraySelectorProps> = ({
         marginBottom: '6px'
       }}>
         {DASH_PRESETS.slice(0, 8).map(preset => (
-          <IconButton
+          <ChakraIconButton
             key={preset.id}
+            aria-label={`${preset.name}: ${preset.description}`}
             onPointerUp={() => onChange(preset.dashArray)}
-            active={value === preset.dashArray}
-            activeBgColor="#007bff"
-            activeColor="#fff"
-            size="custom"
-            customSize="20px"
+            colorScheme={value === preset.dashArray ? 'blue' : 'gray'}
+            variant={value === preset.dashArray ? 'solid' : 'outline'}
+            size="xs"
+            minW="20px"
+            h="20px"
             title={`${preset.name}: ${preset.description}`}
-          >
-            <DashPreview dashArray={preset.dashArray} />
-          </IconButton>
+            icon={<DashPreview dashArray={preset.dashArray} />}
+          />
         ))}
       </div>
       {/* Custom input */}

@@ -1,8 +1,8 @@
 import React from 'react';
+import { VStack, HStack, IconButton as ChakraIconButton, Text } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Pen, Route, Square, PenTool } from 'lucide-react';
-import { IconButton } from '../ui/IconButton';
-import { PanelWithHeader } from '../ui/PanelComponents';
+import { Panel } from '../ui/Panel';
 
 export const PencilPanel: React.FC = () => {
   const { pencil, updatePencilState, setMode, activePlugin } = useCanvasStore();
@@ -20,49 +20,44 @@ export const PencilPanel: React.FC = () => {
   };
 
   return (
-    <PanelWithHeader icon={<Pen size={16} />} title="Pencil">
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <span style={{ fontSize: '11px', color: '#666' }}>Path Mode:</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <IconButton
-            onPointerUp={handleReusePathToggle}
-            active={!pencil.reusePath}
-            activeBgColor="#007bff"
-            activeColor="#fff"
-            size="custom"
-            customSize="24px"
-            title="New Path"
-          >
-            <Square size={12} />
-          </IconButton>
-          <IconButton
-            onPointerUp={handleReusePathToggle}
-            active={pencil.reusePath}
-            activeBgColor="#007bff"
-            activeColor="#fff"
-            size="custom"
-            customSize="24px"
-            title="Add Subpath"
-          >
-            <Route size={12} />
-          </IconButton>
-        </div>
-      </div>
+    <Panel icon={<Pen size={16} />} title="Pencil">
+      <VStack spacing={2} align="stretch">
+        {/* Path Mode Selection */}
+        <HStack spacing={1} justify="space-between">
+          <Text fontSize="xs" color="gray.600">Path Mode:</Text>
+          <HStack spacing={1}>
+            <ChakraIconButton
+              aria-label="New Path"
+              icon={<Square size={12} />}
+              onClick={handleReusePathToggle}
+              colorScheme={!pencil.reusePath ? 'brand' : 'gray'}
+              variant={!pencil.reusePath ? 'solid' : 'outline'}
+              size="sm"
+            />
+            <ChakraIconButton
+              aria-label="Add Subpath"
+              icon={<Route size={12} />}
+              onClick={handleReusePathToggle}
+              colorScheme={pencil.reusePath ? 'brand' : 'gray'}
+              variant={pencil.reusePath ? 'solid' : 'outline'}
+              size="sm"
+            />
+          </HStack>
+        </HStack>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <span style={{ fontSize: '11px', color: '#666' }}>Curves:</span>
-        <IconButton
-          onPointerUp={handleCurvesToggle}
-          active={activePlugin === 'curves'}
-          activeBgColor="#007bff"
-          activeColor="#fff"
-          size="custom"
-          customSize="24px"
-          title="Draw Curves"
-        >
-          <PenTool size={12} />
-        </IconButton>
-      </div>
-    </PanelWithHeader>
+        {/* Curves Mode */}
+        <HStack spacing={1} justify="space-between">
+          <Text fontSize="xs" color="gray.600">Curves:</Text>
+          <ChakraIconButton
+            aria-label="Draw Curves"
+            icon={<PenTool size={12} />}
+            onClick={handleCurvesToggle}
+            colorScheme={activePlugin === 'curves' ? 'brand' : 'gray'}
+            variant={activePlugin === 'curves' ? 'solid' : 'outline'}
+            size="sm"
+          />
+        </HStack>
+      </VStack>
+    </Panel>
   );
 };
