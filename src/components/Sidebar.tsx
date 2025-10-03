@@ -7,7 +7,8 @@ import {
   useDisclosure,
   IconButton,
   HStack,
-  Box
+  Box,
+  useBreakpointValue
 } from '@chakra-ui/react';
 import { Menu, X, Pin, PinOff } from 'lucide-react';
 import { useCanvasStore } from '../store/canvasStore';
@@ -16,8 +17,24 @@ import { SidebarPanels } from './sidebar/SidebarPanels';
 import { SidebarFooter } from './sidebar/SidebarFooter';
 
 export const Sidebar: React.FC = () => {
-  const { isOpen, onOpen, onClose } = useDisclosure({ defaultIsOpen: true });
-  const [isPinned, setIsPinned] = useState(false);
+  // Detect if desktop (md breakpoint = 768px)
+  const isDesktop = useBreakpointValue({ base: false, md: true }, { ssr: false });
+  
+  // Desktop: open by default, Mobile: closed by default
+  const { isOpen, onOpen, onClose } = useDisclosure({ 
+    defaultIsOpen: isDesktop ?? true 
+  });
+  
+  // Desktop: pinned by default, Mobile: never pinned
+  const [isPinned, setIsPinned] = useState(isDesktop ?? true);
+  
+  // Sync isPinned with desktop/mobile changes
+  useEffect(() => {
+    if (!isDesktop) {
+      // Mobile: always unpinned
+      setIsPinned(false);
+    }
+  }, [isDesktop]);
   
   // Use specific selectors instead of destructuring the entire store
   const activePlugin = useCanvasStore(state => state.activePlugin);
@@ -87,8 +104,8 @@ export const Sidebar: React.FC = () => {
     }
   };
 
-  // When pinned, use a fixed Box instead of Drawer to avoid overlay blocking
-  if (isPinned && isOpen) {
+  // When pinned AND desktop, use a fixed Box instead of Drawer to avoid overlay blocking
+  if (isPinned && isOpen && isDesktop) {
     return (
       <Box
         position="fixed"
@@ -104,6 +121,15 @@ export const Sidebar: React.FC = () => {
         display="flex"
         flexDirection="column"
         zIndex={1000}
+        sx={{
+          // Prevent text selection in UI
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+          MozUserSelect: 'none',
+          msUserSelect: 'none',
+          // Prevent touch callout on iOS
+          WebkitTouchCallout: 'none',
+        }}
       >
         {/* Header with Pin and Close buttons */}
         <Box 
@@ -201,8 +227,18 @@ export const Sidebar: React.FC = () => {
         closeOnOverlayClick={true}
         closeOnEsc={true}
         size="sm"
+        // Prevent gesture conflicts on mobile
+        blockScrollOnMount={true}
+        preserveScrollBarGap={false}
       >
-        <DrawerOverlay />
+        <DrawerOverlay 
+          bg="blackAlpha.600"
+          sx={{
+            // Prevent iOS bounce/overscroll on overlay
+            WebkitOverflowScrolling: 'touch',
+            overscrollBehavior: 'contain',
+          }}
+        />
         <DrawerContent
           h="100vh"
           bg="white"
@@ -211,6 +247,19 @@ export const Sidebar: React.FC = () => {
           boxShadow="lg"
           display="flex"
           flexDirection="column"
+          sx={{
+            // Prevent text selection in UI
+            userSelect: 'none',
+            WebkitUserSelect: 'none',
+            MozUserSelect: 'none',
+            msUserSelect: 'none',
+            // Prevent touch callout on iOS
+            WebkitTouchCallout: 'none',
+            // Prevent pull-to-refresh
+            overscrollBehavior: 'contain',
+            // Smooth scrolling on iOS
+            WebkitOverflowScrolling: 'touch',
+          }}
         >
           {/* Header with Pin and Close buttons */}
           <Box 
@@ -220,15 +269,18 @@ export const Sidebar: React.FC = () => {
             bg="gray.50"
           >
             <HStack spacing={1} justify="flex-end">
-              <IconButton
-                aria-label="Pin sidebar"
-                icon={<PinOff size={16} />}
-                onClick={() => setIsPinned(true)}
-                size="sm"
-                variant="ghost"
-                colorScheme="gray"
-                title="Pin sidebar (prevents auto-close)"
-              />
+              {/* Pin button - only show on desktop */}
+              {isDesktop && (
+                <IconButton
+                  aria-label="Pin sidebar"
+                  icon={<PinOff size={16} />}
+                  onClick={() => setIsPinned(true)}
+                  size="sm"
+                  variant="ghost"
+                  colorScheme="gray"
+                  title="Pin sidebar (prevents auto-close)"
+                />
+              )}
               <IconButton
                 aria-label="Close sidebar"
                 icon={<X size={16} />}
