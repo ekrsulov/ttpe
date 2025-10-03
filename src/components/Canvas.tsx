@@ -80,7 +80,33 @@ export const Canvas: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<Point | null>(null);
   const [hasDragMoved, setHasDragMoved] = useState(false);
-  const [canvasSize] = useState({ width: window.innerWidth, height: window.innerHeight });
+  
+  // Use dynamic canvas size that updates with viewport changes (Safari toolbar show/hide)
+  const [canvasSize, setCanvasSize] = useState({ 
+    width: window.innerWidth, 
+    height: window.innerHeight 
+  });
+
+  // Update canvas size on resize and viewport changes (Safari iOS toolbar)
+  useEffect(() => {
+    const updateCanvasSize = () => {
+      // Use visualViewport if available (better for mobile Safari)
+      const width = window.visualViewport?.width ?? window.innerWidth;
+      const height = window.visualViewport?.height ?? window.innerHeight;
+      setCanvasSize({ width, height });
+    };
+
+    // Listen to both resize and visualViewport changes
+    window.addEventListener('resize', updateCanvasSize);
+    window.visualViewport?.addEventListener('resize', updateCanvasSize);
+    window.visualViewport?.addEventListener('scroll', updateCanvasSize);
+
+    return () => {
+      window.removeEventListener('resize', updateCanvasSize);
+      window.visualViewport?.removeEventListener('resize', updateCanvasSize);
+      window.visualViewport?.removeEventListener('scroll', updateCanvasSize);
+    };
+  }, []);
 
   // Memoize sorted elements to prevent unnecessary re-renders
   const sortedElements = useMemo(() => {

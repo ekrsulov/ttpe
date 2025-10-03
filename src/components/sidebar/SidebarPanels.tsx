@@ -97,11 +97,14 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
       flex={1}
       px={2}
       pb={2}
+      mb="120px" // Reserve space for footer (ArrangePanel + SelectPanel)
       overflowY="auto"
+      overflowX="hidden"
       display="flex"
       flexDirection="column"
       gap={0.5}
       bg="white"
+      minH={0} // Important: allows flex item to shrink below content size
       css={{
         '&::-webkit-scrollbar': {
           width: '8px',

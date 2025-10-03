@@ -1,21 +1,64 @@
 import { Canvas } from './components/Canvas';
 import { Sidebar } from './components/Sidebar';
+import { TopActionBar } from './components/ui/TopActionBar';
+import { BottomActionBar } from './components/ui/BottomActionBar';
+import { useCanvasStore } from './store/canvasStore';
 import './App.css';
 import type { CSSProperties } from 'react';
+import { useState, useCallback } from 'react';
 
 function App() {
+  const activePlugin = useCanvasStore(state => state.activePlugin);
+  const setMode = useCanvasStore(state => state.setMode);
+  
+  // Track sidebar width when pinned (0 when not pinned)
+  const [sidebarWidth, setSidebarWidth] = useState(0);
+  
+  // Track if sidebar is pinned
+  const [isSidebarPinned, setIsSidebarPinned] = useState(false);
+  
+  // Track if sidebar is open
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  
+  // Store reference to sidebar open handler
+  const [sidebarOpenHandler, setSidebarOpenHandler] = useState<(() => void) | null>(null);
+
+  // Memoized callback to prevent re-renders
+  const handleSidebarWidthChange = useCallback((width: number) => {
+    setSidebarWidth(width);
+  }, []);
+
+  const handleSidebarPinnedChange = useCallback((isPinned: boolean) => {
+    setIsSidebarPinned(isPinned);
+  }, []);
+
+  const handleSidebarToggleOpen = useCallback((isOpen: boolean) => {
+    setIsSidebarOpen(isOpen);
+  }, []);
+
+  const handleRegisterOpenHandler = useCallback((openHandler: () => void) => {
+    setSidebarOpenHandler(() => openHandler);
+  }, []);
+
+  const handleMenuClick = useCallback(() => {
+    if (sidebarOpenHandler) {
+      sidebarOpenHandler();
+    }
+  }, [sidebarOpenHandler]);
+
   return (
     <div 
       style={{ 
         position: 'relative', 
         width: '100vw', 
-        height: '100vh', 
+        height: '100dvh', // Dynamic viewport height (adjusts with Safari toolbar)
         overflow: 'hidden',
         // Prevent overscroll/bounce on mobile
         overscrollBehavior: 'none',
         WebkitOverflowScrolling: 'touch',
         // Prevent pull-to-refresh
         touchAction: 'none',
+        // NO padding here - let canvas use full height
       } as CSSProperties}
     >
       <div 
@@ -24,11 +67,28 @@ function App() {
           height: '100%',
           // Allow panning gestures on canvas only
           touchAction: 'pan-x pan-y',
+          // Important: no padding to avoid coordinate offset
         }}
       >
         <Canvas />
       </div>
-      <Sidebar />
+      <Sidebar 
+        onWidthChange={handleSidebarWidthChange}
+        onPinnedChange={handleSidebarPinnedChange}
+        onToggleOpen={handleSidebarToggleOpen}
+        onRegisterOpenHandler={handleRegisterOpenHandler}
+      />
+      <TopActionBar 
+        activeMode={activePlugin} 
+        onModeChange={setMode}
+        sidebarWidth={sidebarWidth}
+        isSidebarPinned={isSidebarPinned}
+        isSidebarOpen={isSidebarOpen}
+        onMenuClick={handleMenuClick}
+      />
+      <BottomActionBar 
+        sidebarWidth={sidebarWidth}
+      />
     </div>
   );
 }

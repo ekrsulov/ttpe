@@ -1,11 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import {
-  Undo2,
-  Redo2,
-  Trash2,
-  ZoomIn,
-  ZoomOut,
   Pen,
   Eye,
   Circle,
@@ -22,7 +17,8 @@ import {
   Box,
   Collapse,
   useDisclosure,
-  Input
+  Input,
+  useBreakpointValue
 } from '@chakra-ui/react';
 import { SliderControl } from '../ui/SliderControl';
 import { PresetButton } from '../ui/PresetButton';
@@ -33,67 +29,17 @@ import { DashArrayCustomInput, DashArrayPresets } from '../ui/DashArraySelector'
 import { PRESETS, type Preset } from '../../utils/presets';
 import { useSelectedPathProperty } from '../../utils/pathPropertyUtils';
 
-// Custom hook to subscribe to temporal state changes
-const useTemporalState = () => {
-  const [temporalState, setTemporalState] = useState(() => useCanvasStore.temporal.getState());
-
-  useEffect(() => {
-    const unsubscribe = useCanvasStore.temporal.subscribe(setTemporalState);
-    return unsubscribe;
-  }, []);
-
-  return temporalState;
-};
-
 export const EditorPanel: React.FC = () => {
   // Use specific selectors instead of destructuring the entire store
-  const selectedIds = useCanvasStore(state => state.selectedIds);
-  const selectedCommands = useCanvasStore(state => state.selectedCommands);
-  const deleteSelectedElements = useCanvasStore(state => state.deleteSelectedElements);
-  const deleteSelectedCommands = useCanvasStore(state => state.deleteSelectedCommands);
-  const viewport = useCanvasStore(state => state.viewport);
-  const zoom = useCanvasStore(state => state.zoom);
-  const resetZoom = useCanvasStore(state => state.resetZoom);
   const pencil = useCanvasStore(state => state.pencil);
   const updatePencilState = useCanvasStore(state => state.updatePencilState);
   const getSelectedPathsCount = useCanvasStore(state => state.getSelectedPathsCount);
   const updateSelectedPaths = useCanvasStore(state => state.updateSelectedPaths);
-  const activePlugin = useCanvasStore(state => state.activePlugin);
-  const deleteSelectedSubpaths = useCanvasStore(state => state.deleteSelectedSubpaths);
-  const getSelectedSubpathsCount = useCanvasStore(state => state.getSelectedSubpathsCount);
+  const selectedIds = useCanvasStore(state => state.selectedIds);
   const elements = useCanvasStore(state => state.elements);
-  const selectedSubpaths = useCanvasStore(state => state.selectedSubpaths);
-
-  const { undo, redo, pastStates, futureStates } = useTemporalState();
 
   // Memoize computed values to prevent unnecessary re-renders
-  const selectedCount = useMemo(() => selectedIds.length, [selectedIds]);
-  const selectedCommandsCount = useMemo(() => selectedCommands.length, [selectedCommands]);
-  const canUndo = useMemo(() => pastStates.length > 0, [pastStates.length]);
-  const canRedo = useMemo(() => futureStates.length > 0, [futureStates.length]);
   const selectedPathsCount = useMemo(() => getSelectedPathsCount(), [selectedIds, elements]); // eslint-disable-line react-hooks/exhaustive-deps
-  const selectedSubpathsCount = useMemo(() => getSelectedSubpathsCount(), [selectedSubpaths]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const zoomFactor = 1.2;
-
-  // Handle delete action based on active plugin
-  const handleDelete = () => {
-    if (activePlugin === 'edit' && selectedCommandsCount > 0) {
-      deleteSelectedCommands();
-    } else if (activePlugin === 'subpath' && selectedSubpathsCount > 0) {
-      deleteSelectedSubpaths();
-    } else if (activePlugin === 'select' && selectedCount > 0) {
-      deleteSelectedElements();
-    }
-  };
-
-  // Determine if delete button should be enabled
-  const canDelete = useMemo(() => 
-    (activePlugin === 'edit' && selectedCommandsCount > 0) ||
-    (activePlugin === 'select' && selectedCount > 0) ||
-    (activePlugin === 'subpath' && selectedSubpathsCount > 0),
-    [activePlugin, selectedCommandsCount, selectedCount, selectedSubpathsCount]
-  );
 
   // Pencil properties handlers
   const handleStrokeWidthChange = (value: number) => {
@@ -219,116 +165,22 @@ export const EditorPanel: React.FC = () => {
   const { isOpen: isColorControlsOpen, onToggle: onColorControlsToggle } = useDisclosure({ defaultIsOpen: false });
   const { isOpen: isAdvancedStrokeOpen, onToggle: onAdvancedStrokeToggle } = useDisclosure({ defaultIsOpen: false });
 
+  // Responsive columns for preset grid
+  const presetColumns = useBreakpointValue({ base: 8, md: 10 }) || 10;
+  const presetMaxWidth = useBreakpointValue({ base: '180px', md: '230px' }) || '230px';
+
   return (
-    <Box bg="white" px={2} pb={2}>
-      {/* Main toolbar with essential buttons */}
-      <HStack justify="space-between" spacing={2} mb={1} mt={1}>
-        {/* Undo/Redo Group */}
-        <HStack spacing={0.5}>
-          <ChakraIconButton
-            aria-label="Undo"
-            icon={
-              <HStack spacing={0.5}>
-                <Undo2 size={14} />
-                <Text fontSize="10px" lineHeight="10px" minW="20px" textAlign="right">
-                  {pastStates.length}
-                </Text>
-              </HStack>
-            }
-            onClick={() => undo()}
-            isDisabled={!canUndo}
-            colorScheme={canUndo ? 'blue' : 'gray'}
-            variant={canUndo ? 'solid' : 'outline'}
-            size="xs"
-            h="24px"
-            minW="24px"
-          />
-          <ChakraIconButton
-            aria-label="Redo"
-            icon={
-              <HStack spacing={0.5}>
-                <Redo2 size={14} />
-                <Text fontSize="10px" lineHeight="10px" minW="20px" textAlign="right">
-                  {futureStates.length}
-                </Text>
-              </HStack>
-            }
-            onClick={() => redo()}
-            isDisabled={!canRedo}
-            colorScheme={canRedo ? 'blue' : 'gray'}
-            variant={canRedo ? 'solid' : 'outline'}
-            size="xs"
-            h="24px"
-            minW="24px"
-          />
-        </HStack>
-
-        {/* Zoom Controls Group */}
-        <HStack spacing={0.5}>
-          <ChakraIconButton
-            aria-label="Zoom Out"
-            icon={<ZoomOut size={14} />}
-            onClick={() => zoom(1 / zoomFactor, window.innerWidth / 2, window.innerHeight / 2)}
-            size="xs"
-            h="24px"
-            minW="24px"
-          />
-          <ChakraIconButton
-            aria-label="Reset Zoom"
-            icon={
-              <Text fontSize="10px" lineHeight="10px" minW="32px" textAlign="center">
-                {Math.round((viewport.zoom as number) * 100)}%
-              </Text>
-            }
-            onClick={resetZoom}
-            size="xs"
-            h="24px"
-            minW="24px"
-          />
-          <ChakraIconButton
-            aria-label="Zoom In"
-            icon={<ZoomIn size={14} />}
-            onClick={() => zoom(zoomFactor, window.innerWidth / 2, window.innerHeight / 2)}
-            size="xs"
-            h="24px"
-            minW="24px"
-          />
-        </HStack>
-
-        {/* Delete Button */}
-        <ChakraIconButton
-          aria-label={
-            activePlugin === 'edit' ? "Delete Selected Points" :
-              activePlugin === 'subpath' ? "Delete Selected Subpaths" :
-                "Delete Selected"
-          }
-          icon={
-            <HStack spacing={0.5}>
-              <Text fontSize="10px" lineHeight="10px" minW="20px" textAlign="left">
-                {selectedCount}
-              </Text>
-              <Trash2 size={14} />
-            </HStack>
-          }
-          onClick={handleDelete}
-          isDisabled={!canDelete}
-          colorScheme={canDelete ? 'red' : 'gray'}
-          variant={canDelete ? 'solid' : 'outline'}
-          size="xs"
-          h="24px"
-          minW="24px"
-        />
-      </HStack>
-
+    <Box bg="white" pr={2} pb={2}>
       {/* Pencil Properties Section */}
-      <VStack spacing={1} align="stretch">
+      <VStack spacing={1} align="stretch" mt={1}>
         {/* Color Presets */}
-        <HStack justify="center" minH="24px" mt={1}>
+        <HStack justify="space-between" minH="24px" mt={1}>
           <Box
             display="grid"
-            gridTemplateColumns="repeat(10, 1fr)"
+            gridTemplateColumns={`repeat(${presetColumns}, 1fr)`}
             gap={0.75}
-            maxW="230px"
+            maxW={presetMaxWidth}
+            flex={1}
           >
             {PRESETS.map((preset) => (
               <PresetButton
@@ -345,7 +197,7 @@ export const EditorPanel: React.FC = () => {
             size="xs"
             h="20px"
             minW="20px"
-            ml={2}
+            flexShrink={0}
           />
         </HStack>
 
@@ -353,104 +205,108 @@ export const EditorPanel: React.FC = () => {
         <Collapse in={isColorControlsOpen} animateOpacity>
           <VStack spacing={1} align="stretch">
             {/* Fill Color & Opacity */}
-            <HStack justify="flex-start" minH="24px" spacing={2}>
-              <PaintBucket size={14} color="#666" style={{ flexShrink: 0 }} />
-              <HStack spacing={1} flexShrink={0}>
-                <Input
-                  type="color"
-                  value={currentFillColor === 'none' ? '#000000' : currentFillColor}
-                  onChange={(e) => handleFillColorChange(e.target.value)}
-                  w="20px"
-                  h="20px"
-                  minW="20px"
-                  p={0}
-                  border="1px solid"
-                  borderColor="gray.300"
-                  borderRadius="3px"
-                  cursor="pointer"
-                  opacity={currentFillColor === 'none' ? 0.5 : 1}
-                  title="Fill Color"
-                />
-                <ChakraIconButton
-                  aria-label="No Fill"
-                  icon={<X size={12} />}
-                  onClick={handleFillNone}
-                  colorScheme={currentFillColor === 'none' ? 'blue' : 'gray'}
-                  variant={currentFillColor === 'none' ? 'solid' : 'outline'}
-                  size="xs"
-                  h="20px"
-                  minW="20px"
-                />
+            <VStack spacing={1} align="stretch">
+              <HStack justify="flex-start" minH="24px" spacing={1.5}>
+                <PaintBucket size={14} color="#666" style={{ flexShrink: 0 }} />
+                <HStack spacing={1} flexShrink={0}>
+                  <Input
+                    type="color"
+                    value={currentFillColor === 'none' ? '#000000' : currentFillColor}
+                    onChange={(e) => handleFillColorChange(e.target.value)}
+                    w="20px"
+                    h="20px"
+                    minW="20px"
+                    p={0}
+                    border="1px solid"
+                    borderColor="gray.300"
+                    borderRadius="3px"
+                    cursor="pointer"
+                    opacity={currentFillColor === 'none' ? 0.5 : 1}
+                    title="Fill Color"
+                  />
+                  <ChakraIconButton
+                    aria-label="No Fill"
+                    icon={<X size={12} />}
+                    onClick={handleFillNone}
+                    colorScheme={currentFillColor === 'none' ? 'blue' : 'gray'}
+                    variant={currentFillColor === 'none' ? 'solid' : 'outline'}
+                    size="xs"
+                    h="20px"
+                    minW="20px"
+                  />
+                </HStack>
+                <Box flex={1} minW="100px">
+                  <SliderControl
+                    icon={<Eye size={14} />}
+                    value={currentFillOpacity}
+                    min={0}
+                    max={1}
+                    step={0.1}
+                    onChange={handleFillOpacityChange}
+                    formatter={(value) => `${Math.round(value * 100)}%`}
+                    title="Fill Opacity"
+                    minWidth="50px"
+                    valueWidth="35px"
+                    inline={true}
+                    gap="4px"
+                  />
+                </Box>
               </HStack>
-              <Box minW="120px">
-                <SliderControl
-                  icon={<Eye size={14} />}
-                  value={currentFillOpacity}
-                  min={0}
-                  max={1}
-                  step={0.1}
-                  onChange={handleFillOpacityChange}
-                  formatter={(value) => `${Math.round(value * 100)}%`}
-                  title="Fill Opacity"
-                  minWidth="50px"
-                  valueWidth="35px"
-                  inline={true}
-                  gap="4px"
-                />
-              </Box>
-            </HStack>
+            </VStack>
 
             {/* Stroke Color & Opacity */}
-            <HStack justify="flex-start" minH="24px" spacing={2}>
-              <Pen size={14} color="#666" style={{ flexShrink: 0 }} />
-              <HStack spacing={1} flexShrink={0}>
-                <Input
-                  type="color"
-                  value={currentStrokeColor === 'none' ? '#000000' : currentStrokeColor}
-                  onChange={(e) => handleStrokeColorChange(e.target.value)}
-                  w="20px"
-                  h="20px"
-                  minW="20px"
-                  p={0}
-                  border="1px solid"
-                  borderColor="gray.300"
-                  borderRadius="3px"
-                  cursor="pointer"
-                  opacity={currentStrokeColor === 'none' ? 0.5 : 1}
-                  title="Stroke Color"
-                />
-                <ChakraIconButton
-                  aria-label="No Stroke"
-                  icon={<X size={12} />}
-                  onClick={handleStrokeNone}
-                  isDisabled={currentFillColor === 'none'}
-                  colorScheme={currentStrokeColor === 'none' ? 'blue' : 'gray'}
-                  variant={currentStrokeColor === 'none' ? 'solid' : 'outline'}
-                  size="xs"
-                  h="20px"
-                  minW="20px"
-                />
+            <VStack spacing={1} align="stretch">
+              <HStack justify="flex-start" minH="24px" spacing={1.5}>
+                <Pen size={14} color="#666" style={{ flexShrink: 0 }} />
+                <HStack spacing={1} flexShrink={0}>
+                  <Input
+                    type="color"
+                    value={currentStrokeColor === 'none' ? '#000000' : currentStrokeColor}
+                    onChange={(e) => handleStrokeColorChange(e.target.value)}
+                    w="20px"
+                    h="20px"
+                    minW="20px"
+                    p={0}
+                    border="1px solid"
+                    borderColor="gray.300"
+                    borderRadius="3px"
+                    cursor="pointer"
+                    opacity={currentStrokeColor === 'none' ? 0.5 : 1}
+                    title="Stroke Color"
+                  />
+                  <ChakraIconButton
+                    aria-label="No Stroke"
+                    icon={<X size={12} />}
+                    onClick={handleStrokeNone}
+                    isDisabled={currentFillColor === 'none'}
+                    colorScheme={currentStrokeColor === 'none' ? 'blue' : 'gray'}
+                    variant={currentStrokeColor === 'none' ? 'solid' : 'outline'}
+                    size="xs"
+                    h="20px"
+                    minW="20px"
+                  />
+                </HStack>
+                <Box flex={1} minW="100px">
+                  <SliderControl
+                    icon={<Eye size={14} />}
+                    value={currentOpacity}
+                    min={0}
+                    max={1}
+                    step={0.1}
+                    onChange={handleOpacityChange}
+                    formatter={(value) => `${Math.round(value * 100)}%`}
+                    title="Stroke Opacity"
+                    minWidth="50px"
+                    valueWidth="35px"
+                    inline={true}
+                    gap="4px"
+                  />
+                </Box>
               </HStack>
-              <Box minW="120px">
-                <SliderControl
-                  icon={<Eye size={14} />}
-                  value={currentOpacity}
-                  min={0}
-                  max={1}
-                  step={0.1}
-                  onChange={handleOpacityChange}
-                  formatter={(value) => `${Math.round(value * 100)}%`}
-                  title="Stroke Opacity"
-                  minWidth="50px"
-                  valueWidth="35px"
-                  inline={true}
-                  gap="4px"
-                />
-              </Box>
-            </HStack>
+            </VStack>
 
             {/* Stroke Width */}
-            <HStack minH="24px" justify="flex-start">
+            <HStack minH="24px" justify="flex-start" spacing={1.5}>
               <Box flex={1}>
                 <SliderControl
                   icon={<Circle size={14} />}
@@ -470,17 +326,17 @@ export const EditorPanel: React.FC = () => {
                 size="xs"
                 h="20px"
                 minW="20px"
-                ml={2}
+                flexShrink={0}
               />
             </HStack>
 
             {/* Advanced Stroke Properties */}
             <Collapse in={isAdvancedStrokeOpen} animateOpacity>
               <VStack spacing={1} align="stretch">
-                {/* Advanced Properties - C, J and R in one line */}
-                <HStack justify="space-between" minH="24px">
-                  <HStack spacing={1}>
-                    <Text fontSize="13px" fontWeight="500" color="gray.600" minW="12px" h="24px" display="flex" alignItems="center" title="Stroke Linecap">
+                {/* Linecap and Linejoin - C and J in one line */}
+                <HStack justify="space-between" minH="24px" spacing={1}>
+                  <HStack spacing={1} flex={1}>
+                    <Text fontSize="11px" fontWeight="600" color="gray.600" minW="10px" h="24px" display="flex" alignItems="center" title="Stroke Linecap">
                       C:
                     </Text>
                     <LinecapSelector
@@ -490,8 +346,8 @@ export const EditorPanel: React.FC = () => {
                     />
                   </HStack>
                   
-                  <HStack spacing={1}>
-                    <Text fontSize="13px" fontWeight="500" color="gray.600" minW="12px" h="24px" display="flex" alignItems="center" title="Stroke Linejoin">
+                  <HStack spacing={1} flex={1}>
+                    <Text fontSize="11px" fontWeight="600" color="gray.600" minW="10px" h="24px" display="flex" alignItems="center" title="Stroke Linejoin">
                       J:
                     </Text>
                     <LinejoinSelector
@@ -500,9 +356,33 @@ export const EditorPanel: React.FC = () => {
                       title="Stroke Linejoin"
                     />
                   </HStack>
+                </HStack>
 
-                  <HStack spacing={1}>
-                    <Text fontSize="13px" fontWeight="500" color="gray.600" minW="12px" h="24px" display="flex" alignItems="center" title="Fill Rule">
+                {/* Dash Array Presets */}
+                <HStack justify="flex-start" minH="24px" spacing={1}>
+                  <DashArrayPresets
+                    value={currentStrokeDasharray || 'none'}
+                    onChange={handleStrokeDasharrayChange}
+                  />
+                </HStack>
+                
+                {/* Custom Dash Array and Fill Rule - D and R in same line */}
+                <HStack justify="space-between" minH="24px" spacing={2}>
+                  <HStack spacing={1} flex={1}>
+                    <Text fontSize="11px" fontWeight="600" color="gray.600" minW="10px" h="24px" display="flex" alignItems="center" title="Custom Dash Array">
+                      D:
+                    </Text>
+                    <Box flex={1}>
+                      <DashArrayCustomInput
+                        value={currentStrokeDasharray || 'none'}
+                        onChange={handleStrokeDasharrayChange}
+                        title="Custom dash array (e.g., 5,3,2,3)"
+                      />
+                    </Box>
+                  </HStack>
+                  
+                  <HStack spacing={1} flexShrink={0}>
+                    <Text fontSize="11px" fontWeight="600" color="gray.600" minW="10px" h="24px" display="flex" alignItems="center" title="Fill Rule">
                       R:
                     </Text>
                     <FillRuleSelector
@@ -510,27 +390,6 @@ export const EditorPanel: React.FC = () => {
                       onChange={handleFillRuleChange}
                       title="Fill Rule"
                     />
-                  </HStack>
-                </HStack>
-
-                {/* Dash Array Presets and Custom Input in one line */}
-                <HStack justify="space-between" minH="24px" spacing={2}>
-                  <DashArrayPresets
-                    value={currentStrokeDasharray || 'none'}
-                    onChange={handleStrokeDasharrayChange}
-                  />
-                  
-                  <HStack spacing={1}>
-                    <Text fontSize="13px" fontWeight="500" color="gray.600" minW="12px" h="24px" display="flex" alignItems="center" title="Custom Dash Array">
-                      D:
-                    </Text>
-                    <Box w="80px">
-                      <DashArrayCustomInput
-                        value={currentStrokeDasharray || 'none'}
-                        onChange={handleStrokeDasharrayChange}
-                        title="Custom dash array (e.g., 5,3,2,3)"
-                      />
-                    </Box>
                   </HStack>
                 </HStack>
               </VStack>

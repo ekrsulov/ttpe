@@ -2,15 +2,10 @@ import React from 'react';
 import { Box, SimpleGrid, IconButton as ChakraIconButton, Tooltip } from '@chakra-ui/react';
 import {
   Hand,
-  Pen,
-  Type,
-  MousePointer,
-  Shapes,
-  VectorSquare,
-  MousePointerClick,
-  Route,
   File,
-  Settings
+  Settings,
+  Pin,
+  PinOff
 } from 'lucide-react';
 
 interface ToolConfig {
@@ -25,30 +20,32 @@ interface SidebarToolGridProps {
   onToolClick?: (toolName: string) => void;
   showFilePanel?: boolean;
   showSettingsPanel?: boolean;
+  isPinned?: boolean;
+  onTogglePin?: () => void;
+  isDesktop?: boolean;
 }
 
 /**
  * Grid component for plugin/tool buttons in the sidebar
+ * Note: Main action tools (select, pencil, text, shape, subpath, transform, edit)
+ * are now in the ActionBar at the bottom of the screen
  */
 export const SidebarToolGrid: React.FC<SidebarToolGridProps> = ({ 
   activePlugin, 
   setMode,
   onToolClick,
   showFilePanel = false,
-  showSettingsPanel = false
+  showSettingsPanel = false,
+  isPinned = false,
+  onTogglePin,
+  isDesktop = false
 }) => {
-  // Plugin configuration organized in rows
+  // Plugin configuration - only utility/settings tools
+  // Main action tools moved to ActionBar
   const pluginRows: ToolConfig[][] = [
     [
-      { name: 'select', label: 'Select', icon: MousePointer },
-      { name: 'subpath', label: 'Subpath', icon: Route },
-      { name: 'transformation', label: 'Transform', icon: VectorSquare },
-      { name: 'edit', label: 'Edit', icon: MousePointerClick },
       { name: 'file', label: 'File', icon: File },
       { name: 'pan', label: 'Pan', icon: Hand },
-      { name: 'pencil', label: 'Pencil', icon: Pen },
-      { name: 'text', label: 'Text', icon: Type },
-      { name: 'shape', label: 'Shape', icon: Shapes },
       { name: 'settings', label: 'Settings', icon: Settings },
     ],
   ];
@@ -84,15 +81,19 @@ export const SidebarToolGrid: React.FC<SidebarToolGridProps> = ({
       <Tooltip key={plugin.name} label={plugin.label} placement="left" hasArrow>
         <ChakraIconButton
           aria-label={plugin.label}
-          icon={<IconComponent size={16} />}
+          icon={<IconComponent size={14} />}
           onClick={handleClick}
           variant="tool"
-          size="md"
+          size="sm"
           data-active={isActive}
           bg={isActive ? 'brand.500' : 'sidebar.toolBg'}
           color={isActive ? 'white' : 'gray.700'}
           _hover={{
             bg: isActive ? 'brand.600' : 'sidebar.toolHover'
+          }}
+          sx={{
+            minH: '32px',
+            minW: '32px',
           }}
         />
       </Tooltip>
@@ -100,15 +101,37 @@ export const SidebarToolGrid: React.FC<SidebarToolGridProps> = ({
   };
 
   return (
-    <Box p={2} bg="white">
+    <Box p={2} bg="white" borderBottom="1px solid" borderColor="gray.200">
       {pluginRows.map((row, rowIndex) => (
         <SimpleGrid
           key={rowIndex}
-          columns={5}
-          spacing={0.5}
-          mb={rowIndex < pluginRows.length - 1 ? 0.5 : 0}
+          columns={isDesktop ? 4 : 3} // 4 columns on desktop (includes pin), 3 on mobile
+          spacing={1}
+          mb={rowIndex < pluginRows.length - 1 ? 1 : 0}
         >
           {row.map(renderPluginButton)}
+          
+          {/* Pin/Unpin button - only on desktop */}
+          {isDesktop && rowIndex === 0 && (
+            <Tooltip label={isPinned ? "Unpin sidebar" : "Pin sidebar"} placement="left" hasArrow>
+              <ChakraIconButton
+                aria-label={isPinned ? "Unpin sidebar" : "Pin sidebar"}
+                icon={isPinned ? <Pin size={14} /> : <PinOff size={14} />}
+                onClick={onTogglePin}
+                variant="tool"
+                size="sm"
+                bg="sidebar.toolBg"
+                color="gray.700"
+                _hover={{
+                  bg: 'sidebar.toolHover'
+                }}
+                sx={{
+                  minH: '32px',
+                  minW: '32px',
+                }}
+              />
+            </Tooltip>
+          )}
         </SimpleGrid>
       ))}
     </Box>

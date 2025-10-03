@@ -58,15 +58,6 @@ export const PRESETS: Preset[] = [
       fillOpacity: 0.6
     },
     {
-      id: 'electric-blue',
-      name: 'Electric Blue',
-      strokeWidth: 3,
-      strokeColor: '#00bcd4',
-      strokeOpacity: 1,
-      fillColor: '#4dd0e1',
-      fillOpacity: 0.9
-    },
-    {
       id: 'thick-blue',
       name: 'Bold Blue',
       strokeWidth: 7,
@@ -83,15 +74,6 @@ export const PRESETS: Preset[] = [
       strokeOpacity: 1,
       fillColor: '#ce93d8',
       fillOpacity: 0.8
-    },
-    {
-      id: 'pale-pink',
-      name: 'Soft Pink',
-      strokeWidth: 2,
-      strokeColor: '#fce4ec',
-      strokeOpacity: 0.8,
-      fillColor: '#fce4ec',
-      fillOpacity: 0.4
     },
     {
       id: 'minimal-gray',

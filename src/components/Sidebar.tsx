@@ -1,22 +1,32 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Drawer,
   DrawerBody,
   DrawerOverlay,
   DrawerContent,
   useDisclosure,
-  IconButton,
-  HStack,
   Box,
   useBreakpointValue
 } from '@chakra-ui/react';
-import { Menu, X, Pin, PinOff } from 'lucide-react';
 import { useCanvasStore } from '../store/canvasStore';
 import { SidebarToolGrid } from './sidebar/SidebarToolGrid';
 import { SidebarPanels } from './sidebar/SidebarPanels';
 import { SidebarFooter } from './sidebar/SidebarFooter';
+import { SidebarResizer } from './sidebar/SidebarResizer';
 
-export const Sidebar: React.FC = () => {
+interface SidebarProps {
+  onPinnedChange?: (isPinned: boolean) => void;
+  onWidthChange?: (width: number) => void; // Para informar el ancho al ActionBar
+  onToggleOpen?: (isOpen: boolean) => void; // Para informar si el drawer está abierto
+  onRegisterOpenHandler?: (openHandler: () => void) => void; // Para registrar la función de abrir
+}
+
+export const Sidebar: React.FC<SidebarProps> = ({ 
+  onPinnedChange, 
+  onWidthChange, 
+  onToggleOpen,
+  onRegisterOpenHandler 
+}) => {
   // Detect if desktop (md breakpoint = 768px)
   const isDesktop = useBreakpointValue({ base: false, md: true }, { ssr: false });
   
@@ -24,9 +34,23 @@ export const Sidebar: React.FC = () => {
   const { isOpen, onOpen, onClose } = useDisclosure({ 
     defaultIsOpen: isDesktop ?? true 
   });
+
+  // Notify parent when drawer open state changes
+  useEffect(() => {
+    onToggleOpen?.(isOpen);
+  }, [isOpen, onToggleOpen]);
+
+  // Register the open handler with parent
+  useEffect(() => {
+    onRegisterOpenHandler?.(onOpen);
+  }, [onOpen, onRegisterOpenHandler]);
   
   // Desktop: pinned by default, Mobile: never pinned
   const [isPinned, setIsPinned] = useState(isDesktop ?? true);
+  
+  // Sidebar width state (only for pinned mode)
+  const [sidebarWidth, setSidebarWidth] = useState(300);
+  const initialWidth = 300; // Ancho inicial para reset
   
   // Sync isPinned with desktop/mobile changes
   useEffect(() => {
@@ -35,6 +59,33 @@ export const Sidebar: React.FC = () => {
       setIsPinned(false);
     }
   }, [isDesktop]);
+
+  // Notify parent when pinned state changes
+  useEffect(() => {
+    onPinnedChange?.(isPinned && isDesktop === true);
+  }, [isPinned, isDesktop, onPinnedChange]);
+
+  // Notify parent of width changes when pinned (debounced to avoid loops)
+  useEffect(() => {
+    if (isPinned && isDesktop) {
+      const timer = setTimeout(() => {
+        onWidthChange?.(sidebarWidth);
+      }, 0);
+      return () => clearTimeout(timer);
+    } else {
+      onWidthChange?.(0); // No sidebar visible
+    }
+  }, [sidebarWidth, isPinned, isDesktop, onWidthChange]);
+
+  // Handle sidebar resize
+  const handleResize = useCallback((newWidth: number) => {
+    setSidebarWidth(newWidth);
+  }, []);
+
+  // Handle reset to initial width (double-click)
+  const handleReset = useCallback(() => {
+    setSidebarWidth(initialWidth);
+  }, [initialWidth]);
   
   // Use specific selectors instead of destructuring the entire store
   const activePlugin = useCanvasStore(state => state.activePlugin);
@@ -111,9 +162,11 @@ export const Sidebar: React.FC = () => {
         position="fixed"
         right={0}
         top={0}
-        bottom={0}
-        width="sm"
-        h="100vh"
+        bottom={0} // Full height - ActionBar is now floating
+        width={`${sidebarWidth}px`} // Dynamic width controlled by resizer
+        maxW="100vw"
+        h="100dvh" // Full dynamic viewport height
+        maxH="100dvh"
         bg="white"
         borderLeft="1px solid"
         borderColor="gray.200"
@@ -131,46 +184,29 @@ export const Sidebar: React.FC = () => {
           WebkitTouchCallout: 'none',
         }}
       >
-        {/* Header with Pin and Close buttons */}
-        <Box 
-          p={2} 
-          borderBottom="1px solid" 
-          borderColor="gray.200"
-          bg="gray.50"
-        >
-          <HStack spacing={1} justify="flex-end">
-            <IconButton
-              aria-label="Pin sidebar"
-              icon={<Pin size={16} />}
-              onClick={() => setIsPinned(false)}
-              size="sm"
-              variant="ghost"
-              colorScheme="blue"
-              title="Unpin sidebar"
-            />
-            <IconButton
-              aria-label="Close sidebar"
-              icon={<X size={16} />}
-              onClick={onClose}
-              size="sm"
-              variant="ghost"
-              colorScheme="gray"
-              title="Close sidebar"
-            />
-          </HStack>
-        </Box>
-
-        <Box p={0} display="flex" flexDirection="column" flex="1" overflow="auto">
-          {/* Tools Grid */}
+        {/* Resizer handle */}
+        <SidebarResizer
+          onResize={handleResize}
+          onReset={handleReset}
+          minWidth={200}
+          maxWidth={600}
+        />
+        
+        {/* Body container with relative positioning for absolute footer */}
+        <Box p={0} display="flex" flexDirection="column" flex="1" overflow="hidden" position="relative">
+          {/* Tools Grid - Fixed at top */}
           <SidebarToolGrid 
             activePlugin={activePlugin}
             setMode={setMode}
             onToolClick={handleToolClick}
             showFilePanel={showFilePanel}
             showSettingsPanel={showSettingsPanel}
+            isPinned={isPinned}
+            onTogglePin={() => setIsPinned(false)}
+            isDesktop={isDesktop}
           />
 
-          {/* Main Panels */}
+          {/* Main Panels - Scrollable middle section */}
           <SidebarPanels
             activePlugin={activePlugin}
             showFilePanel={showFilePanel}
@@ -190,7 +226,8 @@ export const Sidebar: React.FC = () => {
             resetSmoothBrush={resetSmoothBrush}
           />
 
-          {/* Footer with ArrangePanel and SelectPanel - hide in special panel mode */}
+          {/* Footer with ArrangePanel and SelectPanel - Fixed at bottom */}
+          {/* Hide in special panel mode (file/settings) */}
           {!showFilePanel && !showSettingsPanel && (
             <SidebarFooter
               isArrangeExpanded={isArrangeExpanded}
@@ -205,28 +242,13 @@ export const Sidebar: React.FC = () => {
   // Normal drawer mode (not pinned)
   return (
     <>
-      {/* Hamburger menu button - only show when drawer is closed */}
-      {!isOpen && (
-        <IconButton
-          aria-label="Open sidebar"
-          icon={<Menu size={20} />}
-          onClick={onOpen}
-          position="fixed"
-          top={4}
-          right={4}
-          zIndex={999}
-          colorScheme="blue"
-          size="md"
-        />
-      )}
-
       <Drawer
         isOpen={isOpen}
         placement="right"
         onClose={onClose}
         closeOnOverlayClick={true}
         closeOnEsc={true}
-        size="sm"
+        size="sm" // 300px for unpinned mode
         // Prevent gesture conflicts on mobile
         blockScrollOnMount={true}
         preserveScrollBarGap={false}
@@ -240,7 +262,8 @@ export const Sidebar: React.FC = () => {
           }}
         />
         <DrawerContent
-          h="100vh"
+          h="100dvh" // Full height - ActionBar is now floating
+          maxH="100dvh"
           bg="white"
           borderLeft="1px solid"
           borderColor="gray.200"
@@ -261,49 +284,20 @@ export const Sidebar: React.FC = () => {
             WebkitOverflowScrolling: 'touch',
           }}
         >
-          {/* Header with Pin and Close buttons */}
-          <Box 
-            p={2} 
-            borderBottom="1px solid" 
-            borderColor="gray.200"
-            bg="gray.50"
-          >
-            <HStack spacing={1} justify="flex-end">
-              {/* Pin button - only show on desktop */}
-              {isDesktop && (
-                <IconButton
-                  aria-label="Pin sidebar"
-                  icon={<PinOff size={16} />}
-                  onClick={() => setIsPinned(true)}
-                  size="sm"
-                  variant="ghost"
-                  colorScheme="gray"
-                  title="Pin sidebar (prevents auto-close)"
-                />
-              )}
-              <IconButton
-                aria-label="Close sidebar"
-                icon={<X size={16} />}
-                onClick={onClose}
-                size="sm"
-                variant="ghost"
-                colorScheme="gray"
-                title="Close sidebar"
-              />
-            </HStack>
-          </Box>
-
-          <DrawerBody p={0} display="flex" flexDirection="column">
-            {/* Tools Grid */}
+          <DrawerBody p={0} display="flex" flexDirection="column" position="relative">
+            {/* Tools Grid - Fixed at top */}
             <SidebarToolGrid 
               activePlugin={activePlugin}
               setMode={setMode}
               onToolClick={handleToolClick}
               showFilePanel={showFilePanel}
               showSettingsPanel={showSettingsPanel}
+              isPinned={isPinned}
+              onTogglePin={() => setIsPinned(true)}
+              isDesktop={isDesktop}
             />
 
-            {/* Main Panels */}
+            {/* Main Panels - Scrollable middle section */}
             <SidebarPanels
               activePlugin={activePlugin}
               showFilePanel={showFilePanel}
@@ -323,7 +317,8 @@ export const Sidebar: React.FC = () => {
               resetSmoothBrush={resetSmoothBrush}
             />
 
-            {/* Footer with ArrangePanel and SelectPanel - hide in special panel mode */}
+            {/* Footer with ArrangePanel and SelectPanel - Fixed at bottom */}
+            {/* Hide in special panel mode (file/settings) */}
             {!showFilePanel && !showSettingsPanel && (
               <SidebarFooter
                 isArrangeExpanded={isArrangeExpanded}
@@ -335,4 +330,4 @@ export const Sidebar: React.FC = () => {
       </Drawer>
     </>
   );
-};
+}
