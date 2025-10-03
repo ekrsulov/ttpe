@@ -8,7 +8,6 @@ import {
   Button,
   Select,
   Text,
-  Divider,
   Box
 } from '@chakra-ui/react';
 import { Settings, RotateCcw } from 'lucide-react';
@@ -150,10 +149,10 @@ export const SettingsPanel: React.FC = () => {
 
         {/* Keyboard Movement Precision */}
         <SliderControl
-          label="Precision"
+          label="Precision:"
           value={keyboardPrecision}
           min={0}
-          max={10}
+          max={4}
           step={1}
           onChange={handleKeyboardPrecisionChange}
           title="Number of decimal places for keyboard movement (0 = integers only)"
@@ -161,7 +160,6 @@ export const SettingsPanel: React.FC = () => {
 
         {/* Reset Application */}
         <Box pt={3}>
-          <Divider mb={3} />
           <Button
             onClick={() => {
               localStorage.removeItem('canvas-app-state');
@@ -171,6 +169,8 @@ export const SettingsPanel: React.FC = () => {
             leftIcon={<RotateCcw size={16} />}
             size="sm"
             width="full"
+            variant="ghost"
+            bg="transparent"
             title="Reset Application - This will clear all data and reload the page"
           >
             Reset App
