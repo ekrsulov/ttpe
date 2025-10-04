@@ -49,7 +49,7 @@ export const FeedbackOverlay: React.FC<FeedbackOverlayProps> = ({
     <>
       {/* Rotation Feedback */}
       {rotationFeedback.visible && (
-        <g transform={`translate(${-viewport.panX / viewport.zoom + 20 / viewport.zoom} ${-viewport.panY / viewport.zoom + canvasSize.height / viewport.zoom - 40 / viewport.zoom}) scale(${1 / viewport.zoom})`}>
+        <g transform={`translate(${-viewport.panX / viewport.zoom + 5 / viewport.zoom} ${-viewport.panY / viewport.zoom + canvasSize.height / viewport.zoom - 33 / viewport.zoom}) scale(${1 / viewport.zoom})`}>
           <rect
             x="0"
             y="0"
@@ -78,7 +78,7 @@ export const FeedbackOverlay: React.FC<FeedbackOverlayProps> = ({
 
       {/* Resize Feedback */}
       {resizeFeedback.visible && (
-        <g transform={`translate(${-viewport.panX / viewport.zoom + 20 / viewport.zoom} ${-viewport.panY / viewport.zoom + canvasSize.height / viewport.zoom - 40 / viewport.zoom}) scale(${1 / viewport.zoom})`}>
+        <g transform={`translate(${-viewport.panX / viewport.zoom + 5 / viewport.zoom} ${-viewport.panY / viewport.zoom + canvasSize.height / viewport.zoom - 33 / viewport.zoom}) scale(${1 / viewport.zoom})`}>
           <rect
             x="0"
             y="0"
@@ -107,7 +107,7 @@ export const FeedbackOverlay: React.FC<FeedbackOverlayProps> = ({
 
       {/* Shape Creation Feedback */}
       {shapeFeedback.visible && (
-        <g transform={`translate(${-viewport.panX / viewport.zoom + 20 / viewport.zoom} ${-viewport.panY / viewport.zoom + canvasSize.height / viewport.zoom - 40 / viewport.zoom}) scale(${1 / viewport.zoom})`}>
+        <g transform={`translate(${-viewport.panX / viewport.zoom + 5 / viewport.zoom} ${-viewport.panY / viewport.zoom + canvasSize.height / viewport.zoom - 33 / viewport.zoom}) scale(${1 / viewport.zoom})`}>
           <rect
             x="0"
             y="0"
@@ -136,7 +136,7 @@ export const FeedbackOverlay: React.FC<FeedbackOverlayProps> = ({
 
       {/* Point Position Feedback */}
       {pointPositionFeedback.visible && (
-        <g transform={`translate(${-viewport.panX / viewport.zoom + 20 / viewport.zoom} ${-viewport.panY / viewport.zoom + canvasSize.height / viewport.zoom - 40 / viewport.zoom}) scale(${1 / viewport.zoom})`}>
+        <g transform={`translate(${-viewport.panX / viewport.zoom + 5 / viewport.zoom} ${-viewport.panY / viewport.zoom + canvasSize.height / viewport.zoom - 33 / viewport.zoom}) scale(${1 / viewport.zoom})`}>
           <rect
             x="0"
             y="0"

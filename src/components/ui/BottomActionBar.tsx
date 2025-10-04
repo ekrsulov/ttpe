@@ -110,6 +110,10 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
                 colorScheme={canUndo ? 'blue' : 'gray'}
                 variant={canUndo ? 'solid' : 'ghost'}
                 size="xs"
+                sx={{
+                  minHeight: '28px',
+                  minWidth: '28px',
+                }}
               />
               {pastStates.length > 0 && (
                 <Box
@@ -144,6 +148,10 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
                 colorScheme={canRedo ? 'blue' : 'gray'}
                 variant={canRedo ? 'solid' : 'ghost'}
                 size="xs"
+                sx={{
+                  minHeight: '28px',
+                  minWidth: '28px',
+                }}
               />
               {futureStates.length > 0 && (
                 <Box
@@ -179,6 +187,10 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
               colorScheme="gray"
               variant="ghost"
               size="xs"
+              sx={{
+                minHeight: '28px',
+                minWidth: '28px',
+              }}
             />
           </Tooltip>
 
@@ -191,6 +203,10 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
                 colorScheme="gray"
                 variant="ghost"
                 size="xs"
+                sx={{
+                  minHeight: '28px',
+                  minWidth: '28px',
+                }}
               />
               {isZoomDifferent && (
                 <Box
@@ -224,6 +240,10 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
               colorScheme="gray"
               variant="ghost"
               size="xs"
+              sx={{
+                minHeight: '28px',
+                minWidth: '28px',
+              }}
             />
           </Tooltip>
         </HStack>
@@ -239,6 +259,10 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
               colorScheme={canDelete ? 'red' : 'gray'}
               variant={canDelete ? 'solid' : 'ghost'}
               size="xs"
+              sx={{
+                minHeight: '28px',
+                minWidth: '28px',
+              }}
             />
             {deleteCount > 0 && (
               <Box
