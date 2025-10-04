@@ -1,5 +1,6 @@
 import React, { useRef, useCallback, useState, useEffect, useMemo } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
+import { useShallow } from 'zustand/react/shallow';
 import { measurePath, measureSubpathBounds, mapPointerToCanvas } from '../utils/geometry';
 import { extractEditablePoints, commandsToString } from '../utils/path';
 import { useCanvasDragInteractions } from '../hooks/useCanvasDragInteractions';
@@ -14,9 +15,12 @@ import { useCanvasSmoothBrush } from '../hooks/useCanvasSmoothBrush';
 import { useCanvasEventHandlers } from '../hooks/useCanvasEventHandlers';
 import { pluginManager } from '../utils/pluginManager';
 import { logger } from '../utils';
+import { RenderCountBadge } from './ui/RenderCountBadge';
+import { useRenderCount } from '../hooks/useRenderCount';
 import type { Point, PathData, CanvasElement } from '../types';
 
 export const Canvas: React.FC = () => {
+  const { count: renderCount, rps: renderRps } = useRenderCount('Canvas');
   const svgRef = useRef<SVGSVGElement>(null);
   const { isSpacePressed, isShiftPressed } = useCanvasKeyboardControls();
   const {
@@ -57,27 +61,56 @@ export const Canvas: React.FC = () => {
     updateCursorPosition
   } = useCanvasSmoothBrush();
 
-  // Use specific selectors instead of destructuring the entire store
-  const elements = useCanvasStore(state => state.elements);
-  const viewport = useCanvasStore(state => state.viewport);
-  const activePlugin = useCanvasStore(state => state.activePlugin);
-  const transformation = useCanvasStore(state => state.transformation);
-  const shape = useCanvasStore(state => state.shape);
-  const selectedIds = useCanvasStore(state => state.selectedIds);
-  const editingPoint = useCanvasStore(state => state.editingPoint);
-  const selectedCommands = useCanvasStore(state => state.selectedCommands);
-  const selectedSubpaths = useCanvasStore(state => state.selectedSubpaths);
-  const draggingSelection = useCanvasStore(state => state.draggingSelection);
-  const updateElement = useCanvasStore(state => state.updateElement);
-  const startDraggingPoint = useCanvasStore(state => state.startDraggingPoint);
-  const updateDraggingPoint = useCanvasStore(state => state.updateDraggingPoint);
-  const stopDraggingPoint = useCanvasStore(state => state.stopDraggingPoint);
-  const emergencyCleanupDrag = useCanvasStore(state => state.emergencyCleanupDrag);
-  const selectCommand = useCanvasStore(state => state.selectCommand);
-  const selectSubpath = useCanvasStore(state => state.selectSubpath);
-  const isWorkingWithSubpaths = useCanvasStore(state => state.isWorkingWithSubpaths);
-  const getFilteredEditablePoints = useCanvasStore(state => state.getFilteredEditablePoints);
-  const getControlPointInfo = useCanvasStore(state => state.getControlPointInfo);
+  // Use shallow selector to prevent unnecessary re-renders
+  // Only re-render when values actually change (not just reference)
+  const {
+    elements,
+    viewport,
+    activePlugin,
+    transformation,
+    shape,
+    selectedIds,
+    editingPoint,
+    selectedCommands,
+    selectedSubpaths,
+    draggingSelection,
+    settings,
+    updateElement,
+    startDraggingPoint,
+    updateDraggingPoint,
+    stopDraggingPoint,
+    emergencyCleanupDrag,
+    selectCommand,
+    selectSubpath,
+    isWorkingWithSubpaths,
+    getFilteredEditablePoints,
+    getControlPointInfo,
+  } = useCanvasStore(
+    useShallow((state) => ({
+      elements: state.elements,
+      viewport: state.viewport,
+      activePlugin: state.activePlugin,
+      transformation: state.transformation,
+      shape: state.shape,
+      selectedIds: state.selectedIds,
+      editingPoint: state.editingPoint,
+      selectedCommands: state.selectedCommands,
+      selectedSubpaths: state.selectedSubpaths,
+      draggingSelection: state.draggingSelection,
+      settings: state.settings,
+      updateElement: state.updateElement,
+      startDraggingPoint: state.startDraggingPoint,
+      updateDraggingPoint: state.updateDraggingPoint,
+      stopDraggingPoint: state.stopDraggingPoint,
+      emergencyCleanupDrag: state.emergencyCleanupDrag,
+      selectCommand: state.selectCommand,
+      selectSubpath: state.selectSubpath,
+      isWorkingWithSubpaths: state.isWorkingWithSubpaths,
+      getFilteredEditablePoints: state.getFilteredEditablePoints,
+      getControlPointInfo: state.getControlPointInfo,
+    }))
+  );
+  
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<Point | null>(null);
   const [hasDragMoved, setHasDragMoved] = useState(false);
@@ -478,6 +511,64 @@ export const Canvas: React.FC = () => {
     };
   }, [activePlugin, screenToCanvas]);
 
+  // Native DOM event listeners for smooth brush (bypassing React's synthetic events)
+  useEffect(() => {
+    const svgElement = svgRef.current;
+    if (!svgElement || activePlugin !== 'edit' || !isSmoothBrushActive) return;
+
+    let isBrushing = false;
+    let lastApplyTime = 0;
+    const APPLY_THROTTLE = 200; // Apply smooth brush at most every 100ms
+
+    const nativePointerDown = (e: PointerEvent) => {
+      if (e.button !== 0) return; // Only left mouse button
+      const point = screenToCanvas(e.clientX, e.clientY);
+      isBrushing = true;
+      lastApplyTime = 0; // Reset throttle
+      
+      // Apply brush immediately on pointer down
+      const state = useCanvasStore.getState();
+      state.applySmoothBrush(point.x, point.y);
+      lastApplyTime = Date.now();
+    };
+
+    const nativePointerMove = (e: PointerEvent) => {
+      const point = screenToCanvas(e.clientX, e.clientY);
+      
+      // Always update cursor position for visual feedback (this is lightweight)
+      const state = useCanvasStore.getState();
+      state.updateSmoothBrushCursor(point.x, point.y);
+
+      if (!isBrushing) return;
+
+      // Throttle brush applications to reduce re-renders
+      const now = Date.now();
+      if (now - lastApplyTime >= APPLY_THROTTLE) {
+        state.applySmoothBrush(point.x, point.y);
+        lastApplyTime = now;
+      }
+    };
+
+    const nativePointerUp = () => {
+      if (!isBrushing) return;
+      isBrushing = false;
+      lastApplyTime = 0;
+    };
+
+    // Add native event listeners with passive: true for better performance
+    svgElement.addEventListener('pointerdown', nativePointerDown, { passive: true });
+    svgElement.addEventListener('pointermove', nativePointerMove, { passive: true });
+    svgElement.addEventListener('pointerup', nativePointerUp, { passive: true });
+    svgElement.addEventListener('pointercancel', nativePointerUp, { passive: true });
+
+    return () => {
+      svgElement.removeEventListener('pointerdown', nativePointerDown);
+      svgElement.removeEventListener('pointermove', nativePointerMove);
+      svgElement.removeEventListener('pointerup', nativePointerUp);
+      svgElement.removeEventListener('pointercancel', nativePointerUp);
+    };
+  }, [activePlugin, isSmoothBrushActive, screenToCanvas]);
+
   // Handle wheel event with passive: false to allow preventDefault
   useEffect(() => {
     const svgElement = svgRef.current;
@@ -502,23 +593,29 @@ export const Canvas: React.FC = () => {
   }, []);
 
   return (
-    <svg
-      ref={svgRef}
-      width={canvasSize.width}
-      height={canvasSize.height}
-      viewBox={`${-viewport.panX / viewport.zoom} ${-viewport.panY / viewport.zoom} ${canvasSize.width / viewport.zoom} ${canvasSize.height / viewport.zoom}`}
-      style={{
-        width: '100%',
-        height: '100%',
-        border: 'none',
-        cursor: (isSpacePressed || activePlugin === 'pan') ? 'grabbing' :
-          pluginManager.getCursor(activePlugin || 'select')
-      }}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onDoubleClick={handleCanvasDoubleClick}
-    >
+    <>
+      {process.env.NODE_ENV === 'development' && settings.showRenderCountBadges && (
+        <div style={{ position: 'fixed', top: 0, left: 0, zIndex: 10000 }}>
+          <RenderCountBadge count={renderCount} rps={renderRps} position="top-left" />
+        </div>
+      )}
+      <svg
+        ref={svgRef}
+        width={canvasSize.width}
+        height={canvasSize.height}
+        viewBox={`${-viewport.panX / viewport.zoom} ${-viewport.panY / viewport.zoom} ${canvasSize.width / viewport.zoom} ${canvasSize.height / viewport.zoom}`}
+        style={{
+          width: '100%',
+          height: '100%',
+          border: 'none',
+          cursor: (isSpacePressed || activePlugin === 'pan') ? 'grabbing' :
+            pluginManager.getCursor(activePlugin || 'select')
+        }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onDoubleClick={handleCanvasDoubleClick}
+      >
       {/* Sort elements by zIndex */}
       {sortedElements.map(renderElement)}
 
@@ -629,5 +726,6 @@ export const Canvas: React.FC = () => {
         <OverlayComponent key={index} viewport={viewport} />
       ))}
     </svg>
+    </>
   );
 };

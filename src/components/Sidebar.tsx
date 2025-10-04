@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Drawer,
   DrawerBody,
@@ -13,6 +13,8 @@ import { SidebarToolGrid } from './sidebar/SidebarToolGrid';
 import { SidebarPanels } from './sidebar/SidebarPanels';
 import { SidebarFooter } from './sidebar/SidebarFooter';
 import { SidebarResizer } from './sidebar/SidebarResizer';
+import { RenderCountBadge } from './ui/RenderCountBadge';
+import { useRenderCount } from '../hooks/useRenderCount';
 
 interface SidebarProps {
   onPinnedChange?: (isPinned: boolean) => void;
@@ -27,6 +29,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onToggleOpen,
   onRegisterOpenHandler 
 }) => {
+  const { count: renderCount, rps: renderRps } = useRenderCount('Sidebar');
+  
   // Detect if desktop (md breakpoint = 768px)
   const isDesktop = useBreakpointValue({ base: false, md: true }, { ssr: false });
   
@@ -87,22 +91,57 @@ export const Sidebar: React.FC<SidebarProps> = ({
     setSidebarWidth(initialWidth);
   }, [initialWidth]);
   
-  // Use specific selectors instead of destructuring the entire store
-  const activePlugin = useCanvasStore(state => state.activePlugin);
-  const setMode = useCanvasStore(state => state.setMode);
-  const smoothBrush = useCanvasStore(state => state.smoothBrush);
-  const pathSimplification = useCanvasStore(state => state.pathSimplification);
-  const pathRounding = useCanvasStore(state => state.pathRounding);
-  const selectedCommands = useCanvasStore(state => state.selectedCommands);
-  const updateSmoothBrush = useCanvasStore(state => state.updateSmoothBrush);
-  const updatePathSimplification = useCanvasStore(state => state.updatePathSimplification);
-  const updatePathRounding = useCanvasStore(state => state.updatePathRounding);
-  const applySmoothBrush = useCanvasStore(state => state.applySmoothBrush);
-  const applyPathSimplification = useCanvasStore(state => state.applyPathSimplification);
-  const applyPathRounding = useCanvasStore(state => state.applyPathRounding);
-  const activateSmoothBrush = useCanvasStore(state => state.activateSmoothBrush);
-  const deactivateSmoothBrush = useCanvasStore(state => state.deactivateSmoothBrush);
-  const resetSmoothBrush = useCanvasStore(state => state.resetSmoothBrush);
+  // Use individual selectors to prevent unnecessary re-renders
+  // This way we only re-render when specific values change
+  const activePlugin = useCanvasStore((state) => state.activePlugin);
+  const setMode = useCanvasStore((state) => state.setMode);
+  const settings = useCanvasStore((state) => state.settings);
+  const pathSimplification = useCanvasStore((state) => state.pathSimplification);
+  const pathRounding = useCanvasStore((state) => state.pathRounding);
+  const selectedCommands = useCanvasStore((state) => state.selectedCommands);
+  
+  // For smoothBrush, select only the properties we need (exclude affectedPoints)
+  const smoothBrushRadius = useCanvasStore((state) => state.smoothBrush.radius);
+  const smoothBrushStrength = useCanvasStore((state) => state.smoothBrush.strength);
+  const smoothBrushIsActive = useCanvasStore((state) => state.smoothBrush.isActive);
+  const smoothBrushCursorX = useCanvasStore((state) => state.smoothBrush.cursorX);
+  const smoothBrushCursorY = useCanvasStore((state) => state.smoothBrush.cursorY);
+  const smoothBrushSimplifyPoints = useCanvasStore((state) => state.smoothBrush.simplifyPoints);
+  const smoothBrushSimplificationTolerance = useCanvasStore((state) => state.smoothBrush.simplificationTolerance);
+  const smoothBrushMinDistance = useCanvasStore((state) => state.smoothBrush.minDistance);
+  
+  // Actions (these are stable references)
+  const updateSmoothBrush = useCanvasStore((state) => state.updateSmoothBrush);
+  const updatePathSimplification = useCanvasStore((state) => state.updatePathSimplification);
+  const updatePathRounding = useCanvasStore((state) => state.updatePathRounding);
+  const applySmoothBrush = useCanvasStore((state) => state.applySmoothBrush);
+  const applyPathSimplification = useCanvasStore((state) => state.applyPathSimplification);
+  const applyPathRounding = useCanvasStore((state) => state.applyPathRounding);
+  const activateSmoothBrush = useCanvasStore((state) => state.activateSmoothBrush);
+  const deactivateSmoothBrush = useCanvasStore((state) => state.deactivateSmoothBrush);
+  const resetSmoothBrush = useCanvasStore((state) => state.resetSmoothBrush);
+  
+  // Reconstruct smoothBrush object for child components (memoized to prevent re-creation)
+  const smoothBrush = useMemo(() => ({
+    radius: smoothBrushRadius,
+    strength: smoothBrushStrength,
+    isActive: smoothBrushIsActive,
+    cursorX: smoothBrushCursorX,
+    cursorY: smoothBrushCursorY,
+    simplifyPoints: smoothBrushSimplifyPoints,
+    simplificationTolerance: smoothBrushSimplificationTolerance,
+    minDistance: smoothBrushMinDistance,
+    affectedPoints: [], // Empty array - we don't need to track this in Sidebar
+  }), [
+    smoothBrushRadius,
+    smoothBrushStrength,
+    smoothBrushIsActive,
+    smoothBrushCursorX,
+    smoothBrushCursorY,
+    smoothBrushSimplifyPoints,
+    smoothBrushSimplificationTolerance,
+    smoothBrushMinDistance,
+  ]);
   
   // Local state for panels
   const [showFilePanel, setShowFilePanel] = useState<boolean>(false);
@@ -242,6 +281,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
   // Normal drawer mode (not pinned)
   return (
     <>
+      {process.env.NODE_ENV === 'development' && settings.showRenderCountBadges && (
+        <div style={{ 
+          position: 'fixed', 
+          top: '60px', 
+          right: isPinned && isDesktop ? `${sidebarWidth + 10}px` : '10px',
+          zIndex: 10000 
+        }}>
+          <RenderCountBadge count={renderCount} rps={renderRps} position="top-right" />
+        </div>
+      )}
       <Drawer
         isOpen={isOpen}
         placement="right"

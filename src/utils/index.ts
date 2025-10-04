@@ -2,8 +2,7 @@
 export { measurePath } from './measurementUtils';
 
 export {
-  getAvailableFonts,
-  FONTS_TO_CHECK
+  getAvailableFonts
 } from './fontDetectionUtils';
 
 export * from './pathParserUtils';

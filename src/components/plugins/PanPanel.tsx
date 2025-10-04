@@ -5,7 +5,12 @@ import { Hand, RotateCcw, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } fr
 import { Panel } from '../ui/Panel';
 
 export const PanPanel: React.FC = () => {
-  const { pan, resetPan } = useCanvasStore();
+  // Use individual selectors to prevent re-renders on unrelated changes
+  const pan = useCanvasStore(state => state.pan);
+  const resetPan = useCanvasStore(state => state.resetPan);
+  const panX = useCanvasStore(state => Math.round(state.viewport.panX));
+  const panY = useCanvasStore(state => Math.round(state.viewport.panY));
+  
   const panAmount = 50; // pixels to pan
 
   return (
@@ -14,7 +19,7 @@ export const PanPanel: React.FC = () => {
       title="Pan"
       headerActions={
         <ChakraTag size="sm" colorScheme="gray" fontSize="xs">
-          {Math.round(useCanvasStore.getState().viewport.panX)}, {Math.round(useCanvasStore.getState().viewport.panY)}
+          {panX}, {panY}
         </ChakraTag>
       }
     >

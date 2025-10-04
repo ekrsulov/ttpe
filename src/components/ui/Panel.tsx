@@ -6,6 +6,9 @@
 import React from 'react'
 import { Box, Collapse, useDisclosure } from '@chakra-ui/react'
 import { PanelHeader } from './PanelHeader'
+import { RenderCountBadge } from './RenderCountBadge'
+import { useRenderCount } from '../../hooks/useRenderCount'
+import { useCanvasStore } from '../../store/canvasStore'
 
 export interface PanelProps {
   /** Icon to display in header */
@@ -20,6 +23,8 @@ export interface PanelProps {
   defaultOpen?: boolean
   /** Whether panel can be collapsed */
   isCollapsible?: boolean
+  /** Show render count badge (debug only) */
+  showRenderCount?: boolean
 }
 
 export const Panel: React.FC<PanelProps> = ({
@@ -29,11 +34,17 @@ export const Panel: React.FC<PanelProps> = ({
   headerActions,
   defaultOpen = true,
   isCollapsible = false,
+  showRenderCount = process.env.NODE_ENV === 'development',
 }) => {
   const { isOpen, onToggle } = useDisclosure({ defaultIsOpen: defaultOpen })
+  const { count: renderCount, rps: renderRps } = useRenderCount(`Panel: ${title}`)
+  const settings = useCanvasStore(state => state.settings)
+  const shouldShowBadge = showRenderCount && settings.showRenderCountBadges
 
   return (
-    <Box bg="white" mb={0.5}>
+    <Box bg="white" mb={0.5} position="relative">
+      {shouldShowBadge && <RenderCountBadge count={renderCount} rps={renderRps} />}
+      
       <PanelHeader
         icon={icon}
         title={title}

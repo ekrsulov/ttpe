@@ -43,23 +43,23 @@ export const OpticalAlignmentPanel: React.FC = () => {
   // Use store state
   const hasAlignment = currentAlignment !== null;
 
-  // Apply alignment
-  const handleApplyAlignment = () => {
-    if (!hasAlignment) return;
-    applyAlignment();
-    // After applying, show preview again to maintain visual feedback
-    previewAlignment();
+  // Handle unified Preview/Apply button
+  const handlePreviewOrApply = () => {
+    if (hasAlignment) {
+      // If already previewing, apply the alignment
+      applyAlignment();
+      // After applying, show preview again to maintain visual feedback
+      previewAlignment();
+    } else {
+      // If not previewing yet, show preview
+      if (!canPerformOpticalAlignment()) return;
+      previewAlignment();
+    }
   };
 
   // Reset alignment
   const handleResetAlignment = () => {
     resetAlignment();
-  };
-
-  // Preview alignment
-  const handlePreviewAlignment = () => {
-    if (!canPerformOpticalAlignment()) return;
-    previewAlignment();
   };
 
   if (getAlignmentValidationMessage() !== null) return null;
@@ -70,14 +70,15 @@ export const OpticalAlignmentPanel: React.FC = () => {
       title="Optical Alignment"
       headerActions={
         <Button
-          onClick={handleApplyAlignment}
-          isDisabled={!hasAlignment}
+          onClick={handlePreviewOrApply}
+          isDisabled={!canPerformOpticalAlignment() && !hasAlignment}
           size="xs"
           variant="outline"
           fontSize="12px"
           py={0}
+          colorScheme="gray"
         >
-          Apply
+          {hasAlignment ? 'Apply' : 'Preview'}
         </Button>
       }
     >
@@ -85,7 +86,7 @@ export const OpticalAlignmentPanel: React.FC = () => {
       {canPerformOpticalAlignment() && (
         <VStack spacing={2} align="stretch">
           {/* Visualization Controls */}
-          <HStack spacing={2}>
+          <HStack spacing={1}>
             <Tooltip label="Mathematical Center" fontSize="xs">
               <ChakraIconButton
                 aria-label="Mathematical Center"
@@ -133,19 +134,6 @@ export const OpticalAlignmentPanel: React.FC = () => {
                 bg={showDistanceRules ? undefined : 'transparent'}
               />
             </Tooltip>
-
-            <Button
-              onClick={handlePreviewAlignment}
-              isDisabled={!canPerformOpticalAlignment()}
-              colorScheme="brand"
-              size="sm"
-              variant="ghost"
-              bg="transparent"
-              border="1px solid"
-              borderColor="gray.300"
-            >
-              Preview
-            </Button>
 
             <Tooltip label="Reset" fontSize="xs">
               <ChakraIconButton

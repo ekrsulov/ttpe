@@ -18,8 +18,6 @@ interface EventHandlerDeps {
   shapeStart: Point | null;
   transformStateIsTransforming: boolean;
   updateTransformation: (point: Point, shiftPressed: boolean) => void;
-  applyBrush: (point: Point) => void;
-  updateCursorPosition: (point: Point) => void;
   beginSelectionRectangle: (point: Point, shiftKey?: boolean, subpathMode?: boolean) => void;
   startShapeCreation: (point: Point) => void;
   isSmoothBrushActive: boolean;
@@ -57,8 +55,6 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     shapeStart,
     transformStateIsTransforming,
     updateTransformation,
-    applyBrush,
-    updateCursorPosition,
     beginSelectionRectangle,
     startShapeCreation,
     isSmoothBrushActive,
@@ -324,14 +320,10 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       return;
     }
 
-    // Handle smooth brush in edit mode
-    if (activePlugin === 'edit' && isSmoothBrushActive && e.buttons === 1) {
-      applyBrush(point);
-    }
-
-    // Update smooth brush cursor position
+    // Smooth brush is handled by native DOM listeners in Canvas.tsx
+    // Skip React event handling for smooth brush to avoid conflicts
     if (activePlugin === 'edit' && isSmoothBrushActive) {
-      updateCursorPosition(point);
+      return;
     }
 
     if (isSelecting && selectionStart) {
@@ -371,8 +363,6 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     setDragStart,
     updateTransformation,
     isSmoothBrushActive,
-    applyBrush,
-    updateCursorPosition,
     selectionStart,
     shapeStart,
     updateShapeCreation,

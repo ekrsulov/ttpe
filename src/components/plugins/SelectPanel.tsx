@@ -5,11 +5,23 @@ import { VStack, HStack, Box, Text, IconButton as ChakraIconButton } from '@chak
 import { extractEditablePoints, extractSubpaths, commandsToString, translateCommands } from '../../utils/path';
 import type { CanvasElement, PathData } from '../../types';
 import { logger } from '../../utils';
+import { RenderCountBadge } from '../ui/RenderCountBadge';
+import { useRenderCount } from '../../hooks/useRenderCount';
 
-export const SelectPanel: React.FC = () => {
-  const { elements, selectedIds, selectedSubpaths, addElement } = useCanvasStore();
-
-  const selectedElements = elements.filter(el => selectedIds.includes(el.id));
+const SelectPanelComponent: React.FC = () => {
+  const { count: renderCount, rps: renderRps } = useRenderCount('SelectPanel');
+  const settings = useCanvasStore(state => state.settings);
+  
+  const selectedSubpaths = useCanvasStore(state => state.selectedSubpaths);
+  const addElement = useCanvasStore(state => state.addElement);
+  
+  // Subscribe only to count, not the full array - this is a primitive so it won't cause re-renders unless count actually changes
+  // This forces a re-render only when selection count changes
+  useCanvasStore(state => state.selectedIds.length);
+  
+  // Get selected elements directly - this runs on every render but component only re-renders when selectedCount changes
+  const state = useCanvasStore.getState();
+  const selectedElements = state.elements.filter(el => state.selectedIds.includes(el.id));
 
   // Build list of items to display
   const items: Array<{
@@ -113,7 +125,10 @@ export const SelectPanel: React.FC = () => {
   };
 
   return (
-    <Box bg="white" px={2}>
+    <Box bg="white" px={2} position="relative">
+      {process.env.NODE_ENV === 'development' && settings.showRenderCountBadges && (
+        <RenderCountBadge count={renderCount} rps={renderRps} position="top-right" />
+      )}
       <Box h="94px" overflowY="auto">
         {items.length > 0 ? (
           <VStack spacing={1} align="stretch">
@@ -183,3 +198,6 @@ export const SelectPanel: React.FC = () => {
     </Box>
   );
 };
+
+// Export memoized version to prevent unnecessary re-renders
+export const SelectPanel = React.memo(SelectPanelComponent);

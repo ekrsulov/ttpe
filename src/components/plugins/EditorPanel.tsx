@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import {
   Pen,
@@ -28,18 +28,22 @@ import { FillRuleSelector } from '../ui/FillRuleSelector';
 import { DashArrayCustomInput, DashArrayPresets } from '../ui/DashArraySelector';
 import { PRESETS, type Preset } from '../../utils/presets';
 import { useSelectedPathProperty } from '../../utils/pathPropertyUtils';
+import { RenderCountBadge } from '../ui/RenderCountBadge';
+import { useRenderCount } from '../../hooks/useRenderCount';
 
 export const EditorPanel: React.FC = () => {
+  const { count: renderCount, rps: renderRps } = useRenderCount('EditorPanel');
+  const settings = useCanvasStore(state => state.settings);
+  
   // Use specific selectors instead of destructuring the entire store
   const pencil = useCanvasStore(state => state.pencil);
   const updatePencilState = useCanvasStore(state => state.updatePencilState);
-  const getSelectedPathsCount = useCanvasStore(state => state.getSelectedPathsCount);
   const updateSelectedPaths = useCanvasStore(state => state.updateSelectedPaths);
-  const selectedIds = useCanvasStore(state => state.selectedIds);
-  const elements = useCanvasStore(state => state.elements);
-
-  // Memoize computed values to prevent unnecessary re-renders
-  const selectedPathsCount = useMemo(() => getSelectedPathsCount(), [selectedIds, elements]); // eslint-disable-line react-hooks/exhaustive-deps
+  
+  // Calculate selected paths count - only re-renders if the count changes (not when positions change)
+  const selectedPathsCount = useCanvasStore(state => {
+    return state.elements.filter(el => state.selectedIds.includes(el.id) && el.type === 'path').length;
+  });
 
   // Pencil properties handlers
   const handleStrokeWidthChange = (value: number) => {
@@ -170,7 +174,10 @@ export const EditorPanel: React.FC = () => {
   const presetMaxWidth = useBreakpointValue({ base: '180px', md: '230px' }) || '230px';
 
   return (
-    <Box bg="white" pb={1} mt={1}>
+    <Box bg="white" pb={1} mt={1} position="relative">
+      {process.env.NODE_ENV === 'development' && settings.showRenderCountBadges && (
+        <RenderCountBadge count={renderCount} rps={renderRps} position="top-right" />
+      )}
       {/* Pencil Properties Section */}
       <VStack spacing={1} align="stretch">
         {/* Color Presets */}

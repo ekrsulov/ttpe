@@ -15,7 +15,9 @@ import { Panel } from '../ui/Panel';
 import { logger } from '../../utils';
 
 export const TextPanel: React.FC = () => {
-  const { text, updateTextState } = useCanvasStore();
+  // Use individual selectors to prevent re-renders on unrelated changes
+  const text = useCanvasStore(state => state.text);
+  const updateTextState = useCanvasStore(state => state.updateTextState);
 
   // Font detection state
   const [availableFonts, setAvailableFonts] = useState<string[]>([]);

@@ -137,17 +137,24 @@ export const createOpticalAlignmentSlice: StateCreator<
   },
 
   resetAlignment: () => {
-    set(() => ({
-      currentAlignment: null
-    }));
+    // Only reset if there's an active alignment (avoid unnecessary set() calls)
+    const state = get() as CanvasStore;
+    if (state.currentAlignment !== null) {
+      set(() => ({
+        currentAlignment: null
+      }));
+    }
   },
 
   // Auto-reset functionality
   autoResetOnSelectionChange: () => {
-    // Clear any existing alignment calculations and preview when selection changes
-    set(() => ({
-      currentAlignment: null
-    }));
+    // Only reset if there's an active alignment (avoid unnecessary set() calls)
+    const state = get() as CanvasStore;
+    if (state.currentAlignment !== null) {
+      set(() => ({
+        currentAlignment: null
+      }));
+    }
   },
 
   // Visualization actions

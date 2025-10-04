@@ -6,7 +6,11 @@ import { Panel } from '../ui/Panel';
 import type { ShapeType } from '../../store/slices/plugins/shapePluginSlice';
 
 export const ShapePanel: React.FC = () => {
-  const { shape, updateShapeState, setActivePlugin, activePlugin } = useCanvasStore();
+  // Use individual selectors to prevent re-renders on unrelated changes
+  const shape = useCanvasStore(state => state.shape);
+  const updateShapeState = useCanvasStore(state => state.updateShapeState);
+  const setActivePlugin = useCanvasStore(state => state.setActivePlugin);
+  const activePlugin = useCanvasStore(state => state.activePlugin);
 
   const shapes: { type: ShapeType; label: string; icon: LucideIcon }[] = [
     { type: 'square', label: 'Square', icon: Square },

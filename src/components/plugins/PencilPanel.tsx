@@ -5,7 +5,11 @@ import { Pen, Route, Square, PenTool } from 'lucide-react';
 import { Panel } from '../ui/Panel';
 
 export const PencilPanel: React.FC = () => {
-  const { pencil, updatePencilState, setMode, activePlugin } = useCanvasStore();
+  // Use individual selectors to prevent re-renders on unrelated changes
+  const pencil = useCanvasStore(state => state.pencil);
+  const updatePencilState = useCanvasStore(state => state.updatePencilState);
+  const setMode = useCanvasStore(state => state.setMode);
+  const activePlugin = useCanvasStore(state => state.activePlugin);
 
   const handleReusePathToggle = () => {
     updatePencilState({ reusePath: !pencil.reusePath });

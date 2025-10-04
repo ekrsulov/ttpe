@@ -11,6 +11,9 @@ import {
 } from '@chakra-ui/react';
 import { PaintBucket, Zap, RotateCcw } from 'lucide-react';
 import { SliderControl } from '../ui/SliderControl';
+import { RenderCountBadge } from '../ui/RenderCountBadge';
+import { useRenderCount } from '../../hooks/useRenderCount';
+import { useCanvasStore } from '../../store/canvasStore';
 
 interface EditPanelProps {
   activePlugin: string | null;
@@ -68,10 +71,17 @@ export const EditPanel: React.FC<EditPanelProps> = ({
   deactivateSmoothBrush,
   resetSmoothBrush,
 }) => {
+  const { count: renderCount, rps: renderRps } = useRenderCount('EditPanel');
+  const settings = useCanvasStore(state => state.settings);
+  
   if (activePlugin !== 'edit') return null;
 
   return (
-    <VStack spacing={2} align="stretch">
+    <Box position="relative">
+      {process.env.NODE_ENV === 'development' && settings.showRenderCountBadges && (
+        <RenderCountBadge count={renderCount} rps={renderRps} position="top-left" />
+      )}
+      <VStack spacing={2} align="stretch">
       {/* Smooth Brush Section */}
       <Box>
         <Flex 
@@ -290,5 +300,6 @@ export const EditPanel: React.FC<EditPanelProps> = ({
         />
       </Box>
     </VStack>
+    </Box>
   );
 };

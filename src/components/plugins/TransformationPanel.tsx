@@ -5,13 +5,13 @@ import { VectorSquare } from 'lucide-react';
 import { Panel } from '../ui/Panel';
 
 export const TransformationPanel: React.FC = () => {
-  const {
-    selectedIds,
-    selectedSubpaths,
-    transformation,
-    updateTransformationState,
-    isWorkingWithSubpaths
-  } = useCanvasStore();
+  // Use individual selectors to prevent re-renders on unrelated changes
+  const selectedIds = useCanvasStore(state => state.selectedIds);
+  const selectedSubpaths = useCanvasStore(state => state.selectedSubpaths);
+  const transformation = useCanvasStore(state => state.transformation);
+  const updateTransformationState = useCanvasStore(state => state.updateTransformationState);
+  const isWorkingWithSubpaths = useCanvasStore(state => state.isWorkingWithSubpaths);
+  
   const { showCoordinates, showRulers } = transformation;
 
   const isSubpathMode = isWorkingWithSubpaths();

@@ -342,6 +342,7 @@ export interface EditPluginSlice {
   convertZToLineForMPoint: (elementId: string, commandIndex: number) => void;
   moveToM: (elementId: string, commandIndex: number, pointIndex: number) => void;
   convertCommandType: (elementId: string, commandIndex: number) => void;
+  cutSubpathAtPoint: (elementId: string, commandIndex: number, pointIndex: number) => void;
   alignLeftCommands: () => void;
   alignCenterCommands: () => void;
   alignRightCommands: () => void;
@@ -2249,7 +2250,57 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     }));
   },
 
-  updatePathRounding: (settings) => {
+  cutSubpathAtPoint: (elementId: string, commandIndex: number, _pointIndex: number) => {
+    const state = get() as FullCanvasState;
+    const element = state.elements.find((el: CanvasElement) => el.id === elementId);
+
+    if (!element || element.type !== 'path') return;
+
+    const pathData = element.data as PathData;
+    const commands = pathData.subPaths.flat();
+
+    const command = commands[commandIndex];
+    if (!command || (command.type !== 'L' && command.type !== 'C')) return;
+
+    // Get the current point position (always the command's position for cutting)
+    const currentPoint = command.position;
+    if (!currentPoint) return;
+
+    const updatedCommands = [...commands];
+
+    // Create new M command at current point + 5
+    const newMCommand: Command = {
+      type: 'M',
+      position: {
+        x: currentPoint.x + 5,
+        y: currentPoint.y + 5
+      }
+    };
+
+    // Insert the new M command right after the current command
+    updatedCommands.splice(commandIndex + 1, 0, newMCommand);
+
+    // The remaining commands after the original commandIndex are already in the right place
+
+    // Normalize and reconstruct path
+    const normalizedCommands = normalizePathCommands(updatedCommands);
+
+    const newSubPaths = extractSubpaths(normalizedCommands).map(s => s.commands);
+
+    // Update the element
+    (set as (fn: (state: FullCanvasState) => Partial<FullCanvasState>) => void)((currentState) => ({
+      ...currentState,
+      elements: currentState.elements.map((el) =>
+        el.id === elementId
+          ? { ...el, data: { ...pathData, subPaths: newSubPaths } }
+          : el
+      )
+    }));
+
+    // Clear selection after cutting subpath (indices may have changed)
+    const currentState = get() as FullCanvasState;
+    currentState.clearSelectedCommands();
+  },  updatePathRounding: (settings) => {
     set((state) => ({
       pathRounding: { ...state.pathRounding, ...settings },
     }));

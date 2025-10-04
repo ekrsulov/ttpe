@@ -15,6 +15,8 @@ import {
   MoveVertical
 } from 'lucide-react';
 import { VStack, HStack, IconButton as ChakraIconButton, Box } from '@chakra-ui/react';
+import { RenderCountBadge } from '../ui/RenderCountBadge';
+import { useRenderCount } from '../../hooks/useRenderCount';
 
 interface ButtonConfig {
   handler: () => void;
@@ -23,19 +25,21 @@ interface ButtonConfig {
   disabled?: boolean;
 }
 
-export const ArrangePanel: React.FC = () => {
-  const {
-    selectedIds,
-    selectedCommands,
-    activePlugin,
-    getSelectedSubpathsCount,
-  } = useCanvasStore();
-
+const ArrangePanelComponent: React.FC = () => {
+  const { count: renderCount, rps: renderRps } = useRenderCount('ArrangePanel');
+  
+  // Only trigger re-render when activePlugin changes via useArrangeHandlers
   const currentHandlers = useArrangeHandlers();
+  
+  // Get current state without subscribing - fresh on every render
+  // Component only re-renders when useArrangeHandlers changes (activePlugin change) or useRenderCount forces update
+  const state = useCanvasStore.getState();
+  const selectedCount = state.selectedIds.length;
+  const selectedCommandsCount = state.selectedCommands.length;
+  const selectedSubpathsCount = state.selectedSubpaths.length;
+  const activePlugin = state.activePlugin;
+  const settings = state.settings;
 
-  const selectedCount = selectedIds.length;
-  const selectedCommandsCount = selectedCommands.length;
-  const selectedSubpathsCount = getSelectedSubpathsCount();
   const canAlign = selectedCount >= 2 ||
     (activePlugin === 'edit' && selectedCommandsCount >= 2) ||
     (activePlugin === 'subpath' && selectedSubpathsCount >= 2);
@@ -84,7 +88,10 @@ export const ArrangePanel: React.FC = () => {
   );
 
   return (
-    <Box bg="white" px={2} pt={2} borderTop="1px solid" borderColor="gray.300" w="full">
+    <Box bg="white" px={2} pt={2} borderTop="1px solid" borderColor="gray.300" w="full" position="relative">
+      {process.env.NODE_ENV === 'development' && settings.showRenderCountBadges && (
+        <RenderCountBadge count={renderCount} rps={renderRps} position="top-right" />
+      )}
       <VStack spacing={1} align="stretch">
         {/* Row 1: Distribution & Order buttons */}
         {activePlugin === 'edit' ? (
@@ -105,3 +112,7 @@ export const ArrangePanel: React.FC = () => {
     </Box>
   );
 };
+
+// Export memoized version - only re-renders when props change (no props = never re-renders from parent)
+// Component only re-renders internally when useArrangeHandlers changes (activePlugin)
+export const ArrangePanel = React.memo(ArrangePanelComponent);

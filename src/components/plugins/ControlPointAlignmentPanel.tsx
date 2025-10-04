@@ -23,18 +23,27 @@ import {
 import { Panel } from '../ui/Panel';
 
 export const ControlPointAlignmentPanel: React.FC = () => {
+  // ALL HOOKS FIRST - must be called unconditionally
   const { isOpen: showDetails, onToggle: toggleDetails } = useDisclosure({ defaultIsOpen: false });
   
-  const {
-    selectedCommands,
-    activePlugin,
-    elements,
-    deleteZCommandForMPoint,
-    convertZToLineForMPoint,
-    moveToM,
-    convertCommandType,
-    setControlPointAlignmentType
-  } = useCanvasStore();
+  // Use individual selectors to prevent unnecessary re-renders
+  const selectedCommands = useCanvasStore(state => state.selectedCommands);
+  const activePlugin = useCanvasStore(state => state.activePlugin);
+  const allElements = useCanvasStore(state => state.elements);
+  
+  // Filter elements in useMemo to avoid recalculation and infinite loops
+  const elements = useMemo(() => {
+    if (selectedCommands.length === 0) return allElements;
+    const selectedElementIds = [...new Set(selectedCommands.map(cmd => cmd.elementId))];
+    return allElements.filter(el => selectedElementIds.includes(el.id));
+  }, [allElements, selectedCommands]);
+  
+  const deleteZCommandForMPoint = useCanvasStore(state => state.deleteZCommandForMPoint);
+  const convertZToLineForMPoint = useCanvasStore(state => state.convertZToLineForMPoint);
+  const moveToM = useCanvasStore(state => state.moveToM);
+  const convertCommandType = useCanvasStore(state => state.convertCommandType);
+  const cutSubpathAtPoint = useCanvasStore(state => state.cutSubpathAtPoint);
+  const setControlPointAlignmentType = useCanvasStore(state => state.setControlPointAlignmentType);
 
   const isPathClosed = (commands: Command[]): boolean => {
     if (commands.length < 2) return false;
@@ -157,6 +166,49 @@ export const ControlPointAlignmentPanel: React.FC = () => {
     const tolerance = 0.1;
     return Math.abs(pointToCheck.x - mPosition.x) < tolerance &&
       Math.abs(pointToCheck.y - mPosition.y) < tolerance;
+  }, [elements]);
+
+  // Check if cutting subpath at this point is allowed
+  const canCutSubpathAtPoint = useCallback((elementId: string, commandIndex: number, pointIndex: number): boolean => {
+    const element = elements.find(el => el.id === elementId);
+    if (!element || element.type !== 'path') return false;
+
+    const pathData = element.data as import('../../types').PathData;
+    const commands = pathData.subPaths.flat();
+
+    const command = commands[commandIndex];
+    if (!command || (command.type !== 'L' && command.type !== 'C')) return false;
+
+    // Check if this is the anchor point (last point of the command)
+    const pointsLength = command.type === 'L' ? 1 : command.type === 'C' ? 3 : 0;
+    const isAnchorPoint = pointIndex === pointsLength - 1;
+    if (!isAnchorPoint) return false;
+
+    // Find the end of the current subpath
+    let subpathEndIndex = commandIndex;
+    for (let i = commandIndex + 1; i < commands.length; i++) {
+      if (commands[i].type === 'M') {
+        break;
+      }
+      subpathEndIndex = i;
+    }
+
+    // Don't allow cutting at the last command of the subpath
+    if (commandIndex === subpathEndIndex) return false;
+
+    // Check if there's a Z in this subpath
+    let hasZInSubpath = false;
+    for (let i = commandIndex; i <= subpathEndIndex; i++) {
+      if (commands[i].type === 'Z') {
+        hasZInSubpath = true;
+        break;
+      }
+    }
+
+    // If there's a Z, don't allow cutting at the second-to-last command
+    if (hasZInSubpath && commandIndex === subpathEndIndex - 1) return false;
+
+    return true;
   }, [elements]);
 
   // Get info for a single selected control point
@@ -389,6 +441,11 @@ export const ControlPointAlignmentPanel: React.FC = () => {
 
   const singlePointInfo = useMemo(() => getSinglePointInfo(), [getSinglePointInfo]);
 
+  // Early return AFTER all hooks: Only render when in edit mode and exactly one point is selected
+  if (activePlugin !== 'edit' || selectedCommands.length !== 1) {
+    return null;
+  }
+
   // Always show the panel, even when no control point is selected
   // if (!singlePointInfo) {
   //   return null;
@@ -471,74 +528,6 @@ export const ControlPointAlignmentPanel: React.FC = () => {
   const renderDetailContent = () => {
     if (!singlePointInfo || !showDetails) return null;
 
-    if (singlePointInfo.isAnchor) {
-      return (
-        <Collapse in={showDetails} animateOpacity>
-          <VStack spacing={2} align="stretch" fontSize="11px" color="gray.600" lineHeight="1.4">
-            <Text><Text as="strong" color="gray.700">Location:</Text> {singlePointInfo.location}</Text>
-            {hasClosingZCommand(selectedCommands[0].elementId, selectedCommands[0].commandIndex) && (
-              <>
-                <Button
-                  onClick={() => deleteZCommandForMPoint(selectedCommands[0].elementId, selectedCommands[0].commandIndex)}
-                  colorScheme="red"
-                  size="xs"
-                  fontSize="12px"
-                  w="full"
-                  variant="ghost"
-                  bg="transparent"
-                  title="Delete the Z command that closes this path"
-                >
-                  Delete Z Command
-                </Button>
-                <Button
-                  onClick={() => convertZToLineForMPoint(selectedCommands[0].elementId, selectedCommands[0].commandIndex)}
-                  colorScheme="green"
-                  size="xs"
-                  fontSize="12px"
-                  w="full"
-                  variant="ghost"
-                  bg="transparent"
-                  title="Convert the Z command to a line command"
-                >
-                  Convert Z to Line
-                </Button>
-              </>
-            )}
-            {(singlePointInfo.command.type === 'L' || singlePointInfo.command.type === 'C') &&
-              isLastPointOfSubpath(selectedCommands[0].elementId, selectedCommands[0].commandIndex, selectedCommands[0].pointIndex) &&
-              !isAtMPosition(selectedCommands[0].elementId, selectedCommands[0].commandIndex, selectedCommands[0].pointIndex) && (
-                <Button
-                  onClick={() => moveToM(selectedCommands[0].elementId, selectedCommands[0].commandIndex, selectedCommands[0].pointIndex)}
-                  colorScheme="green"
-                  size="xs"
-                  fontSize="12px"
-                  w="full"
-                  variant="ghost"
-                  bg="transparent"
-                  title="Move this point to start a new subpath"
-                >
-                  Move to M
-                </Button>
-              )}
-            {(singlePointInfo.command.type === 'L' || singlePointInfo.command.type === 'C') && (
-              <Button
-                onClick={() => convertCommandType(selectedCommands[0].elementId, selectedCommands[0].commandIndex)}
-                colorScheme="cyan"
-                size="xs"
-                fontSize="12px"
-                w="full"
-                variant="ghost"
-                bg="transparent"
-                title={`Change to ${singlePointInfo.command.type === 'L' ? 'Curve' : 'Line'}`}
-              >
-                Change to {singlePointInfo.command.type === 'L' ? 'Curve' : 'Line'}
-              </Button>
-            )}
-          </VStack>
-        </Collapse>
-      );
-    }
-
     if (singlePointInfo.pairedPoint) {
       return (
         <Collapse in={showDetails} animateOpacity>
@@ -593,7 +582,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
   };
 
   return (
-    <Panel icon={<RotateCcw size={16} />} title="Control Point Alignment">
+    <Panel icon={<RotateCcw size={16} />} title="Control Point Alignment" showRenderCount={true}>
       {renderAlignmentButtons()}
       
       {/* Always visible Position and Command info */}
@@ -605,6 +594,81 @@ export const ControlPointAlignmentPanel: React.FC = () => {
       )}
       
       {renderDetailContent()}
+
+      {/* Always visible anchor-specific actions */}
+      {singlePointInfo && singlePointInfo.isAnchor && (
+        <VStack spacing={2} align="stretch" fontSize="11px" color="gray.600" lineHeight="1.4">
+          <Text><Text as="strong" color="gray.700">Location:</Text> {singlePointInfo.location}</Text>
+          {hasClosingZCommand(selectedCommands[0].elementId, selectedCommands[0].commandIndex) && (
+            <>
+              <Button
+                onClick={() => deleteZCommandForMPoint(selectedCommands[0].elementId, selectedCommands[0].commandIndex)}
+                colorScheme="gray"
+                size="xs"
+                fontSize="12px"
+                w="full"
+                variant="outline"
+                title="Delete the Z command that closes this path"
+              >
+                Delete Z Command
+              </Button>
+              <Button
+                onClick={() => convertZToLineForMPoint(selectedCommands[0].elementId, selectedCommands[0].commandIndex)}
+                colorScheme="gray"
+                size="xs"
+                fontSize="12px"
+                w="full"
+                variant="outline"
+                title="Convert the Z command to a line command"
+              >
+                Convert Z to Line
+              </Button>
+            </>
+          )}
+          {(singlePointInfo.command.type === 'L' || singlePointInfo.command.type === 'C') &&
+            isLastPointOfSubpath(selectedCommands[0].elementId, selectedCommands[0].commandIndex, selectedCommands[0].pointIndex) &&
+            !isAtMPosition(selectedCommands[0].elementId, selectedCommands[0].commandIndex, selectedCommands[0].pointIndex) && (
+              <Button
+                onClick={() => moveToM(selectedCommands[0].elementId, selectedCommands[0].commandIndex, selectedCommands[0].pointIndex)}
+                colorScheme="gray"
+                size="xs"
+                fontSize="12px"
+                w="full"
+                variant="outline"
+                title="Move this point to start a new subpath"
+              >
+                Move to M
+              </Button>
+            )}
+          {(singlePointInfo.command.type === 'L' || singlePointInfo.command.type === 'C') && (
+            <Button
+              onClick={() => convertCommandType(selectedCommands[0].elementId, selectedCommands[0].commandIndex)}
+              colorScheme="gray"
+              size="xs"
+              fontSize="12px"
+              w="full"
+              variant="outline"
+              title={`Change to ${singlePointInfo.command.type === 'L' ? 'Curve' : 'Line'}`}
+            >
+              Change to {singlePointInfo.command.type === 'L' ? 'Curve' : 'Line'}
+            </Button>
+          )}
+          {(singlePointInfo.command.type === 'L' || singlePointInfo.command.type === 'C') &&
+            canCutSubpathAtPoint(selectedCommands[0].elementId, selectedCommands[0].commandIndex, selectedCommands[0].pointIndex) && (
+              <Button
+                onClick={() => cutSubpathAtPoint(selectedCommands[0].elementId, selectedCommands[0].commandIndex, selectedCommands[0].pointIndex)}
+                colorScheme="gray"
+                size="xs"
+                fontSize="12px"
+                w="full"
+                variant="outline"
+                title="Cut the subpath at this point, creating two separate subpaths"
+              >
+                Cut Subpath
+              </Button>
+            )}
+        </VStack>
+      )}
     </Panel>
   );
 };

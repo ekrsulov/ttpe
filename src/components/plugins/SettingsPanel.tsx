@@ -10,14 +10,18 @@ import {
   Text,
   Box
 } from '@chakra-ui/react';
-import { Settings, RotateCcw } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { logger, LogLevel } from '../../utils';
 import { Panel } from '../ui/Panel';
 import { SliderControl } from '../ui/SliderControl';
 
 export const SettingsPanel: React.FC = () => {
-  const { documentName, settings, updateSettings } = useCanvasStore();
+  // Use individual selectors to prevent re-renders on unrelated changes
+  const documentName = useCanvasStore(state => state.documentName);
+  const settings = useCanvasStore(state => state.settings);
+  const updateSettings = useCanvasStore(state => state.updateSettings);
+  
   const [localDocumentName, setLocalDocumentName] = useState(documentName);
   const [logLevel, setLogLevel] = useState<LogLevel>(LogLevel.WARN); // Default log level
   const [isSaving, setIsSaving] = useState(false);
@@ -147,6 +151,17 @@ export const SettingsPanel: React.FC = () => {
           Show caller info in logs
         </ChakraCheckbox>
 
+        {/* Show Render Count Badges */}
+        {process.env.NODE_ENV === 'development' && (
+          <ChakraCheckbox
+            isChecked={settings.showRenderCountBadges}
+            onChange={(e) => updateSettings({ showRenderCountBadges: e.target.checked })}
+            size="sm"
+          >
+            Show render count badges (debug)
+          </ChakraCheckbox>
+        )}
+
         {/* Keyboard Movement Precision */}
         <SliderControl
           label="Precision:"
@@ -165,12 +180,10 @@ export const SettingsPanel: React.FC = () => {
               localStorage.removeItem('canvas-app-state');
               window.location.reload();
             }}
-            colorScheme="red"
-            leftIcon={<RotateCcw size={16} />}
+            colorScheme="gray"
             size="sm"
             width="full"
-            variant="ghost"
-            bg="transparent"
+            variant="outline"
             title="Reset Application - This will clear all data and reload the page"
           >
             Reset App

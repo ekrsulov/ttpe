@@ -14,6 +14,7 @@ export interface BaseSlice {
   // Settings
   settings: {
     keyboardMovementPrecision: number; // Number of decimal places for keyboard movement (0 = integers)
+    showRenderCountBadges: boolean; // Show debug render count badges
   };
 
   // Actions
@@ -151,6 +152,7 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
   // Settings with defaults
   settings: {
     keyboardMovementPrecision: 0, // Default to 0 (integers only)
+    showRenderCountBadges: process.env.NODE_ENV === 'development', // Show badges in development by default
   },
 
   // Actions

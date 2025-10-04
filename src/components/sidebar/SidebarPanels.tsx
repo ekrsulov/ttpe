@@ -90,13 +90,17 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
   deactivateSmoothBrush,
   resetSmoothBrush,
 }) => {
-  const { selectedIds, selectedSubpaths } = useCanvasStore();
+  // Use specific selectors to prevent unnecessary re-renders
+  // Only subscribe to the LENGTH of arrays, not the arrays themselves
+  const hasSelectedIds = useCanvasStore(state => state.selectedIds.length > 0);
+  const hasSelectedSubpaths = useCanvasStore(state => state.selectedSubpaths.length > 0);
+  const hasSelectedCommands = selectedCommands.length > 0;
   
   // Check if we're in special panel mode (file or settings)
   const isInSpecialPanelMode = showFilePanel || showSettingsPanel;
   
   // Check if footer should be shown (when something is selected)
-  const hasSelection = selectedIds.length > 0 || selectedCommands.length > 0 || selectedSubpaths.length > 0;
+  const hasSelection = hasSelectedIds || hasSelectedCommands || hasSelectedSubpaths;
 
   return (
     <Box

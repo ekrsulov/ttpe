@@ -6,7 +6,11 @@ import { logger } from '../../utils';
 import { Panel } from '../ui/Panel';
 
 export const FilePanel: React.FC = () => {
-  const { saveDocument, loadDocument, saveAsSvg } = useCanvasStore();
+  // Use individual selectors to prevent re-renders on unrelated changes
+  const saveDocument = useCanvasStore(state => state.saveDocument);
+  const loadDocument = useCanvasStore(state => state.loadDocument);
+  const saveAsSvg = useCanvasStore(state => state.saveAsSvg);
+  
   const [appendMode, setAppendMode] = useState(false);
 
   const handleSave = () => {
@@ -32,7 +36,8 @@ export const FilePanel: React.FC = () => {
         <HStack spacing={1}>
           <ChakraButton
             onClick={handleSave}
-            variant="secondary"
+            variant="outline"
+            colorScheme="gray"
             leftIcon={<Save size={14} />}
             flex={1}
             size="sm"
@@ -42,7 +47,8 @@ export const FilePanel: React.FC = () => {
 
           <ChakraButton
             onClick={handleSaveAsSvg}
-            variant="secondary"
+            variant="outline"
+            colorScheme="gray"
             leftIcon={<Download size={14} />}
             flex={1}
             size="sm"
@@ -52,7 +58,8 @@ export const FilePanel: React.FC = () => {
 
           <ChakraButton
             onClick={handleLoad}
-            variant="secondary"
+            variant="outline"
+            colorScheme="gray"
             leftIcon={<FolderOpen size={14} />}
             flex={1}
             size="sm"
