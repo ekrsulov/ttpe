@@ -107,7 +107,7 @@ export const SidebarToolGrid: React.FC<SidebarToolGridProps> = ({
           key={rowIndex}
           columns={isDesktop ? 4 : 3} // 4 columns on desktop (includes pin), 3 on mobile
           spacing={1}
-          mb={rowIndex === 0 ? 2 : (rowIndex < pluginRows.length - 1 ? 1 : 0)}
+          mb={rowIndex === 0 ? 1 : (rowIndex < pluginRows.length - 1 ? 1 : 0)}
         >
           {row.map(renderPluginButton)}
           

@@ -170,7 +170,7 @@ export const EditorPanel: React.FC = () => {
   const presetMaxWidth = useBreakpointValue({ base: '180px', md: '230px' }) || '230px';
 
   return (
-    <Box bg="white" pb={1}>
+    <Box bg="white" pb={1} mt={1}>
       {/* Pencil Properties Section */}
       <VStack spacing={1} align="stretch">
         {/* Color Presets */}
