@@ -4,8 +4,10 @@ import { useCanvasStore } from '../../store/canvasStore';
 import { RotateCcw } from 'lucide-react';
 import { Panel } from '../ui/Panel';
 
-export const SubPathOperationsPanel: React.FC = () => {
-  const { selectedSubpaths, performSubPathReverse, activePlugin } = useCanvasStore();
+const SubPathOperationsPanelComponent: React.FC = () => {
+  // Subscribe only to activePlugin and selectedSubpaths to trigger re-renders when needed
+  const activePlugin = useCanvasStore(state => state.activePlugin);
+  const selectedSubpaths = useCanvasStore(state => state.selectedSubpaths);
 
   // Show only when subpath plugin is active and exactly 1 subpath is selected
   if (activePlugin !== 'subpath' || selectedSubpaths.length !== 1) {
@@ -13,7 +15,7 @@ export const SubPathOperationsPanel: React.FC = () => {
   }
 
   const performReverse = () => {
-    performSubPathReverse();
+    useCanvasStore.getState().performSubPathReverse();
   };
 
   return (
@@ -33,3 +35,7 @@ export const SubPathOperationsPanel: React.FC = () => {
     </Panel>
   );
 };
+
+// Export memoized version - only re-renders when props change (no props = never re-renders from parent)
+// Component only re-renders internally when activePlugin or selectedSubpaths changes
+export const SubPathOperationsPanel = React.memo(SubPathOperationsPanelComponent);

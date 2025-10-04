@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { getCanvas, waitForLoad, getToolButton, getSidebarButton } from './helpers';
+import { getCanvas, waitForLoad, getToolButton } from './helpers';
 
 test.describe('Path Movement Tests', () => {
   test('should move complete paths in select mode', async ({ page }) => {

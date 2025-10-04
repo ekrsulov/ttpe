@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { getCanvas, waitForLoad, getToolButton, getSidebarButton } from './helpers';
+import { getCanvas, waitForLoad, getToolButton } from './helpers';
 
 test.describe('Selection and Transformation', () => {
   test('should select and transform elements', async ({ page }) => {

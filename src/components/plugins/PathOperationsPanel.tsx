@@ -5,8 +5,14 @@ import { Plus, Scissors, Zap, Minus, CirclePlus, Square, X, SplitSquareHorizonta
 import { Panel } from '../ui/Panel';
 import type { PathData } from '../../types';
 
-export const PathOperationsPanel: React.FC = () => {
-  const { selectedIds, selectedSubpaths, elements, performPathUnion, performPathSubtraction, performPathSimplify, performPathUnionPaperJS, performPathIntersect, performPathExclude, performPathDivide } = useCanvasStore();
+const PathOperationsPanelComponent: React.FC = () => {
+  // Subscribe only to selection changes to trigger re-renders when needed
+  const selectedIds = useCanvasStore(state => state.selectedIds);
+  const selectedSubpaths = useCanvasStore(state => state.selectedSubpaths);
+  
+  // Get current state without subscribing - fresh on every render
+  const state = useCanvasStore.getState();
+  const elements = state.elements;
 
   // Get selected paths/subpaths
   const selectedPaths = elements.filter(el =>
@@ -32,31 +38,31 @@ export const PathOperationsPanel: React.FC = () => {
   }
 
   const performUnion = () => {
-    performPathUnion();
+    useCanvasStore.getState().performPathUnion();
   };
 
   const performUnionPaperJS = () => {
-    performPathUnionPaperJS();
+    useCanvasStore.getState().performPathUnionPaperJS();
   };
 
   const performSubtraction = () => {
-    performPathSubtraction();
+    useCanvasStore.getState().performPathSubtraction();
   };
 
   const performIntersect = () => {
-    performPathIntersect();
+    useCanvasStore.getState().performPathIntersect();
   };
 
   const performExclude = () => {
-    performPathExclude();
+    useCanvasStore.getState().performPathExclude();
   };
 
   const performDivide = () => {
-    performPathDivide();
+    useCanvasStore.getState().performPathDivide();
   };
 
   const performSimplify = () => {
-    performPathSimplify();
+    useCanvasStore.getState().performPathSimplify();
   };
 
   return (
@@ -143,7 +149,11 @@ export const PathOperationsPanel: React.FC = () => {
             )}
           </>
         )}
-      </HStack>
+            </HStack>
     </Panel>
   );
 };
+
+// Export memoized version - only re-renders when props change (no props = never re-renders from parent)
+// Component only re-renders internally when activePlugin changes or selection changes
+export const PathOperationsPanel = React.memo(PathOperationsPanelComponent);

@@ -5,27 +5,6 @@ import { Page, Locator } from '@playwright/test';
  * Since buttons moved from sidebar to TopActionBar and BottomActionBar
  */
 
-// Tool buttons that are in the TopActionBar
-const TOP_ACTIONBAR_TOOLS = [
-  'Select',
-  'Pencil',
-  'Text',
-  'Shape',
-  'Subpath',
-  'Transform',
-  'Edit',
-];
-
-// Action buttons that are in the BottomActionBar
-const BOTTOM_ACTIONBAR_ACTIONS = [
-  'Undo',
-  'Redo',
-  'Zoom In',
-  'Zoom Out',
-  'Delete',
-  'Reset Zoom',
-];
-
 /**
  * Get a tool button from the TopActionBar by its title
  */
