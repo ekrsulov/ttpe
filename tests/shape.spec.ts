@@ -1,15 +1,16 @@
 import { test, expect } from '@playwright/test';
+import { getCanvas, waitForLoad, getToolButton } from './helpers';
 
 test.describe('Shape Creation', () => {
   test('should create different shapes', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await waitForLoad(page);
 
     // Switch to shape mode
-    await page.locator('[title="Shape"]').click();
+    await getToolButton(page, 'Shape').click();
 
     // Get SVG canvas element
-    const canvas = page.locator('svg[viewBox*="0 0"]').first();
+    const canvas = getCanvas(page);
     const canvasBox = await canvas.boundingBox();
     if (!canvasBox) throw new Error('SVG canvas not found');
 
@@ -17,7 +18,7 @@ test.describe('Shape Creation', () => {
     const initialPaths = await canvas.locator('path').count();
 
     // Test creating a square
-    await page.locator('[title="Square - Click and drag to create"]').click();
+    await page.locator('[aria-label="Square"]').click();
 
     // Draw a square by clicking and dragging
     await page.mouse.move(
@@ -42,7 +43,7 @@ test.describe('Shape Creation', () => {
     expect(pathsAfterSquare).toBeGreaterThan(initialPaths);
 
     // Switch to select mode explicitly
-    await page.locator('[title="Select"]').click();
+    await getToolButton(page, 'Select').click();
 
     // Click on the created square to select it
     await page.mouse.click(
@@ -51,16 +52,16 @@ test.describe('Shape Creation', () => {
     );
 
     // Verify Edit and Transform buttons are enabled
-    const editButton = page.locator('[title="Edit"]').first();
-    const transformButton = page.locator('[title="Transform"]').first();
+    const editButton = getToolButton(page, 'Edit');
+    const transformButton = getToolButton(page, 'Transform');
     await expect(editButton).toBeEnabled();
     await expect(transformButton).toBeEnabled();
 
     // Switch back to shape mode to create circle
-    await page.locator('[title="Shape"]').click();
+    await getToolButton(page, 'Shape').click();
 
     // Test creating a circle
-    await page.locator('[title="Circle - Click and drag to create"]').click();
+    await page.locator('[aria-label="Circle"]').click();
 
     await page.mouse.move(
       canvasBox.x + canvasBox.width * 0.6,

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { getCanvas, waitForLoad, getToolButton } from './helpers';
 
 // Helper function to draw a zig-zag pattern with multiple jumps and small irregularities
 async function drawZigZagPath(page: any, canvasBox: any) {
@@ -45,12 +46,12 @@ async function drawZigZagPath(page: any, canvasBox: any) {
 test.describe('Edit Functionality', () => {
   test('should toggle smooth brush mode', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await waitForLoad(page);
 
     // Create a path first
-    await page.locator('[title="Pencil"]').click();
+    await getToolButton(page, 'Pencil').click();
 
-    const canvas = page.locator('svg[viewBox*="0 0"]').first();
+    const canvas = getCanvas(page);
     const canvasBox = await canvas.boundingBox();
     if (!canvasBox) throw new Error('SVG canvas not found');
 
@@ -68,7 +69,7 @@ test.describe('Edit Functionality', () => {
     expect(pathsAfterCreation).toBeGreaterThan(initialPaths);
 
     // Switch to select mode explicitly
-    await page.locator('[title="Select"]').click();
+    await getToolButton(page, 'Select').click();
 
     // Try clicking on canvas at the path location
     await page.mouse.click(
@@ -80,12 +81,12 @@ test.describe('Edit Functionality', () => {
     await page.waitForTimeout(100);
 
     // Now switch to edit mode (should be enabled since we have a selected element)
-    const editButton = page.locator('[title="Edit"]');
+    const editButton = getToolButton(page, 'Edit');
     await expect(editButton).toBeEnabled();
     await editButton.click();
 
     // Check that edit panel is visible
-    await expect(page.locator('span', { hasText: 'Smooth Brush' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Smooth Brush' })).toBeVisible();
 
     // Test toggling brush mode
     const brushModeButton = page.locator('button', { hasText: 'OFF' });
@@ -100,12 +101,12 @@ test.describe('Edit Functionality', () => {
 
   test('should adjust smooth brush settings', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await waitForLoad(page);
 
     // Create a path and switch to edit mode
-    await page.locator('[title="Pencil"]').click();
+    await getToolButton(page, 'Pencil').click();
 
-    const canvas = page.locator('svg[viewBox*="0 0"]').first();
+    const canvas = getCanvas(page);
     const canvasBox = await canvas.boundingBox();
     if (!canvasBox) throw new Error('SVG canvas not found');
 
@@ -123,7 +124,7 @@ test.describe('Edit Functionality', () => {
     expect(pathsAfterCreation).toBeGreaterThan(initialPaths);
 
     // Switch to select mode explicitly
-    await page.locator('[title="Select"]').click();
+    await getToolButton(page, 'Select').click();
 
     // Try clicking on canvas at the path location
     await page.mouse.click(
@@ -135,7 +136,7 @@ test.describe('Edit Functionality', () => {
     await page.waitForTimeout(100);
 
     // Switch to edit mode
-    const editButton = page.locator('[title="Edit"]');
+    const editButton = getToolButton(page, 'Edit');
     await expect(editButton).toBeEnabled();
     await editButton.click();
 
@@ -162,12 +163,12 @@ test.describe('Edit Functionality', () => {
 
   test('should apply smooth brush', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await waitForLoad(page);
 
     // Create a path and switch to edit mode
-    await page.locator('[title="Pencil"]').click();
+    await getToolButton(page, 'Pencil').click();
 
-    const canvas = page.locator('svg[viewBox*="0 0"]').first();
+    const canvas = getCanvas(page);
     const canvasBox = await canvas.boundingBox();
     if (!canvasBox) throw new Error('SVG canvas not found');
 
@@ -185,7 +186,7 @@ test.describe('Edit Functionality', () => {
     expect(pathsAfterCreation).toBeGreaterThan(initialPaths);
 
     // Switch to select mode explicitly
-    await page.locator('[title="Select"]').click();
+    await getToolButton(page, 'Select').click();
 
     // Try clicking on canvas at the path location
     await page.mouse.click(
@@ -197,7 +198,7 @@ test.describe('Edit Functionality', () => {
     await page.waitForTimeout(100);
 
     // Switch to edit mode
-    const editButton = page.locator('[title="Edit"]');
+    const editButton = getToolButton(page, 'Edit');
     await expect(editButton).toBeEnabled();
     await editButton.click();
 
@@ -211,12 +212,12 @@ test.describe('Edit Functionality', () => {
 
   test('should show round path functionality', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await waitForLoad(page);
 
     // Create a path using pencil tool
-    await page.locator('[title="Pencil"]').click();
+    await getToolButton(page, 'Pencil').click();
 
-    const canvas = page.locator('svg[viewBox*="0 0"]').first();
+    const canvas = getCanvas(page);
     const canvasBox = await canvas.boundingBox();
     if (!canvasBox) throw new Error('SVG canvas not found');
 
@@ -235,7 +236,7 @@ test.describe('Edit Functionality', () => {
     await page.mouse.up();
 
     // Switch to edit mode to access Round Path
-    const editButton = page.locator('[title="Edit"]');
+    const editButton = getToolButton(page, 'Edit');
     await expect(editButton).toBeEnabled();
     await editButton.click();
 

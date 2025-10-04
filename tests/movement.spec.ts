@@ -1,14 +1,15 @@
 import { test, expect } from '@playwright/test';
+import { getCanvas, waitForLoad, getToolButton, getSidebarButton } from './helpers';
 
 test.describe('Path Movement Tests', () => {
   test('should move complete paths in select mode', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await waitForLoad(page);
 
     // Create a path first
-    await page.locator('[title="Pencil"]').click();
+    await getToolButton(page, 'Pencil').click();
 
-    const canvas = page.locator('svg[viewBox*="0 0"]').first();
+    const canvas = getCanvas(page);
     const canvasBox = await canvas.boundingBox();
     if (!canvasBox) throw new Error('SVG canvas not found');
 
@@ -44,7 +45,7 @@ test.describe('Path Movement Tests', () => {
     expect(pathsAfterCreation).toBeGreaterThan(initialPaths);
 
     // Switch to select mode
-    await page.locator('[title="Select"]').click();
+    await getToolButton(page, 'Select').click();
 
     // Click and drag the path to move it
     const startX = canvasBox.x + canvasBox.width * 0.4; // Take from the right edge of the path
@@ -59,8 +60,8 @@ test.describe('Path Movement Tests', () => {
     await page.waitForTimeout(100);
 
     // Verify Edit and Transform buttons are enabled
-    const editButton = page.locator('[title="Edit"]').first();
-    const transformButton = page.locator('[title="Transform"]').first();
+    const editButton = getToolButton(page, 'Edit').first();
+    const transformButton = getToolButton(page, 'Transform').first();
     await expect(editButton).toBeEnabled();
     await expect(transformButton).toBeEnabled();
 
@@ -86,16 +87,16 @@ test.describe('Path Movement Tests', () => {
 
   test('should move individual subpaths in subpath mode', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await waitForLoad(page);
 
     // Switch to pencil mode
-    await page.locator('[title="Pencil"]').click();
+    await getToolButton(page, 'Pencil').click();
 
     // Click add subpath button to switch to subpath mode
-    const addSubpathButton = page.locator('[title="Add Subpath"]');
+    const addSubpathButton = page.locator('[aria-label="Add Subpath"]');
     await addSubpathButton.click();
 
-    const canvas = page.locator('svg[viewBox*="0 0"]').first();
+    const canvas = getCanvas(page);
     const canvasBox = await canvas.boundingBox();
     if (!canvasBox) throw new Error('SVG canvas not found');
 
@@ -136,7 +137,7 @@ test.describe('Path Movement Tests', () => {
     await page.waitForTimeout(50);
 
     // Switch to select mode
-    await page.locator('[title="Select"]').click();
+    await getToolButton(page, 'Select').click();
 
     // Click on the created path to select it (clicking on the first subpath)
     await page.mouse.click(
@@ -148,7 +149,7 @@ test.describe('Path Movement Tests', () => {
     await page.waitForTimeout(50);
 
     // Check if the subpath button is now enabled
-    const subpathButton = page.locator('[title="Subpath"]');
+    const subpathButton = getToolButton(page, 'Subpath');
     const isEnabled = await subpathButton.isEnabled();
 
     if (!isEnabled) {
@@ -189,12 +190,12 @@ test.describe('Path Movement Tests', () => {
 
   test('should move individual points in edit mode', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await waitForLoad(page);
 
     // Create a simple path first
-    await page.locator('[title="Pencil"]').click();
+    await getToolButton(page, 'Pencil').click();
 
-    const canvas = page.locator('svg[viewBox*="0 0"]').first();
+    const canvas = getCanvas(page);
     const canvasBox = await canvas.boundingBox();
     if (!canvasBox) throw new Error('SVG canvas not found');
 
@@ -223,7 +224,7 @@ test.describe('Path Movement Tests', () => {
     await page.waitForTimeout(100);
 
     // Switch to select mode first to select the path
-    await page.locator('[title="Select"]').click();
+    await getToolButton(page, 'Select').click();
 
     // Click on the path to select it
     await page.mouse.click(
@@ -235,7 +236,7 @@ test.describe('Path Movement Tests', () => {
     await page.waitForTimeout(100);
 
     // Switch to edit mode
-    const editButton = page.locator('[title="Edit"]');
+    const editButton = getToolButton(page, 'Edit');
     await expect(editButton).toBeEnabled();
     await editButton.click();
 
@@ -243,7 +244,7 @@ test.describe('Path Movement Tests', () => {
     await page.waitForTimeout(100);
 
     // Check that edit panel is visible
-    await expect(page.locator('span', { hasText: 'Smooth Brush' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Smooth Brush' })).toBeVisible();
 
     // Click on canvas to start point selection (when smooth brush is off)
     await page.mouse.click(
@@ -292,15 +293,15 @@ test.describe('Path Movement Tests', () => {
 
   test('should handle multiple path movement', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await waitForLoad(page);
 
     // Create a shape and a line
-    await page.locator('[title="Shape"]').click();
+    await getToolButton(page, 'Shape').click();
 
     // Select square shape
-    await page.locator('[title="Square - Click and drag to create"]').click();
+    await page.locator('[aria-label="Square"]').click();
 
-    const canvas = page.locator('svg[viewBox*="0 0"]').first();
+    const canvas = getCanvas(page);
     const canvasBox = await canvas.boundingBox();
     if (!canvasBox) throw new Error('SVG canvas not found');
 
@@ -318,7 +319,7 @@ test.describe('Path Movement Tests', () => {
     await page.mouse.up();
 
     // Switch to pencil to draw a line
-    await page.locator('[title="Pencil"]').click();
+    await getToolButton(page, 'Pencil').click();
 
     // Draw second path (line)
     await page.waitForTimeout(200);
@@ -342,7 +343,7 @@ test.describe('Path Movement Tests', () => {
     expect(initialPaths).toBeGreaterThanOrEqual(2);
 
     // Switch to select mode
-    await page.locator('[title="Select"]').click();
+    await getToolButton(page, 'Select').click();
 
     // Select both elements (shift+click)
     await page.keyboard.down('Shift');

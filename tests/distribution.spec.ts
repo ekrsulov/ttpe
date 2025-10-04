@@ -1,31 +1,18 @@
 import { test, expect } from '@playwright/test';
-
-// Helper function to safely expand arrange panel
-async function expandArrangePanel(page: any) {
-  try {
-    const expandButton = page.locator('[title="Expand Arrange"]');
-    await expandButton.waitFor({ timeout: 10000 });
-    await expandButton.click();
-    await page.waitForTimeout(200);
-  } catch (_error) {
-    console.log('Expand Arrange button not found, trying alternative approach');
-    // Try to find and click any expand button or skip if panel is already expanded
-    await page.waitForTimeout(500);
-  }
-}
+import { getCanvas, waitForLoad, getToolButton } from './helpers';
 
 test.describe('Distribution Tests', () => {
   test('should distribute elements horizontally', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await waitForLoad(page);
 
     // Activate shape mode
-    await page.locator('[title="Shape"]').click();
+    await getToolButton(page, 'Shape').click();
 
     // Select circle shape
-    await page.locator('[title="Circle - Click and drag to create"]').click();
+    await page.locator('[aria-label="Circle"]').click();
 
-    const canvas = page.locator('svg[viewBox*="0 0"]').first();
+    const canvas = getCanvas(page);
     const canvasBox = await canvas.boundingBox();
     if (!canvasBox) throw new Error('SVG canvas not found');
 
@@ -39,8 +26,8 @@ test.describe('Distribution Tests', () => {
 
     for (const pos of circlePositions) {
       // Ensure we're in shape mode for each circle
-      await page.locator('[title="Shape"]').click();
-      await page.locator('[title="Circle - Click and drag to create"]').click();
+      await getToolButton(page, 'Shape').click();
+      await page.locator('[aria-label="Circle"]').click();
 
       await page.mouse.move(
         canvasBox.x + canvasBox.width * pos.start.x,
@@ -57,11 +44,10 @@ test.describe('Distribution Tests', () => {
     }
 
     // Switch to select mode
-    await page.locator('[title="Select"]').click();
+    await getToolButton(page, 'Select').click();
     await page.waitForTimeout(200);
 
     // Expand arrange panel
-    await expandArrangePanel(page);
 
     // Get initial positions
     const initialPositions = await page.evaluate(() => {
@@ -117,7 +103,7 @@ test.describe('Distribution Tests', () => {
     expect(selectedCount).toBe(4);
 
     // Verify distribute button is enabled
-    const distributeButton = page.locator('[title="Distribute Horizontally"]');
+    const distributeButton = page.locator('[aria-label="Distribute Horizontally"]');
     await expect(distributeButton).toBeEnabled();
 
     // Click distribute horizontally button
@@ -170,31 +156,32 @@ test.describe('Distribution Tests', () => {
 
   test('should distribute elements vertically', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await waitForLoad(page);
 
     // Activate shape mode
-    await page.locator('[title="Shape"]').click();
+    await getToolButton(page, 'Shape').click();
 
     // Select circle shape
-    await page.locator('[title="Circle - Click and drag to create"]').click();
+    await page.locator('[aria-label="Circle"]').click();
 
-    const canvas = page.locator('svg[viewBox*="0 0"]').first();
+    const canvas = getCanvas(page);
     const canvasBox = await canvas.boundingBox();
     if (!canvasBox) throw new Error('SVG canvas not found');
 
     // Create 5 circles in positions that need vertical redistribution
+    // Moved to the left to avoid sidebar and adjusted vertical spacing
     const circlePositions = [
-      { start: { x: 0.3, y: 0.05 }, end: { x: 0.35, y: 0.1 } }, // Topmost circle
-      { start: { x: 0.3, y: 0.2 }, end: { x: 0.35, y: 0.25 } }, // Upper circle
-      { start: { x: 0.3, y: 0.4 }, end: { x: 0.35, y: 0.45 } }, // Middle circle
-      { start: { x: 0.3, y: 0.6 }, end: { x: 0.35, y: 0.65 } }, // Lower circle
-      { start: { x: 0.3, y: 0.8 }, end: { x: 0.35, y: 0.85 } }, // Bottommost circle
+      { start: { x: 0.15, y: 0.05 }, end: { x: 0.20, y: 0.1 } }, // Topmost circle
+      { start: { x: 0.15, y: 0.2 }, end: { x: 0.20, y: 0.25 } }, // Upper circle
+      { start: { x: 0.15, y: 0.35 }, end: { x: 0.20, y: 0.4 } }, // Middle circle
+      { start: { x: 0.15, y: 0.5 }, end: { x: 0.20, y: 0.55 } }, // Lower circle
+      { start: { x: 0.15, y: 0.65 }, end: { x: 0.20, y: 0.7 } }, // Bottommost circle
     ];
 
     for (const pos of circlePositions) {
       // Ensure we're in shape mode for each circle
-      await page.locator('[title="Shape"]').click();
-      await page.locator('[title="Circle - Click and drag to create"]').click();
+      await getToolButton(page, 'Shape').click();
+      await page.locator('[aria-label="Circle"]').click();
 
       await page.mouse.move(
         canvasBox.x + canvasBox.width * pos.start.x,
@@ -211,11 +198,10 @@ test.describe('Distribution Tests', () => {
     }
 
     // Switch to select mode
-    await page.locator('[title="Select"]').click();
+    await getToolButton(page, 'Select').click();
     await page.waitForTimeout(200);
 
     // Expand arrange panel
-    await expandArrangePanel(page);
 
     // Get initial positions
     const initialPositions = await page.evaluate(() => {
@@ -266,7 +252,7 @@ test.describe('Distribution Tests', () => {
     expect(selectedCount).toBe(5);
 
     // Verify distribute button is enabled
-    const distributeButton = page.locator('[title="Distribute Vertically"]');
+    const distributeButton = page.locator('[aria-label="Distribute Vertically"]');
     await expect(distributeButton).toBeEnabled();
 
     // Click distribute vertically button

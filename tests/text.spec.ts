@@ -1,19 +1,20 @@
 import { test, expect } from '@playwright/test';
+import { getCanvas, waitForLoad, getToolButton } from './helpers';
 
 test.describe('Text Functionality', () => {
   test('should add text with spaces, change font properties, and position to the left', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await waitForLoad(page);
 
     // Switch to text mode
-    await page.locator('[title="Text"]').click();
+    await getToolButton(page, 'Text').click();
     await page.waitForTimeout(200); // Slow down
 
     // Verify text panel is visible
     await expect(page.locator('text=Text')).toBeVisible();
 
     // Get SVG canvas element
-    const canvas = page.locator('svg[viewBox*="0 0"]').first();
+    const canvas = getCanvas(page);
     const canvasBox = await canvas.boundingBox();
     if (!canvasBox) throw new Error('SVG canvas not found');
 
@@ -64,7 +65,7 @@ test.describe('Text Functionality', () => {
     expect(pathsAfterText).toBeGreaterThan(initialPaths);
 
     // Switch to select mode explicitly
-    await page.locator('[title="Select"]').click();
+    await getToolButton(page, 'Select').click();
     await page.waitForTimeout(200); // Slow down
 
     // Click on the created text to select it (try multiple coordinates, positioned to the left)
@@ -78,7 +79,7 @@ test.describe('Text Functionality', () => {
     await page.waitForTimeout(300); // Extra wait
 
     // If still not enabled, try clicking again
-    const editButton = page.locator('[title="Edit"]').first();
+    const editButton = getToolButton(page, 'Edit').first();
     
     if (!(await editButton.isEnabled())) {
       // Try clicking at a different position

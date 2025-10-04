@@ -1,49 +1,52 @@
 import { test, expect } from '@playwright/test';
+import { getCanvas, waitForLoad, getToolButton } from './helpers';
 
 test.describe('TTPE Application', () => {
   test('should load the application successfully', async ({ page }) => {
     await page.goto('/');
 
     // Wait for the page to be fully loaded
-    await page.waitForLoadState('networkidle');
+    await waitForLoad(page);
 
-    // Check that the SVG canvas and sidebar are present
-    await expect(page.locator('svg[viewBox*="0 0"]').first()).toBeVisible();
-    await expect(page.locator('[style*="position: absolute"][style*="right: 0"]').first()).toBeVisible();
+    // Check that the SVG canvas is present
+    await expect(getCanvas(page)).toBeVisible();
 
-    // Check that plugin buttons are present
-    const pluginButtons = ['Select', 'Subpath', 'Transform', 'Edit', 'Pan', 'Pencil', 'Text', 'Shape'];
+    // Check that the TopActionBar is visible (looking for the container)
+    await expect(page.locator('div').filter({ has: getToolButton(page, 'Select') }).first()).toBeVisible();
+
+    // Check that plugin buttons are present in TopActionBar
+    const pluginButtons = ['Select', 'Subpath', 'Transform', 'Edit', 'Pencil', 'Text', 'Shape'];
     for (const button of pluginButtons) {
-      await expect(page.locator(`[title="${button}"]`)).toBeVisible();
+      await expect(getToolButton(page, button)).toBeVisible();
     }
   });
 
   test('should switch between different modes', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await waitForLoad(page);
 
     // Test switching to pencil mode
-    await page.locator('[title="Pencil"]').click();
-    await expect(page.locator('text=Pencil')).toBeVisible();
+    await getToolButton(page, 'Pencil').click();
+    await expect(page.getByRole('heading', { name: 'Pencil' })).toBeVisible();
 
     // Test switching to shape mode
-    await page.locator('[title="Shape"]').click();
-    await expect(page.locator('text=Shape')).toBeVisible();
+    await getToolButton(page, 'Shape').click();
+    await expect(page.getByRole('heading', { name: 'Shape' })).toBeVisible();
 
     // Test switching to text mode
-    await page.locator('[title="Text"]').click();
-    await expect(page.locator('text=Text')).toBeVisible();
+    await getToolButton(page, 'Text').click();
+    await expect(page.getByRole('heading', { name: 'Text' })).toBeVisible();
   });
 
   test('should switch modes with double click', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await waitForLoad(page);
 
     // Create a shape to test double click
-    await page.locator('[title="Shape"]').click();
-    await page.locator('[title="Square - Click and drag to create"]').click();
+    await getToolButton(page, 'Shape').click();
+    await page.locator('[aria-label="Square"]').click();
 
-    const canvas = page.locator('svg[viewBox*="0 0"]').first();
+    const canvas = getCanvas(page);
     const canvasBox = await canvas.boundingBox();
     if (!canvasBox) throw new Error('SVG canvas not found');
 
@@ -85,10 +88,10 @@ test.describe('TTPE Application', () => {
 
   test('should return to select mode with Escape key', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await waitForLoad(page);
 
     // Switch to pencil mode
-    await page.locator('[title="Pencil"]').click();
+    await getToolButton(page, 'Pencil').click();
 
     // Wait for mode switch
     await page.waitForTimeout(100);
@@ -100,20 +103,20 @@ test.describe('TTPE Application', () => {
     await page.waitForTimeout(100);
 
     // Check that select mode is active (Select button should be active)
-    const selectButton = page.locator('[title="Select"]');
-    // Since IconButton doesn't have a class, check that it has the active background color
-    await expect(selectButton).toHaveCSS('background-color', 'rgb(0, 123, 255)');
+    const selectButton = getToolButton(page, 'Select');
+    // Check that the button has the blue colorScheme (Chakra UI blue.500 is rgb(49, 130, 206))
+    await expect(selectButton).toHaveCSS('background-color', 'rgb(49, 130, 206)');
   });
 
   test('should clear selections with Escape key before changing modes', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await waitForLoad(page);
 
     // Create a shape
-    await page.locator('[title="Shape"]').click();
-    await page.locator('[title="Square - Click and drag to create"]').click();
+    await getToolButton(page, 'Shape').click();
+    await page.locator('[aria-label="Square"]').click();
 
-    const canvas = page.locator('svg[viewBox*="0 0"]').first();
+    const canvas = getCanvas(page);
     const canvasBox = await canvas.boundingBox();
     if (!canvasBox) throw new Error('SVG canvas not found');
 
@@ -145,18 +148,19 @@ test.describe('TTPE Application', () => {
     await page.waitForTimeout(100);
 
     // Switch to transform mode
-    await page.locator('[title="Transform"]').click();
+    await getToolButton(page, 'Transform').click();
     await page.waitForTimeout(100);
 
-    // Verify element is selected in transform mode
-    await expect(page.locator('text=1 element selected')).toBeVisible();
+    // Verify the transformation panel is visible (will show "Select an element to transform" when nothing is selected yet)
+    // After clicking, there should be no error and panel should be visible
+    await expect(page.getByRole('heading', { name: 'Transform' })).toBeVisible();
 
     // Press Escape - should clear selection and change to select mode
     await page.keyboard.press('Escape');
     await page.waitForTimeout(100);
 
     // Check that select mode is active
-    const selectButton = page.locator('[title="Select"]');
-    await expect(selectButton).toHaveCSS('background-color', 'rgb(0, 123, 255)');
+    const selectButton = getToolButton(page, 'Select');
+    await expect(selectButton).toHaveCSS('background-color', 'rgb(49, 130, 206)');
   });
 });

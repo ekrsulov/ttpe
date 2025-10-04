@@ -1,31 +1,18 @@
 import { test, expect } from '@playwright/test';
-
-// Helper function to safely expand arrange panel
-async function expandArrangePanel(page: any) {
-  try {
-    const expandButton = page.locator('[title="Expand Arrange"]');
-    await expandButton.waitFor({ timeout: 10000 });
-    await expandButton.click();
-    await page.waitForTimeout(200);
-  } catch (_error) {
-    console.log('Expand Arrange button not found, trying alternative approach');
-    // Try to find and click any expand button or skip if panel is already expanded
-    await page.waitForTimeout(500);
-  }
-}
+import { getCanvas, waitForLoad, getToolButton } from './helpers';
 
 test.describe('Bring to Front and Send to Back', () => {
   test('should arrange elements using bring to front and send to back', async ({ page }) => {
     // This test verifies the bring to front and send to back functionality through complete UI interaction.
-    // Colors are applied via UI color picker: select shape → expand panel → set fill color → collapse panel
+    // Colors are applied via UI color picker: select shape → set fill color (panel is open by default)
     // Then z-order operations are tested through UI buttons.
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await waitForLoad(page);
 
     // Create first shape
-    await page.locator('[title="Shape"]').click();
+    await getToolButton(page, 'Shape').click();
 
-    const canvas = page.locator('svg[viewBox*="0 0"]').first();
+    const canvas = getCanvas(page);
     const canvasBox = await canvas.boundingBox();
     if (!canvasBox) throw new Error('SVG canvas not found');
 
@@ -48,7 +35,7 @@ test.describe('Bring to Front and Send to Back', () => {
     await page.waitForTimeout(100);
 
     // Switch back to shape mode to create second shape
-    await page.locator('[title="Shape"]').click();
+    await getToolButton(page, 'Shape').click();
 
     // Create second shape (overlapping with first) with slower mouse movement
     await page.mouse.move(
@@ -69,7 +56,7 @@ test.describe('Bring to Front and Send to Back', () => {
     await page.waitForTimeout(100);
 
     // Switch to select mode
-    await page.locator('[title="Select"]').click();
+    await getToolButton(page, 'Select').click();
 
     // Select the first shape by clicking in its center area
     await page.mouse.click(
@@ -90,8 +77,7 @@ test.describe('Bring to Front and Send to Back', () => {
     });
     expect(firstSelectionCount).toBe(1);
 
-    // Expand the editor panel by clicking the chevron
-    await page.locator('[title="Expand Color Controls"]').click();
+    // The color panel is now open by default, no need to expand
     await page.waitForTimeout(200);
 
     // Find and set fill color for first shape using the color input
@@ -102,10 +88,6 @@ test.describe('Bring to Front and Send to Back', () => {
     await fillColorInput.fill('#ff4444');
     
     await page.waitForTimeout(300);
-
-    // Collapse the editor panel
-    await page.locator('[title="Collapse Color Controls"]').click();
-    await page.waitForTimeout(100);
 
     // Clear any existing selection by clicking empty area
     await page.mouse.click(
@@ -133,8 +115,7 @@ test.describe('Bring to Front and Send to Back', () => {
     });
     expect(secondSelectionCount).toBe(1);
 
-    // Expand the editor panel again
-    await page.locator('[title="Expand Color Controls"]').click();
+    // The color panel is already open
     await page.waitForTimeout(200);
 
     // Set blue color for second shape using the same color input
@@ -143,15 +124,17 @@ test.describe('Bring to Front and Send to Back', () => {
     
     await page.waitForTimeout(300);
 
-    // Collapse the editor panel
-    await page.locator('[title="Collapse Color Controls"]').click();
+    // The arrange panel is open by default, no need to expand
+    await page.waitForTimeout(200);
+
+    // Make sure we're in Select mode before using arrange buttons
+    await getToolButton(page, 'Select').click();
     await page.waitForTimeout(100);
 
-    // Expand arrange panel
-    await expandArrangePanel(page);
-
-    // Try to find buttons by their position or content
-    const arrangeButtons = page.locator('button[title*="Front"], button[title*="Back"]');
+    // Find the arrange buttons using aria-label
+    // Note: The title has two spaces between "Bring" and "to" when in select mode: "Bring  to Front"
+    const bringToFrontButton = page.locator('[aria-label="Bring  to Front"]');
+    const sendToBackButton = page.locator('[aria-label="Send  to Back"]');
 
     // Select the first shape (bottom one - red) for z-order operations by clicking in area that only has first shape
     await page.mouse.click(
@@ -201,8 +184,8 @@ test.describe('Bring to Front and Send to Back', () => {
     // Wait for selection
     await page.waitForTimeout(100);
 
-    // Click bring to front - use position-based selector
-    await arrangeButtons.nth(0).click(); // Bring to Front should be first
+    // Click bring to front
+    await bringToFrontButton.click();
     await page.waitForTimeout(200);
 
     // Get order after bring to front
@@ -232,8 +215,8 @@ test.describe('Bring to Front and Send to Back', () => {
       expect(redElement.zIndex).toBeGreaterThan(blueElement.zIndex);
     }
 
-    // Click send to back - use position-based selector
-    await arrangeButtons.nth(2).click(); // Send to Back should be last (index 2)
+    // Click send to back
+    await sendToBackButton.click();
     await page.waitForTimeout(200);
 
     // Get order after send to back

@@ -1,14 +1,15 @@
 import { test, expect } from '@playwright/test';
+import { getCanvas, waitForLoad, getToolButton } from './helpers';
 
 test.describe('Pencil Drawing', () => {
   test('should draw with pencil tool', async ({ page }) => {
     await page.goto('/');
 
     // Switch to pencil mode
-    await page.locator('[title="Pencil"]').click();
+    await getToolButton(page, 'Pencil').click();
 
     // Get SVG canvas element
-    const canvas = page.locator('svg[viewBox*="0 0"]').first();
+    const canvas = getCanvas(page);
 
     // Count initial paths
     const initialPaths = await canvas.locator('path').count();
@@ -63,7 +64,7 @@ test.describe('Pencil Drawing', () => {
     expect(pathsAfterDrawing).toBeGreaterThan(initialPaths);
 
     // Switch to select mode to verify the drawing is selectable
-    await page.locator('[title="Select"]').click();
+    await getToolButton(page, 'Select').click();
 
     // Try to select the drawn path
     await page.mouse.click(
@@ -72,24 +73,24 @@ test.describe('Pencil Drawing', () => {
     );
 
     // Verify that edit and transform buttons are enabled (indicating selection worked)
-    const editButton = page.locator('[title="Edit"]').first();
-    const transformButton = page.locator('[title="Transform"]').first();
+    const editButton = getToolButton(page, 'Edit').first();
+    const transformButton = getToolButton(page, 'Transform').first();
     await expect(editButton).toBeEnabled();
     await expect(transformButton).toBeEnabled();
   });
 
   test('should toggle between new path and add subpath modes', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await waitForLoad(page);
 
     // Switch to pencil mode
-    await page.locator('[title="Pencil"]').click();
+    await getToolButton(page, 'Pencil').click();
 
     // Check that pencil panel is visible
     await expect(page.locator('text=Pencil')).toBeVisible();
 
     // Get SVG canvas element
-    const canvas = page.locator('svg[viewBox*="0 0"]').first();
+    const canvas = getCanvas(page);
     const canvasBox = await canvas.boundingBox();
     if (!canvasBox) throw new Error('SVG canvas not found');
 
@@ -97,8 +98,8 @@ test.describe('Pencil Drawing', () => {
     const initialPaths = await canvas.locator('path').count();
 
     // The buttons should exist
-    const newPathButton = page.locator('[title="New Path"]');
-    const addSubpathButton = page.locator('[title="Add Subpath"]');
+    const newPathButton = page.locator('[aria-label="New Path"]');
+    const addSubpathButton = page.locator('[aria-label="Add Subpath"]');
 
     await expect(newPathButton).toBeVisible();
     await expect(addSubpathButton).toBeVisible();
@@ -148,7 +149,7 @@ test.describe('Pencil Drawing', () => {
     expect(pathsAfterDrawing).toBe(initialPaths + 1);
 
     // Switch to select mode
-    await page.locator('[title="Select"]').click();
+    await getToolButton(page, 'Select').click();
 
     // Try to select the path
     await page.mouse.click(
@@ -157,8 +158,8 @@ test.describe('Pencil Drawing', () => {
     );
 
     // Verify that edit and transform buttons are enabled
-    const editButton = page.locator('[title="Edit"]').first();
-    const transformButton = page.locator('[title="Transform"]').first();
+    const editButton = getToolButton(page, 'Edit').first();
+    const transformButton = getToolButton(page, 'Transform').first();
     await expect(editButton).toBeEnabled();
     await expect(transformButton).toBeEnabled();
 

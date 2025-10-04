@@ -1,55 +1,32 @@
 import { test, expect } from '@playwright/test';
-
-// Helper function to safely expand arrange panel
-async function expandArrangePanel(page: any) {
-  try {
-    // First try to find "Expand Controls" button
-    const expandButton = page.locator('[title="Expand Controls"]');
-    await expandButton.waitFor({ timeout: 5000 });
-    await expandButton.click();
-    await page.waitForTimeout(200);
-    console.log('Successfully expanded controls panel');
-  } catch (_error) {
-    try {
-      // If that doesn't work, try "Expand Arrange" (legacy)
-      const expandButton = page.locator('[title="Expand Arrange"]');
-      await expandButton.waitFor({ timeout: 2000 });
-      await expandButton.click();
-      await page.waitForTimeout(200);
-      console.log('Successfully expanded arrange panel');
-    } catch (_error2) {
-      console.log('Neither Expand Controls nor Expand Arrange button found, panel may already be expanded');
-      // The arrange panel might already be expanded, so we continue
-      await page.waitForTimeout(500);
-    }
-  }
-}
+import { getCanvas, waitForLoad, getToolButton } from './helpers';
 
 test.describe('Align Tests', () => {
   test('should align elements to the left', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await waitForLoad(page);
 
     // Activate shape mode
-    await page.locator('[title="Shape"]').click();
+    await getToolButton(page, 'Shape').click();
 
     // Select circle shape
-    await page.locator('[title="Circle - Click and drag to create"]').click();
+    await page.locator('[aria-label="Circle"]').click();
 
-    const canvas = page.locator('svg[viewBox*="0 0"]').first();
+    const canvas = getCanvas(page);
     const canvasBox = await canvas.boundingBox();
     if (!canvasBox) throw new Error('SVG canvas not found');
 
     // Create 2 circles at different horizontal positions with different sizes
+    // Positioning more to the left to avoid sidebar collision
     const circlePositions = [
-      { start: { x: 0.4, y: 0.2 }, end: { x: 0.45, y: 0.25 } }, // Small circle at x: 0.4-0.45
-      { start: { x: 0.7, y: 0.2 }, end: { x: 0.8, y: 0.35 } }, // Large circle at x: 0.7-0.8
+      { start: { x: 0.15, y: 0.2 }, end: { x: 0.20, y: 0.25 } }, // Small circle on the left
+      { start: { x: 0.45, y: 0.2 }, end: { x: 0.55, y: 0.35 } }, // Large circle in the center
     ];
 
     for (const pos of circlePositions) {
       // Ensure we're in shape mode for each circle
-      await page.locator('[title="Shape"]').click();
-      await page.locator('[title="Circle - Click and drag to create"]').click();
+      await getToolButton(page, 'Shape').click();
+      await page.locator('[aria-label="Circle"]').click();
 
       await page.mouse.move(
         canvasBox.x + canvasBox.width * pos.start.x,
@@ -66,11 +43,10 @@ test.describe('Align Tests', () => {
     }
 
     // Switch to select mode
-    await page.locator('[title="Select"]').click();
+    await getToolButton(page, 'Select').click();
     await page.waitForTimeout(200);
 
     // Expand arrange panel
-    await expandArrangePanel(page);
     await page.waitForTimeout(200);
 
     // Get initial positions
@@ -105,24 +81,26 @@ test.describe('Align Tests', () => {
     const pathsCount = await canvas.locator('path').count();
     expect(pathsCount).toBe(circlePositions.length);
 
-    // Select all circles using the exposed store
-    await page.evaluate(() => {
-      const store = (window as any).useCanvasStore;
-      if (store) {
-        const state = store.getState();
-        const elementIds = state.elements.map((el: any) => el.id);
-        if (elementIds.length >= 2) {
-          // Select all elements
-          state.selectElements(elementIds);
-        }
-      }
-    });
+    // Select all circles by dragging a selection box around them
+    // Adjusted to match the new circle positions
+    await page.mouse.move(
+      canvasBox.x + canvasBox.width * 0.10,
+      canvasBox.y + canvasBox.height * 0.15
+    );
+    await page.mouse.down();
+    await page.mouse.move(
+      canvasBox.x + canvasBox.width * 0.60,
+      canvasBox.y + canvasBox.height * 0.4,
+      { steps: 10 }
+    );
+    await page.mouse.up();
 
-    // Wait for selection to be processed
-    await page.waitForTimeout(500);
+    // Wait for selection to be processed and panel to render
+    await page.waitForTimeout(1000);
 
-    // Verify selection by checking if align button is enabled
-    const alignButton = page.locator('[title="Align Left"]');
+    // Wait for the arrange panel to be visible by checking for any align button
+    const alignButton = page.locator('[aria-label="Align Left"]');
+    await expect(alignButton).toBeVisible({ timeout: 10000 });
     await expect(alignButton).toBeEnabled();
 
     // Click align left button
@@ -174,28 +152,29 @@ test.describe('Align Tests', () => {
 
   test('should align elements to the center horizontally', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await waitForLoad(page);
 
     // Activate shape mode
-    await page.locator('[title="Shape"]').click();
+    await getToolButton(page, 'Shape').click();
 
     // Select circle shape
-    await page.locator('[title="Circle - Click and drag to create"]').click();
+    await page.locator('[aria-label="Circle"]').click();
 
-    const canvas = page.locator('svg[viewBox*="0 0"]').first();
+    const canvas = getCanvas(page);
     const canvasBox = await canvas.boundingBox();
     if (!canvasBox) throw new Error('SVG canvas not found');
 
     // Create 2 circles at different horizontal positions with different sizes
+    // Positioning more to the left to avoid sidebar collision
     const circlePositions = [
-      { start: { x: 0.2, y: 0.2 }, end: { x: 0.25, y: 0.25 } }, // Small circle at x: 0.2-0.25
-      { start: { x: 0.7, y: 0.2 }, end: { x: 0.8, y: 0.35 } }, // Large circle at x: 0.7-0.8
+      { start: { x: 0.1, y: 0.2 }, end: { x: 0.15, y: 0.25 } }, // Small circle on the left
+      { start: { x: 0.4, y: 0.2 }, end: { x: 0.5, y: 0.35 } }, // Large circle in the center
     ];
 
     for (const pos of circlePositions) {
       // Ensure we're in shape mode for each circle
-      await page.locator('[title="Shape"]').click();
-      await page.locator('[title="Circle - Click and drag to create"]').click();
+      await getToolButton(page, 'Shape').click();
+      await page.locator('[aria-label="Circle"]').click();
 
       await page.mouse.move(
         canvasBox.x + canvasBox.width * pos.start.x,
@@ -212,11 +191,10 @@ test.describe('Align Tests', () => {
     }
 
     // Switch to select mode
-    await page.locator('[title="Select"]').click();
+    await getToolButton(page, 'Select').click();
     await page.waitForTimeout(200);
 
     // Expand arrange panel
-    await expandArrangePanel(page);
     await page.waitForTimeout(200);
 
     // Get initial positions
@@ -239,24 +217,26 @@ test.describe('Align Tests', () => {
     const pathsCount = await canvas.locator('path').count();
     expect(pathsCount).toBe(circlePositions.length);
 
-    // Select all circles using the exposed store
-    await page.evaluate(() => {
-      const store = (window as any).useCanvasStore;
-      if (store) {
-        const state = store.getState();
-        const elementIds = state.elements.map((el: any) => el.id);
-        if (elementIds.length >= 2) {
-          // Select all elements
-          state.selectElements(elementIds);
-        }
-      }
-    });
+    // Select all circles by dragging a selection box around them
+    // Adjusted to match the new circle positions
+    await page.mouse.move(
+      canvasBox.x + canvasBox.width * 0.05,
+      canvasBox.y + canvasBox.height * 0.15
+    );
+    await page.mouse.down();
+    await page.mouse.move(
+      canvasBox.x + canvasBox.width * 0.55,
+      canvasBox.y + canvasBox.height * 0.4,
+      { steps: 10 }
+    );
+    await page.mouse.up();
 
-    // Wait for selection to be processed
-    await page.waitForTimeout(500);
+    // Wait for selection to be processed and panel to render
+    await page.waitForTimeout(1000);
 
-    // Verify selection by checking if align button is enabled
-    const alignButton = page.locator('[title="Align Center"]');
+    // Wait for the arrange panel to be visible by checking for the align button
+    const alignButton = page.locator('[aria-label="Align Center"]');
+    await expect(alignButton).toBeVisible({ timeout: 10000 });
     await expect(alignButton).toBeEnabled();
 
     // Click align center button
@@ -309,15 +289,15 @@ test.describe('Align Tests', () => {
 
   test('should align elements to the right', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await waitForLoad(page);
 
     // Activate shape mode
-    await page.locator('[title="Shape"]').click();
+    await getToolButton(page, 'Shape').click();
 
     // Select circle shape
-    await page.locator('[title="Circle - Click and drag to create"]').click();
+    await page.locator('[aria-label="Circle"]').click();
 
-    const canvas = page.locator('svg[viewBox*="0 0"]').first();
+    const canvas = getCanvas(page);
     const canvasBox = await canvas.boundingBox();
     if (!canvasBox) throw new Error('SVG canvas not found');
 
@@ -329,8 +309,8 @@ test.describe('Align Tests', () => {
 
     for (const pos of circlePositions) {
       // Ensure we're in shape mode for each circle
-      await page.locator('[title="Shape"]').click();
-      await page.locator('[title="Circle - Click and drag to create"]').click();
+      await getToolButton(page, 'Shape').click();
+      await page.locator('[aria-label="Circle"]').click();
 
       await page.mouse.move(
         canvasBox.x + canvasBox.width * pos.start.x,
@@ -347,11 +327,10 @@ test.describe('Align Tests', () => {
     }
 
     // Switch to select mode
-    await page.locator('[title="Select"]').click();
+    await getToolButton(page, 'Select').click();
     await page.waitForTimeout(200);
 
     // Expand arrange panel
-    await expandArrangePanel(page);
     await page.waitForTimeout(200);
 
     // Get initial positions
@@ -391,7 +370,7 @@ test.describe('Align Tests', () => {
     await page.waitForTimeout(500);
 
     // Verify selection by checking if align button is enabled
-    const alignButton = page.locator('[title="Align Right"]');
+    const alignButton = page.locator('[aria-label="Align Right"]');
     await expect(alignButton).toBeEnabled();
 
     // Click align right button
@@ -443,15 +422,15 @@ test.describe('Align Tests', () => {
 
   test('should align elements to the top', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await waitForLoad(page);
 
     // Activate shape mode
-    await page.locator('[title="Shape"]').click();
+    await getToolButton(page, 'Shape').click();
 
     // Select circle shape
-    await page.locator('[title="Circle - Click and drag to create"]').click();
+    await page.locator('[aria-label="Circle"]').click();
 
-    const canvas = page.locator('svg[viewBox*="0 0"]').first();
+    const canvas = getCanvas(page);
     const canvasBox = await canvas.boundingBox();
     if (!canvasBox) throw new Error('SVG canvas not found');
 
@@ -463,8 +442,8 @@ test.describe('Align Tests', () => {
 
     for (const pos of circlePositions) {
       // Ensure we're in shape mode for each circle
-      await page.locator('[title="Shape"]').click();
-      await page.locator('[title="Circle - Click and drag to create"]').click();
+      await getToolButton(page, 'Shape').click();
+      await page.locator('[aria-label="Circle"]').click();
 
       await page.mouse.move(
         canvasBox.x + canvasBox.width * pos.start.x,
@@ -481,11 +460,10 @@ test.describe('Align Tests', () => {
     }
 
     // Switch to select mode
-    await page.locator('[title="Select"]').click();
+    await getToolButton(page, 'Select').click();
     await page.waitForTimeout(200);
 
     // Expand arrange panel
-    await expandArrangePanel(page);
     await page.waitForTimeout(200);
 
     // Get initial positions
@@ -525,7 +503,7 @@ test.describe('Align Tests', () => {
     await page.waitForTimeout(500);
 
     // Verify selection by checking if align button is enabled
-    const alignButton = page.locator('[title="Align Top"]');
+    const alignButton = page.locator('[aria-label="Align Top"]');
     await expect(alignButton).toBeEnabled();
 
     // Click align top button
@@ -577,15 +555,15 @@ test.describe('Align Tests', () => {
 
   test('should align elements to the middle vertically', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await waitForLoad(page);
 
     // Activate shape mode
-    await page.locator('[title="Shape"]').click();
+    await getToolButton(page, 'Shape').click();
 
     // Select circle shape
-    await page.locator('[title="Circle - Click and drag to create"]').click();
+    await page.locator('[aria-label="Circle"]').click();
 
-    const canvas = page.locator('svg[viewBox*="0 0"]').first();
+    const canvas = getCanvas(page);
     const canvasBox = await canvas.boundingBox();
     if (!canvasBox) throw new Error('SVG canvas not found');
 
@@ -597,8 +575,8 @@ test.describe('Align Tests', () => {
 
     for (const pos of circlePositions) {
       // Ensure we're in shape mode for each circle
-      await page.locator('[title="Shape"]').click();
-      await page.locator('[title="Circle - Click and drag to create"]').click();
+      await getToolButton(page, 'Shape').click();
+      await page.locator('[aria-label="Circle"]').click();
 
       await page.mouse.move(
         canvasBox.x + canvasBox.width * pos.start.x,
@@ -615,11 +593,10 @@ test.describe('Align Tests', () => {
     }
 
     // Switch to select mode
-    await page.locator('[title="Select"]').click();
+    await getToolButton(page, 'Select').click();
     await page.waitForTimeout(200);
 
     // Expand arrange panel
-    await expandArrangePanel(page);
     await page.waitForTimeout(200);
 
     // Get initial positions
@@ -659,7 +636,7 @@ test.describe('Align Tests', () => {
     await page.waitForTimeout(500);
 
     // Verify selection by checking if align button is enabled
-    const alignButton = page.locator('[title="Align Middle"]');
+    const alignButton = page.locator('[aria-label="Align Middle"]');
     await expect(alignButton).toBeEnabled();
 
     // Click align middle button
@@ -712,15 +689,15 @@ test.describe('Align Tests', () => {
 
   test('should align elements to the bottom', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await waitForLoad(page);
 
     // Activate shape mode
-    await page.locator('[title="Shape"]').click();
+    await getToolButton(page, 'Shape').click();
 
     // Select circle shape
-    await page.locator('[title="Circle - Click and drag to create"]').click();
+    await page.locator('[aria-label="Circle"]').click();
 
-    const canvas = page.locator('svg[viewBox*="0 0"]').first();
+    const canvas = getCanvas(page);
     const canvasBox = await canvas.boundingBox();
     if (!canvasBox) throw new Error('SVG canvas not found');
 
@@ -732,8 +709,8 @@ test.describe('Align Tests', () => {
 
     for (const pos of circlePositions) {
       // Ensure we're in shape mode for each circle
-      await page.locator('[title="Shape"]').click();
-      await page.locator('[title="Circle - Click and drag to create"]').click();
+      await getToolButton(page, 'Shape').click();
+      await page.locator('[aria-label="Circle"]').click();
 
       await page.mouse.move(
         canvasBox.x + canvasBox.width * pos.start.x,
@@ -750,11 +727,10 @@ test.describe('Align Tests', () => {
     }
 
     // Switch to select mode
-    await page.locator('[title="Select"]').click();
+    await getToolButton(page, 'Select').click();
     await page.waitForTimeout(200);
 
     // Expand arrange panel
-    await expandArrangePanel(page);
     await page.waitForTimeout(200);
 
     // Get initial positions
@@ -794,7 +770,7 @@ test.describe('Align Tests', () => {
     await page.waitForTimeout(500);
 
     // Verify selection by checking if align button is enabled
-    const alignButton = page.locator('[title="Align Bottom"]');
+    const alignButton = page.locator('[aria-label="Align Bottom"]');
     await expect(alignButton).toBeEnabled();
 
     // Click align bottom button

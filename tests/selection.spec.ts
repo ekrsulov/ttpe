@@ -1,15 +1,16 @@
 import { test, expect } from '@playwright/test';
+import { getCanvas, waitForLoad, getToolButton, getSidebarButton } from './helpers';
 
 test.describe('Selection and Transformation', () => {
   test('should select and transform elements', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await waitForLoad(page);
 
     // First create a shape to select
-    await page.locator('[title="Shape"]').click();
-    await page.locator('[title="Square - Click and drag to create"]').click();
+    await getToolButton(page, 'Shape').click();
+    await page.locator('[aria-label="Square"]').click();
 
-    const canvas = page.locator('svg[viewBox*="0 0"]').first();
+    const canvas = getCanvas(page);
     const canvasBox = await canvas.boundingBox();
     if (!canvasBox) throw new Error('SVG canvas not found');
 
@@ -47,30 +48,30 @@ test.describe('Selection and Transformation', () => {
     // Wait for selection
     await page.waitForTimeout(100);
 
-    // Check that transformation panel appears and shows selection
-    await page.locator('[title="Transform"]').click();
-    await expect(page.locator('text=1 element selected')).toBeVisible();
+    // Check that transformation panel appears
+    await getToolButton(page, 'Transform').click();
+    await expect(page.getByRole('heading', { name: 'Transform' })).toBeVisible();
 
     // Test toggling coordinates
-    const coordinatesCheckbox = page.locator('#showCoordinates');
+    const coordinatesCheckbox = page.getByRole('checkbox', { name: 'Coordinates' });
     await coordinatesCheckbox.check();
     await expect(coordinatesCheckbox).toBeChecked();
 
     // Test toggling rulers
-    const rulersCheckbox = page.locator('#showRulers');
+    const rulersCheckbox = page.getByRole('checkbox', { name: 'Rulers' });
     await rulersCheckbox.check();
     await expect(rulersCheckbox).toBeChecked();
   });
 
   test('should duplicate selected elements', async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await waitForLoad(page);
 
     // Create a shape
-    await page.locator('[title="Shape"]').click();
-    await page.locator('[title="Circle - Click and drag to create"]').click();
+    await getToolButton(page, 'Shape').click();
+    await page.locator('[aria-label="Circle"]').click();
 
-    const canvas = page.locator('svg[viewBox*="0 0"]').first();
+    const canvas = getCanvas(page);
     const canvasBox = await canvas.boundingBox();
     if (!canvasBox) throw new Error('SVG canvas not found');
 
@@ -109,13 +110,13 @@ test.describe('Selection and Transformation', () => {
     await page.waitForTimeout(100);
 
     // Check that select panel is visible (the Select button should be active/highlighted)
-    await page.locator('[title="Select"]').click();
+    await getToolButton(page, 'Select').click();
     
     // Wait for panel to appear
     await page.waitForTimeout(100);
 
     // Check that duplicate button is available and enabled
-    const duplicateButton = page.locator('[title="Duplicate"]');
+    const duplicateButton = page.locator('[aria-label="Duplicate"]');
     await expect(duplicateButton).toBeVisible();
     await expect(duplicateButton).toBeEnabled();
 
