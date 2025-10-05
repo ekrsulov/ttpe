@@ -7,14 +7,8 @@ export {
 
 export * from './pathParserUtils';
 
-// Export coordinate helpers
-export * from './coordinateHelpers';
-
 // Export logger
 export { logger, LogLevel } from './logger';
-
-// Export type guards
-export * from './typeGuards';
 
 // Export modular utilities
 export * from './geometry';

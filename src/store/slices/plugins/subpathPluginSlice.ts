@@ -4,7 +4,7 @@ import type { PathData, Command, CanvasElement } from '../../../types';
 import { extractSubpaths } from '../../../utils/pathParserUtils';
 import { measureSubpathBounds } from '../../../utils/measurementUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../../utils';
-import { translateCommands, translateCommandsUnified } from '../../../utils/transformationUtils';
+import { translateCommands } from '../../../utils/transformationUtils';
 
 // Helper interface for subpath bounds
 interface SubpathWithBounds {
@@ -298,7 +298,7 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
 
         subpathIndices.forEach(subpathIndex => {
           if (subpathIndex < newSubPaths.length) {
-            newSubPaths[subpathIndex] = translateCommandsUnified(newSubPaths[subpathIndex], deltaX, deltaY, { 
+            newSubPaths[subpathIndex] = translateCommands(newSubPaths[subpathIndex], deltaX, deltaY, { 
               precision: precision,
               roundToIntegers: precision === 0 
             });

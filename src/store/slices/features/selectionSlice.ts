@@ -1,7 +1,7 @@
 import type { StateCreator } from 'zustand';
 import type { CanvasElement } from '../../../types';
 import type { CanvasStore } from '../../canvasStore';
-import { translatePathDataUnified } from '../../../utils/transformationUtils';
+import { translatePathData } from '../../../utils/transformationUtils';
 
 export interface SelectionSlice {
   // State
@@ -96,7 +96,7 @@ export const createSelectionSlice: StateCreator<CanvasStore, [], [], SelectionSl
             const pathData = el.data as import('../../../types').PathData;
             return {
               ...el,
-              data: translatePathDataUnified(pathData, deltaX, deltaY, {
+              data: translatePathData(pathData, deltaX, deltaY, {
                 precision: precision,
                 roundToIntegers: precision === 0
               })

@@ -3,9 +3,6 @@
  * Centralizes geometric calculations and operations
  */
 
-// Re-export coordinate helpers
-export * from '../coordinateHelpers';
-
 // Re-export measurement utilities
 export { measurePath, measureSubpathBounds } from '../measurementUtils';
 

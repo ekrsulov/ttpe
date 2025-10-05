@@ -1,5 +1,6 @@
 import { transformManager, type TransformBounds } from '../utils/transformManager';
-import type { Point, PathData, CanvasElement, Command } from '../types';
+import { transformCommands, calculateScaledStrokeWidth } from '../utils/sharedTransformUtils';
+import type { Point, PathData, CanvasElement } from '../types';
 
 export interface TransformState {
   isTransforming: boolean;
@@ -227,8 +228,21 @@ export class TransformController {
         if (subpathIndex !== null && index !== subpathIndex) {
           return subPath;
         }
-        return subPath.map(command => this.transformCommand(command, transform, origin));
+        // Use shared transformation utility for consistency
+        return transformCommands(subPath, {
+          scaleX: transform.scaleX,
+          scaleY: transform.scaleY,
+          originX: origin.x,
+          originY: origin.y,
+          rotation: transform.rotation,
+          rotationCenterX: origin.x,
+          rotationCenterY: origin.y
+        });
       }),
+      // Update stroke width using shared utility
+      strokeWidth: subpathIndex === null 
+        ? calculateScaledStrokeWidth(originalData.strokeWidth, transform.scaleX, transform.scaleY)
+        : originalData.strokeWidth,
       // Update the transform property to reflect the current transformation
       transform: {
         scaleX: transform.scaleX,
@@ -243,66 +257,6 @@ export class TransformController {
       ...element,
       data: newData
     };
-  }
-
-  /**
-   * Transform a single path command
-   */
-  private transformCommand(
-    command: Command,
-    transform: { scaleX: number; scaleY: number; rotation: number; translateX: number; translateY: number },
-    origin: Point
-  ): Command {
-    const cos = Math.cos(transform.rotation * Math.PI / 180);
-    const sin = Math.sin(transform.rotation * Math.PI / 180);
-
-    const transformPoint = (point: Point): Point => {
-      // Translate to origin
-      const x = point.x - origin.x;
-      const y = point.y - origin.y;
-
-      // Apply scale and rotation
-      const scaledX = x * transform.scaleX;
-      const scaledY = y * transform.scaleY;
-
-      const rotatedX = scaledX * cos - scaledY * sin;
-      const rotatedY = scaledX * sin + scaledY * cos;
-
-      // Translate back and add translation
-      return {
-        x: rotatedX + origin.x + transform.translateX,
-        y: rotatedY + origin.y + transform.translateY
-      };
-    };
-
-    switch (command.type) {
-      case 'M':
-      case 'L':
-        return {
-          ...command,
-          position: transformPoint(command.position)
-        };
-
-      case 'C':
-        return {
-          ...command,
-          controlPoint1: {
-            ...command.controlPoint1,
-            ...transformPoint(command.controlPoint1)
-          },
-          controlPoint2: {
-            ...command.controlPoint2,
-            ...transformPoint(command.controlPoint2)
-          },
-          position: transformPoint(command.position)
-        };
-
-      case 'Z':
-        return command; // Close path doesn't have points to transform
-
-      default:
-        return command;
-    }
   }
 
   /**

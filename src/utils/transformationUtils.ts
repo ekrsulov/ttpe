@@ -60,27 +60,6 @@ export function translateCommands(
 }
 
 /**
- * @deprecated Use translateCommands(commands, deltaX, deltaY, { roundToIntegers: true }) instead
- * Translates commands and rounds all points to integers.
- */
-export function translateCommandsToIntegers(commands: Command[], deltaX: number, deltaY: number): Command[] {
-  return translateCommands(commands, deltaX, deltaY, { roundToIntegers: true });
-}
-
-/**
- * @deprecated Use translateCommands() directly - this alias is no longer needed
- * Translates commands by deltaX and deltaY with configurable formatting options.
- */
-export function translateCommandsUnified(
-  commands: Command[], 
-  deltaX: number, 
-  deltaY: number,
-  options: { roundToIntegers?: boolean; precision?: number } = {}
-): Command[] {
-  return translateCommands(commands, deltaX, deltaY, options);
-}
-
-/**
  * Translates PathData by deltaX and deltaY with configurable formatting options.
  * This is the main path translation function - use this for all path translation operations.
  * 
@@ -106,27 +85,6 @@ export function translatePathData(
     ...pathData,
     subPaths: translatedSubPaths
   };
-}
-
-/**
- * @deprecated Use translatePathData(pathData, deltaX, deltaY, { roundToIntegers: true }) instead
- * Translates PathData by deltaX and deltaY and rounds all points to integers.
- */
-export function translatePathDataToIntegers(pathData: PathData, deltaX: number, deltaY: number): PathData {
-  return translatePathData(pathData, deltaX, deltaY, { roundToIntegers: true });
-}
-
-/**
- * @deprecated Use translatePathData() directly - this alias is no longer needed
- * Translates PathData by deltaX and deltaY with configurable formatting options.
- */
-export function translatePathDataUnified(
-  pathData: PathData, 
-  deltaX: number, 
-  deltaY: number,
-  options: { roundToIntegers?: boolean; precision?: number } = {}
-): PathData {
-  return translatePathData(pathData, deltaX, deltaY, options);
 }
 
 /**
