@@ -6,6 +6,7 @@ import { useCanvasStore } from './store/canvasStore';
 import './App.css';
 import type { CSSProperties } from 'react';
 import { useState, useCallback, useMemo } from 'react';
+import type { CanvasElement } from './types';
 
 function App() {
   const activePlugin = useCanvasStore(state => state.activePlugin);
@@ -13,7 +14,7 @@ function App() {
   const selectedIds = useCanvasStore(state => state.selectedIds);
   const selectedPaths = useMemo(() => {
     const elements = useCanvasStore.getState().elements;
-    return elements.filter((el: any) => selectedIds.includes(el.id) && el.type === 'path');
+    return elements.filter((el: CanvasElement) => selectedIds.includes(el.id) && el.type === 'path');
   }, [selectedIds]);
   
   // Track sidebar width when pinned (0 when not pinned)
