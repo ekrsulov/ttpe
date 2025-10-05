@@ -11,7 +11,7 @@ test.describe('Text Functionality', () => {
     await page.waitForTimeout(200); // Slow down
 
     // Verify text panel is visible
-    await expect(page.locator('text=Text')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Text' })).toBeVisible();
 
     // Get SVG canvas element
     const canvas = getCanvas(page);
@@ -21,20 +21,30 @@ test.describe('Text Functionality', () => {
     // Count initial elements
     const initialPaths = await canvas.locator('path').count();
 
-    // Set font properties before adding text
-    const fontSizeInput = page.locator('input[type="number"][min="4"]');
+    // Enter text first, then modify font properties
+    const initialTextInput = page.locator('input[placeholder="Enter text"]');
+    await expect(initialTextInput).toBeVisible();
+    await page.waitForTimeout(150); // Slow down
+    await initialTextInput.fill('Hello World Text');
+
+    // Now set font properties after entering text
+    // Wait a bit for the panel to fully load
+    await page.waitForTimeout(500);
+    
+    // Try to find the font size input - it might be within a NumberInput component
+    const fontSizeInput = page.locator('[role="spinbutton"]').first();
     await fontSizeInput.clear();
     await fontSizeInput.fill('96');
     await expect(fontSizeInput).toHaveValue('96');
 
     // Make text bold
-    const boldButton = page.locator('[title="Bold"]');
+    const boldButton = page.locator('[aria-label="Bold"]');
     await expect(boldButton).toBeVisible();
     await page.waitForTimeout(150); // Slow down
     await boldButton.click();
 
     // Make text italic
-    const italicButton = page.locator('[title="Italic"]');
+    const italicButton = page.locator('[aria-label="Italic"]');
     await expect(italicButton).toBeVisible();
     await page.waitForTimeout(150); // Slow down
     await italicButton.click();
