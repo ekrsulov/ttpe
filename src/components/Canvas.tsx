@@ -465,11 +465,16 @@ export const Canvas: React.FC = () => {
     const svgElement = svgRef.current;
     if (!svgElement || activePlugin !== 'pencil') return;
 
+    // Cleanup any orphaned temp paths from previous sessions
+    const orphanedTempPaths = svgElement.querySelectorAll('[data-temp-path="true"]');
+    orphanedTempPaths.forEach(path => path.remove());
+
     let isDrawing = false;
     let tempPath: SVGPathElement | null = null;
     let allPoints: Point[] = [];
 
     const nativePointerDown = (e: PointerEvent) => {
+      e.stopPropagation(); // Prevent React's handler from receiving this
       const point = screenToCanvas(e.clientX, e.clientY);
       isDrawing = true;
       allPoints = [point];
@@ -486,12 +491,15 @@ export const Canvas: React.FC = () => {
       tempPath.setAttribute('stroke-linecap', 'round');
       tempPath.setAttribute('stroke-linejoin', 'round');
       tempPath.setAttribute('d', `M ${point.x} ${point.y}`);
+      tempPath.setAttribute('data-temp-path', 'true'); // Mark as temporary
+      tempPath.style.pointerEvents = 'none'; // Prevent interaction
       
       svgElement.appendChild(tempPath);
     };
 
     const nativePointerMove = (e: PointerEvent) => {
       if (!isDrawing || !tempPath) return;
+      e.stopPropagation(); // Prevent React's handler from receiving this
 
       const point = screenToCanvas(e.clientX, e.clientY);
       allPoints.push(point);
@@ -504,35 +512,40 @@ export const Canvas: React.FC = () => {
       tempPath.setAttribute('d', pathD);
     };
 
-    const nativePointerUp = () => {
+    const nativePointerUp = (e: PointerEvent) => {
+      e.stopPropagation(); // Prevent React's handler from receiving this
       if (!isDrawing) return;
       isDrawing = false;
 
-      // Remove temporary path
-      if (tempPath) {
-        tempPath.remove();
+      // Store points before clearing
+      const pointsToAdd = [...allPoints];
+      
+      // Clear state immediately
+      allPoints = [];
+
+      // Remove temporary path from DOM immediately
+      if (tempPath && tempPath.parentNode) {
+        tempPath.parentNode.removeChild(tempPath);
         tempPath = null;
       }
 
-      // Add all points to store in ONE update
-      if (allPoints.length > 0) {
+      // Add all points to store
+      if (pointsToAdd.length > 0) {
         const state = useCanvasStore.getState();
-        state.startPath(allPoints[0]);
+        state.startPath(pointsToAdd[0]);
         
         // Add remaining points (skip first one as it's used in startPath)
-        for (let i = 1; i < allPoints.length; i++) {
-          state.addPointToPath(allPoints[i]);
+        for (let i = 1; i < pointsToAdd.length; i++) {
+          state.addPointToPath(pointsToAdd[i]);
         }
       }
-
-      allPoints = [];
     };
 
-    // Add native event listeners with passive: true for better performance
-    svgElement.addEventListener('pointerdown', nativePointerDown, { passive: true });
-    svgElement.addEventListener('pointermove', nativePointerMove, { passive: true });
-    svgElement.addEventListener('pointerup', nativePointerUp, { passive: true });
-    svgElement.addEventListener('pointercancel', nativePointerUp, { passive: true });
+    // Add native event listeners (NOT passive so we can stopPropagation)
+    svgElement.addEventListener('pointerdown', nativePointerDown);
+    svgElement.addEventListener('pointermove', nativePointerMove);
+    svgElement.addEventListener('pointerup', nativePointerUp);
+    svgElement.addEventListener('pointercancel', nativePointerUp);
 
     return () => {
       svgElement.removeEventListener('pointerdown', nativePointerDown);
@@ -541,9 +554,13 @@ export const Canvas: React.FC = () => {
       svgElement.removeEventListener('pointercancel', nativePointerUp);
       
       // Cleanup temp path if it exists
-      if (tempPath) {
-        tempPath.remove();
+      if (tempPath && tempPath.parentNode) {
+        tempPath.parentNode.removeChild(tempPath);
       }
+      
+      // Also cleanup any orphaned temp paths
+      const tempPaths = svgElement.querySelectorAll('[data-temp-path="true"]');
+      tempPaths.forEach(path => path.remove());
     };
   }, [activePlugin, screenToCanvas]);
 

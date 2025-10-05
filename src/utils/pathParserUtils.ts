@@ -812,11 +812,23 @@ export function extractSubpaths(commands: Command[]): { commands: SubPath; d: st
 
 export function commandsToString(commands: Command[]): string {
   const result = commands.map(cmd => {
+    if (!cmd) return ''; // Guard against undefined/null commands
     if (cmd.type === 'Z') return 'Z';
     if (cmd.type === 'M' || cmd.type === 'L') {
+      // Validate that position exists
+      if (!cmd.position || typeof cmd.position.x !== 'number' || typeof cmd.position.y !== 'number') {
+        return '';
+      }
       return `${cmd.type} ${formatToPrecision(cmd.position.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cmd.position.y, PATH_DECIMAL_PRECISION)}`;
     }
     if (cmd.type === 'C') {
+      // Validate that all required properties exist
+      if (!cmd.controlPoint1 || !cmd.controlPoint2 || !cmd.position ||
+          typeof cmd.controlPoint1.x !== 'number' || typeof cmd.controlPoint1.y !== 'number' ||
+          typeof cmd.controlPoint2.x !== 'number' || typeof cmd.controlPoint2.y !== 'number' ||
+          typeof cmd.position.x !== 'number' || typeof cmd.position.y !== 'number') {
+        return '';
+      }
       return `${cmd.type} ${formatToPrecision(cmd.controlPoint1.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cmd.controlPoint1.y, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cmd.controlPoint2.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cmd.controlPoint2.y, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cmd.position.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cmd.position.y, PATH_DECIMAL_PRECISION)}`;
     }
     return '';
