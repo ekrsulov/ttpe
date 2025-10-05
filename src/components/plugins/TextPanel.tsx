@@ -6,6 +6,9 @@ import {
   IconButton as ChakraIconButton,
   NumberInput,
   NumberInputField,
+  NumberInputStepper,
+  NumberIncrementStepper,
+  NumberDecrementStepper,
 } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Type, Bold, Italic } from 'lucide-react';
@@ -115,7 +118,7 @@ export const TextPanel: React.FC = () => {
             onChange={(_, valueNumber) => handleFontSizeChange(valueNumber || 12)}
             min={4}
             size="sm"
-            width="60px"
+            width="100px"
           >
             <NumberInputField
               onKeyDown={(e) => {
@@ -124,6 +127,10 @@ export const TextPanel: React.FC = () => {
                 }
               }}
             />
+            <NumberInputStepper>
+              <NumberIncrementStepper />
+              <NumberDecrementStepper />
+            </NumberInputStepper>
           </NumberInput>
           
           <ChakraIconButton
@@ -135,6 +142,8 @@ export const TextPanel: React.FC = () => {
             size="sm"
             variant={getCurrentFontWeight() === 'bold' ? 'solid' : 'ghost'}
             bg={getCurrentFontWeight() === 'bold' ? '#007bff' : 'transparent'}
+            border="1px"
+            borderColor="gray.200"
           />
           
           <ChakraIconButton
@@ -146,6 +155,8 @@ export const TextPanel: React.FC = () => {
             size="sm"
             variant={getCurrentFontStyle() === 'italic' ? 'solid' : 'ghost'}
             bg={getCurrentFontStyle() === 'italic' ? '#007bff' : 'transparent'}
+            border="1px"
+            borderColor="gray.200"
           />
         </HStack>
       </VStack>
