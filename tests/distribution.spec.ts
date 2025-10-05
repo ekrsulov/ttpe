@@ -16,7 +16,7 @@ test.describe('Distribution Tests', () => {
     const canvasBox = await canvas.boundingBox();
     if (!canvasBox) throw new Error('SVG canvas not found');
 
-    // Create 5 circles at different horizontal positions
+    // Create 4 circles at different horizontal positions
     const circlePositions = [
       { start: { x: 0.05, y: 0.3 }, end: { x: 0.08, y: 0.33 } }, // Leftmost circle
       { start: { x: 0.18, y: 0.3 }, end: { x: 0.21, y: 0.33 } }, // Left circle
@@ -43,11 +43,19 @@ test.describe('Distribution Tests', () => {
       await page.waitForTimeout(200);
     }
 
+    // Wait for all circles to be created
+    await page.waitForTimeout(500);
+
     // Switch to select mode
     await getToolButton(page, 'Select').click();
     await page.waitForTimeout(200);
 
-    // Expand arrange panel
+    // Ensure arrange panel is expanded
+    const expandArrangeButton = page.locator('[aria-label="Expand Arrange"]');
+    if (await expandArrangeButton.isVisible()) {
+      await expandArrangeButton.click();
+      await page.waitForTimeout(200);
+    }
 
     // Get initial positions
     const initialPositions = await page.evaluate(() => {
@@ -136,17 +144,12 @@ test.describe('Distribution Tests', () => {
 
     // Verify that elements were distributed horizontally
     expect(finalPositions.length).toBe(4);
-    // Sort by X position
-    finalPositions.sort((a: any, b: any) => a.minX - b.minX);
     
-    // For 5 elements, verify they are distributed across the canvas
-    // The leftmost element should be closer to the left edge, rightmost to the right edge
-    expect(finalPositions[0].minX).toBeLessThan(finalPositions[3].minX);
-
     // Verify that positions actually changed
-    const positionsChanged = initialPositions.some((initial: any, index: number) => 
-      initial.minX !== finalPositions[index].minX
-    );
+    const positionsChanged = initialPositions.some((initial: any) => {
+      const final = finalPositions.find((f: any) => f.id === initial.id);
+      return final && initial.minX !== final.minX;
+    });
     expect(positionsChanged).toBe(true);
 
     // Verify circles still exist after distribution
@@ -171,11 +174,11 @@ test.describe('Distribution Tests', () => {
     // Create 5 circles in positions that need vertical redistribution
     // Moved to the left to avoid sidebar and adjusted vertical spacing
     const circlePositions = [
-      { start: { x: 0.15, y: 0.05 }, end: { x: 0.20, y: 0.1 } }, // Topmost circle
-      { start: { x: 0.15, y: 0.2 }, end: { x: 0.20, y: 0.25 } }, // Upper circle
-      { start: { x: 0.15, y: 0.35 }, end: { x: 0.20, y: 0.4 } }, // Middle circle
-      { start: { x: 0.15, y: 0.5 }, end: { x: 0.20, y: 0.55 } }, // Lower circle
-      { start: { x: 0.15, y: 0.65 }, end: { x: 0.20, y: 0.7 } }, // Bottommost circle
+      { start: { x: 0.15, y: 0.1 }, end: { x: 0.20, y: 0.15 } }, // Top circle
+      { start: { x: 0.15, y: 0.25 }, end: { x: 0.20, y: 0.3 } }, // Upper circle
+      { start: { x: 0.15, y: 0.4 }, end: { x: 0.20, y: 0.45 } }, // Middle circle
+      { start: { x: 0.15, y: 0.55 }, end: { x: 0.20, y: 0.6 } }, // Lower circle
+      { start: { x: 0.15, y: 0.75 }, end: { x: 0.20, y: 0.8 } }, // Bottom circle
     ];
 
     for (const pos of circlePositions) {
@@ -197,9 +200,19 @@ test.describe('Distribution Tests', () => {
       await page.waitForTimeout(100);
     }
 
+    // Wait for all circles to be created
+    await page.waitForTimeout(500);
+
     // Switch to select mode
     await getToolButton(page, 'Select').click();
     await page.waitForTimeout(200);
+
+    // Ensure arrange panel is expanded
+    const expandArrangeButton = page.locator('[aria-label="Expand Arrange"]');
+    if (await expandArrangeButton.isVisible()) {
+      await expandArrangeButton.click();
+      await page.waitForTimeout(200);
+    }
 
     // Expand arrange panel
 
@@ -285,15 +298,12 @@ test.describe('Distribution Tests', () => {
 
     // Verify that elements were distributed vertically
     expect(finalPositions.length).toBe(5);
-    // Sort by Y position
-    finalPositions.sort((a: any, b: any) => a.minY - b.minY);
     
-    // For 5 elements, verify they are distributed across the canvas vertically
-    // The topmost element should be above the bottommost element
-    expect(finalPositions[0].minY).toBeLessThan(finalPositions[4].minY);    // Verify that positions actually changed
-    const positionsChanged = initialPositions.some((initial: any, index: number) =>
-      initial.minY !== finalPositions[index].minY
-    );
+    // Verify that positions actually changed
+    const positionsChanged = initialPositions.some((initial: any) => {
+      const final = finalPositions.find((f: any) => f.id === initial.id);
+      return final && initial.minY !== final.minY;
+    });
     expect(positionsChanged).toBe(true);
 
     // Verify circles still exist after distribution

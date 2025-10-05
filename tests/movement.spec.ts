@@ -24,15 +24,27 @@ test.describe('Path Movement Tests', () => {
     await page.mouse.down();
 
     await page.mouse.move(
+      canvasBox.x + canvasBox.width * 0.3,
+      canvasBox.y + canvasBox.height * 0.5,
+      { steps: 10 }
+    );
+
+    await page.mouse.move(
       canvasBox.x + canvasBox.width * 0.4,
       canvasBox.y + canvasBox.height * 0.5,
-      { steps: 5 }
+      { steps: 10 }
+    );
+
+    await page.mouse.move(
+      canvasBox.x + canvasBox.width * 0.4,
+      canvasBox.y + canvasBox.height * 0.6,
+      { steps: 10 }
     );
 
     await page.mouse.move(
       canvasBox.x + canvasBox.width * 0.4,
       canvasBox.y + canvasBox.height * 0.7,
-      { steps: 5 }
+      { steps: 10 }
     );
 
     await page.mouse.up();
@@ -43,6 +55,19 @@ test.describe('Path Movement Tests', () => {
     // Verify path was created
     const pathsAfterCreation = await canvas.locator('path').count();
     expect(pathsAfterCreation).toBeGreaterThan(initialPaths);
+
+    // Get initial path data from store
+    const initialPathData = await page.evaluate(() => {
+      const store = (window as any).useCanvasStore;
+      if (store) {
+        const state = store.getState();
+        const pathElement = state.elements.find((el: any) => el.type === 'path');
+        return pathElement ? pathElement.data : null;
+      }
+      return null;
+    });
+    expect(initialPathData).toBeTruthy();
+    expect(initialPathData.subPaths[0].length).toBeGreaterThan(1); // Should have more than just M command
 
     // Switch to select mode
     await getToolButton(page, 'Select').click();
@@ -73,6 +98,13 @@ test.describe('Path Movement Tests', () => {
 
     // Wait for movement to complete
     await page.waitForTimeout(100);
+
+    // Get final path data
+    const finalPathData = await canvas.locator('path').first().getAttribute('d');
+    
+    // Verify the path has moved (d attribute should be different)
+    expect(finalPathData).not.toBe(initialPathData);
+    expect(finalPathData).not.toBe('M 256 360'); // Should not be reduced to a single point
 
     // Verify the path has moved (transform attribute should be different or path position changed)
     const finalPath = canvas.locator('path').first();
@@ -207,21 +239,46 @@ test.describe('Path Movement Tests', () => {
     await page.mouse.down();
 
     await page.mouse.move(
+      canvasBox.x + canvasBox.width * 0.3,
+      canvasBox.y + canvasBox.height * 0.5,
+      { steps: 10 }
+    );
+
+    await page.mouse.move(
       canvasBox.x + canvasBox.width * 0.4,
       canvasBox.y + canvasBox.height * 0.5,
-      { steps: 5 }
+      { steps: 10 }
+    );
+
+    await page.mouse.move(
+      canvasBox.x + canvasBox.width * 0.4,
+      canvasBox.y + canvasBox.height * 0.6,
+      { steps: 10 }
     );
 
     await page.mouse.move(
       canvasBox.x + canvasBox.width * 0.4,
       canvasBox.y + canvasBox.height * 0.7,
-      { steps: 5 }
+      { steps: 10 }
     );
 
     await page.mouse.up();
 
     // Wait for path creation
     await page.waitForTimeout(100);
+
+    // Get initial path data from store
+    const initialPathData = await page.evaluate(() => {
+      const store = (window as any).useCanvasStore;
+      if (store) {
+        const state = store.getState();
+        const pathElement = state.elements.find((el: any) => el.type === 'path');
+        return pathElement ? pathElement.data : null;
+      }
+      return null;
+    });
+    expect(initialPathData).toBeTruthy();
+    expect(initialPathData.subPaths[0].length).toBeGreaterThan(1); // Should have more than just M command
 
     // Switch to select mode first to select the path
     await getToolButton(page, 'Select').click();
@@ -285,6 +342,13 @@ test.describe('Path Movement Tests', () => {
 
     // Wait for movement
     await page.waitForTimeout(100);
+
+    // Get final path data
+    const finalPathData = await canvas.locator('path').first().getAttribute('d');
+    
+    // Verify the path has changed (d attribute should be different)
+    expect(finalPathData).not.toBe(initialPathData);
+    expect(finalPathData).not.toBe('M 256 360'); // Should not be reduced to a single point
 
     // Verify the path still exists and is visible
     const finalPath = canvas.locator('path').first();

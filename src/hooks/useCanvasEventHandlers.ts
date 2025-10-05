@@ -270,6 +270,12 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       return;
     }
 
+    // Handle pencil drawing
+    if (activePlugin === 'pencil' && e.buttons === 1) {
+      useCanvasStore.getState().addPointToPath(point);
+      return;
+    }
+
     // Check for potential element dragging (when we have dragStart but may not be isDragging yet)
     if (dragStart && !transformStateIsTransforming && !isSelecting && !isCreatingShape) {
       const deltaX = point.x - dragStart.x;

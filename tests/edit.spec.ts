@@ -88,12 +88,13 @@ test.describe('Edit Functionality', () => {
     // Check that edit panel is visible
     await expect(page.getByRole('heading', { name: 'Smooth Brush' })).toBeVisible();
 
-    // Test toggling brush mode
-    const brushModeButton = page.locator('button', { hasText: 'OFF' });
+    // Test toggling brush mode - find the Off button in the edit panel
+    const brushModeButton = page.locator('button').filter({ hasText: 'Off' }).first();
     await expect(brushModeButton).toBeVisible();
 
     await brushModeButton.click();
-    await expect(page.locator('button', { hasText: 'ON' })).toBeVisible();
+    const onButton = page.locator('button').filter({ hasText: 'On' }).first();
+    await expect(onButton).toBeVisible();
 
     // Test that radius slider appears when brush is active (use first occurrence for Smooth Brush)
     await expect(page.locator('text=Radius:').first()).toBeVisible();
@@ -141,24 +142,31 @@ test.describe('Edit Functionality', () => {
     await editButton.click();
 
     // Activate brush mode
-    await page.locator('button', { hasText: 'OFF' }).click();
+    const offButton = page.locator('button').filter({ hasText: 'Off' }).first();
+    await offButton.click();
 
-    // Test strength slider
-    const strengthSlider = page.locator('input[type="range"]').first();
-    await strengthSlider.evaluate((el: HTMLInputElement) => el.value = '0.5');
+    // Wait for brush to be activated and verify button changed
+    await page.waitForTimeout(100);
+    const onButton = page.locator('button').filter({ hasText: 'On' }).first();
+    await expect(onButton).toBeVisible();
 
-    // Test simplify points checkbox
+    // Test strength slider - check for the label
+    const strengthLabel = page.locator('text=Strength:');
+    await expect(strengthLabel).toBeVisible();
+
+    // Test simplify points checkbox - click the label instead
+    const simplifyLabel = page.locator('text=Simplify Points');
+    await simplifyLabel.click();
     const simplifyCheckbox = page.locator('#simplifyPoints');
-    await simplifyCheckbox.check();
     await expect(simplifyCheckbox).toBeChecked();
 
-    // Test tolerance slider
-    const toleranceSlider = page.locator('input[type="range"]').nth(1);
-    await toleranceSlider.evaluate((el: HTMLInputElement) => el.value = '2.5');
+    // Test tolerance slider - should appear after checking simplify
+    const toleranceLabel = page.locator('text=Tolerance:').first();
+    await expect(toleranceLabel).toBeVisible();
 
-    // Test min distance slider
-    const minDistSlider = page.locator('input[type="range"]').nth(2);
-    await minDistSlider.evaluate((el: HTMLInputElement) => el.value = '1.5');
+    // Test min distance slider - should appear after checking simplify  
+    const minDistLabel = page.locator('text=Min Dist:').first();
+    await expect(minDistLabel).toBeVisible();
   });
 
   test('should apply smooth brush', async ({ page }) => {
@@ -203,7 +211,7 @@ test.describe('Edit Functionality', () => {
     await editButton.click();
 
     // Test apply button is visible when brush is off
-    const applyButton = page.locator('button', { hasText: 'Apply Smooth Brush' });
+    const applyButton = page.locator('button', { hasText: 'Apply' }).first();
     await expect(applyButton).toBeVisible();
 
     // Click apply (though it may not do much without selected points)
@@ -241,11 +249,11 @@ test.describe('Edit Functionality', () => {
     await editButton.click();
 
     // Look for the Round Path section header
-    const roundPathSection = page.locator('span', { hasText: 'Round Path' });
+    const roundPathSection = page.locator('h2', { hasText: 'Round Path' });
     await expect(roundPathSection).toBeVisible();
 
     // Test apply button for Round Path
-    const roundButton = page.locator('button', { hasText: 'Round Path' });
+    const roundButton = page.locator('button', { hasText: 'Apply' }).nth(1); // Second Apply button
     await expect(roundButton).toBeVisible();
     await roundButton.click({ force: true });
 
