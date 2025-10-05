@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
 import { TransformController, type TransformState, type TransformFeedback } from '../canvasInteractions/TransformController';
 import { measurePath, measureSubpathBounds } from '../utils/geometry';
@@ -16,6 +16,12 @@ export const useCanvasTransformControls = () => {
     originalElementData: null
   });
 
+  // Use ref to avoid recreating callbacks when transformState changes
+  const transformStateRef = useRef(transformState);
+  useEffect(() => {
+    transformStateRef.current = transformState;
+  }, [transformState]);
+
   const [feedback, setFeedback] = useState<TransformFeedback>({
     rotation: { degrees: 0, visible: false, isShiftPressed: false, isMultipleOf15: false },
     resize: { deltaX: 0, deltaY: 0, visible: false, isShiftPressed: false, isMultipleOf10: false },
@@ -23,10 +29,10 @@ export const useCanvasTransformControls = () => {
     pointPosition: { x: 0, y: 0, visible: false }
   });
 
-  const { elements, updateElement } = useCanvasStore();
   const transformController = useMemo(() => new TransformController(), []);
 
   const startTransformation = useCallback((elementId: string, handler: string, point: Point) => {
+    const { elements } = useCanvasStore.getState();
     // Handle subpath transformations
     let realElementId = elementId;
 
@@ -62,19 +68,21 @@ export const useCanvasTransformControls = () => {
       const newState = transformController.initializeTransform(element, elementId, handler, point, bounds);
       setTransformState(prev => ({ ...prev, ...newState }));
     }
-  }, [elements, transformController]);
+  }, [transformController]);
 
   const updateTransformation = useCallback((point: Point, isShiftPressed: boolean) => {
-    if (!transformState.isTransforming) return;
+    const currentState = transformStateRef.current;
+    if (!currentState.isTransforming) return;
 
-    const result = transformController.calculateTransformUpdate(point, transformState, elements, isShiftPressed);
+    const { elements, updateElement } = useCanvasStore.getState();
+    const result = transformController.calculateTransformUpdate(point, currentState, elements, isShiftPressed);
 
     if (result.updatedElement) {
       updateElement(result.updatedElement.id, result.updatedElement);
     }
 
     setFeedback(result.feedback);
-  }, [transformState, elements, transformController, updateElement]);
+  }, [transformController]);
 
   const endTransformation = useCallback(() => {
     const resetState = transformController.resetTransform();

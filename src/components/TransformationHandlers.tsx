@@ -39,6 +39,9 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
   const triangleSize = handlerSize;
   const lineSeparation = 5 / viewport.zoom;
   const overlaySize = 20 / viewport.zoom;
+  const cornerOverlaySize = 24 / viewport.zoom; // Larger overlay for corners
+  const rotationOverlaySize = 20 / viewport.zoom; // Larger overlay for rotation
+  const rotationOffset = 18 / viewport.zoom; // Distance from corner to rotation handler
   const lineThickness = 1;
   const circleSize = handlerSize * 0.75;
 
@@ -75,10 +78,10 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
       />
       {/* Top-left corner overlay */}
       <rect
-        x={bounds.minX}
-        y={bounds.minY}
-        width={triangleSize}
-        height={triangleSize}
+        x={bounds.minX - (cornerOverlaySize - triangleSize) / 2}
+        y={bounds.minY - (cornerOverlaySize - triangleSize) / 2}
+        width={cornerOverlaySize}
+        height={cornerOverlaySize}
         fill="transparent"
         opacity="0.1"
         style={{ cursor: 'nw-resize' }}
@@ -116,10 +119,10 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
       />
       {/* Top-right corner overlay */}
       <rect
-        x={bounds.maxX - triangleSize}
-        y={bounds.minY}
-        width={triangleSize}
-        height={triangleSize}
+        x={bounds.maxX - cornerOverlaySize + (cornerOverlaySize - triangleSize) / 2}
+        y={bounds.minY - (cornerOverlaySize - triangleSize) / 2}
+        width={cornerOverlaySize}
+        height={cornerOverlaySize}
         fill="transparent"
         opacity="0.1"
         style={{ cursor: 'ne-resize' }}
@@ -157,10 +160,10 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
       />
       {/* Bottom-left corner overlay */}
       <rect
-        x={bounds.minX}
-        y={bounds.maxY - triangleSize}
-        width={triangleSize}
-        height={triangleSize}
+        x={bounds.minX - (cornerOverlaySize - triangleSize) / 2}
+        y={bounds.maxY - cornerOverlaySize + (cornerOverlaySize - triangleSize) / 2}
+        width={cornerOverlaySize}
+        height={cornerOverlaySize}
         fill="transparent"
         opacity="0.1"
         style={{ cursor: 'sw-resize' }}
@@ -198,10 +201,10 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
       />
       {/* Bottom-right corner overlay */}
       <rect
-        x={bounds.maxX - triangleSize}
-        y={bounds.maxY - triangleSize}
-        width={triangleSize}
-        height={triangleSize}
+        x={bounds.maxX - cornerOverlaySize + (cornerOverlaySize - triangleSize) / 2}
+        y={bounds.maxY - cornerOverlaySize + (cornerOverlaySize - triangleSize) / 2}
+        width={cornerOverlaySize}
+        height={cornerOverlaySize}
         fill="transparent"
         opacity="0.1"
         style={{ cursor: 'se-resize' }}
@@ -211,8 +214,8 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
 
       {/* Rotation handlers */}
       <circle
-        cx={bounds.maxX + circleSize}
-        cy={bounds.minY - circleSize}
+        cx={bounds.maxX + rotationOffset}
+        cy={bounds.minY - rotationOffset}
         r={circleSize / 2}
         fill={selectionColor}
         fillOpacity={triangleOpacity}
@@ -220,8 +223,18 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
         stroke={selectionColor}
         style={{ cursor: 'alias' }}
         strokeWidth={lineThickness}
-        onPointerDown={(e) => onPointerDown(e, generateTargetId(), 'rotate-tr')}
+        pointerEvents="none"
         vectorEffect="non-scaling-stroke"
+      />
+      {/* Rotation handler overlay */}
+      <circle
+        cx={bounds.maxX + rotationOffset}
+        cy={bounds.minY - rotationOffset}
+        r={rotationOverlaySize / 2}
+        fill="transparent"
+        opacity="0.1"
+        style={{ cursor: 'alias' }}
+        onPointerDown={(e) => onPointerDown(e, generateTargetId(), 'rotate-tr')}
         onPointerUp={onPointerUp}
       />
 

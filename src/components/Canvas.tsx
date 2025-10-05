@@ -166,8 +166,9 @@ export const Canvas: React.FC = () => {
 
   // Transform screen coordinates to canvas coordinates
   const screenToCanvas = useCallback((screenX: number, screenY: number): Point => {
-    return mapPointerToCanvas(svgRef.current, viewport, screenX, screenY);
-  }, [viewport]);
+    const currentViewport = useCanvasStore.getState().viewport;
+    return mapPointerToCanvas(svgRef.current, currentViewport, screenX, screenY);
+  }, []);
 
   // Helper function to get element bounds considering current transform
   const getElementBounds = (element: typeof elements[0]) => {
@@ -178,7 +179,7 @@ export const Canvas: React.FC = () => {
     return null;
   };
 
-  const eventHandlerDeps = {
+  const eventHandlerDeps = useMemo(() => ({
     svgRef,
     screenToCanvas,
     isSpacePressed,
@@ -213,7 +214,42 @@ export const Canvas: React.FC = () => {
     updateShapeCreation,
     endShapeCreation,
     setMode,
-  };
+  }), [
+    svgRef,
+    screenToCanvas,
+    isSpacePressed,
+    activePlugin,
+    isSelecting,
+    selectionStart,
+    isDragging,
+    dragStart,
+    hasDragMoved,
+    isCreatingShape,
+    shapeStart,
+    transformState.isTransforming,
+    updateTransformation,
+    applyBrush,
+    updateCursorPosition,
+    beginSelectionRectangle,
+    startShapeCreation,
+    isSmoothBrushActive,
+    setIsDragging,
+    setDragStart,
+    setHasDragMoved,
+    moveSelectedElements,
+    moveSelectedSubpaths,
+    isWorkingWithSubpaths,
+    selectedSubpaths,
+    selectedIds,
+    selectElement,
+    startTransformation,
+    endTransformation,
+    completeSelectionRectangle,
+    updateSelectionRectangle,
+    updateShapeCreation,
+    endShapeCreation,
+    setMode,
+  ]);
 
   const {
     handleElementClick,

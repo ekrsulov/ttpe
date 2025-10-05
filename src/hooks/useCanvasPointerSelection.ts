@@ -11,8 +11,6 @@ export const useCanvasPointerSelection = (isShiftPressed: boolean = false) => {
 
   const {
     activePlugin,
-    elements,
-    viewport,
     clearSelectedCommands,
     clearSubpathSelection
   } = useCanvasStore();
@@ -86,6 +84,9 @@ export const useCanvasPointerSelection = (isShiftPressed: boolean = false) => {
   const completeSelectionRectangle = useCallback(() => {
     if (!isSelecting || !selectionStart || !selectionEnd || !activePlugin) return;
 
+    // Get current state
+    const { elements, viewport } = useCanvasStore.getState();
+
     // Handle selection using the controller
     selectionController.completeSelection(selectionStart, selectionEnd, activePlugin, elements, viewport.zoom, isShiftPressed);
 
@@ -95,7 +96,7 @@ export const useCanvasPointerSelection = (isShiftPressed: boolean = false) => {
     setSelectionEnd(null);
     setJustSelected(true);
     setTimeout(() => setJustSelected(false), 100);
-  }, [isSelecting, selectionStart, selectionEnd, activePlugin, elements, viewport.zoom, isShiftPressed, selectionController]);
+  }, [isSelecting, selectionStart, selectionEnd, activePlugin, isShiftPressed, selectionController]);
 
   return {
     isSelecting,
