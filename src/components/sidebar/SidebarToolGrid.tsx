@@ -1,7 +1,6 @@
 import React from 'react';
 import { Box, SimpleGrid, IconButton as ChakraIconButton, Tooltip } from '@chakra-ui/react';
 import {
-  Hand,
   File,
   Settings,
   Pin,
@@ -51,7 +50,6 @@ export const SidebarToolGrid: React.FC<SidebarToolGridProps> = ({
   const pluginRows: ToolConfig[][] = [
     [
       { name: 'file', label: 'File', icon: File },
-      { name: 'pan', label: 'Pan', icon: Hand },
       { name: 'settings', label: 'Settings', icon: Settings },
     ],
   ];
@@ -116,7 +114,7 @@ export const SidebarToolGrid: React.FC<SidebarToolGridProps> = ({
       {pluginRows.map((row, rowIndex) => (
         <SimpleGrid
           key={rowIndex}
-          columns={isDesktop ? 4 : 3} // 4 columns on desktop (includes pin), 3 on mobile
+          columns={isDesktop ? 3 : 2} // 3 columns on desktop (file, settings, pin), 2 on mobile (file, settings)
           spacing={1}
           mb={rowIndex === 0 ? 1 : (rowIndex < pluginRows.length - 1 ? 1 : 0)}
         >

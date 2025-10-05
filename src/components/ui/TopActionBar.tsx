@@ -8,10 +8,11 @@ import {
   Route,
   SquareDashedMousePointer,
   MousePointerClick,
-  Menu
+  Menu,
+  Hand
 } from 'lucide-react';
 
-type ToolMode = 'select' | 'pencil' | 'text' | 'shape' | 'subpath' | 'transformation' | 'edit';
+type ToolMode = 'select' | 'pencil' | 'text' | 'shape' | 'subpath' | 'transformation' | 'edit' | 'pan';
 
 interface TopActionBarProps {
   activeMode: string | null;
@@ -24,6 +25,7 @@ interface TopActionBarProps {
 
 const actionTools: Array<{ mode: ToolMode; icon: React.ComponentType<{ size?: number }>; label: string }> = [
   { mode: 'select', icon: MousePointer, label: 'Select' },
+  { mode: 'pan', icon: Hand, label: 'Pan' },
   { mode: 'pencil', icon: Pen, label: 'Pencil' },
   { mode: 'text', icon: Type, label: 'Text' },
   { mode: 'shape', icon: Shapes, label: 'Shape' },
