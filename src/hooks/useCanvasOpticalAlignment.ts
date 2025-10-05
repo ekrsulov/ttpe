@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
 import { OpticalAlignmentController } from '../canvasInteractions/OpticalAlignmentController';
 import type { AlignmentResult } from '../utils/geometry';
@@ -46,8 +46,7 @@ export const useCanvasOpticalAlignment = (): UseCanvasOpticalAlignmentReturn => 
     toggleMetrics: storeToggleMetrics,
     toggleDistanceRules: storeToggleDistanceRules,
     canPerformOpticalAlignment: storeCanPerformOpticalAlignment,
-    getAlignmentValidationMessage: storeGetAlignmentValidationMessage,
-    autoResetOnSelectionChange
+    getAlignmentValidationMessage: storeGetAlignmentValidationMessage
   } = useCanvasStore();
 
   const controller = useMemo(() => new OpticalAlignmentController({
@@ -83,11 +82,6 @@ export const useCanvasOpticalAlignment = (): UseCanvasOpticalAlignmentReturn => 
     showMetrics,
     showDistanceRules,
   ]);
-
-  // Auto-reset alignment when selection changes
-  useEffect(() => {
-    autoResetOnSelectionChange();
-  }, [autoResetOnSelectionChange]);
 
   const calculateAlignment = useCallback(() => {
     controller.calculate();

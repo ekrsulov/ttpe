@@ -11,31 +11,10 @@ export class PluginManager {
   }
 
   /**
-   * Register a new tool
-   */
-  registerTool(name: string, config: ToolConfig): void {
-    this.registry[name] = config;
-  }
-
-  /**
-   * Unregister a tool
-   */
-  unregisterTool(name: string): void {
-    delete this.registry[name];
-  }
-
-  /**
    * Get tool config
    */
   getTool(name: string): ToolConfig | undefined {
     return this.registry[name];
-  }
-
-  /**
-   * Get all registered tools
-   */
-  getAllTools(): ToolRegistry {
-    return { ...this.registry };
   }
 
   /**

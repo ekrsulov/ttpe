@@ -205,21 +205,21 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
     
     // Auto-reset optical alignment on subpath selection change
     const currentState = get() as CanvasStore;
-    currentState.autoResetOnSelectionChange();
+    currentState.resetAlignment();
   },
 
   selectSubpaths: (subpaths) => {
     set({ selectedSubpaths: subpaths });
     // Auto-reset optical alignment on subpath selection change
     const currentState = get() as CanvasStore;
-    currentState.autoResetOnSelectionChange();
+    currentState.resetAlignment();
   },
 
   clearSubpathSelection: () => {
     set({ selectedSubpaths: [] });
     // Auto-reset optical alignment on subpath selection change
     const currentState = get() as CanvasStore;
-    currentState.autoResetOnSelectionChange();
+    currentState.resetAlignment();
   },
 
   getSelectedSubpathsCount: () => {
@@ -294,7 +294,7 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
 
     // Auto-reset optical alignment on subpath movement
     const currentState = get() as CanvasStore;
-    currentState.autoResetOnSelectionChange();
+    currentState.resetAlignment();
   },
 
   // Order functions
@@ -818,6 +818,6 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
     set({ draggingSubpaths: null });
     // Auto-reset optical alignment on subpath movement completion
     const currentState = get() as CanvasStore;
-    currentState.autoResetOnSelectionChange();
+    currentState.resetAlignment();
   },
 });

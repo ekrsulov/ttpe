@@ -30,9 +30,6 @@ export interface OpticalAlignmentActions {
   previewAlignment: () => void;
   resetAlignment: () => void;
   
-  // Auto-reset functionality
-  autoResetOnSelectionChange: () => void;
-  
   // Visualization
   toggleMathematicalCenter: () => void;
   toggleOpticalCenter: () => void;
@@ -45,6 +42,22 @@ export interface OpticalAlignmentActions {
 }
 
 export type OpticalAlignmentSlice = OpticalAlignmentState & OpticalAlignmentActions;
+
+// Helper to validate and get container/content info
+interface ValidatedAlignment {
+  containerInfo: NonNullable<ReturnType<typeof detectContainer>>;
+  contentInfo: NonNullable<ReturnType<typeof prepareContentInfo>>;
+}
+
+function getValidatedAlignmentData(state: CanvasStore): ValidatedAlignment | null {
+  const containerInfo = detectContainer(state.elements, state.selectedIds);
+  if (!containerInfo) return null;
+
+  const contentInfo = prepareContentInfo(state.elements, state.selectedIds, containerInfo);
+  if (contentInfo.length === 0) return null;
+
+  return { containerInfo, contentInfo };
+}
 
 export const createOpticalAlignmentSlice: StateCreator<
   CanvasStore,
@@ -68,33 +81,16 @@ export const createOpticalAlignmentSlice: StateCreator<
       return;
     }
 
-    // Detect container
-    const containerInfo = detectContainer(
-      state.elements,
-      state.selectedIds
-    );
-
-    if (!containerInfo) {
-      set(() => ({ currentAlignment: null }));
-      return;
-    }
-
-    // Prepare content info
-    const contentInfo = prepareContentInfo(
-      state.elements,
-      state.selectedIds,
-      containerInfo
-    );
-
-    if (contentInfo.length === 0) {
+    const validated = getValidatedAlignmentData(state);
+    if (!validated) {
       set(() => ({ currentAlignment: null }));
       return;
     }
 
     // Calculate optimal alignment automatically
     const alignmentResult = calculateOpticalAlignment(
-      containerInfo,
-      contentInfo
+      validated.containerInfo,
+      validated.contentInfo
     );
 
     set(() => ({ currentAlignment: alignmentResult }));
@@ -137,17 +133,6 @@ export const createOpticalAlignmentSlice: StateCreator<
   },
 
   resetAlignment: () => {
-    // Only reset if there's an active alignment (avoid unnecessary set() calls)
-    const state = get() as CanvasStore;
-    if (state.currentAlignment !== null) {
-      set(() => ({
-        currentAlignment: null
-      }));
-    }
-  },
-
-  // Auto-reset functionality
-  autoResetOnSelectionChange: () => {
     // Only reset if there's an active alignment (avoid unnecessary set() calls)
     const state = get() as CanvasStore;
     if (state.currentAlignment !== null) {
@@ -204,28 +189,15 @@ export const createOpticalAlignmentSlice: StateCreator<
       return 'Select exactly two paths (one container and one content path)';
     }
     
-    const containerInfo = detectContainer(
-      state.elements,
-      state.selectedIds
-    );
+    const validated = getValidatedAlignmentData(state);
     
-    if (!containerInfo) {
+    if (!validated) {
       return 'Could not determine container. Ensure both paths are valid.';
     }
     
-    const contentInfo = prepareContentInfo(
-      state.elements,
-      state.selectedIds,
-      containerInfo
-    );
-    
-    if (contentInfo.length === 0) {
-      return 'No content path found for alignment';
-    }
-    
     // Check if the content is actually contained within the container
-    const containerBounds = containerInfo.bounds;
-    const isContained = contentInfo.every(content => {
+    const containerBounds = validated.containerInfo.bounds;
+    const isContained = validated.contentInfo.every(content => {
       const contentBounds = content.geometry.bounds;
       return contentBounds.minX >= containerBounds.minX &&
              contentBounds.minY >= containerBounds.minY &&
