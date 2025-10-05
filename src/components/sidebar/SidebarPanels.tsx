@@ -58,6 +58,7 @@ interface SidebarPanelsProps {
   pathSimplification: PathSimplification;
   pathRounding: PathRounding;
   selectedCommands: SelectedCommand[];
+  selectedSubpaths: Array<{ elementId: string; subpathIndex: number }>;
   updateSmoothBrush: (config: Partial<SmoothBrush>) => void;
   updatePathSimplification: (config: Partial<PathSimplification>) => void;
   updatePathRounding: (config: Partial<PathRounding>) => void;
@@ -80,6 +81,7 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
   pathSimplification,
   pathRounding,
   selectedCommands,
+  selectedSubpaths,
   updateSmoothBrush,
   updatePathSimplification,
   updatePathRounding,
@@ -161,6 +163,7 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
             pathSimplification={pathSimplification}
             pathRounding={pathRounding}
             selectedCommands={selectedCommands}
+            selectedSubpaths={selectedSubpaths}
             updateSmoothBrush={updateSmoothBrush}
             updatePathSimplification={updatePathSimplification}
             updatePathRounding={updatePathRounding}

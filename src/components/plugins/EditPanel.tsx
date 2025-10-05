@@ -44,6 +44,10 @@ interface EditPanelProps {
     commandIndex: number;
     pointIndex: number;
   }>;
+  selectedSubpaths?: Array<{
+    elementId: string;
+    subpathIndex: number;
+  }>;
   updateSmoothBrush: (brush: Partial<EditPanelProps['smoothBrush']>) => void;
   updatePathSimplification: (settings: Partial<EditPanelProps['pathSimplification']>) => void;
   updatePathRounding: (settings: Partial<EditPanelProps['pathRounding']>) => void;
@@ -61,6 +65,7 @@ export const EditPanel: React.FC<EditPanelProps> = ({
   pathSimplification,
   pathRounding,
   selectedCommands,
+  selectedSubpaths = [],
   updateSmoothBrush,
   updatePathSimplification,
   updatePathRounding,
@@ -75,6 +80,13 @@ export const EditPanel: React.FC<EditPanelProps> = ({
   const settings = useCanvasStore(state => state.settings);
   
   if (activePlugin !== 'edit') return null;
+
+  // Determine if working with subpaths
+  const hasSelectedSubpaths = selectedSubpaths && selectedSubpaths.length > 0;
+  
+  // Dynamic labels
+  const pathSimplificationLabel = hasSelectedSubpaths ? "Subpath Simplification" : "Path Simplification";
+  const roundPathLabel = hasSelectedSubpaths ? "Round Subpath" : "Round Path";
 
   return (
     <Box position="relative">
@@ -235,14 +247,14 @@ export const EditPanel: React.FC<EditPanelProps> = ({
         >
           <HStack spacing={1.5}>
             <Zap size={16} color="#666" />
-            <Heading size="xs" fontWeight="extrabold">Path Simplification</Heading>
+            <Heading size="xs" fontWeight="extrabold">{pathSimplificationLabel}</Heading>
           </HStack>
           <Button
             onClick={applyPathSimplification}
             size="xs"
             variant="outline"
             fontSize="12px"
-            title="Simplify Path"
+            title={pathSimplificationLabel}
           >
             Apply
           </Button>
@@ -274,14 +286,14 @@ export const EditPanel: React.FC<EditPanelProps> = ({
         >
           <HStack spacing={1.5}>
             <RotateCcw size={16} color="#666" />
-            <Heading size="xs" fontWeight="extrabold">Round Path</Heading>
+            <Heading size="xs" fontWeight="extrabold">{roundPathLabel}</Heading>
           </HStack>
           <Button
             onClick={applyPathRounding}
             size="xs"
             variant="outline"
             fontSize="12px"
-            title="Round Path"
+            title={roundPathLabel}
           >
             Apply
           </Button>

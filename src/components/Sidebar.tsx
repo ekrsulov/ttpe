@@ -99,6 +99,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const pathSimplification = useCanvasStore((state) => state.pathSimplification);
   const pathRounding = useCanvasStore((state) => state.pathRounding);
   const selectedCommands = useCanvasStore((state) => state.selectedCommands);
+  const selectedSubpaths = useCanvasStore((state) => state.selectedSubpaths);
   
   // For smoothBrush, select only the properties we need (exclude affectedPoints)
   const smoothBrushRadius = useCanvasStore((state) => state.smoothBrush.radius);
@@ -263,6 +264,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             pathSimplification={pathSimplification}
             pathRounding={pathRounding}
             selectedCommands={selectedCommands}
+            selectedSubpaths={selectedSubpaths}
             updateSmoothBrush={updateSmoothBrush}
             updatePathSimplification={updatePathSimplification}
             updatePathRounding={updatePathRounding}
@@ -364,6 +366,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               pathSimplification={pathSimplification}
               pathRounding={pathRounding}
               selectedCommands={selectedCommands}
+              selectedSubpaths={selectedSubpaths}
               updateSmoothBrush={updateSmoothBrush}
               updatePathSimplification={updatePathSimplification}
               updatePathRounding={updatePathRounding}

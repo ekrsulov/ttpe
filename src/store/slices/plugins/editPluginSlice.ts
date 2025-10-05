@@ -930,7 +930,33 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
 
     const pathData = element.data;
     const commands = pathData.subPaths.flat();
-    const editablePoints = extractEditablePoints(commands);
+    let editablePoints = extractEditablePoints(commands);
+
+    // Check if we have selected subpaths - filter editable points accordingly
+    const hasSelectedSubpaths = state.selectedSubpaths && state.selectedSubpaths.length > 0;
+    const selectedSubpathsForElement = hasSelectedSubpaths 
+      ? state.selectedSubpaths.filter(sp => sp.elementId === targetElementId)
+      : [];
+
+    if (selectedSubpathsForElement.length > 0) {
+      // Filter editable points to only those in selected subpaths
+      const subpaths = extractSubpaths(commands);
+      const filteredPoints: typeof editablePoints = [];
+
+      selectedSubpathsForElement.forEach((selected: { subpathIndex: number }) => {
+        const subpathData = subpaths[selected.subpathIndex];
+        if (subpathData) {
+          // Include points that fall within this subpath's command range
+          const pointsInSubpath = editablePoints.filter(point =>
+            point.commandIndex >= subpathData.startIndex &&
+            point.commandIndex <= subpathData.endIndex
+          );
+          filteredPoints.push(...pointsInSubpath);
+        }
+      });
+
+      editablePoints = filteredPoints;
+    }
 
     let rebuildPath = false;
     let simplifiedPointsForRebuild: Array<{
@@ -1360,7 +1386,49 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     const pathData = element.data as import('../../../types').PathData;
     const allCommands = pathData.subPaths.flat();
 
-    if (state.selectedCommands.length > 0) {
+    // Check if we have selected subpaths
+    const hasSelectedSubpaths = state.selectedSubpaths && state.selectedSubpaths.length > 0;
+    const selectedSubpathsForElement = hasSelectedSubpaths 
+      ? state.selectedSubpaths.filter(sp => sp.elementId === targetElementId)
+      : [];
+
+    if (selectedSubpathsForElement.length > 0) {
+      // Apply simplification only to selected subpaths
+      const subpaths = extractSubpaths(allCommands);
+      const newSubPaths: SubPath[] = [];
+
+      subpaths.forEach((subpathData, index) => {
+        const isSelected = selectedSubpathsForElement.some(sp => sp.subpathIndex === index);
+        
+        if (isSelected) {
+          // Simplify this subpath
+          const tempPathData: import('../../../types').PathData = {
+            ...pathData,
+            subPaths: [subpathData.commands]
+          };
+
+          const simplifiedTempPath = performPathSimplifyPaperJS(tempPathData, tolerance);
+          
+          if (simplifiedTempPath && simplifiedTempPath.subPaths.length > 0) {
+            newSubPaths.push(simplifiedTempPath.subPaths[0]);
+          } else {
+            // If simplification failed, keep original
+            newSubPaths.push(subpathData.commands);
+          }
+        } else {
+          // Keep original subpath
+          newSubPaths.push(subpathData.commands);
+        }
+      });
+
+      // Update the element
+      (get() as FullCanvasState).updateElement(targetElementId, {
+        data: {
+          ...pathData,
+          subPaths: newSubPaths
+        },
+      });
+    } else if (state.selectedCommands.length > 0) {
       // Simplify only the selected portion of the path
       const selectedElementId = state.selectedCommands[0].elementId;
       const selectedCommands = state.selectedCommands.filter(cmd => cmd.elementId === selectedElementId);
@@ -2328,17 +2396,65 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
 
     const pathData = element.data as import('../../../types').PathData;
 
-    // Apply path rounding using the utility function
-    const roundedPathData = performPathRound(pathData, radius);
+    // Check if we have selected subpaths
+    const hasSelectedSubpaths = state.selectedSubpaths && state.selectedSubpaths.length > 0;
+    const selectedSubpathsForElement = hasSelectedSubpaths 
+      ? state.selectedSubpaths.filter(sp => sp.elementId === targetElementId)
+      : [];
 
-    if (roundedPathData) {
-      // Update the element with the rounded path
+    if (selectedSubpathsForElement.length > 0) {
+      // Apply rounding only to selected subpaths
+      const allCommands = pathData.subPaths.flat();
+      const subpaths = extractSubpaths(allCommands);
+      const newSubPaths: SubPath[] = [];
+
+      subpaths.forEach((subpathData, index) => {
+        const isSelected = selectedSubpathsForElement.some(sp => sp.subpathIndex === index);
+        
+        if (isSelected) {
+          // Round this subpath
+          const tempPathData: import('../../../types').PathData = {
+            ...pathData,
+            subPaths: [subpathData.commands]
+          };
+
+          const roundedTempPath = performPathRound(tempPathData, radius);
+          
+          if (roundedTempPath && roundedTempPath.subPaths.length > 0) {
+            newSubPaths.push(roundedTempPath.subPaths[0]);
+          } else {
+            // If rounding failed, keep original
+            newSubPaths.push(subpathData.commands);
+          }
+        } else {
+          // Keep original subpath
+          newSubPaths.push(subpathData.commands);
+        }
+      });
+
+      // Update the element
       (get() as FullCanvasState).updateElement(targetElementId, {
-        data: roundedPathData,
+        data: {
+          ...pathData,
+          subPaths: newSubPaths
+        },
       });
 
       // Clear selection after rounding
       state.clearSelectedCommands();
+    } else {
+      // Apply path rounding using the utility function to the entire path
+      const roundedPathData = performPathRound(pathData, radius);
+
+      if (roundedPathData) {
+        // Update the element with the rounded path
+        (get() as FullCanvasState).updateElement(targetElementId, {
+          data: roundedPathData,
+        });
+
+        // Clear selection after rounding
+        state.clearSelectedCommands();
+      }
     }
   },
 });
