@@ -202,18 +202,22 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     if (activePlugin === 'select') {
       e.stopPropagation(); // Prevent handlePointerDown from starting selection rectangle
 
-      const selectedIds = useCanvasStore.getState().selectedIds;
-      const isElementSelected = selectedIds.includes(elementId);
+      // Only handle selection and dragging when shift is NOT pressed
+      // When shift is pressed, let handleElementClick handle the toggle selection
+      if (!e.shiftKey) {
+        const selectedIds = useCanvasStore.getState().selectedIds;
+        const isElementSelected = selectedIds.includes(elementId);
 
-      if (!isElementSelected) {
-        // If element not selected, select it first
-        useCanvasStore.getState().selectElement(elementId, false);
+        if (!isElementSelected) {
+          // If element not selected, select it first (without multiselect)
+          useCanvasStore.getState().selectElement(elementId, false);
+        }
+
+        // Start dragging
+        setIsDragging(true);
+        setDragStart(screenToCanvas(e.clientX, e.clientY));
+        setHasDragMoved(false);
       }
-
-      // Start dragging
-      setIsDragging(true);
-      setDragStart(screenToCanvas(e.clientX, e.clientY));
-      setHasDragMoved(false);
     }
   }, [activePlugin, screenToCanvas, setIsDragging, setDragStart, setHasDragMoved]);
 
