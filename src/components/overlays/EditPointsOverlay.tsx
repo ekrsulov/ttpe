@@ -129,20 +129,35 @@ export const EditPointsOverlay: React.FC<EditPointsOverlayProps> = ({
         }
 
         const pointStyle = getPointStyle(point, selectedCommands, element, smoothBrush, commands, pathData);
+        
+        // Calculate larger hit area for better touch/mouse interaction
+        // Use a minimum size in screen pixels (12px) regardless of zoom
+        const hitAreaSize = Math.max(12 / viewport.zoom, pointStyle.size / viewport.zoom);
 
         return (
-          <circle
-            key={index}
-            cx={displayX}
-            cy={displayY}
-            r={pointStyle.size / viewport.zoom}
-            fill={pointStyle.color}
-            stroke={pointStyle.strokeColor}
-            strokeWidth="2"
-            vectorEffect="non-scaling-stroke"
-            style={{ cursor: 'pointer' }}
-            onPointerDown={(e) => handlePointPointerDown(e, point, element, selectedCommands, smoothBrush, viewport, onStartDraggingPoint, onSelectCommand)}
-          />
+          <g key={index}>
+            {/* Transparent overlay for easier interaction */}
+            <circle
+              cx={displayX}
+              cy={displayY}
+              r={hitAreaSize}
+              fill="transparent"
+              stroke="none"
+              style={{ cursor: 'pointer' }}
+              onPointerDown={(e) => handlePointPointerDown(e, point, element, selectedCommands, smoothBrush, viewport, onStartDraggingPoint, onSelectCommand)}
+            />
+            {/* Visible point */}
+            <circle
+              cx={displayX}
+              cy={displayY}
+              r={pointStyle.size / viewport.zoom}
+              fill={pointStyle.color}
+              stroke={pointStyle.strokeColor}
+              strokeWidth="2"
+              vectorEffect="non-scaling-stroke"
+              style={{ pointerEvents: 'none' }} // Let the overlay handle interactions
+            />
+          </g>
         );
       })}
 
