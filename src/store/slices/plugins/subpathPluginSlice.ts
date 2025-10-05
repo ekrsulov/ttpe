@@ -5,6 +5,7 @@ import { extractSubpaths } from '../../../utils/pathParserUtils';
 import { measureSubpathBounds } from '../../../utils/measurementUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../../utils';
 import { translateCommands } from '../../../utils/transformationUtils';
+import { groupSubpathsByElement, moveSubpathsWithinElement, deleteSubpathsFromElement } from '../../../utils/subpathHelpers';
 
 // Helper interface for subpath bounds
 interface SubpathWithBounds {
@@ -232,13 +233,7 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
     if (selectedSubpaths.length === 0) return;
 
     // Group subpaths by element ID
-    const subpathsByElement = selectedSubpaths.reduce((acc, subpath) => {
-      if (!acc[subpath.elementId]) {
-        acc[subpath.elementId] = [];
-      }
-      acc[subpath.elementId].push(subpath.subpathIndex);
-      return acc;
-    }, {} as Record<string, number[]>);
+    const subpathsByElement = groupSubpathsByElement(selectedSubpaths);
 
     // Process each element
     Object.entries(subpathsByElement).forEach(([elementId, subpathIndices]) => {
@@ -246,16 +241,8 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
       if (element && element.type === 'path') {
         const pathData = element.data as PathData;
 
-        // Sort indices in descending order to avoid index shifting issues
-        const sortedIndices = [...subpathIndices].sort((a, b) => b - a);
-
-        // Remove subpaths from highest index to lowest
-        const newSubPaths = [...pathData.subPaths];
-        sortedIndices.forEach(index => {
-          if (index < newSubPaths.length) {
-            newSubPaths.splice(index, 1);
-          }
-        });
+        // Remove subpaths using helper
+        const newSubPaths = deleteSubpathsFromElement(pathData.subPaths, subpathIndices);
 
         // If no subpaths left, delete the entire element
         if (newSubPaths.length === 0) {
@@ -281,13 +268,7 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
     if (selectedSubpaths.length === 0) return;
 
     // Group subpaths by element ID
-    const subpathsByElement = selectedSubpaths.reduce((acc, subpath) => {
-      if (!acc[subpath.elementId]) {
-        acc[subpath.elementId] = [];
-      }
-      acc[subpath.elementId].push(subpath.subpathIndex);
-      return acc;
-    }, {} as Record<string, number[]>);
+    const subpathsByElement = groupSubpathsByElement(selectedSubpaths);
 
     // Process each element
     Object.entries(subpathsByElement).forEach(([elementId, subpathIndices]) => {
@@ -324,13 +305,7 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
     if (selectedSubpaths.length === 0) return;
 
     // Group subpaths by element ID
-    const subpathsByElement = selectedSubpaths.reduce((acc, subpath) => {
-      if (!acc[subpath.elementId]) {
-        acc[subpath.elementId] = [];
-      }
-      acc[subpath.elementId].push(subpath.subpathIndex);
-      return acc;
-    }, {} as Record<string, number[]>);
+    const subpathsByElement = groupSubpathsByElement(selectedSubpaths);
 
     const newSelection: Array<{ elementId: string; subpathIndex: number }> = [];
 
@@ -339,26 +314,13 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
       const element = state.elements.find((el) => el.id === elementId);
       if (element && element.type === 'path') {
         const pathData = element.data as PathData;
-        const newSubPaths = [...pathData.subPaths];
 
-        // Sort indices in descending order to handle correctly
-        const sortedIndices = [...subpathIndices].sort((a, b) => b - a);
-        const subpathsToMove: Command[][] = [];
-
-        // Extract subpaths to move (from back to front to preserve indices)
-        sortedIndices.forEach(index => {
-          if (index < newSubPaths.length) {
-            subpathsToMove.unshift(newSubPaths.splice(index, 1)[0]);
-          }
-        });
-
-        // Add them at the end (front in rendering order)
-        const startIndex = newSubPaths.length;
-        newSubPaths.push(...subpathsToMove);
+        // Use helper to move subpaths to front
+        const { newSubPaths, newIndices } = moveSubpathsWithinElement(pathData.subPaths, subpathIndices, 'toFront');
 
         // Update selection with new indices
-        subpathsToMove.forEach((_, i) => {
-          newSelection.push({ elementId, subpathIndex: startIndex + i });
+        newIndices.forEach(index => {
+          newSelection.push({ elementId, subpathIndex: index });
         });
 
         // Update the element
@@ -379,13 +341,7 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
     if (selectedSubpaths.length === 0) return;
 
     // Group subpaths by element ID
-    const subpathsByElement = selectedSubpaths.reduce((acc, subpath) => {
-      if (!acc[subpath.elementId]) {
-        acc[subpath.elementId] = [];
-      }
-      acc[subpath.elementId].push(subpath.subpathIndex);
-      return acc;
-    }, {} as Record<string, number[]>);
+    const subpathsByElement = groupSubpathsByElement(selectedSubpaths);
 
     const newSelection: Array<{ elementId: string; subpathIndex: number }> = [];
 
@@ -394,20 +350,13 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
       const element = state.elements.find((el) => el.id === elementId);
       if (element && element.type === 'path') {
         const pathData = element.data as PathData;
-        const newSubPaths = [...pathData.subPaths];
 
-        // Sort indices in descending order to avoid index shifting
-        const sortedIndices = [...subpathIndices].sort((a, b) => b - a);
+        // Use helper to move subpaths forward
+        const { newSubPaths, newIndices } = moveSubpathsWithinElement(pathData.subPaths, subpathIndices, 'forward');
 
-        sortedIndices.forEach(index => {
-          if (index < newSubPaths.length - 1) {
-            // Swap with the next subpath (move forward one position)
-            [newSubPaths[index], newSubPaths[index + 1]] = [newSubPaths[index + 1], newSubPaths[index]];
-            newSelection.push({ elementId, subpathIndex: index + 1 });
-          } else {
-            // Can't move forward, keep current position
-            newSelection.push({ elementId, subpathIndex: index });
-          }
+        // Update selection with new indices
+        newIndices.forEach(index => {
+          newSelection.push({ elementId, subpathIndex: index });
         });
 
         // Update the element
@@ -428,13 +377,7 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
     if (selectedSubpaths.length === 0) return;
 
     // Group subpaths by element ID
-    const subpathsByElement = selectedSubpaths.reduce((acc, subpath) => {
-      if (!acc[subpath.elementId]) {
-        acc[subpath.elementId] = [];
-      }
-      acc[subpath.elementId].push(subpath.subpathIndex);
-      return acc;
-    }, {} as Record<string, number[]>);
+    const subpathsByElement = groupSubpathsByElement(selectedSubpaths);
 
     const newSelection: Array<{ elementId: string; subpathIndex: number }> = [];
 
@@ -443,20 +386,13 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
       const element = state.elements.find((el) => el.id === elementId);
       if (element && element.type === 'path') {
         const pathData = element.data as PathData;
-        const newSubPaths = [...pathData.subPaths];
 
-        // Sort indices in ascending order to avoid index shifting
-        const sortedIndices = [...subpathIndices].sort((a, b) => a - b);
+        // Use helper to move subpaths backward
+        const { newSubPaths, newIndices } = moveSubpathsWithinElement(pathData.subPaths, subpathIndices, 'backward');
 
-        sortedIndices.forEach(index => {
-          if (index > 0) {
-            // Swap with the previous subpath (move backward one position)
-            [newSubPaths[index], newSubPaths[index - 1]] = [newSubPaths[index - 1], newSubPaths[index]];
-            newSelection.push({ elementId, subpathIndex: index - 1 });
-          } else {
-            // Can't move backward, keep current position
-            newSelection.push({ elementId, subpathIndex: index });
-          }
+        // Update selection with new indices
+        newIndices.forEach(index => {
+          newSelection.push({ elementId, subpathIndex: index });
         });
 
         // Update the element
@@ -477,13 +413,7 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
     if (selectedSubpaths.length === 0) return;
 
     // Group subpaths by element ID
-    const subpathsByElement = selectedSubpaths.reduce((acc, subpath) => {
-      if (!acc[subpath.elementId]) {
-        acc[subpath.elementId] = [];
-      }
-      acc[subpath.elementId].push(subpath.subpathIndex);
-      return acc;
-    }, {} as Record<string, number[]>);
+    const subpathsByElement = groupSubpathsByElement(selectedSubpaths);
 
     const newSelection: Array<{ elementId: string; subpathIndex: number }> = [];
 
@@ -492,25 +422,13 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
       const element = state.elements.find((el) => el.id === elementId);
       if (element && element.type === 'path') {
         const pathData = element.data as PathData;
-        const newSubPaths = [...pathData.subPaths];
 
-        // Sort indices in ascending order to handle correctly
-        const sortedIndices = [...subpathIndices].sort((a, b) => a - b);
-        const subpathsToMove: Command[][] = [];
+        // Use helper to move subpaths to back
+        const { newSubPaths, newIndices } = moveSubpathsWithinElement(pathData.subPaths, subpathIndices, 'toBack');
 
-        // Extract subpaths to move (from front to back to preserve indices)
-        sortedIndices.forEach(index => {
-          if (index < newSubPaths.length) {
-            subpathsToMove.push(newSubPaths.splice(index, 1)[0]);
-          }
-        });
-
-        // Add them at the beginning (back in rendering order)
-        newSubPaths.unshift(...subpathsToMove);
-
-        // Update selection with new indices (they're now at the beginning)
-        subpathsToMove.forEach((_, i) => {
-          newSelection.push({ elementId, subpathIndex: i });
+        // Update selection with new indices
+        newIndices.forEach(index => {
+          newSelection.push({ elementId, subpathIndex: index });
         });
 
         // Update the element
