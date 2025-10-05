@@ -31,12 +31,13 @@ const ArrangePanelComponent: React.FC = () => {
   // Only trigger re-render when activePlugin changes via useArrangeHandlers
   const currentHandlers = useArrangeHandlers();
   
+  // Subscribe to selection changes to trigger re-renders
+  const selectedCount = useCanvasStore(state => state.selectedIds.length);
+  const selectedCommandsCount = useCanvasStore(state => state.selectedCommands.length);
+  const selectedSubpathsCount = useCanvasStore(state => state.selectedSubpaths.length);
+  
   // Get current state without subscribing - fresh on every render
-  // Component only re-renders when useArrangeHandlers changes (activePlugin change) or useRenderCount forces update
   const state = useCanvasStore.getState();
-  const selectedCount = state.selectedIds.length;
-  const selectedCommandsCount = state.selectedCommands.length;
-  const selectedSubpathsCount = state.selectedSubpaths.length;
   const activePlugin = state.activePlugin;
   const settings = state.settings;
 
