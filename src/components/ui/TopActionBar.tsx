@@ -11,6 +11,7 @@ import {
   Menu,
   Hand
 } from 'lucide-react';
+import type { CanvasElement } from '../../types';
 
 type ToolMode = 'select' | 'pencil' | 'text' | 'shape' | 'subpath' | 'transformation' | 'edit' | 'pan';
 
@@ -21,6 +22,7 @@ interface TopActionBarProps {
   isSidebarPinned?: boolean;
   isSidebarOpen?: boolean;
   onMenuClick?: () => void;
+  selectedPaths?: CanvasElement[];
 }
 
 const actionTools: Array<{ mode: ToolMode; icon: React.ComponentType<{ size?: number }>; label: string }> = [
@@ -41,6 +43,7 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
   isSidebarPinned = false,
   isSidebarOpen = false,
   onMenuClick,
+  selectedPaths = [],
 }) => {
 
   const showMenuButton = !isSidebarPinned;
@@ -74,22 +77,34 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
         justify="center"
       >
         {/* Tool buttons */}
-        {actionTools.map(({ mode, icon: Icon, label }) => (
-          <IconButton
-            key={mode}
-            aria-label={label}
-            icon={<Icon size={14} />}
-            onClick={() => onModeChange(mode)}
-            size="xs"
-            variant={activeMode === mode ? 'solid' : 'ghost'}
-            colorScheme={activeMode === mode ? 'blue' : 'gray'}
-            title={label}
-            sx={{
-              minHeight: '28px',
-              minWidth: '28px',
-            }}
-          />
-        ))}
+        {actionTools.map(({ mode, icon: Icon, label }) => {
+          const isDisabled = (() => {
+            if (mode === 'transformation' || mode === 'edit') {
+              return selectedPaths.length !== 1;
+            }
+            if (mode === 'subpath') {
+              return selectedPaths.length !== 1 || (selectedPaths[0] && selectedPaths[0].data.subPaths.length <= 1);
+            }
+            return false;
+          })();
+          return (
+            <IconButton
+              key={mode}
+              aria-label={label}
+              icon={<Icon size={14} />}
+              onClick={() => onModeChange(mode)}
+              size="xs"
+              variant={activeMode === mode ? 'solid' : 'ghost'}
+              colorScheme={activeMode === mode ? 'blue' : 'gray'}
+              title={label}
+              isDisabled={isDisabled}
+              sx={{
+                minHeight: '28px',
+                minWidth: '28px',
+              }}
+            />
+          );
+        })}
         
         {/* Hamburger menu button - al final */}
         {showMenuButton && (

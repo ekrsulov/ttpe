@@ -148,6 +148,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [showSettingsPanel, setShowSettingsPanel] = useState<boolean>(false);
   const [isArrangeExpanded, setIsArrangeExpanded] = useState(true);
 
+  // Close special panels when switching to tool modes
+  useEffect(() => {
+    const toolModes = ['select', 'pan', 'pencil', 'text', 'shape', 'subpath', 'transformation', 'edit'];
+    if (toolModes.includes(activePlugin || '')) {
+      setShowFilePanel(false);
+      setShowSettingsPanel(false);
+    }
+  }, [activePlugin]);
+
   // Handle Escape key to return to select mode when in file/settings mode
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

@@ -3,13 +3,16 @@ import { Sidebar } from './components/Sidebar';
 import { TopActionBar } from './components/ui/TopActionBar';
 import { BottomActionBar } from './components/ui/BottomActionBar';
 import { useCanvasStore } from './store/canvasStore';
+import { useShallow } from 'zustand/shallow';
 import './App.css';
 import type { CSSProperties } from 'react';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 
 function App() {
   const activePlugin = useCanvasStore(state => state.activePlugin);
   const setMode = useCanvasStore(state => state.setMode);
+  const { selectedIds, elements } = useCanvasStore(useShallow((state: any) => ({ selectedIds: state.selectedIds, elements: state.elements })));
+  const selectedPaths = useMemo(() => elements.filter((el: any) => selectedIds.includes(el.id) && el.type === 'path'), [selectedIds, elements]);
   
   // Track sidebar width when pinned (0 when not pinned)
   const [sidebarWidth, setSidebarWidth] = useState(0);
@@ -85,6 +88,7 @@ function App() {
         isSidebarPinned={isSidebarPinned}
         isSidebarOpen={isSidebarOpen}
         onMenuClick={handleMenuClick}
+        selectedPaths={selectedPaths}
       />
       <BottomActionBar 
         sidebarWidth={sidebarWidth}
