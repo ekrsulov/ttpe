@@ -838,21 +838,8 @@ export function commandsToString(commands: Command[]): string {
 }
 
 /**
- * Convert subPaths to SVG d string
- */
-export function subPathsToSvgD(subPaths: SubPath[]): string {
-  return subPaths.map(subPath => {
-    let d = commandsToString(subPath);
-    // Ensure the path is closed if it doesn't end with Z and has more than 1 point
-    if (subPath.length > 1 && subPath[subPath.length - 1].type !== 'Z') {
-      d += ' Z';
-    }
-    return d;
-  }).join(' ');
-}
-
-/**
  * Determine the alignment type between two control points
+```
  */
 export function determineControlPointAlignment(
   commands: Command[],

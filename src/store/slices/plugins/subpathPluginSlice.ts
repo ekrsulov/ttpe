@@ -78,14 +78,11 @@ const applySubpathTransformations = (
   });
 };
 
-// Helper function for alignment operations
-const performSubpathAlignment = (
+// Helper function to collect subpath bounds information
+const collectSubpathBounds = (
   state: CanvasStore,
-  selectedSubpaths: Array<{ elementId: string; subpathIndex: number }>,
-  getTargetPosition: (bounds: SubpathWithBounds[]) => (subpathInfo: SubpathWithBounds) => { deltaX: number; deltaY: number }
-) => {
-  if (selectedSubpaths.length < 2) return;
-
+  selectedSubpaths: Array<{ elementId: string; subpathIndex: number }>
+): SubpathWithBounds[] => {
   const subpathBounds: SubpathWithBounds[] = [];
 
   selectedSubpaths.forEach(selected => {
@@ -112,6 +109,19 @@ const performSubpathAlignment = (
       }
     }
   });
+
+  return subpathBounds;
+};
+
+// Helper function for alignment operations
+const performSubpathAlignment = (
+  state: CanvasStore,
+  selectedSubpaths: Array<{ elementId: string; subpathIndex: number }>,
+  getTargetPosition: (bounds: SubpathWithBounds[]) => (subpathInfo: SubpathWithBounds) => { deltaX: number; deltaY: number }
+) => {
+  if (selectedSubpaths.length < 2) return;
+
+  const subpathBounds = collectSubpathBounds(state, selectedSubpaths);
 
   if (subpathBounds.length < 2) return;
 
@@ -127,32 +137,7 @@ const distributeSubpathsAlongAxis = (
 ) => {
   if (selectedSubpaths.length < 3) return;
 
-  const subpathBounds: SubpathWithBounds[] = [];
-
-  selectedSubpaths.forEach(selected => {
-    const element = state.elements.find((el) => el.id === selected.elementId);
-    if (element && element.type === 'path') {
-      const pathData = element.data as PathData;
-      const allCommands = pathData.subPaths.flat();
-      const subpaths = extractSubpaths(allCommands);
-      const subpathCommands = subpaths[selected.subpathIndex]?.commands;
-
-      if (subpathCommands) {
-        const bounds = measureSubpathBounds(subpathCommands, pathData.strokeWidth || 1);
-
-        subpathBounds.push({
-          elementId: selected.elementId,
-          subpathIndex: selected.subpathIndex,
-          subpathCommands,
-          bounds,
-          centerX: (bounds.minX + bounds.maxX) / 2,
-          centerY: (bounds.minY + bounds.maxY) / 2,
-          width: bounds.maxX - bounds.minX,
-          height: bounds.maxY - bounds.minY
-        });
-      }
-    }
-  });
+  const subpathBounds = collectSubpathBounds(state, selectedSubpaths);
 
   if (subpathBounds.length < 3) return;
 
@@ -211,6 +196,49 @@ const distributeSubpathsAlongAxis = (
     const key = `${subpathInfo.elementId}-${subpathInfo.subpathIndex}`;
     return transformations.get(key) || { deltaX: 0, deltaY: 0 };
   });
+};
+
+// Helper function to process subpath order changes
+const processSubpathOrderChange = (
+  state: CanvasStore,
+  selectedSubpaths: Array<{ elementId: string; subpathIndex: number }>,
+  direction: 'toFront' | 'forward' | 'backward' | 'toBack'
+): Array<{ elementId: string; subpathIndex: number }> => {
+  if (selectedSubpaths.length === 0) return [];
+
+  // Group subpaths by element ID
+  const subpathsByElement = groupSubpathsByElement(selectedSubpaths);
+
+  const newSelection: Array<{ elementId: string; subpathIndex: number }> = [];
+
+  // Process each element
+  Object.entries(subpathsByElement).forEach(([elementId, subpathIndices]) => {
+    const element = state.elements.find((el) => el.id === elementId);
+    if (element && element.type === 'path') {
+      const pathData = element.data as PathData;
+
+      // Use helper to move subpaths
+      const { newSubPaths, newIndices } = moveSubpathsWithinElement(pathData.subPaths, subpathIndices, direction);
+
+      // Update selection with new indices
+      newIndices.forEach(index => {
+        newSelection.push({ elementId, subpathIndex: index });
+      });
+
+      // Update the element
+      state.updateElement(elementId, {
+        data: { ...pathData, subPaths: newSubPaths }
+      });
+    }
+  });
+
+  return newSelection;
+};
+
+// Helper function to reset alignment after selection changes
+const resetAlignmentAfterChange = (get: () => CanvasStore) => {
+  const currentState = get() as CanvasStore;
+  currentState.resetAlignment();
 };
 
 export interface SubpathPluginSlice {
@@ -298,22 +326,19 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
     });
     
     // Auto-reset optical alignment on subpath selection change
-    const currentState = get() as CanvasStore;
-    currentState.resetAlignment();
+    resetAlignmentAfterChange(get);
   },
 
   selectSubpaths: (subpaths) => {
     set({ selectedSubpaths: subpaths });
     // Auto-reset optical alignment on subpath selection change
-    const currentState = get() as CanvasStore;
-    currentState.resetAlignment();
+    resetAlignmentAfterChange(get);
   },
 
   clearSubpathSelection: () => {
     set({ selectedSubpaths: [] });
     // Auto-reset optical alignment on subpath selection change
-    const currentState = get() as CanvasStore;
-    currentState.resetAlignment();
+    resetAlignmentAfterChange(get);
   },
 
   getSelectedSubpathsCount: () => {
@@ -387,152 +412,35 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
     });
 
     // Auto-reset optical alignment on subpath movement
-    const currentState = get() as CanvasStore;
-    currentState.resetAlignment();
+    resetAlignmentAfterChange(get);
   },
 
   // Order functions
   bringSubpathToFront: () => {
     const state = get() as CanvasStore;
     const selectedSubpaths = get().selectedSubpaths;
-
-    if (selectedSubpaths.length === 0) return;
-
-    // Group subpaths by element ID
-    const subpathsByElement = groupSubpathsByElement(selectedSubpaths);
-
-    const newSelection: Array<{ elementId: string; subpathIndex: number }> = [];
-
-    // Process each element
-    Object.entries(subpathsByElement).forEach(([elementId, subpathIndices]) => {
-      const element = state.elements.find((el) => el.id === elementId);
-      if (element && element.type === 'path') {
-        const pathData = element.data as PathData;
-
-        // Use helper to move subpaths to front
-        const { newSubPaths, newIndices } = moveSubpathsWithinElement(pathData.subPaths, subpathIndices, 'toFront');
-
-        // Update selection with new indices
-        newIndices.forEach(index => {
-          newSelection.push({ elementId, subpathIndex: index });
-        });
-
-        // Update the element
-        state.updateElement(elementId, {
-          data: { ...pathData, subPaths: newSubPaths }
-        });
-      }
-    });
-
-    // Update selection with new indices
+    const newSelection = processSubpathOrderChange(state, selectedSubpaths, 'toFront');
     set({ selectedSubpaths: newSelection });
   },
 
   sendSubpathForward: () => {
     const state = get() as CanvasStore;
     const selectedSubpaths = get().selectedSubpaths;
-
-    if (selectedSubpaths.length === 0) return;
-
-    // Group subpaths by element ID
-    const subpathsByElement = groupSubpathsByElement(selectedSubpaths);
-
-    const newSelection: Array<{ elementId: string; subpathIndex: number }> = [];
-
-    // Process each element
-    Object.entries(subpathsByElement).forEach(([elementId, subpathIndices]) => {
-      const element = state.elements.find((el) => el.id === elementId);
-      if (element && element.type === 'path') {
-        const pathData = element.data as PathData;
-
-        // Use helper to move subpaths forward
-        const { newSubPaths, newIndices } = moveSubpathsWithinElement(pathData.subPaths, subpathIndices, 'forward');
-
-        // Update selection with new indices
-        newIndices.forEach(index => {
-          newSelection.push({ elementId, subpathIndex: index });
-        });
-
-        // Update the element
-        state.updateElement(elementId, {
-          data: { ...pathData, subPaths: newSubPaths }
-        });
-      }
-    });
-
-    // Update selection with new indices
+    const newSelection = processSubpathOrderChange(state, selectedSubpaths, 'forward');
     set({ selectedSubpaths: newSelection });
   },
 
   sendSubpathBackward: () => {
     const state = get() as CanvasStore;
     const selectedSubpaths = get().selectedSubpaths;
-
-    if (selectedSubpaths.length === 0) return;
-
-    // Group subpaths by element ID
-    const subpathsByElement = groupSubpathsByElement(selectedSubpaths);
-
-    const newSelection: Array<{ elementId: string; subpathIndex: number }> = [];
-
-    // Process each element
-    Object.entries(subpathsByElement).forEach(([elementId, subpathIndices]) => {
-      const element = state.elements.find((el) => el.id === elementId);
-      if (element && element.type === 'path') {
-        const pathData = element.data as PathData;
-
-        // Use helper to move subpaths backward
-        const { newSubPaths, newIndices } = moveSubpathsWithinElement(pathData.subPaths, subpathIndices, 'backward');
-
-        // Update selection with new indices
-        newIndices.forEach(index => {
-          newSelection.push({ elementId, subpathIndex: index });
-        });
-
-        // Update the element
-        state.updateElement(elementId, {
-          data: { ...pathData, subPaths: newSubPaths }
-        });
-      }
-    });
-
-    // Update selection with new indices
+    const newSelection = processSubpathOrderChange(state, selectedSubpaths, 'backward');
     set({ selectedSubpaths: newSelection });
   },
 
   sendSubpathToBack: () => {
     const state = get() as CanvasStore;
     const selectedSubpaths = get().selectedSubpaths;
-
-    if (selectedSubpaths.length === 0) return;
-
-    // Group subpaths by element ID
-    const subpathsByElement = groupSubpathsByElement(selectedSubpaths);
-
-    const newSelection: Array<{ elementId: string; subpathIndex: number }> = [];
-
-    // Process each element
-    Object.entries(subpathsByElement).forEach(([elementId, subpathIndices]) => {
-      const element = state.elements.find((el) => el.id === elementId);
-      if (element && element.type === 'path') {
-        const pathData = element.data as PathData;
-
-        // Use helper to move subpaths to back
-        const { newSubPaths, newIndices } = moveSubpathsWithinElement(pathData.subPaths, subpathIndices, 'toBack');
-
-        // Update selection with new indices
-        newIndices.forEach(index => {
-          newSelection.push({ elementId, subpathIndex: index });
-        });
-
-        // Update the element
-        state.updateElement(elementId, {
-          data: { ...pathData, subPaths: newSubPaths }
-        });
-      }
-    });
-
-    // Update selection with new indices
+    const newSelection = processSubpathOrderChange(state, selectedSubpaths, 'toBack');
     set({ selectedSubpaths: newSelection });
   },
 
@@ -757,7 +665,6 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
   stopDraggingSubpaths: () => {
     set({ draggingSubpaths: null });
     // Auto-reset optical alignment on subpath movement completion
-    const currentState = get() as CanvasStore;
-    currentState.resetAlignment();
+    resetAlignmentAfterChange(get);
   },
 });

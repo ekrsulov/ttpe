@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ToolRegistry, ToolConfig } from './toolRegistry';
+import type { ToolRegistry } from './toolRegistry';
 import type { Point } from '../types';
 import { toolRegistry } from './toolRegistry';
 
@@ -8,13 +8,6 @@ export class PluginManager {
 
   constructor(initialRegistry: ToolRegistry) {
     this.registry = { ...initialRegistry };
-  }
-
-  /**
-   * Get tool config
-   */
-  getTool(name: string): ToolConfig | undefined {
-    return this.registry[name];
   }
 
   /**
