@@ -40,8 +40,8 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
       bg="white"
       borderRadius="xl"
       boxShadow="lg"
-      py={{ base: 0.5, md: 1 }}
-      px={{ base: 1.5, md: 2 }}
+      px={1}
+      py={1}
       zIndex={999}
       sx={{
         userSelect: 'none',

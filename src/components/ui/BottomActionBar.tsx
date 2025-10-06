@@ -91,7 +91,7 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
       width="fit-content"
       zIndex={1000}
       bg="white"
-      px={2}
+      px={1}
       py={1}
       borderRadius="xl"
       boxShadow="lg"
@@ -108,24 +108,25 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
                 icon={<Undo2 size={14} />}
                 onClick={() => undo()}
                 isDisabled={!canUndo}
-                colorScheme={canUndo ? 'blue' : 'gray'}
-                variant={canUndo ? 'solid' : 'ghost'}
+                colorScheme="gray"
+                variant="ghost"
                 size="xs"
                 sx={{
                   minHeight: '28px',
                   minWidth: '28px',
                 }}
               />
-              {pastStates.length > 0 && (
+                            {pastStates.length > 0 && (
                 <Box
                   position="absolute"
-                  top="-8px"
-                  right="-4px"
-                  bg="rgba(59, 130, 246, 0.7)"
-                  color="white"
+                  bottom="-4px"
+                  left="50%"
+                  transform="translateX(-50%)"
+                  bg="gray.50"
+                  color="gray.600"
                   borderRadius="full"
                   minW="16px"
-                  h="16px"
+                  h="11px"
                   display="flex"
                   alignItems="center"
                   justifyContent="center"
@@ -146,8 +147,8 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
                 icon={<Redo2 size={14} />}
                 onClick={() => redo()}
                 isDisabled={!canRedo}
-                colorScheme={canRedo ? 'blue' : 'gray'}
-                variant={canRedo ? 'solid' : 'ghost'}
+                colorScheme="gray"
+                variant="ghost"
                 size="xs"
                 sx={{
                   minHeight: '28px',
@@ -157,13 +158,14 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
               {futureStates.length > 0 && (
                 <Box
                   position="absolute"
-                  top="-8px"
-                  right="-4px"
-                  bg="rgba(59, 130, 246, 0.7)"
-                  color="white"
+                  bottom="-4px"
+                  left="50%"
+                  transform="translateX(-50%)"
+                  bg="gray.50"
+                  color="gray.600"
                   borderRadius="full"
                   minW="16px"
-                  h="16px"
+                  h="11px"
                   display="flex"
                   alignItems="center"
                   justifyContent="center"
@@ -212,20 +214,20 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
               {isZoomDifferent && (
                 <Box
                   position="absolute"
-                  top="-10px"
+                  bottom="-4px"
                   left="50%"
                   transform="translateX(-50%)"
-                  bg="rgba(75, 85, 99, 0.7)"
-                  color="white"
+                  bg="gray.50"
+                  color="gray.600"
                   borderRadius="full"
                   minW="28px"
-                  h="16px"
+                  h="11px"
                   display="flex"
                   alignItems="center"
                   justifyContent="center"
                   fontSize="9px"
                   fontWeight="bold"
-                  px="4px"
+                  px="3px"
                 >
                   {currentZoom}%
                 </Box>
@@ -257,24 +259,25 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
               icon={<Trash2 size={14} />}
               onClick={handleDelete}
               isDisabled={!canDelete}
-              colorScheme={canDelete ? 'red' : 'gray'}
-              variant={canDelete ? 'solid' : 'ghost'}
+              variant="ghost"
               size="xs"
               sx={{
                 minHeight: '28px',
                 minWidth: '28px',
+                color: canDelete ? 'red.500' : 'gray.400',
               }}
             />
             {deleteCount > 0 && (
               <Box
                 position="absolute"
-                top="-8px"
-                right="-4px"
-                bg="rgba(239, 68, 68, 0.7)"
-                color="white"
+                bottom="-4px"
+                left="50%"
+                transform="translateX(-50%)"
+                bg="red.50"
+                color="red.500"
                 borderRadius="full"
                 minW="16px"
-                h="16px"
+                h="11px"
                 display="flex"
                 alignItems="center"
                 justifyContent="center"
