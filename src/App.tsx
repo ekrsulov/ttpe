@@ -40,7 +40,11 @@ function App() {
 
   const handleSidebarToggleOpen = useCallback((isOpen: boolean) => {
     setIsSidebarOpen(isOpen);
-  }, []);
+    // When sidebar closes and is not pinned, if in file or settings mode, switch to select
+    if (!isOpen && !isSidebarPinned && (activePlugin === 'file' || activePlugin === 'settings')) {
+      setMode('select');
+    }
+  }, [isSidebarPinned, activePlugin, setMode]);
 
   const handleRegisterOpenHandler = useCallback((openHandler: () => void) => {
     setSidebarOpenHandler(() => openHandler);
