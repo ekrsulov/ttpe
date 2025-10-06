@@ -104,20 +104,3 @@ export const DASH_PRESETS: DashPreset[] = [
     description: 'Dash followed by three tiny dots'
   }
 ];
-
-/**
- * Converts a dash array string to SVG format
- */
-export function formatDashArray(dashArray: string): string {
-  if (dashArray === 'none' || !dashArray) {
-    return 'none';
-  }
-  return dashArray;
-}
-
-/**
- * Gets dash preset by id
- */
-export function getDashPreset(id: string): DashPreset | undefined {
-  return DASH_PRESETS.find(preset => preset.id === id);
-}

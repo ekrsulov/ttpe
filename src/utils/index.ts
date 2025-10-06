@@ -14,6 +14,7 @@ export { logger, LogLevel } from './logger';
 export * from './geometry';
 export * from './path';
 export * from './canvas';
+export * from './overlayHelpers';
 
 export function formatToPrecision(num: number, precision: number = 2): number {
   return parseFloat(num.toFixed(precision));

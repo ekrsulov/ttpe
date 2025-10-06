@@ -119,6 +119,100 @@ const performSubpathAlignment = (
   applySubpathTransformations(state, subpathBounds, getTargetPosition(subpathBounds));
 };
 
+// Generic distribution helper
+const distributeSubpathsAlongAxis = (
+  state: CanvasStore,
+  selectedSubpaths: Array<{ elementId: string; subpathIndex: number }>,
+  axis: 'horizontal' | 'vertical'
+) => {
+  if (selectedSubpaths.length < 3) return;
+
+  const subpathBounds: SubpathWithBounds[] = [];
+
+  selectedSubpaths.forEach(selected => {
+    const element = state.elements.find((el) => el.id === selected.elementId);
+    if (element && element.type === 'path') {
+      const pathData = element.data as PathData;
+      const allCommands = pathData.subPaths.flat();
+      const subpaths = extractSubpaths(allCommands);
+      const subpathCommands = subpaths[selected.subpathIndex]?.commands;
+
+      if (subpathCommands) {
+        const bounds = measureSubpathBounds(subpathCommands, pathData.strokeWidth || 1);
+
+        subpathBounds.push({
+          elementId: selected.elementId,
+          subpathIndex: selected.subpathIndex,
+          subpathCommands,
+          bounds,
+          centerX: (bounds.minX + bounds.maxX) / 2,
+          centerY: (bounds.minY + bounds.maxY) / 2,
+          width: bounds.maxX - bounds.minX,
+          height: bounds.maxY - bounds.minY
+        });
+      }
+    }
+  });
+
+  if (subpathBounds.length < 3) return;
+
+  const isHorizontal = axis === 'horizontal';
+  
+  // Sort by current center position along the axis
+  subpathBounds.sort((a, b) => 
+    isHorizontal ? a.centerX - b.centerX : a.centerY - b.centerY
+  );
+
+  // Calculate distribution
+  const firstBound = isHorizontal ? subpathBounds[0].bounds.minX : subpathBounds[0].bounds.minY;
+  const lastBound = isHorizontal 
+    ? subpathBounds[subpathBounds.length - 1].bounds.maxX 
+    : subpathBounds[subpathBounds.length - 1].bounds.maxY;
+  
+  const totalSpan = lastBound - firstBound;
+  const totalElementsSize = subpathBounds.reduce((sum, sb) => 
+    sum + (isHorizontal ? sb.width : sb.height), 0
+  );
+  const availableSpace = totalSpan - totalElementsSize;
+  const spaceBetween = availableSpace / (subpathBounds.length - 1);
+
+  // Calculate transformations for all subpaths
+  const transformations = new Map<string, { deltaX: number; deltaY: number }>();
+  let currentPosition = firstBound;
+
+  subpathBounds.forEach((subpathInfo, index) => {
+    if (index === 0) {
+      // First element stays in place
+      currentPosition += isHorizontal ? subpathInfo.width : subpathInfo.height;
+    } else if (index === subpathBounds.length - 1) {
+      // Last element stays in place
+      return;
+    } else {
+      // Distribute middle elements
+      currentPosition += spaceBetween;
+      const targetPosition = currentPosition;
+      const currentBound = isHorizontal ? subpathInfo.bounds.minX : subpathInfo.bounds.minY;
+      const delta = targetPosition - currentBound;
+
+      transformations.set(`${subpathInfo.elementId}-${subpathInfo.subpathIndex}`, {
+        deltaX: isHorizontal ? delta : 0,
+        deltaY: isHorizontal ? 0 : delta
+      });
+      currentPosition += isHorizontal ? subpathInfo.width : subpathInfo.height;
+    }
+  });
+
+  // Apply transformations using helper function
+  const subpathsToTransform = subpathBounds.filter((_, index) =>
+    index !== 0 && index !== subpathBounds.length - 1
+  );
+
+  applySubpathTransformations(state, subpathsToTransform, (subpathInfo) => {
+    const key = `${subpathInfo.elementId}-${subpathInfo.subpathIndex}`;
+    return transformations.get(key) || { deltaX: 0, deltaY: 0 };
+  });
+};
+
 export interface SubpathPluginSlice {
   // State
   selectedSubpaths: Array<{ elementId: string; subpathIndex: number }>;
@@ -524,167 +618,13 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
   distributeHorizontallySubpaths: () => {
     const state = get() as CanvasStore;
     const selectedSubpaths = get().selectedSubpaths;
-
-    if (selectedSubpaths.length < 3) return;
-
-    const subpathBounds: SubpathWithBounds[] = [];
-
-    selectedSubpaths.forEach(selected => {
-      const element = state.elements.find((el) => el.id === selected.elementId);
-      if (element && element.type === 'path') {
-        const pathData = element.data as PathData;
-        const allCommands = pathData.subPaths.flat();
-        const subpaths = extractSubpaths(allCommands);
-        const subpathCommands = subpaths[selected.subpathIndex]?.commands;
-
-        if (subpathCommands) {
-
-          const bounds = measureSubpathBounds(subpathCommands, pathData.strokeWidth || 1);
-
-          subpathBounds.push({
-            elementId: selected.elementId,
-            subpathIndex: selected.subpathIndex,
-            subpathCommands,
-            bounds,
-            centerX: (bounds.minX + bounds.maxX) / 2,
-            centerY: (bounds.minY + bounds.maxY) / 2,
-            width: bounds.maxX - bounds.minX,
-            height: bounds.maxY - bounds.minY
-          });
-        }
-      }
-    });
-
-    if (subpathBounds.length < 3) return;
-
-    // Sort by current center X position
-    subpathBounds.sort((a, b) => a.centerX - b.centerX);
-
-    // Calculate distribution
-    const leftmost = subpathBounds[0].bounds.minX;
-    const rightmost = subpathBounds[subpathBounds.length - 1].bounds.maxX;
-    const totalWidth = rightmost - leftmost;
-    const totalElementsWidth = subpathBounds.reduce((sum, sb) => sum + sb.width, 0);
-    const availableSpace = totalWidth - totalElementsWidth;
-    const spaceBetween = availableSpace / (subpathBounds.length - 1);
-
-    // Calculate transformations for all subpaths
-    const transformations = new Map<string, { deltaX: number; deltaY: number }>();
-    let currentX = leftmost;
-
-    subpathBounds.forEach((subpathInfo, index) => {
-      if (index === 0) {
-        // First element stays in place
-        currentX += subpathInfo.width;
-      } else if (index === subpathBounds.length - 1) {
-        // Last element stays in place
-        return;
-      } else {
-        // Distribute middle elements
-        currentX += spaceBetween;
-        const targetX = currentX;
-        const deltaX = targetX - subpathInfo.bounds.minX;
-
-        transformations.set(`${subpathInfo.elementId}-${subpathInfo.subpathIndex}`, {
-          deltaX,
-          deltaY: 0
-        });
-        currentX += subpathInfo.width;
-      }
-    });
-
-    // Apply transformations using helper function
-    const subpathsToTransform = subpathBounds.filter((_, index) =>
-      index !== 0 && index !== subpathBounds.length - 1
-    );
-
-    applySubpathTransformations(state, subpathsToTransform, (subpathInfo) => {
-      const key = `${subpathInfo.elementId}-${subpathInfo.subpathIndex}`;
-      return transformations.get(key) || { deltaX: 0, deltaY: 0 };
-    });
+    distributeSubpathsAlongAxis(state, selectedSubpaths, 'horizontal');
   },
 
   distributeVerticallySubpaths: () => {
     const state = get() as CanvasStore;
     const selectedSubpaths = get().selectedSubpaths;
-
-    if (selectedSubpaths.length < 3) return;
-
-    const subpathBounds: SubpathWithBounds[] = [];
-
-    selectedSubpaths.forEach(selected => {
-      const element = state.elements.find((el) => el.id === selected.elementId);
-      if (element && element.type === 'path') {
-        const pathData = element.data as PathData;
-        const allCommands = pathData.subPaths.flat();
-        const subpaths = extractSubpaths(allCommands);
-        const subpathCommands = subpaths[selected.subpathIndex]?.commands;
-
-        if (subpathCommands) {
-
-          const bounds = measureSubpathBounds(subpathCommands, pathData.strokeWidth || 1);
-
-          subpathBounds.push({
-            elementId: selected.elementId,
-            subpathIndex: selected.subpathIndex,
-            subpathCommands,
-            bounds,
-            centerX: (bounds.minX + bounds.maxX) / 2,
-            centerY: (bounds.minY + bounds.maxY) / 2,
-            width: bounds.maxX - bounds.minX,
-            height: bounds.maxY - bounds.minY
-          });
-        }
-      }
-    });
-
-    if (subpathBounds.length < 3) return;
-
-    // Sort by current center Y position
-    subpathBounds.sort((a, b) => a.centerY - b.centerY);
-
-    // Calculate distribution
-    const topmost = subpathBounds[0].bounds.minY;
-    const bottommost = subpathBounds[subpathBounds.length - 1].bounds.maxY;
-    const totalHeight = bottommost - topmost;
-    const totalElementsHeight = subpathBounds.reduce((sum, sb) => sum + sb.height, 0);
-    const availableSpace = totalHeight - totalElementsHeight;
-    const spaceBetween = availableSpace / (subpathBounds.length - 1);
-
-    // Calculate transformations for all subpaths
-    const transformations = new Map<string, { deltaX: number; deltaY: number }>();
-    let currentY = topmost;
-
-    subpathBounds.forEach((subpathInfo, index) => {
-      if (index === 0) {
-        // First element stays in place
-        currentY += subpathInfo.height;
-      } else if (index === subpathBounds.length - 1) {
-        // Last element stays in place
-        return;
-      } else {
-        // Distribute middle elements
-        currentY += spaceBetween;
-        const targetY = currentY;
-        const deltaY = targetY - subpathInfo.bounds.minY;
-
-        transformations.set(`${subpathInfo.elementId}-${subpathInfo.subpathIndex}`, {
-          deltaX: 0,
-          deltaY
-        });
-        currentY += subpathInfo.height;
-      }
-    });
-
-    // Apply transformations using helper function
-    const subpathsToTransform = subpathBounds.filter((_, index) =>
-      index !== 0 && index !== subpathBounds.length - 1
-    );
-
-    applySubpathTransformations(state, subpathsToTransform, (subpathInfo) => {
-      const key = `${subpathInfo.elementId}-${subpathInfo.subpathIndex}`;
-      return transformations.get(key) || { deltaX: 0, deltaY: 0 };
-    });
+    distributeSubpathsAlongAxis(state, selectedSubpaths, 'vertical');
   },
 
   // Drag actions

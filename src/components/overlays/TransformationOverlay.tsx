@@ -1,6 +1,7 @@
 import React from 'react';
 import { deriveElementSelectionColors, SUBPATH_SELECTION_COLOR } from '../../utils/canvas';
 import { measureSubpathBounds } from '../../utils/geometry';
+import { computeAdjustedBounds } from '../../utils/overlayHelpers';
 import { TransformationHandlers } from '../TransformationHandlers';
 import type { PathData } from '../../types';
 import { logger } from '../../utils';
@@ -55,17 +56,11 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
   const { selectionColor } = deriveElementSelectionColors(element);
 
   const strokeWidth = 1 / viewport.zoom;
-  const offset = 5 / viewport.zoom;
-  const adjustedX = bounds.minX - offset;
-  const adjustedY = bounds.minY - offset;
-  const adjustedWidth = bounds.maxX - bounds.minX + 2 * offset;
-  const adjustedHeight = bounds.maxY - bounds.minY + 2 * offset;
-  const adjustedBounds = {
-    minX: adjustedX,
-    minY: adjustedY,
-    maxX: adjustedX + adjustedWidth,
-    maxY: adjustedY + adjustedHeight,
-  };
+  
+  // Calculate adjusted bounds for the element
+  const adjustedBounds = computeAdjustedBounds(bounds, viewport.zoom);
+  const adjustedWidth = adjustedBounds.maxX - adjustedBounds.minX;
+  const adjustedHeight = adjustedBounds.maxY - adjustedBounds.minY;
 
   const handlerSize = 10 / viewport.zoom;
 
@@ -74,8 +69,8 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
       {/* Selection rectangle - only show when working with subpaths but NOT in transformation mode with exactly one subpath selected */}
       {isWorkingWithSubpaths && !(activePlugin === 'transformation' && selectedSubpaths.length === 1) && adjustedWidth > 0 && adjustedHeight > 0 && (
         <rect
-          x={adjustedX}
-          y={adjustedY}
+          x={adjustedBounds.minX}
+          y={adjustedBounds.minY}
           width={adjustedWidth}
           height={adjustedHeight}
           fill="none"
@@ -112,13 +107,7 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
 
               if (!subpathBounds) return null;
 
-              const subpathOffset = 5 / viewport.zoom;
-              const adjustedSubpathBounds = {
-                minX: subpathBounds.minX - subpathOffset,
-                minY: subpathBounds.minY - subpathOffset,
-                maxX: subpathBounds.maxX + subpathOffset,
-                maxY: subpathBounds.maxY + subpathOffset,
-              };
+              const adjustedSubpathBounds = computeAdjustedBounds(subpathBounds, viewport.zoom);
 
               return (
                 <g key={`subpath-handlers-${selected.elementId}-${selected.subpathIndex}`}>
