@@ -137,9 +137,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
     smoothBrushMinDistance,
   ]);
   
-  // Local state for panels
-  const [showFilePanel, setShowFilePanel] = useState<boolean>(false);
-  const [showSettingsPanel, setShowSettingsPanel] = useState<boolean>(false);
+  // Panel state from store (single source of truth)
+  const showFilePanel = useCanvasStore((state) => state.showFilePanel);
+  const showSettingsPanel = useCanvasStore((state) => state.showSettingsPanel);
+  const setShowFilePanel = useCanvasStore((state) => state.setShowFilePanel);
+  const setShowSettingsPanel = useCanvasStore((state) => state.setShowSettingsPanel);
+  
+  // Local state for arrange panel expansion
   const [isArrangeExpanded, setIsArrangeExpanded] = useState(true);
 
   // Close special panels when switching to tool modes
@@ -149,21 +153,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       setShowFilePanel(false);
       setShowSettingsPanel(false);
     }
-  }, [activePlugin]);
-
-  // Handle Escape key to return to select mode when in file/settings mode
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && (showFilePanel || showSettingsPanel)) {
-        setShowFilePanel(false);
-        setShowSettingsPanel(false);
-        setMode('select');
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [showFilePanel, showSettingsPanel, setMode]);
+  }, [activePlugin, setShowFilePanel, setShowSettingsPanel]);
 
   // Handlers for special panel buttons
   const handleToolClick = (toolName: string) => {
