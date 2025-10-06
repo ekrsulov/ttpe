@@ -3,15 +3,12 @@ export interface Point {
   y: number;
 }
 
-// Control point alignment types
+// Control point alignment types (calculated on-demand)
 export type ControlPointType = 'independent' | 'aligned' | 'mirrored';
 
 export interface ControlPointInfo {
   commandIndex: number;
   pointIndex: number;
-  type: ControlPointType;
-  pairedCommandIndex?: number;
-  pairedPointIndex?: number;
   anchor: Point;
   isControl: boolean; // Made required to consolidate ControlPoint definitions
   associatedCommandIndex?: number; // Added to consolidate ControlPoint definitions
@@ -20,6 +17,14 @@ export interface ControlPointInfo {
 
 // Control point combining position and info
 export interface ControlPoint extends Point, ControlPointInfo { }
+
+// Extended control point info with alignment data (calculated on-demand)
+export interface ControlPointAlignmentInfo {
+  type: ControlPointType;
+  pairedCommandIndex?: number;
+  pairedPointIndex?: number;
+  anchor: Point;
+}
 
 // Path command types
 export type Command =

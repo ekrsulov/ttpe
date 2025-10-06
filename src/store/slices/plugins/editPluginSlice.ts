@@ -1,5 +1,5 @@
 import type { StateCreator } from 'zustand';
-import { extractEditablePoints, updateCommands, normalizePathCommands, extractSubpaths, simplifyPoints, findPairedControlPoint, determineControlPointAlignment, adjustControlPointForAlignment } from '../../../utils/pathParserUtils';
+import { extractEditablePoints, updateCommands, normalizePathCommands, extractSubpaths, simplifyPoints, adjustControlPointForAlignment, getControlPointAlignmentInfo } from '../../../utils/pathParserUtils';
 import { performPathSimplifyPaperJS, performPathRound } from '../../../utils/pathOperationsUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../../utils';
 import type { CanvasElement, PathData, Point, Command, SubPath } from '../../../types';
@@ -358,7 +358,6 @@ export interface EditPluginSlice {
   };
   controlPointAlignment: {
     enabled: boolean;
-    controlPoints: Record<string, import('../../../types').ControlPointInfo>;
   };
 
   // Actions
@@ -402,7 +401,6 @@ export interface EditPluginSlice {
   applyPathSimplification: () => void;
   updatePathRounding: (settings: Partial<EditPluginSlice['pathRounding']>) => void;
   applyPathRounding: () => void;
-  updateControlPointAlignment: (elementId: string, commandIndex: number, pointIndex: number) => void;
   getControlPointInfo: (elementId: string, commandIndex: number, pointIndex: number) => import('../../../types').ControlPointInfo | null;
   setControlPointAlignmentType: (elementId: string, commandIndex1: number, pointIndex1: number, commandIndex2: number, pointIndex2: number, type: import('../../../types').ControlPointType) => void;
   applyControlPointAlignment: (elementId: string, commandIndex: number, pointIndex: number, newX: number, newY: number) => void;
@@ -434,7 +432,6 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
   },
   controlPointAlignment: {
     enabled: true,
-    controlPoints: {}, // Cambiar de Map a objeto plano
   },
 
   // Actions
@@ -698,13 +695,8 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
       };
     });
 
-    // Update control point alignment info for selected commands immediately
-    const currentState = get() as FullCanvasState;
-    currentState.selectedCommands.forEach(cmd => {
-      currentState.updateControlPointAlignment(cmd.elementId, cmd.commandIndex, cmd.pointIndex);
-    });
-
     // Set active plugin to 'edit' when selecting commands
+    const currentState = get() as FullCanvasState;
     if (currentState.activePlugin !== 'edit') {
       currentState.setActivePlugin('edit');
     }
@@ -1189,7 +1181,6 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
               x: sp.x,
               y: sp.y,
               isControl: sp.isControl,
-              type: 'independent' as const,
               anchor: { x: sp.x, y: sp.y }
             });
           });
@@ -1249,7 +1240,6 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
               x: sp.x,
               y: sp.y,
               isControl: sp.isControl,
-              type: 'independent' as const,
               anchor: { x: sp.x, y: sp.y }
             });
           });
@@ -1561,94 +1551,30 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     }
   },
 
-  updateControlPointAlignment: (elementId: string, commandIndex: number, pointIndex: number) => {
+  getControlPointInfo: (elementId: string, commandIndex: number, pointIndex: number) => {
     const state = get() as FullCanvasState;
     const element = state.elements.find(el => el.id === elementId);
-    if (!element || element.type !== 'path') return;
-
-    const key = `${elementId}-${commandIndex}-${pointIndex}`;
-    if (state.controlPointAlignment.controlPoints[key]) {
-      return; // Already has alignment info, don't update
-    }
+    if (!element || element.type !== 'path') return null;
 
     const pathData = element.data as PathData;
     const commands = pathData.subPaths.flat();
-    const command = commands[commandIndex];
+    const points = extractEditablePoints(commands);
 
-    if (!command || command.type !== 'C' || (pointIndex !== 0 && pointIndex !== 1)) return;
+    // Calculate alignment info on-demand
+    const alignmentInfo = getControlPointAlignmentInfo(commands, points, commandIndex, pointIndex);
+    
+    if (!alignmentInfo) return null;
 
-    // Find paired control point
-    const paired = findPairedControlPoint(commands, commandIndex, pointIndex);
-    if (!paired) {
-      // No paired control point, mark as independent
-      const key = `${elementId}-${commandIndex}-${pointIndex}`;
-      const controlPointInfo: import('../../../types').ControlPointInfo = {
-        commandIndex,
-        pointIndex,
-        type: 'independent',
-        anchor: command.position,
-        isControl: true
-      };
-      set((currentState) => ({
-        controlPointAlignment: {
-          ...currentState.controlPointAlignment,
-          controlPoints: {
-            ...currentState.controlPointAlignment.controlPoints,
-            [key]: controlPointInfo
-          }
-        }
-      }));
-      return;
-    }
-
-    // Determine alignment type
-    const alignmentType = determineControlPointAlignment(
-      commands,
+    return {
       commandIndex,
       pointIndex,
-      paired.commandIndex,
-      paired.pointIndex,
-      paired.anchor
-    );
-
-    // Update both control points
-    const key1 = `${elementId}-${commandIndex}-${pointIndex}`;
-    const key2 = `${elementId}-${paired.commandIndex}-${paired.pointIndex}`;
-
-    const info1: import('../../../types').ControlPointInfo = {
-      commandIndex,
-      pointIndex,
-      type: alignmentType,
-      pairedCommandIndex: paired.commandIndex,
-      pairedPointIndex: paired.pointIndex,
-      anchor: paired.anchor,
-      isControl: true
-    };
-
-    const info2: import('../../../types').ControlPointInfo = {
-      commandIndex: paired.commandIndex,
-      pointIndex: paired.pointIndex,
-      type: alignmentType,
-      pairedCommandIndex: commandIndex,
-      pairedPointIndex: pointIndex,
-      anchor: paired.anchor,
-      isControl: true
-    };
-
-    set((currentState) => ({
-      controlPointAlignment: {
-        ...currentState.controlPointAlignment,
-        controlPoints: {
-          ...currentState.controlPointAlignment.controlPoints,
-          [key1]: info1,
-          [key2]: info2
-        }
-      }
-    }));
-  }, getControlPointInfo: (elementId: string, commandIndex: number, pointIndex: number) => {
-    const state = get() as FullCanvasState;
-    const key = `${elementId}-${commandIndex}-${pointIndex}`;
-    return state.controlPointAlignment.controlPoints[key] || null;
+      anchor: alignmentInfo.anchor,
+      isControl: true,
+      // Include type and pairing info from alignment calculation
+      type: alignmentInfo.type,
+      pairedCommandIndex: alignmentInfo.pairedCommandIndex,
+      pairedPointIndex: alignmentInfo.pairedPointIndex
+    } as import('../../../types').ControlPointInfo & { type: import('../../../types').ControlPointType; pairedCommandIndex?: number; pairedPointIndex?: number };
   },
 
   setControlPointAlignmentType: (elementId: string, commandIndex1: number, pointIndex1: number, commandIndex2: number, pointIndex2: number, type: import('../../../types').ControlPointType) => {
@@ -1685,30 +1611,12 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
       type
     );
 
-    // Update point1 with new position and type
+    // Update point1 with new position
     point1.x = newPoint1Position.x;
     point1.y = newPoint1Position.y;
-    point1.type = type;
-
-    // For independent type, remove pairing information
-    if (type === 'independent') {
-      point1.pairedCommandIndex = undefined;
-      point1.pairedPointIndex = undefined;
-      point2.pairedCommandIndex = undefined;
-      point2.pairedPointIndex = undefined;
-    } else {
-      // For aligned and mirrored, maintain pairing
-      point1.pairedCommandIndex = commandIndex2;
-      point1.pairedPointIndex = pointIndex2;
-      point2.pairedCommandIndex = commandIndex1;
-      point2.pairedPointIndex = pointIndex1;
-    }
-
-    // Also update point2 with the new type
-    point2.type = type;
 
     // Update the path with modified points
-    const newCommands = updateCommands(commands, [point1, point2]);
+    const newCommands = updateCommands(commands, [point1]);
     const newSubPaths = extractSubpaths(newCommands).map(s => s.commands);
 
     (get() as FullCanvasState).updateElement(elementId, {
@@ -1716,52 +1624,6 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
         ...pathData,
         subPaths: newSubPaths
       }
-    });
-
-    // Update the control point info in the store
-    const key1 = `${elementId}-${commandIndex1}-${pointIndex1}`;
-    const key2 = `${elementId}-${commandIndex2}-${pointIndex2}`;
-
-    const info1: import('../../../types').ControlPointInfo = {
-      commandIndex: commandIndex1,
-      pointIndex: pointIndex1,
-      type,
-      pairedCommandIndex: type === 'independent' ? undefined : commandIndex2,
-      pairedPointIndex: type === 'independent' ? undefined : pointIndex2,
-      anchor: sharedAnchor,
-      isControl: true
-    };
-
-    const info2: import('../../../types').ControlPointInfo = {
-      commandIndex: commandIndex2,
-      pointIndex: pointIndex2,
-      type,
-      pairedCommandIndex: type === 'independent' ? undefined : commandIndex1,
-      pairedPointIndex: type === 'independent' ? undefined : pointIndex1,
-      anchor: sharedAnchor,
-      isControl: true
-    };
-
-    // Update the control point alignment state
-    set((currentState) => {
-      const newControlPoints = { ...currentState.controlPointAlignment.controlPoints };
-
-      if (type === 'independent') {
-        // For independent, we might want to remove the pairing info entirely
-        newControlPoints[key1] = info1;
-        newControlPoints[key2] = info2;
-      } else {
-        // For aligned and mirrored, store the pairing info
-        newControlPoints[key1] = info1;
-        newControlPoints[key2] = info2;
-      }
-
-      return {
-        controlPointAlignment: {
-          ...currentState.controlPointAlignment,
-          controlPoints: newControlPoints
-        }
-      };
     });
   },
 
@@ -1778,143 +1640,8 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     const movedPoint = points.find(p => p.commandIndex === commandIndex && p.pointIndex === pointIndex);
     if (!movedPoint || !movedPoint.isControl) return;
 
-    // Get the alignment info for this point
-    const key = `${elementId}-${commandIndex}-${pointIndex}`;
-    let alignmentInfo = state.controlPointAlignment.controlPoints[key];
-
-    // If this point doesn't have alignment info, try to find paired point structurally and check if it has alignment
-    if (!alignmentInfo || alignmentInfo.type === 'independent') {
-      // Determine the paired point structurally
-      const isClosed = commands.length > 2 && commands[commands.length - 1].type === 'Z';
-
-      let pairedCommandIndex = -1;
-      let pairedPointIndex = -1;
-      const handleType = pointIndex === 0 ? 'outgoing' : 'incoming';
-
-      if (handleType === 'incoming') {
-        // For incoming handle, find the next command's outgoing handle
-        if (commandIndex < commands.length - 1) {
-          const nextCommand = commands[commandIndex + 1];
-          if (nextCommand.type === 'C') {
-            pairedCommandIndex = commandIndex + 1;
-            pairedPointIndex = 0;
-          }
-        } else if (isClosed && commands[commandIndex].type === 'C') {
-          // Find first C command
-          for (let i = 1; i < commands.length; i++) {
-            if (commands[i].type === 'C') {
-              pairedCommandIndex = i;
-              pairedPointIndex = 0;
-              break;
-            }
-          }
-        }
-      } else {
-        // For outgoing handle, find the previous command's incoming handle
-        if (commandIndex > 0) {
-          const prevCommand = commands[commandIndex - 1];
-          if (prevCommand.type === 'C') {
-            pairedCommandIndex = commandIndex - 1;
-            pairedPointIndex = 1;
-          }
-        } else if (isClosed && commands[commandIndex].type === 'C') {
-          // Find last C command
-          for (let i = commands.length - 2; i >= 0; i--) {
-            if (commands[i].type === 'C') {
-              pairedCommandIndex = i;
-              pairedPointIndex = 1;
-              break;
-            }
-          }
-        }
-      }
-
-      // If found paired point, check if it has alignment info
-      if (pairedCommandIndex !== -1) {
-        const pairedKey = `${elementId}-${pairedCommandIndex}-${pairedPointIndex}`;
-        const pairedAlignmentInfo = state.controlPointAlignment.controlPoints[pairedKey];
-        if (pairedAlignmentInfo && pairedAlignmentInfo.type !== 'independent') {
-          // Use the paired point's alignment info
-          alignmentInfo = {
-            commandIndex: commandIndex,
-            pointIndex: pointIndex,
-            type: pairedAlignmentInfo.type,
-            pairedCommandIndex: pairedCommandIndex,
-            pairedPointIndex: pairedPointIndex,
-            anchor: pairedAlignmentInfo.anchor,
-            isControl: true
-          };
-        }
-      } else {
-        // Special case: if no paired point found and path is closed, look for control points that share coordinates with the M point
-        const isClosed = commands.length > 2 && commands[commands.length - 1].type === 'Z';
-
-        if (isClosed && commands[commandIndex].type === 'C') {
-          // Find the M point for this subpath
-          let mCommandIndex = -1;
-          for (let i = commandIndex; i >= 0; i--) {
-            if (commands[i].type === 'M') {
-              mCommandIndex = i;
-              break;
-            }
-          }
-
-          if (mCommandIndex !== -1) {
-            const mPoint = (commands[mCommandIndex] as Command & { type: 'M' }).position;
-            const currentPoint = points.find(p => p.commandIndex === commandIndex && p.pointIndex === pointIndex);
-
-            if (currentPoint) {
-              // Check if current point shares x or y coordinate with M point
-              const sharesX = Math.abs(currentPoint.x - mPoint.x) < 0.1;
-              const sharesY = Math.abs(currentPoint.y - mPoint.y) < 0.1;
-
-              if (sharesX || sharesY) {
-                // Find other control points in the same subpath that share the same coordinate
-                for (const otherPoint of points) {
-                  if (otherPoint.commandIndex !== commandIndex || otherPoint.pointIndex !== pointIndex) {
-                    // Check if it's in the same subpath (between M and Z)
-                    let inSameSubpath = false;
-                    if (otherPoint.commandIndex > mCommandIndex) {
-                      inSameSubpath = true;
-                      // Check if there's an M between them (new subpath)
-                      for (let i = mCommandIndex + 1; i < otherPoint.commandIndex; i++) {
-                        if (commands[i].type === 'M') {
-                          inSameSubpath = false;
-                          break;
-                        }
-                      }
-                    }
-
-                    if (inSameSubpath && otherPoint.isControl) {
-                      const sharesCoord = (sharesX && Math.abs(otherPoint.x - mPoint.x) < 0.1) ||
-                        (sharesY && Math.abs(otherPoint.y - mPoint.y) < 0.1);
-
-                      if (sharesCoord) {
-                        // Found a matching point, check if it has alignment info
-                        const pairedKey = `${elementId}-${otherPoint.commandIndex}-${otherPoint.pointIndex}`;
-                        const pairedAlignmentInfo = state.controlPointAlignment.controlPoints[pairedKey];
-                        if (pairedAlignmentInfo && pairedAlignmentInfo.type !== 'independent') {
-                          alignmentInfo = {
-                            commandIndex: commandIndex,
-                            pointIndex: pointIndex,
-                            type: pairedAlignmentInfo.type,
-                            pairedCommandIndex: otherPoint.commandIndex,
-                            pairedPointIndex: otherPoint.pointIndex,
-                            anchor: pairedAlignmentInfo.anchor,
-                            isControl: true
-                          };
-                        }
-                        break;
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+    // Get the alignment info for this point (calculated on-demand)
+    const alignmentInfo = getControlPointAlignmentInfo(commands, points, commandIndex, pointIndex);
 
     if (!alignmentInfo || alignmentInfo.type === 'independent') return;
 
@@ -2256,7 +1983,6 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
             ...control1,
             commandIndex,
             pointIndex: 0,
-            type: 'independent' as const,
             anchor: startPoint,
             isControl: true
           },
@@ -2264,7 +1990,6 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
             ...control2,
             commandIndex,
             pointIndex: 1,
-            type: 'independent' as const,
             anchor: startPoint,
             isControl: true
           },

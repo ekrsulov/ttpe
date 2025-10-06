@@ -1,6 +1,6 @@
 import React, { useMemo, useCallback } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { extractEditablePoints } from '../../utils/path';
+import { extractEditablePoints, getControlPointAlignmentInfo } from '../../utils/path';
 import type { Command, Point, ControlPoint } from '../../types';
 import { RotateCcw, Move, Link, Copy, ChevronDown, ChevronUp } from 'lucide-react';
 import {
@@ -44,28 +44,6 @@ export const ControlPointAlignmentPanel: React.FC = () => {
   const convertCommandType = useCanvasStore(state => state.convertCommandType);
   const cutSubpathAtPoint = useCanvasStore(state => state.cutSubpathAtPoint);
   const setControlPointAlignmentType = useCanvasStore(state => state.setControlPointAlignmentType);
-
-  const isPathClosed = (commands: Command[]): boolean => {
-    if (commands.length < 2) return false;
-
-    // Check for explicit Z command
-    if (commands[commands.length - 1].type === 'Z') return true;
-
-    // Check if last point is close to first point (implicitly closed)
-    const firstPoint = commands[0].type === 'Z' ? null : commands[0].position;
-    const lastCommand = commands[commands.length - 1];
-    const lastPoint = lastCommand.type === 'Z' ? null : lastCommand.position;
-
-    if (!firstPoint || !lastPoint) return false;
-
-    const distance = Math.sqrt(
-      Math.pow(lastPoint.x - firstPoint.x, 2) +
-      Math.pow(lastPoint.y - firstPoint.y, 2)
-    );
-
-    const threshold = 0.1; // Small threshold for considering points as the same
-    return distance < threshold;
-  };
 
   /**
    * Helper function to retrieve path commands with validation
@@ -243,151 +221,18 @@ export const ControlPointAlignmentPanel: React.FC = () => {
         location: `${command.type} Command ${cmd.commandIndex}, Point ${cmd.pointIndex}`
       };
     } else {
-      // Control point logic - use the information directly from the point
-
-      // Determine if path is closed
-      const isClosed = isPathClosed(commands);
-
-      // Find paired control point using the stored pairing information
+      // Control point - calculate alignment info on-demand
+      const alignmentInfo = getControlPointAlignmentInfo(commands, points, cmd.commandIndex, cmd.pointIndex);
+      
+      // Find paired control point if alignment info indicates it exists
       let pairedPoint: ControlPoint | null = null;
-
-      if (point.pairedCommandIndex !== undefined && point.pairedPointIndex !== undefined) {
+      if (alignmentInfo && alignmentInfo.pairedCommandIndex !== undefined && alignmentInfo.pairedPointIndex !== undefined) {
         pairedPoint = points.find((p: ControlPoint) =>
-          p.commandIndex === point.pairedCommandIndex && p.pointIndex === point.pairedPointIndex
+          p.commandIndex === alignmentInfo.pairedCommandIndex && p.pointIndex === alignmentInfo.pairedPointIndex
         ) || null;
       }
 
-      // If no direct pairing found, try to find paired control point using proper logic
-      if (!pairedPoint) {
-        // For a control point to have a pair, they must share the same anchor point
-        // This happens when:
-        // 1. Incoming control point (index 1) of command N pairs with outgoing control point (index 0) of command N+1
-        // 2. In closed paths, the last command's incoming pairs with first command's outgoing
-
-        let candidatePairedPoint: ControlPoint | null = null;
-
-        if (cmd.pointIndex === 1) {
-          // This is an incoming control point - look for the next command's outgoing control point
-          const nextCommandIndex = cmd.commandIndex + 1;
-
-          // Skip Z commands when looking for the next command
-          let targetCommandIndex = nextCommandIndex;
-          while (targetCommandIndex < commands.length && commands[targetCommandIndex].type === 'Z') {
-            targetCommandIndex++;
-          }
-
-          if (targetCommandIndex < commands.length && commands[targetCommandIndex].type === 'C') {
-            candidatePairedPoint = points.find((p: ControlPoint) =>
-              p.commandIndex === targetCommandIndex && p.pointIndex === 0
-            ) || null;
-          } else if (isClosed) {
-            // For closed paths, if we're at the last curve command, pair with the first curve's outgoing
-            // Find the first C command after M
-            for (let i = 1; i < commands.length; i++) {
-              if (commands[i].type === 'C') {
-                candidatePairedPoint = points.find((p: ControlPoint) =>
-                  p.commandIndex === i && p.pointIndex === 0
-                ) || null;
-                break;
-              }
-            }
-          }
-        } else if (cmd.pointIndex === 0) {
-          // This is an outgoing control point - look for the previous command's incoming control point
-          const prevCommandIndex = cmd.commandIndex - 1;
-
-          // Skip Z commands when looking for the previous command
-          let targetCommandIndex = prevCommandIndex;
-          while (targetCommandIndex >= 0 && commands[targetCommandIndex].type === 'Z') {
-            targetCommandIndex--;
-          }
-
-          if (targetCommandIndex >= 0 && commands[targetCommandIndex].type === 'C') {
-            candidatePairedPoint = points.find((p: ControlPoint) =>
-              p.commandIndex === targetCommandIndex && p.pointIndex === 1
-            ) || null;
-          } else if (isClosed) {
-            // For closed paths, if we're at the first curve command, pair with the last curve's incoming
-            // Find the last C command before any Z
-            for (let i = commands.length - 1; i >= 1; i--) {
-              if (commands[i].type === 'C') {
-                candidatePairedPoint = points.find((p: ControlPoint) =>
-                  p.commandIndex === i && p.pointIndex === 1
-                ) || null;
-                break;
-              }
-            }
-          }
-        }
-
-        // For paired control points, verify they have the exact same anchor
-        if (candidatePairedPoint) {
-          const tolerance = 0.1;
-          const anchorDistance = Math.sqrt(
-            Math.pow(point.anchor.x - candidatePairedPoint.anchor.x, 2) +
-            Math.pow(point.anchor.y - candidatePairedPoint.anchor.y, 2)
-          );
-
-          if (anchorDistance < tolerance) {
-            pairedPoint = candidatePairedPoint;
-          }
-        }
-      }
-
-      // Special case: if no paired point found and path is closed, look for control points that share coordinates with the M point
-      if (!pairedPoint && isClosed && commands[cmd.commandIndex].type === 'C') {
-        // Find the M point for this subpath
-        let mCommandIndex = -1;
-        for (let i = cmd.commandIndex; i >= 0; i--) {
-          if (commands[i].type === 'M') {
-            mCommandIndex = i;
-            break;
-          }
-        }
-
-        if (mCommandIndex !== -1) {
-          const mPoint = (commands[mCommandIndex] as Command & { type: 'M' }).position;
-          const currentPoint = point;
-
-          // Check if current point shares x or y coordinate with M point
-          const sharesX = Math.abs(currentPoint.x - mPoint.x) < 0.1;
-          const sharesY = Math.abs(currentPoint.y - mPoint.y) < 0.1;
-
-          if (sharesX || sharesY) {
-            // Find other control points in the same subpath that share the same coordinate
-            for (const otherPoint of points) {
-              if (otherPoint.commandIndex !== cmd.commandIndex || otherPoint.pointIndex !== cmd.pointIndex) {
-                // Check if it's in the same subpath (between M and Z)
-                let inSameSubpath = false;
-                if (otherPoint.commandIndex > mCommandIndex) {
-                  inSameSubpath = true;
-                  // Check if there's an M between them (new subpath)
-                  for (let i = mCommandIndex + 1; i < otherPoint.commandIndex; i++) {
-                    if (commands[i].type === 'M') {
-                      inSameSubpath = false;
-                      break;
-                    }
-                  }
-                }
-
-                if (inSameSubpath && otherPoint.isControl) {
-                  const sharesCoord = (sharesX && Math.abs(otherPoint.x - mPoint.x) < 0.1) ||
-                    (sharesY && Math.abs(otherPoint.y - mPoint.y) < 0.1);
-
-                  if (sharesCoord) {
-                    // Found a matching point
-                    pairedPoint = otherPoint;
-                    break;
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-
-      // Calculate alignment type based on positions (this will be the current type from the data)
-      const calculatedType: 'independent' | 'aligned' | 'mirrored' = point.type || 'independent';
+      // Calculate magnitudes and angles for display
       let mag1 = 0;
       let angle1 = 0;
       let mag2: number | undefined;
@@ -409,24 +254,29 @@ export const ControlPointAlignmentPanel: React.FC = () => {
       return {
         point,
         command: commands[cmd.commandIndex],
-        info: {
+        info: alignmentInfo ? {
           commandIndex: point.commandIndex,
           pointIndex: point.pointIndex,
-          type: point.type,
-          pairedCommandIndex: point.pairedCommandIndex,
-          pairedPointIndex: point.pairedPointIndex,
+          type: alignmentInfo.type,
+          pairedCommandIndex: alignmentInfo.pairedCommandIndex,
+          pairedPointIndex: alignmentInfo.pairedPointIndex,
+          anchor: alignmentInfo.anchor
+        } : {
+          commandIndex: point.commandIndex,
+          pointIndex: point.pointIndex,
+          type: 'independent' as const,
           anchor: point.anchor
         },
         pairedPoint,
-        pairedInfo: pairedPoint ? {
+        pairedInfo: pairedPoint && alignmentInfo ? {
           commandIndex: pairedPoint.commandIndex,
           pointIndex: pairedPoint.pointIndex,
-          type: pairedPoint.type,
-          pairedCommandIndex: pairedPoint.pairedCommandIndex,
-          pairedPointIndex: pairedPoint.pairedPointIndex,
-          anchor: pairedPoint.anchor
+          type: alignmentInfo.type,
+          pairedCommandIndex: alignmentInfo.pairedCommandIndex,
+          pairedPointIndex: alignmentInfo.pairedPointIndex,
+          anchor: alignmentInfo.anchor
         } : null,
-        calculatedType,
+        calculatedType: alignmentInfo?.type || 'independent',
         mag1,
         angle1,
         mag2,
