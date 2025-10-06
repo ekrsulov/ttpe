@@ -1,7 +1,7 @@
 import React from 'react';
-import { IconButton as ChakraIconButton, HStack, Tag as ChakraTag } from '@chakra-ui/react';
+import { IconButton as ChakraIconButton, HStack, VStack, Tag as ChakraTag } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { Hand, RotateCcw, ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Hand, RotateCcw, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ArrowUpLeft, ArrowUpRight, ArrowDownLeft, ArrowDownRight } from 'lucide-react';
 import { Panel } from '../ui/Panel';
 
 export const PanPanel: React.FC = () => {
@@ -23,39 +23,50 @@ export const PanPanel: React.FC = () => {
         </ChakraTag>
       }
     >
-      <HStack spacing={1} justify="space-between">
-        {/* Direction buttons group */}
+      <VStack spacing={1} align="center">
+        {/* First row: NW, N, NE */}
         <HStack spacing={1}>
-          {/* Pan Left */}
           <ChakraIconButton
-            aria-label="Pan Left"
-            icon={<ChevronLeft size={14} />}
-            onClick={() => pan(-panAmount, 0)}
+            aria-label="Pan Northwest"
+            icon={<ArrowUpLeft size={14} />}
+            onClick={() => pan(-panAmount, -panAmount)}
             size="sm"
             variant="secondary"
           />
-
-          {/* Pan Up */}
           <ChakraIconButton
-            aria-label="Pan Up"
+            aria-label="Pan North"
             icon={<ChevronUp size={14} />}
             onClick={() => pan(0, -panAmount)}
             size="sm"
             variant="secondary"
           />
-
-          {/* Pan Down */}
           <ChakraIconButton
-            aria-label="Pan Down"
-            icon={<ChevronDown size={14} />}
-            onClick={() => pan(0, panAmount)}
+            aria-label="Pan Northeast"
+            icon={<ArrowUpRight size={14} />}
+            onClick={() => pan(panAmount, -panAmount)}
             size="sm"
             variant="secondary"
           />
+        </HStack>
 
-          {/* Pan Right */}
+        {/* Second row: W, Reset, E */}
+        <HStack spacing={1}>
           <ChakraIconButton
-            aria-label="Pan Right"
+            aria-label="Pan West"
+            icon={<ChevronLeft size={14} />}
+            onClick={() => pan(-panAmount, 0)}
+            size="sm"
+            variant="secondary"
+          />
+          <ChakraIconButton
+            aria-label="Reset Pan"
+            icon={<RotateCcw size={14} />}
+            onClick={resetPan}
+            size="sm"
+            variant="secondary"
+          />
+          <ChakraIconButton
+            aria-label="Pan East"
             icon={<ChevronRight size={14} />}
             onClick={() => pan(panAmount, 0)}
             size="sm"
@@ -63,15 +74,31 @@ export const PanPanel: React.FC = () => {
           />
         </HStack>
 
-        {/* Reset Pan - aligned to the right */}
-        <ChakraIconButton
-          aria-label="Reset Pan"
-          icon={<RotateCcw size={14} />}
-          onClick={resetPan}
-          size="sm"
-          variant="secondary"
-        />
-      </HStack>
+        {/* Third row: SW, S, SE */}
+        <HStack spacing={1}>
+          <ChakraIconButton
+            aria-label="Pan Southwest"
+            icon={<ArrowDownLeft size={14} />}
+            onClick={() => pan(-panAmount, panAmount)}
+            size="sm"
+            variant="secondary"
+          />
+          <ChakraIconButton
+            aria-label="Pan South"
+            icon={<ChevronDown size={14} />}
+            onClick={() => pan(0, panAmount)}
+            size="sm"
+            variant="secondary"
+          />
+          <ChakraIconButton
+            aria-label="Pan Southeast"
+            icon={<ArrowDownRight size={14} />}
+            onClick={() => pan(panAmount, panAmount)}
+            size="sm"
+            variant="secondary"
+          />
+        </HStack>
+      </VStack>
     </Panel>
   );
 };
