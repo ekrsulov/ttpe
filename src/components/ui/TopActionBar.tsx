@@ -11,9 +11,7 @@ import {
   Menu,
   Hand
 } from 'lucide-react';
-import { useCanvasStore } from '../../store/canvasStore';
-import { RenderCountBadge } from './RenderCountBadge';
-import { useRenderCount } from '../../hooks/useRenderCount';
+import { RenderCountBadgeWrapper } from './RenderCountBadgeWrapper';
 import type { CanvasElement } from '../../types';
 
 type ToolMode = 'select' | 'pencil' | 'text' | 'shape' | 'subpath' | 'transformation' | 'edit' | 'pan';
@@ -48,9 +46,6 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
   onMenuClick,
   selectedPaths = [],
 }) => {
-  const { count: renderCount, rps: renderRps } = useRenderCount('TopActionBar');
-  const settings = useCanvasStore(state => state.settings);
-
   const showMenuButton = !isSidebarPinned;
   const isPositionedForSidebar = sidebarWidth > 0;
 
@@ -128,9 +123,7 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
           />
         )}
       </HStack>
-      {process.env.NODE_ENV === 'development' && settings.showRenderCountBadges && (
-        <RenderCountBadge count={renderCount} rps={renderRps} position="top-right" />
-      )}
+      <RenderCountBadgeWrapper componentName="TopActionBar" position="top-right" />
     </Box>
   );
 };

@@ -13,8 +13,7 @@ import { SidebarToolGrid } from './sidebar/SidebarToolGrid';
 import { SidebarPanels } from './sidebar/SidebarPanels';
 import { SidebarFooter } from './sidebar/SidebarFooter';
 import { SidebarResizer } from './sidebar/SidebarResizer';
-import { RenderCountBadge } from './ui/RenderCountBadge';
-import { useRenderCount } from '../hooks/useRenderCount';
+import { RenderCountBadgeWrapper } from './ui/RenderCountBadgeWrapper';
 
 interface SidebarProps {
   onPinnedChange?: (isPinned: boolean) => void;
@@ -29,8 +28,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onToggleOpen,
   onRegisterOpenHandler 
 }) => {
-  const { count: renderCount, rps: renderRps } = useRenderCount('Sidebar');
-  
   // Detect if desktop (md breakpoint = 768px)
   const isDesktop = useBreakpointValue({ base: false, md: true }, { ssr: false });
   
@@ -95,7 +92,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   // This way we only re-render when specific values change
   const activePlugin = useCanvasStore((state) => state.activePlugin);
   const setMode = useCanvasStore((state) => state.setMode);
-  const settings = useCanvasStore((state) => state.settings);
   const pathSimplification = useCanvasStore((state) => state.pathSimplification);
   const pathRounding = useCanvasStore((state) => state.pathRounding);
   const selectedCommands = useCanvasStore((state) => state.selectedCommands);
@@ -243,6 +239,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         
         {/* Body container with relative positioning for absolute footer */}
         <Box p={0} display="flex" flexDirection="column" flex="1" overflow="hidden" position="relative">
+          <RenderCountBadgeWrapper componentName="Sidebar" position="top-right" />
           {/* Tools Grid - Fixed at top */}
           <SidebarToolGrid 
             activePlugin={activePlugin}
@@ -292,16 +289,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
   // Normal drawer mode (not pinned)
   return (
     <>
-      {process.env.NODE_ENV === 'development' && settings.showRenderCountBadges && (
-        <div style={{ 
+      <RenderCountBadgeWrapper 
+        componentName="Sidebar" 
+        position="top-right"
+        wrapperStyle={{ 
           position: 'fixed', 
           top: '60px', 
           right: isPinned && isDesktop ? `${sidebarWidth + 10}px` : '10px',
           zIndex: 10000 
-        }}>
-          <RenderCountBadge count={renderCount} rps={renderRps} position="top-right" />
-        </div>
-      )}
+        }}
+      />
       <Drawer
         isOpen={isOpen}
         placement="right"

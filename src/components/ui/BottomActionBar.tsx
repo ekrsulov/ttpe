@@ -9,8 +9,7 @@ import {
   Maximize2
 } from 'lucide-react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { RenderCountBadge } from './RenderCountBadge';
-import { useRenderCount } from '../../hooks/useRenderCount';
+import { RenderCountBadgeWrapper } from './RenderCountBadgeWrapper';
 
 // Custom hook to subscribe to temporal state changes
 const useTemporalState = () => {
@@ -44,9 +43,6 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
   const selectedSubpaths = useCanvasStore(state => state.selectedSubpaths);
 
   const { undo, redo, pastStates, futureStates } = useTemporalState();
-  
-  const { count: renderCount, rps: renderRps } = useRenderCount('BottomActionBar');
-  const settings = useCanvasStore(state => state.settings);
   
   // Calculate current zoom percentage
   const currentZoom = useMemo(() => Math.round((viewport.zoom as number) * 100), [viewport.zoom]);
@@ -292,9 +288,7 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
           </Box>
         </Tooltip>
       </HStack>
-      {process.env.NODE_ENV === 'development' && settings.showRenderCountBadges && (
-        <RenderCountBadge count={renderCount} rps={renderRps} position="bottom-right" />
-      )}
+      <RenderCountBadgeWrapper componentName="BottomActionBar" position="bottom-right" />
     </Box>
   );
 };

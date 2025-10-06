@@ -15,12 +15,10 @@ import { useCanvasSmoothBrush } from '../hooks/useCanvasSmoothBrush';
 import { useCanvasEventHandlers } from '../hooks/useCanvasEventHandlers';
 import { pluginManager } from '../utils/pluginManager';
 import { logger } from '../utils';
-import { RenderCountBadge } from './ui/RenderCountBadge';
-import { useRenderCount } from '../hooks/useRenderCount';
+import { RenderCountBadgeWrapper } from './ui/RenderCountBadgeWrapper';
 import type { Point, PathData, CanvasElement } from '../types';
 
 export const Canvas: React.FC = () => {
-  const { count: renderCount, rps: renderRps } = useRenderCount('Canvas');
   const svgRef = useRef<SVGSVGElement>(null);
   const { isSpacePressed, isShiftPressed } = useCanvasKeyboardControls();
   const {
@@ -74,7 +72,6 @@ export const Canvas: React.FC = () => {
     selectedCommands,
     selectedSubpaths,
     draggingSelection,
-    settings,
     updateElement,
     startDraggingPoint,
     updateDraggingPoint,
@@ -97,7 +94,6 @@ export const Canvas: React.FC = () => {
       selectedCommands: state.selectedCommands,
       selectedSubpaths: state.selectedSubpaths,
       draggingSelection: state.draggingSelection,
-      settings: state.settings,
       updateElement: state.updateElement,
       startDraggingPoint: state.startDraggingPoint,
       updateDraggingPoint: state.updateDraggingPoint,
@@ -647,11 +643,11 @@ export const Canvas: React.FC = () => {
 
   return (
     <>
-      {process.env.NODE_ENV === 'development' && settings.showRenderCountBadges && (
-        <div style={{ position: 'fixed', top: 0, left: 0, zIndex: 10000 }}>
-          <RenderCountBadge count={renderCount} rps={renderRps} position="top-left" />
-        </div>
-      )}
+      <RenderCountBadgeWrapper 
+        componentName="Canvas" 
+        position="top-left"
+        wrapperStyle={{ position: 'fixed', top: 0, left: 0, zIndex: 10000 }}
+      />
       <svg
         ref={svgRef}
         width={canvasSize.width}

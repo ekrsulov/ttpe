@@ -1,54 +1,15 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useMemo } from 'react';
 import { Box } from '@chakra-ui/react';
 import { ConditionalPanel } from '../ui/ConditionalPanel';
 import { useCanvasStore } from '../../store/canvasStore';
-
-// Lazy load panel components
-const EditorPanel = React.lazy(() => import('../plugins/EditorPanel').then(module => ({ default: module.EditorPanel })));
-const EditPanel = React.lazy(() => import('../plugins/EditPanel').then(module => ({ default: module.EditPanel })));
-const ControlPointAlignmentPanel = React.lazy(() => import('../plugins/ControlPointAlignmentPanel').then(module => ({ default: module.ControlPointAlignmentPanel })));
-const OpticalAlignmentPanel = React.lazy(() => import('../plugins/OpticalAlignmentPanel').then(module => ({ default: module.OpticalAlignmentPanel })));
-const PanPanel = React.lazy(() => import('../plugins/PanPanel').then(module => ({ default: module.PanPanel })));
-const PencilPanel = React.lazy(() => import('../plugins/PencilPanel').then(module => ({ default: module.PencilPanel })));
-const CurvesPanel = React.lazy(() => import('../plugins/CurvesPanel').then(module => ({ default: module.CurvesPanel })));
-const TransformationPanel = React.lazy(() => import('../plugins/TransformationPanel').then(module => ({ default: module.TransformationPanel })));
-const TextPanel = React.lazy(() => import('../plugins/TextPanel').then(module => ({ default: module.TextPanel })));
-const ShapePanel = React.lazy(() => import('../plugins/ShapePanel').then(module => ({ default: module.ShapePanel })));
-const FilePanel = React.lazy(() => import('../plugins/FilePanel').then(module => ({ default: module.FilePanel })));
-const SettingsPanel = React.lazy(() => import('../plugins/SettingsPanel').then(module => ({ default: module.SettingsPanel })));
-const PathOperationsPanel = React.lazy(() => import('../plugins/PathOperationsPanel').then(module => ({ default: module.PathOperationsPanel })));
-const SubPathOperationsPanel = React.lazy(() => import('../plugins/SubPathOperationsPanel').then(module => ({ default: module.SubPathOperationsPanel })));
-
-interface SmoothBrush {
-  radius: number;
-  strength: number;
-  isActive: boolean;
-  cursorX: number;
-  cursorY: number;
-  simplifyPoints: boolean;
-  simplificationTolerance: number;
-  minDistance: number;
-  affectedPoints: Array<{
-    commandIndex: number;
-    pointIndex: number;
-    x: number;
-    y: number;
-  }>;
-}
-
-interface PathSimplification {
-  tolerance: number;
-}
-
-interface PathRounding {
-  radius: number;
-}
-
-interface SelectedCommand {
-  elementId: string;
-  commandIndex: number;
-  pointIndex: number;
-}
+import { 
+  PANEL_CONFIGS, 
+  type SmoothBrush, 
+  type PathSimplification, 
+  type PathRounding, 
+  type SelectedCommand,
+  type PanelComponentProps 
+} from './panelConfig';
 
 interface SidebarPanelsProps {
   activePlugin: string | null;
@@ -73,6 +34,7 @@ interface SidebarPanelsProps {
 
 /**
  * Main panels section of the sidebar with conditional rendering
+ * Uses a data-driven approach to render panels based on configuration
  */
 export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
   activePlugin,
@@ -105,6 +67,49 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
   // Check if footer should be shown (when something is selected)
   const hasSelection = hasSelectedIds || hasSelectedCommands || hasSelectedSubpaths;
 
+  // Prepare the context for condition evaluation
+  const conditionContext = useMemo(() => ({
+    activePlugin,
+    showFilePanel,
+    showSettingsPanel,
+    isInSpecialPanelMode,
+  }), [activePlugin, showFilePanel, showSettingsPanel, isInSpecialPanelMode]);
+
+  // Prepare all props for panels that might need them
+  const allPanelProps: PanelComponentProps = useMemo(() => ({
+    activePlugin,
+    smoothBrush,
+    pathSimplification,
+    pathRounding,
+    selectedCommands,
+    selectedSubpaths,
+    updateSmoothBrush,
+    updatePathSimplification,
+    updatePathRounding,
+    applySmoothBrush,
+    applyPathSimplification,
+    applyPathRounding,
+    activateSmoothBrush,
+    deactivateSmoothBrush,
+    resetSmoothBrush,
+  }), [
+    activePlugin,
+    smoothBrush,
+    pathSimplification,
+    pathRounding,
+    selectedCommands,
+    selectedSubpaths,
+    updateSmoothBrush,
+    updatePathSimplification,
+    updatePathRounding,
+    applySmoothBrush,
+    applyPathSimplification,
+    applyPathRounding,
+    activateSmoothBrush,
+    deactivateSmoothBrush,
+    resetSmoothBrush,
+  ]);
+
   return (
     <Box
       flex={1}
@@ -135,79 +140,24 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
       }}
     >
       <Suspense fallback={<Box h="20px" bg="gray.100" />}>
-        {/* Special panel modes - show only the specific panel */}
-        <ConditionalPanel condition={showFilePanel}>
-          <FilePanel />
-        </ConditionalPanel>
-        
-        <ConditionalPanel condition={showSettingsPanel}>
-          <SettingsPanel />
-        </ConditionalPanel>
+        {PANEL_CONFIGS.map((panelConfig) => {
+          const shouldShow = panelConfig.condition(conditionContext);
+          
+          if (!shouldShow) {
+            return null;
+          }
 
-        {/* Regular panels - only show when not in special panel mode */}
-        <ConditionalPanel condition={!isInSpecialPanelMode}>
-          <EditorPanel />
-        </ConditionalPanel>
-        
-        <ConditionalPanel condition={!isInSpecialPanelMode && activePlugin === 'select'}>
-          <PathOperationsPanel />
-        </ConditionalPanel>
-        
-        <ConditionalPanel condition={!isInSpecialPanelMode}>
-          <SubPathOperationsPanel />
-        </ConditionalPanel>
-        
-        <ConditionalPanel condition={!isInSpecialPanelMode && activePlugin === 'edit'}>
-          <EditPanel
-            activePlugin={activePlugin}
-            smoothBrush={smoothBrush}
-            pathSimplification={pathSimplification}
-            pathRounding={pathRounding}
-            selectedCommands={selectedCommands}
-            selectedSubpaths={selectedSubpaths}
-            updateSmoothBrush={updateSmoothBrush}
-            updatePathSimplification={updatePathSimplification}
-            updatePathRounding={updatePathRounding}
-            applySmoothBrush={applySmoothBrush}
-            applyPathSimplification={applyPathSimplification}
-            applyPathRounding={applyPathRounding}
-            activateSmoothBrush={activateSmoothBrush}
-            deactivateSmoothBrush={deactivateSmoothBrush}
-            resetSmoothBrush={resetSmoothBrush}
-          />
-        </ConditionalPanel>
-        
-        <ConditionalPanel condition={!isInSpecialPanelMode && activePlugin === 'edit'}>
-          <ControlPointAlignmentPanel />
-        </ConditionalPanel>
-        
-        <ConditionalPanel condition={!isInSpecialPanelMode && activePlugin === 'select'}>
-          <OpticalAlignmentPanel />
-        </ConditionalPanel>
-        
-        <ConditionalPanel condition={!isInSpecialPanelMode && activePlugin === 'pan'}>
-          <PanPanel />
-        </ConditionalPanel>
-        
-        <ConditionalPanel condition={!isInSpecialPanelMode && activePlugin === 'pencil'}>
-          <PencilPanel />
-        </ConditionalPanel>
-        
-        <ConditionalPanel condition={!isInSpecialPanelMode && activePlugin === 'curves'}>
-          <CurvesPanel />
-        </ConditionalPanel>
-        
-        <ConditionalPanel condition={!isInSpecialPanelMode && activePlugin === 'transformation'}>
-          <TransformationPanel />
-        </ConditionalPanel>
-        
-        <ConditionalPanel condition={!isInSpecialPanelMode && activePlugin === 'text'}>
-          <TextPanel />
-        </ConditionalPanel>
-        
-        <ConditionalPanel condition={!isInSpecialPanelMode && activePlugin === 'shape'}>
-          <ShapePanel />
-        </ConditionalPanel>
+          const PanelComponent = panelConfig.component;
+          const panelProps = panelConfig.getProps 
+            ? panelConfig.getProps(allPanelProps) 
+            : {};
+
+          return (
+            <ConditionalPanel key={panelConfig.key} condition={true}>
+              <PanelComponent {...panelProps} />
+            </ConditionalPanel>
+          );
+        })}
       </Suspense>
     </Box>
   );

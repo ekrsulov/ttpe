@@ -6,9 +6,7 @@ import {
   Pin,
   PinOff
 } from 'lucide-react';
-import { RenderCountBadge } from '../ui/RenderCountBadge';
-import { useRenderCount } from '../../hooks/useRenderCount';
-import { useCanvasStore } from '../../store/canvasStore';
+import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
 
 interface ToolConfig {
   name: string;
@@ -42,9 +40,6 @@ export const SidebarToolGrid: React.FC<SidebarToolGridProps> = ({
   onTogglePin,
   isDesktop = false
 }) => {
-  const { count: renderCount, rps: renderRps } = useRenderCount('SidebarToolGrid');
-  const settings = useCanvasStore(state => state.settings);
-  
   // Plugin configuration - only utility/settings tools
   // Main action tools moved to ActionBar
   const pluginRows: ToolConfig[][] = [
@@ -108,9 +103,7 @@ export const SidebarToolGrid: React.FC<SidebarToolGridProps> = ({
 
   return (
     <Box pt={2} pr={2} pl={2} bg="white" position="relative">
-      {process.env.NODE_ENV === 'development' && settings.showRenderCountBadges && (
-        <RenderCountBadge count={renderCount} rps={renderRps} position="top-left" />
-      )}
+      <RenderCountBadgeWrapper componentName="SidebarToolGrid" position="top-left" />
       {pluginRows.map((row, rowIndex) => (
         <SimpleGrid
           key={rowIndex}
