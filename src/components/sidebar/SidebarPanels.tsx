@@ -10,6 +10,7 @@ const ControlPointAlignmentPanel = React.lazy(() => import('../plugins/ControlPo
 const OpticalAlignmentPanel = React.lazy(() => import('../plugins/OpticalAlignmentPanel').then(module => ({ default: module.OpticalAlignmentPanel })));
 const PanPanel = React.lazy(() => import('../plugins/PanPanel').then(module => ({ default: module.PanPanel })));
 const PencilPanel = React.lazy(() => import('../plugins/PencilPanel').then(module => ({ default: module.PencilPanel })));
+const CurvesPanel = React.lazy(() => import('../plugins/CurvesPanel').then(module => ({ default: module.CurvesPanel })));
 const TransformationPanel = React.lazy(() => import('../plugins/TransformationPanel').then(module => ({ default: module.TransformationPanel })));
 const TextPanel = React.lazy(() => import('../plugins/TextPanel').then(module => ({ default: module.TextPanel })));
 const ShapePanel = React.lazy(() => import('../plugins/ShapePanel').then(module => ({ default: module.ShapePanel })));
@@ -190,6 +191,10 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
         
         <ConditionalPanel condition={!isInSpecialPanelMode && activePlugin === 'pencil'}>
           <PencilPanel />
+        </ConditionalPanel>
+        
+        <ConditionalPanel condition={!isInSpecialPanelMode && activePlugin === 'curves'}>
+          <CurvesPanel />
         </ConditionalPanel>
         
         <ConditionalPanel condition={!isInSpecialPanelMode && activePlugin === 'transformation'}>
