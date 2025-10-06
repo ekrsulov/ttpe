@@ -1,4 +1,5 @@
 import type { StateCreator } from 'zustand';
+import { createSimplePluginSlice } from '../../utils/pluginSliceHelpers';
 
 export interface TextPluginSlice {
   // State
@@ -14,20 +15,14 @@ export interface TextPluginSlice {
   updateTextState: (state: Partial<TextPluginSlice['text']>) => void;
 }
 
-export const createTextPluginSlice: StateCreator<TextPluginSlice, [], [], TextPluginSlice> = (set) => ({
-  // Initial state
-  text: {
-    text: 'New',
-    fontSize: 180,
-    fontFamily: 'Arial',
-    fontWeight: 'bold',
-    fontStyle: 'normal',
-  },
-
-  // Actions
-  updateTextState: (state) => {
-    set((current) => ({
-      text: { ...current.text, ...state },
-    }));
-  },
-});
+export const createTextPluginSlice: StateCreator<TextPluginSlice, [], [], TextPluginSlice> = 
+  createSimplePluginSlice<'text', TextPluginSlice['text'], TextPluginSlice>(
+    'text',
+    {
+      text: 'New',
+      fontSize: 180,
+      fontFamily: 'Arial',
+      fontWeight: 'bold',
+      fontStyle: 'normal',
+    }
+  );

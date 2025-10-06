@@ -20,15 +20,20 @@ import {
   Ruler
 } from 'lucide-react';
 
-export const OpticalAlignmentPanel: React.FC = () => {
+const OpticalAlignmentPanelComponent: React.FC = () => {
+  // Subscribe only to specific primitives and minimal state to prevent re-renders
+  const showMathematicalCenter = useCanvasStore(state => state.showMathematicalCenter);
+  const showOpticalCenter = useCanvasStore(state => state.showOpticalCenter);
+  const showMetrics = useCanvasStore(state => state.showMetrics);
+  const showDistanceRules = useCanvasStore(state => state.showDistanceRules);
+  const hasAlignment = useCanvasStore(state => state.currentAlignment !== null);
+  const validationMessage = useCanvasStore(state => state.getAlignmentValidationMessage());
+  
+  // Get current alignment only when needed for display (doesn't cause re-renders on movement)
+  const currentAlignment = hasAlignment ? useCanvasStore.getState().currentAlignment : null;
+  
+  // Get actions from getState (doesn't cause re-renders)
   const {
-    // Optical alignment state
-    currentAlignment,
-    showMathematicalCenter,
-    showOpticalCenter,
-    showMetrics,
-    showDistanceRules,
-    // Optical alignment actions
     applyAlignment,
     previewAlignment,
     resetAlignment,
@@ -37,11 +42,7 @@ export const OpticalAlignmentPanel: React.FC = () => {
     toggleMetrics,
     toggleDistanceRules,
     canPerformOpticalAlignment,
-    getAlignmentValidationMessage
-  } = useCanvasStore();
-
-  // Use store state
-  const hasAlignment = currentAlignment !== null;
+  } = useCanvasStore.getState();
 
   // Handle unified Preview/Apply button
   const handlePreviewOrApply = () => {
@@ -62,7 +63,7 @@ export const OpticalAlignmentPanel: React.FC = () => {
     resetAlignment();
   };
 
-  if (getAlignmentValidationMessage() !== null) return null;
+  if (validationMessage !== null) return null;
 
   return (
     <Panel 
@@ -289,3 +290,6 @@ export const OpticalAlignmentPanel: React.FC = () => {
     </Panel>
   );
 };
+// Export memoized version - only re-renders when props change (no props = never re-renders from parent)
+// Component only re-renders internally when alignment state or visualization toggles change
+export const OpticalAlignmentPanel = React.memo(OpticalAlignmentPanelComponent);

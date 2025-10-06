@@ -24,24 +24,32 @@ import { Panel } from '../ui/Panel';
 import { SliderControl } from '../ui/SliderControl';
 import { useCanvasStore } from '../../store/canvasStore';
 
-export const CurvesPanel: React.FC = () => {
-  // Selectors for curves settings and actions
-  const curves = useCanvasStore(state => state.curves);
-  const curveState = useCanvasStore(state => state.curveState);
-  const updateCurvesSettings = useCanvasStore(state => state.updateCurvesSettings);
-  const selectCurvePoint = useCanvasStore(state => state.selectCurvePoint);
-  const deleteCurvePoint = useCanvasStore(state => state.deleteCurvePoint);
-  const updateCurvePoint = useCanvasStore(state => state.updateCurvePoint);
-  const finishCurve = useCanvasStore(state => state.finishCurve);
-  const cancelCurve = useCanvasStore(state => state.cancelCurve);
+const CurvesPanelComponent: React.FC = () => {
+  // Only subscribe to activePlugin to control visibility
   const activePlugin = useCanvasStore(state => state.activePlugin);
+  
+  // Subscribe to primitives only to minimize re-renders
+  const curves = useCanvasStore(state => state.curves);
+  const pointsCount = useCanvasStore(state => state.curveState.points.length);
+  const selectedPointId = useCanvasStore(state => state.curveState.selectedPointId);
+  
+  // Get actions and current state directly when needed (doesn't cause re-renders)
+  const {
+    curveState,
+    updateCurvesSettings,
+    selectCurvePoint,
+    deleteCurvePoint,
+    updateCurvePoint,
+    finishCurve,
+    cancelCurve,
+  } = useCanvasStore.getState();
 
   if (activePlugin !== 'curves') return null;
 
-  const hasPoints = curveState.points.length > 0;
-  const hasSelectedPoint = curveState.selectedPointId !== undefined;
-  const selectedPoint = curveState.points.find(p => p.id === curveState.selectedPointId);
-  const canFinishCurve = curveState.points.length >= 2;
+  const hasPoints = pointsCount > 0;
+  const hasSelectedPoint = selectedPointId !== undefined;
+  const selectedPoint = curveState.points.find(p => p.id === selectedPointId);
+  const canFinishCurve = pointsCount >= 2;
 
   // Generic toggle handler for boolean curve settings
   const toggleCurvesSetting = (key: 'snapToGrid' | 'showHandles' | 'showPreview') => {
@@ -57,8 +65,8 @@ export const CurvesPanel: React.FC = () => {
   };
 
   const handleDeleteSelectedPoint = () => {
-    if (curveState.selectedPointId) {
-      deleteCurvePoint(curveState.selectedPointId);
+    if (selectedPointId) {
+      deleteCurvePoint(selectedPointId);
     }
   };
 
@@ -96,7 +104,7 @@ export const CurvesPanel: React.FC = () => {
                 </Text>
               </HStack>
               <Text fontSize="11px" color="gray.500">
-                {curveState.points.length} point{curveState.points.length !== 1 ? 's' : ''}
+                {pointsCount} point{pointsCount !== 1 ? 's' : ''}
               </Text>
             </Flex>
 
@@ -383,3 +391,7 @@ export const CurvesPanel: React.FC = () => {
     </Panel>
   );
 };
+
+// Export memoized version - only re-renders when props change (no props = never re-renders from parent)
+// Component only re-renders internally when activePlugin, pointsCount, selectedPointId, or curves settings change
+export const CurvesPanel = React.memo(CurvesPanelComponent);

@@ -1,4 +1,5 @@
 import type { StateCreator } from 'zustand';
+import { createSimplePluginSlice } from '../../utils/pluginSliceHelpers';
 
 export type ShapeType = 'square' | 'circle' | 'triangle' | 'rectangle';
 
@@ -12,16 +13,10 @@ export interface ShapePluginSlice {
   updateShapeState: (state: Partial<ShapePluginSlice['shape']>) => void;
 }
 
-export const createShapePluginSlice: StateCreator<ShapePluginSlice, [], [], ShapePluginSlice> = (set) => ({
-  // Initial state
-  shape: {
-    selectedShape: 'square',
-  },
-
-  // Actions
-  updateShapeState: (state) => {
-    set((current) => ({
-      shape: { ...current.shape, ...state },
-    }));
-  },
-});
+export const createShapePluginSlice: StateCreator<ShapePluginSlice, [], [], ShapePluginSlice> = 
+  createSimplePluginSlice<'shape', ShapePluginSlice['shape'], ShapePluginSlice>(
+    'shape',
+    {
+      selectedShape: 'square',
+    }
+  );

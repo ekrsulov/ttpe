@@ -1,4 +1,5 @@
 import type { StateCreator } from 'zustand';
+import { createSimplePluginSlice } from '../../utils/pluginSliceHelpers';
 
 export interface PencilPluginSlice {
   // State
@@ -19,25 +20,19 @@ export interface PencilPluginSlice {
   updatePencilState: (state: Partial<PencilPluginSlice['pencil']>) => void;
 }
 
-export const createPencilPluginSlice: StateCreator<PencilPluginSlice, [], [], PencilPluginSlice> = (set) => ({
-  // Initial state
-  pencil: {
-    strokeWidth: 4,
-    strokeColor: '#000000',
-    strokeOpacity: 1,
-    fillColor: 'none',
-    fillOpacity: 1,
-    strokeLinecap: 'round',
-    strokeLinejoin: 'round',
-    fillRule: 'nonzero',
-    strokeDasharray: 'none',
-    reusePath: false,
-  },
-
-  // Actions
-  updatePencilState: (state) => {
-    set((current) => ({
-      pencil: { ...current.pencil, ...state },
-    }));
-  },
-});
+export const createPencilPluginSlice: StateCreator<PencilPluginSlice, [], [], PencilPluginSlice> = 
+  createSimplePluginSlice<'pencil', PencilPluginSlice['pencil'], PencilPluginSlice>(
+    'pencil',
+    {
+      strokeWidth: 4,
+      strokeColor: '#000000',
+      strokeOpacity: 1,
+      fillColor: 'none',
+      fillOpacity: 1,
+      strokeLinecap: 'round',
+      strokeLinejoin: 'round',
+      fillRule: 'nonzero',
+      strokeDasharray: 'none',
+      reusePath: false,
+    }
+  );

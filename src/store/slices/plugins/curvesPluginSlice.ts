@@ -24,6 +24,17 @@ export interface CurvesPluginSlice {
   cancelCurve: () => void;
 }
 
+/**
+ * Helper function to create a reset curve state.
+ * Ensures consistent reset behavior across finishCurve and cancelCurve.
+ */
+const getResetCurveState = (): CurveState => ({
+  mode: 'inactive',
+  isActive: false,
+  points: [],
+  isClosingPath: false,
+});
+
 export const createCurvesPluginSlice: StateCreator<CurvesPluginSlice, [], [], CurvesPluginSlice> = (set) => ({
   // Initial state
   curves: {
@@ -33,12 +44,7 @@ export const createCurvesPluginSlice: StateCreator<CurvesPluginSlice, [], [], Cu
     showPreview: true,
   },
 
-  curveState: {
-    mode: 'inactive',
-    isActive: false,
-    points: [],
-    isClosingPath: false,
-  },
+  curveState: getResetCurveState(),
 
   // Actions
   updateCurvesSettings: (settings) => {
@@ -103,23 +109,13 @@ export const createCurvesPluginSlice: StateCreator<CurvesPluginSlice, [], [], Cu
   finishCurve: () => {
     // Convert points to SVG path and create element (not implemented)
     set(() => ({
-      curveState: {
-        mode: 'inactive',
-        isActive: false,
-        points: [],
-        isClosingPath: false,
-      },
+      curveState: getResetCurveState(),
     }));
   },
 
   cancelCurve: () => {
     set(() => ({
-      curveState: {
-        mode: 'inactive',
-        isActive: false,
-        points: [],
-        isClosingPath: false,
-      },
+      curveState: getResetCurveState(),
     }));
   },
 });

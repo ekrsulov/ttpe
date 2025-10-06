@@ -5,12 +5,12 @@ import { RotateCcw } from 'lucide-react';
 import { Panel } from '../ui/Panel';
 
 const SubPathOperationsPanelComponent: React.FC = () => {
-  // Subscribe only to activePlugin and selectedSubpaths to trigger re-renders when needed
+  // Subscribe only to primitives to minimize re-renders
   const activePlugin = useCanvasStore(state => state.activePlugin);
-  const selectedSubpaths = useCanvasStore(state => state.selectedSubpaths);
+  const selectedSubpathsCount = useCanvasStore(state => state.selectedSubpaths.length);
 
   // Show only when subpath plugin is active and exactly 1 subpath is selected
-  if (activePlugin !== 'subpath' || selectedSubpaths.length !== 1) {
+  if (activePlugin !== 'subpath' || selectedSubpathsCount !== 1) {
     return null;
   }
 

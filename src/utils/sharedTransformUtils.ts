@@ -102,14 +102,15 @@ export function transformCommands(
 
 /**
  * Calculate new stroke width after scaling transformation
+ * Always rounds to integer values for cleaner strokes
+ * Ensures a minimum of 1px to keep strokes visible
  */
 export function calculateScaledStrokeWidth(
   originalStrokeWidth: number,
   scaleX: number,
   scaleY: number
 ): number {
-  return formatToPrecision(
-    originalStrokeWidth * Math.min(Math.abs(scaleX), Math.abs(scaleY)),
-    PATH_DECIMAL_PRECISION
-  );
+  const scaledWidth = originalStrokeWidth * Math.min(Math.abs(scaleX), Math.abs(scaleY));
+  // Round to nearest integer and ensure minimum of 1px
+  return Math.max(1, Math.round(scaledWidth));
 }

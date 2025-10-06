@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { HStack, IconButton as ChakraIconButton, Tooltip } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Plus, Scissors, Zap, Minus, CirclePlus, Square, X, SplitSquareHorizontal } from 'lucide-react';
@@ -6,57 +6,53 @@ import { Panel } from '../ui/Panel';
 import type { PathData } from '../../types';
 
 const PathOperationsPanelComponent: React.FC = () => {
-  // Subscribe only to selection changes to trigger re-renders when needed
-  const selectedIds = useCanvasStore(state => state.selectedIds);
-  const selectedSubpaths = useCanvasStore(state => state.selectedSubpaths);
-  const elements = useCanvasStore(state => state.elements);
-
-  // Calculate selected paths count (paths + subpaths)
-  const selectedPathsCount = selectedIds.filter(id => {
-    const el = elements.find(e => e.id === id);
-    return el && el.type === 'path';
-  }).length;
+  // Subscribe only to the keys we need to detect changes in selection
+  const selectedIdsKey = useCanvasStore(state => state.selectedIds.join(','));
+  const selectedSubpathsKey = useCanvasStore(state => 
+    state.selectedSubpaths.map(sp => `${sp.elementId}-${sp.subpathIndex}`).join(',')
+  );
   
-  const totalSelectedItems = selectedPathsCount + selectedSubpaths.length;
+  // Memoize the calculation based on selection keys - only recalculates when selection actually changes
+  const selectionInfo = useMemo(() => {
+    const state = useCanvasStore.getState();
+    const { selectedIds, selectedSubpaths, elements } = state;
+    
+    const selectedPathsCount = selectedIds.filter(id => {
+      const el = elements.find(e => e.id === id);
+      return el && el.type === 'path';
+    }).length;
+    
+    const hasPathWithMultipleSubpaths = selectedIds.some(id => {
+      const pathEl = elements.find(el => el.id === id && el.type === 'path');
+      return pathEl && (pathEl.data as PathData).subPaths?.length > 1;
+    });
+    
+    const totalSelectedItems = selectedPathsCount + selectedSubpaths.length;
+    
+    return {
+      totalSelectedItems,
+      hasPathWithMultipleSubpaths,
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedIdsKey, selectedSubpathsKey]);
 
-  // Check if any selected path has more than one subpath
-  const hasPathWithMultipleSubpaths = selectedIds.some(id => {
-    const pathEl = elements.find(el => el.id === id && el.type === 'path');
-    return pathEl && (pathEl.data as PathData).subPaths?.length > 1;
-  });
+  // Destructure path operation actions once
+  const {
+    performPathUnion,
+    performPathUnionPaperJS,
+    performPathSubtraction,
+    performPathIntersect,
+    performPathExclude,
+    performPathDivide,
+    performPathSimplify,
+  } = useCanvasStore.getState();
 
   // Show panel only if there are buttons to display
-  if (!hasPathWithMultipleSubpaths && totalSelectedItems < 2) {
+  if (!selectionInfo.hasPathWithMultipleSubpaths && selectionInfo.totalSelectedItems < 2) {
     return null;
   }
 
-  const performUnion = () => {
-    useCanvasStore.getState().performPathUnion();
-  };
-
-  const performUnionPaperJS = () => {
-    useCanvasStore.getState().performPathUnionPaperJS();
-  };
-
-  const performSubtraction = () => {
-    useCanvasStore.getState().performPathSubtraction();
-  };
-
-  const performIntersect = () => {
-    useCanvasStore.getState().performPathIntersect();
-  };
-
-  const performExclude = () => {
-    useCanvasStore.getState().performPathExclude();
-  };
-
-  const performDivide = () => {
-    useCanvasStore.getState().performPathDivide();
-  };
-
-  const performSimplify = () => {
-    useCanvasStore.getState().performPathSimplify();
-  };
+  const { totalSelectedItems, hasPathWithMultipleSubpaths } = selectionInfo;
 
   return (
     <Panel icon={<Scissors size={16} />} title="Path Operations">
@@ -67,7 +63,7 @@ const PathOperationsPanelComponent: React.FC = () => {
             <ChakraIconButton
               aria-label="Split subpaths"
               icon={<Zap size={14} />}
-              onClick={performSimplify}
+              onClick={performPathSimplify}
               size="sm"
               variant="secondary"
             />
@@ -81,7 +77,7 @@ const PathOperationsPanelComponent: React.FC = () => {
               <ChakraIconButton
                 aria-label="Union (Simple)"
                 icon={<Plus size={14} />}
-                onClick={performUnion}
+                onClick={performPathUnion}
                 size="sm"
                 variant="secondary"
               />
@@ -91,7 +87,7 @@ const PathOperationsPanelComponent: React.FC = () => {
               <ChakraIconButton
                 aria-label="Union (Paper.js)"
                 icon={<CirclePlus size={14} />}
-                onClick={performUnionPaperJS}
+                onClick={performPathUnionPaperJS}
                 size="sm"
                 variant="secondary"
               />
@@ -103,7 +99,7 @@ const PathOperationsPanelComponent: React.FC = () => {
                   <ChakraIconButton
                     aria-label="Subtract"
                     icon={<Minus size={14} />}
-                    onClick={performSubtraction}
+                    onClick={performPathSubtraction}
                     size="sm"
                     variant="secondary"
                   />
@@ -113,7 +109,7 @@ const PathOperationsPanelComponent: React.FC = () => {
                   <ChakraIconButton
                     aria-label="Intersect"
                     icon={<Square size={14} />}
-                    onClick={performIntersect}
+                    onClick={performPathIntersect}
                     size="sm"
                     variant="secondary"
                   />
@@ -123,7 +119,7 @@ const PathOperationsPanelComponent: React.FC = () => {
                   <ChakraIconButton
                     aria-label="Exclude"
                     icon={<X size={14} />}
-                    onClick={performExclude}
+                    onClick={performPathExclude}
                     size="sm"
                     variant="secondary"
                   />
@@ -133,7 +129,7 @@ const PathOperationsPanelComponent: React.FC = () => {
                   <ChakraIconButton
                     aria-label="Divide"
                     icon={<SplitSquareHorizontal size={14} />}
-                    onClick={performDivide}
+                    onClick={performPathDivide}
                     size="sm"
                     variant="secondary"
                   />
