@@ -42,47 +42,49 @@ test.describe('TTPE Application', () => {
     await page.goto('/');
     await waitForLoad(page);
 
-    // Create a shape to test double click
-    await getToolButton(page, 'Shape').click();
-    await page.locator('[aria-label="Square"]').click();
+    // Create a path to test double click
+    await getToolButton(page, 'Pencil').click();
 
     const canvas = getCanvas(page);
     const canvasBox = await canvas.boundingBox();
     if (!canvasBox) throw new Error('SVG canvas not found');
 
-    // Draw a square
+    // Draw a simple path
     await page.mouse.move(
-      canvasBox.x + canvasBox.width * 0.3,
+      canvasBox.x + canvasBox.width * 0.1,
       canvasBox.y + canvasBox.height * 0.3
     );
     await page.mouse.down();
 
     await page.mouse.move(
-      canvasBox.x + canvasBox.width * 0.5,
+      canvasBox.x + canvasBox.width * 0.3,
       canvasBox.y + canvasBox.height * 0.5,
       { steps: 10 }
     );
 
     await page.mouse.up();
 
-    // Wait for shape creation and mode switch to select
+    // Wait for path creation
     await page.waitForTimeout(100);
 
     // Verify the path was created
     const pathsAfterCreation = await canvas.locator('path').count();
     expect(pathsAfterCreation).toBeGreaterThan(0);
 
-    // Double click on the created square (this should select it and switch modes)
+    // Switch to select mode
+    await getToolButton(page, 'Select').click();
+
+    // Double click on the created path (this should select it and switch modes)
     await page.mouse.dblclick(
-      canvasBox.x + canvasBox.width * 0.31,
-      canvasBox.y + canvasBox.height * 0.31
+      canvasBox.x + canvasBox.width * 0.15,
+      canvasBox.y + canvasBox.height * 0.35
     );
 
     // Wait for mode switch
     await page.waitForTimeout(100);
 
     // Check that transformation panel is visible (indicating transformation mode is active)
-    const transformationPanel = page.locator('div').filter({ hasText: 'Select an element to transform' }).first();
+    const transformationPanel = page.locator('h3', { hasText: 'Transform' });
     await expect(transformationPanel).toBeVisible();
   });
 

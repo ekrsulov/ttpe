@@ -352,6 +352,62 @@ export class CurvesController {
     return true;
   }
 
+  /**
+   * Shared helper to adjust segment curvature based on mouse position.
+   * Centralizes all curvature calculation and handle assignment logic.
+   */
+  private adjustSegmentCurvature(params: {
+    anchorPoint: CurvePoint;
+    movingPoint: Point;
+    referencePoint: CurvePoint;
+  }): void {
+    const { anchorPoint, movingPoint, referencePoint } = params;
+
+    // Calculate the direction from reference point to anchor point
+    const segmentDx = anchorPoint.x - referencePoint.x;
+    const segmentDy = anchorPoint.y - referencePoint.y;
+    const segmentLength = Math.sqrt(segmentDx * segmentDx + segmentDy * segmentDy);
+
+    if (segmentLength === 0) return;
+
+    // Calculate the perpendicular direction for the curve
+    const perpDx = -segmentDy / segmentLength;
+    const perpDy = segmentDx / segmentLength;
+
+    // Calculate how far the mouse is from the anchor point
+    const mouseDx = movingPoint.x - anchorPoint.x;
+    const mouseDy = movingPoint.y - anchorPoint.y;
+
+    // Project mouse position onto the perpendicular line
+    const projection = mouseDx * perpDx + mouseDy * perpDy;
+    const curvatureStrength = Math.max(-segmentLength * 0.5, Math.min(segmentLength * 0.5, projection));
+
+    // Create handles based on curvature
+    if (Math.abs(curvatureStrength) > 5) {
+      // Create handle on reference point (handle_out)
+      referencePoint.handleOut = {
+        x: referencePoint.x + segmentDx * 0.3 + perpDx * curvatureStrength * 0.5,
+        y: referencePoint.y + segmentDy * 0.3 + perpDy * curvatureStrength * 0.5,
+      };
+
+      // Create handle on anchor point (handle_in)
+      anchorPoint.handleIn = {
+        x: anchorPoint.x - segmentDx * 0.3 + perpDx * curvatureStrength * 0.5,
+        y: anchorPoint.y - segmentDy * 0.3 + perpDy * curvatureStrength * 0.5,
+      };
+
+      // Convert points to smooth type
+      referencePoint.type = 'smooth';
+      anchorPoint.type = 'smooth';
+    } else {
+      // Remove handles if curvature is too small
+      referencePoint.handleOut = undefined;
+      anchorPoint.handleIn = undefined;
+      referencePoint.type = 'corner';
+      anchorPoint.type = 'corner';
+    }
+  }
+
   private handleAdjustingCurvature(snappedPoint: Point): boolean {
     if (!this.state.dragState || this.state.dragState.dragType !== 'adjust_curvature') return false;
 
@@ -365,49 +421,11 @@ export class CurvesController {
 
     const prevPoint = this.state.points[pointIndex - 1];
 
-    // Calculate the direction from previous point to current point
-    const segmentDx = currentPoint.x - prevPoint.x;
-    const segmentDy = currentPoint.y - prevPoint.y;
-    const segmentLength = Math.sqrt(segmentDx * segmentDx + segmentDy * segmentDy);
-
-    if (segmentLength === 0) return false;
-
-    // Calculate the perpendicular direction for the curve
-    const perpDx = -segmentDy / segmentLength;
-    const perpDy = segmentDx / segmentLength;
-
-    // Calculate how far the mouse is from the current point
-    const mouseDx = snappedPoint.x - currentPoint.x;
-    const mouseDy = snappedPoint.y - currentPoint.y;
-
-    // Project mouse position onto the perpendicular line
-    const projection = mouseDx * perpDx + mouseDy * perpDy;
-    const curvatureStrength = Math.max(-segmentLength * 0.5, Math.min(segmentLength * 0.5, projection));
-
-    // Create handles based on curvature
-    if (Math.abs(curvatureStrength) > 5) {
-      // Create handle on previous point (handle_out)
-      prevPoint.handleOut = {
-        x: prevPoint.x + segmentDx * 0.3 + perpDx * curvatureStrength * 0.5,
-        y: prevPoint.y + segmentDy * 0.3 + perpDy * curvatureStrength * 0.5,
-      };
-
-      // Create handle on current point (handle_in)
-      currentPoint.handleIn = {
-        x: currentPoint.x - segmentDx * 0.3 + perpDx * curvatureStrength * 0.5,
-        y: currentPoint.y - segmentDy * 0.3 + perpDy * curvatureStrength * 0.5,
-      };
-
-      // Convert points to smooth type
-      prevPoint.type = 'smooth';
-      currentPoint.type = 'smooth';
-    } else {
-      // Remove handles if curvature is too small
-      prevPoint.handleOut = undefined;
-      currentPoint.handleIn = undefined;
-      prevPoint.type = 'corner';
-      currentPoint.type = 'corner';
-    }
+    this.adjustSegmentCurvature({
+      anchorPoint: currentPoint,
+      movingPoint: snappedPoint,
+      referencePoint: prevPoint,
+    });
 
     this.notifyListeners();
     return true;
@@ -423,49 +441,11 @@ export class CurvesController {
 
     const prevPoint = this.state.points[this.state.points.length - 2];
 
-    // Calculate the direction from previous point to last point
-    const segmentDx = lastPoint.x - prevPoint.x;
-    const segmentDy = lastPoint.y - prevPoint.y;
-    const segmentLength = Math.sqrt(segmentDx * segmentDx + segmentDy * segmentDy);
-
-    if (segmentLength === 0) return false;
-
-    // Calculate the perpendicular direction for the curve
-    const perpDx = -segmentDy / segmentLength;
-    const perpDy = segmentDx / segmentLength;
-
-    // Calculate how far the mouse is from the last point
-    const mouseDx = snappedPoint.x - lastPoint.x;
-    const mouseDy = snappedPoint.y - lastPoint.y;
-
-    // Project mouse position onto the perpendicular line
-    const projection = mouseDx * perpDx + mouseDy * perpDy;
-    const curvatureStrength = Math.max(-segmentLength * 0.5, Math.min(segmentLength * 0.5, projection));
-
-    // Create handles based on curvature
-    if (Math.abs(curvatureStrength) > 5) {
-      // Create handle on previous point (handle_out)
-      prevPoint.handleOut = {
-        x: prevPoint.x + segmentDx * 0.3 + perpDx * curvatureStrength * 0.5,
-        y: prevPoint.y + segmentDy * 0.3 + perpDy * curvatureStrength * 0.5,
-      };
-
-      // Create handle on last point (handle_in)
-      lastPoint.handleIn = {
-        x: lastPoint.x - segmentDx * 0.3 + perpDx * curvatureStrength * 0.5,
-        y: lastPoint.y - segmentDy * 0.3 + perpDy * curvatureStrength * 0.5,
-      };
-
-      // Convert points to smooth type
-      prevPoint.type = 'smooth';
-      lastPoint.type = 'smooth';
-    } else {
-      // Remove handles if curvature is too small
-      prevPoint.handleOut = undefined;
-      lastPoint.handleIn = undefined;
-      prevPoint.type = 'corner';
-      lastPoint.type = 'corner';
-    }
+    this.adjustSegmentCurvature({
+      anchorPoint: lastPoint,
+      movingPoint: snappedPoint,
+      referencePoint: prevPoint,
+    });
 
     this.notifyListeners();
     return true;
@@ -479,49 +459,11 @@ export class CurvesController {
     const firstPoint = this.state.points[0];
     const lastPoint = this.state.points[this.state.points.length - 1];
 
-    // Calculate the direction from last point to first point (closing segment)
-    const segmentDx = firstPoint.x - lastPoint.x;
-    const segmentDy = firstPoint.y - lastPoint.y;
-    const segmentLength = Math.sqrt(segmentDx * segmentDx + segmentDy * segmentDy);
-
-    if (segmentLength === 0) return false;
-
-    // Calculate the perpendicular direction for the curve
-    const perpDx = -segmentDy / segmentLength;
-    const perpDy = segmentDx / segmentLength;
-
-    // Calculate how far the mouse is from the first point
-    const mouseDx = snappedPoint.x - firstPoint.x;
-    const mouseDy = snappedPoint.y - firstPoint.y;
-
-    // Project mouse position onto the perpendicular line
-    const projection = mouseDx * perpDx + mouseDy * perpDy;
-    const curvatureStrength = Math.max(-segmentLength * 0.5, Math.min(segmentLength * 0.5, projection));
-
-    // Create handles based on curvature
-    if (Math.abs(curvatureStrength) > 5) {
-      // Create handle on last point (handle_out)
-      lastPoint.handleOut = {
-        x: lastPoint.x + segmentDx * 0.3 + perpDx * curvatureStrength * 0.5,
-        y: lastPoint.y + segmentDy * 0.3 + perpDy * curvatureStrength * 0.5,
-      };
-
-      // Create handle on first point (handle_in)
-      firstPoint.handleIn = {
-        x: firstPoint.x - segmentDx * 0.3 + perpDx * curvatureStrength * 0.5,
-        y: firstPoint.y - segmentDy * 0.3 + perpDy * curvatureStrength * 0.5,
-      };
-
-      // Convert points to smooth type
-      lastPoint.type = 'smooth';
-      firstPoint.type = 'smooth';
-    } else {
-      // Remove handles if curvature is too small
-      lastPoint.handleOut = undefined;
-      firstPoint.handleIn = undefined;
-      lastPoint.type = 'corner';
-      firstPoint.type = 'corner';
-    }
+    this.adjustSegmentCurvature({
+      anchorPoint: firstPoint,
+      movingPoint: snappedPoint,
+      referencePoint: lastPoint,
+    });
 
     this.notifyListeners();
     return true;

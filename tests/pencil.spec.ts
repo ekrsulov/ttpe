@@ -20,39 +20,39 @@ test.describe('Pencil Drawing', () => {
 
     // Start drawing from center-left to center-right with continuous drawing
     await page.mouse.move(
-      canvasBox.x + canvasBox.width * 0.2,
+      canvasBox.x + canvasBox.width * 0.1,
       canvasBox.y + canvasBox.height * 0.5
     );
     await page.mouse.down();
 
     // Draw a zigzag pattern
     await page.mouse.move(
-      canvasBox.x + canvasBox.width * 0.3,
+      canvasBox.x + canvasBox.width * 0.2,
       canvasBox.y + canvasBox.height * 0.4,
+      { steps: 5 }
+    );
+    await page.mouse.move(
+      canvasBox.x + canvasBox.width * 0.3,
+      canvasBox.y + canvasBox.height * 0.6,
       { steps: 5 }
     );
     await page.mouse.move(
       canvasBox.x + canvasBox.width * 0.4,
-      canvasBox.y + canvasBox.height * 0.6,
-      { steps: 5 }
-    );
-    await page.mouse.move(
-      canvasBox.x + canvasBox.width * 0.5,
       canvasBox.y + canvasBox.height * 0.4,
       { steps: 5 }
     );
     await page.mouse.move(
-      canvasBox.x + canvasBox.width * 0.6,
+      canvasBox.x + canvasBox.width * 0.5,
       canvasBox.y + canvasBox.height * 0.6,
       { steps: 5 }
     );
     await page.mouse.move(
-      canvasBox.x + canvasBox.width * 0.7,
+      canvasBox.x + canvasBox.width * 0.6,
       canvasBox.y + canvasBox.height * 0.5,
       { steps: 5 }
     );
     await page.mouse.move(
-      canvasBox.x + canvasBox.width * 0.8,
+      canvasBox.x + canvasBox.width * 0.7,
       canvasBox.y + canvasBox.height * 0.5,
       { steps: 5 }
     );

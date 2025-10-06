@@ -17,7 +17,7 @@ async function drawZigZagPath(page: any, canvasBox: any) {
   
   for (let i = 0; i < segments; i++) {
     const progress = (i + 1) / segments;
-    const baseX = canvasBox.x + canvasBox.width * (0.1 + progress * 0.8);
+    const baseX = canvasBox.x + canvasBox.width * (0.1 + progress * 0.6);
     const yOffset = (i % 2 === 0) ? -0.15 : 0.15; // Main zig-zag movement
     const baseY = canvasBox.y + canvasBox.height * (0.5 + yOffset);
     
@@ -27,7 +27,7 @@ async function drawZigZagPath(page: any, canvasBox: any) {
     
     for (let j = 0; j < irregularities; j++) {
       const irregularityProgress = j / irregularities;
-      const irregularityX = baseX - (canvasBox.width * 0.8 / segments) * (1 - irregularityProgress);
+      const irregularityX = baseX - (canvasBox.width * 0.6 / segments) * (1 - irregularityProgress);
       
       // Add small random-like movements (±0.02 in both directions)
       const smallXOffset = (Math.sin(i * 2 + j * 3) * 0.02); // Pseudo-random small movements
@@ -230,9 +230,9 @@ test.describe('Edit Functionality', () => {
     if (!canvasBox) throw new Error('SVG canvas not found');
 
     // Draw a simple square path
-    const startX = canvasBox.x + canvasBox.width * 0.3;
+    const startX = canvasBox.x + canvasBox.width * 0.2;
     const startY = canvasBox.y + canvasBox.height * 0.3;
-    const endX = canvasBox.x + canvasBox.width * 0.7;
+    const endX = canvasBox.x + canvasBox.width * 0.6;
     const endY = canvasBox.y + canvasBox.height * 0.7;
 
     await page.mouse.move(startX, startY);
@@ -242,6 +242,13 @@ test.describe('Edit Functionality', () => {
     await page.mouse.move(startX, endY, { steps: 10 });
     await page.mouse.move(startX, startY, { steps: 10 });
     await page.mouse.up();
+
+    // Switch to select mode and select the path
+    await getToolButton(page, 'Select').click();
+    await page.mouse.click(
+      canvasBox.x + canvasBox.width * 0.5,
+      canvasBox.y + canvasBox.height * 0.5
+    );
 
     // Switch to edit mode to access Round Path
     const editButton = getToolButton(page, 'Edit');

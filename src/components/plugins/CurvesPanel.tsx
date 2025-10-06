@@ -43,17 +43,14 @@ export const CurvesPanel: React.FC = () => {
   const selectedPoint = curveState.points.find(p => p.id === curveState.selectedPointId);
   const canFinishCurve = curveState.points.length >= 2;
 
-  const handleToggleSnapToGrid = () => {
-    updateCurvesSettings({ snapToGrid: !curves.snapToGrid });
+  // Generic toggle handler for boolean curve settings
+  const toggleCurvesSetting = (key: 'snapToGrid' | 'showHandles' | 'showPreview') => {
+    updateCurvesSettings({ [key]: !curves[key] });
   };
 
-  const handleToggleShowHandles = () => {
-    updateCurvesSettings({ showHandles: !curves.showHandles });
-  };
-
-  const handleToggleShowPreview = () => {
-    updateCurvesSettings({ showPreview: !curves.showPreview });
-  };
+  const handleToggleSnapToGrid = () => toggleCurvesSetting('snapToGrid');
+  const handleToggleShowHandles = () => toggleCurvesSetting('showHandles');
+  const handleToggleShowPreview = () => toggleCurvesSetting('showPreview');
 
   const handleGridSizeChange = (gridSize: number) => {
     updateCurvesSettings({ gridSize });

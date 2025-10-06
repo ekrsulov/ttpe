@@ -9,10 +9,7 @@ import {
   useBreakpointValue
 } from '@chakra-ui/react';
 import { useCanvasStore } from '../store/canvasStore';
-import { SidebarToolGrid } from './sidebar/SidebarToolGrid';
-import { SidebarPanels } from './sidebar/SidebarPanels';
-import { SidebarFooter } from './sidebar/SidebarFooter';
-import { SidebarResizer } from './sidebar/SidebarResizer';
+import { SidebarContent } from './sidebar/SidebarContent';
 import { RenderCountBadgeWrapper } from './ui/RenderCountBadgeWrapper';
 
 interface SidebarProps {
@@ -229,59 +226,35 @@ export const Sidebar: React.FC<SidebarProps> = ({
           WebkitTouchCallout: 'none',
         }}
       >
-        {/* Resizer handle */}
-        <SidebarResizer
+        <SidebarContent
+          variant="pinned"
+          activePlugin={activePlugin}
+          setMode={setMode}
+          onToolClick={handleToolClick}
+          showFilePanel={showFilePanel}
+          showSettingsPanel={showSettingsPanel}
+          isPinned={isPinned}
+          onTogglePin={() => setIsPinned(false)}
+          isDesktop={isDesktop}
+          smoothBrush={smoothBrush}
+          pathSimplification={pathSimplification}
+          pathRounding={pathRounding}
+          selectedCommands={selectedCommands}
+          selectedSubpaths={selectedSubpaths}
+          updateSmoothBrush={updateSmoothBrush}
+          updatePathSimplification={updatePathSimplification}
+          updatePathRounding={updatePathRounding}
+          applySmoothBrush={applySmoothBrush}
+          applyPathSimplification={applyPathSimplification}
+          applyPathRounding={applyPathRounding}
+          activateSmoothBrush={activateSmoothBrush}
+          deactivateSmoothBrush={deactivateSmoothBrush}
+          resetSmoothBrush={resetSmoothBrush}
+          isArrangeExpanded={isArrangeExpanded}
+          setIsArrangeExpanded={setIsArrangeExpanded}
           onResize={handleResize}
           onReset={handleReset}
-          minWidth={260}
-          maxWidth={600}
         />
-        
-        {/* Body container with relative positioning for absolute footer */}
-        <Box p={0} display="flex" flexDirection="column" flex="1" overflow="hidden" position="relative">
-          <RenderCountBadgeWrapper componentName="Sidebar" position="top-right" />
-          {/* Tools Grid - Fixed at top */}
-          <SidebarToolGrid 
-            activePlugin={activePlugin}
-            setMode={setMode}
-            onToolClick={handleToolClick}
-            showFilePanel={showFilePanel}
-            showSettingsPanel={showSettingsPanel}
-            isPinned={isPinned}
-            onTogglePin={() => setIsPinned(false)}
-            isDesktop={isDesktop}
-          />
-
-          {/* Main Panels - Scrollable middle section */}
-          <SidebarPanels
-            activePlugin={activePlugin}
-            showFilePanel={showFilePanel}
-            showSettingsPanel={showSettingsPanel}
-            smoothBrush={smoothBrush}
-            pathSimplification={pathSimplification}
-            pathRounding={pathRounding}
-            selectedCommands={selectedCommands}
-            selectedSubpaths={selectedSubpaths}
-            updateSmoothBrush={updateSmoothBrush}
-            updatePathSimplification={updatePathSimplification}
-            updatePathRounding={updatePathRounding}
-            applySmoothBrush={applySmoothBrush}
-            applyPathSimplification={applyPathSimplification}
-            applyPathRounding={applyPathRounding}
-            activateSmoothBrush={activateSmoothBrush}
-            deactivateSmoothBrush={deactivateSmoothBrush}
-            resetSmoothBrush={resetSmoothBrush}
-          />
-
-          {/* Footer with ArrangePanel and SelectPanel - Fixed at bottom */}
-          {/* Hide in special panel mode (file/settings) */}
-          {!showFilePanel && !showSettingsPanel && (
-            <SidebarFooter
-              isArrangeExpanded={isArrangeExpanded}
-              setIsArrangeExpanded={setIsArrangeExpanded}
-            />
-          )}
-        </Box>
       </Box>
     );
   }
@@ -342,8 +315,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           }}
         >
           <DrawerBody p={0} display="flex" flexDirection="column" position="relative">
-            {/* Tools Grid - Fixed at top */}
-            <SidebarToolGrid 
+            <SidebarContent
+              variant="drawer"
               activePlugin={activePlugin}
               setMode={setMode}
               onToolClick={handleToolClick}
@@ -352,13 +325,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
               isPinned={isPinned}
               onTogglePin={() => setIsPinned(true)}
               isDesktop={isDesktop}
-            />
-
-            {/* Main Panels - Scrollable middle section */}
-            <SidebarPanels
-              activePlugin={activePlugin}
-              showFilePanel={showFilePanel}
-              showSettingsPanel={showSettingsPanel}
               smoothBrush={smoothBrush}
               pathSimplification={pathSimplification}
               pathRounding={pathRounding}
@@ -373,16 +339,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
               activateSmoothBrush={activateSmoothBrush}
               deactivateSmoothBrush={deactivateSmoothBrush}
               resetSmoothBrush={resetSmoothBrush}
+              isArrangeExpanded={isArrangeExpanded}
+              setIsArrangeExpanded={setIsArrangeExpanded}
             />
-
-            {/* Footer with ArrangePanel and SelectPanel - Fixed at bottom */}
-            {/* Hide in special panel mode (file/settings) */}
-            {!showFilePanel && !showSettingsPanel && (
-              <SidebarFooter
-                isArrangeExpanded={isArrangeExpanded}
-                setIsArrangeExpanded={setIsArrangeExpanded}
-              />
-            )}
           </DrawerBody>
         </DrawerContent>
       </Drawer>
