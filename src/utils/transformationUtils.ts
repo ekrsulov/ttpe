@@ -153,27 +153,18 @@ export function transformPathData(
 }
 
 /**
- * Applies scale transformation to ONLY selected subpaths - using shared transformation logic
+ * Helper function to transform a range of subpaths
+ * Consolidates the shared logic between transformSubpathsData and transformSingleSubpath
  */
-export function transformSubpathsData(
+function transformSubpathRange(
   pathData: PathData,
+  subpathIndices: number[],
   scaleX: number,
   scaleY: number,
   originX: number,
   originY: number,
-  rotation: number = 0,
-  selectedSubpaths: Array<{ elementId: string; subpathIndex: number }> = []
+  rotation: number = 0
 ): PathData {
-  // If no selected subpaths, transform all subpaths
-  const shouldTransformAll = selectedSubpaths.length === 0;
-
-  if (shouldTransformAll) {
-    // Get all subpaths to transform
-    const commands = pathData.subPaths.flat();
-    const allSubpaths = extractSubpaths(commands);
-    selectedSubpaths = allSubpaths.map((_, index) => ({ elementId: '', subpathIndex: index }));
-  }
-
   try {
     // Parse the path into commands
     const commands = pathData.subPaths.flat();
@@ -184,8 +175,8 @@ export function transformSubpathsData(
     // Create a copy of the original commands to modify
     const modifiedCommands = [...commands];
 
-    // Transform only the selected subpaths
-    selectedSubpaths.forEach(({ subpathIndex }) => {
+    // Transform only the specified subpaths
+    subpathIndices.forEach((subpathIndex) => {
       if (subpathIndex < subpaths.length) {
         const subpath = subpaths[subpathIndex];
 
@@ -238,6 +229,35 @@ export function transformSubpathsData(
 }
 
 /**
+ * Applies scale transformation to ONLY selected subpaths - using shared transformation logic
+ */
+export function transformSubpathsData(
+  pathData: PathData,
+  scaleX: number,
+  scaleY: number,
+  originX: number,
+  originY: number,
+  rotation: number = 0,
+  selectedSubpaths: Array<{ elementId: string; subpathIndex: number }> = []
+): PathData {
+  // If no selected subpaths, transform all subpaths
+  const shouldTransformAll = selectedSubpaths.length === 0;
+
+  if (shouldTransformAll) {
+    // Get all subpaths to transform
+    const commands = pathData.subPaths.flat();
+    const allSubpaths = extractSubpaths(commands);
+    selectedSubpaths = allSubpaths.map((_, index) => ({ elementId: '', subpathIndex: index }));
+  }
+
+  // Extract just the indices
+  const indices = selectedSubpaths.map(sp => sp.subpathIndex);
+  
+  // Use the shared helper
+  return transformSubpathRange(pathData, indices, scaleX, scaleY, originX, originY, rotation);
+}
+
+/**
  * Applies transformation to a single subpath with correct origin calculation - using shared logic
  */
 export function transformSingleSubpath(
@@ -249,65 +269,6 @@ export function transformSingleSubpath(
   originY: number,
   rotation: number = 0
 ): PathData {
-  try {
-    // Use the subPaths directly
-    const commands = pathData.subPaths.flat();
-
-    // Extract subpaths with their command ranges
-    const subpaths = extractSubpaths(commands);
-
-    if (subpathIndex >= subpaths.length) {
-      logger.warn('Subpath index out of bounds, falling back to full path transformation');
-      return transformPathData(pathData, scaleX, scaleY, originX, originY, rotation);
-    }
-
-    // Create a copy of the original commands to modify
-    const modifiedCommands = [...commands];
-
-    const subpath = subpaths[subpathIndex];
-
-    // Calculate the center of THIS specific subpath for rotation (if needed)
-    let subpathCenterX = originX;
-    let subpathCenterY = originY;
-
-    if (rotation !== 0) {
-      // Get bounds of this specific subpath for rotation center
-      const subpathBounds = measureSubpathBounds(subpath.commands, 1, 1);
-      subpathCenterX = (subpathBounds.minX + subpathBounds.maxX) / 2;
-      subpathCenterY = (subpathBounds.minY + subpathBounds.maxY) / 2;
-    }
-
-    // Extract the commands for this subpath
-    const subpathCommands = commands.slice(subpath.startIndex, subpath.endIndex + 1);
-
-    // Transform each command in this subpath using shared logic
-    const transformedSubpathCommands = transformCommands(subpathCommands, {
-      scaleX,
-      scaleY,
-      originX,
-      originY,
-      rotation,
-      rotationCenterX: subpathCenterX,
-      rotationCenterY: subpathCenterY
-    });
-
-    // Replace the original subpath commands with transformed ones
-    modifiedCommands.splice(subpath.startIndex, subpath.endIndex - subpath.startIndex + 1, ...transformedSubpathCommands);
-
-    // Rebuild subPaths from modified commands
-    const newSubPaths = extractSubpaths(modifiedCommands).map(sp => sp.commands);
-
-    return {
-      ...pathData,
-      subPaths: newSubPaths,
-      // Scale stroke width proportionally using shared utility
-      strokeWidth: calculateScaledStrokeWidth(pathData.strokeWidth, scaleX, scaleY),
-      // Remove transform since we've applied it directly
-      transform: undefined
-    };
-
-  } catch (error) {
-    logger.warn('Single subpath transformation failed, falling back to full path transformation', error);
-    return transformPathData(pathData, scaleX, scaleY, originX, originY, rotation);
-  }
+  // Use the shared helper with a single index
+  return transformSubpathRange(pathData, [subpathIndex], scaleX, scaleY, originX, originY, rotation);
 }

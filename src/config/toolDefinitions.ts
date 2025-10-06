@@ -88,17 +88,3 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     panelKey: 'edit',
   },
 ];
-
-/**
- * Get tool definition by mode
- */
-export const getToolDefinition = (mode: ToolMode): ToolDefinition | undefined => {
-  return TOOL_DEFINITIONS.find(tool => tool.mode === mode);
-};
-
-/**
- * Get all tool modes
- */
-export const getAllToolModes = (): ToolMode[] => {
-  return TOOL_DEFINITIONS.map(tool => tool.mode);
-};

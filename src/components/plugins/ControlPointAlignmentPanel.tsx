@@ -67,149 +67,148 @@ export const ControlPointAlignmentPanel: React.FC = () => {
     return distance < threshold;
   };
 
-  // Check if selected M point has a closing Z command
-  const hasClosingZCommand = useCallback((elementId: string, commandIndex: number): boolean => {
+  /**
+   * Helper function to retrieve path commands with validation
+   * Centralizes the shared retrieval/validation logic used by multiple callbacks
+   */
+  const withPathCommands = useCallback(<T,>(
+    elementId: string,
+    commandIndex: number,
+    callback: (commands: Command[], command: Command) => T,
+    fallbackValue: T
+  ): T => {
     const element = elements.find(el => el.id === elementId);
-    if (!element || element.type !== 'path') return false;
+    if (!element || element.type !== 'path') return fallbackValue;
 
     const pathData = element.data as import('../../types').PathData;
     const commands = pathData.subPaths.flat();
 
-    // Check if the command at commandIndex is an M command
-    if (commands[commandIndex]?.type !== 'M') return false;
+    const command = commands[commandIndex];
+    if (!command) return fallbackValue;
 
-    // Look for Z commands after this M command
-    for (let i = commandIndex + 1; i < commands.length; i++) {
-      if (commands[i].type === 'Z') {
-        // Check if this Z closes to our M point
-        // A Z closes to the last M before it
-        let lastMIndex = -1;
-        for (let j = i - 1; j >= 0; j--) {
-          if (commands[j].type === 'M') {
-            lastMIndex = j;
-            break;
-          }
-        }
-
-        if (lastMIndex === commandIndex) {
-          return true;
-        }
-      } else if (commands[i].type === 'M') {
-        // If we hit another M, stop looking
-        break;
-      }
-    }
-
-    return false;
+    return callback(commands, command);
   }, [elements]);
+
+  // Check if selected M point has a closing Z command
+  const hasClosingZCommand = useCallback((elementId: string, commandIndex: number): boolean => {
+    return withPathCommands(elementId, commandIndex, (commands, command) => {
+      // Check if the command at commandIndex is an M command
+      if (command.type !== 'M') return false;
+
+      // Look for Z commands after this M command
+      for (let i = commandIndex + 1; i < commands.length; i++) {
+        if (commands[i].type === 'Z') {
+          // Check if this Z closes to our M point
+          // A Z closes to the last M before it
+          let lastMIndex = -1;
+          for (let j = i - 1; j >= 0; j--) {
+            if (commands[j].type === 'M') {
+              lastMIndex = j;
+              break;
+            }
+          }
+
+          if (lastMIndex === commandIndex) {
+            return true;
+          }
+        } else if (commands[i].type === 'M') {
+          // If we hit another M, stop looking
+          break;
+        }
+      }
+
+      return false;
+    }, false);
+  }, [withPathCommands]);
 
   // Check if selected point is the last point of its subpath
   const isLastPointOfSubpath = useCallback((elementId: string, commandIndex: number, pointIndex: number): boolean => {
-    const element = elements.find(el => el.id === elementId);
-    if (!element || element.type !== 'path') return false;
+    return withPathCommands(elementId, commandIndex, (commands, command) => {
+      // Check if this is the last point of the command
+      const pointsLength = command.type === 'M' || command.type === 'L' ? 1 : command.type === 'C' ? 3 : 0;
+      const isLastPoint = pointIndex === pointsLength - 1;
+      if (!isLastPoint) return false;
 
-    const pathData = element.data as import('../../types').PathData;
-    const commands = pathData.subPaths.flat();
+      // Check if this is the last command in the path or before a Z/M
+      const isLastCommandInSubpath = commandIndex === commands.length - 1 ||
+        commands[commandIndex + 1].type === 'M' ||
+        commands[commandIndex + 1].type === 'Z';
 
-    const command = commands[commandIndex];
-    if (!command) return false;
-
-    // Check if this is the last point of the command
-    const pointsLength = command.type === 'M' || command.type === 'L' ? 1 : command.type === 'C' ? 3 : 0;
-    const isLastPoint = pointIndex === pointsLength - 1;
-    if (!isLastPoint) return false;
-
-    // Check if this is the last command in the path or before a Z/M
-    const isLastCommandInSubpath = commandIndex === commands.length - 1 ||
-      commands[commandIndex + 1].type === 'M' ||
-      commands[commandIndex + 1].type === 'Z';
-
-    return isLastCommandInSubpath;
-  }, [elements]);
+      return isLastCommandInSubpath;
+    }, false);
+  }, [withPathCommands]);
 
   // Check if selected point is already at the same position as the M of its subpath
   const isAtMPosition = useCallback((elementId: string, commandIndex: number, pointIndex: number): boolean => {
-    const element = elements.find(el => el.id === elementId);
-    if (!element || element.type !== 'path') return false;
-
-    const pathData = element.data as import('../../types').PathData;
-    const commands = pathData.subPaths.flat();
-
-    const command = commands[commandIndex];
-    if (!command) return false;
-
-    // Find the M command for this subpath (the last M before this command)
-    let subpathMIndex = -1;
-    for (let i = commandIndex - 1; i >= 0; i--) {
-      if (commands[i].type === 'M') {
-        subpathMIndex = i;
-        break;
+    return withPathCommands(elementId, commandIndex, (commands, command) => {
+      // Find the M command for this subpath (the last M before this command)
+      let subpathMIndex = -1;
+      for (let i = commandIndex - 1; i >= 0; i--) {
+        if (commands[i].type === 'M') {
+          subpathMIndex = i;
+          break;
+        }
       }
-    }
 
-    if (subpathMIndex === -1) return false;
+      if (subpathMIndex === -1) return false;
 
-    // Get the point to check
-    let pointToCheck: Point | null = null;
-    if (command.type === 'M' || command.type === 'L') {
-      if (pointIndex === 0) pointToCheck = command.position;
-    } else if (command.type === 'C') {
-      if (pointIndex === 0) pointToCheck = command.controlPoint1;
-      else if (pointIndex === 1) pointToCheck = command.controlPoint2;
-      else if (pointIndex === 2) pointToCheck = command.position;
-    }
-    const mPosition = (commands[subpathMIndex] as Command & { type: 'M' }).position;
+      // Get the point to check
+      let pointToCheck: Point | null = null;
+      if (command.type === 'M' || command.type === 'L') {
+        if (pointIndex === 0) pointToCheck = command.position;
+      } else if (command.type === 'C') {
+        if (pointIndex === 0) pointToCheck = command.controlPoint1;
+        else if (pointIndex === 1) pointToCheck = command.controlPoint2;
+        else if (pointIndex === 2) pointToCheck = command.position;
+      }
+      const mPosition = (commands[subpathMIndex] as Command & { type: 'M' }).position;
 
-    if (!pointToCheck || !mPosition) return false;
+      if (!pointToCheck || !mPosition) return false;
 
-    // Check if they are at the same position (with small tolerance for floating point)
-    const tolerance = 0.1;
-    return Math.abs(pointToCheck.x - mPosition.x) < tolerance &&
-      Math.abs(pointToCheck.y - mPosition.y) < tolerance;
-  }, [elements]);
+      // Check if they are at the same position (with small tolerance for floating point)
+      const tolerance = 0.1;
+      return Math.abs(pointToCheck.x - mPosition.x) < tolerance &&
+        Math.abs(pointToCheck.y - mPosition.y) < tolerance;
+    }, false);
+  }, [withPathCommands]);
 
   // Check if cutting subpath at this point is allowed
   const canCutSubpathAtPoint = useCallback((elementId: string, commandIndex: number, pointIndex: number): boolean => {
-    const element = elements.find(el => el.id === elementId);
-    if (!element || element.type !== 'path') return false;
+    return withPathCommands(elementId, commandIndex, (commands, command) => {
+      if (command.type !== 'L' && command.type !== 'C') return false;
 
-    const pathData = element.data as import('../../types').PathData;
-    const commands = pathData.subPaths.flat();
+      // Check if this is the anchor point (last point of the command)
+      const pointsLength = command.type === 'L' ? 1 : command.type === 'C' ? 3 : 0;
+      const isAnchorPoint = pointIndex === pointsLength - 1;
+      if (!isAnchorPoint) return false;
 
-    const command = commands[commandIndex];
-    if (!command || (command.type !== 'L' && command.type !== 'C')) return false;
-
-    // Check if this is the anchor point (last point of the command)
-    const pointsLength = command.type === 'L' ? 1 : command.type === 'C' ? 3 : 0;
-    const isAnchorPoint = pointIndex === pointsLength - 1;
-    if (!isAnchorPoint) return false;
-
-    // Find the end of the current subpath
-    let subpathEndIndex = commandIndex;
-    for (let i = commandIndex + 1; i < commands.length; i++) {
-      if (commands[i].type === 'M') {
-        break;
+      // Find the end of the current subpath
+      let subpathEndIndex = commandIndex;
+      for (let i = commandIndex + 1; i < commands.length; i++) {
+        if (commands[i].type === 'M') {
+          break;
+        }
+        subpathEndIndex = i;
       }
-      subpathEndIndex = i;
-    }
 
-    // Don't allow cutting at the last command of the subpath
-    if (commandIndex === subpathEndIndex) return false;
+      // Don't allow cutting at the last command of the subpath
+      if (commandIndex === subpathEndIndex) return false;
 
-    // Check if there's a Z in this subpath
-    let hasZInSubpath = false;
-    for (let i = commandIndex; i <= subpathEndIndex; i++) {
-      if (commands[i].type === 'Z') {
-        hasZInSubpath = true;
-        break;
+      // Check if there's a Z in this subpath
+      let hasZInSubpath = false;
+      for (let i = commandIndex; i <= subpathEndIndex; i++) {
+        if (commands[i].type === 'Z') {
+          hasZInSubpath = true;
+          break;
+        }
       }
-    }
 
-    // If there's a Z, don't allow cutting at the second-to-last command
-    if (hasZInSubpath && commandIndex === subpathEndIndex - 1) return false;
+      // If there's a Z, don't allow cutting at the second-to-last command
+      if (hasZInSubpath && commandIndex === subpathEndIndex - 1) return false;
 
-    return true;
-  }, [elements]);
+      return true;
+    }, false);
+  }, [withPathCommands]);
 
   // Get info for a single selected control point
   const getSinglePointInfo = useCallback(() => {

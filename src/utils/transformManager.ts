@@ -8,7 +8,7 @@ export interface TransformBounds {
   center: Point;
 }
 
-export class SimpleTransformManager {
+class SimpleTransformManager {
   // Helper method to calculate corner scale with proportional scaling
   private calculateCornerScale(
     scaleX: number,
