@@ -58,6 +58,9 @@ export const Canvas: React.FC = () => {
     applyBrush,
     updateCursorPosition
   } = useCanvasSmoothBrush();
+  
+  // Local state for smooth brush cursor position (not in store to avoid re-renders)
+  const [smoothBrushCursor, setSmoothBrushCursor] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
   // Use shallow selector to prevent unnecessary re-renders
   // Only re-render when values actually change (not just reference)
@@ -584,15 +587,15 @@ export const Canvas: React.FC = () => {
     const nativePointerMove = (e: PointerEvent) => {
       const point = screenToCanvas(e.clientX, e.clientY);
       
-      // Always update cursor position for visual feedback (this is lightweight)
-      const state = useCanvasStore.getState();
-      state.updateSmoothBrushCursor(point.x, point.y);
+      // Update local cursor position for visual feedback (doesn't cause store re-renders)
+      setSmoothBrushCursor({ x: point.x, y: point.y });
 
       if (!isBrushing) return;
 
       // Throttle brush applications to reduce re-renders
       const now = Date.now();
       if (now - lastApplyTime >= APPLY_THROTTLE) {
+        const state = useCanvasStore.getState();
         state.applySmoothBrush(point.x, point.y);
         lastApplyTime = now;
       }
@@ -698,8 +701,8 @@ export const Canvas: React.FC = () => {
       {/* Smooth Brush Cursor */}
       {activePlugin === 'edit' && isSmoothBrushActive && (
         <ellipse
-          cx={smoothBrush.cursorX}
-          cy={smoothBrush.cursorY}
+          cx={smoothBrushCursor.x}
+          cy={smoothBrushCursor.y}
           rx={smoothBrush.radius}
           ry={smoothBrush.radius}
           fill="none"

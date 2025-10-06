@@ -98,8 +98,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const smoothBrushRadius = useCanvasStore((state) => state.smoothBrush.radius);
   const smoothBrushStrength = useCanvasStore((state) => state.smoothBrush.strength);
   const smoothBrushIsActive = useCanvasStore((state) => state.smoothBrush.isActive);
-  const smoothBrushCursorX = useCanvasStore((state) => state.smoothBrush.cursorX);
-  const smoothBrushCursorY = useCanvasStore((state) => state.smoothBrush.cursorY);
+  // Don't subscribe to cursorX/cursorY - they update on every mouse move and aren't needed in Sidebar
   const smoothBrushSimplifyPoints = useCanvasStore((state) => state.smoothBrush.simplifyPoints);
   const smoothBrushSimplificationTolerance = useCanvasStore((state) => state.smoothBrush.simplificationTolerance);
   const smoothBrushMinDistance = useCanvasStore((state) => state.smoothBrush.minDistance);
@@ -116,12 +115,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const resetSmoothBrush = useCanvasStore((state) => state.resetSmoothBrush);
   
   // Reconstruct smoothBrush object for child components (memoized to prevent re-creation)
+  // cursorX/cursorY are omitted - they're only needed in Canvas and cause unnecessary re-renders
   const smoothBrush = useMemo(() => ({
     radius: smoothBrushRadius,
     strength: smoothBrushStrength,
     isActive: smoothBrushIsActive,
-    cursorX: smoothBrushCursorX,
-    cursorY: smoothBrushCursorY,
+    cursorX: 0, // Not used in Sidebar
+    cursorY: 0, // Not used in Sidebar
     simplifyPoints: smoothBrushSimplifyPoints,
     simplificationTolerance: smoothBrushSimplificationTolerance,
     minDistance: smoothBrushMinDistance,
@@ -130,8 +130,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     smoothBrushRadius,
     smoothBrushStrength,
     smoothBrushIsActive,
-    smoothBrushCursorX,
-    smoothBrushCursorY,
     smoothBrushSimplifyPoints,
     smoothBrushSimplificationTolerance,
     smoothBrushMinDistance,

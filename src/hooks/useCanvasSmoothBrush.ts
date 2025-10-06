@@ -24,8 +24,30 @@ export type UseCanvasSmoothBrushReturn = SmoothBrushState & SmoothBrushActions;
  * Handles smooth brush activation, cursor updates, and application
  */
 export const useCanvasSmoothBrush = (): UseCanvasSmoothBrushReturn => {
-  const smoothBrush = useCanvasStore(state => state.smoothBrush);
-  const isActive = smoothBrush.isActive;
+  // Use granular selectors to prevent re-renders on cursor position changes
+  // cursorX/cursorY are NOT subscribed here - cursor is managed with local state in Canvas
+  const isActive = useCanvasStore(state => state.smoothBrush.isActive);
+  const radius = useCanvasStore(state => state.smoothBrush.radius);
+  const strength = useCanvasStore(state => state.smoothBrush.strength);
+  const simplifyPoints = useCanvasStore(state => state.smoothBrush.simplifyPoints);
+  const simplificationTolerance = useCanvasStore(state => state.smoothBrush.simplificationTolerance);
+  const minDistance = useCanvasStore(state => state.smoothBrush.minDistance);
+  const affectedPoints = useCanvasStore(state => state.smoothBrush.affectedPoints);
+  
+  // Reconstruct smoothBrush object with all necessary properties
+  // cursorX/cursorY are managed locally in Canvas to avoid re-renders
+  const smoothBrush = useMemo(() => ({
+    radius,
+    strength,
+    isActive,
+    cursorX: 0, // Not used - cursor managed with local state in Canvas
+    cursorY: 0, // Not used - cursor managed with local state in Canvas
+    simplifyPoints,
+    simplificationTolerance,
+    minDistance,
+    affectedPoints,
+  }), [radius, strength, isActive, simplifyPoints, simplificationTolerance, minDistance, affectedPoints]);
+  
   const [cursorPosition, setCursorPosition] = useState<Point | null>(null);
 
   const controller = useMemo(() => new SmoothBrushController({
