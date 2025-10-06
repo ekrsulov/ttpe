@@ -436,7 +436,7 @@ export const Canvas: React.FC = () => {
   useEffect(() => {
     const handleEmergencyCleanup = () => {
       if (editingPoint?.isDragging || draggingSelection?.isDragging) {
-        logger.warn('Emergency cleanup triggered - force stopping drag');
+        logger.debug('Emergency cleanup triggered - force stopping drag');
         emergencyCleanupDrag();
       }
     };
