@@ -283,11 +283,12 @@ function convertSinglePaperPathToPathData(paperPath: paper.Path): PathData {
                          Math.abs(segments[nextIndex].handleIn.x) > 0.01 || Math.abs(segments[nextIndex].handleIn.y) > 0.01;
       
       if (hasHandles) {
+        const nextPoint = { x: Math.round(segments[nextIndex].point.x), y: Math.round(segments[nextIndex].point.y) };
         subPath.push({
           type: 'C',
-          controlPoint1: { x: Math.round(cp1x), y: Math.round(cp1y), commandIndex: 0, pointIndex: 0, type: 'independent' as const, anchor: { x: Math.round(segments[nextIndex].point.x), y: Math.round(segments[nextIndex].point.y) }, isControl: true },
-          controlPoint2: { x: Math.round(cp2x), y: Math.round(cp2y), commandIndex: 0, pointIndex: 0, type: 'independent' as const, anchor: { x: Math.round(segments[nextIndex].point.x), y: Math.round(segments[nextIndex].point.y) }, isControl: true },
-          position: { x: Math.round(segments[nextIndex].point.x), y: Math.round(segments[nextIndex].point.y) }
+          controlPoint1: { x: Math.round(cp1x), y: Math.round(cp1y), commandIndex: 0, pointIndex: 0, anchor: nextPoint, isControl: true },
+          controlPoint2: { x: Math.round(cp2x), y: Math.round(cp2y), commandIndex: 0, pointIndex: 0, anchor: nextPoint, isControl: true },
+          position: nextPoint
         });
       } else {
         subPath.push({ type: 'L', position: { x: Math.round(segments[nextIndex].point.x), y: Math.round(segments[nextIndex].point.y) } });

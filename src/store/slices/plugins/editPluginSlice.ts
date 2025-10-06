@@ -933,7 +933,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     const { radius, strength, simplifyPoints: shouldSimplifyPoints, simplificationTolerance, minDistance } = state.smoothBrush;
 
     // Find the active element (first selected or the one being edited)
-    let targetElementId = null;
+    let targetElementId: string | null = null;
     if (state.selectedCommands.length > 0) {
       targetElementId = state.selectedCommands[0].elementId;
     } else if (state.editingPoint) {
@@ -1391,7 +1391,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     const { tolerance } = state.pathSimplification;
 
     // Find the active element (first selected or the one being edited)
-    let targetElementId = null;
+    let targetElementId: string | null = null;
     if (state.selectedCommands.length > 0) {
       targetElementId = state.selectedCommands[0].elementId;
     } else if (state.editingPoint) {
@@ -2082,7 +2082,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     const { radius } = state.pathRounding;
 
     // Find the active element (first selected or the one being edited)
-    let targetElementId = null;
+    let targetElementId: string | null = null;
     if (state.selectedCommands.length > 0) {
       targetElementId = state.selectedCommands[0].elementId;
     } else if (state.editingPoint) {
