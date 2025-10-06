@@ -11,7 +11,6 @@ import { PaintBucket, Zap, RotateCcw } from 'lucide-react';
 import { SliderControl } from '../ui/SliderControl';
 import { SectionHeader } from '../ui/SectionHeader';
 import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
-import { useRenderCount } from '../../hooks/useRenderCount';
 
 interface EditPanelProps {
   activePlugin: string | null;
@@ -74,8 +73,6 @@ export const EditPanel: React.FC<EditPanelProps> = ({
   deactivateSmoothBrush,
   resetSmoothBrush,
 }) => {
-  useRenderCount('EditPanel');
-  
   if (activePlugin !== 'edit') return null;
 
   // Determine if working with subpaths

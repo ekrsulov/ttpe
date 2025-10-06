@@ -6,11 +6,17 @@ import { extractEditablePoints, extractSubpaths, commandsToString, translateComm
 import type { CanvasElement, PathData } from '../../types';
 import { logger } from '../../utils';
 import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
-import { useRenderCount } from '../../hooks/useRenderCount';
+
+// Helper to extract subpath data from an element
+const getSubpathData = (element: CanvasElement, subpathIndex: number) => {
+  if (element.type !== 'path') return null;
+  
+  const commands = (element.data as PathData).subPaths.flat();
+  const subpaths = extractSubpaths(commands);
+  return subpaths[subpathIndex] || null;
+};
 
 const SelectPanelComponent: React.FC = () => {
-  useRenderCount('SelectPanel');
-  
   const selectedSubpaths = useCanvasStore(state => state.selectedSubpaths);
   const addElement = useCanvasStore(state => state.addElement);
   
@@ -76,9 +82,7 @@ const SelectPanelComponent: React.FC = () => {
       }
     } else if (item.type === 'subpath' && item.subpathIndex !== undefined) {
       // Duplicate the subpath as a new element
-      const commands = (item.element.data as PathData).subPaths.flat();
-      const subpaths = extractSubpaths(commands);
-      const subpathData = subpaths[item.subpathIndex];
+      const subpathData = getSubpathData(item.element, item.subpathIndex);
       if (subpathData) {
         // Translate the subpath commands to make duplication visible
         const translatedCommands = translateCommands(subpathData.commands, 20, 20);
@@ -105,9 +109,7 @@ const SelectPanelComponent: React.FC = () => {
       }
     } else if (item.type === 'subpath' && item.subpathIndex !== undefined) {
       // Copy the subpath's path
-      const commands = (item.element.data as PathData).subPaths.flat();
-      const subpaths = extractSubpaths(commands);
-      const subpathData = subpaths[item.subpathIndex];
+      const subpathData = getSubpathData(item.element, item.subpathIndex);
       if (subpathData) {
         pathData = commandsToString(subpathData.commands);
       }

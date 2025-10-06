@@ -29,11 +29,8 @@ import { DashArrayCustomInput, DashArrayPresets } from '../ui/DashArraySelector'
 import { PRESETS, type Preset } from '../../utils/presets';
 import { useSelectedPathProperty } from '../../utils/pathPropertyUtils';
 import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
-import { useRenderCount } from '../../hooks/useRenderCount';
 
 export const EditorPanel: React.FC = () => {
-  useRenderCount('EditorPanel');
-  
   // Use specific selectors instead of destructuring the entire store
   const pencil = useCanvasStore(state => state.pencil);
   const updatePencilState = useCanvasStore(state => state.updatePencilState);
@@ -44,61 +41,42 @@ export const EditorPanel: React.FC = () => {
     return state.elements.filter(el => state.selectedIds.includes(el.id) && el.type === 'path').length;
   });
 
+  // Helper to update selected paths or fall back to pencil defaults
+  const updatePathProperty = <T,>(property: string, value: T) => {
+    if (selectedPathsCount > 0) {
+      updateSelectedPaths({ [property]: value });
+    } else {
+      updatePencilState({ [property]: value });
+    }
+  };
+
   // Pencil properties handlers
   const handleStrokeWidthChange = (value: number) => {
-    if (selectedPathsCount > 0) {
-      updateSelectedPaths({ strokeWidth: value });
-    } else {
-      updatePencilState({ strokeWidth: value });
-    }
+    updatePathProperty('strokeWidth', value);
   };
 
   const handleStrokeColorChange = (value: string) => {
-    if (selectedPathsCount > 0) {
-      updateSelectedPaths({ strokeColor: value });
-    } else {
-      updatePencilState({ strokeColor: value });
-    }
+    updatePathProperty('strokeColor', value);
   };
 
   const handleStrokeNone = () => {
-    if (selectedPathsCount > 0) {
-      updateSelectedPaths({ strokeColor: 'none' });
-    } else {
-      updatePencilState({ strokeColor: 'none' });
-    }
+    updatePathProperty('strokeColor', 'none');
   };
 
   const handleOpacityChange = (value: number) => {
-    if (selectedPathsCount > 0) {
-      updateSelectedPaths({ strokeOpacity: value });
-    } else {
-      updatePencilState({ strokeOpacity: value });
-    }
+    updatePathProperty('strokeOpacity', value);
   };
 
   const handleFillColorChange = (value: string) => {
-    if (selectedPathsCount > 0) {
-      updateSelectedPaths({ fillColor: value });
-    } else {
-      updatePencilState({ fillColor: value });
-    }
+    updatePathProperty('fillColor', value);
   };
 
   const handleFillNone = () => {
-    if (selectedPathsCount > 0) {
-      updateSelectedPaths({ fillColor: 'none' });
-    } else {
-      updatePencilState({ fillColor: 'none' });
-    }
+    updatePathProperty('fillColor', 'none');
   };
 
   const handleFillOpacityChange = (value: number) => {
-    if (selectedPathsCount > 0) {
-      updateSelectedPaths({ fillOpacity: value });
-    } else {
-      updatePencilState({ fillOpacity: value });
-    }
+    updatePathProperty('fillOpacity', value);
   };
 
   const handlePresetSelect = (preset: Preset) => {
@@ -123,35 +101,19 @@ export const EditorPanel: React.FC = () => {
 
   // Handlers for new stroke properties
   const handleStrokeLinecapChange = (value: 'butt' | 'round' | 'square') => {
-    if (selectedPathsCount > 0) {
-      updateSelectedPaths({ strokeLinecap: value });
-    } else {
-      updatePencilState({ strokeLinecap: value });
-    }
+    updatePathProperty('strokeLinecap', value);
   };
 
   const handleStrokeLinejoinChange = (value: 'miter' | 'round' | 'bevel') => {
-    if (selectedPathsCount > 0) {
-      updateSelectedPaths({ strokeLinejoin: value });
-    } else {
-      updatePencilState({ strokeLinejoin: value });
-    }
+    updatePathProperty('strokeLinejoin', value);
   };
 
   const handleFillRuleChange = (value: 'nonzero' | 'evenodd') => {
-    if (selectedPathsCount > 0) {
-      updateSelectedPaths({ fillRule: value });
-    } else {
-      updatePencilState({ fillRule: value });
-    }
+    updatePathProperty('fillRule', value);
   };
 
   const handleStrokeDasharrayChange = (value: string) => {
-    if (selectedPathsCount > 0) {
-      updateSelectedPaths({ strokeDasharray: value });
-    } else {
-      updatePencilState({ strokeDasharray: value });
-    }
+    updatePathProperty('strokeDasharray', value);
   };
 
   // Get current values from selected elements or plugin defaults

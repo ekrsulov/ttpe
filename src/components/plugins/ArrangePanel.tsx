@@ -16,7 +16,6 @@ import {
 } from 'lucide-react';
 import { VStack, HStack, IconButton as ChakraIconButton, Box } from '@chakra-ui/react';
 import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
-import { useRenderCount } from '../../hooks/useRenderCount';
 
 interface ButtonConfig {
   handler: () => void;
@@ -26,8 +25,6 @@ interface ButtonConfig {
 }
 
 const ArrangePanelComponent: React.FC = () => {
-  useRenderCount('ArrangePanel');
-  
   // Only trigger re-render when activePlugin changes via useArrangeHandlers
   const currentHandlers = useArrangeHandlers();
   
