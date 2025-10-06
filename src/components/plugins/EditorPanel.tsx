@@ -28,12 +28,11 @@ import { FillRuleSelector } from '../ui/FillRuleSelector';
 import { DashArrayCustomInput, DashArrayPresets } from '../ui/DashArraySelector';
 import { PRESETS, type Preset } from '../../utils/presets';
 import { useSelectedPathProperty } from '../../utils/pathPropertyUtils';
-import { RenderCountBadge } from '../ui/RenderCountBadge';
+import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
 import { useRenderCount } from '../../hooks/useRenderCount';
 
 export const EditorPanel: React.FC = () => {
-  const { count: renderCount, rps: renderRps } = useRenderCount('EditorPanel');
-  const settings = useCanvasStore(state => state.settings);
+  useRenderCount('EditorPanel');
   
   // Use specific selectors instead of destructuring the entire store
   const pencil = useCanvasStore(state => state.pencil);
@@ -175,9 +174,7 @@ export const EditorPanel: React.FC = () => {
 
   return (
     <Box bg="white" pb={1} mt={1} position="relative">
-      {process.env.NODE_ENV === 'development' && settings.showRenderCountBadges && (
-        <RenderCountBadge count={renderCount} rps={renderRps} position="top-right" />
-      )}
+      <RenderCountBadgeWrapper componentName="EditorPanel" position="top-right" />
       {/* Pencil Properties Section */}
       <VStack spacing={1} align="stretch">
         {/* Color Presets */}

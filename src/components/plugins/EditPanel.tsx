@@ -5,15 +5,13 @@ import {
   Button,
   Checkbox as ChakraCheckbox,
   Text,
-  Box,
-  Flex,
-  Heading
+  Box
 } from '@chakra-ui/react';
 import { PaintBucket, Zap, RotateCcw } from 'lucide-react';
 import { SliderControl } from '../ui/SliderControl';
-import { RenderCountBadge } from '../ui/RenderCountBadge';
+import { SectionHeader } from '../ui/SectionHeader';
+import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
 import { useRenderCount } from '../../hooks/useRenderCount';
-import { useCanvasStore } from '../../store/canvasStore';
 
 interface EditPanelProps {
   activePlugin: string | null;
@@ -76,8 +74,7 @@ export const EditPanel: React.FC<EditPanelProps> = ({
   deactivateSmoothBrush,
   resetSmoothBrush,
 }) => {
-  const { count: renderCount, rps: renderRps } = useRenderCount('EditPanel');
-  const settings = useCanvasStore(state => state.settings);
+  useRenderCount('EditPanel');
   
   if (activePlugin !== 'edit') return null;
 
@@ -90,41 +87,21 @@ export const EditPanel: React.FC<EditPanelProps> = ({
 
   return (
     <Box position="relative">
-      {process.env.NODE_ENV === 'development' && settings.showRenderCountBadges && (
-        <RenderCountBadge count={renderCount} rps={renderRps} position="top-left" />
-      )}
+      <RenderCountBadgeWrapper componentName="EditPanel" position="top-left" />
       <VStack spacing={2} align="stretch">
       {/* Smooth Brush Section */}
       <Box>
-        <Flex 
-          align="center" 
-          justify="space-between" 
-          mb={2} 
-          bg="transparent" 
-          py={0} 
-          px={0}
-          borderRadius="md"
-          minH="24px"
-        >
-          <HStack spacing={1.5}>
-            <PaintBucket size={16} color="#666" />
-            <Heading size="xs" fontWeight="extrabold">Smooth Brush</Heading>
-          </HStack>
-          {(!smoothBrush.isActive || (smoothBrush.isActive && selectedCommands.length > 0)) && (
-            <Button
-              onClick={applySmoothBrush}
-              size="xs"
-              variant="outline"
-              fontSize="12px"
-              title={smoothBrush.isActive && selectedCommands.length > 0
-                ? `Apply Smooth to ${selectedCommands.length} Selected Point${selectedCommands.length === 1 ? '' : 's'}`
-                : 'Apply Smooth Brush'
-              }
-            >
-              Apply
-            </Button>
-          )}
-        </Flex>
+        <SectionHeader
+          icon={PaintBucket}
+          title="Smooth Brush"
+          actionLabel="Apply"
+          onAction={applySmoothBrush}
+          actionTitle={smoothBrush.isActive && selectedCommands.length > 0
+            ? `Apply Smooth to ${selectedCommands.length} Selected Point${selectedCommands.length === 1 ? '' : 's'}`
+            : 'Apply Smooth Brush'
+          }
+          showAction={!smoothBrush.isActive || (smoothBrush.isActive && selectedCommands.length > 0)}
+        />
 
         {/* Brush Mode Toggle */}
         <HStack spacing={2} mb={2}>
@@ -236,29 +213,13 @@ export const EditPanel: React.FC<EditPanelProps> = ({
 
       {/* Path Simplification Section */}
       <Box>
-        <Flex 
-          align="center" 
-          justify="space-between" 
-          mb={2} 
-          bg="transparent" 
-          py={0} 
-          px={0}
-          borderRadius="md"
-        >
-          <HStack spacing={1.5}>
-            <Zap size={16} color="#666" />
-            <Heading size="xs" fontWeight="extrabold">{pathSimplificationLabel}</Heading>
-          </HStack>
-          <Button
-            onClick={applyPathSimplification}
-            size="xs"
-            variant="outline"
-            fontSize="12px"
-            title={pathSimplificationLabel}
-          >
-            Apply
-          </Button>
-        </Flex>
+        <SectionHeader
+          icon={Zap}
+          title={pathSimplificationLabel}
+          actionLabel="Apply"
+          onAction={applyPathSimplification}
+          actionTitle={pathSimplificationLabel}
+        />
 
         <SliderControl
           label="Tolerance:"
@@ -275,29 +236,13 @@ export const EditPanel: React.FC<EditPanelProps> = ({
 
       {/* Round Path Section */}
       <Box>
-        <Flex 
-          align="center" 
-          justify="space-between" 
-          mb={2} 
-          bg="transparent" 
-          py={0} 
-          px={0}
-          borderRadius="md"
-        >
-          <HStack spacing={1.5}>
-            <RotateCcw size={16} color="#666" />
-            <Heading size="xs" fontWeight="extrabold">{roundPathLabel}</Heading>
-          </HStack>
-          <Button
-            onClick={applyPathRounding}
-            size="xs"
-            variant="outline"
-            fontSize="12px"
-            title={roundPathLabel}
-          >
-            Apply
-          </Button>
-        </Flex>
+        <SectionHeader
+          icon={RotateCcw}
+          title={roundPathLabel}
+          actionLabel="Apply"
+          onAction={applyPathRounding}
+          actionTitle={roundPathLabel}
+        />
 
         <SliderControl
           label="Radius:"

@@ -15,7 +15,7 @@ import {
   MoveVertical
 } from 'lucide-react';
 import { VStack, HStack, IconButton as ChakraIconButton, Box } from '@chakra-ui/react';
-import { RenderCountBadge } from '../ui/RenderCountBadge';
+import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
 import { useRenderCount } from '../../hooks/useRenderCount';
 
 interface ButtonConfig {
@@ -26,7 +26,7 @@ interface ButtonConfig {
 }
 
 const ArrangePanelComponent: React.FC = () => {
-  const { count: renderCount, rps: renderRps } = useRenderCount('ArrangePanel');
+  useRenderCount('ArrangePanel');
   
   // Only trigger re-render when activePlugin changes via useArrangeHandlers
   const currentHandlers = useArrangeHandlers();
@@ -39,7 +39,6 @@ const ArrangePanelComponent: React.FC = () => {
   // Get current state without subscribing - fresh on every render
   const state = useCanvasStore.getState();
   const activePlugin = state.activePlugin;
-  const settings = state.settings;
 
   const canAlign = selectedCount >= 2 ||
     (activePlugin === 'edit' && selectedCommandsCount >= 2) ||
@@ -90,9 +89,7 @@ const ArrangePanelComponent: React.FC = () => {
 
   return (
     <Box bg="white" px={2} pt={2} borderTop="1px solid" borderColor="gray.300" w="full" position="relative">
-      {process.env.NODE_ENV === 'development' && settings.showRenderCountBadges && (
-        <RenderCountBadge count={renderCount} rps={renderRps} position="top-right" />
-      )}
+      <RenderCountBadgeWrapper componentName="ArrangePanel" position="top-right" />
       <VStack spacing={1} align="stretch">
         {/* Row 1: Distribution & Order buttons */}
         {activePlugin === 'edit' ? (

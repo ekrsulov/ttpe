@@ -5,12 +5,11 @@ import { VStack, HStack, Box, Text, IconButton as ChakraIconButton } from '@chak
 import { extractEditablePoints, extractSubpaths, commandsToString, translateCommands } from '../../utils/path';
 import type { CanvasElement, PathData } from '../../types';
 import { logger } from '../../utils';
-import { RenderCountBadge } from '../ui/RenderCountBadge';
+import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
 import { useRenderCount } from '../../hooks/useRenderCount';
 
 const SelectPanelComponent: React.FC = () => {
-  const { count: renderCount, rps: renderRps } = useRenderCount('SelectPanel');
-  const settings = useCanvasStore(state => state.settings);
+  useRenderCount('SelectPanel');
   
   const selectedSubpaths = useCanvasStore(state => state.selectedSubpaths);
   const addElement = useCanvasStore(state => state.addElement);
@@ -126,9 +125,7 @@ const SelectPanelComponent: React.FC = () => {
 
   return (
     <Box bg="white" px={2} position="relative">
-      {process.env.NODE_ENV === 'development' && settings.showRenderCountBadges && (
-        <RenderCountBadge count={renderCount} rps={renderRps} position="top-right" />
-      )}
+      <RenderCountBadgeWrapper componentName="SelectPanel" position="top-right" />
       <Box h="94px" overflowY="auto">
         {items.length > 0 ? (
           <VStack spacing={1} align="stretch">
