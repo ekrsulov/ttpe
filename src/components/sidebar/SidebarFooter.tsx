@@ -17,10 +17,12 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
   isArrangeExpanded,
   setIsArrangeExpanded,
 }) => {
-  const { selectedIds, selectedCommands, selectedSubpaths } = useCanvasStore();
+  // Subscribe to individual selection state to avoid unnecessary re-renders
+  const hasSelectedIds = useCanvasStore(state => state.selectedIds.length > 0);
+  const hasSelectedCommands = useCanvasStore(state => state.selectedCommands.length > 0);
+  const hasSelectedSubpaths = useCanvasStore(state => state.selectedSubpaths.length > 0);
   
-  // Show panels only when something is selected (elements, commands, or subpaths)
-  const hasSelection = selectedIds.length > 0 || selectedCommands.length > 0 || selectedSubpaths.length > 0;
+  const hasSelection = hasSelectedIds || hasSelectedCommands || hasSelectedSubpaths;
   
   if (!hasSelection) {
     return null;

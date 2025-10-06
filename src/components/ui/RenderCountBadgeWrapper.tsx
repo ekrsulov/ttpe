@@ -6,7 +6,6 @@ import { useCanvasStore } from '../../store/canvasStore';
 interface RenderCountBadgeWrapperProps {
   componentName: string;
   position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
-  children?: React.ReactNode;
   wrapperStyle?: React.CSSProperties;
 }
 
@@ -22,7 +21,6 @@ interface RenderCountBadgeWrapperProps {
 export const RenderCountBadgeWrapper: React.FC<RenderCountBadgeWrapperProps> = ({
   componentName,
   position = 'top-left',
-  children,
   wrapperStyle,
 }) => {
   const { count: renderCount, rps: renderRps } = useRenderCount(componentName);
@@ -32,17 +30,7 @@ export const RenderCountBadgeWrapper: React.FC<RenderCountBadgeWrapperProps> = (
   const shouldShow = process.env.NODE_ENV === 'development' && settings.showRenderCountBadges;
 
   if (!shouldShow) {
-    return children ? <>{children}</> : null;
-  }
-
-  // If children are provided, render them with the badge
-  if (children) {
-    return (
-      <>
-        {children}
-        <RenderCountBadge count={renderCount} rps={renderRps} position={position} />
-      </>
-    );
+    return null;
   }
 
   // If wrapper style is provided (for fixed positioning), wrap in a div

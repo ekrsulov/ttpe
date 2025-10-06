@@ -1,6 +1,5 @@
 import React, { Suspense, useMemo } from 'react';
 import { Box } from '@chakra-ui/react';
-import { ConditionalPanel } from '../ui/ConditionalPanel';
 import { useCanvasStore } from '../../store/canvasStore';
 import { 
   PANEL_CONFIGS, 
@@ -55,16 +54,14 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
   deactivateSmoothBrush,
   resetSmoothBrush,
 }) => {
-  // Use specific selectors to prevent unnecessary re-renders
-  // Only subscribe to the LENGTH of arrays, not the arrays themselves
-  const hasSelectedIds = useCanvasStore(state => state.selectedIds.length > 0);
-  const hasSelectedSubpaths = useCanvasStore(state => state.selectedSubpaths.length > 0);
-  const hasSelectedCommands = selectedCommands.length > 0;
-  
   // Check if we're in special panel mode (file or settings)
   const isInSpecialPanelMode = showFilePanel || showSettingsPanel;
   
-  // Check if footer should be shown (when something is selected)
+  // Subscribe to individual selection state to check if footer should be shown
+  const hasSelectedIds = useCanvasStore(state => state.selectedIds.length > 0);
+  const hasSelectedCommands = selectedCommands.length > 0;
+  const hasSelectedSubpaths = useCanvasStore(state => state.selectedSubpaths.length > 0);
+  
   const hasSelection = hasSelectedIds || hasSelectedCommands || hasSelectedSubpaths;
 
   // Prepare the context for condition evaluation
@@ -152,11 +149,7 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
             ? panelConfig.getProps(allPanelProps) 
             : {};
 
-          return (
-            <ConditionalPanel key={panelConfig.key} condition={true}>
-              <PanelComponent {...panelProps} />
-            </ConditionalPanel>
-          );
+          return <PanelComponent key={panelConfig.key} {...panelProps} />;
         })}
       </Suspense>
     </Box>

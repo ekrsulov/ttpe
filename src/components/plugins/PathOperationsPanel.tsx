@@ -9,28 +9,21 @@ const PathOperationsPanelComponent: React.FC = () => {
   // Subscribe only to selection changes to trigger re-renders when needed
   const selectedIds = useCanvasStore(state => state.selectedIds);
   const selectedSubpaths = useCanvasStore(state => state.selectedSubpaths);
+  const elements = useCanvasStore(state => state.elements);
+
+  // Calculate selected paths count (paths + subpaths)
+  const selectedPathsCount = selectedIds.filter(id => {
+    const el = elements.find(e => e.id === id);
+    return el && el.type === 'path';
+  }).length;
   
-  // Get current state without subscribing - fresh on every render
-  const state = useCanvasStore.getState();
-  const elements = state.elements;
-
-  // Get selected paths/subpaths
-  const selectedPaths = elements.filter(el =>
-    selectedIds.includes(el.id) && el.type === 'path'
-  );
-
-  const selectedSubpathElements = selectedSubpaths.map(sp => {
-    const element = elements.find(el => el.id === sp.elementId);
-    if (element && element.type === 'path') {
-      return { element, subpathIndex: sp.subpathIndex };
-    }
-    return null;
-  }).filter(Boolean);
-
-  const totalSelectedItems = selectedPaths.length + selectedSubpathElements.length;
+  const totalSelectedItems = selectedPathsCount + selectedSubpaths.length;
 
   // Check if any selected path has more than one subpath
-  const hasPathWithMultipleSubpaths = selectedPaths.some(pathEl => (pathEl.data as PathData).subPaths?.length > 1);
+  const hasPathWithMultipleSubpaths = selectedIds.some(id => {
+    const pathEl = elements.find(el => el.id === id && el.type === 'path');
+    return pathEl && (pathEl.data as PathData).subPaths?.length > 1;
+  });
 
   // Show panel only if there are buttons to display
   if (!hasPathWithMultipleSubpaths && totalSelectedItems < 2) {
