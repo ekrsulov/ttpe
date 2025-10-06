@@ -1,20 +1,9 @@
 import React from 'react';
 import { Box, HStack, IconButton } from '@chakra-ui/react';
-import {
-  MousePointer,
-  Pen,
-  Type,
-  Shapes,
-  Route,
-  SquareDashedMousePointer,
-  MousePointerClick,
-  Menu,
-  Hand
-} from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { RenderCountBadgeWrapper } from './RenderCountBadgeWrapper';
 import type { CanvasElement } from '../../types';
-
-type ToolMode = 'select' | 'pencil' | 'text' | 'shape' | 'subpath' | 'transformation' | 'edit' | 'pan';
+import { TOOL_DEFINITIONS } from '../../config/toolDefinitions';
 
 interface TopActionBarProps {
   activeMode: string | null;
@@ -25,17 +14,6 @@ interface TopActionBarProps {
   onMenuClick?: () => void;
   selectedPaths?: CanvasElement[];
 }
-
-const actionTools: Array<{ mode: ToolMode; icon: React.ComponentType<{ size?: number }>; label: string }> = [
-  { mode: 'select', icon: MousePointer, label: 'Select' },
-  { mode: 'pan', icon: Hand, label: 'Pan' },
-  { mode: 'pencil', icon: Pen, label: 'Pencil' },
-  { mode: 'text', icon: Type, label: 'Text' },
-  { mode: 'shape', icon: Shapes, label: 'Shape' },
-  { mode: 'subpath', icon: Route, label: 'Subpath' },
-  { mode: 'transformation', icon: SquareDashedMousePointer, label: 'Transform' },
-  { mode: 'edit', icon: MousePointerClick, label: 'Edit' },
-];
 
 export const TopActionBar: React.FC<TopActionBarProps> = ({
   activeMode,
@@ -77,7 +55,7 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
         justify="center"
       >
         {/* Tool buttons */}
-        {actionTools.map(({ mode, icon: Icon, label }) => {
+        {TOOL_DEFINITIONS.map(({ mode, icon: Icon, label }) => {
           const isDisabled = (() => {
             if (mode === 'transformation' || mode === 'edit') {
               return selectedPaths.length !== 1;

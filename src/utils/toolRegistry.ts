@@ -1,6 +1,7 @@
 import type { Point } from '../types';
 import { useCanvasStore } from '../store/canvasStore';
 import React from 'react';
+import { TOOL_DEFINITIONS, type ToolMode } from '../config/toolDefinitions';
 
 export type ToolHandler = (
   e: React.PointerEvent,
@@ -23,6 +24,15 @@ export interface ToolConfig {
 
 export type ToolRegistry = Record<string, ToolConfig>;
 
+/**
+ * Get cursor style for a tool mode
+ * Uses centralized tool definitions
+ */
+export const getToolCursor = (mode: ToolMode): string => {
+  const toolDef = TOOL_DEFINITIONS.find(tool => tool.mode === mode);
+  return toolDef?.cursor || 'default';
+};
+
 export const toolRegistry: ToolRegistry = {
   pencil: {
     handler: (_e, point) => {
@@ -36,7 +46,7 @@ export const toolRegistry: ToolRegistry = {
       },
     },
     feedback: {
-      cursor: 'crosshair',
+      cursor: getToolCursor('pencil'),
     },
   },
   text: {
@@ -52,7 +62,7 @@ export const toolRegistry: ToolRegistry = {
       },
     },
     feedback: {
-      cursor: 'text',
+      cursor: getToolCursor('text'),
     },
   },
   shape: {
@@ -66,7 +76,7 @@ export const toolRegistry: ToolRegistry = {
       },
     },
     feedback: {
-      cursor: 'crosshair',
+      cursor: getToolCursor('shape'),
     },
   },
   select: {
@@ -91,7 +101,7 @@ export const toolRegistry: ToolRegistry = {
       },
     },
     feedback: {
-      cursor: 'default',
+      cursor: getToolCursor('select'),
     },
   },
   edit: {
@@ -108,7 +118,7 @@ export const toolRegistry: ToolRegistry = {
       },
     },
     feedback: {
-      cursor: 'pointer',
+      cursor: getToolCursor('edit'),
     },
   },
   subpath: {
@@ -125,7 +135,23 @@ export const toolRegistry: ToolRegistry = {
       },
     },
     feedback: {
-      cursor: 'pointer',
+      cursor: getToolCursor('subpath'),
+    },
+  },
+  pan: {
+    handler: () => {
+      // Pan tool handler - implemented elsewhere
+    },
+    feedback: {
+      cursor: getToolCursor('pan'),
+    },
+  },
+  transformation: {
+    handler: () => {
+      // Transformation tool handler - implemented elsewhere
+    },
+    feedback: {
+      cursor: getToolCursor('transformation'),
     },
   },
 };

@@ -37,6 +37,59 @@ interface FeedbackOverlayProps {
   };
 }
 
+interface FeedbackBlockProps {
+  viewport: {
+    panX: number;
+    panY: number;
+    zoom: number;
+  };
+  canvasSize: {
+    width: number;
+    height: number;
+  };
+  width: number;
+  isHighlighted?: boolean;
+  content: string;
+}
+
+const FeedbackBlock: React.FC<FeedbackBlockProps> = ({
+  viewport,
+  canvasSize,
+  width,
+  isHighlighted = false,
+  content,
+}) => {
+  const transform = `translate(${-viewport.panX / viewport.zoom + 5 / viewport.zoom} ${-viewport.panY / viewport.zoom + canvasSize.height / viewport.zoom - 33 / viewport.zoom}) scale(${1 / viewport.zoom})`;
+  
+  return (
+    <g transform={transform}>
+      <rect
+        x="0"
+        y="0"
+        width={width}
+        height="24"
+        fill={isHighlighted ? "#059669" : "#1f2937"}
+        fillOpacity="0.9"
+        rx="4"
+        ry="4"
+        stroke={isHighlighted ? "#10b981" : "#374151"}
+        strokeWidth="1"
+      />
+      <text
+        x={width / 2}
+        y="16"
+        textAnchor="middle"
+        fontSize="12"
+        fontFamily="system-ui, -apple-system, sans-serif"
+        fill="#ffffff"
+        fontWeight="500"
+      >
+        {content}
+      </text>
+    </g>
+  );
+};
+
 export const FeedbackOverlay: React.FC<FeedbackOverlayProps> = ({
   viewport,
   canvasSize,
@@ -49,118 +102,45 @@ export const FeedbackOverlay: React.FC<FeedbackOverlayProps> = ({
     <>
       {/* Rotation Feedback */}
       {rotationFeedback.visible && (
-        <g transform={`translate(${-viewport.panX / viewport.zoom + 5 / viewport.zoom} ${-viewport.panY / viewport.zoom + canvasSize.height / viewport.zoom - 33 / viewport.zoom}) scale(${1 / viewport.zoom})`}>
-          <rect
-            x="0"
-            y="0"
-            width={rotationFeedback.isShiftPressed ? "75" : "55"}
-            height="24"
-            fill={rotationFeedback.isMultipleOf15 ? "#059669" : "#1f2937"}
-            fillOpacity="0.9"
-            rx="4"
-            ry="4"
-            stroke={rotationFeedback.isMultipleOf15 ? "#10b981" : "#374151"}
-            strokeWidth="1"
-          />
-          <text
-            x={rotationFeedback.isShiftPressed ? "37.5" : "27.5"}
-            y="16"
-            textAnchor="middle"
-            fontSize="12"
-            fontFamily="system-ui, -apple-system, sans-serif"
-            fill="#ffffff"
-            fontWeight="500"
-          >
-            {rotationFeedback.degrees}°{rotationFeedback.isShiftPressed ? " ⇧" : ""}
-          </text>
-        </g>
+        <FeedbackBlock
+          viewport={viewport}
+          canvasSize={canvasSize}
+          width={rotationFeedback.isShiftPressed ? 75 : 55}
+          isHighlighted={rotationFeedback.isMultipleOf15}
+          content={`${rotationFeedback.degrees}°${rotationFeedback.isShiftPressed ? " ⇧" : ""}`}
+        />
       )}
 
       {/* Resize Feedback */}
       {resizeFeedback.visible && (
-        <g transform={`translate(${-viewport.panX / viewport.zoom + 5 / viewport.zoom} ${-viewport.panY / viewport.zoom + canvasSize.height / viewport.zoom - 33 / viewport.zoom}) scale(${1 / viewport.zoom})`}>
-          <rect
-            x="0"
-            y="0"
-            width={resizeFeedback.isShiftPressed ? "95" : "85"}
-            height="24"
-            fill={resizeFeedback.isMultipleOf10 ? "#059669" : "#1f2937"}
-            fillOpacity="0.9"
-            rx="4"
-            ry="4"
-            stroke={resizeFeedback.isMultipleOf10 ? "#10b981" : "#374151"}
-            strokeWidth="1"
-          />
-          <text
-            x={resizeFeedback.isShiftPressed ? "47.5" : "42.5"}
-            y="16"
-            textAnchor="middle"
-            fontSize="12"
-            fontFamily="system-ui, -apple-system, sans-serif"
-            fill="#ffffff"
-            fontWeight="500"
-          >
-            x{resizeFeedback.deltaX >= 0 ? '+' : ''}{resizeFeedback.deltaX}, y{resizeFeedback.deltaY >= 0 ? '+' : ''}{resizeFeedback.deltaY}{resizeFeedback.isShiftPressed ? " ⇧" : ""}
-          </text>
-        </g>
+        <FeedbackBlock
+          viewport={viewport}
+          canvasSize={canvasSize}
+          width={resizeFeedback.isShiftPressed ? 95 : 85}
+          isHighlighted={resizeFeedback.isMultipleOf10}
+          content={`x${resizeFeedback.deltaX >= 0 ? '+' : ''}${resizeFeedback.deltaX}, y${resizeFeedback.deltaY >= 0 ? '+' : ''}${resizeFeedback.deltaY}${resizeFeedback.isShiftPressed ? " ⇧" : ""}`}
+        />
       )}
 
       {/* Shape Creation Feedback */}
       {shapeFeedback.visible && (
-        <g transform={`translate(${-viewport.panX / viewport.zoom + 5 / viewport.zoom} ${-viewport.panY / viewport.zoom + canvasSize.height / viewport.zoom - 33 / viewport.zoom}) scale(${1 / viewport.zoom})`}>
-          <rect
-            x="0"
-            y="0"
-            width={shapeFeedback.isShiftPressed ? "85" : "75"}
-            height="24"
-            fill={shapeFeedback.isMultipleOf10 ? "#059669" : "#1f2937"}
-            fillOpacity="0.9"
-            rx="4"
-            ry="4"
-            stroke={shapeFeedback.isMultipleOf10 ? "#10b981" : "#374151"}
-            strokeWidth="1"
-          />
-          <text
-            x={shapeFeedback.isShiftPressed ? "42.5" : "37.5"}
-            y="16"
-            textAnchor="middle"
-            fontSize="12"
-            fontFamily="system-ui, -apple-system, sans-serif"
-            fill="#ffffff"
-            fontWeight="500"
-          >
-            {shapeFeedback.width} × {shapeFeedback.height}{shapeFeedback.isShiftPressed ? " ⇧" : ""}
-          </text>
-        </g>
+        <FeedbackBlock
+          viewport={viewport}
+          canvasSize={canvasSize}
+          width={shapeFeedback.isShiftPressed ? 85 : 75}
+          isHighlighted={shapeFeedback.isMultipleOf10}
+          content={`${shapeFeedback.width} × ${shapeFeedback.height}${shapeFeedback.isShiftPressed ? " ⇧" : ""}`}
+        />
       )}
 
       {/* Point Position Feedback */}
       {pointPositionFeedback.visible && (
-        <g transform={`translate(${-viewport.panX / viewport.zoom + 5 / viewport.zoom} ${-viewport.panY / viewport.zoom + canvasSize.height / viewport.zoom - 33 / viewport.zoom}) scale(${1 / viewport.zoom})`}>
-          <rect
-            x="0"
-            y="0"
-            width="75"
-            height="24"
-            fill="#1f2937"
-            fillOpacity="0.9"
-            rx="4"
-            ry="4"
-            stroke="#374151"
-            strokeWidth="1"
-          />
-          <text
-            x="37.5"
-            y="16"
-            textAnchor="middle"
-            fontSize="12"
-            fontFamily="system-ui, -apple-system, sans-serif"
-            fill="#ffffff"
-            fontWeight="500"
-          >
-            {pointPositionFeedback.x}, {pointPositionFeedback.y}
-          </text>
-        </g>
+        <FeedbackBlock
+          viewport={viewport}
+          canvasSize={canvasSize}
+          width={75}
+          content={`${pointPositionFeedback.x}, ${pointPositionFeedback.y}`}
+        />
       )}
     </>
   );

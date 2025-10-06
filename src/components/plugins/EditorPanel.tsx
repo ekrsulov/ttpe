@@ -21,12 +21,12 @@ import {
   useBreakpointValue
 } from '@chakra-ui/react';
 import { SliderControl } from '../ui/SliderControl';
-import { PresetButton } from '../ui/PresetButton';
+import { PresetButton } from '../ui/FillAndStrokePresetButton';
 import { LinecapSelector } from '../ui/LinecapSelector';
 import { LinejoinSelector } from '../ui/LinejoinSelector';
 import { FillRuleSelector } from '../ui/FillRuleSelector';
 import { DashArrayCustomInput, DashArrayPresets } from '../ui/DashArraySelector';
-import { PRESETS, type Preset } from '../../utils/presets';
+import { PRESETS, type Preset } from '../../utils/fillAndStrokePresets';
 import { useSelectedPathProperty } from '../../utils/pathPropertyUtils';
 import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
 

@@ -115,164 +115,99 @@ export const OpticalAlignmentOverlay: React.FC<OpticalAlignmentOverlayProps> = (
             
             const containerBounds = container.bounds;
             
-            // Calculate distances
-            const leftDistance = Math.abs(contentBounds.minX - containerBounds.minX);
-            const rightDistance = Math.abs(containerBounds.maxX - contentBounds.maxX);
-            const topDistance = Math.abs(contentBounds.minY - containerBounds.minY);
-            const bottomDistance = Math.abs(containerBounds.maxY - contentBounds.maxY);
+            // Calculate distances for each edge
+            const distances = {
+              top: {
+                value: Math.abs(contentBounds.minY - containerBounds.minY),
+                x1: (contentBounds.minX + contentBounds.maxX) / 2,
+                y1: containerBounds.minY,
+                x2: (contentBounds.minX + contentBounds.maxX) / 2,
+                y2: contentBounds.minY,
+                labelX: (contentBounds.minX + contentBounds.maxX) / 2,
+                labelY: (containerBounds.minY + contentBounds.minY) / 2,
+              },
+              right: {
+                value: Math.abs(containerBounds.maxX - contentBounds.maxX),
+                x1: contentBounds.maxX,
+                y1: (contentBounds.minY + contentBounds.maxY) / 2,
+                x2: containerBounds.maxX,
+                y2: (contentBounds.minY + contentBounds.maxY) / 2,
+                labelX: (contentBounds.maxX + containerBounds.maxX) / 2,
+                labelY: (contentBounds.minY + contentBounds.maxY) / 2,
+              },
+              bottom: {
+                value: Math.abs(containerBounds.maxY - contentBounds.maxY),
+                x1: (contentBounds.minX + contentBounds.maxX) / 2,
+                y1: contentBounds.maxY,
+                x2: (contentBounds.minX + contentBounds.maxX) / 2,
+                y2: containerBounds.maxY,
+                labelX: (contentBounds.minX + contentBounds.maxX) / 2,
+                labelY: (contentBounds.maxY + containerBounds.maxY) / 2,
+              },
+              left: {
+                value: Math.abs(contentBounds.minX - containerBounds.minX),
+                x1: containerBounds.minX,
+                y1: (contentBounds.minY + contentBounds.maxY) / 2,
+                x2: contentBounds.minX,
+                y2: (contentBounds.minY + contentBounds.maxY) / 2,
+                labelX: (containerBounds.minX + contentBounds.minX) / 2,
+                labelY: (contentBounds.minY + contentBounds.maxY) / 2,
+              },
+            };
             
             const textSize = 10 / zoom;
             const ruleStroke = 1 / zoom;
             
+            // Helper function to render a distance rule
+            const renderDistanceRule = (
+              edge: keyof typeof distances,
+              distance: typeof distances.top
+            ) => {
+              if (distance.value <= 5) return null;
+              
+              return (
+                <g key={edge}>
+                  {/* Distance line */}
+                  <line
+                    x1={distance.x1}
+                    y1={distance.y1}
+                    x2={distance.x2}
+                    y2={distance.y2}
+                    stroke="#666666"
+                    strokeWidth={ruleStroke}
+                  />
+                  {/* Distance label background */}
+                  <rect
+                    x={distance.labelX - 15 / zoom}
+                    y={distance.labelY - textSize / 2}
+                    width={30 / zoom}
+                    height={textSize}
+                    fill="white"
+                    rx={2 / zoom}
+                    ry={2 / zoom}
+                  />
+                  {/* Distance label */}
+                  <text
+                    x={distance.labelX}
+                    y={distance.labelY}
+                    fontSize={textSize}
+                    fill="#666666"
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fontFamily="Arial, sans-serif"
+                  >
+                    {Math.round(distance.value)}px
+                  </text>
+                </g>
+              );
+            };
+            
             return (
               <g key={`distance-rules-${item.elementId}`}>
-                {/* Top distance */}
-                {topDistance > 5 && (
-                  <g>
-                    {/* Vertical line */}
-                    <line
-                      x1={(contentBounds.minX + contentBounds.maxX) / 2}
-                      y1={containerBounds.minY}
-                      x2={(contentBounds.minX + contentBounds.maxX) / 2}
-                      y2={contentBounds.minY}
-                      stroke="#666666"
-                      strokeWidth={ruleStroke}
-                    />
-                    {/* Distance label background */}
-                    <rect
-                      x={(contentBounds.minX + contentBounds.maxX) / 2 - 15 / zoom}
-                      y={(containerBounds.minY + contentBounds.minY) / 2 - textSize / 2}
-                      width={30 / zoom}
-                      height={textSize}
-                      fill="white"
-                      rx={2 / zoom}
-                      ry={2 / zoom}
-                    />
-                    {/* Distance label */}
-                    <text
-                      x={(contentBounds.minX + contentBounds.maxX) / 2}
-                      y={(containerBounds.minY + contentBounds.minY) / 2}
-                      fontSize={textSize}
-                      fill="#666666"
-                      textAnchor="middle"
-                      dominantBaseline="central"
-                      fontFamily="Arial, sans-serif"
-                    >
-                      {Math.round(topDistance)}px
-                    </text>
-                  </g>
-                )}
-                
-                {/* Right distance */}
-                {rightDistance > 5 && (
-                  <g>
-                    {/* Horizontal line */}
-                    <line
-                      x1={contentBounds.maxX}
-                      y1={(contentBounds.minY + contentBounds.maxY) / 2}
-                      x2={containerBounds.maxX}
-                      y2={(contentBounds.minY + contentBounds.maxY) / 2}
-                      stroke="#666666"
-                      strokeWidth={ruleStroke}
-                    />
-                    {/* Distance label background */}
-                    <rect
-                      x={(contentBounds.maxX + containerBounds.maxX) / 2 - 15 / zoom}
-                      y={(contentBounds.minY + contentBounds.maxY) / 2 - textSize / 2}
-                      width={30 / zoom}
-                      height={textSize}
-                      fill="white"
-                      rx={2 / zoom}
-                      ry={2 / zoom}
-                    />
-                    {/* Distance label */}
-                    <text
-                      x={(contentBounds.maxX + containerBounds.maxX) / 2}
-                      y={(contentBounds.minY + contentBounds.maxY) / 2}
-                      fontSize={textSize}
-                      fill="#666666"
-                      textAnchor="middle"
-                      dominantBaseline="central"
-                      fontFamily="Arial, sans-serif"
-                    >
-                      {Math.round(rightDistance)}px
-                    </text>
-                  </g>
-                )}
-                
-                {/* Bottom distance */}
-                {bottomDistance > 5 && (
-                  <g>
-                    {/* Vertical line */}
-                    <line
-                      x1={(contentBounds.minX + contentBounds.maxX) / 2}
-                      y1={contentBounds.maxY}
-                      x2={(contentBounds.minX + contentBounds.maxX) / 2}
-                      y2={containerBounds.maxY}
-                      stroke="#666666"
-                      strokeWidth={ruleStroke}
-                    />
-                    {/* Distance label background */}
-                    <rect
-                      x={(contentBounds.minX + contentBounds.maxX) / 2 - 15 / zoom}
-                      y={(contentBounds.maxY + containerBounds.maxY) / 2 - textSize / 2}
-                      width={30 / zoom}
-                      height={textSize}
-                      fill="white"
-                      rx={2 / zoom}
-                      ry={2 / zoom}
-                    />
-                    {/* Distance label */}
-                    <text
-                      x={(contentBounds.minX + contentBounds.maxX) / 2}
-                      y={(contentBounds.maxY + containerBounds.maxY) / 2}
-                      fontSize={textSize}
-                      fill="#666666"
-                      textAnchor="middle"
-                      dominantBaseline="central"
-                      fontFamily="Arial, sans-serif"
-                    >
-                      {Math.round(bottomDistance)}px
-                    </text>
-                  </g>
-                )}
-                
-                {/* Left distance */}
-                {leftDistance > 5 && (
-                  <g>
-                    {/* Horizontal line */}
-                    <line
-                      x1={containerBounds.minX}
-                      y1={(contentBounds.minY + contentBounds.maxY) / 2}
-                      x2={contentBounds.minX}
-                      y2={(contentBounds.minY + contentBounds.maxY) / 2}
-                      stroke="#666666"
-                      strokeWidth={ruleStroke}
-                    />
-                    {/* Distance label background */}
-                    <rect
-                      x={(containerBounds.minX + contentBounds.minX) / 2 - 15 / zoom}
-                      y={(contentBounds.minY + contentBounds.maxY) / 2 - textSize / 2}
-                      width={30 / zoom}
-                      height={textSize}
-                      fill="white"
-                      rx={2 / zoom}
-                      ry={2 / zoom}
-                    />
-                    {/* Distance label */}
-                    <text
-                      x={(containerBounds.minX + contentBounds.minX) / 2}
-                      y={(contentBounds.minY + contentBounds.maxY) / 2}
-                      fontSize={textSize}
-                      fill="#666666"
-                      textAnchor="middle"
-                      dominantBaseline="central"
-                      fontFamily="Arial, sans-serif"
-                    >
-                      {Math.round(leftDistance)}px
-                    </text>
-                  </g>
-                )}
+                {renderDistanceRule('top', distances.top)}
+                {renderDistanceRule('right', distances.right)}
+                {renderDistanceRule('bottom', distances.bottom)}
+                {renderDistanceRule('left', distances.left)}
               </g>
             );
           })()}
