@@ -47,8 +47,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [isPinned, setIsPinned] = useState(isDesktop ?? true);
   
   // Sidebar width state (only for pinned mode)
-  const [sidebarWidth, setSidebarWidth] = useState(300);
-  const initialWidth = 300; // Ancho inicial para reset
+  const [sidebarWidth, setSidebarWidth] = useState(250);
+  const initialWidth = 250; // Ancho inicial para reset
   
   // Sync isPinned with desktop/mobile changes
   useEffect(() => {
@@ -266,7 +266,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         onClose={onClose}
         closeOnOverlayClick={true}
         closeOnEsc={true}
-        size="sm" // 300px for unpinned mode
+        size="sm" // 260px for unpinned mode
         // Prevent gesture conflicts on mobile
         blockScrollOnMount={true}
         preserveScrollBarGap={false}
@@ -280,6 +280,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           }}
         />
         <DrawerContent
+          w="260px"
           h="100dvh" // Full height - ActionBar is now floating
           maxH="100dvh"
           bg="white"
