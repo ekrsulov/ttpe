@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { Pen, Minus, Copy, Clipboard } from 'lucide-react';
+import { Copy, Clipboard } from 'lucide-react';
 import { VStack, HStack, Box, Text, IconButton as ChakraIconButton } from '@chakra-ui/react';
 import { extractEditablePoints, extractSubpaths, commandsToString, translateCommands } from '../../utils/path';
 import type { CanvasElement, PathData, Command } from '../../types';
@@ -17,17 +17,64 @@ const getSubpathData = (element: CanvasElement, subpathIndex: number) => {
   return subpaths[subpathIndex] || null;
 };
 
+// Helper to calculate bounding box coordinates
+const getBoundingBoxCoords = (commands: Command[]) => {
+  if (commands.length === 0) return null;
+  
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+
+  commands.forEach(cmd => {
+    const points: number[] = [];
+    
+    switch (cmd.type) {
+      case 'M':
+      case 'L':
+        points.push(cmd.position.x, cmd.position.y);
+        break;
+      case 'C':
+        points.push(
+          cmd.controlPoint1.x, cmd.controlPoint1.y,
+          cmd.controlPoint2.x, cmd.controlPoint2.y,
+          cmd.position.x, cmd.position.y
+        );
+        break;
+      case 'Z':
+        // Z command doesn't add new points
+        break;
+    }
+
+    for (let i = 0; i < points.length; i += 2) {
+      const x = points[i];
+      const y = points[i + 1];
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    }
+  });
+
+  return {
+    topLeft: { x: Math.round(minX), y: Math.round(minY) },
+    bottomRight: { x: Math.round(maxX), y: Math.round(maxY) }
+  };
+};
+
 const SelectPanelComponent: React.FC = () => {
   const selectedSubpaths = useCanvasStore(state => state.selectedSubpaths);
   const addElement = useCanvasStore(state => state.addElement);
   
-  // Subscribe only to count, not the full array - this is a primitive so it won't cause re-renders unless count actually changes
-  // This forces a re-render only when selection count changes
-  useCanvasStore(state => state.selectedIds.length);
+  // Subscribe to elements and selectedIds separately to avoid infinite re-renders
+  const elements = useCanvasStore(state => state.elements);
+  const selectedIds = useCanvasStore(state => state.selectedIds);
   
-  // Get selected elements directly - this runs on every render but component only re-renders when selectedCount changes
-  const state = useCanvasStore.getState();
-  const selectedElements = state.elements.filter(el => state.selectedIds.includes(el.id));
+  // Memoize the filtered selected elements to prevent unnecessary re-renders
+  const selectedElements = useMemo(() => 
+    elements.filter(el => selectedIds.includes(el.id)),
+    [elements, selectedIds]
+  );
 
   // Build list of items to display
   const items: Array<{
@@ -133,7 +180,7 @@ const SelectPanelComponent: React.FC = () => {
         {items.length > 0 ? (
           <VStack spacing={1} align="stretch">
             {items.map((item) => {
-              // Get commands for thumbnail
+              // Get commands for thumbnail and bbox
               let thumbnailCommands: Command[] = [];
               if (item.type === 'element' && item.element.type === 'path') {
                 thumbnailCommands = (item.element.data as PathData).subPaths.flat();
@@ -144,16 +191,19 @@ const SelectPanelComponent: React.FC = () => {
                 }
               }
 
+              // Calculate bbox coordinates
+              const bbox = getBoundingBoxCoords(thumbnailCommands);
+
               return (
                 <HStack
                   key={`${item.element.id}-${item.type}-${item.subpathIndex || 0}`}
                   spacing={2}
-                  px={item.type === 'subpath' ? 4 : 1}
-                  pl={item.type === 'subpath' ? 4 : 1}
+                  px={1}
                   py={1}
                   bg="gray.50"
                   borderRadius="sm"
-                  fontSize="11px"
+                  fontSize="10px"
+                  align="flex-start"
                 >
                   {/* Thumbnail */}
                   {thumbnailCommands.length > 0 && (
@@ -164,45 +214,42 @@ const SelectPanelComponent: React.FC = () => {
                     />
                   )}
                   
-                  {/* Icon */}
-                  {item.type === 'element' ? (
-                    item.element.type === 'path' ? <Pen size={12} /> : <Pen size={12} />
-                  ) : (
-                    <Minus size={12} />
-                  )}
-                  
                   {/* Text info */}
                   <Box flex={1}>
-                    <Text fontWeight="500" fontSize="11px">
+                    <Text fontWeight="500" fontSize="10px">
                       {item.type === 'element'
-                        ? `${item.element.type} (z: ${item.element.zIndex})`
-                        : `Subpath ${item.subpathIndex}`
+                        ? `${item.element.type} (z: ${item.element.zIndex}) - ${item.pointCount} points`
+                        : `Subpath ${item.subpathIndex} - ${item.pointCount} points`
                       }
                     </Text>
-                    <Text fontSize="10px" color="gray.600">
-                      {item.pointCount} points
-                    </Text>
+                    {bbox && (
+                      <Text fontSize="9px" color="gray.600">
+                        ({bbox.topLeft.x}, {bbox.topLeft.y}) → ({bbox.bottomRight.x}, {bbox.bottomRight.y})
+                      </Text>
+                    )}
                   </Box>
                   
-                  {/* Action buttons */}
-                  <ChakraIconButton
-                    aria-label="Duplicate"
-                    icon={<Copy size={10} />}
-                    onClick={() => duplicateItem(item)}
-                    size="xs"
-                    minW="auto"
-                    h="auto"
-                    p={1}
-                  />
-                  <ChakraIconButton
-                    aria-label="Copy Path to Clipboard"
-                    icon={<Clipboard size={10} />}
-                    onClick={() => copyPathToClipboard(item)}
-                    size="xs"
-                    minW="auto"
-                    h="auto"
-                    p={1}
-                  />
+                  {/* Action buttons - always aligned to the right */}
+                  <HStack spacing={1}>
+                    <ChakraIconButton
+                      aria-label="Duplicate"
+                      icon={<Copy size={10} />}
+                      onClick={() => duplicateItem(item)}
+                      size="xs"
+                      minW="auto"
+                      h="auto"
+                      p={1}
+                    />
+                    <ChakraIconButton
+                      aria-label="Copy Path to Clipboard"
+                      icon={<Clipboard size={10} />}
+                      onClick={() => copyPathToClipboard(item)}
+                      size="xs"
+                      minW="auto"
+                      h="auto"
+                      p={1}
+                    />
+                  </HStack>
                 </HStack>
               );
             })}
