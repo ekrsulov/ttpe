@@ -407,10 +407,9 @@ export const ControlPointAlignmentPanel: React.FC = () => {
               aria-label={showDetails ? "Hide Details" : "Show Details"}
               icon={showDetails ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
               onClick={toggleDetails}
-              colorScheme={showDetails ? 'blue' : 'gray'}
-              variant={showDetails ? 'solid' : 'ghost'}
-              bg={showDetails ? undefined : 'transparent'}
+              variant="ghost"
               size="sm"
+              bg="transparent"
             />
           </Box>
         </HStack>

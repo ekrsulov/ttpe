@@ -82,6 +82,7 @@ export const SidebarToolGrid: React.FC<SidebarToolGridProps> = ({
         borderRadius="md"
         fontWeight="medium"
         transition="all 0.2s"
+        width={!isDesktop ? "full" : "auto"}
         _hover={{
           bg: isActive ? 'blue.600' : 'gray.50'
         }}
@@ -129,7 +130,7 @@ export const SidebarToolGrid: React.FC<SidebarToolGridProps> = ({
   return (
     <Box pt={2} pr={2} pl={2} bg="white" position="relative">
       <RenderCountBadgeWrapper componentName="SidebarToolGrid" position="top-left" />
-      <SimpleGrid columns={3} spacing={1}>
+      <SimpleGrid columns={isDesktop ? 3 : 2} spacing={1}>
         {pluginRows[0].map(renderPluginButton)}
         {isDesktop && renderPinButton()}
       </SimpleGrid>
