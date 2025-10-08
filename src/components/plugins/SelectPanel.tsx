@@ -3,9 +3,10 @@ import { useCanvasStore } from '../../store/canvasStore';
 import { Pen, Minus, Copy, Clipboard } from 'lucide-react';
 import { VStack, HStack, Box, Text, IconButton as ChakraIconButton } from '@chakra-ui/react';
 import { extractEditablePoints, extractSubpaths, commandsToString, translateCommands } from '../../utils/path';
-import type { CanvasElement, PathData } from '../../types';
+import type { CanvasElement, PathData, Command } from '../../types';
 import { logger } from '../../utils';
 import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
+import { PathThumbnail } from '../ui/PathThumbnail';
 
 // Helper to extract subpath data from an element
 const getSubpathData = (element: CanvasElement, subpathIndex: number) => {
@@ -131,53 +132,80 @@ const SelectPanelComponent: React.FC = () => {
       <Box h="94px" overflowY="auto">
         {items.length > 0 ? (
           <VStack spacing={1} align="stretch">
-            {items.map((item) => (
-              <HStack
-                key={`${item.element.id}-${item.type}-${item.subpathIndex || 0}`}
-                spacing={1}
-                px={item.type === 'subpath' ? 4 : 1}
-                pl={item.type === 'subpath' ? 4 : 1}
-                py={0.5}
-                bg="gray.50"
-                borderRadius="sm"
-                fontSize="11px"
-              >
-                {item.type === 'element' ? (
-                  item.element.type === 'path' ? <Pen size={12} /> : <Pen size={12} />
-                ) : (
-                  <Minus size={12} />
-                )}
-                <Box flex={1}>
-                  <Text fontWeight="500" fontSize="11px">
-                    {item.type === 'element'
-                      ? `${item.element.type} (z: ${item.element.zIndex})`
-                      : `Subpath ${item.subpathIndex}`
-                    }
-                  </Text>
-                  <Text fontSize="10px" color="gray.600">
-                    {item.pointCount} points
-                  </Text>
-                </Box>
-                <ChakraIconButton
-                  aria-label="Duplicate"
-                  icon={<Copy size={10} />}
-                  onClick={() => duplicateItem(item)}
-                  size="xs"
-                  minW="auto"
-                  h="auto"
-                  p={1}
-                />
-                <ChakraIconButton
-                  aria-label="Copy Path to Clipboard"
-                  icon={<Clipboard size={10} />}
-                  onClick={() => copyPathToClipboard(item)}
-                  size="xs"
-                  minW="auto"
-                  h="auto"
-                  p={1}
-                />
-              </HStack>
-            ))}
+            {items.map((item) => {
+              // Get commands for thumbnail
+              let thumbnailCommands: Command[] = [];
+              if (item.type === 'element' && item.element.type === 'path') {
+                thumbnailCommands = (item.element.data as PathData).subPaths.flat();
+              } else if (item.type === 'subpath' && item.subpathIndex !== undefined) {
+                const subpathData = getSubpathData(item.element, item.subpathIndex);
+                if (subpathData) {
+                  thumbnailCommands = subpathData.commands;
+                }
+              }
+
+              return (
+                <HStack
+                  key={`${item.element.id}-${item.type}-${item.subpathIndex || 0}`}
+                  spacing={2}
+                  px={item.type === 'subpath' ? 4 : 1}
+                  pl={item.type === 'subpath' ? 4 : 1}
+                  py={1}
+                  bg="gray.50"
+                  borderRadius="sm"
+                  fontSize="11px"
+                >
+                  {/* Thumbnail */}
+                  {thumbnailCommands.length > 0 && (
+                    <PathThumbnail 
+                      commands={thumbnailCommands} 
+                      size={32}
+                      element={item.element}
+                    />
+                  )}
+                  
+                  {/* Icon */}
+                  {item.type === 'element' ? (
+                    item.element.type === 'path' ? <Pen size={12} /> : <Pen size={12} />
+                  ) : (
+                    <Minus size={12} />
+                  )}
+                  
+                  {/* Text info */}
+                  <Box flex={1}>
+                    <Text fontWeight="500" fontSize="11px">
+                      {item.type === 'element'
+                        ? `${item.element.type} (z: ${item.element.zIndex})`
+                        : `Subpath ${item.subpathIndex}`
+                      }
+                    </Text>
+                    <Text fontSize="10px" color="gray.600">
+                      {item.pointCount} points
+                    </Text>
+                  </Box>
+                  
+                  {/* Action buttons */}
+                  <ChakraIconButton
+                    aria-label="Duplicate"
+                    icon={<Copy size={10} />}
+                    onClick={() => duplicateItem(item)}
+                    size="xs"
+                    minW="auto"
+                    h="auto"
+                    p={1}
+                  />
+                  <ChakraIconButton
+                    aria-label="Copy Path to Clipboard"
+                    icon={<Clipboard size={10} />}
+                    onClick={() => copyPathToClipboard(item)}
+                    size="xs"
+                    minW="auto"
+                    h="auto"
+                    p={1}
+                  />
+                </HStack>
+              );
+            })}
           </VStack>
         ) : (
           <Box
