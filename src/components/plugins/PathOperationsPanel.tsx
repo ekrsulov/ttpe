@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
-import { HStack, IconButton as ChakraIconButton, Tooltip } from '@chakra-ui/react';
+import { Grid, Button } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { Plus, Scissors, Zap, Minus, CirclePlus, Square, X, SplitSquareHorizontal } from 'lucide-react';
+import { Scissors } from 'lucide-react';
 import { Panel } from '../ui/Panel';
 import type { PathData } from '../../types';
 
@@ -56,89 +56,208 @@ const PathOperationsPanelComponent: React.FC = () => {
 
   return (
     <Panel icon={<Scissors size={16} />} title="Path Operations">
-      <HStack spacing={1} wrap="wrap">
+      <Grid templateColumns="repeat(auto-fit, minmax(100px, 1fr))" gap={1}>
         {/* Split subpaths operation - available only if a selected path has multiple subpaths */}
         {hasPathWithMultipleSubpaths && (
-          <Tooltip label="Split subpaths into separate paths" fontSize="xs">
-            <ChakraIconButton
-              aria-label="Split subpaths"
-              icon={<Zap size={14} />}
-              onClick={performPathSimplify}
-              size="sm"
-              variant="secondary"
-            />
-          </Tooltip>
+          <Button
+            aria-label="Split subpaths"
+            onClick={performPathSimplify}
+            variant="unstyled"
+            size="sm"
+            bg="transparent"
+            color="gray.700"
+            border="1px solid"
+            borderColor="gray.400"
+            borderRadius="md"
+            fontWeight="medium"
+            fontSize="10px"
+            transition="all 0.2s"
+            _hover={{
+              bg: 'gray.50'
+            }}
+            sx={{
+              minH: '28px',
+              px: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            Subpath Split
+          </Button>
         )}
 
         {/* Boolean operations - require 2+ items */}
         {totalSelectedItems >= 2 && (
           <>
-            <Tooltip label="Union (Simple)" fontSize="xs">
-              <ChakraIconButton
-                aria-label="Union (Simple)"
-                icon={<Plus size={14} />}
-                onClick={performPathUnion}
-                size="sm"
-                variant="secondary"
-              />
-            </Tooltip>
+            <Button
+              aria-label="Union (Simple)"
+              onClick={performPathUnion}
+              variant="unstyled"
+              size="sm"
+              bg="transparent"
+              color="gray.700"
+              border="1px solid"
+              borderColor="gray.400"
+              borderRadius="md"
+              fontWeight="medium"
+              fontSize="10px"
+              transition="all 0.2s"
+              _hover={{
+                bg: 'gray.50'
+              }}
+              sx={{
+                minH: '28px',
+                px: 2,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              Union
+            </Button>
             
-            <Tooltip label="Union (Paper.js)" fontSize="xs">
-              <ChakraIconButton
-                aria-label="Union (Paper.js)"
-                icon={<CirclePlus size={14} />}
-                onClick={performPathUnionPaperJS}
-                size="sm"
-                variant="secondary"
-              />
-            </Tooltip>
+            <Button
+              aria-label="Union (Paper.js)"
+              onClick={performPathUnionPaperJS}
+              variant="unstyled"
+              size="sm"
+              bg="transparent"
+              color="gray.700"
+              border="1px solid"
+              borderColor="gray.400"
+              borderRadius="md"
+              fontWeight="medium"
+              fontSize="10px"
+              transition="all 0.2s"
+              _hover={{
+                bg: 'gray.50'
+              }}
+              sx={{
+                minH: '28px',
+                px: 2,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              Union PaperJs
+            </Button>
             
             {totalSelectedItems === 2 && (
               <>
-                <Tooltip label="Subtract (First - Second)" fontSize="xs">
-                  <ChakraIconButton
-                    aria-label="Subtract"
-                    icon={<Minus size={14} />}
-                    onClick={performPathSubtraction}
-                    size="sm"
-                    variant="secondary"
-                  />
-                </Tooltip>
+                <Button
+                  aria-label="Subtract"
+                  onClick={performPathSubtraction}
+                  variant="unstyled"
+                  size="sm"
+                  bg="transparent"
+                  color="gray.700"
+                  border="1px solid"
+                  borderColor="gray.400"
+                  borderRadius="md"
+                  fontWeight="medium"
+                  fontSize="10px"
+                  transition="all 0.2s"
+                  _hover={{
+                    bg: 'gray.50'
+                  }}
+                  sx={{
+                    minH: '28px',
+                    px: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  Subtract
+                </Button>
                 
-                <Tooltip label="Intersect (First ∩ Second)" fontSize="xs">
-                  <ChakraIconButton
-                    aria-label="Intersect"
-                    icon={<Square size={14} />}
-                    onClick={performPathIntersect}
-                    size="sm"
-                    variant="secondary"
-                  />
-                </Tooltip>
+                <Button
+                  aria-label="Intersect"
+                  onClick={performPathIntersect}
+                  variant="unstyled"
+                  size="sm"
+                  bg="transparent"
+                  color="gray.700"
+                  border="1px solid"
+                  borderColor="gray.400"
+                  borderRadius="md"
+                  fontWeight="medium"
+                  fontSize="10px"
+                  transition="all 0.2s"
+                  _hover={{
+                    bg: 'gray.50'
+                  }}
+                  sx={{
+                    minH: '28px',
+                    px: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  Intersect
+                </Button>
                 
-                <Tooltip label="Exclude (First ⊕ Second)" fontSize="xs">
-                  <ChakraIconButton
-                    aria-label="Exclude"
-                    icon={<X size={14} />}
-                    onClick={performPathExclude}
-                    size="sm"
-                    variant="secondary"
-                  />
-                </Tooltip>
+                <Button
+                  aria-label="Exclude"
+                  onClick={performPathExclude}
+                  variant="unstyled"
+                  size="sm"
+                  bg="transparent"
+                  color="gray.700"
+                  border="1px solid"
+                  borderColor="gray.400"
+                  borderRadius="md"
+                  fontWeight="medium"
+                  fontSize="10px"
+                  transition="all 0.2s"
+                  _hover={{
+                    bg: 'gray.50'
+                  }}
+                  sx={{
+                    minH: '28px',
+                    px: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  Exclude
+                </Button>
                 
-                <Tooltip label="Divide (Split at intersections)" fontSize="xs">
-                  <ChakraIconButton
-                    aria-label="Divide"
-                    icon={<SplitSquareHorizontal size={14} />}
-                    onClick={performPathDivide}
-                    size="sm"
-                    variant="secondary"
-                  />
-                </Tooltip>
+                <Button
+                  aria-label="Divide"
+                  onClick={performPathDivide}
+                  variant="unstyled"
+                  size="sm"
+                  bg="transparent"
+                  color="gray.700"
+                  border="1px solid"
+                  borderColor="gray.400"
+                  borderRadius="md"
+                  fontWeight="medium"
+                  fontSize="10px"
+                  transition="all 0.2s"
+                  _hover={{
+                    bg: 'gray.50'
+                  }}
+                  sx={{
+                    minH: '28px',
+                    px: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  Divide
+                </Button>
               </>
             )}
           </>
         )}
-            </HStack>
+      </Grid>
     </Panel>
   );
 };

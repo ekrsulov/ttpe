@@ -1,23 +1,17 @@
 import React from 'react';
 import {
   VStack,
-  HStack,
   Button,
-  IconButton as ChakraIconButton,
   Text,
   Box,
   Grid,
   GridItem,
-  Tooltip
+  Checkbox
 } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Panel } from '../ui/Panel';
 import {
-  Target,
-  RotateCcw,
-  Crosshair,
-  BarChart3,
-  Ruler
+  Target
 } from 'lucide-react';
 
 const OpticalAlignmentPanelComponent: React.FC = () => {
@@ -85,69 +79,130 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
     >
       {/* Controls */}
       {canPerformOpticalAlignment() && (
-        <VStack spacing={2} align="stretch">
+        <VStack spacing={3} align="stretch">
           {/* Visualization Controls */}
-          <HStack spacing={1}>
-            <Tooltip label="Mathematical Center" fontSize="xs">
-              <ChakraIconButton
-                aria-label="Mathematical Center"
-                icon={<Crosshair size={16} />}
-                size="sm"
-                onClick={toggleMathematicalCenter}
-                colorScheme={showMathematicalCenter ? 'brand' : 'gray'}
-                variant={showMathematicalCenter ? 'solid' : 'ghost'}
-                bg={showMathematicalCenter ? undefined : 'transparent'}
-              />
-            </Tooltip>
+          <VStack spacing={2} align="stretch">
+            <Checkbox
+              size="sm"
+              isChecked={showMathematicalCenter}
+              onChange={toggleMathematicalCenter}
+              sx={{
+                '& .chakra-checkbox__control': {
+                  bg: showMathematicalCenter ? 'blue.500' : 'transparent',
+                  borderColor: showMathematicalCenter ? 'blue.500' : 'gray.400',
+                  _checked: {
+                    bg: 'blue.500',
+                    borderColor: 'blue.500',
+                    color: 'white',
+                    _hover: {
+                      bg: 'blue.600',
+                      borderColor: 'blue.600',
+                    }
+                  },
+                  _hover: {
+                    bg: showMathematicalCenter ? 'blue.600' : 'gray.50',
+                    borderColor: showMathematicalCenter ? 'blue.600' : 'gray.400',
+                  }
+                }
+              }}
+            >
+              <Text fontSize="xs">Show Mathematical Center</Text>
+            </Checkbox>
 
-            <Tooltip label="Optical Center" fontSize="xs">
-              <ChakraIconButton
-                aria-label="Optical Center"
-                icon={<Target size={16} />}
-                size="sm"
-                onClick={toggleOpticalCenter}
-                colorScheme={showOpticalCenter ? 'brand' : 'gray'}
-                variant={showOpticalCenter ? 'solid' : 'ghost'}
-                bg={showOpticalCenter ? undefined : 'transparent'}
-              />
-            </Tooltip>
+            <Checkbox
+              size="sm"
+              isChecked={showOpticalCenter}
+              onChange={toggleOpticalCenter}
+              sx={{
+                '& .chakra-checkbox__control': {
+                  bg: showOpticalCenter ? 'blue.500' : 'transparent',
+                  borderColor: showOpticalCenter ? 'blue.500' : 'gray.400',
+                  _checked: {
+                    bg: 'blue.500',
+                    borderColor: 'blue.500',
+                    color: 'white',
+                    _hover: {
+                      bg: 'blue.600',
+                      borderColor: 'blue.600',
+                    }
+                  },
+                  _hover: {
+                    bg: showOpticalCenter ? 'blue.600' : 'gray.50',
+                    borderColor: showOpticalCenter ? 'blue.600' : 'gray.400',
+                  }
+                }
+              }}
+            >
+              <Text fontSize="xs">Show Optical Center</Text>
+            </Checkbox>
 
-            <Tooltip label="Show Metrics" fontSize="xs">
-              <ChakraIconButton
-                aria-label="Show Metrics"
-                icon={<BarChart3 size={16} />}
-                size="sm"
-                onClick={toggleMetrics}
-                colorScheme={showMetrics ? 'brand' : 'gray'}
-                variant={showMetrics ? 'solid' : 'ghost'}
-                bg={showMetrics ? undefined : 'transparent'}
-              />
-            </Tooltip>
+            <Checkbox
+              size="sm"
+              isChecked={showMetrics}
+              onChange={toggleMetrics}
+              sx={{
+                '& .chakra-checkbox__control': {
+                  bg: showMetrics ? 'blue.500' : 'transparent',
+                  borderColor: showMetrics ? 'blue.500' : 'gray.400',
+                  _checked: {
+                    bg: 'blue.500',
+                    borderColor: 'blue.500',
+                    color: 'white',
+                    _hover: {
+                      bg: 'blue.600',
+                      borderColor: 'blue.600',
+                    }
+                  },
+                  _hover: {
+                    bg: showMetrics ? 'blue.600' : 'gray.50',
+                    borderColor: showMetrics ? 'blue.600' : 'gray.400',
+                  }
+                }
+              }}
+            >
+              <Text fontSize="xs">Show Metric</Text>
+            </Checkbox>
 
-            <Tooltip label="Show Distance Rules" fontSize="xs">
-              <ChakraIconButton
-                aria-label="Show Distance Rules"
-                icon={<Ruler size={16} />}
-                size="sm"
-                onClick={toggleDistanceRules}
-                colorScheme={showDistanceRules ? 'brand' : 'gray'}
-                variant={showDistanceRules ? 'solid' : 'ghost'}
-                bg={showDistanceRules ? undefined : 'transparent'}
-              />
-            </Tooltip>
+            <Checkbox
+              size="sm"
+              isChecked={showDistanceRules}
+              onChange={toggleDistanceRules}
+              sx={{
+                '& .chakra-checkbox__control': {
+                  bg: showDistanceRules ? 'blue.500' : 'transparent',
+                  borderColor: showDistanceRules ? 'blue.500' : 'gray.400',
+                  _checked: {
+                    bg: 'blue.500',
+                    borderColor: 'blue.500',
+                    color: 'white',
+                    _hover: {
+                      bg: 'blue.600',
+                      borderColor: 'blue.600',
+                    }
+                  },
+                  _hover: {
+                    bg: showDistanceRules ? 'blue.600' : 'gray.50',
+                    borderColor: showDistanceRules ? 'blue.600' : 'gray.400',
+                  }
+                }
+              }}
+            >
+              <Text fontSize="xs">Show Distance Rules</Text>
+            </Checkbox>
+          </VStack>
 
-            <Tooltip label="Reset" fontSize="xs">
-              <ChakraIconButton
-                aria-label="Reset"
-                icon={<RotateCcw size={16} />}
-                size="sm"
-                onClick={handleResetAlignment}
-                isDisabled={!hasAlignment}
-                variant="ghost"
-                bg="transparent"
-              />
-            </Tooltip>
-          </HStack>
+          {/* Reset Button */}
+          <Button
+            onClick={handleResetAlignment}
+            isDisabled={!hasAlignment}
+            size="sm"
+            variant="outline"
+            colorScheme="gray"
+            fontSize="xs"
+            w="full"
+          >
+            Reset
+          </Button>
 
           {/* Metrics Display */}
           {showMetrics && currentAlignment && (

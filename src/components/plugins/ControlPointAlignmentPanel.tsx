@@ -2,7 +2,7 @@ import React, { useMemo, useCallback } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { extractEditablePoints, getControlPointAlignmentInfo } from '../../utils/path';
 import type { Command, Point, ControlPoint } from '../../types';
-import { RotateCcw, Move, Link, Copy, ChevronDown, ChevronUp } from 'lucide-react';
+import { RotateCcw, ChevronDown, ChevronUp } from 'lucide-react';
 import {
   VStack,
   HStack,
@@ -321,35 +321,86 @@ export const ControlPointAlignmentPanel: React.FC = () => {
     return (
       <VStack spacing={2} align="stretch" mb={2}>
         <HStack spacing={1}>
-          <ChakraIconButton
+          <Button
             aria-label="Independent - Control points move freely"
-            icon={<Move size={14} />}
             onClick={() => handleAlignmentChange('independent')}
-            colorScheme={(singlePointInfo.info?.type || 'independent') === 'independent' ? 'blue' : 'gray'}
-            variant={(singlePointInfo.info?.type || 'independent') === 'independent' ? 'solid' : 'ghost'}
-            bg={(singlePointInfo.info?.type || 'independent') === 'independent' ? undefined : 'transparent'}
+            variant="unstyled"
             size="sm"
-          />
+            bg={(singlePointInfo.info?.type || 'independent') === 'independent' ? 'blue.500' : 'transparent'}
+            color={(singlePointInfo.info?.type || 'independent') === 'independent' ? 'white' : 'gray.700'}
+            border="1px solid"
+            borderColor={(singlePointInfo.info?.type || 'independent') === 'independent' ? 'blue.500' : 'gray.400'}
+            borderRadius="md"
+            fontWeight="medium"
+            fontSize="10px"
+            transition="all 0.2s"
+            _hover={{
+              bg: (singlePointInfo.info?.type || 'independent') === 'independent' ? 'blue.600' : 'gray.50'
+            }}
+            sx={{
+              minH: '28px',
+              px: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            Independent
+          </Button>
 
-          <ChakraIconButton
+          <Button
             aria-label="Aligned - Control points maintain opposite directions"
-            icon={<Link size={14} />}
             onClick={() => handleAlignmentChange('aligned')}
-            colorScheme={(singlePointInfo.info?.type || 'independent') === 'aligned' ? 'blue' : 'gray'}
-            variant={(singlePointInfo.info?.type || 'independent') === 'aligned' ? 'solid' : 'ghost'}
-            bg={(singlePointInfo.info?.type || 'independent') === 'aligned' ? undefined : 'transparent'}
+            variant="unstyled"
             size="sm"
-          />
+            bg={(singlePointInfo.info?.type || 'independent') === 'aligned' ? 'blue.500' : 'transparent'}
+            color={(singlePointInfo.info?.type || 'independent') === 'aligned' ? 'white' : 'gray.700'}
+            border="1px solid"
+            borderColor={(singlePointInfo.info?.type || 'independent') === 'aligned' ? 'blue.500' : 'gray.400'}
+            borderRadius="md"
+            fontWeight="medium"
+            fontSize="10px"
+            transition="all 0.2s"
+            _hover={{
+              bg: (singlePointInfo.info?.type || 'independent') === 'aligned' ? 'blue.600' : 'gray.50'
+            }}
+            sx={{
+              minH: '28px',
+              px: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            Aligned
+          </Button>
 
-          <ChakraIconButton
+          <Button
             aria-label="Mirrored - Control points are perfectly mirrored"
-            icon={<Copy size={14} />}
             onClick={() => handleAlignmentChange('mirrored')}
-            colorScheme={(singlePointInfo.info?.type || 'independent') === 'mirrored' ? 'blue' : 'gray'}
-            variant={(singlePointInfo.info?.type || 'independent') === 'mirrored' ? 'solid' : 'ghost'}
-            bg={(singlePointInfo.info?.type || 'independent') === 'mirrored' ? undefined : 'transparent'}
+            variant="unstyled"
             size="sm"
-          />
+            bg={(singlePointInfo.info?.type || 'independent') === 'mirrored' ? 'blue.500' : 'transparent'}
+            color={(singlePointInfo.info?.type || 'independent') === 'mirrored' ? 'white' : 'gray.700'}
+            border="1px solid"
+            borderColor={(singlePointInfo.info?.type || 'independent') === 'mirrored' ? 'blue.500' : 'gray.400'}
+            borderRadius="md"
+            fontWeight="medium"
+            fontSize="10px"
+            transition="all 0.2s"
+            _hover={{
+              bg: (singlePointInfo.info?.type || 'independent') === 'mirrored' ? 'blue.600' : 'gray.50'
+            }}
+            sx={{
+              minH: '28px',
+              px: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            Mirrored
+          </Button>
 
           <Box ml="auto">
             <ChakraIconButton

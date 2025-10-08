@@ -286,7 +286,25 @@ const CurvesPanelComponent: React.FC = () => {
               isChecked={curves.snapToGrid}
               onChange={handleToggleSnapToGrid}
               size="sm"
-              colorScheme="brand"
+              sx={{
+                '& .chakra-checkbox__control': {
+                  bg: curves.snapToGrid ? 'blue.500' : 'transparent',
+                  borderColor: curves.snapToGrid ? 'blue.500' : 'gray.400',
+                  _checked: {
+                    bg: 'blue.500',
+                    borderColor: 'blue.500',
+                    color: 'white',
+                    _hover: {
+                      bg: 'blue.600',
+                      borderColor: 'blue.600',
+                    }
+                  },
+                  _hover: {
+                    bg: curves.snapToGrid ? 'blue.600' : 'gray.50',
+                    borderColor: curves.snapToGrid ? 'blue.600' : 'gray.400',
+                  }
+                }
+              }}
             />
           </HStack>
 
@@ -312,7 +330,25 @@ const CurvesPanelComponent: React.FC = () => {
               isChecked={curves.showHandles}
               onChange={handleToggleShowHandles}
               size="sm"
-              colorScheme="brand"
+              sx={{
+                '& .chakra-checkbox__control': {
+                  bg: curves.showHandles ? 'blue.500' : 'transparent',
+                  borderColor: curves.showHandles ? 'blue.500' : 'gray.400',
+                  _checked: {
+                    bg: 'blue.500',
+                    borderColor: 'blue.500',
+                    color: 'white',
+                    _hover: {
+                      bg: 'blue.600',
+                      borderColor: 'blue.600',
+                    }
+                  },
+                  _hover: {
+                    bg: curves.showHandles ? 'blue.600' : 'gray.50',
+                    borderColor: curves.showHandles ? 'blue.600' : 'gray.400',
+                  }
+                }
+              }}
             />
           </HStack>
 
@@ -323,7 +359,25 @@ const CurvesPanelComponent: React.FC = () => {
               isChecked={curves.showPreview}
               onChange={handleToggleShowPreview}
               size="sm"
-              colorScheme="brand"
+              sx={{
+                '& .chakra-checkbox__control': {
+                  bg: curves.showPreview ? 'blue.500' : 'transparent',
+                  borderColor: curves.showPreview ? 'blue.500' : 'gray.400',
+                  _checked: {
+                    bg: 'blue.500',
+                    borderColor: 'blue.500',
+                    color: 'white',
+                    _hover: {
+                      bg: 'blue.600',
+                      borderColor: 'blue.600',
+                    }
+                  },
+                  _hover: {
+                    bg: curves.showPreview ? 'blue.600' : 'gray.50',
+                    borderColor: curves.showPreview ? 'blue.600' : 'gray.400',
+                  }
+                }
+              }}
             />
           </HStack>
         </Box>

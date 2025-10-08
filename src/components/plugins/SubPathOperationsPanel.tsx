@@ -1,5 +1,5 @@
 import React from 'react';
-import { HStack, IconButton as ChakraIconButton, Tooltip } from '@chakra-ui/react';
+import { Button } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { RotateCcw } from 'lucide-react';
 import { Panel } from '../ui/Panel';
@@ -20,18 +20,32 @@ const SubPathOperationsPanelComponent: React.FC = () => {
 
   return (
     <Panel icon={<RotateCcw size={16} />} title="SubPath Operations">
-      <HStack spacing={1}>
-        {/* Reverse operation */}
-        <Tooltip label="Reverse subpath direction" fontSize="xs">
-          <ChakraIconButton
-            aria-label="Reverse subpath direction"
-            icon={<RotateCcw size={14} />}
-            onClick={performReverse}
-            size="sm"
-            variant="secondary"
-          />
-        </Tooltip>
-      </HStack>
+      <Button
+        aria-label="Reverse subpath direction"
+        onClick={performReverse}
+        variant="unstyled"
+        size="sm"
+        bg="transparent"
+        color="gray.700"
+        border="1px solid"
+        borderColor="gray.400"
+        borderRadius="md"
+        fontWeight="medium"
+        fontSize="10px"
+        transition="all 0.2s"
+        _hover={{
+          bg: 'gray.50'
+        }}
+        sx={{
+          minH: '28px',
+          px: 2,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        Reverse
+      </Button>
     </Panel>
   );
 };

@@ -1,7 +1,7 @@
 import React from 'react';
-import { VStack, HStack, IconButton as ChakraIconButton, Text } from '@chakra-ui/react';
+import { VStack, HStack, Button, Text } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { Pen, Route, Square, PenTool } from 'lucide-react';
+import { Pen } from 'lucide-react';
 import { Panel } from '../ui/Panel';
 
 export const PencilPanel: React.FC = () => {
@@ -30,39 +30,90 @@ export const PencilPanel: React.FC = () => {
         <HStack spacing={1} justify="space-between">
           <Text fontSize="12px" color="gray.600">Path Mode:</Text>
           <HStack spacing={1}>
-            <ChakraIconButton
+            <Button
               aria-label="New Path"
-              icon={<Square size={12} />}
               onClick={handleReusePathToggle}
-              colorScheme={!pencil.reusePath ? 'brand' : 'gray'}
-              variant={!pencil.reusePath ? 'solid' : 'ghost'}
-              bg={!pencil.reusePath ? undefined : 'transparent'}
+              variant="unstyled"
               size="sm"
-            />
-            <ChakraIconButton
+              bg={!pencil.reusePath ? 'blue.500' : 'transparent'}
+              color={!pencil.reusePath ? 'white' : 'gray.700'}
+              border="1px solid"
+              borderColor={!pencil.reusePath ? 'blue.500' : 'gray.400'}
+              borderRadius="md"
+              fontWeight="medium"
+              fontSize="11px"
+              transition="all 0.2s"
+              _hover={{
+                bg: !pencil.reusePath ? 'blue.600' : 'gray.50'
+              }}
+              sx={{
+                h: '24px',
+                px: 2,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              New
+            </Button>
+            <Button
               aria-label="Add Subpath"
-              icon={<Route size={12} />}
               onClick={handleReusePathToggle}
-              colorScheme={pencil.reusePath ? 'brand' : 'gray'}
-              variant={pencil.reusePath ? 'solid' : 'ghost'}
-              bg={pencil.reusePath ? undefined : 'transparent'}
+              variant="unstyled"
               size="sm"
-            />
+              bg={pencil.reusePath ? 'blue.500' : 'transparent'}
+              color={pencil.reusePath ? 'white' : 'gray.700'}
+              border="1px solid"
+              borderColor={pencil.reusePath ? 'blue.500' : 'gray.400'}
+              borderRadius="md"
+              fontWeight="medium"
+              fontSize="11px"
+              transition="all 0.2s"
+              _hover={{
+                bg: pencil.reusePath ? 'blue.600' : 'gray.50'
+              }}
+              sx={{
+                h: '24px',
+                px: 2,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              Add
+            </Button>
           </HStack>
         </HStack>
 
         {/* Curves Mode */}
         <HStack spacing={1} justify="space-between">
           <Text fontSize="12px" color="gray.600">Curves:</Text>
-          <ChakraIconButton
+          <Button
             aria-label="Draw Curves"
-            icon={<PenTool size={12} />}
             onClick={handleCurvesToggle}
-            colorScheme={activePlugin === 'curves' ? 'brand' : 'gray'}
-            variant={activePlugin === 'curves' ? 'solid' : 'ghost'}
-            bg={activePlugin === 'curves' ? undefined : 'transparent'}
+            variant="unstyled"
             size="sm"
-          />
+            bg={activePlugin === 'curves' ? 'blue.500' : 'transparent'}
+            color={activePlugin === 'curves' ? 'white' : 'gray.700'}
+            border="1px solid"
+            borderColor={activePlugin === 'curves' ? 'blue.500' : 'gray.400'}
+            borderRadius="md"
+            fontWeight="medium"
+            fontSize="11px"
+            transition="all 0.2s"
+            _hover={{
+              bg: activePlugin === 'curves' ? 'blue.600' : 'gray.50'
+            }}
+            sx={{
+              h: '24px',
+              px: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            Curves
+          </Button>
         </HStack>
       </VStack>
     </Panel>

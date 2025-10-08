@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button as ChakraButton, Checkbox as ChakraCheckbox, HStack, VStack } from '@chakra-ui/react';
-import { File, Save, FolderOpen, Download } from 'lucide-react';
+import { File } from 'lucide-react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { logger } from '../../utils';
 import { Panel } from '../ui/Panel';
@@ -38,7 +38,6 @@ export const FilePanel: React.FC = () => {
             onClick={handleSave}
             variant="outline"
             colorScheme="gray"
-            leftIcon={<Save size={14} />}
             flex={1}
             size="sm"
           >
@@ -49,7 +48,6 @@ export const FilePanel: React.FC = () => {
             onClick={handleSaveAsSvg}
             variant="outline"
             colorScheme="gray"
-            leftIcon={<Download size={14} />}
             flex={1}
             size="sm"
           >
@@ -60,7 +58,6 @@ export const FilePanel: React.FC = () => {
             onClick={handleLoad}
             variant="outline"
             colorScheme="gray"
-            leftIcon={<FolderOpen size={14} />}
             flex={1}
             size="sm"
           >
@@ -73,6 +70,25 @@ export const FilePanel: React.FC = () => {
           isChecked={appendMode}
           onChange={(e) => setAppendMode(e.target.checked)}
           size="sm"
+          sx={{
+            '& .chakra-checkbox__control': {
+              bg: appendMode ? 'blue.500' : 'transparent',
+              borderColor: appendMode ? 'blue.500' : 'gray.400',
+              _checked: {
+                bg: 'blue.500',
+                borderColor: 'blue.500',
+                color: 'white',
+                _hover: {
+                  bg: 'blue.600',
+                  borderColor: 'blue.600',
+                }
+              },
+              _hover: {
+                bg: appendMode ? 'blue.600' : 'gray.50',
+                borderColor: appendMode ? 'blue.600' : 'gray.400',
+              }
+            }
+          }}
         >
           Append to current document
         </ChakraCheckbox>

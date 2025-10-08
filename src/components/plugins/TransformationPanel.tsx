@@ -39,6 +39,25 @@ export const TransformationPanel: React.FC = () => {
             isChecked={showCoordinates}
             onChange={(e) => updateTransformationState({ showCoordinates: e.target.checked })}
             size="sm"
+            sx={{
+              '& .chakra-checkbox__control': {
+                bg: showCoordinates ? 'blue.500' : 'transparent',
+                borderColor: showCoordinates ? 'blue.500' : 'gray.400',
+                _checked: {
+                  bg: 'blue.500',
+                  borderColor: 'blue.500',
+                  color: 'white',
+                  _hover: {
+                    bg: 'blue.600',
+                    borderColor: 'blue.600',
+                  }
+                },
+                _hover: {
+                  bg: showCoordinates ? 'blue.600' : 'gray.50',
+                  borderColor: showCoordinates ? 'blue.600' : 'gray.400',
+                }
+              }
+            }}
           >
             Coordinates
           </ChakraCheckbox>
@@ -47,6 +66,25 @@ export const TransformationPanel: React.FC = () => {
             isChecked={showRulers}
             onChange={(e) => updateTransformationState({ showRulers: e.target.checked })}
             size="sm"
+            sx={{
+              '& .chakra-checkbox__control': {
+                bg: showRulers ? 'blue.500' : 'transparent',
+                borderColor: showRulers ? 'blue.500' : 'gray.400',
+                _checked: {
+                  bg: 'blue.500',
+                  borderColor: 'blue.500',
+                  color: 'white',
+                  _hover: {
+                    bg: 'blue.600',
+                    borderColor: 'blue.600',
+                  }
+                },
+                _hover: {
+                  bg: showRulers ? 'blue.600' : 'gray.50',
+                  borderColor: showRulers ? 'blue.600' : 'gray.400',
+                }
+              }
+            }}
           >
             Rulers
           </ChakraCheckbox>

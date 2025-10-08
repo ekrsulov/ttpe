@@ -137,26 +137,50 @@ export const TextPanel: React.FC = () => {
             aria-label="Bold"
             icon={<Bold size={12} />}
             onClick={() => handleFontWeightChange(getCurrentFontWeight() === 'bold' ? 'normal' : 'bold')}
-            isActive={getCurrentFontWeight() === 'bold'}
-            colorScheme={getCurrentFontWeight() === 'bold' ? 'brand' : 'gray'}
+            variant="unstyled"
             size="sm"
-            variant={getCurrentFontWeight() === 'bold' ? 'solid' : 'ghost'}
-            bg={getCurrentFontWeight() === 'bold' ? '#007bff' : 'transparent'}
-            border="1px"
-            borderColor="gray.200"
+            bg={getCurrentFontWeight() === 'bold' ? 'blue.500' : 'transparent'}
+            color={getCurrentFontWeight() === 'bold' ? 'white' : 'gray.700'}
+            border="1px solid"
+            borderColor={getCurrentFontWeight() === 'bold' ? 'blue.500' : 'gray.400'}
+            borderRadius="md"
+            fontWeight="medium"
+            transition="all 0.2s"
+            _hover={{
+              bg: getCurrentFontWeight() === 'bold' ? 'blue.600' : 'gray.50'
+            }}
+            sx={{
+              minH: '28px',
+              px: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
           />
           
           <ChakraIconButton
             aria-label="Italic"
             icon={<Italic size={12} />}
             onClick={() => handleFontStyleChange(getCurrentFontStyle() === 'italic' ? 'normal' : 'italic')}
-            isActive={getCurrentFontStyle() === 'italic'}
-            colorScheme={getCurrentFontStyle() === 'italic' ? 'brand' : 'gray'}
+            variant="unstyled"
             size="sm"
-            variant={getCurrentFontStyle() === 'italic' ? 'solid' : 'ghost'}
-            bg={getCurrentFontStyle() === 'italic' ? '#007bff' : 'transparent'}
-            border="1px"
-            borderColor="gray.200"
+            bg={getCurrentFontStyle() === 'italic' ? 'blue.500' : 'transparent'}
+            color={getCurrentFontStyle() === 'italic' ? 'white' : 'gray.700'}
+            border="1px solid"
+            borderColor={getCurrentFontStyle() === 'italic' ? 'blue.500' : 'gray.400'}
+            borderRadius="md"
+            fontWeight="medium"
+            transition="all 0.2s"
+            _hover={{
+              bg: getCurrentFontStyle() === 'italic' ? 'blue.600' : 'gray.50'
+            }}
+            sx={{
+              minH: '28px',
+              px: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
           />
         </HStack>
       </VStack>

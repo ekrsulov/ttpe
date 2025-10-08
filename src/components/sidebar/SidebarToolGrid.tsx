@@ -1,17 +1,10 @@
 import React from 'react';
-import { Box, SimpleGrid, IconButton as ChakraIconButton, Tooltip } from '@chakra-ui/react';
-import {
-  File,
-  Settings,
-  Pin,
-  PinOff
-} from 'lucide-react';
+import { Box, SimpleGrid, Button } from '@chakra-ui/react';
 import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
 
 interface ToolConfig {
   name: string;
   label: string;
-  icon: React.ComponentType<{ size?: number }>;
 }
 
 interface SidebarToolGridProps {
@@ -44,14 +37,12 @@ export const SidebarToolGrid: React.FC<SidebarToolGridProps> = ({
   // Main action tools moved to ActionBar
   const pluginRows: ToolConfig[][] = [
     [
-      { name: 'file', label: 'File', icon: File },
-      { name: 'settings', label: 'Settings', icon: Settings },
+      { name: 'file', label: 'File' },
+      { name: 'settings', label: 'Settings' },
     ],
   ];
 
   const renderPluginButton = (plugin: ToolConfig) => {
-    const IconComponent = plugin.icon;
-    
     // Handle special panel buttons
     const handleClick = () => {
       if (onToolClick) {
@@ -77,67 +68,71 @@ export const SidebarToolGrid: React.FC<SidebarToolGridProps> = ({
     }
     
     return (
-      <Tooltip key={plugin.name} label={plugin.label} placement="left" hasArrow>
-        <ChakraIconButton
-          aria-label={plugin.label}
-          icon={<IconComponent size={14} />}
-          onClick={handleClick}
-          variant="tool"
-          size="sm"
-          data-active={isActive}
-          bg={isActive ? 'brand.500' : 'transparent'}
-          color={isActive ? 'white' : 'gray.700'}
-          border="1px solid"
-          borderColor="gray.400"
-          _hover={{
-            bg: isActive ? 'brand.600' : 'gray.50'
-          }}
-          sx={{
-            minH: '32px',
-            minW: '32px',
-          }}
-        />
-      </Tooltip>
+      <Button
+        key={plugin.name}
+        aria-label={plugin.label}
+        onClick={handleClick}
+        variant="unstyled"
+        size="sm"
+        data-active={isActive}
+        bg={isActive ? 'blue.500' : 'transparent'}
+        color={isActive ? 'white' : 'gray.700'}
+        border="1px solid"
+        borderColor={isActive ? 'blue.500' : 'gray.400'}
+        borderRadius="md"
+        fontWeight="medium"
+        transition="all 0.2s"
+        _hover={{
+          bg: isActive ? 'blue.600' : 'gray.50'
+        }}
+        sx={{
+          minH: '32px',
+          px: 3,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        {plugin.label}
+      </Button>
     );
   };
+
+  const renderPinButton = () => (
+    <Button
+      aria-label={isPinned ? "Unpin sidebar" : "Pin sidebar"}
+      onClick={onTogglePin}
+      variant="unstyled"
+      size="sm"
+      bg="transparent"
+      color="gray.700"
+      border="1px solid"
+      borderColor="gray.400"
+      borderRadius="md"
+      fontWeight="medium"
+      transition="all 0.2s"
+      _hover={{
+        bg: 'gray.50'
+      }}
+      sx={{
+        minH: '32px',
+        px: 3,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      {isPinned ? "Unpin" : "Pin"}
+    </Button>
+  );
 
   return (
     <Box pt={2} pr={2} pl={2} bg="white" position="relative">
       <RenderCountBadgeWrapper componentName="SidebarToolGrid" position="top-left" />
-      {pluginRows.map((row, rowIndex) => (
-        <SimpleGrid
-          key={rowIndex}
-          columns={isDesktop ? 3 : 2} // 3 columns on desktop (file, settings, pin), 2 on mobile (file, settings)
-          spacing={1}
-          mb={rowIndex === 0 ? 1 : (rowIndex < pluginRows.length - 1 ? 1 : 0)}
-        >
-          {row.map(renderPluginButton)}
-          
-          {/* Pin/Unpin button - only on desktop */}
-          {isDesktop && rowIndex === 0 && (
-            <Tooltip label={isPinned ? "Unpin sidebar" : "Pin sidebar"} placement="left" hasArrow>
-              <ChakraIconButton
-                aria-label={isPinned ? "Unpin sidebar" : "Pin sidebar"}
-                icon={isPinned ? <Pin size={14} /> : <PinOff size={14} />}
-                onClick={onTogglePin}
-                variant="tool"
-                size="sm"
-                bg="transparent"
-                color="gray.700"
-                border="1px solid"
-                borderColor="gray.400"
-                _hover={{
-                  bg: 'gray.50'
-                }}
-                sx={{
-                  minH: '32px',
-                  minW: '32px',
-                }}
-              />
-            </Tooltip>
-          )}
-        </SimpleGrid>
-      ))}
+      <SimpleGrid columns={3} spacing={1}>
+        {pluginRows[0].map(renderPluginButton)}
+        {isDesktop && renderPinButton()}
+      </SimpleGrid>
     </Box>
   );
 };

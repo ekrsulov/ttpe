@@ -162,6 +162,25 @@ export const EditPanel: React.FC<EditPanelProps> = ({
           isChecked={smoothBrush.simplifyPoints}
           onChange={(e) => updateSmoothBrush({ simplifyPoints: e.target.checked })}
           size="sm"
+          sx={{
+            '& .chakra-checkbox__control': {
+              bg: smoothBrush.simplifyPoints ? 'blue.500' : 'transparent',
+              borderColor: smoothBrush.simplifyPoints ? 'blue.500' : 'gray.400',
+              _checked: {
+                bg: 'blue.500',
+                borderColor: 'blue.500',
+                color: 'white',
+                _hover: {
+                  bg: 'blue.600',
+                  borderColor: 'blue.600',
+                }
+              },
+              _hover: {
+                bg: smoothBrush.simplifyPoints ? 'blue.600' : 'gray.50',
+                borderColor: smoothBrush.simplifyPoints ? 'blue.600' : 'gray.400',
+              }
+            }
+          }}
           mb={smoothBrush.simplifyPoints ? 2 : 0}
         >
           Simplify Points

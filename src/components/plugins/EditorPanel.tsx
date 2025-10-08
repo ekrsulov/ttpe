@@ -1,10 +1,6 @@
 import React from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import {
-  Pen,
-  Eye,
-  Circle,
-  PaintBucket,
   X,
   ChevronDown,
   ChevronUp
@@ -175,7 +171,9 @@ export const EditorPanel: React.FC = () => {
             {/* Fill Color & Opacity */}
             <VStack spacing={1} align="stretch">
               <HStack justify="flex-start" minH="24px" spacing={1.5}>
-                <PaintBucket size={14} color="#666" style={{ flexShrink: 0 }} />
+                <Text fontSize="11px" fontWeight="600" color="gray.600" minW="40px" h="24px" display="flex" alignItems="center">
+                  Fill
+                </Text>
                 <HStack spacing={1} flexShrink={0}>
                   <Input
                     type="color"
@@ -205,7 +203,6 @@ export const EditorPanel: React.FC = () => {
                 </HStack>
                 <Box flex={1} minW="120px">
                   <SliderControl
-                    icon={<Eye size={14} />}
                     value={currentFillOpacity}
                     min={0}
                     max={1}
@@ -225,7 +222,9 @@ export const EditorPanel: React.FC = () => {
             {/* Stroke Color & Opacity */}
             <VStack spacing={1} align="stretch">
               <HStack justify="flex-start" minH="24px" spacing={1.5}>
-                <Pen size={14} color="#666" style={{ flexShrink: 0 }} />
+                <Text fontSize="11px" fontWeight="600" color="gray.600" minW="40px" h="24px" display="flex" alignItems="center">
+                  Stroke
+                </Text>
                 <HStack spacing={1} flexShrink={0}>
                   <Input
                     type="color"
@@ -256,7 +255,6 @@ export const EditorPanel: React.FC = () => {
                 </HStack>
                 <Box flex={1} minW="120px">
                   <SliderControl
-                    icon={<Eye size={14} />}
                     value={currentOpacity}
                     min={0}
                     max={1}
@@ -275,9 +273,11 @@ export const EditorPanel: React.FC = () => {
 
             {/* Stroke Width */}
             <HStack minH="24px" justify="flex-start" spacing={1.5}>
+              <Text fontSize="11px" fontWeight="600" color="gray.600" minW="40px" h="24px" display="flex" alignItems="center">
+                Width
+              </Text>
               <Box flex={1}>
                 <SliderControl
-                  icon={<Circle size={14} />}
                   value={currentStrokeWidth}
                   min={0}
                   max={20}
@@ -303,31 +303,6 @@ export const EditorPanel: React.FC = () => {
             {/* Advanced Stroke Properties */}
             <Collapse in={isAdvancedStrokeOpen} animateOpacity>
               <VStack spacing={1} align="stretch">
-                {/* Linecap and Linejoin - C and J in one line */}
-                <HStack justify="space-between" minH="24px" spacing={1}>
-                  <HStack spacing={1} flex={1}>
-                    <Text fontSize="11px" fontWeight="600" color="gray.600" minW="10px" h="24px" display="flex" alignItems="center" title="Stroke Linecap">
-                      C:
-                    </Text>
-                    <LinecapSelector
-                      value={currentStrokeLinecap || 'round'}
-                      onChange={handleStrokeLinecapChange}
-                      title="Stroke Linecap"
-                    />
-                  </HStack>
-                  
-                  <HStack spacing={1} flex={1}>
-                    <Text fontSize="11px" fontWeight="600" color="gray.600" minW="10px" h="24px" display="flex" alignItems="center" title="Stroke Linejoin">
-                      J:
-                    </Text>
-                    <LinejoinSelector
-                      value={currentStrokeLinejoin || 'round'}
-                      onChange={handleStrokeLinejoinChange}
-                      title="Stroke Linejoin"
-                    />
-                  </HStack>
-                </HStack>
-
                 {/* Dash Array Presets */}
                 <HStack justify="flex-start" minH="24px" spacing={1}>
                   <DashArrayPresets
@@ -335,32 +310,55 @@ export const EditorPanel: React.FC = () => {
                     onChange={handleStrokeDasharrayChange}
                   />
                 </HStack>
-                
-                {/* Custom Dash Array and Fill Rule - D and R in same line */}
-                <HStack justify="space-between" minH="24px" spacing={2}>
-                  <HStack spacing={1} flex={1}>
-                    <Text fontSize="11px" fontWeight="600" color="gray.600" minW="10px" h="24px" display="flex" alignItems="center" title="Custom Dash Array">
-                      D:
-                    </Text>
-                    <Box flex={1}>
-                      <DashArrayCustomInput
-                        value={currentStrokeDasharray || 'none'}
-                        onChange={handleStrokeDasharrayChange}
-                        title="Custom dash array (e.g., 5,3,2,3)"
-                      />
-                    </Box>
-                  </HStack>
-                  
-                  <HStack spacing={1} flexShrink={0}>
-                    <Text fontSize="11px" fontWeight="600" color="gray.600" minW="10px" h="24px" display="flex" alignItems="center" title="Fill Rule">
-                      R:
-                    </Text>
-                    <FillRuleSelector
-                      value={currentFillRule || 'nonzero'}
-                      onChange={handleFillRuleChange}
-                      title="Fill Rule"
+
+                {/* Custom Dash Array */}
+                <HStack justify="flex-start" minH="24px" spacing={1}>
+                  <Text fontSize="11px" fontWeight="600" color="gray.600" minW="80px" h="24px" display="flex" alignItems="center" title="Custom Dash Array">
+                    Dash Array
+                  </Text>
+                  <Box flex={1}>
+                    <DashArrayCustomInput
+                      value={currentStrokeDasharray || 'none'}
+                      onChange={handleStrokeDasharrayChange}
+                      title="Custom dash array (e.g., 5,3,2,3)"
                     />
-                  </HStack>
+                  </Box>
+                </HStack>
+
+                {/* Linecap */}
+                <HStack justify="flex-start" minH="24px" spacing={1}>
+                  <Text fontSize="11px" fontWeight="600" color="gray.600" minW="80px" h="24px" display="flex" alignItems="center" title="Stroke Linecap">
+                    Line Cap
+                  </Text>
+                  <LinecapSelector
+                    value={currentStrokeLinecap || 'round'}
+                    onChange={handleStrokeLinecapChange}
+                    title="Stroke Linecap"
+                  />
+                </HStack>
+
+                {/* Linejoin */}
+                <HStack justify="flex-start" minH="24px" spacing={1}>
+                  <Text fontSize="11px" fontWeight="600" color="gray.600" minW="80px" h="24px" display="flex" alignItems="center" title="Stroke Linejoin">
+                    Line Join
+                  </Text>
+                  <LinejoinSelector
+                    value={currentStrokeLinejoin || 'round'}
+                    onChange={handleStrokeLinejoinChange}
+                    title="Stroke Linejoin"
+                  />
+                </HStack>
+
+                {/* Fill Rule */}
+                <HStack justify="flex-start" minH="24px" spacing={1}>
+                  <Text fontSize="11px" fontWeight="600" color="gray.600" minW="80px" h="24px" display="flex" alignItems="center" title="Fill Rule">
+                    Fill Rule
+                  </Text>
+                  <FillRuleSelector
+                    value={currentFillRule || 'nonzero'}
+                    onChange={handleFillRuleChange}
+                    title="Fill Rule"
+                  />
                 </HStack>
               </VStack>
             </Collapse>

@@ -1,6 +1,5 @@
 import React from 'react';
-import { IconButton as ChakraIconButton } from '@chakra-ui/react';
-import { Square, Circle, ChevronRight } from 'lucide-react';
+import { Button } from '@chakra-ui/react';
 
 interface LinejoinSelectorProps {
   value: 'miter' | 'round' | 'bevel';
@@ -15,34 +14,44 @@ export const LinejoinSelector: React.FC<LinejoinSelectorProps> = ({
 }) => {
   const linejoinOptions: Array<{
     value: 'miter' | 'round' | 'bevel';
-    icon: React.ComponentType<{ size?: number }>;
     label: string;
     description: string;
   }> = [
-    { value: 'miter', icon: Square, label: 'Miter', description: 'Miter Join - Sharp corner with pointed edge' },
-    { value: 'round', icon: Circle, label: 'Round', description: 'Round Join - Rounded corner' },
-    { value: 'bevel', icon: ChevronRight, label: 'Bevel', description: 'Bevel Join - Flattened corner' }
+    { value: 'miter', label: 'Miter', description: 'Miter Join - Sharp corner with pointed edge' },
+    { value: 'round', label: 'Round', description: 'Round Join - Rounded corner' },
+    { value: 'bevel', label: 'Bevel', description: 'Bevel Join - Flattened corner' }
   ];
 
   return (
-    <div style={{ display: 'flex', gap: '2px' }}>
-      {linejoinOptions.map(option => {
-        const IconComponent = option.icon;
-        return (
-          <ChakraIconButton
-            key={option.value}
-            aria-label={`${title}: ${option.description}`}
-            onPointerUp={() => onChange(option.value)}
-            colorScheme={value === option.value ? 'blue' : 'gray'}
-            variant={value === option.value ? 'solid' : 'outline'}
-            size="xs"
-            minW="20px"
-            h="20px"
-            title={`${title}: ${option.description}`}
-            icon={<IconComponent size={12} />}
-          />
-        );
-      })}
+    <div style={{ display: 'flex', gap: '2px', flex: 1 }}>
+      {linejoinOptions.map(option => (
+        <Button
+          key={option.value}
+          aria-label={`${title}: ${option.description}`}
+          onClick={() => onChange(option.value)}
+          variant="unstyled"
+          size="xs"
+          bg={value === option.value ? 'blue.500' : 'transparent'}
+          color={value === option.value ? 'white' : 'gray.700'}
+          border="1px solid"
+          borderColor={value === option.value ? 'blue.500' : 'gray.400'}
+          borderRadius="md"
+          fontSize="10px"
+          fontWeight="medium"
+          px={2}
+          py={1}
+          h="20px"
+          flex={1}
+          display="flex"
+          alignItems="center"
+          title={`${title}: ${option.description}`}
+          _hover={{
+            bg: value === option.value ? 'blue.600' : 'gray.50'
+          }}
+        >
+          {option.label}
+        </Button>
+      ))}
     </div>
   );
 };

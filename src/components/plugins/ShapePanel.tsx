@@ -40,10 +40,25 @@ export const ShapePanel: React.FC = () => {
                 aria-label={shapeItem.label}
                 icon={<IconComponent size={14} />}
                 onClick={() => handleShapeSelect(shapeItem.type)}
-                colorScheme={shouldHighlight ? 'brand' : 'gray'}
-                variant={shouldHighlight ? 'solid' : 'ghost'}
-                bg={shouldHighlight ? undefined : 'transparent'}
+                variant="unstyled"
                 size="sm"
+                bg={shouldHighlight ? 'blue.500' : 'transparent'}
+                color={shouldHighlight ? 'white' : 'gray.700'}
+                border="1px solid"
+                borderColor={shouldHighlight ? 'blue.500' : 'gray.400'}
+                borderRadius="md"
+                fontWeight="medium"
+                transition="all 0.2s"
+                _hover={{
+                  bg: shouldHighlight ? 'blue.600' : 'gray.50'
+                }}
+                sx={{
+                  minH: '28px',
+                  px: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
               />
             </Tooltip>
           );
