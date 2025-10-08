@@ -2,7 +2,7 @@ import React, { useMemo, useCallback } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { extractEditablePoints, getControlPointAlignmentInfo } from '../../utils/path';
 import type { Command, Point, ControlPoint } from '../../types';
-import { RotateCcw, ChevronDown, ChevronUp } from 'lucide-react';
+import { Tangent, ChevronDown, ChevronUp } from 'lucide-react';
 import {
   VStack,
   HStack,
@@ -481,7 +481,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
   };
 
   return (
-    <Panel icon={<RotateCcw size={16} />} title="Control Point Alignment" showRenderCount={true}>
+    <Panel icon={<Tangent size={16} />} title="Control Point Alignment" showRenderCount={true}>
       {renderAlignmentButtons()}
       
       {/* Always visible Position and Command info */}

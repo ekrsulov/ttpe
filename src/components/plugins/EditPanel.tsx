@@ -7,7 +7,7 @@ import {
   Text,
   Box
 } from '@chakra-ui/react';
-import { PaintBucket, Zap, RotateCcw } from 'lucide-react';
+import { Route, SplinePointer, SquareRoundCorner } from 'lucide-react';
 import { SliderControl } from '../ui/SliderControl';
 import { SectionHeader } from '../ui/SectionHeader';
 import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
@@ -89,7 +89,7 @@ export const EditPanel: React.FC<EditPanelProps> = ({
       {/* Smooth Brush Section */}
       <Box>
         <SectionHeader
-          icon={PaintBucket}
+          icon={SplinePointer}
           title="Smooth Brush"
           actionLabel="Apply"
           onAction={applySmoothBrush}
@@ -230,7 +230,7 @@ export const EditPanel: React.FC<EditPanelProps> = ({
       {/* Path Simplification Section */}
       <Box>
         <SectionHeader
-          icon={Zap}
+          icon={Route}
           title={pathSimplificationLabel}
           actionLabel="Apply"
           onAction={applyPathSimplification}
@@ -253,7 +253,7 @@ export const EditPanel: React.FC<EditPanelProps> = ({
       {/* Round Path Section */}
       <Box>
         <SectionHeader
-          icon={RotateCcw}
+          icon={SquareRoundCorner}
           title={roundPathLabel}
           actionLabel="Apply"
           onAction={applyPathRounding}
