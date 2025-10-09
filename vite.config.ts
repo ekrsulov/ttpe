@@ -1,5 +1,40 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import type { Plugin } from 'vite'
+import { readFileSync, writeFileSync } from 'fs'
+import { resolve } from 'path'
+
+// Plugin to inject BASE_URL into manifest.json
+function manifestPlugin(): Plugin {
+  let base = '/'
+  
+  return {
+    name: 'manifest-plugin',
+    configResolved(config) {
+      base = config.base
+    },
+    closeBundle() {
+      // Update manifest.json after build
+      const manifestPath = resolve(__dirname, 'dist/manifest.json')
+      try {
+        const manifestContent = readFileSync(manifestPath, 'utf-8')
+        const manifest = JSON.parse(manifestContent)
+        
+        // Update URLs to include base path
+        manifest.start_url = base
+        manifest.icons = manifest.icons.map((icon: { src: string }) => ({
+          ...icon,
+          src: icon.src.startsWith('/') ? `${base}${icon.src.slice(1)}` : icon.src
+        }))
+        
+        writeFileSync(manifestPath, JSON.stringify(manifest, null, 2))
+        console.log(`✅ Updated manifest.json with base path: ${base}`)
+      } catch (error) {
+        console.warn('⚠️  Could not update manifest.json:', error)
+      }
+    }
+  }
+}
 
 // https://vite.dev/config/
 export default defineConfig(() => {
@@ -16,7 +51,7 @@ export default defineConfig(() => {
 
   return {
     base: normalizedBase,
-    plugins: [react()],
+    plugins: [react(), manifestPlugin()],
     // Include .bin files as static assets
     assetsInclude: ['**/*.bin'],
     server: {
