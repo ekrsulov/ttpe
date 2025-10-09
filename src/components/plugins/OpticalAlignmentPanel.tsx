@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import {
   VStack,
   Button,
@@ -6,12 +6,25 @@ import {
   Box,
   Grid,
   GridItem,
-  Checkbox
+  Checkbox,
+  Divider,
+  HStack,
+  Progress,
+  Badge,
+  useToast,
+  Input
 } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Panel } from '../ui/Panel';
 import {
-  Target
+  Target,
+  Brain,
+  Plus,
+  Trash2,
+  Play,
+  Download,
+  Upload,
+  Save
 } from 'lucide-react';
 
 const OpticalAlignmentPanelComponent: React.FC = () => {
@@ -22,6 +35,18 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
   const showDistanceRules = useCanvasStore(state => state.showDistanceRules);
   const hasAlignment = useCanvasStore(state => state.currentAlignment !== null);
   const validationMessage = useCanvasStore(state => state.getAlignmentValidationMessage());
+  
+  // ML state
+  const mlModel = useCanvasStore(state => state.mlModel);
+  const trainingSamples = useCanvasStore(state => state.trainingSamples);
+  const isTraining = useCanvasStore(state => state.isTraining);
+  const trainingProgress = useCanvasStore(state => state.trainingProgress);
+  const trainingLoss = useCanvasStore(state => state.trainingLoss);
+  const useMlPrediction = useCanvasStore(state => state.useMlPrediction);
+  
+  const toast = useToast();
+  const modelJsonInputRef = useRef<HTMLInputElement>(null);
+  const modelWeightsInputRef = useRef<HTMLInputElement>(null);
   
   // Get current alignment only when needed for display (doesn't cause re-renders on movement)
   const currentAlignment = hasAlignment ? useCanvasStore.getState().currentAlignment : null;
@@ -36,6 +61,20 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
     toggleMetrics,
     toggleDistanceRules,
     canPerformOpticalAlignment,
+    // ML actions
+    addTrainingSample,
+    addAllTrainingSamples,
+    applyMLToAllPairs,
+    clearTrainingSamples,
+    trainMLModel,
+    applyMLPrediction,
+    saveMLModel,
+    loadMLModel,
+    loadPretrainedMLModel,
+    downloadMLModel,
+    uploadMLModel,
+    deleteMLModel,
+    toggleMLPrediction,
   } = useCanvasStore.getState();
 
   // Handle unified Preview/Apply button
@@ -55,6 +94,260 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
   // Reset alignment
   const handleResetAlignment = () => {
     resetAlignment();
+  };
+  
+  // ML Handlers
+  const handleAddTrainingSample = async () => {
+    try {
+      await addTrainingSample();
+      toast({
+        title: 'Training sample added',
+        description: `Total samples: ${trainingSamples.length + 1}`,
+        status: 'success',
+        duration: 2000,
+        isClosable: true,
+      });
+    } catch (_error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to add training sample',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
+  
+  const handleAddAllTrainingSamples = async () => {
+    try {
+      const beforeCount = trainingSamples.length;
+      await addAllTrainingSamples();
+      const afterCount = useCanvasStore.getState().trainingSamples.length;
+      const added = afterCount - beforeCount;
+      
+      if (added > 0) {
+        toast({
+          title: 'Training samples added',
+          description: `Added ${added} samples. Total: ${afterCount}`,
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
+      } else {
+        toast({
+          title: 'No samples found',
+          description: 'No valid container-content pairs found on canvas',
+          status: 'info',
+          duration: 3000,
+          isClosable: true,
+        });
+      }
+    } catch (_error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to add training samples',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
+  
+  const handleTrainModel = async () => {
+    if (trainingSamples.length < 5) {
+      toast({
+        title: 'Insufficient samples',
+        description: 'Need at least 5 training samples',
+        status: 'warning',
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+    
+    try {
+      await trainMLModel();
+      toast({
+        title: 'Training complete',
+        description: 'Model trained successfully',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (_error) {
+      toast({
+        title: 'Training failed',
+        description: 'Failed to train model',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
+  
+  const handleApplyMLPrediction = async () => {
+    try {
+      await applyMLPrediction();
+    } catch (_error) {
+      toast({
+        title: 'Prediction failed',
+        description: 'Failed to apply ML prediction',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
+  
+  const handleSaveModel = async () => {
+    try {
+      await saveMLModel();
+      toast({
+        title: 'Model saved',
+        description: 'Model saved to browser storage',
+        status: 'success',
+        duration: 2000,
+        isClosable: true,
+      });
+    } catch (_error) {
+      toast({
+        title: 'Save failed',
+        description: 'Failed to save model',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
+  
+  const handleLoadModel = async () => {
+    try {
+      await loadMLModel();
+      toast({
+        title: 'Model loaded',
+        description: 'Model loaded from browser storage',
+        status: 'success',
+        duration: 2000,
+        isClosable: true,
+      });
+    } catch (_error) {
+      toast({
+        title: 'Load failed',
+        description: 'No saved model found',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
+  
+  const handleDownloadModel = async () => {
+    try {
+      await downloadMLModel();
+      toast({
+        title: 'Model downloaded',
+        description: 'Model files downloaded',
+        status: 'success',
+        duration: 2000,
+        isClosable: true,
+      });
+    } catch (_error) {
+      toast({
+        title: 'Download failed',
+        description: 'Failed to download model',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
+  
+  const handleLoadPretrainedModel = async () => {
+    try {
+      await loadPretrainedMLModel();
+      toast({
+        title: 'Pre-trained model loaded',
+        description: 'Default optical alignment model loaded successfully',
+        status: 'success',
+        duration: 2000,
+        isClosable: true,
+      });
+    } catch (_error) {
+      toast({
+        title: 'Load failed',
+        description: 'Failed to load pre-trained model from server',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
+  
+  const handleUploadModel = async () => {
+    const jsonFile = modelJsonInputRef.current?.files?.[0];
+    const weightsFile = modelWeightsInputRef.current?.files?.[0];
+    
+    if (!jsonFile || !weightsFile) {
+      toast({
+        title: 'Missing files',
+        description: 'Please select both model.json and weights.bin files',
+        status: 'warning',
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+    
+    try {
+      await uploadMLModel(jsonFile, weightsFile);
+      toast({
+        title: 'Model uploaded',
+        description: 'Model loaded successfully',
+        status: 'success',
+        duration: 2000,
+        isClosable: true,
+      });
+    } catch (_error) {
+      toast({
+        title: 'Upload failed',
+        description: 'Failed to upload model',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
+  
+  const handleApplyMLToAll = async () => {
+    if (!mlModel) {
+      toast({
+        title: 'No model',
+        description: 'Please train or load a model first',
+        status: 'warning',
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+    
+    try {
+      const count = await applyMLToAllPairs();
+      toast({
+        title: 'ML alignment applied',
+        description: `Applied ML alignment to ${count} container-content pairs`,
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (_error) {
+      toast({
+        title: 'Apply failed',
+        description: 'Failed to apply ML alignment to all pairs',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
   };
 
   if (validationMessage !== null) return null;
@@ -340,6 +633,237 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
               )}
             </Box>
           )}
+          
+          {/* ML Training Section */}
+          <Divider />
+          
+          <Box>
+            <HStack justify="space-between" mb={2}>
+              <HStack>
+                <Brain size={14} />
+                <Text fontSize="xs" fontWeight="bold">ML Training</Text>
+              </HStack>
+              {mlModel && (
+                <Badge colorScheme="green" fontSize="2xs">Model Ready</Badge>
+              )}
+            </HStack>
+            
+            {/* Training Samples */}
+            <VStack spacing={2} align="stretch">
+              <HStack justify="space-between">
+                <Text fontSize="2xs" color="gray.600">
+                  Training Samples: {trainingSamples.length}
+                </Text>
+                {trainingSamples.length > 0 && (
+                  <Button
+                    size="xs"
+                    variant="ghost"
+                    colorScheme="red"
+                    leftIcon={<Trash2 size={12} />}
+                    onClick={() => clearTrainingSamples()}
+                    fontSize="2xs"
+                  >
+                    Clear
+                  </Button>
+                )}
+              </HStack>
+              
+              {/* Add Sample Buttons */}
+              <VStack spacing={2} align="stretch">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  leftIcon={<Plus size={14} />}
+                  onClick={handleAddTrainingSample}
+                  isDisabled={!hasAlignment}
+                  fontSize="xs"
+                >
+                  Add Current as Training Sample
+                </Button>
+                
+                <Button
+                  size="sm"
+                  variant="outline"
+                  colorScheme="green"
+                  leftIcon={<Target size={14} />}
+                  onClick={handleAddAllTrainingSamples}
+                  fontSize="xs"
+                >
+                  Add All Valid Pairs from Canvas
+                </Button>
+              </VStack>
+              
+              {/* Training Progress */}
+              {isTraining && (
+                <Box>
+                  <Progress value={trainingProgress} size="sm" colorScheme="blue" />
+                  <Text fontSize="2xs" color="gray.600" mt={1}>
+                    Training: {trainingProgress.toFixed(0)}%
+                    {trainingLoss !== null && ` (Loss: ${trainingLoss.toFixed(4)})`}
+                  </Text>
+                </Box>
+              )}
+              
+              {/* Train Button */}
+              <Button
+                size="sm"
+                variant="solid"
+                colorScheme="blue"
+                leftIcon={<Play size={14} />}
+                onClick={handleTrainModel}
+                isDisabled={trainingSamples.length < 5 || isTraining}
+                fontSize="xs"
+              >
+                Train Model ({trainingSamples.length}/5 min)
+              </Button>
+              
+              {/* ML Prediction Toggle */}
+              {mlModel && (
+                <Checkbox
+                  size="sm"
+                  isChecked={useMlPrediction}
+                  onChange={toggleMLPrediction}
+                  fontSize="xs"
+                >
+                  Use ML Prediction
+                </Checkbox>
+              )}
+              
+              {/* ML Prediction Button */}
+              {mlModel && useMlPrediction && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  colorScheme="purple"
+                  leftIcon={<Brain size={14} />}
+                  onClick={handleApplyMLPrediction}
+                  isDisabled={!canPerformOpticalAlignment()}
+                  fontSize="xs"
+                >
+                  Apply ML Prediction
+                </Button>
+              )}
+              
+              {/* Apply ML to All Pairs */}
+              {mlModel && (
+                <Button
+                  size="sm"
+                  variant="solid"
+                  colorScheme="purple"
+                  leftIcon={<Brain size={14} />}
+                  onClick={handleApplyMLToAll}
+                  fontSize="xs"
+                >
+                  Apply ML to All Pairs
+                </Button>
+              )}
+            </VStack>
+          </Box>
+          
+          {/* Model Management */}
+          <Divider />
+          
+          <Box>
+            <Text fontSize="xs" fontWeight="bold" mb={2}>Model Management</Text>
+            
+            <VStack spacing={2} align="stretch">
+              {/* Save/Load to Browser Storage */}
+              <HStack spacing={2}>
+                <Button
+                  size="xs"
+                  variant="outline"
+                  leftIcon={<Save size={12} />}
+                  onClick={handleSaveModel}
+                  isDisabled={!mlModel}
+                  flex={1}
+                  fontSize="2xs"
+                >
+                  Save
+                </Button>
+                <Button
+                  size="xs"
+                  variant="outline"
+                  leftIcon={<Upload size={12} />}
+                  onClick={handleLoadModel}
+                  flex={1}
+                  fontSize="2xs"
+                >
+                  Load
+                </Button>
+              </HStack>
+              
+              {/* Load Pre-trained Model */}
+              <Button
+                size="xs"
+                variant="solid"
+                colorScheme="green"
+                leftIcon={<Brain size={12} />}
+                onClick={handleLoadPretrainedModel}
+                isDisabled={mlModel !== null}
+                fontSize="2xs"
+              >
+                Load Default Model
+              </Button>
+              
+              {/* Download Model */}
+              <Button
+                size="xs"
+                variant="outline"
+                leftIcon={<Download size={12} />}
+                onClick={handleDownloadModel}
+                isDisabled={!mlModel}
+                fontSize="2xs"
+              >
+                Download Model Files
+              </Button>
+              
+              {/* Upload Model */}
+              <Box>
+                <Text fontSize="2xs" color="gray.600" mb={1}>Upload Model:</Text>
+                <VStack spacing={1} align="stretch">
+                  <Input
+                    ref={modelJsonInputRef}
+                    type="file"
+                    accept=".json"
+                    size="xs"
+                    fontSize="2xs"
+                    placeholder="model.json"
+                  />
+                  <Input
+                    ref={modelWeightsInputRef}
+                    type="file"
+                    accept=".bin"
+                    size="xs"
+                    fontSize="2xs"
+                    placeholder="weights.bin"
+                  />
+                  <Button
+                    size="xs"
+                    variant="solid"
+                    colorScheme="blue"
+                    onClick={handleUploadModel}
+                    fontSize="2xs"
+                  >
+                    Upload Model
+                  </Button>
+                </VStack>
+              </Box>
+              
+              {/* Delete Model */}
+              {mlModel && (
+                <Button
+                  size="xs"
+                  variant="ghost"
+                  colorScheme="red"
+                  leftIcon={<Trash2 size={12} />}
+                  onClick={() => deleteMLModel()}
+                  fontSize="2xs"
+                >
+                  Delete Saved Model
+                </Button>
+              )}
+            </VStack>
+          </Box>
         </VStack>
       )}
     </Panel>
