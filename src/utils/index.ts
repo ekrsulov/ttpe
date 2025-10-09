@@ -7,6 +7,9 @@ export {
 
 export * from './pathParserUtils';
 
+// Export transformation utilities
+export { translateCommands } from './transformationUtils';
+
 // Export logger
 export { logger, LogLevel } from './logger';
 
@@ -15,6 +18,9 @@ export * from './geometry';
 export * from './path';
 export * from './canvas';
 export * from './overlayHelpers';
+
+// Export SVG import utilities
+export * from './svgImportUtils';
 
 export function formatToPrecision(num: number, precision: number = 2): number {
   return parseFloat(num.toFixed(precision));

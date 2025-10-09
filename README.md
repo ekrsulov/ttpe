@@ -26,7 +26,13 @@ A powerful web-based vector graphics editor built with React and TypeScript that
 - **Coordinate Display**: Show exact coordinates and rulers
 - **Element Ordering**: Bring to front, send to back, and arrange layers
 
-### 📝 Text Features
+### � File Management
+- **SVG Import**: Import SVG files with full support for shapes, paths, groups, and transformations
+- **Path Normalization**: All imported paths normalized to M, L, C, Z commands
+- **Document Save/Load**: Save and load projects in native format
+- **SVG Export**: Export your work as standard SVG files
+
+### �📝 Text Features
 - **Font Selection**: Choose from system fonts
 - **Text Vectorization**: Convert text to editable SVG paths using WASM-powered tracing
 - **Font Properties**: Customize size, weight, and style
@@ -113,6 +119,30 @@ The editor can convert any text into editable SVG paths:
 4. The text is automatically converted to vector paths
 5. Switch to Edit mode to modify individual path points
 
+### SVG Import
+
+Import existing SVG files and work with them in the editor:
+
+1. Click the **File** button in the sidebar
+2. Click **Import SVG**
+3. Select your SVG file
+4. All elements are imported and normalized to editable paths
+
+**Supported Elements:**
+- `<path>` - Direct import
+- `<rect>`, `<circle>`, `<ellipse>` - Converted to paths
+- `<line>`, `<polyline>`, `<polygon>` - Converted to paths
+- `<g>` (groups) - Recursively processed with transformations
+
+**Features:**
+- ✅ Full transformation support (translate, scale, rotate, skew, matrix)
+- ✅ Style preservation (stroke, fill, opacity, linecap, linejoin, etc.)
+- ✅ Nested groups with combined transformations
+- ✅ All paths normalized to M, L, C, Z commands
+- ✅ Append mode to add to existing document or replace
+
+See [SVG Import Documentation](docs/SVG_IMPORT_FEATURE.md) for details.
+
 ## Project Structure
 
 ```
@@ -129,11 +159,15 @@ src/
 │   └── slices/         # Feature-specific state slices
 ├── utils/              # Utility functions
 │   ├── pathParserUtils.ts      # SVG path parsing
+│   ├── svgImportUtils.ts       # SVG file import & normalization
 │   ├── textVectorizationUtils.ts # Text-to-path conversion
 │   ├── transformationUtils.ts   # Element transformations
 │   └── measurementUtils.ts     # Geometric calculations
 ├── types/              # TypeScript type definitions
-└── hooks/              # Custom React hooks
+├── hooks/              # Custom React hooks
+└── docs/               # Documentation
+    ├── SVG_IMPORT_FEATURE.md       # SVG import documentation
+    └── IMPLEMENTACION_SVG_IMPORT.md # Implementation details
 ```
 
 ## Testing
