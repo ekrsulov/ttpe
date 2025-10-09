@@ -565,7 +565,12 @@ export async function loadModelFromFiles(
  * Loads the pre-trained model from the server
  */
 export async function loadPretrainedModel(): Promise<tf.LayersModel> {
-  const model = await tf.loadLayersModel('/models/optical-alignment/default-model.json');
+  // Use import.meta.env.BASE_URL to handle GitHub Pages deployment
+  const baseUrl = import.meta.env.BASE_URL || '/';
+  const modelUrl = `${baseUrl}models/optical-alignment/default-model.json`;
+  
+  console.log(`Loading pre-trained model from: ${modelUrl}`);
+  const model = await tf.loadLayersModel(modelUrl);
   console.log('✅ Loaded pre-trained optical alignment model from server');
   return model;
 }
