@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, IconButton } from '@chakra-ui/react';
+import { Box, IconButton, useBreakpointValue } from '@chakra-ui/react';
 import { ArrowBigUp } from 'lucide-react';
 import { useCanvasStore } from '../../store/canvasStore';
 
@@ -14,6 +14,12 @@ export const VirtualShiftButton: React.FC<VirtualShiftButtonProps> = ({
   const toggleVirtualShift = useCanvasStore(state => state.toggleVirtualShift);
 
   const isSidebarPinned = sidebarWidth > 0;
+  const isMobile = useBreakpointValue({ base: true, md: false }, { fallback: 'md' });
+
+  // Only show on mobile devices
+  if (!isMobile) {
+    return null;
+  }
 
   return (
     <Box
