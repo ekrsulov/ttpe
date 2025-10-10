@@ -423,6 +423,14 @@ export const useCanvasStore = create<CanvasStore>()(
               }
             });
           });
+
+          // Clear selection after operation
+          const fullState = get() as CanvasStore;
+          fullState.clearSelection();
+          fullState.clearSubpathSelection();
+
+          // Switch back to select mode after operation
+          fullState.setActivePlugin('select');
         },
       }),
       {
