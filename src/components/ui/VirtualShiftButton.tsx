@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, IconButton, useBreakpointValue } from '@chakra-ui/react';
 import { ArrowBigUp } from 'lucide-react';
 import { useCanvasStore } from '../../store/canvasStore';
+import { RenderCountBadgeWrapper } from './RenderCountBadgeWrapper';
 
 interface VirtualShiftButtonProps {
   sidebarWidth?: number;
@@ -54,6 +55,7 @@ export const VirtualShiftButton: React.FC<VirtualShiftButtonProps> = ({
           transition: 'all 0.15s ease',
         }}
       />
+      <RenderCountBadgeWrapper componentName="VirtualShiftButton" position="top-right" />
     </Box>
   );
 };
