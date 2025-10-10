@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   VStack,
   Button,
@@ -12,7 +12,9 @@ import {
   Progress,
   Badge,
   useToast,
-  Input
+  Input,
+  Collapse,
+  IconButton
 } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Panel } from '../ui/Panel';
@@ -24,7 +26,9 @@ import {
   Play,
   Download,
   Upload,
-  Save
+  Save,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 
 const OpticalAlignmentPanelComponent: React.FC = () => {
@@ -43,6 +47,9 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
   const trainingProgress = useCanvasStore(state => state.trainingProgress);
   const trainingLoss = useCanvasStore(state => state.trainingLoss);
   const useMlPrediction = useCanvasStore(state => state.useMlPrediction);
+  
+  // Local state for Advanced ML collapse
+  const [isAdvancedMLOpen, setIsAdvancedMLOpen] = useState(false);
   
   const toast = useToast();
   const modelJsonInputRef = useRef<HTMLInputElement>(null);
@@ -349,6 +356,19 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
       });
     }
   };
+  
+  const handleResetMLSystem = () => {
+    // Reset ML model and prediction mode
+    useCanvasStore.setState({ mlModel: null, useMlPrediction: false });
+    
+    toast({
+      title: 'ML System Reset',
+      description: 'Model cleared. System ready for new training or loading.',
+      status: 'info',
+      duration: 2000,
+      isClosable: true,
+    });
+  };
 
   if (validationMessage !== null) return null;
 
@@ -634,88 +654,34 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
             </Box>
           )}
           
-          {/* ML Training Section */}
+          {/* ML Section - Simplified Operations */}
           <Divider />
           
           <Box>
             <HStack justify="space-between" mb={2}>
               <HStack>
                 <Brain size={14} />
-                <Text fontSize="xs" fontWeight="bold">ML Training</Text>
+                <Text fontSize="xs" fontWeight="bold">Machine Learning</Text>
               </HStack>
               {mlModel && (
                 <Badge colorScheme="green" fontSize="2xs">Model Ready</Badge>
               )}
             </HStack>
             
-            {/* Training Samples */}
             <VStack spacing={2} align="stretch">
-              <HStack justify="space-between">
-                <Text fontSize="2xs" color="gray.600">
-                  Training Samples: {trainingSamples.length}
-                </Text>
-                {trainingSamples.length > 0 && (
-                  <Button
-                    size="xs"
-                    variant="ghost"
-                    colorScheme="red"
-                    leftIcon={<Trash2 size={12} />}
-                    onClick={() => clearTrainingSamples()}
-                    fontSize="2xs"
-                  >
-                    Clear
-                  </Button>
-                )}
-              </HStack>
-              
-              {/* Add Sample Buttons */}
-              <VStack spacing={2} align="stretch">
+              {/* Load Default Model */}
+              {!mlModel && (
                 <Button
                   size="sm"
-                  variant="outline"
-                  leftIcon={<Plus size={14} />}
-                  onClick={handleAddTrainingSample}
-                  isDisabled={!hasAlignment}
-                  fontSize="xs"
-                >
-                  Add Current as Training Sample
-                </Button>
-                
-                <Button
-                  size="sm"
-                  variant="outline"
+                  variant="solid"
                   colorScheme="green"
-                  leftIcon={<Target size={14} />}
-                  onClick={handleAddAllTrainingSamples}
+                  leftIcon={<Brain size={14} />}
+                  onClick={handleLoadPretrainedModel}
                   fontSize="xs"
                 >
-                  Add All Valid Pairs from Canvas
+                  Load Default Model
                 </Button>
-              </VStack>
-              
-              {/* Training Progress */}
-              {isTraining && (
-                <Box>
-                  <Progress value={trainingProgress} size="sm" colorScheme="blue" />
-                  <Text fontSize="2xs" color="gray.600" mt={1}>
-                    Training: {trainingProgress.toFixed(0)}%
-                    {trainingLoss !== null && ` (Loss: ${trainingLoss.toFixed(4)})`}
-                  </Text>
-                </Box>
               )}
-              
-              {/* Train Button */}
-              <Button
-                size="sm"
-                variant="solid"
-                colorScheme="blue"
-                leftIcon={<Play size={14} />}
-                onClick={handleTrainModel}
-                isDisabled={trainingSamples.length < 5 || isTraining}
-                fontSize="xs"
-              >
-                Train Model ({trainingSamples.length}/5 min)
-              </Button>
               
               {/* ML Prediction Toggle */}
               {mlModel && (
@@ -729,7 +695,7 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
                 </Checkbox>
               )}
               
-              {/* ML Prediction Button */}
+              {/* Apply ML Prediction */}
               {mlModel && useMlPrediction && (
                 <Button
                   size="sm"
@@ -760,109 +726,210 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
             </VStack>
           </Box>
           
-          {/* Model Management */}
+          {/* Advanced ML Section - Collapsible */}
           <Divider />
           
           <Box>
-            <Text fontSize="xs" fontWeight="bold" mb={2}>Model Management</Text>
-            
-            <VStack spacing={2} align="stretch">
-              {/* Save/Load to Browser Storage */}
-              <HStack spacing={2}>
-                <Button
-                  size="xs"
-                  variant="outline"
-                  leftIcon={<Save size={12} />}
-                  onClick={handleSaveModel}
-                  isDisabled={!mlModel}
-                  flex={1}
-                  fontSize="2xs"
-                >
-                  Save
-                </Button>
-                <Button
-                  size="xs"
-                  variant="outline"
-                  leftIcon={<Upload size={12} />}
-                  onClick={handleLoadModel}
-                  flex={1}
-                  fontSize="2xs"
-                >
-                  Load
-                </Button>
+            <HStack
+              justify="space-between"
+              cursor="pointer"
+              onClick={() => setIsAdvancedMLOpen(!isAdvancedMLOpen)}
+              _hover={{ bg: 'gray.50' }}
+              p={1}
+              borderRadius="md"
+              mb={2}
+            >
+              <HStack>
+                <Text fontSize="xs" fontWeight="bold">Advanced ML</Text>
+                <Text fontSize="2xs" color="gray.500">
+                  (Training & Model Management)
+                </Text>
               </HStack>
-              
-              {/* Load Pre-trained Model */}
-              <Button
+              <IconButton
+                aria-label="Toggle Advanced ML"
+                icon={isAdvancedMLOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                 size="xs"
-                variant="solid"
-                colorScheme="green"
-                leftIcon={<Brain size={12} />}
-                onClick={handleLoadPretrainedModel}
-                isDisabled={mlModel !== null}
-                fontSize="2xs"
-              >
-                Load Default Model
-              </Button>
-              
-              {/* Download Model */}
-              <Button
-                size="xs"
-                variant="outline"
-                leftIcon={<Download size={12} />}
-                onClick={handleDownloadModel}
-                isDisabled={!mlModel}
-                fontSize="2xs"
-              >
-                Download Model Files
-              </Button>
-              
-              {/* Upload Model */}
-              <Box>
-                <Text fontSize="2xs" color="gray.600" mb={1}>Upload Model:</Text>
-                <VStack spacing={1} align="stretch">
-                  <Input
-                    ref={modelJsonInputRef}
-                    type="file"
-                    accept=".json"
-                    size="xs"
-                    fontSize="2xs"
-                    placeholder="model.json"
-                  />
-                  <Input
-                    ref={modelWeightsInputRef}
-                    type="file"
-                    accept=".bin"
-                    size="xs"
-                    fontSize="2xs"
-                    placeholder="weights.bin"
-                  />
-                  <Button
-                    size="xs"
-                    variant="solid"
-                    colorScheme="blue"
-                    onClick={handleUploadModel}
-                    fontSize="2xs"
-                  >
-                    Upload Model
-                  </Button>
-                </VStack>
-              </Box>
-              
-              {/* Delete Model */}
-              {mlModel && (
-                <Button
-                  size="xs"
-                  variant="ghost"
-                  colorScheme="red"
-                  leftIcon={<Trash2 size={12} />}
-                  onClick={() => deleteMLModel()}
-                  fontSize="2xs"
-                >
-                  Delete Saved Model
-                </Button>
-              )}
-            </VStack>
+                variant="ghost"
+              />
+            </HStack>
+            
+            <Collapse in={isAdvancedMLOpen} animateOpacity>
+              <VStack spacing={3} align="stretch" pt={2}>
+                {/* Training Section */}
+                <Box>
+                  <Text fontSize="2xs" fontWeight="bold" color="gray.600" mb={2}>
+                    Training Samples: {trainingSamples.length}
+                  </Text>
+                  
+                  <VStack spacing={2} align="stretch">
+                    {trainingSamples.length > 0 && (
+                      <Button
+                        size="xs"
+                        variant="ghost"
+                        colorScheme="red"
+                        leftIcon={<Trash2 size={12} />}
+                        onClick={() => clearTrainingSamples()}
+                        fontSize="2xs"
+                      >
+                        Clear All Samples
+                      </Button>
+                    )}
+                    
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      leftIcon={<Plus size={12} />}
+                      onClick={handleAddTrainingSample}
+                      isDisabled={!hasAlignment}
+                      fontSize="2xs"
+                    >
+                      Add Current as Sample
+                    </Button>
+                    
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      colorScheme="green"
+                      leftIcon={<Target size={12} />}
+                      onClick={handleAddAllTrainingSamples}
+                      fontSize="2xs"
+                    >
+                      Add All Valid Pairs
+                    </Button>
+                    
+                    {isTraining && (
+                      <Box>
+                        <Progress value={trainingProgress} size="sm" colorScheme="blue" />
+                        <Text fontSize="2xs" color="gray.600" mt={1}>
+                          Training: {trainingProgress.toFixed(0)}%
+                          {trainingLoss !== null && ` (Loss: ${trainingLoss.toFixed(4)})`}
+                        </Text>
+                      </Box>
+                    )}
+                    
+                    <Button
+                      size="xs"
+                      variant="solid"
+                      colorScheme="blue"
+                      leftIcon={<Play size={12} />}
+                      onClick={handleTrainModel}
+                      isDisabled={trainingSamples.length < 5 || isTraining}
+                      fontSize="2xs"
+                    >
+                      Train Model ({trainingSamples.length}/5 min)
+                    </Button>
+                  </VStack>
+                </Box>
+                
+                <Divider />
+                
+                {/* Model Management */}
+                <Box>
+                  <Text fontSize="2xs" fontWeight="bold" color="gray.600" mb={2}>
+                    Model Management
+                  </Text>
+                  
+                  <VStack spacing={2} align="stretch">
+                    {/* Save/Load to Browser Storage */}
+                    <HStack spacing={2}>
+                      <Button
+                        size="xs"
+                        variant="outline"
+                        leftIcon={<Save size={12} />}
+                        onClick={handleSaveModel}
+                        isDisabled={!mlModel}
+                        flex={1}
+                        fontSize="2xs"
+                      >
+                        Save
+                      </Button>
+                      <Button
+                        size="xs"
+                        variant="outline"
+                        leftIcon={<Upload size={12} />}
+                        onClick={handleLoadModel}
+                        flex={1}
+                        fontSize="2xs"
+                      >
+                        Load
+                      </Button>
+                    </HStack>
+                    
+                    {/* Download Model */}
+                    <Button
+                      size="xs"
+                      variant="outline"
+                      leftIcon={<Download size={12} />}
+                      onClick={handleDownloadModel}
+                      isDisabled={!mlModel}
+                      fontSize="2xs"
+                    >
+                      Download Model Files
+                    </Button>
+                    
+                    {/* Upload Model */}
+                    <Box>
+                      <Text fontSize="2xs" color="gray.600" mb={1}>Upload Custom Model:</Text>
+                      <VStack spacing={1} align="stretch">
+                        <Input
+                          ref={modelJsonInputRef}
+                          type="file"
+                          accept=".json"
+                          size="xs"
+                          fontSize="2xs"
+                          placeholder="model.json"
+                        />
+                        <Input
+                          ref={modelWeightsInputRef}
+                          type="file"
+                          accept=".bin"
+                          size="xs"
+                          fontSize="2xs"
+                          placeholder="weights.bin"
+                        />
+                        <Button
+                          size="xs"
+                          variant="solid"
+                          colorScheme="blue"
+                          onClick={handleUploadModel}
+                          fontSize="2xs"
+                        >
+                          Upload Model
+                        </Button>
+                      </VStack>
+                    </Box>
+                    
+                    {/* Delete Model */}
+                    {mlModel && (
+                      <Button
+                        size="xs"
+                        variant="ghost"
+                        colorScheme="red"
+                        leftIcon={<Trash2 size={12} />}
+                        onClick={() => deleteMLModel()}
+                        fontSize="2xs"
+                      >
+                        Delete Saved Model
+                      </Button>
+                    )}
+                    
+                    {/* Reset ML System */}
+                    {mlModel && (
+                      <Button
+                        size="xs"
+                        variant="outline"
+                        colorScheme="orange"
+                        leftIcon={<Trash2 size={12} />}
+                        onClick={handleResetMLSystem}
+                        fontSize="2xs"
+                      >
+                        Reset ML System
+                      </Button>
+                    )}
+                  </VStack>
+                </Box>
+              </VStack>
+            </Collapse>
           </Box>
         </VStack>
       )}
