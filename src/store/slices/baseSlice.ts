@@ -110,6 +110,10 @@ const performBooleanOperation = (
     }
   }
   // If result is null, do nothing (operation not supported for these paths)
+
+  // Clear selection after operation
+  state.clearSelection();
+  state.clearSubpathSelection();
 };
 
 // Generic handler for binary boolean path operations
@@ -135,6 +139,10 @@ const performBinaryBooleanOperation = (
       }
     }
   }
+
+  // Clear selection after operation
+  state.clearSelection();
+  state.clearSubpathSelection();
 };
 
 export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({

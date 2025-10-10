@@ -389,6 +389,11 @@ export const useCanvasStore = create<CanvasStore>()(
               get().deleteElement(element.id);
             }
           });
+
+          // Clear selection after operation
+          const fullState = get() as CanvasStore;
+          fullState.clearSelection();
+          fullState.clearSubpathSelection();
         },
 
         performSubPathReverse: () => {
