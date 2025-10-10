@@ -2,6 +2,7 @@ import { Canvas } from './components/Canvas';
 import { Sidebar } from './components/Sidebar';
 import { TopActionBar } from './components/ui/TopActionBar';
 import { BottomActionBar } from './components/ui/BottomActionBar';
+import { VirtualShiftButton } from './components/ui/VirtualShiftButton';
 import { useCanvasStore } from './store/canvasStore';
 import './App.css';
 import type { CSSProperties } from 'react';
@@ -98,6 +99,9 @@ function App() {
         selectedPaths={selectedPaths}
       />
       <BottomActionBar 
+        sidebarWidth={sidebarWidth}
+      />
+      <VirtualShiftButton 
         sidebarWidth={sidebarWidth}
       />
     </div>

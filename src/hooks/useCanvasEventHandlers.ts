@@ -41,6 +41,8 @@ interface EventHandlerDeps {
 
 export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
   const { handlePointerDown: handleCurvesPointerDown, handlePointerMove: handleCurvesPointerMove, handlePointerUp: handleCurvesPointerUp } = useCanvasCurves();
+  const isVirtualShiftActive = useCanvasStore(state => state.isVirtualShiftActive);
+  
   const {
     svgRef,
     screenToCanvas,
@@ -94,19 +96,22 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       setIsDragging(false);
     }
 
+    // Effective shift state (physical OR virtual)
+    const effectiveShiftKey = e.shiftKey || isVirtualShiftActive;
+
     // Only process click if we're in select mode and either not dragging, or dragging but haven't moved
     if (activePlugin === 'select' && (!isDragging || !hasDragMoved)) {
       const isElementSelected = selectedIds.includes(elementId);
       const hasMultipleSelection = selectedIds.length > 1;
 
       // If clicking on an already selected element within a multi-selection and no shift, keep the multi-selection
-      if (isElementSelected && hasMultipleSelection && !e.shiftKey) {
+      if (isElementSelected && hasMultipleSelection && !effectiveShiftKey) {
         // Don't change selection - this was already handled in pointerDown
         return;
       }
 
       // Handle selection logic
-      if (e.shiftKey) {
+      if (effectiveShiftKey) {
         // Shift+click: toggle selection (add/remove from selection)
         selectElement(elementId, true);
       } else if (!isElementSelected) {
@@ -115,7 +120,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       }
       // If element is already selected and no shift, keep it selected (no action needed)
     }
-  }, [activePlugin, isDragging, dragStart, selectedIds, selectElement, setIsDragging, setDragStart, setHasDragMoved, hasDragMoved]);
+  }, [activePlugin, isDragging, dragStart, selectedIds, selectElement, setIsDragging, setDragStart, setHasDragMoved, hasDragMoved, isVirtualShiftActive]);
 
   // Handle element double click
   const handleElementDoubleClick = useCallback((elementId: string, e: React.MouseEvent<SVGPathElement>) => {
@@ -202,9 +207,12 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     if (activePlugin === 'select') {
       e.stopPropagation(); // Prevent handlePointerDown from starting selection rectangle
 
+      // Effective shift state (physical OR virtual)
+      const effectiveShiftKey = e.shiftKey || isVirtualShiftActive;
+
       // Only handle selection and dragging when shift is NOT pressed
       // When shift is pressed, let handleElementClick handle the toggle selection
-      if (!e.shiftKey) {
+      if (!effectiveShiftKey) {
         const selectedIds = useCanvasStore.getState().selectedIds;
         const isElementSelected = selectedIds.includes(elementId);
 
@@ -219,7 +227,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
         setHasDragMoved(false);
       }
     }
-  }, [activePlugin, screenToCanvas, setIsDragging, setDragStart, setHasDragMoved]);
+  }, [activePlugin, screenToCanvas, setIsDragging, setDragStart, setHasDragMoved, isVirtualShiftActive]);
 
   // Handle transformation handler pointer down
   const handleTransformationHandlerPointerDown = useCallback((e: React.PointerEvent, elementId: string, handler: string) => {
@@ -314,7 +322,9 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     }
 
     if (transformStateIsTransforming) {
-      updateTransformation(point, e.shiftKey);
+      // Effective shift state (physical OR virtual)
+      const effectiveShiftKey = e.shiftKey || isVirtualShiftActive;
+      updateTransformation(point, effectiveShiftKey);
       return;
     }
 
@@ -341,7 +351,9 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     }
 
     if (isCreatingShape && shapeStart) {
-      updateShapeCreation(point, e.shiftKey);
+      // Effective shift state (physical OR virtual)
+      const effectiveShiftKey = e.shiftKey || isVirtualShiftActive;
+      updateShapeCreation(point, effectiveShiftKey);
     }
 
     // Handle subpath dragging
@@ -377,6 +389,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     shapeStart,
     updateShapeCreation,
     updateSelectionRectangle,
+    isVirtualShiftActive,
   ]);
 
   // Handle pointer up

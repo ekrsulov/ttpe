@@ -4,6 +4,7 @@ import { useCanvasStore } from '../store/canvasStore';
 export const useCanvasKeyboardControls = () => {
   const [isSpacePressed, setIsSpacePressed] = useState(false);
   const [isShiftPressed, setIsShiftPressed] = useState(false);
+  const isVirtualShiftActive = useCanvasStore(state => state.isVirtualShiftActive);
   const {
     selectedCommands,
     selectedSubpaths,
@@ -21,6 +22,9 @@ export const useCanvasKeyboardControls = () => {
     finishCurve,
     cancelCurve,
   } = useCanvasStore();
+
+  // Computed effective shift state (physical OR virtual)
+  const isEffectiveShiftPressed = isShiftPressed || isVirtualShiftActive;
 
   // Handle space and delete keys
   useEffect(() => {
@@ -193,6 +197,6 @@ export const useCanvasKeyboardControls = () => {
 
   return {
     isSpacePressed,
-    isShiftPressed
+    isShiftPressed: isEffectiveShiftPressed
   };
 };

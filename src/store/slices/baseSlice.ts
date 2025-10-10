@@ -10,6 +10,7 @@ export interface BaseSlice {
   documentName: string;
   showFilePanel: boolean;
   showSettingsPanel: boolean;
+  isVirtualShiftActive: boolean; // Virtual shift mode for mobile/touch devices
   
   // Settings
   settings: {
@@ -27,6 +28,8 @@ export interface BaseSlice {
   setDocumentName: (name: string) => void;
   setShowFilePanel: (show: boolean) => void;
   setShowSettingsPanel: (show: boolean) => void;
+  setVirtualShift: (active: boolean) => void;
+  toggleVirtualShift: () => void;
   updateSettings: (updates: Partial<BaseSlice['settings']>) => void;
   saveDocument: () => void;
   loadDocument: (append?: boolean) => Promise<void>;
@@ -152,6 +155,7 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
   documentName: 'Untitled Document',
   showFilePanel: false,
   showSettingsPanel: false,
+  isVirtualShiftActive: false,
   
   // Settings with defaults
   settings: {
@@ -240,6 +244,14 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
 
   setShowSettingsPanel: (show) => {
     set({ showSettingsPanel: show });
+  },
+
+  setVirtualShift: (active) => {
+    set({ isVirtualShiftActive: active });
+  },
+
+  toggleVirtualShift: () => {
+    set((state) => ({ isVirtualShiftActive: !state.isVirtualShiftActive }));
   },
 
   updateSettings: (updates) => {

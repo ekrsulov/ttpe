@@ -1,6 +1,7 @@
 import React from 'react';
 import { getCommandStartPoint } from '../../utils/path';
 import { mapSvgToCanvas } from '../../utils/geometry';
+import { useCanvasStore } from '../../store/canvasStore';
 import type { Point, PathData, Command } from '../../types';
 
 interface EditPointsOverlayProps {
@@ -305,6 +306,10 @@ const handlePointPointerDown = (
   // Disable point interaction when smooth brush is active
   if (smoothBrush.isActive) return;
 
+  // Get virtual shift state
+  const isVirtualShiftActive = useCanvasStore.getState().isVirtualShiftActive;
+  const effectiveShiftKey = e.shiftKey || isVirtualShiftActive;
+
   // Check if this point is already selected
   const isAlreadySelected = selectedCommands.some(cmd =>
     cmd.elementId === element.id &&
@@ -313,7 +318,7 @@ const handlePointPointerDown = (
   );
 
   // Handle selection logic
-  if (e.shiftKey) {
+  if (effectiveShiftKey) {
     // Shift+click: toggle selection (add/remove from selection)
     onSelectCommand({
       elementId: element.id,
@@ -331,7 +336,7 @@ const handlePointPointerDown = (
   // If point is already selected and no shift, keep it selected (no action needed)
 
   // Only start dragging if not using shift (to avoid accidental drags during selection)
-  if (!e.shiftKey) {
+  if (!effectiveShiftKey) {
     // Get mouse coordinates relative to SVG
     const svgElement = (e.currentTarget as SVGElement).ownerSVGElement;
     if (svgElement) {
