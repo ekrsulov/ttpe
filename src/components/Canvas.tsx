@@ -89,6 +89,7 @@ export const Canvas: React.FC = () => {
     getFilteredEditablePoints,
     getControlPointInfo,
     mlModel,
+    saveAsPng,
   } = useCanvasStore(
     useShallow((state) => ({
       elements: state.elements,
@@ -112,6 +113,7 @@ export const Canvas: React.FC = () => {
       getFilteredEditablePoints: state.getFilteredEditablePoints,
       getControlPointInfo: state.getControlPointInfo,
       mlModel: state.mlModel,
+      saveAsPng: state.saveAsPng,
     }))
   );
   
@@ -320,6 +322,7 @@ export const Canvas: React.FC = () => {
         return (
           <g key={element.id}>
             <path
+              data-element-id={element.id}
               d={pathD}
               stroke={effectiveStrokeColor}
               strokeWidth={pathData.strokeWidth}
@@ -648,6 +651,22 @@ export const Canvas: React.FC = () => {
       svgElement.removeEventListener('wheel', wheelHandler);
     };
   }, []);
+
+  // Listen for saveAsPng events from FilePanel
+  useEffect(() => {
+    const handleSaveAsPng = (event: CustomEvent) => {
+      const { selectedOnly } = event.detail;
+      if (svgRef.current) {
+        saveAsPng(selectedOnly);
+      }
+    };
+
+    window.addEventListener('saveAsPng', handleSaveAsPng as EventListener);
+
+    return () => {
+      window.removeEventListener('saveAsPng', handleSaveAsPng as EventListener);
+    };
+  }, [saveAsPng]);
 
   return (
     <>

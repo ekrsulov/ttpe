@@ -17,11 +17,13 @@ export const FilePanel: React.FC = () => {
   const setActivePlugin = useCanvasStore(state => state.setActivePlugin);
   
   const [appendMode, setAppendMode] = useState(false);
-  const [addFrame, setAddFrame] = useState(true);
-  const [applyUnion, setApplyUnion] = useState(true);
-  const [resizeImport, setResizeImport] = useState(true);
+  const [addFrame, setAddFrame] = useState(false);
+  const [applyUnion, setApplyUnion] = useState(false);
+  const [resizeImport, setResizeImport] = useState(false);
   const [resizeWidth, setResizeWidth] = useState(64);
   const [resizeHeight, setResizeHeight] = useState(64);
+  const [pngSelectedOnly, setPngSelectedOnly] = useState(true);
+  const [svgSelectedOnly, setSvgSelectedOnly] = useState(false);
   const svgInputRef = useRef<HTMLInputElement>(null);
   const toast = useToast();
 
@@ -50,7 +52,16 @@ export const FilePanel: React.FC = () => {
   };
 
   const handleSaveAsSvg = () => {
-    saveAsSvg();
+    saveAsSvg(svgSelectedOnly);
+  };
+
+  const handleSaveAsPng = () => {
+    // We need to get the SVG element from the Canvas component
+    // For now, we'll dispatch a custom event that the Canvas can listen to
+    const event = new CustomEvent('saveAsPng', { 
+      detail: { selectedOnly: pngSelectedOnly } 
+    });
+    window.dispatchEvent(event);
   };
 
   const handleLoad = async () => {
@@ -291,6 +302,16 @@ export const FilePanel: React.FC = () => {
           >
             Svg
           </ChakraButton>
+
+          <ChakraButton
+            onClick={handleSaveAsPng}
+            variant="outline"
+            colorScheme="gray"
+            flex={1}
+            size="sm"
+          >
+            Png
+          </ChakraButton>
         </HStack>
 
         <HStack spacing={1}>
@@ -351,6 +372,62 @@ export const FilePanel: React.FC = () => {
           }}
         >
           Append to current document
+        </ChakraCheckbox>
+
+        <ChakraCheckbox
+          id="png-selected-only"
+          isChecked={pngSelectedOnly}
+          onChange={(e) => setPngSelectedOnly(e.target.checked)}
+          size="sm"
+          sx={{
+            '& .chakra-checkbox__control': {
+              bg: pngSelectedOnly ? 'green.500' : 'transparent',
+              borderColor: pngSelectedOnly ? 'green.500' : 'gray.400',
+              _checked: {
+                bg: 'green.500',
+                borderColor: 'green.500',
+                color: 'white',
+                _hover: {
+                  bg: 'green.600',
+                  borderColor: 'green.600',
+                }
+              },
+              _hover: {
+                bg: pngSelectedOnly ? 'green.600' : 'gray.50',
+                borderColor: pngSelectedOnly ? 'green.600' : 'gray.400',
+              }
+            }
+          }}
+        >
+          Save selected elements only (PNG)
+        </ChakraCheckbox>
+
+        <ChakraCheckbox
+          id="svg-selected-only"
+          isChecked={svgSelectedOnly}
+          onChange={(e) => setSvgSelectedOnly(e.target.checked)}
+          size="sm"
+          sx={{
+            '& .chakra-checkbox__control': {
+              bg: svgSelectedOnly ? 'blue.500' : 'transparent',
+              borderColor: svgSelectedOnly ? 'blue.500' : 'gray.400',
+              _checked: {
+                bg: 'blue.500',
+                borderColor: 'blue.500',
+                color: 'white',
+                _hover: {
+                  bg: 'blue.600',
+                  borderColor: 'blue.600',
+                }
+              },
+              _hover: {
+                bg: svgSelectedOnly ? 'blue.600' : 'gray.50',
+                borderColor: svgSelectedOnly ? 'blue.600' : 'gray.400',
+              }
+            }
+          }}
+        >
+          Save selected elements only (SVG)
         </ChakraCheckbox>
 
         <ChakraCheckbox

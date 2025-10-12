@@ -85,6 +85,7 @@ export const useCanvasOpticalAlignment = (): UseCanvasOpticalAlignmentReturn => 
   }), [
     storeCalculateAlignment,
     storeApplyAlignment,
+    storeCenterAllPairsMathematically,
     storePreviewAlignment,
     storeResetAlignment,
     storeToggleMathematicalCenter,

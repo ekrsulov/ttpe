@@ -33,7 +33,8 @@ export interface BaseSlice {
   updateSettings: (updates: Partial<BaseSlice['settings']>) => void;
   saveDocument: () => void;
   loadDocument: (append?: boolean) => Promise<void>;
-  saveAsSvg: () => void;
+  saveAsSvg: (selectedOnly?: boolean) => void;
+  saveAsPng: (selectedOnly?: boolean) => void;
   performPathUnion: () => void;
   performPathUnionPaperJS: () => void;
   performPathSubtraction: () => void;
@@ -282,16 +283,26 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
     URL.revokeObjectURL(url);
   },
 
-  saveAsSvg: () => {
+  saveAsSvg: (selectedOnly: boolean = false) => {
     const state = get() as CanvasStore;
     
-    // Calculate bounds of all elements
+    // Filter elements based on selection if needed
+    const elementsToExport = selectedOnly
+      ? state.elements.filter(el => state.selectedIds.includes(el.id))
+      : state.elements;
+
+    if (elementsToExport.length === 0) {
+      console.warn('No elements to export');
+      return;
+    }
+    
+    // Calculate bounds of elements to export
     let minX = Infinity;
     let minY = Infinity;
     let maxX = -Infinity;
     let maxY = -Infinity;
     
-    state.elements.forEach(element => {
+    elementsToExport.forEach(element => {
       if (element.type === 'path') {
         const pathData = element.data as PathData;
         pathData.subPaths.forEach(subPath => {
@@ -312,8 +323,8 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
       }
     });
     
-    // Add some padding
-    const padding = 20;
+    // Add padding only when exporting all elements (not selected only)
+    const padding = selectedOnly ? 0 : 20;
     minX -= padding;
     minY -= padding;
     maxX += padding;
@@ -327,7 +338,7 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
     svgContent += `<svg width="${width}" height="${height}" viewBox="${minX} ${minY} ${width} ${height}" xmlns="http://www.w3.org/2000/svg">\n`;
     
     // Add elements
-    state.elements.forEach(element => {
+    elementsToExport.forEach(element => {
       if (element.type === 'path') {
         const pathData = element.data as PathData;
         const pathD = commandsToString(pathData.subPaths.flat());
@@ -372,6 +383,131 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  },
+
+    saveAsPng: (selectedOnly: boolean = false) => {
+    const state = get() as CanvasStore;
+
+    // Calculate bounds of all elements to export
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+
+    // Filter elements based on selection if needed
+    const elementsToExport = selectedOnly
+      ? state.elements.filter(el => state.selectedIds.includes(el.id))
+      : state.elements;
+
+    if (elementsToExport.length === 0) {
+      console.warn('No elements to export');
+      return;
+    }
+
+    // Calculate bounds from element data
+    elementsToExport.forEach(element => {
+      if (element.type === 'path') {
+        const pathData = element.data as PathData;
+        pathData.subPaths.forEach(subPath => {
+          subPath.forEach(command => {
+            if (command.type === 'M' || command.type === 'L') {
+              minX = Math.min(minX, command.position.x);
+              minY = Math.min(minY, command.position.y);
+              maxX = Math.max(maxX, command.position.x);
+              maxY = Math.max(maxY, command.position.y);
+            } else if (command.type === 'C') {
+              minX = Math.min(minX, command.position.x, command.controlPoint1.x, command.controlPoint2.x);
+              minY = Math.min(minY, command.position.y, command.controlPoint1.y, command.controlPoint2.y);
+              maxX = Math.max(maxX, command.position.x, command.controlPoint1.x, command.controlPoint2.x);
+              maxY = Math.max(maxY, command.position.y, command.controlPoint1.y, command.controlPoint2.y);
+            }
+          });
+        });
+      }
+    });
+
+    const padding = selectedOnly ? 0 : 20;
+    const width = Math.max(maxX - minX + (padding * 2), 100);
+    const height = Math.max(maxY - minY + (padding * 2), 100);
+
+    // Create SVG content manually
+    let svgContent = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+    svgContent += `<svg width="${width}" height="${height}" viewBox="${minX - padding} ${minY - padding} ${width} ${height}" xmlns="http://www.w3.org/2000/svg">\n`;
+
+    // Add elements
+    elementsToExport.forEach(element => {
+      if (element.type === 'path') {
+        const pathData = element.data as PathData;
+        const pathD = commandsToString(pathData.subPaths.flat());
+
+        // For pencil paths, if strokeColor is 'none', render with black
+        const effectiveStrokeColor = pathData.isPencilPath && pathData.strokeColor === 'none'
+          ? '#000000'
+          : pathData.strokeColor;
+
+        svgContent += `  <path d="${pathD}" `;
+        svgContent += `stroke="${effectiveStrokeColor}" `;
+        svgContent += `stroke-width="${pathData.strokeWidth}" `;
+        svgContent += `fill="${pathData.fillColor}" `;
+        svgContent += `fill-opacity="${pathData.fillOpacity}" `;
+        svgContent += `stroke-opacity="${pathData.strokeOpacity}" `;
+        if (pathData.strokeLinecap) {
+          svgContent += `stroke-linecap="${pathData.strokeLinecap}" `;
+        }
+        if (pathData.strokeLinejoin) {
+          svgContent += `stroke-linejoin="${pathData.strokeLinejoin}" `;
+        }
+        if (pathData.fillRule) {
+          svgContent += `fill-rule="${pathData.fillRule}" `;
+        }
+        if (pathData.strokeDasharray && pathData.strokeDasharray !== 'none') {
+          svgContent += `stroke-dasharray="${pathData.strokeDasharray}" `;
+        }
+        svgContent += `vector-effect="non-scaling-stroke" />\n`;
+      }
+    });
+
+    svgContent += `</svg>`;
+
+    // Convert SVG to data URL
+    const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgContent)}`;
+
+    // Create canvas and draw SVG
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      console.error('Could not get canvas context');
+      return;
+    }
+
+    canvas.width = width;
+    canvas.height = height;
+
+    const img = new Image();
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0);
+
+      // Convert to PNG and download
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          console.error('Could not create PNG blob');
+          return;
+        }
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${state.documentName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, 'image/png');
+    };
+    img.onerror = () => {
+      console.error('Failed to load SVG image');
+    };
+    img.src = svgDataUrl;
   },
 
   loadDocument: async (append: boolean = false) => {
