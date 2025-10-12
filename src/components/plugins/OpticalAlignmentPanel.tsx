@@ -14,7 +14,11 @@ import {
   useToast,
   Input,
   Collapse,
-  IconButton
+  IconButton,
+  Slider,
+  SliderTrack,
+  SliderFilledTrack,
+  SliderThumb
 } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Panel } from '../ui/Panel';
@@ -28,8 +32,11 @@ import {
   Upload,
   Save,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Square,
+  Circle
 } from 'lucide-react';
+import { detectContainer, prepareContentInfo } from '../../utils/opticalAlignmentUtils';
 
 const OpticalAlignmentPanelComponent: React.FC = () => {
   // Subscribe only to specific primitives and minimal state to prevent re-renders
@@ -37,6 +44,10 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
   const showOpticalCenter = useCanvasStore(state => state.showOpticalCenter);
   const showMetrics = useCanvasStore(state => state.showMetrics);
   const showDistanceRules = useCanvasStore(state => state.showDistanceRules);
+  const showAllDistanceRules = useCanvasStore(state => state.showAllDistanceRules);
+  const dxFilter = useCanvasStore(state => state.dxFilter);
+  const dyFilter = useCanvasStore(state => state.dyFilter);
+  const elements = useCanvasStore(state => state.elements);
   const hasAlignment = useCanvasStore(state => state.currentAlignment !== null);
   const validationMessage = useCanvasStore(state => state.getAlignmentValidationMessage());
   
@@ -48,8 +59,54 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
   const trainingLoss = useCanvasStore(state => state.trainingLoss);
   const useMlPrediction = useCanvasStore(state => state.useMlPrediction);
   
-  // Local state for Advanced ML collapse
+    // Local state for Advanced ML collapse
   const [isAdvancedMLOpen, setIsAdvancedMLOpen] = useState(false);
+  
+  // Calculate distribution data for visualization
+  const calculateDistribution = (values: number[], maxValue: number) => {
+    const bins: number[] = [];
+    const binSize = 0.1;
+    const numBins = Math.ceil(maxValue / binSize) + 1;
+    
+    for (let i = 0; i < numBins; i++) {
+      bins[i] = 0;
+    }
+    
+    values.forEach(value => {
+      const binIndex = Math.floor(Math.abs(value) / binSize);
+      if (binIndex < numBins) {
+        bins[binIndex]++;
+      }
+    });
+    
+    return bins;
+  };
+
+  // Generate simple horizontal bar chart with numbers (only non-zero values)
+  const generateBarChart = (bins: number[]) => {
+    if (bins.length === 0) return 'No data';
+    
+    const maxCount = Math.max(...bins);
+    if (maxCount === 0) return 'No data';
+    
+    let chart = '';
+    const maxBarWidth = 20; // Maximum width for bars
+    const scale = maxBarWidth / maxCount;
+    
+    for (let bin = 0; bin < bins.length; bin++) {
+      const count = bins[bin];
+      if (count === 0) continue; // Skip empty bins
+      
+      const barWidth = Math.round(count * scale);
+      const binValue = (bin * 0.1).toFixed(1);
+      const bar = '█'.repeat(barWidth);
+      const spaces = ' '.repeat(maxBarWidth - barWidth);
+      
+      chart += `${binValue}: ${bar}${spaces}(${count})\n`;
+    }
+    
+    return chart || 'No data';
+  };
   
   const toast = useToast();
   const modelJsonInputRef = useRef<HTMLInputElement>(null);
@@ -61,12 +118,16 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
   // Get actions from getState (doesn't cause re-renders)
   const {
     applyAlignment,
+    centerAllPairsMathematically,
     previewAlignment,
     resetAlignment,
     toggleMathematicalCenter,
     toggleOpticalCenter,
     toggleMetrics,
     toggleDistanceRules,
+    toggleAllDistanceRules,
+    setDxFilter,
+    setDyFilter,
     canPerformOpticalAlignment,
     // ML actions
     addTrainingSample,
@@ -101,6 +162,138 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
   // Reset alignment
   const handleResetAlignment = () => {
     resetAlignment();
+  };
+
+  // Center all pairs mathematically
+  const handleCenterAllPairsMathematically = () => {
+    centerAllPairsMathematically();
+    toast({
+      title: 'Pairs centered',
+      description: 'All container-content pairs have been mathematically centered',
+      status: 'success',
+      duration: 2000,
+      isClosable: true,
+    });
+  };
+
+  // Select all containers
+  const handleSelectAllContainers = () => {
+    const state = useCanvasStore.getState();
+    const containerIds = new Set<string>();
+
+    // Find all valid container-content pairs
+    for (let i = 0; i < state.elements.length; i++) {
+      for (let j = 0; j < state.elements.length; j++) {
+        if (i === j) continue;
+
+        const containerEl = state.elements[i];
+        const contentEl = state.elements[j];
+
+        if (containerEl.type !== 'path' || contentEl.type !== 'path') continue;
+
+        // Try this pair
+        const selectedIds = [containerEl.id, contentEl.id];
+        const containerInfo = detectContainer(state.elements, selectedIds);
+
+        if (containerInfo && containerInfo.elementId === containerEl.id) {
+          const contentInfo = prepareContentInfo(state.elements, selectedIds, containerInfo);
+
+          if (contentInfo.length > 0) {
+            // Check if content is contained
+            const containerBounds = containerInfo.bounds;
+            const contentBounds = contentInfo[0].geometry.bounds;
+            const isContained =
+              contentBounds.minX >= containerBounds.minX &&
+              contentBounds.minY >= containerBounds.minY &&
+              contentBounds.maxX <= containerBounds.maxX &&
+              contentBounds.maxY <= containerBounds.maxY;
+
+            if (isContained) {
+              containerIds.add(containerEl.id);
+            }
+          }
+        }
+      }
+    }
+
+    if (containerIds.size > 0) {
+      state.selectElements(Array.from(containerIds));
+      toast({
+        title: 'Containers selected',
+        description: `Selected ${containerIds.size} container element(s)`,
+        status: 'info',
+        duration: 2000,
+        isClosable: true,
+      });
+    } else {
+      toast({
+        title: 'No containers found',
+        description: 'No valid container elements were found',
+        status: 'warning',
+        duration: 2000,
+        isClosable: true,
+      });
+    }
+  };
+
+  // Select all content
+  const handleSelectAllContent = () => {
+    const state = useCanvasStore.getState();
+    const contentIds = new Set<string>();
+
+    // Find all valid container-content pairs
+    for (let i = 0; i < state.elements.length; i++) {
+      for (let j = 0; j < state.elements.length; j++) {
+        if (i === j) continue;
+
+        const containerEl = state.elements[i];
+        const contentEl = state.elements[j];
+
+        if (containerEl.type !== 'path' || contentEl.type !== 'path') continue;
+
+        // Try this pair
+        const selectedIds = [containerEl.id, contentEl.id];
+        const containerInfo = detectContainer(state.elements, selectedIds);
+
+        if (containerInfo && containerInfo.elementId === containerEl.id) {
+          const contentInfo = prepareContentInfo(state.elements, selectedIds, containerInfo);
+
+          if (contentInfo.length > 0) {
+            // Check if content is contained
+            const containerBounds = containerInfo.bounds;
+            const contentBounds = contentInfo[0].geometry.bounds;
+            const isContained =
+              contentBounds.minX >= containerBounds.minX &&
+              contentBounds.minY >= containerBounds.minY &&
+              contentBounds.maxX <= containerBounds.maxX &&
+              contentBounds.maxY <= containerBounds.maxY;
+
+            if (isContained) {
+              contentIds.add(contentEl.id);
+            }
+          }
+        }
+      }
+    }
+
+    if (contentIds.size > 0) {
+      state.selectElements(Array.from(contentIds));
+      toast({
+        title: 'Content selected',
+        description: `Selected ${contentIds.size} content element(s)`,
+        status: 'info',
+        duration: 2000,
+        isClosable: true,
+      });
+    } else {
+      toast({
+        title: 'No content found',
+        description: 'No valid content elements were found',
+        status: 'warning',
+        duration: 2000,
+        isClosable: true,
+      });
+    }
   };
   
   // ML Handlers
@@ -503,6 +696,234 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
               <Text fontSize="xs">Show Distance Rules</Text>
             </Checkbox>
           </VStack>
+
+          {/* Show All Distance Rules Button */}
+          <Button
+            onClick={toggleAllDistanceRules}
+            size="sm"
+            variant={showAllDistanceRules ? "solid" : "outline"}
+            colorScheme="purple"
+            leftIcon={<Target size={14} />}
+            fontSize="xs"
+            w="full"
+          >
+            {showAllDistanceRules ? 'Hide' : 'Show'} All Distance Rules
+          </Button>
+
+          {/* Distance Rules Filters - only show when rules are visible */}
+          {showAllDistanceRules && (
+            <VStack spacing={3} w="full" align="stretch">
+              <HStack justify="space-between" align="center">
+                <Text fontSize="xs" fontWeight="bold" color="gray.600">
+                  Filter by Current Offset
+                </Text>
+                <Badge colorScheme="blue" fontSize="xs">
+                  {(() => {
+                    let count = 0;
+                    for (let i = 0; i < elements.length; i++) {
+                      for (let j = 0; j < elements.length; j++) {
+                        if (i === j) continue;
+                        const containerEl = elements[i];
+                        const contentEl = elements[j];
+                        if (containerEl.type !== 'path' || contentEl.type !== 'path') continue;
+                        const selectedIds = [containerEl.id, contentEl.id];
+                        const containerInfo = detectContainer(elements, selectedIds);
+                        if (!containerInfo || containerInfo.elementId !== containerEl.id) continue;
+                        const contentInfo = prepareContentInfo(elements, selectedIds, containerInfo);
+                        if (contentInfo.length === 0) continue;
+                        const containerBounds = containerInfo.bounds;
+                        const contentBounds = contentInfo[0].geometry.bounds;
+                        const isContained =
+                          contentBounds.minX >= containerBounds.minX &&
+                          contentBounds.minY >= containerBounds.minY &&
+                          contentBounds.maxX <= containerBounds.maxX &&
+                          contentBounds.maxY <= containerBounds.maxY;
+                        if (!isContained) continue;
+                        const containerCenter = {
+                          x: (containerBounds.minX + containerBounds.maxX) / 2,
+                          y: (containerBounds.minY + containerBounds.maxY) / 2
+                        };
+                        const contentMathematicalCenter = {
+                          x: (contentBounds.minX + contentBounds.maxX) / 2,
+                          y: (contentBounds.minY + contentBounds.maxY) / 2
+                        };
+                        const currentOffset = {
+                          x: contentMathematicalCenter.x - containerCenter.x,
+                          y: contentMathematicalCenter.y - containerCenter.y
+                        };
+                        if (Math.abs(currentOffset.x) >= dxFilter && Math.abs(currentOffset.y) >= dyFilter) {
+                          count++;
+                        }
+                      }
+                    }
+                    return count;
+                  })()}
+                </Badge>
+              </HStack>
+              
+              {/* Calculate distributions for visualization */}
+              {(() => {
+                const dxValues: number[] = [];
+                const dyValues: number[] = [];
+                let localMaxDx = 0;
+                let localMaxDy = 0;
+                
+                for (let i = 0; i < elements.length; i++) {
+                  for (let j = 0; j < elements.length; j++) {
+                    if (i === j) continue;
+                    const containerEl = elements[i];
+                    const contentEl = elements[j];
+                    if (containerEl.type !== 'path' || contentEl.type !== 'path') continue;
+                    const selectedIds = [containerEl.id, contentEl.id];
+                    const containerInfo = detectContainer(elements, selectedIds);
+                    if (!containerInfo || containerInfo.elementId !== containerEl.id) continue;
+                    const contentInfo = prepareContentInfo(elements, selectedIds, containerInfo);
+                    if (contentInfo.length === 0) continue;
+                    const containerBounds = containerInfo.bounds;
+                    const contentBounds = contentInfo[0].geometry.bounds;
+                    const isContained =
+                      contentBounds.minX >= containerBounds.minX &&
+                      contentBounds.minY >= containerBounds.minY &&
+                      contentBounds.maxX <= containerBounds.maxX &&
+                      contentBounds.maxY <= containerBounds.maxY;
+                    if (!isContained) continue;
+                    const containerCenter = {
+                      x: (containerBounds.minX + containerBounds.maxX) / 2,
+                      y: (containerBounds.minY + containerBounds.maxY) / 2
+                    };
+                    const contentMathematicalCenter = {
+                      x: (contentBounds.minX + contentBounds.maxX) / 2,
+                      y: (contentBounds.minY + contentBounds.maxY) / 2
+                    };
+                    const currentOffset = {
+                      x: contentMathematicalCenter.x - containerCenter.x,
+                      y: contentMathematicalCenter.y - containerCenter.y
+                    };
+                    dxValues.push(currentOffset.x);
+                    dyValues.push(currentOffset.y);
+                    localMaxDx = Math.max(localMaxDx, Math.abs(currentOffset.x));
+                    localMaxDy = Math.max(localMaxDy, Math.abs(currentOffset.y));
+                  }
+                }
+                
+                const dxBins = calculateDistribution(dxValues, localMaxDx);
+                const dyBins = calculateDistribution(dyValues, localMaxDy);
+                
+                return (
+                  <>
+                    {/* DX Filter */}
+                    <Box>
+                      <Text fontSize="xs" fontWeight="bold" mb={1} color="blue.600">
+                        DX Distribution
+                      </Text>
+                      <Box 
+                        fontFamily="monospace" 
+                        fontSize="xs" 
+                        whiteSpace="pre" 
+                        bg="gray.50" 
+                        p={2} 
+                        borderRadius="md"
+                        mb={2}
+                        overflowX="auto"
+                      >
+                        {generateBarChart(dxBins)}
+                      </Box>
+                      <Text fontSize="xs" mb={1}>
+                        Min |DX| ≥ {dxFilter.toFixed(1)} (max: {localMaxDx.toFixed(1)})
+                      </Text>
+                      <Slider
+                        value={dxFilter}
+                        onChange={setDxFilter}
+                        min={0}
+                        max={localMaxDx}
+                        step={0.1}
+                        size="sm"
+                      >
+                        <SliderTrack>
+                          <SliderFilledTrack />
+                        </SliderTrack>
+                        <SliderThumb />
+                      </Slider>
+                    </Box>
+
+                    {/* DY Filter */}
+                    <Box>
+                      <Text fontSize="xs" fontWeight="bold" mb={1} color="green.600">
+                        DY Distribution
+                      </Text>
+                      <Box 
+                        fontFamily="monospace" 
+                        fontSize="xs" 
+                        whiteSpace="pre" 
+                        bg="gray.50" 
+                        p={2} 
+                        borderRadius="md"
+                        mb={2}
+                        overflowX="auto"
+                      >
+                        {generateBarChart(dyBins)}
+                      </Box>
+                      <Text fontSize="xs" mb={1}>
+                        Min |DY| ≥ {dyFilter.toFixed(1)} (max: {localMaxDy.toFixed(1)})
+                      </Text>
+                      <Slider
+                        value={dyFilter}
+                        onChange={setDyFilter}
+                        min={0}
+                        max={localMaxDy}
+                        step={0.1}
+                        size="sm"
+                      >
+                        <SliderTrack>
+                          <SliderFilledTrack />
+                        </SliderTrack>
+                        <SliderThumb />
+                      </Slider>
+                    </Box>
+                  </>
+                );
+              })()}
+            </VStack>
+          )}
+
+          {/* Select All Containers Button */}
+          <Button
+            onClick={handleSelectAllContainers}
+            size="sm"
+            variant="outline"
+            colorScheme="blue"
+            leftIcon={<Square size={14} />}
+            fontSize="xs"
+            w="full"
+          >
+            Select All Containers
+          </Button>
+
+          {/* Select All Content Button */}
+          <Button
+            onClick={handleSelectAllContent}
+            size="sm"
+            variant="outline"
+            colorScheme="green"
+            leftIcon={<Circle size={14} />}
+            fontSize="xs"
+            w="full"
+          >
+            Select All Content
+          </Button>
+
+          {/* Center All Pairs Mathematically Button */}
+          <Button
+            onClick={handleCenterAllPairsMathematically}
+            size="sm"
+            variant="outline"
+            colorScheme="orange"
+            leftIcon={<Target size={14} />}
+            fontSize="xs"
+            w="full"
+          >
+            Center All Pairs Mathematically
+          </Button>
 
           {/* Reset Button */}
           <Button

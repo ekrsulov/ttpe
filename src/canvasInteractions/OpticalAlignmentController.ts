@@ -3,12 +3,14 @@ import type { AlignmentResult } from '../utils/geometry';
 export interface OpticalAlignmentCallbacks {
   calculateAlignment: () => void;
   applyAlignment: () => void;
+  centerAllPairsMathematically: () => void;
   previewAlignment: () => void;
   resetAlignment: () => void;
   toggleMathematicalCenter: () => void;
   toggleOpticalCenter: () => void;
   toggleMetrics: () => void;
   toggleDistanceRules: () => void;
+  toggleAllDistanceRules: () => void;
   canPerformOpticalAlignment: () => boolean;
   getAlignmentValidationMessage: () => string | null;
   getCurrentAlignment: () => AlignmentResult | null;
@@ -16,6 +18,7 @@ export interface OpticalAlignmentCallbacks {
   getShowOpticalCenter: () => boolean;
   getShowMetrics: () => boolean;
   getShowDistanceRules: () => boolean;
+  getShowAllDistanceRules: () => boolean;
 }
 
 export class OpticalAlignmentController {
@@ -37,6 +40,13 @@ export class OpticalAlignmentController {
    */
   apply(): void {
     this.callbacks.applyAlignment();
+  }
+
+  /**
+   * Center all pairs mathematically
+   */
+  centerAllPairsMathematically(): void {
+    this.callbacks.centerAllPairsMathematically();
   }
 
   /**
@@ -82,6 +92,13 @@ export class OpticalAlignmentController {
   }
 
   /**
+   * Toggle all distance rules visibility
+   */
+  toggleAllDistanceRules(): void {
+    this.callbacks.toggleAllDistanceRules();
+  }
+
+  /**
    * Check if optical alignment can be performed
    */
   canPerform(): boolean {
@@ -111,6 +128,7 @@ export class OpticalAlignmentController {
       showOpticalCenter: this.callbacks.getShowOpticalCenter(),
       showMetrics: this.callbacks.getShowMetrics(),
       showDistanceRules: this.callbacks.getShowDistanceRules(),
+      showAllDistanceRules: this.callbacks.getShowAllDistanceRules(),
     };
   }
 }

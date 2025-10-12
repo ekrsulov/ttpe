@@ -17,9 +17,9 @@ export const FilePanel: React.FC = () => {
   const setActivePlugin = useCanvasStore(state => state.setActivePlugin);
   
   const [appendMode, setAppendMode] = useState(false);
-  const [addFrame, setAddFrame] = useState(false);
-  const [applyUnion, setApplyUnion] = useState(false);
-  const [resizeImport, setResizeImport] = useState(false);
+  const [addFrame, setAddFrame] = useState(true);
+  const [applyUnion, setApplyUnion] = useState(true);
+  const [resizeImport, setResizeImport] = useState(true);
   const [resizeWidth, setResizeWidth] = useState(64);
   const [resizeHeight, setResizeHeight] = useState(64);
   const svgInputRef = useRef<HTMLInputElement>(null);
@@ -79,8 +79,13 @@ export const FilePanel: React.FC = () => {
       }
 
       const allAddedIds: string[] = [];
-      let currentXOffset = 0;
-      const margin = 20; // Margin between imported groups
+      
+      // Grid layout variables for organizing imported SVGs
+      let currentXOffset = 0;        // Current horizontal position in the row
+      let currentYOffset = 0;        // Current vertical position (row start)
+      let currentRowMaxHeight = 0;   // Maximum height in current row
+      const margin = 160;            // Margin between imported groups (4x increased for maximum spacing)
+      const maxRowWidth = 12288;     // Maximum horizontal width per row (3x 4096px for very wide rows)
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
@@ -94,7 +99,7 @@ export const FilePanel: React.FC = () => {
           continue;
         }
 
-                // Calculate initial bounds for this group of paths
+        // Calculate initial bounds for this group of paths
         let groupMinX = Infinity;
         let groupMaxX = -Infinity;
         let groupMinY = Infinity;
@@ -161,9 +166,18 @@ export const FilePanel: React.FC = () => {
         const finalGroupWidth = finalGroupMaxX - finalGroupMinX;
         const finalGroupHeight = finalGroupMaxY - finalGroupMinY;
 
-        // Apply translation to position this group
+        // Grid layout: Check if current SVG fits in the current row
+        // If not, wrap to next row to maintain maxRowWidth limit
+        if (currentXOffset > 0 && currentXOffset + finalGroupWidth > maxRowWidth) {
+          // Move to next row
+          currentXOffset = 0;
+          currentYOffset += currentRowMaxHeight + margin;
+          currentRowMaxHeight = 0;
+        }
+
+        // Apply translation to position this group in the grid
         const translateX = currentXOffset - finalGroupMinX;
-        const translateY = -finalGroupMinY; // Align to top
+        const translateY = currentYOffset - finalGroupMinY;
 
         // Add frame if requested (add it first so it appears "below" the SVG content)
         if (addFrame) {
@@ -210,13 +224,15 @@ export const FilePanel: React.FC = () => {
 
         allAddedIds.push(...fileAddedIds);
         
-        // Update offset for next group
-        currentXOffset += finalGroupWidth + margin;
+        // Update grid position for next SVG
+        currentXOffset += finalGroupWidth + margin;  // Move right
+        currentRowMaxHeight = Math.max(currentRowMaxHeight, finalGroupHeight);  // Track row height
 
         logger.info('SVG file processed', { 
           fileName: file.name, 
           pathCount: pathDataArray.length,
           bounds: { width: finalGroupWidth, height: finalGroupHeight },
+          position: { x: currentXOffset - finalGroupWidth - margin, y: currentYOffset },
           offset: currentXOffset
         });
       }

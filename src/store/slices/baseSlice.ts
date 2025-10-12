@@ -160,7 +160,7 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
   // Settings with defaults
   settings: {
     keyboardMovementPrecision: 0, // Default to 0 (integers only)
-    showRenderCountBadges: process.env.NODE_ENV === 'development', // Show badges in development by default
+    showRenderCountBadges: false, // Show badges in development by default
   },
 
   // Actions

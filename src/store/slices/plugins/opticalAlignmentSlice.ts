@@ -24,6 +24,11 @@ export interface OpticalAlignmentState {
   showOpticalCenter: boolean;
   showMetrics: boolean;
   showDistanceRules: boolean;
+  showAllDistanceRules: boolean;
+  
+  // Distance rules filters
+  dxFilter: number;
+  dyFilter: number;
   
   // ML Model state
   mlModel: tf.LayersModel | null;
@@ -38,6 +43,7 @@ export interface OpticalAlignmentActions {
   // Alignment operations
   calculateAlignment: () => void;
   applyAlignment: () => void;
+  centerAllPairsMathematically: () => void;
   previewAlignment: () => void;
   resetAlignment: () => void;
   
@@ -46,6 +52,9 @@ export interface OpticalAlignmentActions {
   toggleOpticalCenter: () => void;
   toggleMetrics: () => void;
   toggleDistanceRules: () => void;
+  toggleAllDistanceRules: () => void;
+  setDxFilter: (value: number) => void;
+  setDyFilter: (value: number) => void;
   
   // Validation
   canPerformOpticalAlignment: () => boolean;
@@ -98,6 +107,11 @@ export const createOpticalAlignmentSlice: StateCreator<
   showOpticalCenter: true,
   showMetrics: false,
   showDistanceRules: false,
+  showAllDistanceRules: false,
+  
+  // Distance rules filters
+  dxFilter: 0,
+  dyFilter: 0,
   
   // ML state
   mlModel: null,
@@ -198,6 +212,91 @@ export const createOpticalAlignmentSlice: StateCreator<
     set(() => ({ currentAlignment: null }));
   },
 
+  centerAllPairsMathematically: () => {
+    const state = get() as CanvasStore;
+    const elements = state.elements;
+    
+    // Find all valid container-content pairs
+    const pairsToCenter: Array<{ containerId: string; contentId: string }> = [];
+    
+    for (let i = 0; i < elements.length; i++) {
+      for (let j = 0; j < elements.length; j++) {
+        if (i === j) continue;
+
+        const containerEl = elements[i];
+        const contentEl = elements[j];
+
+        if (containerEl.type !== 'path' || contentEl.type !== 'path') continue;
+
+        // Try this pair
+        const selectedIds = [containerEl.id, contentEl.id];
+        const containerInfo = detectContainer(elements, selectedIds);
+
+        if (containerInfo && containerInfo.elementId === containerEl.id) {
+          const contentInfo = prepareContentInfo(elements, selectedIds, containerInfo);
+
+          if (contentInfo.length > 0) {
+            // Check if content is contained
+            const containerBounds = containerInfo.bounds;
+            const contentBounds = contentInfo[0].geometry.bounds;
+            const isContained =
+              contentBounds.minX >= containerBounds.minX &&
+              contentBounds.minY >= containerBounds.minY &&
+              contentBounds.maxX <= containerBounds.maxX &&
+              contentBounds.maxY <= containerBounds.maxY;
+
+            if (isContained) {
+              pairsToCenter.push({
+                containerId: containerEl.id,
+                contentId: contentEl.id
+              });
+            }
+          }
+        }
+      }
+    }
+
+    // Apply mathematical centering to each pair
+    pairsToCenter.forEach(({ containerId, contentId }) => {
+      const containerElement = elements.find(el => el.id === containerId);
+      const contentElement = elements.find(el => el.id === contentId);
+      
+      if (!containerElement || !contentElement) return;
+      
+      // Get container center (mathematical center)
+      const selectedIds = [containerId, contentId];
+      const containerInfo = detectContainer(elements, selectedIds);
+      if (!containerInfo) return;
+      
+      const containerCenter = containerInfo.center;
+      
+      // Calculate content mathematical center
+      const contentData = contentElement.data as PathData;
+      const contentBounds = measurePath(contentData.subPaths, contentData.strokeWidth, 1);
+      const contentMathematicalCenter = {
+        x: (contentBounds.minX + contentBounds.maxX) / 2,
+        y: (contentBounds.minY + contentBounds.maxY) / 2
+      };
+      
+      // Calculate offset to center content mathematically in container
+      const offsetX = containerCenter.x - contentMathematicalCenter.x;
+      const offsetY = containerCenter.y - contentMathematicalCenter.y;
+      
+      // Apply the translation
+      const translatedSubPaths = contentData.subPaths.map((subpath: SubPath) =>
+        translateCommands(subpath, offsetX, offsetY)
+      );
+      
+      // Update the element
+      state.updateElement(contentId, {
+        data: {
+          ...contentData,
+          subPaths: translatedSubPaths
+        }
+      });
+    });
+  },
+
   previewAlignment: () => {
     // For preview, we just calculate without applying
     get().calculateAlignment();
@@ -235,6 +334,24 @@ export const createOpticalAlignmentSlice: StateCreator<
   toggleDistanceRules: () => {
     set((state) => ({
       showDistanceRules: !state.showDistanceRules
+    }));
+  },
+
+  toggleAllDistanceRules: () => {
+    set((state) => ({
+      showAllDistanceRules: !state.showAllDistanceRules
+    }));
+  },
+
+  setDxFilter: (value: number) => {
+    set(() => ({
+      dxFilter: value
+    }));
+  },
+
+  setDyFilter: (value: number) => {
+    set(() => ({
+      dyFilter: value
     }));
   },
 

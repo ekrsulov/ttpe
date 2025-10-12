@@ -4,7 +4,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { measurePath, measureSubpathBounds, mapPointerToCanvas } from '../utils/geometry';
 import { extractEditablePoints, commandsToString } from '../utils/path';
 import { useCanvasDragInteractions } from '../hooks/useCanvasDragInteractions';
-import { SelectionOverlay, EditPointsOverlay, SubpathOverlay, ShapePreview, OpticalAlignmentOverlay, FeedbackOverlay, TransformationOverlay } from './overlays';
+import { SelectionOverlay, EditPointsOverlay, SubpathOverlay, ShapePreview, OpticalAlignmentOverlay, AllDistanceRulesOverlay, FeedbackOverlay, TransformationOverlay } from './overlays';
 import { CurvesRenderer } from './CurvesRenderer';
 import { useCanvasKeyboardControls } from '../hooks/useCanvasKeyboardControls';
 import { useCanvasPointerSelection } from '../hooks/useCanvasPointerSelection';
@@ -51,6 +51,9 @@ export const Canvas: React.FC = () => {
     showMathematicalCenter,
     showOpticalCenter,
     showDistanceRules,
+    showAllDistanceRules,
+    dxFilter,
+    dyFilter,
   } = useCanvasOpticalAlignment();
   const {
     isActive: isSmoothBrushActive,
@@ -85,6 +88,7 @@ export const Canvas: React.FC = () => {
     isWorkingWithSubpaths,
     getFilteredEditablePoints,
     getControlPointInfo,
+    mlModel,
   } = useCanvasStore(
     useShallow((state) => ({
       elements: state.elements,
@@ -107,6 +111,7 @@ export const Canvas: React.FC = () => {
       isWorkingWithSubpaths: state.isWorkingWithSubpaths,
       getFilteredEditablePoints: state.getFilteredEditablePoints,
       getControlPointInfo: state.getControlPointInfo,
+      mlModel: state.mlModel,
     }))
   );
   
@@ -720,6 +725,18 @@ export const Canvas: React.FC = () => {
           showOpticalCenter={showOpticalCenter}
           showDistanceRules={showDistanceRules}
           viewport={viewport}
+        />
+      )}
+
+      {/* All Distance Rules Overlay */}
+      {activePlugin === 'select' && (
+        <AllDistanceRulesOverlay
+          elements={elements}
+          showAllDistanceRules={showAllDistanceRules}
+          viewport={viewport}
+          mlModel={mlModel}
+          dxFilter={dxFilter}
+          dyFilter={dyFilter}
         />
       )}
 

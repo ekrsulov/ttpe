@@ -9,17 +9,24 @@ export interface OpticalAlignmentState {
   showOpticalCenter: boolean;
   showMetrics: boolean;
   showDistanceRules: boolean;
+  showAllDistanceRules: boolean;
+  dxFilter: number;
+  dyFilter: number;
 }
 
 export interface OpticalAlignmentActions {
   calculateAlignment: () => void;
   applyAlignment: () => void;
+  centerAllPairsMathematically: () => void;
   previewAlignment: () => void;
   resetAlignment: () => void;
   toggleMathematicalCenter: () => void;
   toggleOpticalCenter: () => void;
   toggleMetrics: () => void;
   toggleDistanceRules: () => void;
+  toggleAllDistanceRules: () => void;
+  setDxFilter: (value: number) => void;
+  setDyFilter: (value: number) => void;
   canPerformOpticalAlignment: () => boolean;
   getAlignmentValidationMessage: () => string | null;
 }
@@ -37,14 +44,21 @@ export const useCanvasOpticalAlignment = (): UseCanvasOpticalAlignmentReturn => 
     showOpticalCenter,
     showMetrics,
     showDistanceRules,
+    showAllDistanceRules,
+    dxFilter,
+    dyFilter,
     calculateAlignment: storeCalculateAlignment,
     applyAlignment: storeApplyAlignment,
+    centerAllPairsMathematically: storeCenterAllPairsMathematically,
     previewAlignment: storePreviewAlignment,
     resetAlignment: storeResetAlignment,
     toggleMathematicalCenter: storeToggleMathematicalCenter,
     toggleOpticalCenter: storeToggleOpticalCenter,
     toggleMetrics: storeToggleMetrics,
     toggleDistanceRules: storeToggleDistanceRules,
+    toggleAllDistanceRules: storeToggleAllDistanceRules,
+    setDxFilter: storeSetDxFilter,
+    setDyFilter: storeSetDyFilter,
     canPerformOpticalAlignment: storeCanPerformOpticalAlignment,
     getAlignmentValidationMessage: storeGetAlignmentValidationMessage
   } = useCanvasStore();
@@ -52,6 +66,7 @@ export const useCanvasOpticalAlignment = (): UseCanvasOpticalAlignmentReturn => 
   const controller = useMemo(() => new OpticalAlignmentController({
     calculateAlignment: storeCalculateAlignment,
     applyAlignment: storeApplyAlignment,
+    centerAllPairsMathematically: storeCenterAllPairsMathematically,
     previewAlignment: storePreviewAlignment,
     resetAlignment: storeResetAlignment,
     toggleMathematicalCenter: storeToggleMathematicalCenter,
@@ -65,6 +80,8 @@ export const useCanvasOpticalAlignment = (): UseCanvasOpticalAlignmentReturn => 
     getShowOpticalCenter: () => showOpticalCenter,
     getShowMetrics: () => showMetrics,
     getShowDistanceRules: () => showDistanceRules,
+    getShowAllDistanceRules: () => showAllDistanceRules,
+    toggleAllDistanceRules: storeToggleAllDistanceRules,
   }), [
     storeCalculateAlignment,
     storeApplyAlignment,
@@ -74,6 +91,7 @@ export const useCanvasOpticalAlignment = (): UseCanvasOpticalAlignmentReturn => 
     storeToggleOpticalCenter,
     storeToggleMetrics,
     storeToggleDistanceRules,
+    storeToggleAllDistanceRules,
     storeCanPerformOpticalAlignment,
     storeGetAlignmentValidationMessage,
     currentAlignment,
@@ -81,6 +99,7 @@ export const useCanvasOpticalAlignment = (): UseCanvasOpticalAlignmentReturn => 
     showOpticalCenter,
     showMetrics,
     showDistanceRules,
+    showAllDistanceRules,
   ]);
 
   const calculateAlignment = useCallback(() => {
@@ -89,6 +108,10 @@ export const useCanvasOpticalAlignment = (): UseCanvasOpticalAlignmentReturn => 
 
   const applyAlignment = useCallback(() => {
     controller.apply();
+  }, [controller]);
+
+  const centerAllPairsMathematically = useCallback(() => {
+    controller.centerAllPairsMathematically();
   }, [controller]);
 
   const previewAlignment = useCallback(() => {
@@ -115,6 +138,10 @@ export const useCanvasOpticalAlignment = (): UseCanvasOpticalAlignmentReturn => 
     controller.toggleDistanceRules();
   }, [controller]);
 
+  const toggleAllDistanceRules = useCallback(() => {
+    controller.toggleAllDistanceRules();
+  }, [controller]);
+
   const canPerformOpticalAlignment = useCallback(() => {
     return controller.canPerform();
   }, [controller]);
@@ -130,16 +157,23 @@ export const useCanvasOpticalAlignment = (): UseCanvasOpticalAlignmentReturn => 
     showOpticalCenter,
     showMetrics,
     showDistanceRules,
+    showAllDistanceRules,
+    dxFilter,
+    dyFilter,
 
     // Actions
     calculateAlignment,
     applyAlignment,
+    centerAllPairsMathematically,
     previewAlignment,
     resetAlignment,
     toggleMathematicalCenter,
     toggleOpticalCenter,
     toggleMetrics,
     toggleDistanceRules,
+    toggleAllDistanceRules,
+    setDxFilter: storeSetDxFilter,
+    setDyFilter: storeSetDyFilter,
     canPerformOpticalAlignment,
     getAlignmentValidationMessage,
   };
