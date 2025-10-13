@@ -9,6 +9,13 @@
 const COLOR_DIFF_WEIGHT_EXPO = 0.333;
 const ROUNDS = 250;
 
+// Protection padding percentages (applied before final displacement)
+// These prevent the content from getting too close to the container edges
+export const PROTECTION_PADDING_TOP_PERCENT = 2.5;
+export const PROTECTION_PADDING_BOTTOM_PERCENT = 2.5;
+export const PROTECTION_PADDING_LEFT_PERCENT = 2.5;
+export const PROTECTION_PADDING_RIGHT_PERCENT = 2.5;
+
 interface RGBColor {
   r: number;
   g: number;
@@ -31,16 +38,18 @@ interface VisualCenterOptions {
 
 /**
  * Calculate the visual center of an RGB matrix
+ * @param rgbMatrix - The RGB matrix to analyze
+ * @param knownBgColor - Optional known background color. If provided, uses this instead of auto-detecting from [0][0]
  */
-export function calculateVisualCenter(rgbMatrix: RGBColor[][]): Point {
+export function calculateVisualCenter(rgbMatrix: RGBColor[][], knownBgColor?: RGBColor): Point {
   let visualLeft = 0.5;
   let visualTop = 0.5;
 
   // Iteratively refine the visual center
-  ({ visualLeft } = recursiveGetCoord(rgbMatrix, visualLeft, visualTop, 'X', 1 / ROUNDS));
-  ({ visualLeft } = recursiveGetCoord(rgbMatrix, visualLeft, visualTop, 'X', -1 / ROUNDS));
-  ({ visualTop } = recursiveGetCoord(rgbMatrix, visualLeft, visualTop, 'Y', 1 / ROUNDS));
-  ({ visualTop } = recursiveGetCoord(rgbMatrix, visualLeft, visualTop, 'Y', -1 / ROUNDS));
+  ({ visualLeft } = recursiveGetCoord(rgbMatrix, visualLeft, visualTop, 'X', 1 / ROUNDS, knownBgColor));
+  ({ visualLeft } = recursiveGetCoord(rgbMatrix, visualLeft, visualTop, 'X', -1 / ROUNDS, knownBgColor));
+  ({ visualTop } = recursiveGetCoord(rgbMatrix, visualLeft, visualTop, 'Y', 1 / ROUNDS, knownBgColor));
+  ({ visualTop } = recursiveGetCoord(rgbMatrix, visualLeft, visualTop, 'Y', -1 / ROUNDS, knownBgColor));
 
   return { 
     x: visualLeft, 
@@ -56,9 +65,14 @@ function recursiveGetCoord(
   visualLeft: number,
   visualTop: number,
   currentAxis: 'X' | 'Y',
-  stepSize: number
+  stepSize: number,
+  knownBgColor?: RGBColor
 ): { visualLeft: number; visualTop: number } {
-  const bgColor = normalizeColor(rgbMatrix[0][0]);
+  // Use known background color if provided, otherwise auto-detect from [0][0]
+  const bgColor = knownBgColor 
+    ? normalizeColor(knownBgColor) 
+    : normalizeColor(rgbMatrix[0][0]);
+  
   const height = rgbMatrix.length;
   const width = rgbMatrix[0].length;
 
@@ -184,9 +198,41 @@ function rgbDiff(baseColor: RGBColor, testColor: RGBColor, maxDiff: number): num
 }
 
 /**
+ * Convert CSS color string to RGBColor using canvas
+ */
+function cssColorToRGB(cssColor: string): RGBColor {
+  // Create a temporary canvas to convert the color
+  const canvas = document.createElement('canvas');
+  canvas.width = 1;
+  canvas.height = 1;
+  const ctx = canvas.getContext('2d');
+  
+  if (!ctx) {
+    // Fallback to white if canvas context not available
+    return { r: 255, g: 255, b: 255, a: 255 };
+  }
+  
+  // Fill with the color
+  ctx.fillStyle = cssColor;
+  ctx.fillRect(0, 0, 1, 1);
+  
+  // Get the pixel data
+  const imageData = ctx.getImageData(0, 0, 1, 1);
+  const data = imageData.data;
+  
+  return {
+    r: data[0],
+    g: data[1],
+    b: data[2],
+    a: data[3]
+  };
+}
+
+/**
  * Convert SVG path to RGB matrix for visual center calculation
  * The path will be scaled relative to the container size to maintain proper proportions
  * Considers both fill and stroke with all their properties for accurate visual representation
+ * Returns both the RGB matrix and the background color (converted from containerFillColor)
  */
 export async function pathToRGBMatrix(
   svgPath: string,
@@ -201,10 +247,14 @@ export async function pathToRGBMatrix(
   strokeLinejoin: 'miter' | 'round' | 'bevel' = 'miter',
   strokeDasharray: string = '',
   scaleStrokeWidth: boolean = false, // Control if stroke scales with the path
+  containerFillColor: string = 'white', // Background color of the container
   size: number = 420
-): Promise<RGBColor[][]> {
+): Promise<{ rgbMatrix: RGBColor[][]; bgColor: RGBColor }> {
   return new Promise((resolve, reject) => {
     try {
+      // Convert container fill color to RGB for use as background
+      const bgColor = cssColorToRGB(containerFillColor);
+      
       // Create a temporary SVG to get the path's bounds
       const tempSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
       tempSvg.style.position = 'absolute';
@@ -221,8 +271,7 @@ export async function pathToRGBMatrix(
 
       // Calculate scale based on container size, not content size
       // This ensures the content is scaled proportionally to how it appears in the container
-      const padding = 20; // Add some padding
-      const availableSize = size - padding * 2;
+      const availableSize = size;
       
       // Scale based on the container dimensions
       const containerScale = Math.min(
@@ -248,82 +297,28 @@ export async function pathToRGBMatrix(
       const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       path.setAttribute('d', svgPath);
       
-      // For visual-center algorithm to work, we need contrast between the shape and background
-      // The algorithm assumes white background, so we need to ensure the shape is visible
-      // If the fill is white or very light, we need to use black instead
-      // If the fill is 'none', use the stroke color or default to black
-      
-      let effectiveFill = fillColor;
-      let effectiveFillOpacity = fillOpacity;
-      let effectiveStroke = strokeColor;
-      let effectiveStrokeWidth = strokeWidth;
-      let effectiveStrokeOpacity = strokeOpacity;
-      
-      // Check if fill is white/light or transparent - if so, use black for visibility
-      const isLightOrTransparent = 
-        fillColor === '#ffffff' || 
-        fillColor === '#fff' || 
-        fillColor === 'white' ||
-        fillColor === 'none' || 
-        fillColor === 'transparent' ||
-        fillColor.toLowerCase().includes('rgb(255') ||
-        fillColor.toLowerCase().includes('rgba(255') ||
-        fillOpacity === 0;
-      
-      if (isLightOrTransparent) {
-        // If we have a visible stroke, use it
-        if (strokeColor !== 'none' && strokeColor !== 'transparent' && strokeWidth > 0 && strokeOpacity > 0) {
-          effectiveFill = 'none';
-          effectiveFillOpacity = 0;
-          effectiveStroke = strokeColor;
-          effectiveStrokeWidth = strokeWidth;
-          effectiveStrokeOpacity = strokeOpacity;
-        } else {
-          // No visible stroke, use black fill for contrast
-          effectiveFill = 'black';
-          effectiveFillOpacity = 1;
-          effectiveStroke = 'none';
-          effectiveStrokeWidth = 0;
-          effectiveStrokeOpacity = 0;
-        }
-      } else if (fillColor === 'none' || fillColor === 'transparent' || fillOpacity === 0) {
-        // Fill is none but not white, check stroke
-        if (strokeColor !== 'none' && strokeColor !== 'transparent' && strokeWidth > 0 && strokeOpacity > 0) {
-          effectiveFill = strokeColor; // Use stroke as fill for better detection
-          effectiveFillOpacity = strokeOpacity;
-          effectiveStroke = 'none';
-          effectiveStrokeWidth = 0;
-          effectiveStrokeOpacity = 0;
-        } else {
-          effectiveFill = 'black';
-          effectiveFillOpacity = 1;
-          effectiveStroke = 'none';
-          effectiveStrokeWidth = 0;
-          effectiveStrokeOpacity = 0;
-        }
-      }
-      
-      // Apply all fill properties
-      path.setAttribute('fill', effectiveFill);
-      path.setAttribute('fill-opacity', effectiveFillOpacity.toString());
+      // Apply all fill properties (use original colors as-is)
+      // No need to adjust colors since we're using the actual container background color
+      path.setAttribute('fill', fillColor);
+      path.setAttribute('fill-opacity', fillOpacity.toString());
       
       // Calculate stroke width based on scaleStrokeWidth parameter
       // If false (default), keep original stroke width (non-scaling stroke)
       // If true, scale stroke proportionally with the path
       const finalStrokeWidth = scaleStrokeWidth 
-        ? effectiveStrokeWidth * scale 
-        : effectiveStrokeWidth;
+        ? strokeWidth * scale 
+        : strokeWidth;
       
       // Apply all stroke properties
-      path.setAttribute('stroke', effectiveStroke);
+      path.setAttribute('stroke', strokeColor);
       path.setAttribute('stroke-width', finalStrokeWidth.toString());
-      path.setAttribute('stroke-opacity', effectiveStrokeOpacity.toString());
+      path.setAttribute('stroke-opacity', strokeOpacity.toString());
       path.setAttribute('stroke-linecap', strokeLinecap);
       path.setAttribute('stroke-linejoin', strokeLinejoin);
       
       // Apply dasharray
       // Scale dasharray only if scaleStrokeWidth is true
-      if (strokeDasharray && strokeDasharray !== '' && effectiveStroke !== 'none') {
+      if (strokeDasharray && strokeDasharray !== '' && strokeColor !== 'none') {
         if (scaleStrokeWidth) {
           const scaledDasharray = strokeDasharray
             .split(/[\s,]+/)
@@ -338,32 +333,27 @@ export async function pathToRGBMatrix(
       path.setAttribute('transform', `translate(${offsetX}, ${offsetY}) scale(${scale})`);
       svg.appendChild(path);
 
-      // Convert to data URL
+      // Convert to data URL (SVG without background)
       const serializer = new XMLSerializer();
       const svgString = serializer.serializeToString(svg);
       const dataUrl = 'data:image/svg+xml;base64,' + btoa(svgString);
 
       // Debug: Log the generated image data URL and properties
-      console.log('[Visual Center Debug] Generated image data URL:', dataUrl);
+      console.log('[Visual Center Debug] SVG data URL (no background):', dataUrl);
       console.log('[Visual Center Debug] Container dimensions:', { containerWidth, containerHeight });
+      console.log('[Visual Center Debug] Container fill color:', containerFillColor);
       console.log('[Visual Center Debug] Content bbox:', contentBbox);
       console.log('[Visual Center Debug] Scale:', scale);
       console.log('[Visual Center Debug] Styles:', { 
-        fill: effectiveFill,
-        fillOpacity: effectiveFillOpacity,
-        stroke: effectiveStroke, 
-        strokeWidth: scaleStrokeWidth ? effectiveStrokeWidth * scale : effectiveStrokeWidth,
+        fill: fillColor,
+        fillOpacity: fillOpacity,
+        stroke: strokeColor, 
+        strokeWidth: scaleStrokeWidth ? strokeWidth * scale : strokeWidth,
         strokeWidthScaled: scaleStrokeWidth,
-        strokeOpacity: effectiveStrokeOpacity,
+        strokeOpacity: strokeOpacity,
         strokeLinecap,
         strokeLinejoin,
-        strokeDasharray: strokeDasharray ? 'applied' : 'none',
-        originalFill: fillColor,
-        originalFillOpacity: fillOpacity,
-        originalStroke: strokeColor,
-        originalStrokeWidth: strokeWidth,
-        originalStrokeOpacity: strokeOpacity,
-        wasAdjustedForContrast: isLightOrTransparent
+        strokeDasharray: strokeDasharray ? 'applied' : 'none'
       });
 
       // Load into image
@@ -379,12 +369,17 @@ export async function pathToRGBMatrix(
           return;
         }
 
-        // Fill with white background
-        ctx.fillStyle = 'white';
+        // Fill with container's background color instead of white
+        // This provides better contrast detection based on the actual container background
+        ctx.fillStyle = containerFillColor;
         ctx.fillRect(0, 0, size, size);
 
         // Draw the image
         ctx.drawImage(img, 0, 0, size, size);
+
+        // Log the final canvas data URL (with background applied)
+        const canvasDataUrl = canvas.toDataURL('image/png');
+        console.log('[Visual Center Debug] Canvas data URL (with background):', canvasDataUrl);
 
         // Get pixel data
         const imageData = ctx.getImageData(0, 0, size, size);
@@ -406,7 +401,7 @@ export async function pathToRGBMatrix(
           rgbMatrix.push(row);
         }
 
-        resolve(rgbMatrix);
+        resolve({ rgbMatrix, bgColor });
       };
 
       img.onerror = () => {

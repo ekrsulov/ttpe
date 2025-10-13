@@ -1,8 +1,20 @@
 import type { StateCreator } from 'zustand';
 import type { CanvasStore } from '../../canvasStore';
 import type { CanvasElement, PathData, Command } from '../../../types';
-import { calculateVisualCenter, pathToRGBMatrix } from '../../../utils/visualCenterUtils';
+import { 
+  calculateVisualCenter, 
+  pathToRGBMatrix,
+  PROTECTION_PADDING_TOP_PERCENT,
+  PROTECTION_PADDING_BOTTOM_PERCENT,
+  PROTECTION_PADDING_LEFT_PERCENT,
+  PROTECTION_PADDING_RIGHT_PERCENT
+} from '../../../utils/visualCenterUtils';
 import { commandsToString } from '../../../utils/path';
+import { measurePath } from '../../../utils/measurementUtils';
+
+// Minimum area ratio required for container/content pair recognition
+// Container must be at least this many times larger than content
+const MIN_CONTAINER_CONTENT_AREA_RATIO = 1.05;
 
 interface OpticalAlignmentResult {
   containerElement: CanvasElement;
@@ -30,31 +42,15 @@ export interface OpticalAlignmentSlice {
 }
 
 /**
- * Helper to calculate bounds from subpaths
+ * Helper to calculate bounds from subpaths including stroke width
+ * Uses measurePath which creates a ghost SVG to get accurate visual bounds
  */
-function calculateBounds(subPaths: Command[][]): { minX: number; minY: number; maxX: number; maxY: number } {
-  let minX = Infinity;
-  let minY = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
-
-  subPaths.forEach(subPath => {
-    subPath.forEach(cmd => {
-      if (cmd.type === 'M' || cmd.type === 'L') {
-        minX = Math.min(minX, cmd.position.x);
-        minY = Math.min(minY, cmd.position.y);
-        maxX = Math.max(maxX, cmd.position.x);
-        maxY = Math.max(maxY, cmd.position.y);
-      } else if (cmd.type === 'C') {
-        minX = Math.min(minX, cmd.controlPoint1.x, cmd.controlPoint2.x, cmd.position.x);
-        minY = Math.min(minY, cmd.controlPoint1.y, cmd.controlPoint2.y, cmd.position.y);
-        maxX = Math.max(maxX, cmd.controlPoint1.x, cmd.controlPoint2.x, cmd.position.x);
-        maxY = Math.max(maxY, cmd.controlPoint1.y, cmd.controlPoint2.y, cmd.position.y);
-      }
-    });
-  });
-
-  return { minX, minY, maxX, maxY };
+function calculateBounds(
+  subPaths: Command[][], 
+  strokeWidth: number = 0,
+  zoom: number = 1
+): { minX: number; minY: number; maxX: number; maxY: number } {
+  return measurePath(subPaths, strokeWidth, zoom);
 }
 
 /**
@@ -95,6 +91,85 @@ function translateSubPaths(subPaths: Command[][], offset: { x: number; y: number
   );
 }
 
+/**
+ * Apply protection padding to offset
+ * This ensures the content doesn't get too close to the container edges
+ * by limiting the displacement based on protection padding percentages
+ * Note: contentBounds already includes stroke width (calculated via measurePath with ghost SVG)
+ */
+function applyProtectionPadding(
+  offset: { x: number; y: number },
+  contentBounds: { minX: number; minY: number; maxX: number; maxY: number },
+  containerBounds: { minX: number; minY: number; maxX: number; maxY: number },
+  strokeWidth: number = 0
+): { x: number; y: number } {
+  // Calculate container dimensions
+  const containerWidth = containerBounds.maxX - containerBounds.minX;
+  const containerHeight = containerBounds.maxY - containerBounds.minY;
+
+  // Calculate protection padding in actual units
+  const paddingLeft = (PROTECTION_PADDING_LEFT_PERCENT / 100) * containerWidth;
+  const paddingRight = (PROTECTION_PADDING_RIGHT_PERCENT / 100) * containerWidth;
+  const paddingTop = (PROTECTION_PADDING_TOP_PERCENT / 100) * containerHeight;
+  const paddingBottom = (PROTECTION_PADDING_BOTTOM_PERCENT / 100) * containerHeight;
+
+  // Calculate the new position after applying the proposed offset
+  // contentBounds already includes stroke, so no need to add strokeExtension
+  const newContentMinX = contentBounds.minX + offset.x;
+  const newContentMaxX = contentBounds.maxX + offset.x;
+  const newContentMinY = contentBounds.minY + offset.y;
+  const newContentMaxY = contentBounds.maxY + offset.y;
+
+  // Calculate the limits (container bounds with protection padding)
+  const minAllowedX = containerBounds.minX + paddingLeft;
+  const maxAllowedX = containerBounds.maxX - paddingRight;
+  const minAllowedY = containerBounds.minY + paddingTop;
+  const maxAllowedY = containerBounds.maxY - paddingBottom;
+
+  // Clamp the offset to respect protection padding
+  let adjustedOffsetX = offset.x;
+  let adjustedOffsetY = offset.y;
+
+  // Adjust X if content would go beyond left or right padding
+  if (newContentMinX < minAllowedX) {
+    adjustedOffsetX = minAllowedX - contentBounds.minX;
+  } else if (newContentMaxX > maxAllowedX) {
+    adjustedOffsetX = maxAllowedX - contentBounds.maxX;
+  }
+
+  // Adjust Y if content would go beyond top or bottom padding
+  if (newContentMinY < minAllowedY) {
+    adjustedOffsetY = minAllowedY - contentBounds.minY;
+  } else if (newContentMaxY > maxAllowedY) {
+    adjustedOffsetY = maxAllowedY - contentBounds.maxY;
+  }
+
+  // Debug: Log when protection padding is applied
+  if (adjustedOffsetX !== offset.x || adjustedOffsetY !== offset.y) {
+    console.log('[Protection Padding] Offset adjusted to respect padding limits');
+    console.log('[Protection Padding] Original offset:', offset);
+    console.log('[Protection Padding] Adjusted offset:', { x: adjustedOffsetX, y: adjustedOffsetY });
+    console.log('[Protection Padding] Content stroke width:', strokeWidth, 'px (already included in bounds)');
+    console.log('[Protection Padding] Padding (%):', {
+      top: PROTECTION_PADDING_TOP_PERCENT,
+      bottom: PROTECTION_PADDING_BOTTOM_PERCENT,
+      left: PROTECTION_PADDING_LEFT_PERCENT,
+      right: PROTECTION_PADDING_RIGHT_PERCENT
+    });
+    console.log('[Protection Padding] Padding (px):', {
+      top: paddingTop.toFixed(2),
+      bottom: paddingBottom.toFixed(2),
+      left: paddingLeft.toFixed(2),
+      right: paddingRight.toFixed(2)
+    });
+  }
+
+  return {
+    x: adjustedOffsetX,
+    y: adjustedOffsetY
+  };
+}
+
 interface PathElementInfo {
   element: CanvasElement;
   bounds: { minX: number; minY: number; maxX: number; maxY: number };
@@ -116,7 +191,7 @@ function findFeasiblePairs(pathElements: PathElementInfo[]): Array<{ container: 
     if (processedContent.has(contentCandidate.element.id)) continue;
 
     // Find the closest container that:
-    // 1. Is at least 1.5x larger
+    // 1. Is at least MIN_CONTAINER_CONTENT_AREA_RATIO times larger
     // 2. Contains or is nearest to this content
     let bestContainer: PathElementInfo | null = null;
     let bestDistance = Infinity;
@@ -128,7 +203,7 @@ function findFeasiblePairs(pathElements: PathElementInfo[]): Array<{ container: 
       const ratio = containerCandidate.area / contentCandidate.area;
       
       // Only consider as container if significantly larger
-      if (ratio >= 1.5) {
+      if (ratio >= MIN_CONTAINER_CONTENT_AREA_RATIO) {
         // Calculate distance between centers
         const dx = containerCandidate.center.x - contentCandidate.center.x;
         const dy = containerCandidate.center.y - contentCandidate.center.y;
@@ -188,11 +263,12 @@ function calculateMathematicalOffset(
  * Get all path elements with their bounds, area and center
  * Helper function to avoid code duplication
  */
-function getPathElementsInfo(elements: CanvasElement[]): PathElementInfo[] {
+function getPathElementsInfo(elements: CanvasElement[], zoom: number = 1): PathElementInfo[] {
   return elements
     .filter(el => el.type === 'path')
     .map(el => {
-      const bounds = calculateBounds((el.data as PathData).subPaths);
+      const pathData = el.data as PathData;
+      const bounds = calculateBounds(pathData.subPaths, pathData.strokeWidth || 0, zoom);
       const area = (bounds.maxX - bounds.minX) * (bounds.maxY - bounds.minY);
       const center = {
         x: (bounds.minX + bounds.maxX) / 2,
@@ -221,14 +297,18 @@ export const createOpticalAlignmentSlice: StateCreator<
     if (selectedElements.length !== 2) return false;
 
     // Check if one element is clearly larger (container) than the other
-    const bounds1 = calculateBounds((selectedElements[0].data as PathData).subPaths);
-    const bounds2 = calculateBounds((selectedElements[1].data as PathData).subPaths);
+    const pathData1 = selectedElements[0].data as PathData;
+    const pathData2 = selectedElements[1].data as PathData;
+    const zoom = get().viewport.zoom;
+    
+    const bounds1 = calculateBounds(pathData1.subPaths, pathData1.strokeWidth || 0, zoom);
+    const bounds2 = calculateBounds(pathData2.subPaths, pathData2.strokeWidth || 0, zoom);
 
     const area1 = (bounds1.maxX - bounds1.minX) * (bounds1.maxY - bounds1.minY);
     const area2 = (bounds2.maxX - bounds2.minX) * (bounds2.maxY - bounds2.minY);
 
-    // One should be at least 1.5x larger than the other
-    return Math.max(area1, area2) / Math.min(area1, area2) >= 1.5;
+    // One should be at least MIN_CONTAINER_CONTENT_AREA_RATIO times larger than the other
+    return Math.max(area1, area2) / Math.min(area1, area2) >= MIN_CONTAINER_CONTENT_AREA_RATIO;
   },
 
   calculateOpticalAlignment: async () => {
@@ -246,8 +326,12 @@ export const createOpticalAlignmentSlice: StateCreator<
       );
 
       // Determine which is container and which is content
-      const bounds1 = calculateBounds((selectedElements[0].data as PathData).subPaths);
-      const bounds2 = calculateBounds((selectedElements[1].data as PathData).subPaths);
+      const pathData1 = selectedElements[0].data as PathData;
+      const pathData2 = selectedElements[1].data as PathData;
+      const zoom = state.viewport.zoom;
+      
+      const bounds1 = calculateBounds(pathData1.subPaths, pathData1.strokeWidth || 0, zoom);
+      const bounds2 = calculateBounds(pathData2.subPaths, pathData2.strokeWidth || 0, zoom);
 
       const area1 = (bounds1.maxX - bounds1.minX) * (bounds1.maxY - bounds1.minY);
       const area2 = (bounds2.maxX - bounds2.minX) * (bounds2.maxY - bounds2.minY);
@@ -258,9 +342,17 @@ export const createOpticalAlignmentSlice: StateCreator<
       const containerData = containerElement.data as PathData;
       const contentData = contentElement.data as PathData;
 
-      // Calculate bounds for both elements
-      const containerBounds = calculateBounds(containerData.subPaths);
-      const contentBounds = calculateBounds(contentData.subPaths);
+      // Calculate bounds for both elements (including stroke width)
+      const containerBounds = calculateBounds(
+        containerData.subPaths, 
+        containerData.strokeWidth || 0,
+        get().viewport.zoom
+      );
+      const contentBounds = calculateBounds(
+        contentData.subPaths,
+        contentData.strokeWidth || 0,
+        get().viewport.zoom
+      );
 
       // Get paths as strings using commandsToString
       const contentPath = commandsToString(contentData.subPaths.flat());
@@ -278,11 +370,17 @@ export const createOpticalAlignmentSlice: StateCreator<
       const strokeLinecap = contentData.strokeLinecap || 'butt';
       const strokeLinejoin = contentData.strokeLinejoin || 'miter';
       const strokeDasharray = contentData.strokeDasharray || '';
+      
+      // Get the container's fill color for accurate background representation
+      // If container has no fill (none), use white background
+      const containerFillColor = (containerData.fillColor && containerData.fillColor !== 'none') 
+        ? containerData.fillColor 
+        : 'white';
 
       // Convert content to RGB matrix and calculate visual center
       // Pass container dimensions and all visual properties for accurate representation
       // scaleStrokeWidth = false to prevent thick strokes in the analysis image
-      const rgbMatrix = await pathToRGBMatrix(
+      const { rgbMatrix, bgColor } = await pathToRGBMatrix(
         contentPath, 
         containerWidth, 
         containerHeight, 
@@ -295,9 +393,11 @@ export const createOpticalAlignmentSlice: StateCreator<
         strokeLinejoin,
         strokeDasharray,
         false, // Don't scale stroke width with path scale
+        containerFillColor, // Use container's fill color as background
         420
       );
-      const visualCenter = calculateVisualCenter(rgbMatrix);
+      // Pass the known background color to the algorithm instead of auto-detecting
+      const visualCenter = calculateVisualCenter(rgbMatrix, bgColor);
 
       // Calculate mathematical centers
       const containerMathCenter = {
@@ -320,19 +420,53 @@ export const createOpticalAlignmentSlice: StateCreator<
       };
 
       // Calculate offset needed to align visual center to container's mathematical center
-      const offset = {
+      const rawOffset = {
         x: containerMathCenter.x - visualCenterActual.x,
         y: containerMathCenter.y - visualCenterActual.y
       };
 
+      // Apply protection padding to prevent content from getting too close to edges
+      // Consider strokeWidth to ensure stroke doesn't go beyond padding limits
+      const offset = applyProtectionPadding(rawOffset, contentBounds, containerBounds, strokeWidth);
+
+      const result: OpticalAlignmentResult = {
+        containerElement,
+        contentElement,
+        visualCenter: visualCenterActual,
+        mathematicalCenter: contentMathCenter,
+        offset
+      };
+
+      // Log the result in both formats
+      console.log('\n=== Optical Alignment Result ===');
+      console.log('OpticalAlignmentResult:', {
+        container: containerElement.id,
+        content: contentElement.id,
+        visualCenter: visualCenterActual,
+        mathematicalCenter: contentMathCenter,
+        offset
+      });
+      
+      // Human-readable format (similar to visual-center library)
+      const contentName = contentElement.id;
+      const visualCenterPercent = {
+        x: (visualCenter.x * 100).toFixed(1),
+        y: (visualCenter.y * 100).toFixed(1)
+      };
+      const movePercent = {
+        x: ((offset.x / contentWidth) * 100).toFixed(1),
+        y: ((offset.y / contentHeight) * 100).toFixed(1)
+      };
+      const horizontalDirection = offset.x > 0 ? 'right' : 'left';
+      const verticalDirection = offset.y > 0 ? 'down' : 'up';
+      
+      console.log(`\n${contentName}`);
+      console.log(`The visual center is at ${visualCenterPercent.x}%, ${visualCenterPercent.y}%`);
+      console.log(`You can visual center your element if you move it ${horizontalDirection} ${Math.abs(parseFloat(movePercent.x))}% and move it ${verticalDirection} ${Math.abs(parseFloat(movePercent.y))}%`);
+      console.log('================================\n');
+
       set({
-        opticalAlignmentResult: {
-          containerElement,
-          contentElement,
-          visualCenter: visualCenterActual,
-          mathematicalCenter: contentMathCenter,
-          offset
-        },
+        opticalAlignmentResult: result,
         isCalculatingAlignment: false
       } as Partial<CanvasStore>);
     } catch (error) {
@@ -377,19 +511,30 @@ export const createOpticalAlignmentSlice: StateCreator<
 
     try {
       // Get all path elements with their bounds and areas using helper
-      const pathElements = getPathElementsInfo(state.elements);
+      const pathElements = getPathElementsInfo(state.elements, state.viewport.zoom);
 
       // Find all feasible pairs using the helper function
       const feasiblePairs = findFeasiblePairs(pathElements);
+
+      console.log(`\n=== Applying Optical Alignment to ${feasiblePairs.length} Pairs ===\n`);
 
       // Apply alignment to each pair
       for (const pair of feasiblePairs) {
         const containerData = pair.container.data as PathData;
         const contentData = pair.content.data as PathData;
+        const zoom = state.viewport.zoom;
 
-        // Calculate bounds for both elements
-        const containerBounds = calculateBounds(containerData.subPaths);
-        const contentBounds = calculateBounds(contentData.subPaths);
+        // Calculate bounds for both elements (including stroke width)
+        const containerBounds = calculateBounds(
+          containerData.subPaths,
+          containerData.strokeWidth || 0,
+          zoom
+        );
+        const contentBounds = calculateBounds(
+          contentData.subPaths,
+          contentData.strokeWidth || 0,
+          zoom
+        );
 
         // Get paths as strings using commandsToString
         const contentPath = commandsToString(contentData.subPaths.flat());
@@ -407,11 +552,17 @@ export const createOpticalAlignmentSlice: StateCreator<
         const strokeLinecap = contentData.strokeLinecap || 'butt';
         const strokeLinejoin = contentData.strokeLinejoin || 'miter';
         const strokeDasharray = contentData.strokeDasharray || '';
+        
+        // Get the container's fill color for accurate background representation
+        // If container has no fill (none), use white background
+        const containerFillColor = (containerData.fillColor && containerData.fillColor !== 'none') 
+          ? containerData.fillColor 
+          : 'white';
 
         // Convert content to RGB matrix and calculate visual center
         // Pass container dimensions and all visual properties for accurate representation
         // scaleStrokeWidth = false to prevent thick strokes in the analysis image
-        const rgbMatrix = await pathToRGBMatrix(
+        const { rgbMatrix, bgColor } = await pathToRGBMatrix(
           contentPath, 
           containerWidth, 
           containerHeight, 
@@ -424,9 +575,11 @@ export const createOpticalAlignmentSlice: StateCreator<
           strokeLinejoin,
           strokeDasharray,
           false, // Don't scale stroke width with path scale
+          containerFillColor, // Use container's fill color as background
           420
         );
-        const visualCenter = calculateVisualCenter(rgbMatrix);
+        // Pass the known background color to the algorithm instead of auto-detecting
+        const visualCenter = calculateVisualCenter(rgbMatrix, bgColor);
 
         // Calculate mathematical centers
         const containerMathCenter = {
@@ -444,10 +597,43 @@ export const createOpticalAlignmentSlice: StateCreator<
         };
 
         // Calculate offset needed to align visual center to container's mathematical center
-        const offset = {
+        const rawOffset = {
           x: containerMathCenter.x - visualCenterActual.x,
           y: containerMathCenter.y - visualCenterActual.y
         };
+
+        // Apply protection padding to prevent content from getting too close to edges
+        // Consider strokeWidth to ensure stroke doesn't go beyond padding limits
+        const offset = applyProtectionPadding(rawOffset, contentBounds, containerBounds, strokeWidth);
+
+        // Log the result for this pair
+        console.log('OpticalAlignmentResult:', {
+          container: pair.container.id,
+          content: pair.content.id,
+          visualCenter: visualCenterActual,
+          mathematicalCenter: {
+            x: (contentBounds.minX + contentBounds.maxX) / 2,
+            y: (contentBounds.minY + contentBounds.maxY) / 2
+          },
+          offset
+        });
+        
+        // Human-readable format
+        const contentName = pair.content.id;
+        const visualCenterPercent = {
+          x: (visualCenter.x * 100).toFixed(1),
+          y: (visualCenter.y * 100).toFixed(1)
+        };
+        const movePercent = {
+          x: ((offset.x / contentWidth) * 100).toFixed(1),
+          y: ((offset.y / contentHeight) * 100).toFixed(1)
+        };
+        const horizontalDirection = offset.x > 0 ? 'right' : 'left';
+        const verticalDirection = offset.y > 0 ? 'down' : 'up';
+        
+        console.log(`${contentName}`);
+        console.log(`The visual center is at ${visualCenterPercent.x}%, ${visualCenterPercent.y}%`);
+        console.log(`You can visual center your element if you move it ${horizontalDirection} ${Math.abs(parseFloat(movePercent.x))}% and move it ${verticalDirection} ${Math.abs(parseFloat(movePercent.y))}%\n`);
 
         // Apply the offset to all subpaths
         const translatedSubPaths = translateSubPaths(contentData.subPaths, offset);
@@ -486,8 +672,12 @@ export const createOpticalAlignmentSlice: StateCreator<
     );
 
     // Determine which is container and which is content
-    const bounds1 = calculateBounds((selectedElements[0].data as PathData).subPaths);
-    const bounds2 = calculateBounds((selectedElements[1].data as PathData).subPaths);
+    const pathData1 = selectedElements[0].data as PathData;
+    const pathData2 = selectedElements[1].data as PathData;
+    const zoom = state.viewport.zoom;
+    
+    const bounds1 = calculateBounds(pathData1.subPaths, pathData1.strokeWidth || 0, zoom);
+    const bounds2 = calculateBounds(pathData2.subPaths, pathData2.strokeWidth || 0, zoom);
 
     const area1 = (bounds1.maxX - bounds1.minX) * (bounds1.maxY - bounds1.minY);
     const area2 = (bounds2.maxX - bounds2.minX) * (bounds2.maxY - bounds2.minY);
@@ -498,9 +688,17 @@ export const createOpticalAlignmentSlice: StateCreator<
     const containerData = containerElement.data as PathData;
     const contentData = contentElement.data as PathData;
 
-    // Calculate bounds for both elements
-    const containerBounds = calculateBounds(containerData.subPaths);
-    const contentBounds = calculateBounds(contentData.subPaths);
+    // Calculate bounds for both elements (including stroke width)
+    const containerBounds = calculateBounds(
+      containerData.subPaths,
+      containerData.strokeWidth || 0,
+      zoom
+    );
+    const contentBounds = calculateBounds(
+      contentData.subPaths,
+      contentData.strokeWidth || 0,
+      zoom
+    );
 
     // Calculate offset using helper function
     const offset = calculateMathematicalOffset(containerBounds, contentBounds);
@@ -521,7 +719,7 @@ export const createOpticalAlignmentSlice: StateCreator<
     const state = get();
 
     // Get all path elements with their bounds and areas using helper
-    const pathElements = getPathElementsInfo(state.elements);
+    const pathElements = getPathElementsInfo(state.elements, state.viewport.zoom);
 
     // Find all feasible pairs using the helper function
     const feasiblePairs = findFeasiblePairs(pathElements);
@@ -530,10 +728,19 @@ export const createOpticalAlignmentSlice: StateCreator<
     for (const pair of feasiblePairs) {
       const containerData = pair.container.data as PathData;
       const contentData = pair.content.data as PathData;
+      const zoom = state.viewport.zoom;
 
-      // Calculate bounds for both elements
-      const containerBounds = calculateBounds(containerData.subPaths);
-      const contentBounds = calculateBounds(contentData.subPaths);
+      // Calculate bounds for both elements (including stroke width)
+      const containerBounds = calculateBounds(
+        containerData.subPaths,
+        containerData.strokeWidth || 0,
+        zoom
+      );
+      const contentBounds = calculateBounds(
+        contentData.subPaths,
+        contentData.strokeWidth || 0,
+        zoom
+      );
 
       // Calculate offset using helper function
       const offset = calculateMathematicalOffset(containerBounds, contentBounds);
@@ -555,7 +762,7 @@ export const createOpticalAlignmentSlice: StateCreator<
     const state = get();
 
     // Get all path elements info using helper
-    const pathElements = getPathElementsInfo(state.elements);
+    const pathElements = getPathElementsInfo(state.elements, state.viewport.zoom);
 
     // Find all feasible pairs
     const feasiblePairs = findFeasiblePairs(pathElements);
@@ -571,7 +778,7 @@ export const createOpticalAlignmentSlice: StateCreator<
     const state = get();
 
     // Get all path elements info using helper
-    const pathElements = getPathElementsInfo(state.elements);
+    const pathElements = getPathElementsInfo(state.elements, state.viewport.zoom);
 
     // Find all feasible pairs
     const feasiblePairs = findFeasiblePairs(pathElements);
