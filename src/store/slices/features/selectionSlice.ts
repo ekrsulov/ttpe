@@ -54,24 +54,14 @@ export const createSelectionSlice: StateCreator<CanvasStore, [], [], SelectionSl
           : [id],
       };
     });
-    
-    // Auto-reset optical alignment on selection change
-    const currentState = get() as CanvasStore;
-    currentState.resetAlignment();
   },
 
   selectElements: (ids) => {
     set({ selectedIds: ids });
-    // Auto-reset optical alignment on selection change
-    const currentState = get() as CanvasStore;
-    currentState.resetAlignment();
   },
 
   clearSelection: () => {
     set({ selectedIds: [] });
-    // Auto-reset optical alignment on selection change
-    const currentState = get() as CanvasStore;
-    currentState.resetAlignment();
   },
 
   getSelectedElements: () => {
@@ -106,10 +96,6 @@ export const createSelectionSlice: StateCreator<CanvasStore, [], [], SelectionSl
         return el;
       }),
     }));
-    
-    // Auto-reset optical alignment on element movement
-    const finalState = get() as CanvasStore;
-    finalState.resetAlignment();
   },
 
   updateSelectedPaths: (properties) => {

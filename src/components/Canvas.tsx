@@ -4,13 +4,12 @@ import { useShallow } from 'zustand/react/shallow';
 import { measurePath, measureSubpathBounds, mapPointerToCanvas } from '../utils/geometry';
 import { extractEditablePoints, commandsToString } from '../utils/path';
 import { useCanvasDragInteractions } from '../hooks/useCanvasDragInteractions';
-import { SelectionOverlay, EditPointsOverlay, SubpathOverlay, ShapePreview, OpticalAlignmentOverlay, AllDistanceRulesOverlay, FeedbackOverlay, TransformationOverlay } from './overlays';
+import { SelectionOverlay, EditPointsOverlay, SubpathOverlay, ShapePreview, FeedbackOverlay, TransformationOverlay } from './overlays';
 import { CurvesRenderer } from './CurvesRenderer';
 import { useCanvasKeyboardControls } from '../hooks/useCanvasKeyboardControls';
 import { useCanvasPointerSelection } from '../hooks/useCanvasPointerSelection';
 import { useCanvasTransformControls } from '../hooks/useCanvasTransformControls';
 import { useCanvasShapeCreation } from '../hooks/useCanvasShapeCreation';
-import { useCanvasOpticalAlignment } from '../hooks/useCanvasOpticalAlignment';
 import { useCanvasSmoothBrush } from '../hooks/useCanvasSmoothBrush';
 import { useCanvasEventHandlers } from '../hooks/useCanvasEventHandlers';
 import { pluginManager } from '../utils/pluginManager';
@@ -47,15 +46,6 @@ export const Canvas: React.FC = () => {
     updatePointPositionFeedback
   } = useCanvasShapeCreation();
   const {
-    currentAlignment,
-    showMathematicalCenter,
-    showOpticalCenter,
-    showDistanceRules,
-    showAllDistanceRules,
-    dxFilter,
-    dyFilter,
-  } = useCanvasOpticalAlignment();
-  const {
     isActive: isSmoothBrushActive,
     smoothBrush,
     applyBrush,
@@ -88,7 +78,6 @@ export const Canvas: React.FC = () => {
     isWorkingWithSubpaths,
     getFilteredEditablePoints,
     getControlPointInfo,
-    mlModel,
     saveAsPng,
   } = useCanvasStore(
     useShallow((state) => ({
@@ -112,7 +101,6 @@ export const Canvas: React.FC = () => {
       isWorkingWithSubpaths: state.isWorkingWithSubpaths,
       getFilteredEditablePoints: state.getFilteredEditablePoints,
       getControlPointInfo: state.getControlPointInfo,
-      mlModel: state.mlModel,
       saveAsPng: state.saveAsPng,
     }))
   );
@@ -733,29 +721,6 @@ export const Canvas: React.FC = () => {
           stroke="#38bdf8"
           strokeWidth="1.2"
           style={{ pointerEvents: 'none' }}
-        />
-      )}
-
-      {/* Optical Alignment Overlay */}
-      {activePlugin === 'select' && (
-        <OpticalAlignmentOverlay
-          alignment={currentAlignment}
-          showMathematicalCenter={showMathematicalCenter}
-          showOpticalCenter={showOpticalCenter}
-          showDistanceRules={showDistanceRules}
-          viewport={viewport}
-        />
-      )}
-
-      {/* All Distance Rules Overlay */}
-      {activePlugin === 'select' && (
-        <AllDistanceRulesOverlay
-          elements={elements}
-          showAllDistanceRules={showAllDistanceRules}
-          viewport={viewport}
-          mlModel={mlModel}
-          dxFilter={dxFilter}
-          dyFilter={dyFilter}
         />
       )}
 

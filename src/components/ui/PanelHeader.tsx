@@ -35,7 +35,7 @@ export const PanelHeader: React.FC<PanelHeaderProps> = ({
       align="center"
       bg="transparent"
       px={0}
-      py={title === 'Optical Alignment' ? 0 : 0.5}
+      py={0.5}
       borderRadius="md"
       mb={2}
       minH="24px"

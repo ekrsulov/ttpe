@@ -145,7 +145,7 @@ export const deriveElementSelectionColors = (element: {
  * Convert a hex color string to its HSL representation.
  *
  * This helper centralises the logic used by multiple modules that need to work
- * with chromatic values (e.g. optical alignment metrics and preset sorting).
+ * with chromatic values (e.g. color metrics and preset sorting).
  * Returning a consistent object shape prevents repeated tuple/object
  * conversions in the callers.
  */

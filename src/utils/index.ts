@@ -19,9 +19,6 @@ export * from './path';
 export * from './canvas';
 export * from './overlayHelpers';
 
-// Export ML utilities
-export * from './mlAlignmentUtils';
-
 // Export SVG import utilities
 export * from './svgImportUtils';
 

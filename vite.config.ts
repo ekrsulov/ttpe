@@ -52,11 +52,8 @@ export default defineConfig(() => {
   return {
     base: normalizedBase,
     plugins: [react(), manifestPlugin()],
-    // Include .bin files as static assets
-    assetsInclude: ['**/*.bin'],
     server: {
       host: '0.0.0.0',
-      // Configure MIME types for TensorFlow.js model files
       headers: {
         'Access-Control-Allow-Origin': '*',
       }
@@ -78,13 +75,6 @@ export default defineConfig(() => {
             // Utilities
             'utils-vendor': ['fast-deep-equal']
           },
-          // Ensure .bin files are copied as-is
-          assetFileNames: (assetInfo) => {
-            if (assetInfo.name?.endsWith('.bin')) {
-              return 'models/optical-alignment/[name][extname]';
-            }
-            return 'assets/[name]-[hash][extname]';
-          }
         }
       },
       // Increase chunk size warning limit to 750KB

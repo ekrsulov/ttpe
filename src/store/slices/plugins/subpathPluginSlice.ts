@@ -235,12 +235,6 @@ const processSubpathOrderChange = (
   return newSelection;
 };
 
-// Helper function to reset alignment after selection changes
-const resetAlignmentAfterChange = (get: () => CanvasStore) => {
-  const currentState = get() as CanvasStore;
-  currentState.resetAlignment();
-};
-
 export interface SubpathPluginSlice {
   // State
   selectedSubpaths: Array<{ elementId: string; subpathIndex: number }>;
@@ -324,21 +318,14 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
         };
       }
     });
-    
-    // Auto-reset optical alignment on subpath selection change
-    resetAlignmentAfterChange(get);
   },
 
   selectSubpaths: (subpaths) => {
     set({ selectedSubpaths: subpaths });
-    // Auto-reset optical alignment on subpath selection change
-    resetAlignmentAfterChange(get);
   },
 
   clearSubpathSelection: () => {
     set({ selectedSubpaths: [] });
-    // Auto-reset optical alignment on subpath selection change
-    resetAlignmentAfterChange(get);
   },
 
   getSelectedSubpathsCount: () => {
@@ -410,9 +397,6 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
         });
       }
     });
-
-    // Auto-reset optical alignment on subpath movement
-    resetAlignmentAfterChange(get);
   },
 
   // Order functions
@@ -664,7 +648,5 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
 
   stopDraggingSubpaths: () => {
     set({ draggingSubpaths: null });
-    // Auto-reset optical alignment on subpath movement completion
-    resetAlignmentAfterChange(get);
   },
 });

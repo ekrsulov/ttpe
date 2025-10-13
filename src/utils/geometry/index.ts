@@ -8,6 +8,3 @@ export { measurePath, measureSubpathBounds } from '../measurementUtils';
 
 // Re-export coordinate transformations
 export { mapPointerToCanvas, mapSvgToCanvas } from '../coordinateUtils';
-
-// Re-export optical alignment utilities
-export * from '../opticalAlignmentUtils';

@@ -4,7 +4,6 @@ import React from 'react';
 const EditorPanel = React.lazy(() => import('../plugins/EditorPanel').then(module => ({ default: module.EditorPanel })));
 const EditPanel = React.lazy(() => import('../plugins/EditPanel').then(module => ({ default: module.EditPanel })));
 const ControlPointAlignmentPanel = React.lazy(() => import('../plugins/ControlPointAlignmentPanel').then(module => ({ default: module.ControlPointAlignmentPanel })));
-const OpticalAlignmentPanel = React.lazy(() => import('../plugins/OpticalAlignmentPanel').then(module => ({ default: module.OpticalAlignmentPanel })));
 const PanPanel = React.lazy(() => import('../plugins/PanPanel').then(module => ({ default: module.PanPanel })));
 const PencilPanel = React.lazy(() => import('../plugins/PencilPanel').then(module => ({ default: module.PencilPanel })));
 const CurvesPanel = React.lazy(() => import('../plugins/CurvesPanel').then(module => ({ default: module.CurvesPanel })));
@@ -144,11 +143,6 @@ export const PANEL_CONFIGS: PanelConfig[] = [
     key: 'control-point-alignment',
     condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'edit',
     component: ControlPointAlignmentPanel,
-  },
-  {
-    key: 'optical-alignment',
-    condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'select',
-    component: OpticalAlignmentPanel,
   },
   {
     key: 'pan',

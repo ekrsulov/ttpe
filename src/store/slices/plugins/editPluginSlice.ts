@@ -1761,10 +1761,6 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
         });
       }
     });
-
-    // Auto-reset optical alignment on point movement
-    const currentState = get() as FullCanvasState;
-    currentState.resetAlignment();
   },
 
   deleteZCommandForMPoint: (elementId: string, commandIndex: number) => {
