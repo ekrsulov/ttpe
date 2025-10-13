@@ -39,7 +39,7 @@ export const SliderControl: React.FC<SliderControlProps> = ({
   title,
   minWidth = '60px',
   labelWidth = '40px',
-  valueWidth = '31px',
+  valueWidth = '50px',
   marginBottom = '6px',
   inline = false,
   gap = '8px'

@@ -4,7 +4,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { measurePath, measureSubpathBounds, mapPointerToCanvas } from '../utils/geometry';
 import { extractEditablePoints, commandsToString } from '../utils/path';
 import { useCanvasDragInteractions } from '../hooks/useCanvasDragInteractions';
-import { SelectionOverlay, EditPointsOverlay, SubpathOverlay, ShapePreview, FeedbackOverlay, TransformationOverlay, GuidelinesOverlay } from './overlays';
+import { SelectionOverlay, EditPointsOverlay, SubpathOverlay, ShapePreview, FeedbackOverlay, TransformationOverlay, GuidelinesOverlay, GridOverlay } from './overlays';
 import { CurvesRenderer } from './CurvesRenderer';
 import { useCanvasKeyboardControls } from '../hooks/useCanvasKeyboardControls';
 import { useCanvasPointerSelection } from '../hooks/useCanvasPointerSelection';
@@ -69,9 +69,9 @@ export const Canvas: React.FC = () => {
     selectedSubpaths,
     draggingSelection,
     guidelines,
+    grid,
     updateElement,
     startDraggingPoint,
-    updateDraggingPoint,
     stopDraggingPoint,
     emergencyCleanupDrag,
     selectCommand,
@@ -80,6 +80,7 @@ export const Canvas: React.FC = () => {
     getFilteredEditablePoints,
     getControlPointInfo,
     saveAsPng,
+    snapToGrid,
   } = useCanvasStore(
     useShallow((state) => ({
       elements: state.elements,
@@ -93,9 +94,9 @@ export const Canvas: React.FC = () => {
       selectedSubpaths: state.selectedSubpaths,
       draggingSelection: state.draggingSelection,
       guidelines: state.guidelines,
+      grid: state.grid,
       updateElement: state.updateElement,
       startDraggingPoint: state.startDraggingPoint,
-      updateDraggingPoint: state.updateDraggingPoint,
       stopDraggingPoint: state.stopDraggingPoint,
       emergencyCleanupDrag: state.emergencyCleanupDrag,
       selectCommand: state.selectCommand,
@@ -104,6 +105,7 @@ export const Canvas: React.FC = () => {
       getFilteredEditablePoints: state.getFilteredEditablePoints,
       getControlPointInfo: state.getControlPointInfo,
       saveAsPng: state.saveAsPng,
+      snapToGrid: state.snapToGrid,
     }))
   );
   
@@ -271,10 +273,10 @@ export const Canvas: React.FC = () => {
     elements: elements as CanvasElement[],
     smoothBrush,
     callbacks: {
-      onUpdateDraggingPoint: updateDraggingPoint,
       onStopDraggingPoint: stopDraggingPoint,
       onUpdateElement: updateElement,
-      getControlPointInfo
+      getControlPointInfo,
+      snapToGrid,
     }
   });
 
@@ -682,6 +684,13 @@ export const Canvas: React.FC = () => {
         onPointerUp={handlePointerUp}
         onDoubleClick={handleCanvasDoubleClick}
       >
+      {/* Grid Overlay - At the very bottom */}
+      <GridOverlay
+        grid={grid}
+        viewport={viewport}
+        canvasSize={canvasSize}
+      />
+
       {/* Sort elements by zIndex */}
       {sortedElements.map(renderElement)}
 

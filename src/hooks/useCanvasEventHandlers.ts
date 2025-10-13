@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
 import { pluginManager } from '../utils/pluginManager';
-import { useCanvasCurves } from './useCanvasCurves';
+import { useCanvasCurves } from '../hooks/useCanvasCurves';
 import type { Point } from '../types';
 
 interface EventHandlerDeps {
@@ -78,12 +78,116 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     setMode,
   } = deps;
 
+  // Apply snap to dragged elements or subpaths
+  const applySnapToDraggedElements = useCallback(() => {
+    // Apply snap to grid for selected elements or subpaths if snap is enabled
+    if (((activePlugin === 'select' && selectedIds.length > 0 && !isWorkingWithSubpaths()) ||
+         (activePlugin === 'subpath' && selectedSubpaths.length > 0 && isWorkingWithSubpaths()))) {
+      const state = useCanvasStore.getState();
+      if (state.grid.snapEnabled && state.snapToGrid) {
+
+        if (activePlugin === 'subpath' && selectedSubpaths.length > 0) {
+          // Snap subpaths using their bounds
+          selectedSubpaths.forEach(({ elementId, subpathIndex }) => {
+            const element = state.elements.find(el => el.id === elementId);
+            if (element && element.type === 'path') {
+              const pathData = element.data as import('../types').PathData;
+              if (subpathIndex < pathData.subPaths.length) {
+                const subpath = pathData.subPaths[subpathIndex];
+
+                // Calculate bounds for this subpath
+                let minX = Infinity, minY = Infinity;
+                subpath.forEach(cmd => {
+                  if (cmd.type === 'M' || cmd.type === 'L') {
+                    minX = Math.min(minX, cmd.position.x);
+                    minY = Math.min(minY, cmd.position.y);
+                  } else if (cmd.type === 'C') {
+                    minX = Math.min(minX, cmd.position.x, cmd.controlPoint1.x, cmd.controlPoint2.x);
+                    minY = Math.min(minY, cmd.position.y, cmd.controlPoint1.y, cmd.controlPoint2.y);
+                  }
+                });
+
+                if (isFinite(minX)) {
+                  // Snap the top-left corner
+                  const snappedTopLeft = state.snapToGrid(minX, minY);
+
+                  // Calculate snap offset
+                  const snapOffsetX = snappedTopLeft.x - minX;
+                  const snapOffsetY = snappedTopLeft.y - minY;
+
+                  // Apply snap offset to this subpath
+                  if (snapOffsetX !== 0 || snapOffsetY !== 0) {
+                    // Use moveSelectedSubpaths to apply the snap
+                    // But we need to modify it to work with individual subpaths
+                    // For now, let's use the existing moveSelectedSubpaths but filter to only this subpath
+                    const originalSelectedSubpaths = state.selectedSubpaths;
+                    // Temporarily set selectedSubpaths to only this one
+                    useCanvasStore.setState({ selectedSubpaths: [{ elementId, subpathIndex }] });
+                    moveSelectedSubpaths(snapOffsetX, snapOffsetY);
+                    // Restore original selection
+                    useCanvasStore.setState({ selectedSubpaths: originalSelectedSubpaths });
+                  }
+                }
+              }
+            }
+          });
+        } else if (activePlugin === 'select' && selectedIds.length > 0) {
+          // Snap selected elements (existing logic)
+          // Calculate the bounding box of all selected elements
+          let overallMinX = Infinity;
+          let overallMinY = Infinity;
+
+          selectedIds.forEach(elementId => {
+            const element = state.elements.find(el => el.id === elementId);
+            if (element && element.type === 'path') {
+              const pathData = element.data as import('../types').PathData;
+
+              // Calculate bounds for this element
+              let minX = Infinity, minY = Infinity;
+              pathData.subPaths.forEach(subPath => {
+                subPath.forEach(cmd => {
+                  if (cmd.type === 'M' || cmd.type === 'L') {
+                    minX = Math.min(minX, cmd.position.x);
+                    minY = Math.min(minY, cmd.position.y);
+                  } else if (cmd.type === 'C') {
+                    minX = Math.min(minX, cmd.position.x, cmd.controlPoint1.x, cmd.controlPoint2.x);
+                    minY = Math.min(minY, cmd.position.y, cmd.controlPoint1.y, cmd.controlPoint2.y);
+                  }
+                });
+              });
+
+              if (isFinite(minX)) {
+                overallMinX = Math.min(overallMinX, minX);
+                overallMinY = Math.min(overallMinY, minY);
+              }
+            }
+          });
+
+          if (isFinite(overallMinX)) {
+            // Snap the top-left corner
+            const snappedTopLeft = state.snapToGrid(overallMinX, overallMinY);
+
+            // Calculate snap offset
+            const snapOffsetX = snappedTopLeft.x - overallMinX;
+            const snapOffsetY = snappedTopLeft.y - overallMinY;
+
+            // Apply snap offset to selected elements
+            if (snapOffsetX !== 0 || snapOffsetY !== 0) {
+              moveSelectedElements(snapOffsetX, snapOffsetY);
+            }
+          }
+        }
+      }
+    }
+  }, [activePlugin, selectedIds, selectedSubpaths, isWorkingWithSubpaths, moveSelectedElements, moveSelectedSubpaths]);
+
   // Handle element click
   const handleElementClick = useCallback((elementId: string, e: React.PointerEvent) => {
     e.stopPropagation();
 
-    // If we were dragging and moved, just end the drag - don't process as a click
+    // If we were dragging and moved, apply snap and end the drag
     if (isDragging && hasDragMoved) {
+      applySnapToDraggedElements();
       setIsDragging(false);
       setDragStart(null);
       setHasDragMoved(false);
@@ -120,7 +224,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       }
       // If element is already selected and no shift, keep it selected (no action needed)
     }
-  }, [activePlugin, isDragging, dragStart, selectedIds, selectElement, setIsDragging, setDragStart, setHasDragMoved, hasDragMoved, isVirtualShiftActive]);
+  }, [activePlugin, isDragging, dragStart, selectedIds, selectElement, setIsDragging, setDragStart, setHasDragMoved, hasDragMoved, isVirtualShiftActive, applySnapToDraggedElements]);
 
   // Handle element double click
   const handleElementDoubleClick = useCallback((elementId: string, e: React.MouseEvent<SVGPathElement>) => {
@@ -464,9 +568,8 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
 
     // Only handle dragging if it hasn't been handled by element click already
     if (isDragging) {
-      setIsDragging(false);
-      
-      // Clear guidelines when drag ends
+      applySnapToDraggedElements();
+      setIsDragging(false);      // Clear guidelines when drag ends
       const state = useCanvasStore.getState();
       if (state.clearGuidelines) {
         state.clearGuidelines();
@@ -490,6 +593,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     activePlugin,
     handleCurvesPointerUp,
     isDragging,
+    applySnapToDraggedElements,
     setIsDragging,
     setDragStart,
     setHasDragMoved,

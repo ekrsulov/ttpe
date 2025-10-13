@@ -5,12 +5,10 @@ import { mapSvgToCanvas } from '../utils/geometry';
 import type { CanvasElement, SubPath, Point, ControlPointInfo, Command, PathData } from '../types';
 
 interface DragCallbacks {
-  onUpdateDraggingPoint: (x: number, y: number) => void;
   onStopDraggingPoint: () => void;
-  onUpdateDraggingSubpaths?: (x: number, y: number) => void;
-  onStopDraggingSubpaths?: () => void;
   onUpdateElement: (id: string, updates: Partial<CanvasElement>) => void;
   getControlPointInfo: (elementId: string, commandIndex: number, pointIndex: number) => ControlPointInfo | null;
+  snapToGrid?: (x: number, y: number) => { x: number; y: number };
 }
 
 interface DragState {
@@ -108,17 +106,9 @@ export const useCanvasDragInteractions = ({
           });
 
           if (editingPoint?.isDragging) {
-            // Update store position
-            callbacks.onUpdateDraggingPoint(
-              formatToPrecision(canvasX, PATH_DECIMAL_PRECISION),
-              formatToPrecision(canvasY, PATH_DECIMAL_PRECISION)
-            );
+            // Position updates are handled by updateSinglePointPath below
           } else if (draggingSubpaths?.isDragging) {
-            // Update subpath dragging
-            callbacks.onUpdateDraggingSubpaths?.(
-              formatToPrecision(canvasX, PATH_DECIMAL_PRECISION),
-              formatToPrecision(canvasY, PATH_DECIMAL_PRECISION)
-            );
+            // Position updates are handled by update logic below
           }
 
           // Throttled path update for real-time feedback
@@ -302,17 +292,259 @@ export const useCanvasDragInteractions = ({
       const { editingPoint, draggingSelection, draggingSubpaths } = dragState;
 
       if (editingPoint?.isDragging || draggingSelection?.isDragging || draggingSubpaths?.isDragging) {
+        // Apply snap to grid on pointer up if snap is enabled
+        if (callbacks.snapToGrid && dragPosition) {
+          const snapped = callbacks.snapToGrid(dragPosition.x, dragPosition.y);
+
+          if (editingPoint?.isDragging) {
+            // Apply snap to single point by updating the element directly
+            const element = elements.find(el => el.id === editingPoint.elementId);
+            if (element && element.type === 'path') {
+              const pathData = element.data as PathData;
+              const commands = pathData.subPaths.flat();
+              const points = extractEditablePoints(commands);
+
+              const pointToUpdate = points.find(p =>
+                p.commandIndex === editingPoint.commandIndex &&
+                p.pointIndex === editingPoint.pointIndex
+              );
+
+              if (pointToUpdate) {
+                // Create update for the snapped position
+                const updates = [{
+                  commandIndex: pointToUpdate.commandIndex,
+                  pointIndex: pointToUpdate.pointIndex,
+                  x: formatToPrecision(snapped.x, PATH_DECIMAL_PRECISION),
+                  y: formatToPrecision(snapped.y, PATH_DECIMAL_PRECISION),
+                  isControl: pointToUpdate.isControl
+                }];
+
+                // Handle control point alignment logic
+                const alignmentInfo = getControlPointAlignmentInfo(commands, points, editingPoint.commandIndex, editingPoint.pointIndex);
+                if (alignmentInfo && (alignmentInfo.type === 'aligned' || alignmentInfo.type === 'mirrored')) {
+                  const pairedCommandIndex = alignmentInfo.pairedCommandIndex;
+                  const pairedPointIndex = alignmentInfo.pairedPointIndex;
+                  const anchor = alignmentInfo.anchor;
+
+                  if (pairedCommandIndex !== undefined && pairedPointIndex !== undefined) {
+                    const currentVector = {
+                      x: snapped.x - anchor.x,
+                      y: snapped.y - anchor.y
+                    };
+                    const magnitude = Math.sqrt(currentVector.x * currentVector.x + currentVector.y * currentVector.y);
+
+                    if (magnitude > 0) {
+                      const unitVector = {
+                        x: currentVector.x / magnitude,
+                        y: currentVector.y / magnitude
+                      };
+
+                      let pairedX: number;
+                      let pairedY: number;
+
+                      if (alignmentInfo.type === 'mirrored') {
+                        pairedX = anchor.x + (-unitVector.x * magnitude);
+                        pairedY = anchor.y + (-unitVector.y * magnitude);
+                      } else {
+                        pairedX = anchor.x + unitVector.x * magnitude;
+                        pairedY = anchor.y + unitVector.y * magnitude;
+                      }
+
+                      updates.push({
+                        commandIndex: pairedCommandIndex,
+                        pointIndex: pairedPointIndex,
+                        x: formatToPrecision(pairedX, PATH_DECIMAL_PRECISION),
+                        y: formatToPrecision(pairedY, PATH_DECIMAL_PRECISION),
+                        isControl: true
+                      });
+                    }
+                  }
+                }
+
+                // Update the commands and element
+                const updatedCommands = updateCommands(commands, updates.map(u => ({ ...u, type: 'independent' as const, anchor: { x: u.x, y: u.y } })));
+                const newSubPaths = extractSubpaths(updatedCommands).map(sp => sp.commands);
+
+                callbacks.onUpdateElement(editingPoint.elementId, {
+                  data: {
+                    ...(element.data as PathData),
+                    subPaths: newSubPaths
+                  }
+                });
+              }
+            }
+          } else if (draggingSelection?.isDragging) {
+            // Apply snap to multi-selection by calculating center and applying offset
+            if (draggingSelection.initialPositions.length > 0) {
+              // Calculate the current center of all selected points
+              let centerX = 0;
+              let centerY = 0;
+              const pointCount = draggingSelection.initialPositions.length;
+
+              draggingSelection.initialPositions.forEach(pos => {
+                centerX += pos.x;
+                centerY += pos.y;
+              });
+              centerX /= pointCount;
+              centerY /= pointCount;
+
+              // Calculate the current delta from drag
+              const currentDeltaX = dragPosition!.x - draggingSelection.startX;
+              const currentDeltaY = dragPosition!.y - draggingSelection.startY;
+
+              // Apply current delta to center
+              const currentCenterX = centerX + currentDeltaX;
+              const currentCenterY = centerY + currentDeltaY;
+
+              // Snap the center
+              const snappedCenter = callbacks.snapToGrid!(currentCenterX, currentCenterY);
+
+              // Calculate snap offset
+              const snapOffsetX = snappedCenter.x - currentCenterX;
+              const snapOffsetY = snappedCenter.y - currentCenterY;
+
+              // Apply snap offset to all points
+              const elementUpdates: Record<string, Array<{
+                commandIndex: number;
+                pointIndex: number;
+                x: number;
+                y: number;
+                isControl: boolean;
+              }>> = {};
+
+              draggingSelection.initialPositions.forEach(pos => {
+                const element = elements.find(el => el.id === pos.elementId);
+                if (element && element.type === 'path') {
+                  const pathData = element.data as PathData;
+                  const commands = pathData.subPaths.flat();
+                  const points = extractEditablePoints(commands);
+
+                  const pointToUpdate = points.find(p =>
+                    p.commandIndex === pos.commandIndex &&
+                    p.pointIndex === pos.pointIndex
+                  );
+
+                  if (pointToUpdate) {
+                    if (!elementUpdates[pos.elementId]) {
+                      elementUpdates[pos.elementId] = [];
+                    }
+
+                    elementUpdates[pos.elementId].push({
+                      commandIndex: pointToUpdate.commandIndex,
+                      pointIndex: pointToUpdate.pointIndex,
+                      x: formatToPrecision(pos.x + currentDeltaX + snapOffsetX, PATH_DECIMAL_PRECISION),
+                      y: formatToPrecision(pos.y + currentDeltaY + snapOffsetY, PATH_DECIMAL_PRECISION),
+                      isControl: pointToUpdate.isControl
+                    });
+                  }
+                }
+              });
+
+              // Update each element
+              Object.entries(elementUpdates).forEach(([elementId, updates]) => {
+                const originalSubPaths = originalPathDataMap?.[elementId];
+                if (originalSubPaths) {
+                  const originalCommands = originalSubPaths.flat();
+                  const updatedCommands = updateCommands(originalCommands, updates.map(u => ({ ...u, type: 'independent' as const, anchor: { x: u.x, y: u.y } })));
+                  const newSubPaths = extractSubpaths(updatedCommands).map(sp => sp.commands);
+
+                  const element = elements.find(el => el.id === elementId);
+                  if (element) {
+                    callbacks.onUpdateElement(elementId, {
+                      data: {
+                        ...(element.data as PathData),
+                        subPaths: newSubPaths
+                      }
+                    });
+                  }
+                }
+              });
+            }
+          } else if (draggingSubpaths?.isDragging) {
+            // Apply snap to subpath dragging using top-left corner of bounding box
+            if (draggingSubpaths.initialPositions.length > 0) {
+              // Calculate the current delta from drag
+              const currentDeltaX = dragPosition!.x - draggingSubpaths.startX;
+              const currentDeltaY = dragPosition!.y - draggingSubpaths.startY;
+
+              // For each subpath, snap its top-left corner
+              draggingSubpaths.initialPositions.forEach(subpathInfo => {
+                const { elementId, subpathIndex, bounds } = subpathInfo;
+
+                // Calculate current top-left position
+                const currentTopLeftX = bounds.minX + currentDeltaX;
+                const currentTopLeftY = bounds.minY + currentDeltaY;
+
+                // Snap the top-left corner
+                const snappedTopLeft = callbacks.snapToGrid!(currentTopLeftX, currentTopLeftY);
+
+                // Calculate snap offset
+                const snapOffsetX = snappedTopLeft.x - currentTopLeftX;
+                const snapOffsetY = snappedTopLeft.y - currentTopLeftY;
+
+                // Apply snap offset to all points in this subpath
+                const element = elements.find(el => el.id === elementId);
+                if (element && element.type === 'path') {
+                  const pathData = element.data as PathData;
+                  const commands = pathData.subPaths.flat();
+                  const points = extractEditablePoints(commands);
+
+                  // Find points that belong to this subpath
+                  const subpathPoints = points.filter(point => {
+                    // Find which subpath this point belongs to
+                    let currentSubpathIndex = 0;
+                    let commandCount = 0;
+
+                    for (let i = 0; i < pathData.subPaths.length; i++) {
+                      const subpathCommandCount = pathData.subPaths[i].length;
+                      if (point.commandIndex >= commandCount && point.commandIndex < commandCount + subpathCommandCount) {
+                        currentSubpathIndex = i;
+                        break;
+                      }
+                      commandCount += subpathCommandCount;
+                    }
+
+                    return currentSubpathIndex === subpathIndex;
+                  });
+
+                  if (subpathPoints.length > 0) {
+                    // Create updates for all points in this subpath
+                    const updates = subpathPoints.map(point => ({
+                      commandIndex: point.commandIndex,
+                      pointIndex: point.pointIndex,
+                      x: formatToPrecision(point.x + currentDeltaX + snapOffsetX, PATH_DECIMAL_PRECISION),
+                      y: formatToPrecision(point.y + currentDeltaY + snapOffsetY, PATH_DECIMAL_PRECISION),
+                      isControl: point.isControl
+                    }));
+
+                    // Update the element
+                    const originalSubPaths = originalPathDataMap?.[elementId];
+                    if (originalSubPaths) {
+                      const originalCommands = originalSubPaths.flat();
+                      const updatedCommands = updateCommands(originalCommands, updates.map(u => ({ ...u, type: 'independent' as const, anchor: { x: u.x, y: u.y } })));
+                      const newSubPaths = extractSubpaths(updatedCommands).map(sp => sp.commands);
+
+                      callbacks.onUpdateElement(elementId, {
+                        data: {
+                          ...(element.data as PathData),
+                          subPaths: newSubPaths
+                        }
+                      });
+                    }
+                  }
+                }
+              });
+            }
+          }
+        }
+
         // Emergency cleanup - clear all temporary state
         setDragPosition(null);
         setOriginalPathDataMap(null);
 
         // Force cleanup of drag state
-        if (editingPoint?.isDragging) {
+        if (editingPoint?.isDragging || draggingSelection?.isDragging || draggingSubpaths?.isDragging) {
           callbacks.onStopDraggingPoint();
-        } else if (draggingSelection?.isDragging) {
-          callbacks.onStopDraggingPoint(); // This will handle draggingSelection cleanup
-        } else if (draggingSubpaths?.isDragging) {
-          callbacks.onStopDraggingSubpaths?.();
         }
       }
     };
@@ -323,12 +555,8 @@ export const useCanvasDragInteractions = ({
       setOriginalPathDataMap(null);
       const { editingPoint, draggingSelection, draggingSubpaths } = dragState;
 
-      if (editingPoint?.isDragging) {
+      if (editingPoint?.isDragging || draggingSelection?.isDragging || draggingSubpaths?.isDragging) {
         callbacks.onStopDraggingPoint();
-      } else if (draggingSelection?.isDragging) {
-        callbacks.onStopDraggingPoint();
-      } else if (draggingSubpaths?.isDragging) {
-        callbacks.onStopDraggingSubpaths?.();
       }
     };
 

@@ -5,3 +5,4 @@ export { ShapePreview } from './ShapePreview';
 export { FeedbackOverlay } from './FeedbackOverlay';
 export { TransformationOverlay } from './TransformationOverlay';
 export { GuidelinesOverlay } from './GuidelinesOverlay';
+export { GridOverlay } from './GridOverlay';
