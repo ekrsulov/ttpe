@@ -64,8 +64,8 @@ export const createGuidelinesPluginSlice: StateCreator<GuidelinesPluginSlice, []
   return {
     // Initial state
     guidelines: {
-      enabled: true,
-      distanceEnabled: true,
+      enabled: false,
+      distanceEnabled: false,
       debugMode: false,
       snapThreshold: 5, // 5 pixels
       stickyDuration: 150, // 150ms
