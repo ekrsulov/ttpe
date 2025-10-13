@@ -11,8 +11,7 @@ import {
   IconButton as ChakraIconButton
 } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { PanelHeader } from '../ui/PanelHeader';
-import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
+import { Panel } from '../ui/Panel';
 import { Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 
 /**
@@ -89,14 +88,8 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
   } : null;
 
   return (
-    <Box position="relative">
-      <RenderCountBadgeWrapper componentName="OpticalAlignmentPanel" position="top-left" />
-      <VStack align="stretch">
-        <PanelHeader 
-          title="Optical Alignment"
-          icon={<Sparkles size={18} />}
-        />
-
+    <Panel icon={<Sparkles size={16} />} title="Optical Alignment">
+      <VStack align="stretch" spacing={2}>
         {/* Primary Action - Always visible */}
         <Button
           onClick={handleApplyDirectly}
@@ -129,7 +122,7 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
 
         {/* Advanced Section - Collapsible (Development Only) */}
         {isDevelopment && (
-          <Box mt={2}>
+          <Box mt={1}>
             <HStack
               justify="space-between"
               py={1}
@@ -429,7 +422,7 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
         </Box>
         )}
       </VStack>
-    </Box>
+    </Panel>
   );
 };
 
