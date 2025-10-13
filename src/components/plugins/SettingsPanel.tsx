@@ -171,7 +171,7 @@ export const SettingsPanel: React.FC = () => {
         </ChakraCheckbox>
 
         {/* Show Render Count Badges */}
-        {process.env.NODE_ENV === 'development' && (
+        {import.meta.env.DEV && (
           <ChakraCheckbox
             isChecked={settings.showRenderCountBadges}
             onChange={(e) => updateSettings({ showRenderCountBadges: e.target.checked })}

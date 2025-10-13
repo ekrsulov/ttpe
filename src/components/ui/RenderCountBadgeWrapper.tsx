@@ -27,7 +27,7 @@ export const RenderCountBadgeWrapper: React.FC<RenderCountBadgeWrapperProps> = (
   const settings = useCanvasStore(state => state.settings);
 
   // Only render in development with the setting enabled
-  const shouldShow = process.env.NODE_ENV === 'development' && settings.showRenderCountBadges;
+  const shouldShow = import.meta.env.DEV && settings.showRenderCountBadges;
 
   if (!shouldShow) {
     return null;

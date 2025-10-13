@@ -31,7 +31,7 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
   const { isOpen: isAdvancedOpen, onToggle: onAdvancedToggle } = useDisclosure();
   
   // Check if we're in development mode
-  const isDevelopment = process.env.NODE_ENV === 'development';
+  const isDevelopment = import.meta.env.DEV;
   
   // Get actions directly when needed (doesn't cause re-renders)
   const {

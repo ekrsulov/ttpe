@@ -32,7 +32,7 @@ export const Panel: React.FC<PanelProps> = ({
   headerActions,
   defaultOpen = true,
   isCollapsible = false,
-  showRenderCount = process.env.NODE_ENV === 'development',
+  showRenderCount = import.meta.env.DEV,
 }) => {
   const { isOpen, onToggle } = useDisclosure({ defaultIsOpen: defaultOpen })
 
