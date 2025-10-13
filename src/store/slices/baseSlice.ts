@@ -186,6 +186,11 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
     set((state) => ({
       elements: state.elements.filter((element) => element.id !== id),
     }));
+    // Clear guidelines when an element is deleted to avoid inconsistencies
+    const state = get() as CanvasStore;
+    if (state.clearGuidelines) {
+      state.clearGuidelines();
+    }
   },
 
   deleteSelectedElements: () => {
@@ -202,6 +207,11 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
       if (state.clearSubpathSelection) {
         state.clearSubpathSelection();
       }
+    }
+    // Clear guidelines when changing modes to avoid showing stale guidelines
+    const state = get() as CanvasStore;
+    if (state.clearGuidelines) {
+      state.clearGuidelines();
     }
   },
 

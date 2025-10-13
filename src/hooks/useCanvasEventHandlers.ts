@@ -312,8 +312,68 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
           return;
         } else {
           // Move entire selected elements
-          const deltaX = point.x - dragStart.x;
-          const deltaY = point.y - dragStart.y;
+          let deltaX = point.x - dragStart.x;
+          let deltaY = point.y - dragStart.y;
+          
+          // Calculate guidelines for selected elements
+          const state = useCanvasStore.getState();
+          if (state.guidelines && state.guidelines.enabled && selectedIds.length > 0) {
+            // Calculate bounds for the first selected element (for simplicity, we use the first one for snapping)
+            const firstElementId = selectedIds[0];
+            const element = state.elements.find(el => el.id === firstElementId);
+            
+            if (element && element.type === 'path') {
+              const pathData = element.data as import('../types').PathData;
+              
+              // Calculate current bounds
+              let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+              pathData.subPaths.forEach(subPath => {
+                subPath.forEach(cmd => {
+                  if (cmd.type === 'M' || cmd.type === 'L') {
+                    minX = Math.min(minX, cmd.position.x);
+                    minY = Math.min(minY, cmd.position.y);
+                    maxX = Math.max(maxX, cmd.position.x);
+                    maxY = Math.max(maxY, cmd.position.y);
+                  } else if (cmd.type === 'C') {
+                    minX = Math.min(minX, cmd.position.x, cmd.controlPoint1.x, cmd.controlPoint2.x);
+                    minY = Math.min(minY, cmd.position.y, cmd.controlPoint1.y, cmd.controlPoint2.y);
+                    maxX = Math.max(maxX, cmd.position.x, cmd.controlPoint1.x, cmd.controlPoint2.x);
+                    maxY = Math.max(maxY, cmd.position.y, cmd.controlPoint1.y, cmd.controlPoint2.y);
+                  }
+                });
+              });
+              
+              if (isFinite(minX)) {
+                // Apply the delta to get the "would-be" position
+                const projectedBounds = {
+                  minX: minX + deltaX,
+                  minY: minY + deltaY,
+                  maxX: maxX + deltaX,
+                  maxY: maxY + deltaY,
+                };
+                
+                // Find alignment guidelines
+                const alignmentMatches = state.findAlignmentGuidelines(firstElementId, projectedBounds);
+                
+                // Find distance guidelines if enabled (pass alignment matches for 2-element detection)
+                const distanceMatches = state.guidelines.distanceEnabled 
+                  ? state.findDistanceGuidelines(firstElementId, projectedBounds, alignmentMatches)
+                  : [];
+                
+                // Update the guidelines state
+                state.updateGuidelinesState({
+                  currentMatches: alignmentMatches,
+                  currentDistanceMatches: distanceMatches,
+                });
+                
+                // Apply sticky snap
+                const snappedDelta = state.checkStickySnap(deltaX, deltaY, projectedBounds);
+                deltaX = snappedDelta.x;
+                deltaY = snappedDelta.y;
+              }
+            }
+          }
+          
           moveSelectedElements(deltaX, deltaY);
           setDragStart(point);
         }
@@ -390,6 +450,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     updateShapeCreation,
     updateSelectionRectangle,
     isVirtualShiftActive,
+    selectedIds,
   ]);
 
   // Handle pointer up
@@ -404,6 +465,12 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     // Only handle dragging if it hasn't been handled by element click already
     if (isDragging) {
       setIsDragging(false);
+      
+      // Clear guidelines when drag ends
+      const state = useCanvasStore.getState();
+      if (state.clearGuidelines) {
+        state.clearGuidelines();
+      }
     }
     setDragStart(null);
     setHasDragMoved(false);

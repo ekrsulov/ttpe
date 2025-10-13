@@ -15,6 +15,7 @@ const FilePanel = React.lazy(() => import('../plugins/FilePanel').then(module =>
 const SettingsPanel = React.lazy(() => import('../plugins/SettingsPanel').then(module => ({ default: module.SettingsPanel })));
 const PathOperationsPanel = React.lazy(() => import('../plugins/PathOperationsPanel').then(module => ({ default: module.PathOperationsPanel })));
 const SubPathOperationsPanel = React.lazy(() => import('../plugins/SubPathOperationsPanel').then(module => ({ default: module.SubPathOperationsPanel })));
+const GuidelinesPanel = React.lazy(() => import('../plugins/GuidelinesPanel').then(module => ({ default: module.GuidelinesPanel })));
 
 export interface SmoothBrush {
   radius: number;
@@ -150,6 +151,11 @@ export const PANEL_CONFIGS: PanelConfig[] = [
     key: 'optical-alignment',
     condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'select' && ctx.canPerformOpticalAlignment,
     component: OpticalAlignmentPanel,
+  },
+  {
+    key: 'guidelines',
+    condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'select',
+    component: GuidelinesPanel,
   },
   {
     key: 'pan',

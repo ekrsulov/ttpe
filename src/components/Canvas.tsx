@@ -4,7 +4,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { measurePath, measureSubpathBounds, mapPointerToCanvas } from '../utils/geometry';
 import { extractEditablePoints, commandsToString } from '../utils/path';
 import { useCanvasDragInteractions } from '../hooks/useCanvasDragInteractions';
-import { SelectionOverlay, EditPointsOverlay, SubpathOverlay, ShapePreview, FeedbackOverlay, TransformationOverlay } from './overlays';
+import { SelectionOverlay, EditPointsOverlay, SubpathOverlay, ShapePreview, FeedbackOverlay, TransformationOverlay, GuidelinesOverlay } from './overlays';
 import { CurvesRenderer } from './CurvesRenderer';
 import { useCanvasKeyboardControls } from '../hooks/useCanvasKeyboardControls';
 import { useCanvasPointerSelection } from '../hooks/useCanvasPointerSelection';
@@ -68,6 +68,7 @@ export const Canvas: React.FC = () => {
     selectedCommands,
     selectedSubpaths,
     draggingSelection,
+    guidelines,
     updateElement,
     startDraggingPoint,
     updateDraggingPoint,
@@ -91,6 +92,7 @@ export const Canvas: React.FC = () => {
       selectedCommands: state.selectedCommands,
       selectedSubpaths: state.selectedSubpaths,
       draggingSelection: state.draggingSelection,
+      guidelines: state.guidelines,
       updateElement: state.updateElement,
       startDraggingPoint: state.startDraggingPoint,
       updateDraggingPoint: state.updateDraggingPoint,
@@ -764,6 +766,16 @@ export const Canvas: React.FC = () => {
             />
           );
         })}
+
+      {/* Guidelines Overlay */}
+      {activePlugin === 'select' && guidelines && (
+        <GuidelinesOverlay
+          guidelines={guidelines}
+          viewport={viewport}
+          elements={elements}
+          selectedIds={selectedIds}
+        />
+      )}
 
       <FeedbackOverlay
         viewport={viewport}
