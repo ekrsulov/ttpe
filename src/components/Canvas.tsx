@@ -81,6 +81,7 @@ export const Canvas: React.FC = () => {
     getControlPointInfo,
     saveAsPng,
     snapToGrid,
+    clearGuidelines,
   } = useCanvasStore(
     useShallow((state) => ({
       elements: state.elements,
@@ -106,6 +107,7 @@ export const Canvas: React.FC = () => {
       getControlPointInfo: state.getControlPointInfo,
       saveAsPng: state.saveAsPng,
       snapToGrid: state.snapToGrid,
+      clearGuidelines: state.clearGuidelines,
     }))
   );
   
@@ -277,6 +279,7 @@ export const Canvas: React.FC = () => {
       onUpdateElement: updateElement,
       getControlPointInfo,
       snapToGrid,
+      clearGuidelines,
     }
   });
 
@@ -777,7 +780,7 @@ export const Canvas: React.FC = () => {
         })}
 
       {/* Guidelines Overlay */}
-      {activePlugin === 'select' && guidelines && (
+      {activePlugin === 'select' && guidelines && (isDragging || editingPoint?.isDragging || draggingSelection?.isDragging) && (
         <GuidelinesOverlay
           guidelines={guidelines}
           viewport={viewport}

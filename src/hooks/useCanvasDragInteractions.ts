@@ -9,6 +9,7 @@ interface DragCallbacks {
   onUpdateElement: (id: string, updates: Partial<CanvasElement>) => void;
   getControlPointInfo: (elementId: string, commandIndex: number, pointIndex: number) => ControlPointInfo | null;
   snapToGrid?: (x: number, y: number) => { x: number; y: number };
+  clearGuidelines?: () => void;
 }
 
 interface DragState {
@@ -542,6 +543,11 @@ export const useCanvasDragInteractions = ({
         setDragPosition(null);
         setOriginalPathDataMap(null);
 
+        // Clear guidelines when drag ends
+        if (callbacks.clearGuidelines) {
+          callbacks.clearGuidelines();
+        }
+
         // Force cleanup of drag state
         if (editingPoint?.isDragging || draggingSelection?.isDragging || draggingSubpaths?.isDragging) {
           callbacks.onStopDraggingPoint();
@@ -554,6 +560,11 @@ export const useCanvasDragInteractions = ({
       setDragPosition(null);
       setOriginalPathDataMap(null);
       const { editingPoint, draggingSelection, draggingSubpaths } = dragState;
+
+      // Clear guidelines when drag is cancelled
+      if (callbacks.clearGuidelines) {
+        callbacks.clearGuidelines();
+      }
 
       if (editingPoint?.isDragging || draggingSelection?.isDragging || draggingSubpaths?.isDragging) {
         callbacks.onStopDraggingPoint();
