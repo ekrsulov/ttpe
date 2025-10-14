@@ -1,257 +1,51 @@
-# TTPE - Text-to-Path Editor
+# TTPE — Web Vector Editor
 
-A powerful web-based vector graphics editor built with React and TypeScript that specializes in creating, editing, and manipulating SVG paths with advanced text vectorization capabilities.
+## Interface Overview
 
-![TTPE Editor](https://img.shields.io/badge/Built%20with-React%20%26%20TypeScript-blue)
-![Tests](https://img.shields.io/badge/E2E%20Tests-Playwright-green)
-![License](https://img.shields.io/badge/License-MIT-yellow)
+TTPE is an SVG-based vector graphics editor presented in a full-screen layout: a central canvas for editing, top and bottom action bars, a collapsible/resizable sidebar, and a virtual **Shift** button for shortcuts on touch devices. The Canvas coordinates interaction layers (selection, node and subpath editing, shape preview, guides, grid) and supports keyboard shortcuts, drag selection, transforms, shape creation, and a smoothing brush.
 
-## Features
+## Architecture & Global State
 
-### 🎨 Drawing Tools
-- **Pencil Tool**: Freehand drawing with smooth path creation
-- **Shape Tool**: Create geometric shapes (squares, circles, triangles, rectangles)
-- **Text Tool**: Convert text to editable vector paths with font customization
-- **Selection Tool**: Multi-select and transform elements
+The app is built with React 19, TypeScript, and Vite; it uses Zustand for state and Playwright for E2E tests. State is composed of multiple slices (base, viewport, selection, ordering, alignment, pencil, text, shapes, transforms, advanced editing, subpaths, optical alignment, curves, guides, and grid), with local persistence and undo/redo history (up to 50 steps, ~100 ms cooldown).
+The base slice manages elements, the active plugin, panel visibility, the "virtual shift," and settings such as keyboard move precision and render counters.
 
-### ✨ Advanced Editing
-- **Path Editing**: Edit individual path points and control points
-- **Smooth Brush**: Path smoothing with adjustable radius and strength
-- **Subpath Management**: Work with individual subpaths within complex paths
-- **Control Point Alignment**: Automatic alignment helpers for precise editing
+## Creation Tools
 
-### 🔧 Transformation Tools
-- **Multi-element Selection**: Select and transform multiple elements
-- **Precise Transformations**: Scale, rotate, and translate with visual handles
-- **Coordinate Display**: Show exact coordinates and rulers
-- **Element Ordering**: Bring to front, send to back, and arrange layers
+* **Pencil / Freehand**: starts or reuses paths with the current stroke attributes; filters points by a minimum distance to avoid noise and marks paths as "freehand."
+* **Text to Curves**: converts text (font, size, weight, style) into SVG commands via a WASM pipeline (e.g., potrace) and applies active styles.
+* **Parametric Shapes**: generates squares, rectangles, circles (Bézier), and triangles from two points, registering them as editable paths with current styles.
 
-### � File Management
-- **SVG Import**: Import SVG files with full support for shapes, paths, groups, and transformations
-- **Path Normalization**: All imported paths normalized to M, L, C, Z commands
-- **Document Save/Load**: Save and load projects in native format
-- **SVG Export**: Export your work as standard SVG files
+## Selection, Transforms & Organization
 
-### �📝 Text Features
-- **Font Selection**: Choose from system fonts
-- **Text Vectorization**: Convert text to editable SVG paths using WASM-powered tracing
-- **Font Properties**: Customize size, weight, and style
-- **Path Conversion**: Text becomes fully editable vector graphics
+* **Selection**: multi-select, context-aware clearing by mode, precision-configurable moves, and bulk property updates (color, opacity, stroke).
+* **Transforms**: handles/controls, optional rulers/coordinates, and bounds for whole elements or subpaths.
+* **Order (z-index)**: bring to front, bring forward, send backward, send to back—preserving relative order.
+* **Align & Distribute**: computes bounding boxes (consistent with zoom and stroke) to align (left/center/right, top/middle/bottom) and distribute evenly on X/Y.
+* **Guides & Grid**: smart guides (edges/centers, repeated distances, sticky mode with zoom-scaled thresholds) and a configurable grid with optional snapping.
 
-### 🎯 Professional Features
-- **Undo/Redo**: Full history management with temporal state
-- **Element Arrangement**: Align, distribute, and arrange multiple elements
-- **Viewport Controls**: Zoom and pan with smooth interactions
-- **Responsive Design**: Works on various screen sizes
+## Subpaths & Advanced Editing
 
-## Technology Stack
+* **Subpath Management**: single/multi selection constrained by element, deletion, precision nudging, reordering within the same path, and align/distribute across subpaths.
+* **Path Editing**: select and drag points/groups; convert commands; split subpaths; align/distribute points; simplification and rounding parameters; helpers to align control points.
+* **Smoothing Brush**: configurable (radius, strength, simplification, minimum distance); works on selected points or within a radius and can simplify after smoothing.
+* **Global Actions**: split subpaths into independent paths and reverse direction of selected subpaths, clearing the selection when finished.
 
-- **Frontend**: React 19 with TypeScript
-- **State Management**: Zustand with temporal middleware (undo/redo)
-- **Build Tool**: Vite
-- **Testing**: Playwright for E2E tests
-- **Graphics**: Native SVG rendering
-- **Text Processing**: esm-potrace-wasm for text-to-path conversion
-- **Path Manipulation**: path-data-parser for SVG path operations
+## View Control & Touch Support
 
-## Getting Started
+The viewport slice manages zoom (with limits, re-centering around the focus point) and pan, with quick resets and coordinate rounding for numerical stability. On mobile, the **virtual Shift** enables Shift-dependent shortcuts.
 
-### Prerequisites
+## File Management & Export
 
-- Node.js (version 16 or higher)
-- npm or yarn
+* **Save/Open JSON** documents (name, elements, view) with append or replace options, generating unique IDs and validating structure.
+* **Export to SVG/PNG** honoring partial selection, vector styles, and optional padding (PNG via SVG rasterization).
+* **SVG Import (batch)**: normalizes transforms, converts shapes and groups to editable paths (M/L/C/Z), preserves styles, and offers options such as append, create frames, boolean-union, rescale, and grid distribution.
 
-### Installation
+## Boolean Ops & Pro Features
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/ekrsulov/ttpe.git
-   cd ttpe
-   ```
+* **Booleans**: union, PaperJS-based union, subtraction, intersection, exclusion, and division—applicable to paths and also to selected subpaths.
+* **Optical Alignment**: detects container/content pairs, computes the visual center (with guard margins), and applies the resulting translation; supports bulk corrections and reset.
+* **Curves**: incremental mode for designing custom curves with a lattice, live preview, and point handling.
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+## In Short
 
-3. **Start development server**
-   ```bash
-   npm run dev
-   ```
-
-4. **Open in browser**
-   Navigate to `http://localhost:5173` to start using the editor.
-
-### Building for Production
-
-```bash
-npm run build
-```
-
-The built files will be in the `dist` directory.
-
-## Usage
-
-### Basic Workflow
-
-1. **Select a Tool**: Choose from Pencil, Shape, Text, or Select tools in the sidebar
-2. **Create Content**: 
-   - Use Pencil to draw freehand
-   - Use Shape to create geometric forms
-   - Use Text to add vectorized text
-3. **Edit and Transform**: Switch to Select mode to modify your creations
-4. **Fine-tune**: Use Edit mode for precise path manipulation
-
-### Keyboard Shortcuts
-
-- `Space` + drag: Pan the canvas
-- `Ctrl/Cmd + Z`: Undo
-- `Ctrl/Cmd + Y`: Redo
-- `Delete`: Remove selected elements
-
-### Text Vectorization
-
-The editor can convert any text into editable SVG paths:
-
-1. Select the Text tool
-2. Set your desired font properties (size, family, weight, style)
-3. Click on the canvas to place text
-4. The text is automatically converted to vector paths
-5. Switch to Edit mode to modify individual path points
-
-### SVG Import
-
-Import existing SVG files and work with them in the editor:
-
-1. Click the **File** button in the sidebar
-2. Click **Import SVG**
-3. Select your SVG file
-4. All elements are imported and normalized to editable paths
-
-**Supported Elements:**
-- `<path>` - Direct import
-- `<rect>`, `<circle>`, `<ellipse>` - Converted to paths
-- `<line>`, `<polyline>`, `<polygon>` - Converted to paths
-- `<g>` (groups) - Recursively processed with transformations
-
-**Features:**
-- ✅ Full transformation support (translate, scale, rotate, skew, matrix)
-- ✅ Style preservation (stroke, fill, opacity, linecap, linejoin, etc.)
-- ✅ Nested groups with combined transformations
-- ✅ All paths normalized to M, L, C, Z commands
-- ✅ Append mode to add to existing document or replace
-
-See [SVG Import Documentation](docs/SVG_IMPORT_FEATURE.md) for details.
-
-## Project Structure
-
-```
-src/
-├── components/          # React components
-│   ├── Canvas.tsx      # Main canvas component
-│   ├── CanvasRenderer.tsx  # SVG rendering logic
-│   ├── Sidebar.tsx     # Tool sidebar
-│   ├── overlays/       # Canvas overlay components
-│   ├── plugins/        # Tool-specific panels
-│   └── ui/             # Reusable UI components
-├── store/              # Zustand state management
-│   ├── canvasStore.ts  # Main store
-│   └── slices/         # Feature-specific state slices
-├── utils/              # Utility functions
-│   ├── pathParserUtils.ts      # SVG path parsing
-│   ├── svgImportUtils.ts       # SVG file import & normalization
-│   ├── textVectorizationUtils.ts # Text-to-path conversion
-│   ├── transformationUtils.ts   # Element transformations
-│   └── measurementUtils.ts     # Geometric calculations
-├── types/              # TypeScript type definitions
-├── hooks/              # Custom React hooks
-└── docs/               # Documentation
-    ├── SVG_IMPORT_FEATURE.md       # SVG import documentation
-    └── IMPLEMENTACION_SVG_IMPORT.md # Implementation details
-```
-
-## Testing
-
-The project includes comprehensive end-to-end tests using Playwright:
-
-```bash
-# Run all tests
-npm test
-
-# Run tests with UI
-npm run test:ui
-
-# Install Playwright browsers (first time only)
-npx playwright install
-```
-
-### Test Coverage
-
-- ✅ Basic application loading and navigation
-- ✅ Pencil drawing and path creation
-- ✅ Shape creation (all geometric shapes)
-- ✅ Text input and font customization
-- ✅ Element selection and transformation
-- ✅ Path editing and smooth brush functionality
-- ✅ Multi-element operations
-- ✅ Element arrangement (align, distribute)
-- ✅ Element ordering (bring to front, send to back)
-- ✅ Path movement and manipulation
-- ❌ Undo/redo functionality (not yet implemented)
-
-## Contributing
-
-We welcome contributions! Here's how to get started:
-
-1. **Fork the repository**
-2. **Create a feature branch**
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
-3. **Make your changes**
-4. **Add tests** if applicable
-5. **Run the test suite**
-   ```bash
-   npm test
-   npm run lint
-   ```
-6. **Submit a pull request**
-
-### Development Guidelines
-
-- Follow TypeScript best practices
-- Write tests for new features
-- Maintain consistent code style (ESLint configured)
-- Update documentation as needed
-
-## Roadmap
-
-- [ ] Import SVG files
-- [ ] Export functionality
-- [ ] Advanced path operations (boolean operations)
-- [ ] Collaborative editing
-- [ ] Plugin system for custom tools
-- [ ] Mobile touch support improvements
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- Built with [React](https://reactjs.org/) and [TypeScript](https://www.typescriptlang.org/)
-- Text vectorization powered by [esm-potrace-wasm](https://www.npmjs.com/package/esm-potrace-wasm)
-- Path manipulation using [path-data-parser](https://www.npmjs.com/package/path-data-parser)
-- Icons from [Lucide React](https://lucide.dev/)
-
-## Support
-
-If you encounter any issues or have questions:
-
-1. Check the [existing issues](https://github.com/ekrsulov/ttpe/issues)
-2. Create a new issue with detailed information
-3. Provide steps to reproduce any bugs
-
----
-
-**TTPE** - Transforming text into editable vector graphics with precision and ease.
+TTPE combines a powerful SVG canvas, a modular slice-based architecture with persistence and history, professional-grade creation/editing tools (including optical alignment and boolean ops), organization utilities, and a robust import/export flow—optimized for both desktop and touch.
