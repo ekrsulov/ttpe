@@ -88,13 +88,13 @@ test.describe('Edit Functionality', () => {
     // Check that edit panel is visible
     await expect(page.getByRole('heading', { name: 'Smooth Brush' })).toBeVisible();
 
-    // Test toggling brush mode - find the Off button in the edit panel
-    const brushModeButton = page.locator('button').filter({ hasText: 'Off' }).first();
+    // Test toggling brush mode - find the brush mode button
+    const brushModeButton = page.locator('text=Brush Mode:').locator('xpath=following-sibling::button').first();
     await expect(brushModeButton).toBeVisible();
+    await expect(brushModeButton).toHaveText('Off');
 
     await brushModeButton.click();
-    const onButton = page.locator('button').filter({ hasText: 'On' }).first();
-    await expect(onButton).toBeVisible();
+    await expect(brushModeButton).toHaveText('On');
 
     // Test that radius slider appears when brush is active (use first occurrence for Smooth Brush)
     await expect(page.locator('text=Radius:').first()).toBeVisible();
@@ -142,13 +142,10 @@ test.describe('Edit Functionality', () => {
     await editButton.click();
 
     // Activate brush mode
-    const offButton = page.locator('button').filter({ hasText: 'Off' }).first();
-    await offButton.click();
-
-    // Wait for brush to be activated and verify button changed
-    await page.waitForTimeout(100);
-    const onButton = page.locator('button').filter({ hasText: 'On' }).first();
-    await expect(onButton).toBeVisible();
+    const brushModeButton = page.locator('text=Brush Mode:').locator('xpath=following-sibling::button').first();
+    await expect(brushModeButton).toHaveText('Off');
+    await brushModeButton.click();
+    await expect(brushModeButton).toHaveText('On');
 
     // Test strength slider - check for the label
     const strengthLabel = page.locator('text=Strength:');
