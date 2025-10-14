@@ -6,14 +6,9 @@
 import type { CanvasElement, PathData, Command } from '../types';
 import { calculateVisualCenter, pathToRGBMatrix } from './visualCenterUtils';
 import { commandsToString } from './path';
-import { measurePath } from './measurementUtils';
+import { getSubPathsBounds, type Bounds } from './boundsUtils';
 
-export interface Bounds {
-  minX: number;
-  minY: number;
-  maxX: number;
-  maxY: number;
-}
+export type { Bounds } from './boundsUtils';
 
 export interface ContainerContentPair {
   container: CanvasElement;
@@ -38,14 +33,14 @@ export interface VisualAlignmentResult {
 
 /**
  * Calculate bounds from subpaths including stroke width
- * Uses measurePath which creates a ghost SVG to get accurate visual bounds
+ * Uses the centralized bounds utility
  */
 export function calculateBounds(
   subPaths: Command[][], 
   strokeWidth: number = 0,
   zoom: number = 1
 ): Bounds {
-  return measurePath(subPaths, strokeWidth, zoom);
+  return getSubPathsBounds(subPaths, strokeWidth, { zoom, includeStroke: true });
 }
 
 /**

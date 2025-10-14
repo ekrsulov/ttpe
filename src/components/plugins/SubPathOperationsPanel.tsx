@@ -1,8 +1,8 @@
 import React from 'react';
-import { Button } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { RotateCcw } from 'lucide-react';
 import { Panel } from '../ui/Panel';
+import { OperationButton } from '../ui/OperationButton';
 
 const SubPathOperationsPanelComponent: React.FC = () => {
   // Subscribe only to primitives to minimize re-renders
@@ -20,32 +20,12 @@ const SubPathOperationsPanelComponent: React.FC = () => {
 
   return (
     <Panel icon={<RotateCcw size={16} />} title="SubPath Operations">
-      <Button
+      <OperationButton
         aria-label="Reverse subpath direction"
         onClick={performReverse}
-        variant="unstyled"
-        size="sm"
-        bg="transparent"
-        color="gray.700"
-        border="1px solid"
-        borderColor="gray.400"
-        borderRadius="md"
-        fontWeight="medium"
-        fontSize="10px"
-        transition="all 0.2s"
-        _hover={{
-          bg: 'gray.50'
-        }}
-        sx={{
-          minH: '28px',
-          px: 2,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
       >
         Reverse
-      </Button>
+      </OperationButton>
     </Panel>
   );
 };

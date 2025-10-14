@@ -24,27 +24,6 @@ export function debugLogLevel(level: LogLevel, message: string, ...args: unknown
 }
 
 /**
- * Log info only in development mode
- */
-export function debugInfo(message: string, ...args: unknown[]): void {
-  debugLogLevel('info', message, ...args);
-}
-
-/**
- * Log warning only in development mode
- */
-export function debugWarn(message: string, ...args: unknown[]): void {
-  debugLogLevel('warn', message, ...args);
-}
-
-/**
- * Log error only in development mode
- */
-export function debugError(message: string, ...args: unknown[]): void {
-  debugLogLevel('error', message, ...args);
-}
-
-/**
  * Group logs only in development mode
  */
 export function debugGroup(label: string, callback: () => void): void {

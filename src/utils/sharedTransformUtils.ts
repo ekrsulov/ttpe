@@ -3,8 +3,9 @@ import type { Command, Point } from '../types';
 
 /**
  * Transform a point by scaling and translation
+ * @internal - Used only within transformCommands
  */
-export function transformPoint(
+function transformPoint(
   point: Point,
   scaleX: number,
   scaleY: number,
@@ -19,8 +20,9 @@ export function transformPoint(
 
 /**
  * Rotate a point around a center
+ * @internal - Used only within transformCommands
  */
-export function rotatePoint(
+function rotatePoint(
   point: Point,
   rotation: number,
   centerX: number,

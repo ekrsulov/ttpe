@@ -2,6 +2,7 @@ import React from 'react';
 import { getCommandStartPoint } from '../../utils/path';
 import { mapSvgToCanvas } from '../../utils/geometry';
 import { useCanvasStore } from '../../store/canvasStore';
+import { getEffectiveShift } from '../../hooks/useEffectiveShift';
 import type { Point, PathData, Command } from '../../types';
 
 interface EditPointsOverlayProps {
@@ -308,7 +309,7 @@ const handlePointPointerDown = (
 
   // Get virtual shift state
   const isVirtualShiftActive = useCanvasStore.getState().isVirtualShiftActive;
-  const effectiveShiftKey = e.shiftKey || isVirtualShiftActive;
+  const effectiveShiftKey = getEffectiveShift(e.shiftKey, isVirtualShiftActive);
 
   // Check if this point is already selected
   const isAlreadySelected = selectedCommands.some(cmd =>

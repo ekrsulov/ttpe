@@ -3,6 +3,7 @@ import { deriveElementSelectionColors } from '../../utils/canvas';
 import { commandsToString } from '../../utils/path';
 import { mapSvgToCanvas } from '../../utils/geometry';
 import { useCanvasStore } from '../../store/canvasStore';
+import { getEffectiveShift } from '../../hooks/useEffectiveShift';
 import type { PathData, SubPath, Point } from '../../types';
 
 interface SubpathOverlayProps {
@@ -89,7 +90,7 @@ export const SubpathOverlay: React.FC<SubpathOverlayProps> = ({
 
               // Get virtual shift state
               const isVirtualShiftActive = useCanvasStore.getState().isVirtualShiftActive;
-              const effectiveShiftKey = e.shiftKey || isVirtualShiftActive;
+              const effectiveShiftKey = getEffectiveShift(e.shiftKey, isVirtualShiftActive);
 
               // Check if this is a click for selection or start of drag
               if (effectiveShiftKey) {

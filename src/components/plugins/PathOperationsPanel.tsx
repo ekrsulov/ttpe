@@ -1,8 +1,9 @@
 import React, { useMemo } from 'react';
-import { Grid, Button } from '@chakra-ui/react';
+import { Grid } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Scissors } from 'lucide-react';
 import { Panel } from '../ui/Panel';
+import { OperationButton } from '../ui/OperationButton';
 import type { PathData } from '../../types';
 
 const PathOperationsPanelComponent: React.FC = () => {
@@ -59,200 +60,60 @@ const PathOperationsPanelComponent: React.FC = () => {
       <Grid templateColumns="repeat(auto-fit, minmax(100px, 1fr))" gap={1}>
         {/* Split subpaths operation - available only if a selected path has multiple subpaths */}
         {hasPathWithMultipleSubpaths && (
-          <Button
+          <OperationButton
             aria-label="Split subpaths"
             onClick={performPathSimplify}
-            variant="unstyled"
-            size="sm"
-            bg="transparent"
-            color="gray.700"
-            border="1px solid"
-            borderColor="gray.400"
-            borderRadius="md"
-            fontWeight="medium"
-            fontSize="10px"
-            transition="all 0.2s"
-            _hover={{
-              bg: 'gray.50'
-            }}
-            sx={{
-              minH: '28px',
-              px: 2,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
           >
             Subpath Split
-          </Button>
+          </OperationButton>
         )}
 
         {/* Boolean operations - require 2+ items */}
         {totalSelectedItems >= 2 && (
           <>
-            <Button
+            <OperationButton
               aria-label="Union (Simple)"
               onClick={performPathUnion}
-              variant="unstyled"
-              size="sm"
-              bg="transparent"
-              color="gray.700"
-              border="1px solid"
-              borderColor="gray.400"
-              borderRadius="md"
-              fontWeight="medium"
-              fontSize="10px"
-              transition="all 0.2s"
-              _hover={{
-                bg: 'gray.50'
-              }}
-              sx={{
-                minH: '28px',
-                px: 2,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
             >
               Union
-            </Button>
+            </OperationButton>
             
-            <Button
+            <OperationButton
               aria-label="Union (Paper.js)"
               onClick={performPathUnionPaperJS}
-              variant="unstyled"
-              size="sm"
-              bg="transparent"
-              color="gray.700"
-              border="1px solid"
-              borderColor="gray.400"
-              borderRadius="md"
-              fontWeight="medium"
-              fontSize="10px"
-              transition="all 0.2s"
-              _hover={{
-                bg: 'gray.50'
-              }}
-              sx={{
-                minH: '28px',
-                px: 2,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
             >
               Union PaperJs
-            </Button>
+            </OperationButton>
             
             {totalSelectedItems === 2 && (
               <>
-                <Button
+                <OperationButton
                   aria-label="Subtract"
                   onClick={performPathSubtraction}
-                  variant="unstyled"
-                  size="sm"
-                  bg="transparent"
-                  color="gray.700"
-                  border="1px solid"
-                  borderColor="gray.400"
-                  borderRadius="md"
-                  fontWeight="medium"
-                  fontSize="10px"
-                  transition="all 0.2s"
-                  _hover={{
-                    bg: 'gray.50'
-                  }}
-                  sx={{
-                    minH: '28px',
-                    px: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
                 >
                   Subtract
-                </Button>
+                </OperationButton>
                 
-                <Button
+                <OperationButton
                   aria-label="Intersect"
                   onClick={performPathIntersect}
-                  variant="unstyled"
-                  size="sm"
-                  bg="transparent"
-                  color="gray.700"
-                  border="1px solid"
-                  borderColor="gray.400"
-                  borderRadius="md"
-                  fontWeight="medium"
-                  fontSize="10px"
-                  transition="all 0.2s"
-                  _hover={{
-                    bg: 'gray.50'
-                  }}
-                  sx={{
-                    minH: '28px',
-                    px: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
                 >
                   Intersect
-                </Button>
+                </OperationButton>
                 
-                <Button
+                <OperationButton
                   aria-label="Exclude"
                   onClick={performPathExclude}
-                  variant="unstyled"
-                  size="sm"
-                  bg="transparent"
-                  color="gray.700"
-                  border="1px solid"
-                  borderColor="gray.400"
-                  borderRadius="md"
-                  fontWeight="medium"
-                  fontSize="10px"
-                  transition="all 0.2s"
-                  _hover={{
-                    bg: 'gray.50'
-                  }}
-                  sx={{
-                    minH: '28px',
-                    px: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
                 >
                   Exclude
-                </Button>
+                </OperationButton>
                 
-                <Button
+                <OperationButton
                   aria-label="Divide"
                   onClick={performPathDivide}
-                  variant="unstyled"
-                  size="sm"
-                  bg="transparent"
-                  color="gray.700"
-                  border="1px solid"
-                  borderColor="gray.400"
-                  borderRadius="md"
-                  fontWeight="medium"
-                  fontSize="10px"
-                  transition="all 0.2s"
-                  _hover={{
-                    bg: 'gray.50'
-                  }}
-                  sx={{
-                    minH: '28px',
-                    px: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
                 >
                   Divide
-                </Button>
+                </OperationButton>
               </>
             )}
           </>

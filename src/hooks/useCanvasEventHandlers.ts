@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
 import { pluginManager } from '../utils/pluginManager';
 import { useCanvasCurves } from '../hooks/useCanvasCurves';
+import { getEffectiveShift } from './useEffectiveShift';
 import type { Point } from '../types';
 
 interface EventHandlerDeps {
@@ -201,7 +202,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     }
 
     // Effective shift state (physical OR virtual)
-    const effectiveShiftKey = e.shiftKey || isVirtualShiftActive;
+    const effectiveShiftKey = getEffectiveShift(e.shiftKey, isVirtualShiftActive);
 
     // Only process click if we're in select mode and either not dragging, or dragging but haven't moved
     if (activePlugin === 'select' && (!isDragging || !hasDragMoved)) {
@@ -312,7 +313,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       e.stopPropagation(); // Prevent handlePointerDown from starting selection rectangle
 
       // Effective shift state (physical OR virtual)
-      const effectiveShiftKey = e.shiftKey || isVirtualShiftActive;
+      const effectiveShiftKey = getEffectiveShift(e.shiftKey, isVirtualShiftActive);
 
       // Only handle selection and dragging when shift is NOT pressed
       // When shift is pressed, let handleElementClick handle the toggle selection
@@ -487,7 +488,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
 
     if (transformStateIsTransforming) {
       // Effective shift state (physical OR virtual)
-      const effectiveShiftKey = e.shiftKey || isVirtualShiftActive;
+      const effectiveShiftKey = getEffectiveShift(e.shiftKey, isVirtualShiftActive);
       updateTransformation(point, effectiveShiftKey);
       return;
     }
@@ -516,7 +517,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
 
     if (isCreatingShape && shapeStart) {
       // Effective shift state (physical OR virtual)
-      const effectiveShiftKey = e.shiftKey || isVirtualShiftActive;
+      const effectiveShiftKey = getEffectiveShift(e.shiftKey, isVirtualShiftActive);
       updateShapeCreation(point, effectiveShiftKey);
     }
 
