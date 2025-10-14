@@ -123,7 +123,7 @@ export const EditorPanel: React.FC = () => {
   const currentFillRule = useSelectedPathProperty('fillRule', pencil.fillRule);
   const currentStrokeDasharray = useSelectedPathProperty('strokeDasharray', pencil.strokeDasharray);
 
-  const { isOpen: isColorControlsOpen, onToggle: onColorControlsToggle } = useDisclosure({ defaultIsOpen: true });
+  const { isOpen: isColorControlsOpen, onToggle: onColorControlsToggle } = useDisclosure({ defaultIsOpen: import.meta.env.DEV });
   const { isOpen: isAdvancedStrokeOpen, onToggle: onAdvancedStrokeToggle } = useDisclosure({ defaultIsOpen: false });
 
   // Responsive columns for preset grid

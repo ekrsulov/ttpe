@@ -142,7 +142,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const setShowSettingsPanel = useCanvasStore((state) => state.setShowSettingsPanel);
   
   // Local state for arrange panel expansion
-  const [isArrangeExpanded, setIsArrangeExpanded] = useState(true);
+  const [isArrangeExpanded, setIsArrangeExpanded] = useState(import.meta.env.DEV);
 
   // Close special panels when switching to tool modes
   useEffect(() => {
