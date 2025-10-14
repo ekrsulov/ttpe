@@ -82,7 +82,7 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
   return (
     <Box
       position="fixed"
-      bottom={{ base: 2, md: 3 }}
+      bottom={{ base: 2, md: 5 }}
       left={isSidebarPinned ? "0" : "50%"}
       right={isSidebarPinned ? `${sidebarWidth}px` : "auto"}
       transform={isSidebarPinned ? "none" : "translateX(-50%)"}

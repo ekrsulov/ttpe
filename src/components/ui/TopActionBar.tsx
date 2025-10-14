@@ -30,7 +30,7 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
   return (
     <Box
       position="fixed"
-      top={{ base: 2, md: 3 }}
+      top={{ base: 4, md: 6 }}
       left={isPositionedForSidebar ? "0" : "50%"}
       right={isPositionedForSidebar ? `${sidebarWidth}px` : "auto"}
       transform={isPositionedForSidebar ? "none" : "translateX(-50%)"}
