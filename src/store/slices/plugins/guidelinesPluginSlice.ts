@@ -1,6 +1,7 @@
 import type { StateCreator } from 'zustand';
 import type { PathData } from '../../../types';
 import { measurePath } from '../../../utils/measurementUtils';
+import { rangesOverlap } from '../../../utils/guidelinesHelpers';
 
 export interface GuidelineMatch {
   type: 'left' | 'right' | 'top' | 'bottom' | 'centerX' | 'centerY';
@@ -448,16 +449,9 @@ export const createGuidelinesPluginSlice: StateCreator<GuidelinesPluginSlice, []
         elementBounds.set(element.id, bounds);
       });
 
-      // Helper function to check if two ranges overlap
-      const rangesOverlap = (
-        min1: number, max1: number, 
-        min2: number, max2: number
-      ): boolean => {
-        return !(max1 < min2 || max2 < min1);
-      };
-
       // === HORIZONTAL DISTANCES ===
       // Filter elements that are in the horizontal band (Y range overlaps with current element)
+      // Use centralized rangesOverlap helper
       const horizontalBandElements = Array.from(elementBounds.entries()).filter(
         ([, bounds]) => rangesOverlap(currentBounds.minY, currentBounds.maxY, bounds.minY, bounds.maxY)
       );

@@ -7,6 +7,7 @@ interface GuidelineLineProps {
   strokeWidth: number;
   color: string;
   dashArray?: string;
+  opacity?: number;
 }
 
 /**
@@ -19,7 +20,8 @@ export const GuidelineLine: React.FC<GuidelineLineProps> = ({
   canvasSize,
   strokeWidth,
   color,
-  dashArray
+  dashArray,
+  opacity = 1
 }) => {
   const isVertical = type === 'left' || type === 'right' || type === 'centerX';
 
@@ -32,6 +34,8 @@ export const GuidelineLine: React.FC<GuidelineLineProps> = ({
       stroke={color}
       strokeWidth={strokeWidth}
       strokeDasharray={dashArray}
+      opacity={opacity}
+      pointerEvents="none"
     />
   );
 };
@@ -45,6 +49,8 @@ interface DistanceLabelProps {
   strokeWidth: number;
   color: string;
   zoom: number;
+  opacity?: number;
+  withBackground?: boolean;
 }
 
 /**
@@ -59,18 +65,22 @@ export const DistanceLabel: React.FC<DistanceLabelProps> = ({
   otherAxisPosition,
   strokeWidth,
   color,
-  zoom
+  zoom,
+  opacity = 1,
+  withBackground = true
 }) => {
   const isHorizontal = axis === 'horizontal';
   const arrowSize = 5 / zoom;
   const labelOffset = 10 / zoom;
   const fontSize = 12 / zoom;
+  const labelPadding = 15 / zoom;
+  const labelHeight = 16 / zoom;
 
   // Calculate midpoint for label
   const mid = (start + end) / 2;
 
   return (
-    <g>
+    <g opacity={opacity}>
       {/* Main line */}
       <line
         x1={isHorizontal ? start : otherAxisPosition}
@@ -79,9 +89,10 @@ export const DistanceLabel: React.FC<DistanceLabelProps> = ({
         y2={isHorizontal ? otherAxisPosition : end}
         stroke={color}
         strokeWidth={strokeWidth}
+        pointerEvents="none"
       />
 
-      {/* Start arrow */}
+      {/* Start arrow - two lines forming a V */}
       <line
         x1={isHorizontal ? start : otherAxisPosition}
         y1={isHorizontal ? otherAxisPosition : start}
@@ -89,6 +100,7 @@ export const DistanceLabel: React.FC<DistanceLabelProps> = ({
         y2={isHorizontal ? otherAxisPosition - arrowSize : start + arrowSize}
         stroke={color}
         strokeWidth={strokeWidth}
+        pointerEvents="none"
       />
       <line
         x1={isHorizontal ? start : otherAxisPosition}
@@ -97,9 +109,10 @@ export const DistanceLabel: React.FC<DistanceLabelProps> = ({
         y2={isHorizontal ? otherAxisPosition + arrowSize : start + arrowSize}
         stroke={color}
         strokeWidth={strokeWidth}
+        pointerEvents="none"
       />
 
-      {/* End arrow */}
+      {/* End arrow - two lines forming a V */}
       <line
         x1={isHorizontal ? end : otherAxisPosition}
         y1={isHorizontal ? otherAxisPosition : end}
@@ -107,6 +120,7 @@ export const DistanceLabel: React.FC<DistanceLabelProps> = ({
         y2={isHorizontal ? otherAxisPosition - arrowSize : end - arrowSize}
         stroke={color}
         strokeWidth={strokeWidth}
+        pointerEvents="none"
       />
       <line
         x1={isHorizontal ? end : otherAxisPosition}
@@ -115,20 +129,36 @@ export const DistanceLabel: React.FC<DistanceLabelProps> = ({
         y2={isHorizontal ? otherAxisPosition + arrowSize : end - arrowSize}
         stroke={color}
         strokeWidth={strokeWidth}
+        pointerEvents="none"
       />
 
-      {/* Distance label */}
-      <text
-        x={isHorizontal ? mid : otherAxisPosition + labelOffset}
-        y={isHorizontal ? otherAxisPosition - labelOffset : mid}
-        fill={color}
-        fontSize={fontSize}
-        fontFamily="monospace"
-        textAnchor="middle"
-        dominantBaseline="middle"
-      >
-        {distance}px
-      </text>
+      {/* Distance label with optional white background */}
+      <g>
+        {withBackground && (
+          <rect
+            x={isHorizontal ? mid - labelPadding : otherAxisPosition + labelOffset / 2}
+            y={isHorizontal ? otherAxisPosition - labelPadding : mid - labelHeight / 2}
+            width={labelPadding * 2}
+            height={labelHeight}
+            fill="white"
+            rx={3 / zoom}
+            ry={3 / zoom}
+            pointerEvents="none"
+          />
+        )}
+        <text
+          x={isHorizontal ? mid : otherAxisPosition + labelOffset + labelPadding}
+          y={isHorizontal ? otherAxisPosition - labelOffset / 2 : mid + fontSize / 4}
+          fill={color}
+          fontSize={fontSize}
+          fontFamily="sans-serif"
+          textAnchor="middle"
+          dominantBaseline="middle"
+          pointerEvents="none"
+        >
+          {Math.round(distance)}
+        </text>
+      </g>
     </g>
   );
 };

@@ -1,9 +1,15 @@
 /**
  * Guidelines Helper Functions
- * Centralized functions for bounds calculation and distance detection
+ * Single Source of Truth (SST) for geometry calculations
+ * 
+ * This module provides centralized, stroke-aware geometry utilities for:
+ * - Bounds calculation (with optional stroke inclusion)
+ * - Range overlap detection
+ * - Distance aggregation
+ * - Memoization support for performance
  */
 
-import type { PathData } from '../types';
+import type { PathData, SubPath } from '../types';
 import { measurePath } from './measurementUtils';
 
 export interface Bounds {
@@ -20,14 +26,79 @@ export interface ElementBoundsInfo {
   centerY: number;
 }
 
+// Memoization cache for bounds calculations
+const boundsCache = new WeakMap<SubPath[], Bounds>();
+const cacheKeys = new WeakMap<SubPath[], string>();
+
+/**
+ * Calculate stroke-aware bounds for a single element
+ * 
+ * @param subPaths - The subpaths of the element
+ * @param strokeWidth - The stroke width (default: 0)
+ * @param zoom - The zoom level (default: 1)
+ * @param options - Options for bounds calculation
+ * @returns The bounds including stroke if specified
+ */
+export function calculateBounds(
+  subPaths: SubPath[],
+  strokeWidth: number = 0,
+  zoom: number = 1,
+  options: { includeStroke?: boolean } = { includeStroke: true }
+): Bounds {
+  const effectiveStrokeWidth = options.includeStroke ? strokeWidth : 0;
+  return measurePath(subPaths, effectiveStrokeWidth, zoom);
+}
+
+/**
+ * Calculate stroke-aware bounds with memoization support
+ * Uses a cache key based on structural properties to avoid redundant calculations
+ * 
+ * @param subPaths - The subpaths of the element
+ * @param strokeWidth - The stroke width
+ * @param zoom - The zoom level
+ * @param cacheKey - Optional cache key (e.g., element ID + version)
+ * @returns The bounds including stroke
+ */
+export function getMemoizedBounds(
+  subPaths: SubPath[],
+  strokeWidth: number,
+  zoom: number,
+  cacheKey?: string
+): Bounds {
+  // If cache key is provided and matches, return cached value
+  if (cacheKey && cacheKeys.get(subPaths) === cacheKey) {
+    const cached = boundsCache.get(subPaths);
+    if (cached) {
+      return cached;
+    }
+  }
+
+  // Calculate new bounds
+  const bounds = calculateBounds(subPaths, strokeWidth, zoom);
+
+  // Cache the result
+  if (cacheKey) {
+    cacheKeys.set(subPaths, cacheKey);
+  }
+  boundsCache.set(subPaths, bounds);
+
+  return bounds;
+}
+
 /**
  * Calculate bounds for all path elements
- * This function should be memoized at the component level
+ * 
+ * @param elements - Array of elements to process
+ * @param excludeIds - IDs to exclude from calculation
+ * @param zoom - The zoom level (default: 1)
+ * @param options - Options for bounds calculation
+ * @returns Map of element IDs to their bounds info
  */
 export function calculateElementBoundsMap(
   elements: Array<{ id: string; type: string; data: unknown }>,
   excludeIds: string[],
-  zoom: number = 1
+  zoom: number = 1,
+  options: { includeStroke?: boolean } = { includeStroke: true }
 ): Map<string, ElementBoundsInfo> {
   const boundsMap = new Map<string, ElementBoundsInfo>();
 
@@ -41,11 +112,12 @@ export function calculateElementBoundsMap(
       return;
     }
 
-    // Use measurePath for accurate bounds including stroke
-    const bounds = measurePath(
+    // Use calculateBounds for consistent stroke-aware bounds
+    const bounds = calculateBounds(
       pathData.subPaths,
       pathData.strokeWidth || 0,
-      zoom
+      zoom,
+      options
     );
 
     if (!isFinite(bounds.minX)) {
@@ -189,4 +261,42 @@ export function aggregateDistances(
   }
 
   return distanceMap;
+}
+
+/**
+ * Calculate perpendicular midpoint for distance visualization
+ * For horizontal distances: Y coordinate at vertical overlap center
+ * For vertical distances: X coordinate at horizontal overlap center
+ * 
+ * @param axis - The axis ('horizontal' or 'vertical')
+ * @param bounds1 - First element bounds
+ * @param bounds2 - Second element bounds
+ * @returns The perpendicular midpoint coordinate
+ */
+export function calculatePerpendicularMidpoint(
+  axis: 'horizontal' | 'vertical',
+  bounds1: Bounds,
+  bounds2: Bounds
+): number {
+  if (axis === 'horizontal') {
+    // Y coordinate at vertical overlap center
+    const overlapMinY = Math.max(bounds1.minY, bounds2.minY);
+    const overlapMaxY = Math.min(bounds1.maxY, bounds2.maxY);
+    return (overlapMinY + overlapMaxY) / 2;
+  } else {
+    // X coordinate at horizontal overlap center
+    const overlapMinX = Math.max(bounds1.minX, bounds2.minX);
+    const overlapMaxX = Math.min(bounds1.maxX, bounds2.maxX);
+    return (overlapMinX + overlapMaxX) / 2;
+  }
+}
+
+/**
+ * Clear the bounds memoization cache
+ * Useful when elements are modified and cache needs invalidation
+ */
+export function clearBoundsCache(): void {
+  // WeakMaps don't have a clear method, but we can create new instances
+  // This is handled automatically by garbage collection when references are lost
+  // We export this for potential future use with a different caching strategy
 }

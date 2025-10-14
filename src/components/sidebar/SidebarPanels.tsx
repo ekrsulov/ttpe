@@ -1,7 +1,8 @@
 import React, { Suspense, useMemo } from 'react';
 import { Box } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
-import type { PathData, SubPath, Command } from '../../types';
+import type { PathData } from '../../types';
+import { calculateBounds } from '../../utils/guidelinesHelpers';
 import { 
   PANEL_CONFIGS, 
   type SmoothBrush, 
@@ -73,37 +74,23 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
 
     if (selectedElements.length !== 2) return false;
 
-    // Check if one element is clearly larger (container) than the other
-    const calculateBounds = (subPaths: SubPath[]) => {
-      let minX = Infinity, minY = Infinity;
-      let maxX = -Infinity, maxY = -Infinity;
-
-      subPaths.forEach(subPath => {
-        subPath.forEach((cmd: Command) => {
-          const points: Array<{ x: number; y: number }> = [];
-          
-          if (cmd.type === 'M' || cmd.type === 'L') {
-            points.push(cmd.position);
-          } else if (cmd.type === 'C') {
-            points.push(cmd.controlPoint1, cmd.controlPoint2, cmd.position);
-          } else if (cmd.type === 'Z') {
-            // Z command has no coordinates
-          }
-
-          points.forEach(point => {
-            minX = Math.min(minX, point.x);
-            minY = Math.min(minY, point.y);
-            maxX = Math.max(maxX, point.x);
-            maxY = Math.max(maxY, point.y);
-          });
-        });
-      });
-
-      return { minX, minY, maxX, maxY };
-    };
-
-    const bounds1 = calculateBounds((selectedElements[0].data as PathData).subPaths);
-    const bounds2 = calculateBounds((selectedElements[1].data as PathData).subPaths);
+    // Use centralized stroke-aware bounds calculation
+    const pathData1 = selectedElements[0].data as PathData;
+    const pathData2 = selectedElements[1].data as PathData;
+    
+    const bounds1 = calculateBounds(
+      pathData1.subPaths, 
+      pathData1.strokeWidth || 0,
+      1,
+      { includeStroke: true }
+    );
+    
+    const bounds2 = calculateBounds(
+      pathData2.subPaths, 
+      pathData2.strokeWidth || 0,
+      1,
+      { includeStroke: true }
+    );
 
     const area1 = (bounds1.maxX - bounds1.minX) * (bounds1.maxY - bounds1.minY);
     const area2 = (bounds2.maxX - bounds2.minX) * (bounds2.maxY - bounds2.minY);
