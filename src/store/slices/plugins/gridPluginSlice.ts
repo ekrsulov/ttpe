@@ -19,7 +19,7 @@ export const createGridPluginSlice: StateCreator<GridPluginSlice, [], [], GridPl
     // Initial state
     grid: {
       enabled: false,
-      snapEnabled: true, // Enable snap by default for testing
+      snapEnabled: false, // Disable snap by default
       spacing: 20, // 20 pixels default spacing
       showRulers: false, // Don't show rulers by default
     },
