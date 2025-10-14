@@ -1,5 +1,5 @@
 import React from 'react';
-import { VStack } from '@chakra-ui/react';
+import { VStack, HStack } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Grid3X3 } from 'lucide-react';
 import { Panel } from '../ui/Panel';
@@ -30,31 +30,31 @@ const GridPanelComponent: React.FC = () => {
   return (
     <Panel icon={<Grid3X3 size={16} />} title="Grid">
       <VStack spacing={2} align="stretch">
-        {/* Show Grid Toggle */}
-        <PanelToggle
-          isChecked={grid.enabled}
-          onChange={handleToggleGrid}
-        >
-          Show Grid
-        </PanelToggle>
+        {/* Grid toggles on one line */}
+        <HStack spacing={4} align="stretch">
+          <PanelToggle
+            isChecked={grid.enabled}
+            onChange={handleToggleGrid}
+          >
+            Show
+          </PanelToggle>
 
-        {/* Snap to Grid Toggle */}
-        <PanelToggle
-          isChecked={grid.snapEnabled}
-          onChange={handleToggleSnap}
-          isDisabled={!grid.enabled}
-        >
-          Snap to Grid
-        </PanelToggle>
+          <PanelToggle
+            isChecked={grid.snapEnabled}
+            onChange={handleToggleSnap}
+            isDisabled={!grid.enabled}
+          >
+            Snap
+          </PanelToggle>
 
-        {/* Show Rulers Toggle */}
-        <PanelToggle
-          isChecked={grid.showRulers}
-          onChange={handleToggleRulers}
-          isDisabled={!grid.enabled}
-        >
-          Show Rulers
-        </PanelToggle>
+          <PanelToggle
+            isChecked={grid.showRulers}
+            onChange={handleToggleRulers}
+            isDisabled={!grid.enabled}
+          >
+            Rulers
+          </PanelToggle>
+        </HStack>
 
         {/* Grid Spacing Slider */}
         <SliderControl
