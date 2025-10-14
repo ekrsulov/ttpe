@@ -155,8 +155,7 @@ export const EditPointsOverlay: React.FC<EditPointsOverlayProps> = ({
               r={pointStyle.size / viewport.zoom}
               fill={pointStyle.color}
               stroke={pointStyle.strokeColor}
-              strokeWidth="2"
-              vectorEffect="non-scaling-stroke"
+              strokeWidth={2 / viewport.zoom}
               style={{ pointerEvents: 'none' }} // Let the overlay handle interactions
             />
           </g>
@@ -384,7 +383,7 @@ const ControlPointLines: React.FC<{
     panX: number;
     panY: number;
   };
-}> = ({ commands, points, element, editingPoint, dragPosition }) => {
+}> = ({ commands, points, element, editingPoint, dragPosition, viewport }) => {
   return (
     <>
       {commands.map((cmd, cmdIndex) => {
@@ -430,8 +429,7 @@ const ControlPointLines: React.FC<{
                   x2={control1X}
                   y2={control1Y}
                   stroke="blue"
-                  strokeWidth="1"
-                  vectorEffect="non-scaling-stroke"
+                  strokeWidth={1 / viewport.zoom}
                 />
                 <line
                   x1={control2X}
@@ -439,8 +437,7 @@ const ControlPointLines: React.FC<{
                   x2={endX}
                   y2={endY}
                   stroke="blue"
-                  strokeWidth="1"
-                  vectorEffect="non-scaling-stroke"
+                  strokeWidth={1 / viewport.zoom}
                 />
               </g>
             );

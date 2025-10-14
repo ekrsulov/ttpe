@@ -224,7 +224,6 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
         style={{ cursor: 'alias' }}
         strokeWidth={lineThickness}
         pointerEvents="none"
-        vectorEffect="non-scaling-stroke"
       />
       {/* Rotation handler overlay */}
       <circle

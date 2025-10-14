@@ -62,7 +62,7 @@ export const SubpathOverlay: React.FC<SubpathOverlayProps> = ({
         // Different colors for selected and unselected subpaths
         const overlayFill = isVisible ? (isSubpathSelected ? `${overlayColor}40` : `${overlayColor}15`) : 'transparent'; // More opacity for selected
         const overlayStroke = isVisible ? (isSubpathSelected ? `${overlayColor}80` : `${overlayColor}40`) : 'transparent'; // Stronger stroke for selected
-        const strokeWidth = isVisible ? (isSubpathSelected ? elementStrokeWidth + 1 : elementStrokeWidth) : 0;
+        const strokeWidth = isVisible ? (isSubpathSelected ? (elementStrokeWidth + 1) / viewport.zoom : elementStrokeWidth / viewport.zoom) : 0;
 
         return (
           <path
@@ -75,7 +75,6 @@ export const SubpathOverlay: React.FC<SubpathOverlayProps> = ({
             strokeLinejoin={pathData.strokeLinejoin || "round"}
             fillRule={pathData.fillRule || "nonzero"}
             strokeDasharray={pathData.strokeDasharray && pathData.strokeDasharray !== 'none' ? pathData.strokeDasharray : undefined}
-            vectorEffect="non-scaling-stroke"
             style={{
               cursor: 'pointer'
               // Removed the transform - the overlay should follow the updated path data

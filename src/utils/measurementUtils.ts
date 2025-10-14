@@ -46,11 +46,10 @@ export const measurePath = (
   // Use the provided path data string
   pathElement.setAttribute('d', d);
   pathElement.setAttribute('stroke', '#000000');
-  pathElement.setAttribute('stroke-width', (strokeWidth / zoom).toString());
+  pathElement.setAttribute('stroke-width', strokeWidth.toString());
   pathElement.setAttribute('stroke-linecap', 'round');
   pathElement.setAttribute('stroke-linejoin', 'round');
   pathElement.setAttribute('fill', 'none');
-  pathElement.setAttribute('vector-effect', 'non-scaling-stroke');
 
   // Add path to SVG
   svg.appendChild(pathElement);
@@ -63,7 +62,7 @@ export const measurePath = (
     const bbox = pathElement.getBBox();
 
     // Add stroke width to get the visual bounds
-    const halfStroke = (strokeWidth / zoom) / 2;
+    const halfStroke = strokeWidth / 2;
     const result = {
       minX: bbox.x - halfStroke,
       minY: bbox.y - halfStroke,

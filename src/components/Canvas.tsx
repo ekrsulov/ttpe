@@ -317,7 +317,7 @@ export const Canvas: React.FC = () => {
               data-element-id={element.id}
               d={pathD}
               stroke={effectiveStrokeColor}
-              strokeWidth={pathData.strokeWidth}
+              strokeWidth={pathData.strokeWidth / viewport.zoom}
               fill={effectiveFillColor}
               fillOpacity={pathData.fillOpacity}
               strokeOpacity={pathData.strokeOpacity}
@@ -325,7 +325,6 @@ export const Canvas: React.FC = () => {
               strokeLinejoin={pathData.strokeLinejoin || "round"}
               fillRule={pathData.fillRule || "nonzero"}
               strokeDasharray={pathData.strokeDasharray && pathData.strokeDasharray !== 'none' ? pathData.strokeDasharray : undefined}
-              vectorEffect="non-scaling-stroke"
               onPointerUp={(e) => handleElementClick(element.id, e)}
               onPointerDown={(e) => handleElementPointerDown(element.id, e)}
               onDoubleClick={(e) => handleElementDoubleClick(element.id, e)}
@@ -481,11 +480,12 @@ export const Canvas: React.FC = () => {
       // Create temporary SVG path for immediate visual feedback
       tempPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       const { strokeWidth, strokeColor, strokeOpacity } = useCanvasStore.getState().pencil;
+      const currentZoom = useCanvasStore.getState().viewport.zoom;
       const effectiveStrokeColor = strokeColor === 'none' ? '#000000' : strokeColor;
       
       tempPath.setAttribute('fill', 'none');
       tempPath.setAttribute('stroke', effectiveStrokeColor);
-      tempPath.setAttribute('stroke-width', strokeWidth.toString());
+      tempPath.setAttribute('stroke-width', (strokeWidth / currentZoom).toString());
       tempPath.setAttribute('stroke-opacity', strokeOpacity.toString());
       tempPath.setAttribute('stroke-linecap', 'round');
       tempPath.setAttribute('stroke-linejoin', 'round');

@@ -376,7 +376,7 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
         if (pathData.strokeDasharray && pathData.strokeDasharray !== 'none') {
           svgContent += `stroke-dasharray="${pathData.strokeDasharray}" `;
         }
-        svgContent += `vector-effect="non-scaling-stroke" />\n`;
+        svgContent += `/>\n`;
       }
     });
     
@@ -473,7 +473,7 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
         if (pathData.strokeDasharray && pathData.strokeDasharray !== 'none') {
           svgContent += `stroke-dasharray="${pathData.strokeDasharray}" `;
         }
-        svgContent += `vector-effect="non-scaling-stroke" />\n`;
+        svgContent += `/>\n`;
       }
     });
 
