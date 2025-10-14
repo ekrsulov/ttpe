@@ -88,9 +88,10 @@ export const PathThumbnail: React.FC<PathThumbnailProps> = ({
   const fillOpacity = element?.type === 'path'
     ? (element.data as PathData).fillOpacity || 1
     : 1;
-  const stroke = element?.type === 'path'
-    ? (element.data as PathData).strokeColor || '#000000'
+  const strokeColor = element?.type === 'path'
+    ? (element.data as PathData).strokeColor
     : '#000000';
+  const stroke = strokeColor === 'none' ? '#000000' : strokeColor;
 
   // Use fixed stroke width for thumbnail
   const thumbnailStrokeWidth = 1;
