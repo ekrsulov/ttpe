@@ -28,7 +28,6 @@ export interface GuidelinesPluginSlice {
     distanceEnabled: boolean;
     debugMode: boolean;
     snapThreshold: number; // pixels
-    stickyDuration: number; // milliseconds
     currentMatches: GuidelineMatch[];
     currentDistanceMatches: DistanceGuidelineMatch[];
     stickyState: {
@@ -68,7 +67,6 @@ export const createGuidelinesPluginSlice: StateCreator<GuidelinesPluginSlice, []
       distanceEnabled: false,
       debugMode: false,
       snapThreshold: 5, // 5 pixels
-      stickyDuration: 150, // 150ms
       currentMatches: [],
       currentDistanceMatches: [],
       stickyState: {

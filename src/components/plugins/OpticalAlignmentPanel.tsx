@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   VStack,
-  Button,
   Text,
   Box,
   HStack,
@@ -12,6 +11,7 @@ import {
 } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Panel } from '../ui/Panel';
+import { AlignmentActionButton } from '../ui/AlignmentActionButton';
 import { Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 
 /**
@@ -91,34 +91,14 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
     <Panel icon={<Sparkles size={16} />} title="Optical Alignment">
       <VStack align="stretch" spacing={2}>
         {/* Primary Action - Always visible */}
-        <Button
+        <AlignmentActionButton
           onClick={handleApplyDirectly}
           isDisabled={!canAlign || isCalculatingAlignment}
           isLoading={isCalculatingAlignment}
           loadingText="Applying..."
-          variant="unstyled"
-          size="sm"
-          bg="transparent"
-          color="gray.700"
-          border="1px solid"
-          borderColor="gray.400"
-          borderRadius="md"
-          fontWeight="medium"
-          fontSize="10px"
-          transition="all 0.2s"
-          _hover={{
-            bg: 'gray.50'
-          }}
-          sx={{
-            minH: '28px',
-            px: 2,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
         >
           Apply Visual Center
-        </Button>
+        </AlignmentActionButton>
 
         {/* Advanced Section - Collapsible (Development Only) */}
         {isDevelopment && (
@@ -153,62 +133,22 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
                 </Text>
                 
                 <Grid templateColumns="1fr 1fr" gap={2}>
-                  <Button
+                  <AlignmentActionButton
                     onClick={handleCalculate}
                     isDisabled={!canAlign || isCalculatingAlignment}
                     isLoading={isCalculatingAlignment}
                     loadingText="Calculating..."
-                    variant="unstyled"
-                    size="sm"
-                    bg="transparent"
-                    color="gray.700"
-                    border="1px solid"
-                    borderColor="gray.400"
-                    borderRadius="md"
-                    fontWeight="medium"
-                    fontSize="10px"
-                    transition="all 0.2s"
-                    _hover={{
-                      bg: 'gray.50'
-                    }}
-                    sx={{
-                      minH: '28px',
-                      px: 2,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
                   >
                     Calculate
-                  </Button>
+                  </AlignmentActionButton>
 
-                  <Button
+                  <AlignmentActionButton
                     onClick={handleApplyToAll}
                     isDisabled={isCalculatingAlignment}
                     isLoading={isCalculatingAlignment}
-                    variant="unstyled"
-                    size="sm"
-                    bg="transparent"
-                    color="gray.700"
-                    border="1px solid"
-                    borderColor="gray.400"
-                    borderRadius="md"
-                    fontWeight="medium"
-                    fontSize="10px"
-                    transition="all 0.2s"
-                    _hover={{
-                      bg: 'gray.50'
-                    }}
-                    sx={{
-                      minH: '28px',
-                      px: 2,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
                   >
                     Apply All
-                  </Button>
+                  </AlignmentActionButton>
                 </Grid>
 
                 {/* Results - Between Visual Center and Mathematical Center */}
@@ -239,56 +179,12 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
                     </Box>
 
                     <Grid templateColumns="1fr 1fr" gap={2}>
-                      <Button
-                        onClick={handleApply}
-                        variant="unstyled"
-                        size="sm"
-                        bg="transparent"
-                        color="gray.700"
-                        border="1px solid"
-                        borderColor="gray.400"
-                        borderRadius="md"
-                        fontWeight="medium"
-                        fontSize="10px"
-                        transition="all 0.2s"
-                        _hover={{
-                          bg: 'gray.50'
-                        }}
-                        sx={{
-                          minH: '28px',
-                          px: 2,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
+                      <AlignmentActionButton onClick={handleApply}>
                         Apply
-                      </Button>
-                      <Button
-                        onClick={handleClear}
-                        variant="unstyled"
-                        size="sm"
-                        bg="transparent"
-                        color="gray.700"
-                        border="1px solid"
-                        borderColor="gray.400"
-                        borderRadius="md"
-                        fontWeight="medium"
-                        fontSize="10px"
-                        transition="all 0.2s"
-                        _hover={{
-                          bg: 'gray.50'
-                        }}
-                        sx={{
-                          minH: '28px',
-                          px: 2,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
+                      </AlignmentActionButton>
+                      <AlignmentActionButton onClick={handleClear}>
                         Cancel
-                      </Button>
+                      </AlignmentActionButton>
                     </Grid>
                   </VStack>
                 )}
@@ -301,59 +197,19 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
                 </Text>
 
                 <Grid templateColumns="1fr 1fr" gap={2}>
-                  <Button
+                  <AlignmentActionButton
                     onClick={handleMathematicalAlign}
                     isDisabled={!canAlign || isCalculatingAlignment}
-                    variant="unstyled"
-                    size="sm"
-                    bg="transparent"
-                    color="gray.700"
-                    border="1px solid"
-                    borderColor="gray.400"
-                    borderRadius="md"
-                    fontWeight="medium"
-                    fontSize="10px"
-                    transition="all 0.2s"
-                    _hover={{
-                      bg: 'gray.50'
-                    }}
-                    sx={{
-                      minH: '28px',
-                      px: 2,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
                   >
                     Apply
-                  </Button>
+                  </AlignmentActionButton>
 
-                  <Button
+                  <AlignmentActionButton
                     onClick={handleMathematicalAlignAll}
                     isDisabled={isCalculatingAlignment}
-                    variant="unstyled"
-                    size="sm"
-                    bg="transparent"
-                    color="gray.700"
-                    border="1px solid"
-                    borderColor="gray.400"
-                    borderRadius="md"
-                    fontWeight="medium"
-                    fontSize="10px"
-                    transition="all 0.2s"
-                    _hover={{
-                      bg: 'gray.50'
-                    }}
-                    sx={{
-                      minH: '28px',
-                      px: 2,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
                   >
                     Apply All
-                  </Button>
+                  </AlignmentActionButton>
                 </Grid>
               </Box>
 
@@ -364,57 +220,13 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
                 </Text>
 
                 <Grid templateColumns="1fr 1fr" gap={2}>
-                  <Button
-                    onClick={selectAllContainers}
-                    variant="unstyled"
-                    size="sm"
-                    bg="transparent"
-                    color="gray.700"
-                    border="1px solid"
-                    borderColor="gray.400"
-                    borderRadius="md"
-                    fontWeight="medium"
-                    fontSize="10px"
-                    transition="all 0.2s"
-                    _hover={{
-                      bg: 'gray.50'
-                    }}
-                    sx={{
-                      minH: '28px',
-                      px: 2,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
+                  <AlignmentActionButton onClick={selectAllContainers}>
                     Containers
-                  </Button>
+                  </AlignmentActionButton>
 
-                  <Button
-                    onClick={selectAllContents}
-                    variant="unstyled"
-                    size="sm"
-                    bg="transparent"
-                    color="gray.700"
-                    border="1px solid"
-                    borderColor="gray.400"
-                    borderRadius="md"
-                    fontWeight="medium"
-                    fontSize="10px"
-                    transition="all 0.2s"
-                    _hover={{
-                      bg: 'gray.50'
-                    }}
-                    sx={{
-                      minH: '28px',
-                      px: 2,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
+                  <AlignmentActionButton onClick={selectAllContents}>
                     Contents
-                  </Button>
+                  </AlignmentActionButton>
                 </Grid>
               </Box>
             </VStack>

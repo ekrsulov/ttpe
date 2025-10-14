@@ -1,9 +1,10 @@
 import React, { useState, useRef } from 'react';
-import { Button as ChakraButton, Checkbox as ChakraCheckbox, HStack, VStack, Input, InputGroup, InputLeftAddon, useToast } from '@chakra-ui/react';
+import { Button as ChakraButton, HStack, VStack, Input, InputGroup, InputLeftAddon, useToast } from '@chakra-ui/react';
 import { File } from 'lucide-react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { logger, importSVGWithDimensions, measurePath, translateCommands, performPathUnion, transformCommands, calculateScaledStrokeWidth } from '../../utils';
 import { Panel } from '../ui/Panel';
+import { PanelToggle } from '../ui/PanelToggle';
 import type { PathData } from '../../types';
 
 export const FilePanel: React.FC = () => {
@@ -346,173 +347,51 @@ export const FilePanel: React.FC = () => {
           onChange={handleSVGFileSelected}
         />
 
-        <ChakraCheckbox
-          id="append-mode"
+        <PanelToggle
           isChecked={appendMode}
           onChange={(e) => setAppendMode(e.target.checked)}
-          size="sm"
-          sx={{
-            '& .chakra-checkbox__control': {
-              bg: appendMode ? 'blue.500' : 'transparent',
-              borderColor: appendMode ? 'blue.500' : 'gray.400',
-              _checked: {
-                bg: 'blue.500',
-                borderColor: 'blue.500',
-                color: 'white',
-                _hover: {
-                  bg: 'blue.600',
-                  borderColor: 'blue.600',
-                }
-              },
-              _hover: {
-                bg: appendMode ? 'blue.600' : 'gray.50',
-                borderColor: appendMode ? 'blue.600' : 'gray.400',
-              }
-            }
-          }}
         >
           Append to current document
-        </ChakraCheckbox>
+        </PanelToggle>
 
-        <ChakraCheckbox
-          id="png-selected-only"
+        <PanelToggle
           isChecked={pngSelectedOnly}
           onChange={(e) => setPngSelectedOnly(e.target.checked)}
-          size="sm"
-          sx={{
-            '& .chakra-checkbox__control': {
-              bg: pngSelectedOnly ? 'green.500' : 'transparent',
-              borderColor: pngSelectedOnly ? 'green.500' : 'gray.400',
-              _checked: {
-                bg: 'green.500',
-                borderColor: 'green.500',
-                color: 'white',
-                _hover: {
-                  bg: 'green.600',
-                  borderColor: 'green.600',
-                }
-              },
-              _hover: {
-                bg: pngSelectedOnly ? 'green.600' : 'gray.50',
-                borderColor: pngSelectedOnly ? 'green.600' : 'gray.400',
-              }
-            }
-          }}
+          accentColor="green"
         >
           Save selected elements only (PNG)
-        </ChakraCheckbox>
+        </PanelToggle>
 
-        <ChakraCheckbox
-          id="svg-selected-only"
+        <PanelToggle
           isChecked={svgSelectedOnly}
           onChange={(e) => setSvgSelectedOnly(e.target.checked)}
-          size="sm"
-          sx={{
-            '& .chakra-checkbox__control': {
-              bg: svgSelectedOnly ? 'blue.500' : 'transparent',
-              borderColor: svgSelectedOnly ? 'blue.500' : 'gray.400',
-              _checked: {
-                bg: 'blue.500',
-                borderColor: 'blue.500',
-                color: 'white',
-                _hover: {
-                  bg: 'blue.600',
-                  borderColor: 'blue.600',
-                }
-              },
-              _hover: {
-                bg: svgSelectedOnly ? 'blue.600' : 'gray.50',
-                borderColor: svgSelectedOnly ? 'blue.600' : 'gray.400',
-              }
-            }
-          }}
         >
           Save selected elements only (SVG)
-        </ChakraCheckbox>
+        </PanelToggle>
 
-        <ChakraCheckbox
-          id="add-frame"
+        <PanelToggle
           isChecked={addFrame}
           onChange={(e) => setAddFrame(e.target.checked)}
-          size="sm"
-          sx={{
-            '& .chakra-checkbox__control': {
-              bg: addFrame ? 'green.500' : 'transparent',
-              borderColor: addFrame ? 'green.500' : 'gray.400',
-              _checked: {
-                bg: 'green.500',
-                borderColor: 'green.500',
-                color: 'white',
-                _hover: {
-                  bg: 'green.600',
-                  borderColor: 'green.600',
-                }
-              },
-              _hover: {
-                bg: addFrame ? 'green.600' : 'gray.50',
-                borderColor: addFrame ? 'green.600' : 'gray.400',
-              }
-            }
-          }}
+          accentColor="green"
         >
           Add frame to imported SVG
-        </ChakraCheckbox>
+        </PanelToggle>
 
-        <ChakraCheckbox
-          id="apply-union"
+        <PanelToggle
           isChecked={applyUnion}
           onChange={(e) => setApplyUnion(e.target.checked)}
-          size="sm"
-          sx={{
-            '& .chakra-checkbox__control': {
-              bg: applyUnion ? 'purple.500' : 'transparent',
-              borderColor: applyUnion ? 'purple.500' : 'gray.400',
-              _checked: {
-                bg: 'purple.500',
-                borderColor: 'purple.500',
-                color: 'white',
-                _hover: {
-                  bg: 'purple.600',
-                  borderColor: 'purple.600',
-                }
-              },
-              _hover: {
-                bg: applyUnion ? 'purple.600' : 'gray.50',
-                borderColor: applyUnion ? 'purple.600' : 'gray.400',
-              }
-            }
-          }}
+          accentColor="purple"
         >
           Apply union to imported paths
-        </ChakraCheckbox>
+        </PanelToggle>
 
-        <ChakraCheckbox
-          id="resize-import"
+        <PanelToggle
           isChecked={resizeImport}
           onChange={(e) => setResizeImport(e.target.checked)}
-          size="sm"
-          sx={{
-            '& .chakra-checkbox__control': {
-              bg: resizeImport ? 'orange.500' : 'transparent',
-              borderColor: resizeImport ? 'orange.500' : 'gray.400',
-              _checked: {
-                bg: 'orange.500',
-                borderColor: 'orange.500',
-                color: 'white',
-                _hover: {
-                  bg: 'orange.600',
-                  borderColor: 'orange.600',
-                }
-              },
-              _hover: {
-                bg: resizeImport ? 'orange.600' : 'gray.50',
-                borderColor: resizeImport ? 'orange.600' : 'gray.400',
-              }
-            }
-          }}
+          accentColor="orange"
         >
           Resize imported SVG
-        </ChakraCheckbox>
+        </PanelToggle>
 
         {resizeImport && (
           <HStack spacing={2}>

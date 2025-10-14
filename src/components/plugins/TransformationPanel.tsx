@@ -1,8 +1,9 @@
 import React from 'react';
-import { VStack, Checkbox as ChakraCheckbox, Tag, Text } from '@chakra-ui/react';
+import { VStack, Tag, Text } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { VectorSquare } from 'lucide-react';
 import { Panel } from '../ui/Panel';
+import { PanelToggle } from '../ui/PanelToggle';
 
 export const TransformationPanel: React.FC = () => {
   // Use individual selectors to prevent re-renders on unrelated changes
@@ -35,59 +36,19 @@ export const TransformationPanel: React.FC = () => {
         )}
 
         <VStack spacing={2} align="stretch">
-          <ChakraCheckbox
+          <PanelToggle
             isChecked={showCoordinates}
             onChange={(e) => updateTransformationState({ showCoordinates: e.target.checked })}
-            size="sm"
-            sx={{
-              '& .chakra-checkbox__control': {
-                bg: showCoordinates ? 'blue.500' : 'transparent',
-                borderColor: showCoordinates ? 'blue.500' : 'gray.400',
-                _checked: {
-                  bg: 'blue.500',
-                  borderColor: 'blue.500',
-                  color: 'white',
-                  _hover: {
-                    bg: 'blue.600',
-                    borderColor: 'blue.600',
-                  }
-                },
-                _hover: {
-                  bg: showCoordinates ? 'blue.600' : 'gray.50',
-                  borderColor: showCoordinates ? 'blue.600' : 'gray.400',
-                }
-              }
-            }}
           >
             Coordinates
-          </ChakraCheckbox>
+          </PanelToggle>
 
-          <ChakraCheckbox
+          <PanelToggle
             isChecked={showRulers}
             onChange={(e) => updateTransformationState({ showRulers: e.target.checked })}
-            size="sm"
-            sx={{
-              '& .chakra-checkbox__control': {
-                bg: showRulers ? 'blue.500' : 'transparent',
-                borderColor: showRulers ? 'blue.500' : 'gray.400',
-                _checked: {
-                  bg: 'blue.500',
-                  borderColor: 'blue.500',
-                  color: 'white',
-                  _hover: {
-                    bg: 'blue.600',
-                    borderColor: 'blue.600',
-                  }
-                },
-                _hover: {
-                  bg: showRulers ? 'blue.600' : 'gray.50',
-                  borderColor: showRulers ? 'blue.600' : 'gray.400',
-                }
-              }
-            }}
           >
             Rulers
-          </ChakraCheckbox>
+          </PanelToggle>
         </VStack>
       </VStack>
     </Panel>

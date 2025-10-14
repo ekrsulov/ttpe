@@ -6,6 +6,8 @@
  * the distribution of pixels and their distances from candidate center points.
  */
 
+import { deepDebugLog } from './debugUtils';
+
 const COLOR_DIFF_WEIGHT_EXPO = 0.333;
 const ROUNDS = 250;
 
@@ -338,13 +340,13 @@ export async function pathToRGBMatrix(
       const svgString = serializer.serializeToString(svg);
       const dataUrl = 'data:image/svg+xml;base64,' + btoa(svgString);
 
-      // Debug: Log the generated image data URL and properties
-      console.log('[Visual Center Debug] SVG data URL (no background):', dataUrl);
-      console.log('[Visual Center Debug] Container dimensions:', { containerWidth, containerHeight });
-      console.log('[Visual Center Debug] Container fill color:', containerFillColor);
-      console.log('[Visual Center Debug] Content bbox:', contentBbox);
-      console.log('[Visual Center Debug] Scale:', scale);
-      console.log('[Visual Center Debug] Styles:', { 
+      // Debug: Log the generated image data URL and properties (only in deep debug mode)
+      deepDebugLog('[Visual Center Debug] SVG data URL (no background):', dataUrl);
+      deepDebugLog('[Visual Center Debug] Container dimensions:', { containerWidth, containerHeight });
+      deepDebugLog('[Visual Center Debug] Container fill color:', containerFillColor);
+      deepDebugLog('[Visual Center Debug] Content bbox:', contentBbox);
+      deepDebugLog('[Visual Center Debug] Scale:', scale);
+      deepDebugLog('[Visual Center Debug] Styles:', { 
         fill: fillColor,
         fillOpacity: fillOpacity,
         stroke: strokeColor, 
@@ -377,9 +379,9 @@ export async function pathToRGBMatrix(
         // Draw the image
         ctx.drawImage(img, 0, 0, size, size);
 
-        // Log the final canvas data URL (with background applied)
+        // Log the final canvas data URL (with background applied) - only in deep debug mode
         const canvasDataUrl = canvas.toDataURL('image/png');
-        console.log('[Visual Center Debug] Canvas data URL (with background):', canvasDataUrl);
+        deepDebugLog('[Visual Center Debug] Canvas data URL (with background):', canvasDataUrl);
 
         // Get pixel data
         const imageData = ctx.getImageData(0, 0, size, size);

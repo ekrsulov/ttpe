@@ -4,7 +4,6 @@ import {
   HStack,
   Button,
   Text,
-  Checkbox as ChakraCheckbox,
   Box,
   Flex,
   Heading,
@@ -21,6 +20,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { Panel } from '../ui/Panel';
+import { PanelToggle } from '../ui/PanelToggle';
 import { SliderControl } from '../ui/SliderControl';
 import { useCanvasStore } from '../../store/canvasStore';
 
@@ -282,30 +282,12 @@ const CurvesPanelComponent: React.FC = () => {
           {/* Snap to Grid */}
           <HStack spacing={2} mb={2} justify="space-between">
             <Text fontSize="12px" color="gray.600">Snap to Grid:</Text>
-            <ChakraCheckbox
+            <PanelToggle
               isChecked={curves.snapToGrid}
               onChange={handleToggleSnapToGrid}
-              size="sm"
-              sx={{
-                '& .chakra-checkbox__control': {
-                  bg: curves.snapToGrid ? 'blue.500' : 'transparent',
-                  borderColor: curves.snapToGrid ? 'blue.500' : 'gray.400',
-                  _checked: {
-                    bg: 'blue.500',
-                    borderColor: 'blue.500',
-                    color: 'white',
-                    _hover: {
-                      bg: 'blue.600',
-                      borderColor: 'blue.600',
-                    }
-                  },
-                  _hover: {
-                    bg: curves.snapToGrid ? 'blue.600' : 'gray.50',
-                    borderColor: curves.snapToGrid ? 'blue.600' : 'gray.400',
-                  }
-                }
-              }}
-            />
+            >
+              {''}
+            </PanelToggle>
           </HStack>
 
           {/* Grid Size Slider */}
@@ -326,59 +308,23 @@ const CurvesPanelComponent: React.FC = () => {
           {/* Show Handles */}
           <HStack spacing={2} mb={2} justify="space-between">
             <Text fontSize="12px" color="gray.600">Show Handles:</Text>
-            <ChakraCheckbox
+            <PanelToggle
               isChecked={curves.showHandles}
               onChange={handleToggleShowHandles}
-              size="sm"
-              sx={{
-                '& .chakra-checkbox__control': {
-                  bg: curves.showHandles ? 'blue.500' : 'transparent',
-                  borderColor: curves.showHandles ? 'blue.500' : 'gray.400',
-                  _checked: {
-                    bg: 'blue.500',
-                    borderColor: 'blue.500',
-                    color: 'white',
-                    _hover: {
-                      bg: 'blue.600',
-                      borderColor: 'blue.600',
-                    }
-                  },
-                  _hover: {
-                    bg: curves.showHandles ? 'blue.600' : 'gray.50',
-                    borderColor: curves.showHandles ? 'blue.600' : 'gray.400',
-                  }
-                }
-              }}
-            />
+            >
+              {''}
+            </PanelToggle>
           </HStack>
 
           {/* Show Preview */}
           <HStack spacing={2} mb={2} justify="space-between">
             <Text fontSize="12px" color="gray.600">Show Preview:</Text>
-            <ChakraCheckbox
+            <PanelToggle
               isChecked={curves.showPreview}
               onChange={handleToggleShowPreview}
-              size="sm"
-              sx={{
-                '& .chakra-checkbox__control': {
-                  bg: curves.showPreview ? 'blue.500' : 'transparent',
-                  borderColor: curves.showPreview ? 'blue.500' : 'gray.400',
-                  _checked: {
-                    bg: 'blue.500',
-                    borderColor: 'blue.500',
-                    color: 'white',
-                    _hover: {
-                      bg: 'blue.600',
-                      borderColor: 'blue.600',
-                    }
-                  },
-                  _hover: {
-                    bg: curves.showPreview ? 'blue.600' : 'gray.50',
-                    borderColor: curves.showPreview ? 'blue.600' : 'gray.400',
-                  }
-                }
-              }}
-            />
+            >
+              {''}
+            </PanelToggle>
           </HStack>
         </Box>
 

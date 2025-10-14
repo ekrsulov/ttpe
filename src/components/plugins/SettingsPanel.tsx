@@ -4,7 +4,6 @@ import {
   FormControl,
   FormLabel,
   Input,
-  Checkbox as ChakraCheckbox,
   Button,
   Select,
   Text,
@@ -14,6 +13,7 @@ import { Settings } from 'lucide-react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { logger, LogLevel } from '../../utils';
 import { Panel } from '../ui/Panel';
+import { PanelToggle } from '../ui/PanelToggle';
 import { SliderControl } from '../ui/SliderControl';
 
 export const SettingsPanel: React.FC = () => {
@@ -143,61 +143,21 @@ export const SettingsPanel: React.FC = () => {
         </FormControl>
 
         {/* Show Caller Info Checkbox */}
-        <ChakraCheckbox
+        <PanelToggle
           isChecked={showCallerInfo}
           onChange={(e) => handleCallerInfoToggle(e.target.checked)}
-          size="sm"
-          sx={{
-            '& .chakra-checkbox__control': {
-              bg: showCallerInfo ? 'blue.500' : 'transparent',
-              borderColor: showCallerInfo ? 'blue.500' : 'gray.400',
-              _checked: {
-                bg: 'blue.500',
-                borderColor: 'blue.500',
-                color: 'white',
-                _hover: {
-                  bg: 'blue.600',
-                  borderColor: 'blue.600',
-                }
-              },
-              _hover: {
-                bg: showCallerInfo ? 'blue.600' : 'gray.50',
-                borderColor: showCallerInfo ? 'blue.600' : 'gray.400',
-              }
-            }
-          }}
         >
           Show caller info in logs
-        </ChakraCheckbox>
+        </PanelToggle>
 
         {/* Show Render Count Badges */}
         {import.meta.env.DEV && (
-          <ChakraCheckbox
+          <PanelToggle
             isChecked={settings.showRenderCountBadges}
             onChange={(e) => updateSettings({ showRenderCountBadges: e.target.checked })}
-            size="sm"
-            sx={{
-              '& .chakra-checkbox__control': {
-                bg: settings.showRenderCountBadges ? 'blue.500' : 'transparent',
-                borderColor: settings.showRenderCountBadges ? 'blue.500' : 'gray.400',
-                _checked: {
-                  bg: 'blue.500',
-                  borderColor: 'blue.500',
-                  color: 'white',
-                  _hover: {
-                    bg: 'blue.600',
-                    borderColor: 'blue.600',
-                  }
-                },
-                _hover: {
-                  bg: settings.showRenderCountBadges ? 'blue.600' : 'gray.50',
-                  borderColor: settings.showRenderCountBadges ? 'blue.600' : 'gray.400',
-                }
-              }
-            }}
           >
             Show render count badges (debug)
-          </ChakraCheckbox>
+          </PanelToggle>
         )}
 
         {/* Keyboard Movement Precision */}

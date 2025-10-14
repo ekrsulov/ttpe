@@ -1,6 +1,7 @@
 import type { Point, CurvePoint, CurveState, CurvePointType, CanvasElement } from '../types';
 import { parsePathD, extractSubpaths } from '../utils/path';
 import { logger } from '../utils';
+import { applyGridSnap } from '../utils/gridSnapUtils';
 
 export interface CurvesCallbacks {
   addElement: (element: CanvasElement) => string;
@@ -53,8 +54,8 @@ export class CurvesController {
   }
 
   private snapToGrid(point: Point): Point {
-    // For now, no snapping
-    return point;
+    // Use shared grid snap utility - single source of truth
+    return applyGridSnap(point);
   }
 
   private isDoubleClick(point: Point): boolean {

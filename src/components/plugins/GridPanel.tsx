@@ -1,8 +1,9 @@
 import React from 'react';
-import { VStack, Checkbox as ChakraCheckbox } from '@chakra-ui/react';
+import { VStack } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Grid3X3 } from 'lucide-react';
 import { Panel } from '../ui/Panel';
+import { PanelToggle } from '../ui/PanelToggle';
 import { SliderControl } from '../ui/SliderControl';
 
 const GridPanelComponent: React.FC = () => {
@@ -30,98 +31,30 @@ const GridPanelComponent: React.FC = () => {
     <Panel icon={<Grid3X3 size={16} />} title="Grid">
       <VStack spacing={2} align="stretch">
         {/* Show Grid Toggle */}
-        <ChakraCheckbox
+        <PanelToggle
           isChecked={grid.enabled}
           onChange={handleToggleGrid}
-          size="sm"
-          sx={{
-            '& .chakra-checkbox__control': {
-              bg: grid.enabled ? 'blue.500' : 'transparent',
-              borderColor: grid.enabled ? 'blue.500' : 'gray.400',
-              _checked: {
-                bg: 'blue.500',
-                borderColor: 'blue.500',
-                color: 'white',
-                _hover: {
-                  bg: 'blue.600',
-                  borderColor: 'blue.600',
-                }
-              },
-              _hover: {
-                bg: grid.enabled ? 'blue.600' : 'gray.50',
-                borderColor: grid.enabled ? 'blue.600' : 'gray.400',
-              }
-            }
-          }}
         >
           Show Grid
-        </ChakraCheckbox>
+        </PanelToggle>
 
         {/* Snap to Grid Toggle */}
-        <ChakraCheckbox
+        <PanelToggle
           isChecked={grid.snapEnabled}
           onChange={handleToggleSnap}
           isDisabled={!grid.enabled}
-          size="sm"
-          sx={{
-            '& .chakra-checkbox__control': {
-              bg: grid.snapEnabled ? 'blue.500' : 'transparent',
-              borderColor: grid.snapEnabled ? 'blue.500' : 'gray.400',
-              _checked: {
-                bg: 'blue.500',
-                borderColor: 'blue.500',
-                color: 'white',
-                _hover: {
-                  bg: 'blue.600',
-                  borderColor: 'blue.600',
-                }
-              },
-              _hover: {
-                bg: grid.snapEnabled ? 'blue.600' : 'gray.50',
-                borderColor: grid.snapEnabled ? 'blue.600' : 'gray.400',
-              },
-              _disabled: {
-                opacity: 0.4,
-                cursor: 'not-allowed',
-              }
-            }
-          }}
         >
           Snap to Grid
-        </ChakraCheckbox>
+        </PanelToggle>
 
         {/* Show Rulers Toggle */}
-        <ChakraCheckbox
+        <PanelToggle
           isChecked={grid.showRulers}
           onChange={handleToggleRulers}
           isDisabled={!grid.enabled}
-          size="sm"
-          sx={{
-            '& .chakra-checkbox__control': {
-              bg: grid.showRulers ? 'blue.500' : 'transparent',
-              borderColor: grid.showRulers ? 'blue.500' : 'gray.400',
-              _checked: {
-                bg: 'blue.500',
-                borderColor: 'blue.500',
-                color: 'white',
-                _hover: {
-                  bg: 'blue.600',
-                  borderColor: 'blue.600',
-                }
-              },
-              _hover: {
-                bg: grid.showRulers ? 'blue.600' : 'gray.50',
-                borderColor: grid.showRulers ? 'blue.600' : 'gray.400',
-              },
-              _disabled: {
-                opacity: 0.4,
-                cursor: 'not-allowed',
-              }
-            }
-          }}
         >
           Show Rulers
-        </ChakraCheckbox>
+        </PanelToggle>
 
         {/* Grid Spacing Slider */}
         <SliderControl
