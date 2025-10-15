@@ -10,10 +10,6 @@ import { deepDebugLog } from './debugUtils';
 
 const COLOR_DIFF_WEIGHT_EXPO = 0.333;
 const ROUNDS = 250;
-// Penalize sprawling rectangles by converting the accumulated interest into a density score.
-// Alpha (0.8) follows the suggested range (0.5 - 0.9) to soften the penalty for large but relevant shapes.
-const DENSITY_PENALTY_EXPONENT = 0.8;
-const MIN_EFFECTIVE_RADIUS = 1e-3;
 
 // Protection padding percentages (applied before final displacement)
 // These prevent the content from getting too close to the container edges
@@ -142,37 +138,24 @@ function getCenterIntensity(
   const centerRow = visualLeft * width;
   const centerPoint: [number, number] = [centerCol, centerRow];
 
-  let totalWeight = 0;
-  let weightedDistanceSum = 0;
+  return rgbMatrix.reduce((resRow, row, rowIdx) => {
+    return (
+      resRow +
+      row.reduce((resCol, col, colIdx) => {
+        const cellColorDiff = rgbDiff(bgColor, col, maxDiff);
 
-  for (let rowIdx = 0; rowIdx < height; rowIdx++) {
-    const row = rgbMatrix[rowIdx];
+        if (!cellColorDiff) return resCol;
 
-    for (let colIdx = 0; colIdx < width; colIdx++) {
-      const col = row[colIdx];
-      const cellColorDiff = rgbDiff(bgColor, col, maxDiff);
+        const cellDistance = getDistance(centerPoint, [rowIdx, colIdx]);
+        const cellColorWeight =
+          cellColorDiff *
+          Math.pow(1 - cellDistance / maxDistance, 0.5) *
+          1000;
 
-      if (!cellColorDiff) continue;
-
-      const cellDistance = getDistance(centerPoint, [rowIdx, colIdx]);
-      const distanceWeight = Math.pow(1 - cellDistance / maxDistance, 0.5);
-      const cellColorWeight = cellColorDiff * distanceWeight * 1000;
-
-      totalWeight += cellColorWeight;
-      weightedDistanceSum += cellColorWeight * (cellDistance / maxDistance);
-    }
-  }
-
-  if (totalWeight === 0) {
-    return 0;
-  }
-
-  const averageNormalizedDistance = weightedDistanceSum / totalWeight;
-  const effectiveRadius = Math.max(averageNormalizedDistance * maxDistance, MIN_EFFECTIVE_RADIUS);
-  const effectiveArea = Math.PI * effectiveRadius * effectiveRadius;
-
-  // Convert the accumulated interest into a density score so smaller, more concentrated rectangles win.
-  return totalWeight / Math.pow(effectiveArea, DENSITY_PENALTY_EXPONENT);
+        return resCol + cellColorWeight;
+      }, 0)
+    );
+  }, 0);
 }
 
 /**
