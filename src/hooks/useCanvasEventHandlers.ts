@@ -449,12 +449,14 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
               });
               
               if (isFinite(minX)) {
-                // Apply the delta to get the "would-be" position
+                const halfStroke = (pathData.strokeWidth ?? 0) / 2;
+
+                // Apply the delta to get the "would-be" position including stroke width
                 const projectedBounds = {
-                  minX: minX + deltaX,
-                  minY: minY + deltaY,
-                  maxX: maxX + deltaX,
-                  maxY: maxY + deltaY,
+                  minX: minX + deltaX - halfStroke,
+                  minY: minY + deltaY - halfStroke,
+                  maxX: maxX + deltaX + halfStroke,
+                  maxY: maxY + deltaY + halfStroke,
                 };
                 
                 // Find alignment guidelines
