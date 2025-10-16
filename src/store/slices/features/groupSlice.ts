@@ -19,6 +19,8 @@ interface GroupSliceHelpers {
 
 export interface GroupSlice {
   groupNameCounter: number;
+  hiddenElementIds: string[];
+  lockedElementIds: string[];
   createGroupFromSelection: (name?: string) => string | null;
   ungroupSelectedGroups: () => void;
   ungroupGroupById: (groupId: string) => void;
@@ -26,6 +28,8 @@ export interface GroupSlice {
   setGroupExpanded: (groupId: string, expanded: boolean) => void;
   toggleGroupVisibility: (groupId: string) => void;
   toggleGroupLock: (groupId: string) => void;
+  toggleElementVisibility: (elementId: string) => void;
+  toggleElementLock: (elementId: string) => void;
   getGroupById: (groupId: string) => GroupElement | null;
   getGroupDescendants: (groupId: string) => string[];
   isElementHidden: (elementId: string) => boolean;
@@ -126,6 +130,8 @@ const ungroupGroupInternal = (
 
 export const createGroupSlice: StateCreator<CanvasStore, [], [], GroupSlice> = (set, get) => ({
   groupNameCounter: 1,
+  hiddenElementIds: [],
+  lockedElementIds: [],
   createGroupFromSelection: (name) => {
     const state = get() as CanvasStore;
     const selectedIds = state.selectedIds;
@@ -350,6 +356,48 @@ export const createGroupSlice: StateCreator<CanvasStore, [], [], GroupSlice> = (
       }),
     }));
   },
+  toggleElementVisibility: (elementId) => {
+    const state = get() as CanvasStore;
+    const element = state.elements.find((el) => el.id === elementId);
+    if (!element || element.type !== 'path') {
+      return;
+    }
+
+    set((storeState) => {
+      const currentState = storeState as CanvasStore;
+      const hiddenSet = new Set(currentState.hiddenElementIds ?? []);
+      if (hiddenSet.has(elementId)) {
+        hiddenSet.delete(elementId);
+      } else {
+        hiddenSet.add(elementId);
+      }
+
+      return {
+        hiddenElementIds: Array.from(hiddenSet),
+      };
+    });
+  },
+  toggleElementLock: (elementId) => {
+    const state = get() as CanvasStore;
+    const element = state.elements.find((el) => el.id === elementId);
+    if (!element || element.type !== 'path') {
+      return;
+    }
+
+    set((storeState) => {
+      const currentState = storeState as CanvasStore;
+      const lockedSet = new Set(currentState.lockedElementIds ?? []);
+      if (lockedSet.has(elementId)) {
+        lockedSet.delete(elementId);
+      } else {
+        lockedSet.add(elementId);
+      }
+
+      return {
+        lockedElementIds: Array.from(lockedSet),
+      };
+    });
+  },
   getGroupById: (groupId) => {
     const state = get() as CanvasStore;
     const element = state.elements.find((el) => el.id === groupId);
@@ -366,10 +414,17 @@ export const createGroupSlice: StateCreator<CanvasStore, [], [], GroupSlice> = (
   },
   isElementHidden: (elementId) => {
     const state = get() as CanvasStore;
+    const directHiddenIds = new Set(state.hiddenElementIds ?? []);
+    if (directHiddenIds.has(elementId)) {
+      return true;
+    }
     const elementMap = helpers.getElementMap(state.elements);
     let current = elementMap.get(elementId);
     while (current) {
       if (current.type === 'group' && current.data.isHidden) {
+        return true;
+      }
+      if (current.type === 'path' && directHiddenIds.has(current.id)) {
         return true;
       }
       current = current.parentId ? elementMap.get(current.parentId) : undefined;
@@ -378,10 +433,17 @@ export const createGroupSlice: StateCreator<CanvasStore, [], [], GroupSlice> = (
   },
   isElementLocked: (elementId) => {
     const state = get() as CanvasStore;
+    const directLockedIds = new Set(state.lockedElementIds ?? []);
+    if (directLockedIds.has(elementId)) {
+      return true;
+    }
     const elementMap = helpers.getElementMap(state.elements);
     let current = elementMap.get(elementId);
     while (current) {
       if (current.type === 'group' && current.data.isLocked) {
+        return true;
+      }
+      if (current.type === 'path' && directLockedIds.has(current.id)) {
         return true;
       }
       current = current.parentId ? elementMap.get(current.parentId) : undefined;

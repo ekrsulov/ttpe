@@ -71,9 +71,13 @@ const SelectPanelComponent: React.FC = () => {
   const setGroupExpanded = useCanvasStore(state => state.setGroupExpanded);
   const toggleGroupVisibility = useCanvasStore(state => state.toggleGroupVisibility);
   const toggleGroupLock = useCanvasStore(state => state.toggleGroupLock);
+  const toggleElementVisibility = useCanvasStore(state => state.toggleElementVisibility);
+  const toggleElementLock = useCanvasStore(state => state.toggleElementLock);
   const isElementHidden = useCanvasStore(state => state.isElementHidden);
   const isElementLocked = useCanvasStore(state => state.isElementLocked);
   const selectElements = useCanvasStore(state => state.selectElements);
+  const hiddenElementIds = useCanvasStore(state => state.hiddenElementIds);
+  const lockedElementIds = useCanvasStore(state => state.lockedElementIds);
 
   // Subscribe to elements and selectedIds separately to avoid infinite re-renders
   const elements = useCanvasStore(state => state.elements);
@@ -102,6 +106,15 @@ const SelectPanelComponent: React.FC = () => {
   }, [elements]);
 
   const selectedIdSet = useMemo(() => new Set(selectedIds), [selectedIds]);
+  const hiddenIdSet = useMemo(() => new Set(hiddenElementIds), [hiddenElementIds]);
+  const lockedIdSet = useMemo(() => new Set(lockedElementIds), [lockedElementIds]);
+
+  const orderedGroups = useMemo(() => {
+    const selectedSet = new Set(selectedIds);
+    const selectedGroups = groups.filter(group => selectedSet.has(group.id));
+    const unselectedGroups = groups.filter(group => !selectedSet.has(group.id));
+    return [...selectedGroups, ...unselectedGroups];
+  }, [groups, selectedIds]);
 
   const groupHasSelectedDescendant = useCallback(
     (group: GroupElement) => {
@@ -258,7 +271,7 @@ const SelectPanelComponent: React.FC = () => {
       >
         <HStack spacing={2} align="center">
           <ChakraIconButton
-            aria-label={groupData.isExpanded ? 'Contraer grupo' : 'Expandir grupo'}
+            aria-label={groupData.isExpanded ? 'Collapse group' : 'Expand group'}
             icon={groupData.isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
             size="xs"
             variant="ghost"
@@ -278,12 +291,12 @@ const SelectPanelComponent: React.FC = () => {
             <EditableInput />
           </Editable>
           <Text fontSize="10px" color="gray.600">
-            {groupData.childIds.length} elementos
+            {groupData.childIds.length} items
           </Text>
           <HStack spacing={1} ml="auto">
-            <Tooltip label="Desagrupar" openDelay={200}>
+            <Tooltip label="Ungroup" openDelay={200}>
               <ChakraIconButton
-                aria-label="Desagrupar grupo"
+                aria-label="Ungroup"
                 icon={<UngroupIcon size={12} />}
                 size="xs"
                 variant="ghost"
@@ -293,9 +306,9 @@ const SelectPanelComponent: React.FC = () => {
                 isDisabled={groupLocked}
               />
             </Tooltip>
-            <Tooltip label={groupLocked ? 'Desbloquear grupo' : 'Bloquear grupo'} openDelay={200}>
+            <Tooltip label={groupLocked ? 'Unlock group' : 'Lock group'} openDelay={200}>
               <ChakraIconButton
-                aria-label={groupLocked ? 'Desbloquear grupo' : 'Bloquear grupo'}
+                aria-label={groupLocked ? 'Unlock group' : 'Lock group'}
                 icon={groupLocked ? <Unlock size={12} /> : <Lock size={12} />}
                 size="xs"
                 variant="ghost"
@@ -304,9 +317,9 @@ const SelectPanelComponent: React.FC = () => {
                 onClick={() => toggleGroupLock(group.id)}
               />
             </Tooltip>
-            <Tooltip label={groupHidden ? 'Mostrar grupo' : 'Ocultar grupo'} openDelay={200}>
+            <Tooltip label={groupHidden ? 'Show group' : 'Hide group'} openDelay={200}>
               <ChakraIconButton
-                aria-label={groupHidden ? 'Mostrar grupo' : 'Ocultar grupo'}
+                aria-label={groupHidden ? 'Show group' : 'Hide group'}
                 icon={groupHidden ? <Eye size={12} /> : <EyeOff size={12} />}
                 size="xs"
                 variant="ghost"
@@ -315,9 +328,9 @@ const SelectPanelComponent: React.FC = () => {
                 onClick={() => toggleGroupVisibility(group.id)}
               />
             </Tooltip>
-            <Tooltip label="Seleccionar grupo" openDelay={200}>
+            <Tooltip label="Select group" openDelay={200}>
               <ChakraIconButton
-                aria-label="Seleccionar grupo"
+                aria-label="Select group"
                 icon={<MousePointer2 size={12} />}
                 size="xs"
                 variant="ghost"
@@ -356,9 +369,9 @@ const SelectPanelComponent: React.FC = () => {
                     {childLocked && <Lock size={10} color="#6b7280" />}
                     {childHidden && <EyeOff size={10} color="#6b7280" />}
                   </HStack>
-                  <Tooltip label="Seleccionar elemento" openDelay={200}>
+                  <Tooltip label="Select element" openDelay={200}>
                     <ChakraIconButton
-                      aria-label="Seleccionar elemento"
+                      aria-label="Select element"
                       icon={<MousePointer2 size={11} />}
                       size="xs"
                       variant="ghost"
@@ -385,9 +398,9 @@ const SelectPanelComponent: React.FC = () => {
       <RenderCountBadgeWrapper componentName="SelectPanel" position="top-right" />
       <Box h="94px" overflowY="auto">
         <VStack spacing={2} align="stretch">
-          {groups.length > 0 && (
+          {orderedGroups.length > 0 && (
             <VStack spacing={1} align="stretch" pt={1}>
-              {groups.map((group) => (
+              {orderedGroups.map((group) => (
                 renderGroupItem(group, {
                   isSelected: selectedIdSet.has(group.id),
                   hasSelectedDescendant: groupHasSelectedDescendant(group)
@@ -412,6 +425,19 @@ const SelectPanelComponent: React.FC = () => {
                 // Calculate bbox coordinates
                 const bbox = getBoundingBoxCoords(thumbnailCommands);
 
+                const isPathElement = item.type === 'element' && item.element.type === 'path';
+                const elementId = item.element.id;
+                const elementHidden = isElementHidden ? isElementHidden(elementId) : false;
+                const elementLocked = isElementLocked ? isElementLocked(elementId) : false;
+                const directHidden = hiddenIdSet.has(elementId);
+                const directLocked = lockedIdSet.has(elementId);
+                const primaryLabel = item.type === 'element'
+                  ? `z: ${item.element.zIndex} - p: ${item.pointCount}`
+                  : `Subpath ${item.subpathIndex ?? 0} - p: ${item.pointCount}`;
+                const coordinateText = bbox
+                  ? `${bbox.topLeft.x},${bbox.topLeft.y} ${bbox.bottomRight.x},${bbox.bottomRight.y}`
+                  : null;
+
                 return (
                   <HStack
                     key={`${item.element.id}-${item.type}-${item.subpathIndex || 0}`}
@@ -423,7 +449,6 @@ const SelectPanelComponent: React.FC = () => {
                     fontSize="10px"
                     align="flex-start"
                   >
-                    {/* Thumbnail */}
                     {thumbnailCommands.length > 0 && (
                       <PathThumbnail
                         commands={thumbnailCommands}
@@ -431,57 +456,97 @@ const SelectPanelComponent: React.FC = () => {
                         element={item.element}
                       />
                     )}
-
-                    {/* Text info */}
-                    <Box flex={1}>
-                      <Text fontWeight="500" fontSize="10px">
-                        {item.type === 'element'
-                          ? `${item.element.type} (z: ${item.element.zIndex}) - ${item.pointCount} points`
-                          : `Subpath ${item.subpathIndex} - ${item.pointCount} points`
-                        }
-                      </Text>
-                      {bbox && (
-                        <Text fontSize="9px" color="gray.600">
-                          ({bbox.topLeft.x}, {bbox.topLeft.y}) → ({bbox.bottomRight.x}, {bbox.bottomRight.y})
+                    <VStack spacing={1} align="stretch" flex={1}>
+                      <HStack spacing={2} align="center">
+                        <Text fontWeight="500" fontSize="10px" color={elementHidden ? 'gray.400' : 'gray.800'}>
+                          {primaryLabel}
                         </Text>
-                      )}
-                    </Box>
-
-                    {/* Action buttons - always aligned to the right */}
-                    <HStack spacing={1}>
-                      {item.type === 'element' && (
-                        <Tooltip label="Agrupar elementos seleccionados" openDelay={200}>
+                        <HStack spacing={1} ml="auto">
+                          {item.type === 'element' && (
+                            <Tooltip label="Group selected elements" openDelay={200}>
+                              <ChakraIconButton
+                                aria-label="Group selected elements"
+                                icon={<GroupIcon size={10} />}
+                                onClick={() => createGroup()}
+                                size="xs"
+                                minW="auto"
+                                h="auto"
+                                p={1}
+                                isDisabled={!canGroup}
+                              />
+                            </Tooltip>
+                          )}
                           <ChakraIconButton
-                            aria-label="Agrupar elementos seleccionados"
-                            icon={<GroupIcon size={10} />}
-                            onClick={() => createGroup()}
+                            aria-label="Duplicate"
+                            icon={<Copy size={10} />}
+                            onClick={() => duplicateItem(item)}
                             size="xs"
                             minW="auto"
                             h="auto"
                             p={1}
-                            isDisabled={!canGroup}
                           />
-                        </Tooltip>
+                          <ChakraIconButton
+                            aria-label="Copy path to clipboard"
+                            icon={<Clipboard size={10} />}
+                            onClick={() => copyPathToClipboard(item)}
+                            size="xs"
+                            minW="auto"
+                            h="auto"
+                            p={1}
+                          />
+                        </HStack>
+                      </HStack>
+                      {(coordinateText || isPathElement) && (
+                        <HStack spacing={2} align="center">
+                          <Text
+                            fontSize="9px"
+                            color={elementHidden ? 'gray.400' : 'gray.600'}
+                            flex={1}
+                            noOfLines={1}
+                          >
+                            {coordinateText ?? '—'}
+                          </Text>
+                          {isPathElement && (
+                            <HStack spacing={1}>
+                              <Tooltip label={directLocked ? 'Unlock path' : 'Lock path'} openDelay={200}>
+                                <ChakraIconButton
+                                  aria-label={directLocked ? 'Unlock path' : 'Lock path'}
+                                  icon={directLocked ? <Unlock size={10} /> : <Lock size={10} />}
+                                  onClick={() => toggleElementLock(elementId)}
+                                  size="xs"
+                                  minW="auto"
+                                  h="auto"
+                                  p={1}
+                                />
+                              </Tooltip>
+                              <Tooltip label={directHidden ? 'Show path' : 'Hide path'} openDelay={200}>
+                                <ChakraIconButton
+                                  aria-label={directHidden ? 'Show path' : 'Hide path'}
+                                  icon={directHidden ? <Eye size={10} /> : <EyeOff size={10} />}
+                                  onClick={() => toggleElementVisibility(elementId)}
+                                  size="xs"
+                                  minW="auto"
+                                  h="auto"
+                                  p={1}
+                                />
+                              </Tooltip>
+                              <Tooltip label="Select path" openDelay={200}>
+                                <ChakraIconButton
+                                  aria-label="Select path"
+                                  icon={<MousePointer2 size={10} />}
+                                  onClick={() => selectElements([elementId])}
+                                  size="xs"
+                                  minW="auto"
+                                  h="auto"
+                                  p={1}
+                                  isDisabled={elementLocked || elementHidden}
+                                />
+                              </Tooltip>
+                            </HStack>
+                          )}
+                        </HStack>
                       )}
-                      <ChakraIconButton
-                        aria-label="Duplicate"
-                        icon={<Copy size={10} />}
-                        onClick={() => duplicateItem(item)}
-                        size="xs"
-                        minW="auto"
-                        h="auto"
-                        p={1}
-                      />
-                      <ChakraIconButton
-                        aria-label="Copy Path to Clipboard"
-                        icon={<Clipboard size={10} />}
-                        onClick={() => copyPathToClipboard(item)}
-                        size="xs"
-                        minW="auto"
-                        h="auto"
-                        p={1}
-                      />
-                    </HStack>
+                    </VStack>
                   </HStack>
                 );
               })}
