@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Copy, Clipboard, MousePointer2, Eye, EyeOff, Lock, Unlock, ChevronDown, ChevronRight } from 'lucide-react';
 import { VStack, HStack, Box, Text, IconButton as ChakraIconButton, Tooltip, Editable, EditableInput, EditablePreview } from '@chakra-ui/react';
@@ -81,9 +81,55 @@ const SelectPanelComponent: React.FC = () => {
   const selectedIds = useCanvasStore(state => state.selectedIds);
   
   // Memoize the filtered selected elements to prevent unnecessary re-renders
-  const selectedElements = useMemo(() => 
+  const selectedElements = useMemo(() =>
     elements.filter(el => selectedIds.includes(el.id)),
     [elements, selectedIds]
+  );
+
+  const groups = useMemo(
+    () =>
+      elements
+        .filter((el): el is GroupElement => el.type === 'group')
+        .sort((a, b) => a.data.name.localeCompare(b.data.name)),
+    [elements]
+  );
+
+  const elementMap = useMemo(() => {
+    const map = new Map<string, CanvasElement>();
+    elements.forEach((el) => {
+      map.set(el.id, el);
+    });
+    return map;
+  }, [elements]);
+
+  const selectedIdSet = useMemo(() => new Set(selectedIds), [selectedIds]);
+
+  const groupHasSelectedDescendant = useCallback(
+    (group: GroupElement) => {
+      const queue = [...group.data.childIds];
+      const visited = new Set<string>();
+
+      while (queue.length > 0) {
+        const childId = queue.shift();
+        if (!childId || visited.has(childId)) {
+          continue;
+        }
+
+        visited.add(childId);
+
+        if (selectedIdSet.has(childId)) {
+          return true;
+        }
+
+        const child = elementMap.get(childId);
+        if (child && child.type === 'group') {
+          queue.push(...child.data.childIds);
+        }
+      }
+
+      return false;
+    },
+    [elementMap, selectedIdSet]
   );
 
   // Build list of items to display
@@ -110,9 +156,6 @@ const SelectPanelComponent: React.FC = () => {
           items.push({ type: 'subpath', element: el, subpathIndex: sp.subpathIndex, pointCount: subPointCount });
         }
       });
-    } else {
-      // For non-path elements, just add them
-      items.push({ type: 'element', element: el, pointCount: 0 });
     }
   });
 
@@ -183,18 +226,36 @@ const SelectPanelComponent: React.FC = () => {
     }
   };
 
-  const renderGroupItem = (group: GroupElement) => {
+  const renderGroupItem = (group: GroupElement, options?: { isSelected?: boolean; hasSelectedDescendant?: boolean }) => {
     const groupData = group.data;
     const groupHidden = isElementHidden(group.id);
     const groupLocked = isElementLocked(group.id);
+    const isSelected = options?.isSelected ?? false;
+    const hasSelectedDescendant = options?.hasSelectedDescendant ?? false;
+
+    const borderColor = isSelected
+      ? 'blue.400'
+      : hasSelectedDescendant
+        ? 'blue.200'
+        : 'gray.200';
+
+    const backgroundColor = isSelected
+      ? 'blue.50'
+      : hasSelectedDescendant
+        ? 'rgba(59, 130, 246, 0.08)'
+        : 'gray.50';
 
     return (
       <Box
         key={`group-${group.id}`}
         px={1}
         py={1}
-        bg="gray.50"
+        bg={backgroundColor}
         borderRadius="sm"
+        borderWidth="1px"
+        borderColor={borderColor}
+        boxShadow={isSelected ? '0 0 0 1px rgba(59, 130, 246, 0.4)' : undefined}
+        transition="background-color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease"
       >
         <HStack spacing={2} align="center">
           <ChakraIconButton
@@ -269,13 +330,15 @@ const SelectPanelComponent: React.FC = () => {
               const childLabel = child.type === 'group'
                 ? child.data.name
                 : `${child.type} (${child.id.slice(-4)})`;
+              const childIsSelected = selectedIdSet.has(child.id);
 
               return (
                 <HStack
                   key={childId}
                   spacing={2}
                   justify="space-between"
-                  color={childHidden ? 'gray.400' : 'gray.700'}
+                  color={childHidden ? 'gray.400' : childIsSelected ? 'blue.600' : 'gray.700'}
+                  fontWeight={childIsSelected ? '600' : 'normal'}
                 >
                   <HStack spacing={1} align="center">
                     <Text>{childLabel}</Text>
@@ -305,6 +368,7 @@ const SelectPanelComponent: React.FC = () => {
 
   const canGroup = selectedElements.length >= 2;
   const canUngroup = selectedElements.some(el => el.type === 'group');
+  const hasSelection = selectedElements.length > 0;
 
   return (
     <Box bg="white" px={2} position="relative">
@@ -319,13 +383,19 @@ const SelectPanelComponent: React.FC = () => {
               onUngroup={() => ungroupSelectedGroups()}
             />
           </Box>
+          {groups.length > 0 && (
+            <VStack spacing={1} align="stretch" pt={1}>
+              {groups.map((group) => (
+                renderGroupItem(group, {
+                  isSelected: selectedIdSet.has(group.id),
+                  hasSelectedDescendant: groupHasSelectedDescendant(group)
+                })
+              ))}
+            </VStack>
+          )}
           {items.length > 0 ? (
             <VStack spacing={1} align="stretch">
               {items.map((item) => {
-                if (item.type === 'element' && item.element.type === 'group') {
-                  return renderGroupItem(item.element);
-                }
-
                 // Get commands for thumbnail and bbox
                 let thumbnailCommands: Command[] = [];
                 if (item.type === 'element' && item.element.type === 'path') {
@@ -411,7 +481,9 @@ const SelectPanelComponent: React.FC = () => {
               alignItems="center"
               justifyContent="center"
             >
-              Select elements to see details and options
+              {hasSelection
+                ? 'No additional options available for the selected items'
+                : 'Select elements to see details and options'}
             </Box>
           )}
         </VStack>

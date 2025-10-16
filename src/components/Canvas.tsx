@@ -470,13 +470,43 @@ export const Canvas: React.FC = () => {
   };
 
   const selectedGroupBounds = useMemo(() => {
-    return selectedIds
-      .map((id) => {
-        const element = elementMap.get(id);
-        if (element && element.type === 'group') {
-          const bounds = calculateGroupBounds(element as GroupElement);
+    const groupIds = new Set<string>();
+
+    selectedIds.forEach((id) => {
+      const element = elementMap.get(id);
+      if (!element) {
+        return;
+      }
+
+      if (element.type === 'group') {
+        groupIds.add(element.id);
+      }
+
+      let currentParentId = element.parentId ?? null;
+      const visitedAncestors = new Set<string>();
+      while (currentParentId) {
+        if (visitedAncestors.has(currentParentId)) {
+          break;
+        }
+        visitedAncestors.add(currentParentId);
+
+        const parent = elementMap.get(currentParentId);
+        if (parent && parent.type === 'group') {
+          groupIds.add(parent.id);
+          currentParentId = parent.parentId ?? null;
+        } else {
+          break;
+        }
+      }
+    });
+
+    return Array.from(groupIds)
+      .map((groupId) => {
+        const group = elementMap.get(groupId);
+        if (group && group.type === 'group') {
+          const bounds = calculateGroupBounds(group as GroupElement);
           if (bounds) {
-            return { id: element.id, bounds };
+            return { id: group.id, bounds };
           }
         }
         return null;

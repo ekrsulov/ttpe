@@ -1,5 +1,5 @@
 import type { StateCreator } from 'zustand';
-import type { CanvasElement, GroupElement } from '../../../types';
+import type { CanvasElement } from '../../../types';
 import type { CanvasStore } from '../../canvasStore';
 import { translatePathData } from '../../../utils/transformationUtils';
 
@@ -98,47 +98,105 @@ export const createSelectionSlice: StateCreator<CanvasStore, [], [], SelectionSl
   },
 
   moveSelectedElements: (deltaX, deltaY) => {
-    const selectedIds = get().selectedIds;
     const state = get() as CanvasStore;
+    const selectedIds = state.selectedIds;
+    if (selectedIds.length === 0) {
+      return;
+    }
+
     const precision = state.settings.keyboardMovementPrecision;
     const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
 
-    const groupsToMove = selectedIds
-      .map((id) => state.elements.find((el: CanvasElement) => el.id === id))
-      .filter((element): element is GroupElement => element?.type === 'group');
-
-    const descendantIds = new Set<string>();
-    groupsToMove.forEach((group) => {
-      const descendants = state.getGroupDescendants ? state.getGroupDescendants(group.id) : [];
-      descendants.forEach((descendantId) => descendantIds.add(descendantId));
+    const elementMap = new Map<string, CanvasElement>();
+    state.elements.forEach((element) => {
+      elementMap.set(element.id, element);
     });
 
     const selectedSet = new Set(selectedIds);
-    const movedDescendants = new Set<string>();
+    const groupsToMoveIds = new Set<string>();
+
+    selectedIds.forEach((id) => {
+      const element = elementMap.get(id);
+      if (!element) {
+        return;
+      }
+
+      if (element.type === 'group') {
+        groupsToMoveIds.add(element.id);
+      }
+
+      let currentParentId = element.parentId ?? null;
+      const visitedAncestors = new Set<string>();
+      while (currentParentId) {
+        if (visitedAncestors.has(currentParentId)) {
+          break;
+        }
+        visitedAncestors.add(currentParentId);
+
+        const parent = elementMap.get(currentParentId);
+        if (parent && parent.type === 'group') {
+          groupsToMoveIds.add(parent.id);
+          currentParentId = parent.parentId ?? null;
+        } else {
+          break;
+        }
+      }
+    });
+
+    const descendantIds = new Set<string>();
+    groupsToMoveIds.forEach((groupId) => {
+      const descendants = state.getGroupDescendants ? state.getGroupDescendants(groupId) : [];
+      descendants.forEach((descendantId) => descendantIds.add(descendantId));
+    });
+
+    const movedPathIds = new Set<string>();
+    const movedGroupIds = new Set<string>();
+
     setStore((currentState) => ({
       elements: currentState.elements.map((el: CanvasElement) => {
-        if (descendantIds.has(el.id) && el.type === 'path') {
-          movedDescendants.add(el.id);
-          const pathData = el.data as import('../../../types').PathData;
+        if (el.type === 'path') {
+          if (descendantIds.has(el.id) || (selectedSet.has(el.id) && !movedPathIds.has(el.id))) {
+            if (movedPathIds.has(el.id)) {
+              return el;
+            }
+            movedPathIds.add(el.id);
+            const pathData = el.data as import('../../../types').PathData;
+            return {
+              ...el,
+              data: translatePathData(pathData, deltaX, deltaY, {
+                precision: precision,
+                roundToIntegers: precision === 0
+              })
+            };
+          }
+          return el;
+        }
+
+        if (el.type === 'group' && (groupsToMoveIds.has(el.id) || descendantIds.has(el.id))) {
+          if (movedGroupIds.has(el.id)) {
+            return el;
+          }
+          movedGroupIds.add(el.id);
+          const transform = el.data.transform ?? {
+            translateX: 0,
+            translateY: 0,
+            rotation: 0,
+            scaleX: 1,
+            scaleY: 1,
+          };
           return {
             ...el,
-            data: translatePathData(pathData, deltaX, deltaY, {
-              precision: precision,
-              roundToIntegers: precision === 0
-            })
+            data: {
+              ...el.data,
+              transform: {
+                ...transform,
+                translateX: transform.translateX + deltaX,
+                translateY: transform.translateY + deltaY,
+              },
+            },
           };
         }
 
-        if (selectedSet.has(el.id) && el.type === 'path' && !movedDescendants.has(el.id)) {
-          const pathData = el.data as import('../../../types').PathData;
-          return {
-            ...el,
-            data: translatePathData(pathData, deltaX, deltaY, {
-              precision: precision,
-              roundToIntegers: precision === 0
-            })
-          };
-        }
         return el;
       }),
     }));
