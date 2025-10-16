@@ -201,6 +201,15 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       setIsDragging(false);
     }
 
+    const state = useCanvasStore.getState();
+    if (state.isElementHidden && state.isElementHidden(elementId)) {
+      return;
+    }
+
+    if (state.isElementLocked && state.isElementLocked(elementId)) {
+      return;
+    }
+
     // Effective shift state (physical OR virtual)
     const effectiveShiftKey = getEffectiveShift(e.shiftKey, isVirtualShiftActive);
 

@@ -15,7 +15,7 @@ import { useCanvasEventHandlers } from '../hooks/useCanvasEventHandlers';
 import { pluginManager } from '../utils/pluginManager';
 import { logger } from '../utils';
 import { RenderCountBadgeWrapper } from './ui/RenderCountBadgeWrapper';
-import type { Point, PathData, CanvasElement } from '../types';
+import type { Point, PathData, CanvasElement, GroupElement } from '../types';
 
 export const Canvas: React.FC = () => {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -82,6 +82,7 @@ export const Canvas: React.FC = () => {
     saveAsPng,
     snapToGrid,
     clearGuidelines,
+    isElementHidden,
   } = useCanvasStore(
     useShallow((state) => ({
       elements: state.elements,
@@ -108,6 +109,7 @@ export const Canvas: React.FC = () => {
       saveAsPng: state.saveAsPng,
       snapToGrid: state.snapToGrid,
       clearGuidelines: state.clearGuidelines,
+      isElementHidden: state.isElementHidden,
     }))
   );
   
@@ -146,6 +148,70 @@ export const Canvas: React.FC = () => {
   const sortedElements = useMemo(() => {
     return [...elements].sort((a, b) => a.zIndex - b.zIndex);
   }, [elements]);
+
+  const elementMap = useMemo(() => {
+    const map = new Map<string, CanvasElement>();
+    elements.forEach((el) => {
+      map.set(el.id, el);
+    });
+    return map;
+  }, [elements]);
+
+  const calculateGroupBounds = useCallback(
+    (group: GroupElement, visited: Set<string> = new Set()): { minX: number; minY: number; maxX: number; maxY: number } | null => {
+      if (visited.has(group.id)) {
+        return null;
+      }
+      visited.add(group.id);
+
+      let minX = Infinity;
+      let minY = Infinity;
+      let maxX = -Infinity;
+      let maxY = -Infinity;
+      let hasBounds = false;
+
+      group.data.childIds.forEach((childId) => {
+        const child = elementMap.get(childId);
+        if (!child) {
+          return;
+        }
+
+        if (isElementHidden && isElementHidden(child.id)) {
+          return;
+        }
+
+        if (child.type === 'group') {
+          const childBounds = calculateGroupBounds(child as GroupElement, visited);
+          if (childBounds) {
+            minX = Math.min(minX, childBounds.minX);
+            minY = Math.min(minY, childBounds.minY);
+            maxX = Math.max(maxX, childBounds.maxX);
+            maxY = Math.max(maxY, childBounds.maxY);
+            hasBounds = true;
+          }
+        } else if (child.type === 'path') {
+          const pathData = child.data as PathData;
+          const bounds = measurePath(pathData.subPaths, pathData.strokeWidth, viewport.zoom);
+          if (bounds) {
+            minX = Math.min(minX, bounds.minX);
+            minY = Math.min(minY, bounds.minY);
+            maxX = Math.max(maxX, bounds.maxX);
+            maxY = Math.max(maxY, bounds.maxY);
+            hasBounds = true;
+          }
+        }
+      });
+
+      visited.delete(group.id);
+
+      if (!hasBounds) {
+        return null;
+      }
+
+      return { minX, minY, maxX, maxY };
+    },
+    [elementMap, isElementHidden, viewport.zoom]
+  );
 
   // Helper functions for event handlers
   const moveSelectedElements = useCallback((deltaX: number, deltaY: number) => {
@@ -297,6 +363,10 @@ export const Canvas: React.FC = () => {
     const { data, type } = element;
     const isSelected = selectedIds.includes(element.id);
 
+    if (isElementHidden && isElementHidden(element.id)) {
+      return null;
+    }
+
     switch (type) {
       case 'path': {
         const pathData = data as PathData;
@@ -398,6 +468,21 @@ export const Canvas: React.FC = () => {
         return null;
     }
   };
+
+  const selectedGroupBounds = useMemo(() => {
+    return selectedIds
+      .map((id) => {
+        const element = elementMap.get(id);
+        if (element && element.type === 'group') {
+          const bounds = calculateGroupBounds(element as GroupElement);
+          if (bounds) {
+            return { id: element.id, bounds };
+          }
+        }
+        return null;
+      })
+      .filter((value): value is { id: string; bounds: { minX: number; minY: number; maxX: number; maxY: number } } => Boolean(value));
+  }, [selectedIds, elementMap, calculateGroupBounds]);
 
   // Handle keyboard events
   useEffect(() => {
@@ -696,6 +781,22 @@ export const Canvas: React.FC = () => {
 
       {/* Sort elements by zIndex */}
       {sortedElements.map(renderElement)}
+
+      {/* Group selection overlays */}
+      {selectedGroupBounds.map(({ id, bounds }) => (
+        <rect
+          key={`group-selection-${id}`}
+          x={bounds.minX}
+          y={bounds.minY}
+          width={bounds.maxX - bounds.minX}
+          height={bounds.maxY - bounds.minY}
+          fill="none"
+          stroke="#2563eb"
+          strokeWidth={1 / viewport.zoom}
+          strokeDasharray={`${6 / viewport.zoom} ${4 / viewport.zoom}`}
+          pointerEvents="none"
+        />
+      ))}
 
       {/* Selection rectangle */}
       {isSelecting && selectionStart && selectionEnd && (

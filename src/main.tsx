@@ -5,8 +5,8 @@ import './index.css'
 import App from './App.tsx'
 import { theme } from './theme'
 
-// Conditionally expose test globals only in development environment
-if (process.env.NODE_ENV === 'development') {
+// Conditionally expose test globals whenever we're not in production
+if (process.env.NODE_ENV !== 'production') {
   import('./testing/testHelpers').then(({ exposeTestGlobals }) => exposeTestGlobals());
 }
 
