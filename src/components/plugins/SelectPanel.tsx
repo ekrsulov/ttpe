@@ -590,13 +590,11 @@ const SelectPanelComponent: React.FC = () => {
                     borderColor={containerBorderColor}
                     borderRadius="sm"
                     fontSize="10px"
-                    align="flex-start"
+                    align="center"
                   >
                     {thumbnailCommands.length > 0 && (
                       <PathThumbnail
                         commands={thumbnailCommands}
-                        size={32}
-                        element={item.element}
                       />
                     )}
                     <VStack spacing={1} align="stretch" flex={1}>

@@ -1,21 +1,17 @@
 import React from 'react';
 import { Box } from '@chakra-ui/react';
-import type { Command, CanvasElement, PathData } from '../../types';
+import type { Command } from '../../types';
 import { commandsToString } from '../../utils/path';
 
 interface PathThumbnailProps {
   commands: Command[];
-  size?: number;
-  element?: CanvasElement;
 }
 
 /**
  * Renders a small SVG thumbnail preview of a path
  */
 export const PathThumbnail: React.FC<PathThumbnailProps> = ({ 
-  commands, 
-  size = 40,
-  element
+  commands
 }) => {
   // Calculate bounding box of the path
   const getBoundingBox = (cmds: Command[]) => {
@@ -60,8 +56,8 @@ export const PathThumbnail: React.FC<PathThumbnailProps> = ({
   if (commands.length === 0) {
     return (
       <Box 
-        width={`${size}px`} 
-        height={`${size}px`} 
+        width="48px" 
+        height="48px" 
         bg="gray.100" 
         borderRadius="sm"
       />
@@ -81,25 +77,18 @@ export const PathThumbnail: React.FC<PathThumbnailProps> = ({
 
   const pathString = commandsToString(commands);
 
-  // Get fill and stroke from element if available
-  const fill = element?.type === 'path' 
-    ? (element.data as PathData).fillColor || 'none'
-    : 'none';
-  const fillOpacity = element?.type === 'path'
-    ? (element.data as PathData).fillOpacity || 1
-    : 1;
-  const strokeColor = element?.type === 'path'
-    ? (element.data as PathData).strokeColor
-    : '#000000';
-  const stroke = strokeColor === 'none' ? '#000000' : strokeColor;
+  // Always use black stroke and no fill for thumbnails
+  const fill = 'none';
+  const fillOpacity = 1;
+  const stroke = '#000000';
 
   // Use fixed stroke width for thumbnail
   const thumbnailStrokeWidth = 1;
 
   return (
     <Box 
-      width={`${size}px`} 
-      height={`${size}px`} 
+      width="48px" 
+      height="48px"
       bg="white" 
       borderRadius="sm"
       border="1px solid"
@@ -110,8 +99,8 @@ export const PathThumbnail: React.FC<PathThumbnailProps> = ({
       flexShrink={0}
     >
       <svg
-        width={size}
-        height={size}
+        width="48"
+        height="48"
         viewBox={`${viewBoxX} ${viewBoxY} ${viewBoxWidth} ${viewBoxHeight}`}
         preserveAspectRatio="xMidYMid meet"
       >
