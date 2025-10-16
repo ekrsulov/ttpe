@@ -3,7 +3,7 @@ import { useCanvasStore } from '../../store/canvasStore';
 import { Copy, Clipboard, MousePointer2, Eye, EyeOff, Lock, Unlock, ChevronDown, ChevronRight, Group as GroupIcon, Ungroup as UngroupIcon } from 'lucide-react';
 import { VStack, HStack, Box, Text, IconButton as ChakraIconButton, Tooltip, Editable, EditableInput, EditablePreview } from '@chakra-ui/react';
 import { extractEditablePoints, extractSubpaths, commandsToString, translateCommands } from '../../utils/path';
-import type { CanvasElement, PathData, Command, GroupElement } from '../../types';
+import type { CanvasElement, PathData, Command, GroupElement, PathElement } from '../../types';
 import { logger } from '../../utils';
 import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
 import { PathThumbnail } from '../ui/PathThumbnail';
@@ -64,6 +64,24 @@ const getBoundingBoxCoords = (commands: Command[]) => {
     topLeft: { x: Math.round(minX), y: Math.round(minY) },
     bottomRight: { x: Math.round(maxX), y: Math.round(maxY) }
   };
+};
+
+type SelectPanelItem =
+  | {
+      type: 'element';
+      element: CanvasElement;
+      pointCount: number;
+    }
+  | {
+      type: 'subpath';
+      element: PathElement;
+      subpathIndex: number;
+      pointCount: number;
+    };
+
+const omitIdAndZIndex = <T extends { id: string; zIndex: number }>(element: T): Omit<T, 'id' | 'zIndex'> => {
+  const { id: _id, zIndex: _zIndex, ...rest } = element;
+  return rest;
 };
 
 const SelectPanelComponent: React.FC = () => {
@@ -222,64 +240,61 @@ const SelectPanelComponent: React.FC = () => {
   );
 
   // Build list of items to display
-  const items = useMemo(() => {
-    const orderedItems: Array<{
-      type: 'element' | 'subpath';
-      element: CanvasElement;
-      subpathIndex?: number;
-      pointCount: number;
-    }> = [];
+  const items = useMemo<SelectPanelItem[]>(() => {
+    const orderedItems: SelectPanelItem[] = [];
 
-    const unselectedItems: typeof orderedItems = [];
+    const unselectedItems: SelectPanelItem[] = [];
 
     elements.forEach((element) => {
       if (element.type === 'group') {
         return;
       }
 
-      if (element.type === 'path') {
-        const commands = (element.data as PathData).subPaths.flat();
-        const pointCount = extractEditablePoints(commands).length;
-        const baseItem = { type: 'element' as const, element, pointCount };
-
-        if (selectedIdSet.has(element.id)) {
+      if (element.type !== 'path') {
+        const nonPathElement = element as CanvasElement;
+        const baseItem: SelectPanelItem = { type: 'element', element: nonPathElement, pointCount: 0 };
+        if (selectedIdSet.has(nonPathElement.id)) {
           orderedItems.push(baseItem);
+        } else {
+          unselectedItems.push(baseItem);
+        }
+        return;
+      }
 
-          const subpaths = extractSubpaths(commands);
-          const subpathSelections = selectedSubpathsByElement.get(element.id) ?? [];
-          subpathSelections.forEach((selection) => {
-            const subpathData = subpaths[selection.subpathIndex];
-            if (!subpathData) {
-              return;
-            }
-            const subPointCount = extractEditablePoints(subpathData.commands).length;
-            orderedItems.push({
-              type: 'subpath',
-              element,
-              subpathIndex: selection.subpathIndex,
-              pointCount: subPointCount,
-            });
+      const commands = (element.data as PathData).subPaths.flat();
+      const pointCount = extractEditablePoints(commands).length;
+      const baseItem: SelectPanelItem = { type: 'element', element, pointCount };
+
+      if (selectedIdSet.has(element.id)) {
+        orderedItems.push(baseItem);
+
+        const subpaths = extractSubpaths(commands);
+        const subpathSelections = selectedSubpathsByElement.get(element.id) ?? [];
+        subpathSelections.forEach((selection) => {
+          const subpathData = subpaths[selection.subpathIndex];
+          if (!subpathData) {
+            return;
+          }
+          const subPointCount = extractEditablePoints(subpathData.commands).length;
+          orderedItems.push({
+            type: 'subpath',
+            element,
+            subpathIndex: selection.subpathIndex,
+            pointCount: subPointCount,
           });
-        } else {
-          unselectedItems.push(baseItem);
-        }
+        });
       } else {
-        const baseItem = { type: 'element' as const, element, pointCount: 0 };
-        if (selectedIdSet.has(element.id)) {
-          orderedItems.push(baseItem);
-        } else {
-          unselectedItems.push(baseItem);
-        }
+        unselectedItems.push(baseItem);
       }
     });
 
     return [...orderedItems, ...unselectedItems];
   }, [elements, selectedIdSet, selectedSubpathsByElement]);
 
-  const duplicateItem = (item: typeof items[0]) => {
+  const duplicateItem = (item: SelectPanelItem) => {
     if (item.type === 'element') {
       // Duplicate the entire element
-      const { id: _id, zIndex: _zIndex, ...elementData } = item.element;
+      const elementData = omitIdAndZIndex(item.element);
       
       // If it's a path, translate it to make duplication visible
       if (elementData.type === 'path') {
@@ -317,7 +332,7 @@ const SelectPanelComponent: React.FC = () => {
     }
   };
 
-  const copyPathToClipboard = async (item: typeof items[0]) => {
+  const copyPathToClipboard = async (item: SelectPanelItem) => {
     let pathData = '';
 
     if (item.type === 'element') {
@@ -549,9 +564,10 @@ const SelectPanelComponent: React.FC = () => {
                 const isSelectedElement = selectedIdSet.has(elementId);
                 const directHidden = hiddenIdSet.has(elementId);
                 const directLocked = lockedIdSet.has(elementId);
+                const subpathIndex = item.type === 'subpath' ? item.subpathIndex : undefined;
                 const primaryLabel = item.type === 'element'
                   ? `z: ${item.element.zIndex} - p: ${item.pointCount}`
-                  : `Subpath ${item.subpathIndex ?? 0} - p: ${item.pointCount}`;
+                  : `Subpath ${subpathIndex ?? 0} - p: ${item.pointCount}`;
                 const coordinateText = bbox
                   ? `${bbox.topLeft.x},${bbox.topLeft.y} ${bbox.bottomRight.x},${bbox.bottomRight.y}`
                   : null;
@@ -559,9 +575,13 @@ const SelectPanelComponent: React.FC = () => {
                 const containerBg = isSelectedElement ? 'blue.50' : 'gray.50';
                 const containerBorderColor = isSelectedElement ? 'blue.200' : 'gray.100';
 
+                const itemKey = subpathIndex !== undefined
+                  ? `${item.element.id}-${item.type}-${subpathIndex}`
+                  : `${item.element.id}-${item.type}`;
+
                 return (
                   <HStack
-                    key={`${item.element.id}-${item.type}-${item.subpathIndex || 0}`}
+                    key={itemKey}
                     spacing={2}
                     px={1}
                     py={1}
