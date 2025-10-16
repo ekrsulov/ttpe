@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Box, Flex, IconButton, Divider } from '@chakra-ui/react';
 import { ArrangePanel } from '../plugins/ArrangePanel';
 import { SelectPanel } from '../plugins/SelectPanel';
@@ -17,19 +17,45 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
   isArrangeExpanded,
   setIsArrangeExpanded,
 }) => {
+  const footerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const node = footerRef.current;
+    if (!node) {
+      return;
+    }
+
+    const updateHeightVariable = () => {
+      document.documentElement.style.setProperty('--sidebar-footer-height', `${node.offsetHeight}px`);
+    };
+
+    updateHeightVariable();
+
+    if (typeof ResizeObserver === 'undefined') {
+      return () => {
+        document.documentElement.style.removeProperty('--sidebar-footer-height');
+      };
+    }
+
+    const resizeObserver = new ResizeObserver(updateHeightVariable);
+    resizeObserver.observe(node);
+
+    return () => {
+      resizeObserver.disconnect();
+      document.documentElement.style.removeProperty('--sidebar-footer-height');
+    };
+  }, []);
+
   // Subscribe to individual selection state to avoid unnecessary re-renders
   const hasSelectedIds = useCanvasStore(state => state.selectedIds.length > 0);
   const hasSelectedCommands = useCanvasStore(state => state.selectedCommands.length > 0);
   const hasSelectedSubpaths = useCanvasStore(state => state.selectedSubpaths.length > 0);
   
   const hasSelection = hasSelectedIds || hasSelectedCommands || hasSelectedSubpaths;
-  
-  if (!hasSelection) {
-    return null;
-  }
 
   return (
     <Box
+      ref={footerRef}
       position="absolute"
       bottom={0}
       left={0}
@@ -39,26 +65,27 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
       display="flex"
       flexDirection="column"
     >
-      {isArrangeExpanded && <ArrangePanel />}
+      {hasSelection && isArrangeExpanded && <ArrangePanel />}
 
-      {/* Expand/Collapse Divider with Button */}
-      <Flex position="relative" my={1} align="center">
-        <Divider />
-        <IconButton
-          aria-label={isArrangeExpanded ? "Collapse Arrange" : "Expand Arrange"}
-          icon={isArrangeExpanded ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
-          onClick={() => setIsArrangeExpanded(!isArrangeExpanded)}
-          size="xs"
-          variant="outline"
-          borderRadius="full"
-          bg="white"
-          position="absolute"
-          left="50%"
-          transform="translateX(-50%)"
-          minW="24px"
-          h="24px"
-        />
-      </Flex>
+      {hasSelection && (
+        <Flex position="relative" my={1} align="center">
+          <Divider />
+          <IconButton
+            aria-label={isArrangeExpanded ? "Collapse Arrange" : "Expand Arrange"}
+            icon={isArrangeExpanded ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
+            onClick={() => setIsArrangeExpanded(!isArrangeExpanded)}
+            size="xs"
+            variant="outline"
+            borderRadius="full"
+            bg="white"
+            position="absolute"
+            left="50%"
+            transform="translateX(-50%)"
+            minW="24px"
+            h="24px"
+          />
+        </Flex>
+      )}
 
       <SelectPanel />
     </Box>
