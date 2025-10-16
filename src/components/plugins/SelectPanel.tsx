@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Copy, Clipboard, MousePointer2, Eye, EyeOff, Lock, Unlock, ChevronDown, ChevronRight, Group as GroupIcon, Ungroup as UngroupIcon } from 'lucide-react';
 import { VStack, HStack, Box, Text, IconButton as ChakraIconButton, Tooltip, Editable, EditableInput, EditablePreview } from '@chakra-ui/react';
@@ -7,6 +7,10 @@ import type { CanvasElement, PathData, Command, GroupElement } from '../../types
 import { logger } from '../../utils';
 import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
 import { PathThumbnail } from '../ui/PathThumbnail';
+
+const DEFAULT_PANEL_HEIGHT = 140;
+const MIN_PANEL_HEIGHT = 96;
+const MAX_PANEL_HEIGHT = 360;
 
 // Helper to extract subpath data from an element
 const getSubpathData = (element: CanvasElement, subpathIndex: number) => {
@@ -109,6 +113,79 @@ const SelectPanelComponent: React.FC = () => {
   const hiddenIdSet = useMemo(() => new Set(hiddenElementIds), [hiddenElementIds]);
   const lockedIdSet = useMemo(() => new Set(lockedElementIds), [lockedElementIds]);
 
+  const selectedSubpathsByElement = useMemo(() => {
+    const map = new Map<string, typeof selectedSubpaths>();
+    selectedSubpaths.forEach(subpath => {
+      if (!map.has(subpath.elementId)) {
+        map.set(subpath.elementId, []);
+      }
+      map.get(subpath.elementId)?.push(subpath);
+    });
+    return map;
+  }, [selectedSubpaths]);
+
+  const [panelHeight, setPanelHeight] = useState(DEFAULT_PANEL_HEIGHT);
+  const [isResizing, setIsResizing] = useState(false);
+  const resizeStartYRef = useRef(0);
+  const resizeStartHeightRef = useRef(DEFAULT_PANEL_HEIGHT);
+
+  const handleResizeStart = useCallback((event: React.MouseEvent) => {
+    event.preventDefault();
+    resizeStartYRef.current = event.clientY;
+    resizeStartHeightRef.current = panelHeight;
+    setIsResizing(true);
+  }, [panelHeight]);
+
+  const handleResetHeight = useCallback(() => {
+    setPanelHeight(DEFAULT_PANEL_HEIGHT);
+  }, []);
+
+  useEffect(() => {
+    if (!isResizing) {
+      return () => {
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+      };
+    }
+
+    const handleMouseMove = (event: MouseEvent) => {
+      const deltaY = resizeStartYRef.current - event.clientY;
+      const newHeight = Math.min(
+        Math.max(resizeStartHeightRef.current + deltaY, MIN_PANEL_HEIGHT),
+        MAX_PANEL_HEIGHT,
+      );
+      setPanelHeight(newHeight);
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'ns-resize';
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+    };
+  }, [isResizing]);
+
+  useEffect(() => {
+    if (typeof ResizeObserver !== 'undefined') {
+      return;
+    }
+
+    document.documentElement.style.setProperty('--sidebar-footer-height', `${panelHeight + 80}px`);
+
+    return () => {
+      document.documentElement.style.removeProperty('--sidebar-footer-height');
+    };
+  }, [panelHeight]);
+
   const orderedGroups = useMemo(() => {
     const selectedSet = new Set(selectedIds);
     const selectedGroups = groups.filter(group => selectedSet.has(group.id));
@@ -145,31 +222,59 @@ const SelectPanelComponent: React.FC = () => {
   );
 
   // Build list of items to display
-  const items: Array<{
-    type: 'element' | 'subpath';
-    element: CanvasElement;
-    subpathIndex?: number;
-    pointCount: number;
-  }> = [];
+  const items = useMemo(() => {
+    const orderedItems: Array<{
+      type: 'element' | 'subpath';
+      element: CanvasElement;
+      subpathIndex?: number;
+      pointCount: number;
+    }> = [];
 
-  selectedElements.forEach(el => {
-    if (el.type === 'path') {
-      const commands = (el.data as PathData).subPaths.flat();
-      const pointCount = extractEditablePoints(commands).length;
-      items.push({ type: 'element', element: el, pointCount });
+    const unselectedItems: typeof orderedItems = [];
 
-      // Add selected subpaths for this element
-      const elementSubpaths = selectedSubpaths.filter(sp => sp.elementId === el.id);
-      const subpaths = extractSubpaths(commands);
-      elementSubpaths.forEach(sp => {
-        const subpathData = subpaths[sp.subpathIndex];
-        if (subpathData) {
-          const subPointCount = extractEditablePoints(subpathData.commands).length;
-          items.push({ type: 'subpath', element: el, subpathIndex: sp.subpathIndex, pointCount: subPointCount });
+    elements.forEach((element) => {
+      if (element.type === 'group') {
+        return;
+      }
+
+      if (element.type === 'path') {
+        const commands = (element.data as PathData).subPaths.flat();
+        const pointCount = extractEditablePoints(commands).length;
+        const baseItem = { type: 'element' as const, element, pointCount };
+
+        if (selectedIdSet.has(element.id)) {
+          orderedItems.push(baseItem);
+
+          const subpaths = extractSubpaths(commands);
+          const subpathSelections = selectedSubpathsByElement.get(element.id) ?? [];
+          subpathSelections.forEach((selection) => {
+            const subpathData = subpaths[selection.subpathIndex];
+            if (!subpathData) {
+              return;
+            }
+            const subPointCount = extractEditablePoints(subpathData.commands).length;
+            orderedItems.push({
+              type: 'subpath',
+              element,
+              subpathIndex: selection.subpathIndex,
+              pointCount: subPointCount,
+            });
+          });
+        } else {
+          unselectedItems.push(baseItem);
         }
-      });
-    }
-  });
+      } else {
+        const baseItem = { type: 'element' as const, element, pointCount: 0 };
+        if (selectedIdSet.has(element.id)) {
+          orderedItems.push(baseItem);
+        } else {
+          unselectedItems.push(baseItem);
+        }
+      }
+    });
+
+    return [...orderedItems, ...unselectedItems];
+  }, [elements, selectedIdSet, selectedSubpathsByElement]);
 
   const duplicateItem = (item: typeof items[0]) => {
     if (item.type === 'element') {
@@ -396,7 +501,20 @@ const SelectPanelComponent: React.FC = () => {
   return (
     <Box bg="white" px={2} position="relative">
       <RenderCountBadgeWrapper componentName="SelectPanel" position="top-right" />
-      <Box h="94px" overflowY="auto">
+      <Box
+        height="6px"
+        cursor="ns-resize"
+        onMouseDown={handleResizeStart}
+        onDoubleClick={handleResetHeight}
+        bg={isResizing ? 'blue.400' : 'gray.200'}
+        borderRadius="full"
+        mx="auto"
+        my={1}
+        w="40px"
+        title="Arrastra para redimensionar, doble clic para resetear"
+        _hover={{ bg: isResizing ? 'blue.400' : 'blue.200' }}
+      />
+      <Box h={`${panelHeight}px`} overflowY="auto">
         <VStack spacing={2} align="stretch">
           {orderedGroups.length > 0 && (
             <VStack spacing={1} align="stretch" pt={1}>
@@ -425,10 +543,10 @@ const SelectPanelComponent: React.FC = () => {
                 // Calculate bbox coordinates
                 const bbox = getBoundingBoxCoords(thumbnailCommands);
 
-                const isPathElement = item.type === 'element' && item.element.type === 'path';
                 const elementId = item.element.id;
-                const elementHidden = isElementHidden ? isElementHidden(elementId) : false;
-                const elementLocked = isElementLocked ? isElementLocked(elementId) : false;
+                const elementHidden = isElementHidden(elementId);
+                const elementLocked = isElementLocked(elementId);
+                const isSelectedElement = selectedIdSet.has(elementId);
                 const directHidden = hiddenIdSet.has(elementId);
                 const directLocked = lockedIdSet.has(elementId);
                 const primaryLabel = item.type === 'element'
@@ -437,6 +555,9 @@ const SelectPanelComponent: React.FC = () => {
                 const coordinateText = bbox
                   ? `${bbox.topLeft.x},${bbox.topLeft.y} ${bbox.bottomRight.x},${bbox.bottomRight.y}`
                   : null;
+                const canCopyPath = item.type === 'element' && item.element.type === 'path';
+                const containerBg = isSelectedElement ? 'blue.50' : 'gray.50';
+                const containerBorderColor = isSelectedElement ? 'blue.200' : 'gray.100';
 
                 return (
                   <HStack
@@ -444,7 +565,9 @@ const SelectPanelComponent: React.FC = () => {
                     spacing={2}
                     px={1}
                     py={1}
-                    bg="gray.50"
+                    bg={containerBg}
+                    borderWidth="1px"
+                    borderColor={containerBorderColor}
                     borderRadius="sm"
                     fontSize="10px"
                     align="flex-start"
@@ -458,7 +581,11 @@ const SelectPanelComponent: React.FC = () => {
                     )}
                     <VStack spacing={1} align="stretch" flex={1}>
                       <HStack spacing={2} align="center">
-                        <Text fontWeight="500" fontSize="10px" color={elementHidden ? 'gray.400' : 'gray.800'}>
+                        <Text
+                          fontWeight="500"
+                          fontSize="10px"
+                          color={elementHidden ? 'gray.400' : isSelectedElement ? 'blue.700' : 'gray.800'}
+                        >
                           {primaryLabel}
                         </Text>
                         <HStack spacing={1} ml="auto">
@@ -493,10 +620,11 @@ const SelectPanelComponent: React.FC = () => {
                             minW="auto"
                             h="auto"
                             p={1}
+                            isDisabled={!canCopyPath}
                           />
                         </HStack>
                       </HStack>
-                      {(coordinateText || isPathElement) && (
+                      {(coordinateText || item.type === 'element') && (
                         <HStack spacing={2} align="center">
                           <Text
                             fontSize="9px"
@@ -506,44 +634,42 @@ const SelectPanelComponent: React.FC = () => {
                           >
                             {coordinateText ?? '—'}
                           </Text>
-                          {isPathElement && (
-                            <HStack spacing={1}>
-                              <Tooltip label={directLocked ? 'Unlock path' : 'Lock path'} openDelay={200}>
-                                <ChakraIconButton
-                                  aria-label={directLocked ? 'Unlock path' : 'Lock path'}
-                                  icon={directLocked ? <Unlock size={10} /> : <Lock size={10} />}
-                                  onClick={() => toggleElementLock(elementId)}
-                                  size="xs"
-                                  minW="auto"
-                                  h="auto"
-                                  p={1}
-                                />
-                              </Tooltip>
-                              <Tooltip label={directHidden ? 'Show path' : 'Hide path'} openDelay={200}>
-                                <ChakraIconButton
-                                  aria-label={directHidden ? 'Show path' : 'Hide path'}
-                                  icon={directHidden ? <Eye size={10} /> : <EyeOff size={10} />}
-                                  onClick={() => toggleElementVisibility(elementId)}
-                                  size="xs"
-                                  minW="auto"
-                                  h="auto"
-                                  p={1}
-                                />
-                              </Tooltip>
-                              <Tooltip label="Select path" openDelay={200}>
-                                <ChakraIconButton
-                                  aria-label="Select path"
-                                  icon={<MousePointer2 size={10} />}
-                                  onClick={() => selectElements([elementId])}
-                                  size="xs"
-                                  minW="auto"
-                                  h="auto"
-                                  p={1}
-                                  isDisabled={elementLocked || elementHidden}
-                                />
-                              </Tooltip>
-                            </HStack>
-                          )}
+                          <HStack spacing={1}>
+                            <Tooltip label={directLocked ? 'Unlock element' : 'Lock element'} openDelay={200}>
+                              <ChakraIconButton
+                                aria-label={directLocked ? 'Unlock element' : 'Lock element'}
+                                icon={directLocked ? <Unlock size={10} /> : <Lock size={10} />}
+                                onClick={() => toggleElementLock(elementId)}
+                                size="xs"
+                                minW="auto"
+                                h="auto"
+                                p={1}
+                              />
+                            </Tooltip>
+                            <Tooltip label={directHidden ? 'Show element' : 'Hide element'} openDelay={200}>
+                              <ChakraIconButton
+                                aria-label={directHidden ? 'Show element' : 'Hide element'}
+                                icon={directHidden ? <Eye size={10} /> : <EyeOff size={10} />}
+                                onClick={() => toggleElementVisibility(elementId)}
+                                size="xs"
+                                minW="auto"
+                                h="auto"
+                                p={1}
+                              />
+                            </Tooltip>
+                            <Tooltip label="Select element" openDelay={200}>
+                              <ChakraIconButton
+                                aria-label="Select element"
+                                icon={<MousePointer2 size={10} />}
+                                onClick={() => selectElements([elementId])}
+                                size="xs"
+                                minW="auto"
+                                h="auto"
+                                p={1}
+                                isDisabled={elementLocked || elementHidden}
+                              />
+                            </Tooltip>
+                          </HStack>
                         </HStack>
                       )}
                     </VStack>

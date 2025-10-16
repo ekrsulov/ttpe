@@ -59,13 +59,6 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
   // Check if we're in special panel mode (file or settings)
   const isInSpecialPanelMode = showFilePanel || showSettingsPanel;
   
-  // Subscribe to individual selection state to check if footer should be shown
-  const hasSelectedIds = useCanvasStore(state => state.selectedIds.length > 0);
-  const hasSelectedCommands = selectedCommands.length > 0;
-  const hasSelectedSubpaths = useCanvasStore(state => state.selectedSubpaths.length > 0);
-  
-  const hasSelection = hasSelectedIds || hasSelectedCommands || hasSelectedSubpaths;
-
   // Get canPerformOpticalAlignment function and check current state
   const canPerformOpticalAlignment = useCanvasStore(state => {
     const selectedElements = state.elements.filter(el => 
@@ -148,7 +141,7 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
       flex={1}
       px={2}
       pb={2}
-      mb={hasSelection ? "120px" : "0px"} // Reserve space for footer only when something is selected
+      mb="calc(var(--sidebar-footer-height, 0px) + 16px)" // Reserve space for footer based on actual height
       overflowY="auto"
       overflowX="hidden"
       display="flex"
