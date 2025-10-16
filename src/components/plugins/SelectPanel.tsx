@@ -1,13 +1,12 @@
 import React, { useCallback, useMemo } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { Copy, Clipboard, MousePointer2, Eye, EyeOff, Lock, Unlock, ChevronDown, ChevronRight } from 'lucide-react';
+import { Copy, Clipboard, MousePointer2, Eye, EyeOff, Lock, Unlock, ChevronDown, ChevronRight, Group as GroupIcon, Ungroup as UngroupIcon } from 'lucide-react';
 import { VStack, HStack, Box, Text, IconButton as ChakraIconButton, Tooltip, Editable, EditableInput, EditablePreview } from '@chakra-ui/react';
 import { extractEditablePoints, extractSubpaths, commandsToString, translateCommands } from '../../utils/path';
 import type { CanvasElement, PathData, Command, GroupElement } from '../../types';
 import { logger } from '../../utils';
 import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
 import { PathThumbnail } from '../ui/PathThumbnail';
-import { GroupControls } from '../ui/GroupControls';
 
 // Helper to extract subpath data from an element
 const getSubpathData = (element: CanvasElement, subpathIndex: number) => {
@@ -67,7 +66,7 @@ const SelectPanelComponent: React.FC = () => {
   const selectedSubpaths = useCanvasStore(state => state.selectedSubpaths);
   const addElement = useCanvasStore(state => state.addElement);
   const createGroup = useCanvasStore(state => state.createGroupFromSelection);
-  const ungroupSelectedGroups = useCanvasStore(state => state.ungroupSelectedGroups);
+  const ungroupGroupById = useCanvasStore(state => state.ungroupGroupById);
   const renameGroup = useCanvasStore(state => state.renameGroup);
   const setGroupExpanded = useCanvasStore(state => state.setGroupExpanded);
   const toggleGroupVisibility = useCanvasStore(state => state.toggleGroupVisibility);
@@ -282,6 +281,18 @@ const SelectPanelComponent: React.FC = () => {
             {groupData.childIds.length} elementos
           </Text>
           <HStack spacing={1} ml="auto">
+            <Tooltip label="Desagrupar" openDelay={200}>
+              <ChakraIconButton
+                aria-label="Desagrupar grupo"
+                icon={<UngroupIcon size={12} />}
+                size="xs"
+                variant="ghost"
+                minW="auto"
+                h="20px"
+                onClick={() => ungroupGroupById(group.id)}
+                isDisabled={groupLocked}
+              />
+            </Tooltip>
             <Tooltip label={groupLocked ? 'Desbloquear grupo' : 'Bloquear grupo'} openDelay={200}>
               <ChakraIconButton
                 aria-label={groupLocked ? 'Desbloquear grupo' : 'Bloquear grupo'}
@@ -367,7 +378,6 @@ const SelectPanelComponent: React.FC = () => {
   };
 
   const canGroup = selectedElements.length >= 2;
-  const canUngroup = selectedElements.some(el => el.type === 'group');
   const hasSelection = selectedElements.length > 0;
 
   return (
@@ -375,14 +385,6 @@ const SelectPanelComponent: React.FC = () => {
       <RenderCountBadgeWrapper componentName="SelectPanel" position="top-right" />
       <Box h="94px" overflowY="auto">
         <VStack spacing={2} align="stretch">
-          <Box px={1} pt={1}>
-            <GroupControls
-              canGroup={canGroup}
-              canUngroup={canUngroup}
-              onGroup={() => createGroup()}
-              onUngroup={() => ungroupSelectedGroups()}
-            />
-          </Box>
           {groups.length > 0 && (
             <VStack spacing={1} align="stretch" pt={1}>
               {groups.map((group) => (
@@ -447,6 +449,20 @@ const SelectPanelComponent: React.FC = () => {
 
                     {/* Action buttons - always aligned to the right */}
                     <HStack spacing={1}>
+                      {item.type === 'element' && (
+                        <Tooltip label="Agrupar elementos seleccionados" openDelay={200}>
+                          <ChakraIconButton
+                            aria-label="Agrupar elementos seleccionados"
+                            icon={<GroupIcon size={10} />}
+                            onClick={() => createGroup()}
+                            size="xs"
+                            minW="auto"
+                            h="auto"
+                            p={1}
+                            isDisabled={!canGroup}
+                          />
+                        </Tooltip>
+                      )}
                       <ChakraIconButton
                         aria-label="Duplicate"
                         icon={<Copy size={10} />}

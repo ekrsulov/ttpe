@@ -21,6 +21,7 @@ export interface GroupSlice {
   groupNameCounter: number;
   createGroupFromSelection: (name?: string) => string | null;
   ungroupSelectedGroups: () => void;
+  ungroupGroupById: (groupId: string) => void;
   renameGroup: (groupId: string, name: string) => void;
   setGroupExpanded: (groupId: string, expanded: boolean) => void;
   toggleGroupVisibility: (groupId: string) => void;
@@ -75,6 +76,52 @@ const helpers: GroupSliceHelpers = {
 
     return descendants;
   },
+};
+
+const ungroupGroupInternal = (
+  group: GroupElement,
+  elements: CanvasElement[],
+): { elements: CanvasElement[]; releasedChildIds: string[] } => {
+  const childIds = [...group.data.childIds];
+  const parentId = group.parentId ?? null;
+
+  let updatedElements = elements.map((element) => {
+    if (childIds.includes(element.id)) {
+      return { ...element, parentId };
+    }
+    return element;
+  });
+
+  if (parentId) {
+    updatedElements = updatedElements.map((element) => {
+      if (element.id === parentId && element.type === 'group') {
+        const parentData = element.data;
+        const newChildIds: string[] = [];
+        parentData.childIds.forEach((childId) => {
+          if (childId === group.id) {
+            newChildIds.push(...childIds);
+          } else {
+            newChildIds.push(childId);
+          }
+        });
+        return {
+          ...element,
+          data: {
+            ...parentData,
+            childIds: newChildIds,
+          },
+        };
+      }
+      return element;
+    });
+  }
+
+  updatedElements = updatedElements.filter((element) => element.id !== group.id);
+
+  return {
+    elements: updatedElements,
+    releasedChildIds: childIds,
+  };
 };
 
 export const createGroupSlice: StateCreator<CanvasStore, [], [], GroupSlice> = (set, get) => ({
@@ -200,42 +247,9 @@ export const createGroupSlice: StateCreator<CanvasStore, [], [], GroupSlice> = (
       const newSelection: string[] = [];
 
       groupsToUngroup.forEach((group) => {
-        const childIds = [...group.data.childIds];
-        const parentId = group.parentId ?? null;
-
-        updatedElements = updatedElements.map((element) => {
-          if (childIds.includes(element.id)) {
-            return { ...element, parentId };
-          }
-          return element;
-        });
-
-        if (parentId) {
-          updatedElements = updatedElements.map((element) => {
-            if (element.id === parentId && element.type === 'group') {
-              const parentData = element.data;
-              const newChildIds: string[] = [];
-              parentData.childIds.forEach((childId) => {
-                if (childId === group.id) {
-                  newChildIds.push(...childIds);
-                } else {
-                  newChildIds.push(childId);
-                }
-              });
-              return {
-                ...element,
-                data: {
-                  ...parentData,
-                  childIds: newChildIds,
-                },
-              };
-            }
-            return element;
-          });
-        }
-
-        updatedElements = updatedElements.filter((element) => element.id !== group.id);
-        newSelection.push(...childIds);
+        const result = ungroupGroupInternal(group, updatedElements);
+        updatedElements = result.elements;
+        newSelection.push(...result.releasedChildIds);
       });
 
       updatedElements = helpers.normalizeRootZIndices(updatedElements);
@@ -243,6 +257,28 @@ export const createGroupSlice: StateCreator<CanvasStore, [], [], GroupSlice> = (
       return {
         elements: updatedElements,
         selectedIds: newSelection.length > 0 ? Array.from(new Set(newSelection)) : [],
+      };
+    });
+  },
+  ungroupGroupById: (groupId) => {
+    const state = get() as CanvasStore;
+    const elementMap = helpers.getElementMap(state.elements);
+    const group = elementMap.get(groupId);
+
+    if (!group || group.type !== 'group') {
+      return;
+    }
+
+    set((storeState) => {
+      const current = storeState as CanvasStore;
+      const result = ungroupGroupInternal(group, current.elements);
+      const updatedElements = helpers.normalizeRootZIndices(result.elements);
+
+      return {
+        elements: updatedElements,
+        selectedIds: result.releasedChildIds.length > 0
+          ? Array.from(new Set(result.releasedChildIds))
+          : [],
       };
     });
   },
