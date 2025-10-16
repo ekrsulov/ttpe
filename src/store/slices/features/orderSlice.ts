@@ -17,11 +17,14 @@ export const createOrderSlice: StateCreator<OrderSlice> = (set, get, _api) => ({
     const selectedIds = store.selectedIds;
     if (selectedIds.length === 0) return;
 
-    const maxZIndex = Math.max(...store.elements.map((el: CanvasElement) => el.zIndex));
+    const rootElements = store.elements.filter((el: CanvasElement) => !el.parentId);
+    const maxZIndex = rootElements.length > 0
+      ? Math.max(...rootElements.map((el: CanvasElement) => el.zIndex))
+      : 0;
     const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
     setStore((state) => ({
       elements: state.elements.map((el: CanvasElement, index: number) => {
-        if (selectedIds.includes(el.id)) {
+        if (selectedIds.includes(el.id) && !el.parentId) {
           return { ...el, zIndex: maxZIndex + index + 1 };
         }
         return el;
@@ -40,11 +43,11 @@ export const createOrderSlice: StateCreator<OrderSlice> = (set, get, _api) => ({
 
       selectedIds.forEach((selectedId: string) => {
         const currentElement = elements.find((el: CanvasElement) => el.id === selectedId);
-        if (!currentElement) return;
+        if (!currentElement || currentElement.parentId) return;
 
         // Find the element immediately above (higher z-index)
         const elementsAbove = elements
-          .filter((el: CanvasElement) => el.zIndex > currentElement.zIndex)
+          .filter((el: CanvasElement) => !el.parentId && el.zIndex > currentElement.zIndex)
           .sort((a: CanvasElement, b: CanvasElement) => a.zIndex - b.zIndex);
 
         if (elementsAbove.length > 0) {
@@ -72,11 +75,11 @@ export const createOrderSlice: StateCreator<OrderSlice> = (set, get, _api) => ({
 
       selectedIds.forEach((selectedId: string) => {
         const currentElement = elements.find((el: CanvasElement) => el.id === selectedId);
-        if (!currentElement) return;
+        if (!currentElement || currentElement.parentId) return;
 
         // Find the element immediately below (lower z-index)
         const elementsBelow = elements
-          .filter((el: CanvasElement) => el.zIndex < currentElement.zIndex)
+          .filter((el: CanvasElement) => !el.parentId && el.zIndex < currentElement.zIndex)
           .sort((a: CanvasElement, b: CanvasElement) => b.zIndex - a.zIndex);
 
         if (elementsBelow.length > 0) {
@@ -98,11 +101,14 @@ export const createOrderSlice: StateCreator<OrderSlice> = (set, get, _api) => ({
     const selectedIds = store.selectedIds;
     if (selectedIds.length === 0) return;
 
-    const minZIndex = Math.min(...store.elements.map((el: CanvasElement) => el.zIndex));
+    const rootElements = store.elements.filter((el: CanvasElement) => !el.parentId);
+    const minZIndex = rootElements.length > 0
+      ? Math.min(...rootElements.map((el: CanvasElement) => el.zIndex))
+      : 0;
     const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
     setStore((state) => ({
       elements: state.elements.map((el: CanvasElement, index: number) => {
-        if (selectedIds.includes(el.id)) {
+        if (selectedIds.includes(el.id) && !el.parentId) {
           return { ...el, zIndex: minZIndex - index - 1 };
         }
         return el;

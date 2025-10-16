@@ -1,5 +1,5 @@
 import type { StateCreator } from 'zustand';
-import type { CanvasElement, PathData } from '../../types';
+import type { CanvasElement, GroupData, GroupElement, PathData, PathElement } from '../../types';
 import type { CanvasStore } from '../canvasStore';
 import { performPathUnion as performUnionOp, performPathSubtraction, performPathUnionPaperJS, performPathIntersect, performPathExclude, performPathDivide, commandsToString } from '../../utils/path';
 
@@ -167,25 +167,132 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
   // Actions
   addElement: (element) => {
     const id = `element_${Date.now()}_${Math.random()}`;
-    const zIndex = get().elements.length;
+    const parentId = element.parentId ?? null;
+    const existingElements = get().elements;
+    const zIndex = parentId
+      ? existingElements.filter((el) => el.parentId === parentId).length
+      : existingElements.filter((el) => !el.parentId).length;
+
+    const newElement: CanvasElement = element.type === 'group'
+      ? {
+          id,
+          type: 'group',
+          parentId,
+          zIndex,
+          data: {
+            ...(element as GroupElement).data,
+            transform: (element as GroupElement).data.transform ?? {
+              translateX: 0,
+              translateY: 0,
+              rotation: 0,
+              scaleX: 1,
+              scaleY: 1,
+            },
+          },
+        }
+      : {
+          id,
+          type: 'path',
+          parentId,
+          zIndex,
+          data: (element as PathElement).data,
+        };
+
     set((state) => ({
-      elements: [...state.elements, { ...element, id, zIndex }],
+      elements: [...state.elements, newElement],
     }));
     return id;
   },
 
   updateElement: (id, updates) => {
     set((state) => ({
-      elements: state.elements.map((element) =>
-        element.id === id ? { ...element, ...updates } : element
-      ),
+      elements: state.elements.map((element) => {
+        if (element.id !== id) {
+          return element;
+        }
+
+        if (element.type === 'group') {
+          const groupUpdates = updates as Partial<GroupElement>;
+          const updatedData = groupUpdates.data
+            ? { ...element.data, ...(groupUpdates.data as GroupData) }
+            : element.data;
+          return { ...element, ...groupUpdates, data: updatedData };
+        }
+
+        const pathUpdates = updates as Partial<PathElement>;
+        const updatedPathData = pathUpdates.data
+          ? { ...element.data, ...(pathUpdates.data as PathData) }
+          : element.data;
+        return { ...element, ...pathUpdates, data: updatedPathData };
+      }) as CanvasElement[],
     }));
   },
 
   deleteElement: (id) => {
-    set((state) => ({
-      elements: state.elements.filter((element) => element.id !== id),
-    }));
+    set((state) => {
+      const currentState = state as CanvasStore;
+      const elementToDelete = currentState.elements.find((element) => element.id === id);
+      if (!elementToDelete) {
+        return { elements: currentState.elements };
+      }
+
+      const parentId = elementToDelete.parentId ?? null;
+      let updatedElements = currentState.elements.filter((element) => element.id !== id);
+
+      if (elementToDelete.type === 'group') {
+        const groupData = elementToDelete.data;
+
+        // Reparent children to the group's parent
+        updatedElements = updatedElements.map((element) => {
+          if (groupData.childIds.includes(element.id)) {
+            return { ...element, parentId };
+          }
+          return element;
+        });
+
+        // If the group had a parent, replace the group entry with its children
+        if (parentId) {
+          updatedElements = updatedElements.map((element) => {
+            if (element.id === parentId && element.type === 'group') {
+              const parentData = element.data;
+              const newChildIds: string[] = [];
+              parentData.childIds.forEach((childId) => {
+                if (childId === id) {
+                  newChildIds.push(...groupData.childIds);
+                } else {
+                  newChildIds.push(childId);
+                }
+              });
+              return {
+                ...element,
+                data: {
+                  ...parentData,
+                  childIds: newChildIds,
+                },
+              };
+            }
+            return element;
+          });
+        }
+      } else if (parentId) {
+        // Remove the element reference from its parent group
+        updatedElements = updatedElements.map((element) => {
+          if (element.id === parentId && element.type === 'group') {
+            const parentData = element.data;
+            return {
+              ...element,
+              data: {
+                ...parentData,
+                childIds: parentData.childIds.filter((childId) => childId !== id),
+              },
+            };
+          }
+          return element;
+        });
+      }
+
+      return { elements: updatedElements };
+    });
     // Clear guidelines when an element is deleted to avoid inconsistencies
     const state = get() as CanvasStore;
     if (state.clearGuidelines) {

@@ -58,14 +58,41 @@ export interface PathData {
   };
 }
 
-export type ElementType = 'path';
+export type ElementType = 'path' | 'group';
 
-export interface CanvasElement {
+export interface GroupData {
+  childIds: string[];
+  name: string;
+  isLocked: boolean;
+  isHidden: boolean;
+  isExpanded: boolean;
+  transform: {
+    translateX: number;
+    translateY: number;
+    rotation: number;
+    scaleX: number;
+    scaleY: number;
+  };
+}
+
+export interface CanvasElementBase {
   id: string;
   type: ElementType;
-  data: PathData;
   zIndex: number;
+  parentId?: string | null;
 }
+
+export interface PathElement extends CanvasElementBase {
+  type: 'path';
+  data: PathData;
+}
+
+export interface GroupElement extends CanvasElementBase {
+  type: 'group';
+  data: GroupData;
+}
+
+export type CanvasElement = PathElement | GroupElement;
 
 export interface Viewport {
   zoom: number;

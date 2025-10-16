@@ -138,11 +138,12 @@ function applyPointUpdates(
   const newSubPaths = extractSubpaths(updatedCommands).map(s => s.commands);
 
   setStore((currentState) => ({
-    elements: currentState.elements.map((el) =>
-      el.id === elementId
-        ? { ...el, data: { ...pathData, subPaths: newSubPaths } }
-        : el
-    )
+    elements: currentState.elements.map((el) => {
+      if (el.id === elementId && el.type === 'path') {
+        return { ...el, data: { ...pathData, subPaths: newSubPaths } };
+      }
+      return el;
+    }) as CanvasElement[],
   }));
 }
 
@@ -814,11 +815,12 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
           // Update the element with the new path
           (set as (fn: (state: FullCanvasState) => Partial<FullCanvasState>) => void)((currentState) => ({
             ...currentState,
-            elements: currentState.elements.map((el) =>
-              el.id === elementId
-                ? { ...el, data: { ...pathData, subPaths: newSubPaths } }
-                : el
-            )
+            elements: currentState.elements.map((el) => {
+              if (el.id === elementId && el.type === 'path') {
+                return { ...el, data: { ...pathData, subPaths: newSubPaths } };
+              }
+              return el;
+            }) as CanvasElement[],
           }));
 
         }
@@ -1785,11 +1787,12 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
       // Update the element
       (set as (fn: (state: FullCanvasState) => Partial<FullCanvasState>) => void)((currentState) => ({
         ...currentState,
-        elements: currentState.elements.map((el) =>
-          el.id === elementId
-            ? { ...el, data: { ...pathData, subPaths: newSubPaths } }
-            : el
-        )
+        elements: currentState.elements.map((el) => {
+          if (el.id === elementId && el.type === 'path') {
+            return { ...el, data: { ...pathData, subPaths: newSubPaths } };
+          }
+          return el;
+        }) as CanvasElement[],
       }));
     }
   },
@@ -1822,14 +1825,15 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
         const newSubPaths = extractSubpaths(normalizedCommands).map(s => s.commands);
 
         // Update the element
-        (set as (fn: (state: FullCanvasState) => Partial<FullCanvasState>) => void)((currentState) => ({
-          ...currentState,
-          elements: currentState.elements.map((el) =>
-            el.id === elementId
-              ? { ...el, data: { ...pathData, subPaths: newSubPaths } }
-              : el
-          )
-        }));
+      (set as (fn: (state: FullCanvasState) => Partial<FullCanvasState>) => void)((currentState) => ({
+        ...currentState,
+        elements: currentState.elements.map((el) => {
+          if (el.id === elementId && el.type === 'path') {
+            return { ...el, data: { ...pathData, subPaths: newSubPaths } };
+          }
+          return el;
+        }) as CanvasElement[],
+      }));
       }
     }
   },
@@ -1928,11 +1932,12 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     // Update the element
     (set as (fn: (state: FullCanvasState) => Partial<FullCanvasState>) => void)((currentState) => ({
       ...currentState,
-      elements: currentState.elements.map((el) =>
-        el.id === elementId
-          ? { ...el, data: { ...pathData, subPaths: newSubPaths } }
-          : el
-      )
+      elements: currentState.elements.map((el) => {
+        if (el.id === elementId && el.type === 'path') {
+          return { ...el, data: { ...pathData, subPaths: newSubPaths } };
+        }
+        return el;
+      }) as CanvasElement[],
     }));
   },
 
@@ -2009,11 +2014,12 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     // Update the element
     (set as (fn: (state: FullCanvasState) => Partial<FullCanvasState>) => void)((currentState) => ({
       ...currentState,
-      elements: currentState.elements.map((el) =>
-        el.id === elementId
-          ? { ...el, data: { ...pathData, subPaths: newSubPaths } }
-          : el
-      )
+      elements: currentState.elements.map((el) => {
+        if (el.id === elementId && el.type === 'path') {
+          return { ...el, data: { ...pathData, subPaths: newSubPaths } };
+        }
+        return el;
+      }) as CanvasElement[],
     }));
   },
 
@@ -2057,11 +2063,12 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     // Update the element
     (set as (fn: (state: FullCanvasState) => Partial<FullCanvasState>) => void)((currentState) => ({
       ...currentState,
-      elements: currentState.elements.map((el) =>
-        el.id === elementId
-          ? { ...el, data: { ...pathData, subPaths: newSubPaths } }
-          : el
-      )
+      elements: currentState.elements.map((el) => {
+        if (el.id === elementId && el.type === 'path') {
+          return { ...el, data: { ...pathData, subPaths: newSubPaths } };
+        }
+        return el;
+      }) as CanvasElement[],
     }));
 
     // Clear selection after cutting subpath (indices may have changed)

@@ -12,6 +12,7 @@ import isDeepEqual from 'fast-deep-equal';
 import { createBaseSlice, type BaseSlice } from './slices/baseSlice';
 import { createViewportSlice, type ViewportSlice } from './slices/features/viewportSlice';
 import { createSelectionSlice, type SelectionSlice } from './slices/features/selectionSlice';
+import { createGroupSlice, type GroupSlice } from './slices/features/groupSlice';
 import { createOrderSlice, type OrderSlice } from './slices/features/orderSlice';
 import { createArrangeSlice, type ArrangeSlice } from './slices/features/arrangeSlice';
 import { createPencilPluginSlice, type PencilPluginSlice } from './slices/plugins/pencilPluginSlice';
@@ -47,6 +48,7 @@ function debounce<T extends (...args: never[]) => void>(
 export type CanvasStore = BaseSlice &
   ViewportSlice &
   SelectionSlice &
+  GroupSlice &
   OrderSlice &
   ArrangeSlice &
   PencilPluginSlice &
@@ -83,6 +85,9 @@ export const useCanvasStore = create<CanvasStore>()(
 
         // Selection slice
         ...createSelectionSlice(set, get, api),
+
+        // Group slice
+        ...createGroupSlice(set, get, api),
 
         // Order slice
         ...createOrderSlice(set, get, api),

@@ -61,7 +61,15 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
               return selectedPaths.length !== 1;
             }
             if (mode === 'subpath') {
-              return selectedPaths.length !== 1 || (selectedPaths[0] && selectedPaths[0].data.subPaths.length <= 1);
+              if (selectedPaths.length !== 1) {
+                return true;
+              }
+              const element = selectedPaths[0];
+              if (!element || element.type !== 'path') {
+                return true;
+              }
+              const pathData = element.data as import('../../types').PathData;
+              return pathData.subPaths.length <= 1;
             }
             return false;
           })();
