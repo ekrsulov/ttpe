@@ -13,6 +13,15 @@ function App() {
   const activePlugin = useCanvasStore(state => state.activePlugin);
   const setMode = useCanvasStore(state => state.setMode);
   const selectedIds = useCanvasStore(state => state.selectedIds);
+  const hasSelection = selectedIds.length > 0;
+  const lockSelected = useCanvasStore(state => state.lockSelected);
+  const unlockSelected = useCanvasStore(state => state.unlockSelected);
+  const lockAllElements = useCanvasStore(state => state.lockAllElements);
+  const unlockAllElements = useCanvasStore(state => state.unlockAllElements);
+  const hasLockedSelection = useCanvasStore(state => state.hasLockedSelection());
+  const areAllSelectedLocked = useCanvasStore(state => state.areAllSelectedLocked());
+  const hasLockedElements = useCanvasStore(state => state.elements.some(el => el.isLocked));
+  const totalElements = useCanvasStore(state => state.elements.length);
   const selectedPaths = useMemo(() => {
     const elements = useCanvasStore.getState().elements;
     return elements.filter((el: CanvasElement) => selectedIds.includes(el.id) && el.type === 'path');
@@ -89,14 +98,23 @@ function App() {
         onToggleOpen={handleSidebarToggleOpen}
         onRegisterOpenHandler={handleRegisterOpenHandler}
       />
-      <TopActionBar 
-        activeMode={activePlugin} 
+      <TopActionBar
+        activeMode={activePlugin}
         onModeChange={setMode}
         sidebarWidth={sidebarWidth}
         isSidebarPinned={isSidebarPinned}
         isSidebarOpen={isSidebarOpen}
         onMenuClick={handleMenuClick}
         selectedPaths={selectedPaths}
+        hasSelection={hasSelection}
+        hasLockedSelection={hasLockedSelection}
+        areAllSelectedLocked={areAllSelectedLocked}
+        hasLockedElements={hasLockedElements}
+        totalElements={totalElements}
+        onLockSelection={lockSelected}
+        onUnlockSelection={unlockSelected}
+        onLockAll={lockAllElements}
+        onUnlockAll={unlockAllElements}
       />
       <BottomActionBar 
         sidebarWidth={sidebarWidth}

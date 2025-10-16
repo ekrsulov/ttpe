@@ -164,6 +164,8 @@ export const Canvas: React.FC = () => {
     useCanvasStore.getState().setMode(mode);
   }, []);
 
+  const isElementLocked = useCanvasStore.getState().isElementLocked;
+
   // Transform screen coordinates to canvas coordinates
   const screenToCanvas = useCallback((screenX: number, screenY: number): Point => {
     const currentViewport = useCanvasStore.getState().viewport;
@@ -214,6 +216,7 @@ export const Canvas: React.FC = () => {
     updateShapeCreation,
     endShapeCreation,
     setMode,
+    isElementLocked,
   }), [
     svgRef,
     screenToCanvas,
@@ -249,6 +252,7 @@ export const Canvas: React.FC = () => {
     updateShapeCreation,
     endShapeCreation,
     setMode,
+    isElementLocked,
   ]);
 
   const {

@@ -1,6 +1,7 @@
 import React from 'react';
 import { deriveElementSelectionColors, SUBPATH_SELECTION_COLOR } from '../../utils/canvas';
 import { computeAdjustedBounds, measureSelectedSubpaths } from '../../utils/overlayHelpers';
+import type { CanvasElement } from '../../types';
 
 interface SelectionOverlayProps {
   element: {
@@ -8,6 +9,7 @@ interface SelectionOverlayProps {
     type: string;
     data: unknown;
     zIndex: number;
+    isLocked: boolean;
   };
   bounds: { minX: number; minY: number; maxX: number; maxY: number } | null;
   viewport: {
@@ -32,6 +34,7 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
   // Extract element colors and calculate selection color
   const { selectionColor } = deriveElementSelectionColors(element);
   const strokeWidth = 1 / viewport.zoom;
+  const isLocked = (element as CanvasElement).isLocked;
 
   // Calculate adjusted bounds for the element
   const adjustedElementBounds = bounds ? computeAdjustedBounds(bounds, viewport.zoom) : null;
@@ -58,8 +61,26 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
             stroke={selectionColor}
             strokeWidth={strokeWidth}
             pointerEvents="none"
+            strokeDasharray={isLocked ? `${4 / viewport.zoom} ${2 / viewport.zoom}` : undefined}
           />
         ) : null;
+      })()}
+
+      {isLocked && adjustedElementBounds && (() => {
+        const iconSize = 12 / viewport.zoom;
+        const padding = 4 / viewport.zoom;
+        return (
+          <text
+            x={adjustedElementBounds.maxX - iconSize - padding}
+            y={adjustedElementBounds.minY + iconSize + padding}
+            fontSize={iconSize}
+            fill={selectionColor}
+            pointerEvents="none"
+            style={{ fontWeight: 600, userSelect: 'none' }}
+          >
+            🔒
+          </text>
+        );
       })()}
 
       {/* Selection rectangles for subpaths */}

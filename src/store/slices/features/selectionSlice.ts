@@ -78,6 +78,9 @@ export const createSelectionSlice: StateCreator<CanvasStore, [], [], SelectionSl
     setStore((currentState) => ({
       elements: currentState.elements.map((el: CanvasElement) => {
         if (selectedIds.includes(el.id)) {
+          if (el.isLocked) {
+            return el;
+          }
           if (el.type === 'path') {
             const pathData = el.data as import('../../../types').PathData;
             return {
@@ -100,6 +103,9 @@ export const createSelectionSlice: StateCreator<CanvasStore, [], [], SelectionSl
     setStore((currentState) => ({
       elements: currentState.elements.map((el: CanvasElement) => {
         if (selectedIds.includes(el.id) && el.type === 'path') {
+          if (el.isLocked) {
+            return el;
+          }
           const pathData = el.data as import('../../../types').PathData;
           return {
             ...el,

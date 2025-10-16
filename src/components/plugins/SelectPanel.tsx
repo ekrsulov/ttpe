@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { Copy, Clipboard } from 'lucide-react';
+import { Copy, Clipboard, Lock, Unlock } from 'lucide-react';
 import { VStack, HStack, Box, Text, IconButton as ChakraIconButton } from '@chakra-ui/react';
 import { extractEditablePoints, extractSubpaths, commandsToString, translateCommands } from '../../utils/path';
 import type { CanvasElement, PathData, Command } from '../../types';
@@ -65,6 +65,7 @@ const getBoundingBoxCoords = (commands: Command[]) => {
 const SelectPanelComponent: React.FC = () => {
   const selectedSubpaths = useCanvasStore(state => state.selectedSubpaths);
   const addElement = useCanvasStore(state => state.addElement);
+  const toggleLock = useCanvasStore(state => state.toggleLock);
   
   // Subscribe to elements and selectedIds separately to avoid infinite re-renders
   const elements = useCanvasStore(state => state.elements);
@@ -110,23 +111,24 @@ const SelectPanelComponent: React.FC = () => {
     if (item.type === 'element') {
       // Duplicate the entire element
       const { id: _id, zIndex: _zIndex, ...elementData } = item.element;
-      
+      const elementPayload = { ...elementData, isLocked: false };
+
       // If it's a path, translate it to make duplication visible
       if (elementData.type === 'path') {
         const pathData = elementData.data as PathData;
-        const translatedSubPaths = pathData.subPaths.map(subPath => 
+        const translatedSubPaths = pathData.subPaths.map(subPath =>
           translateCommands(subPath, 20, 20)
         );
-        
+
         addElement({
-          ...elementData,
+          ...elementPayload,
           data: {
             ...pathData,
             subPaths: translatedSubPaths
           }
         });
       } else {
-        addElement(elementData);
+        addElement(elementPayload);
       }
     } else if (item.type === 'subpath' && item.subpathIndex !== undefined) {
       // Duplicate the subpath as a new element
@@ -142,6 +144,7 @@ const SelectPanelComponent: React.FC = () => {
             ...item.element.data,
             subPaths: [translatedCommands],
           },
+          isLocked: false,
         });
       }
     }
@@ -222,15 +225,32 @@ const SelectPanelComponent: React.FC = () => {
                         : `Subpath ${item.subpathIndex} - ${item.pointCount} points`
                       }
                     </Text>
+                    {item.type === 'element' && item.element.isLocked && (
+                      <HStack spacing={0.5} color="gray.600">
+                        <Lock size={10} />
+                        <Text fontSize="9px">Locked</Text>
+                      </HStack>
+                    )}
                     {bbox && (
                       <Text fontSize="9px" color="gray.600">
                         ({bbox.topLeft.x}, {bbox.topLeft.y}) → ({bbox.bottomRight.x}, {bbox.bottomRight.y})
                       </Text>
                     )}
                   </Box>
-                  
+
                   {/* Action buttons - always aligned to the right */}
                   <HStack spacing={1}>
+                    {item.type === 'element' && (
+                      <ChakraIconButton
+                        aria-label={item.element.isLocked ? 'Unlock element' : 'Lock element'}
+                        icon={item.element.isLocked ? <Unlock size={10} /> : <Lock size={10} />}
+                        onClick={() => toggleLock(item.element.id)}
+                        size="xs"
+                        minW="auto"
+                        h="auto"
+                        p={1}
+                      />
+                    )}
                     <ChakraIconButton
                       aria-label="Duplicate"
                       icon={<Copy size={10} />}

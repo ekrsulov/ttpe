@@ -65,6 +65,7 @@ export interface CanvasElement {
   type: ElementType;
   data: PathData;
   zIndex: number;
+  isLocked: boolean;
 }
 
 export interface Viewport {

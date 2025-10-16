@@ -19,7 +19,7 @@ export interface BaseSlice {
   };
 
   // Actions
-  addElement: (element: Omit<CanvasElement, 'id' | 'zIndex'>) => string;
+  addElement: (element: Omit<CanvasElement, 'id' | 'zIndex'> & { isLocked?: boolean }) => string;
   updateElement: (id: string, updates: Partial<CanvasElement>) => void;
   deleteElement: (id: string) => void;
   deleteSelectedElements: () => void;
@@ -169,7 +169,15 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
     const id = `element_${Date.now()}_${Math.random()}`;
     const zIndex = get().elements.length;
     set((state) => ({
-      elements: [...state.elements, { ...element, id, zIndex }],
+      elements: [
+        ...state.elements,
+        {
+          ...element,
+          id,
+          zIndex,
+          isLocked: element.isLocked ?? false,
+        },
+      ],
     }));
     return id;
   },
@@ -195,7 +203,17 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
 
   deleteSelectedElements: () => {
     const state = get() as CanvasStore;
-    state.selectedIds.forEach((id: string) => state.deleteElement(id));
+    const deletableIds = state.selectedIds.filter((id: string) => {
+      const element = state.elements.find((el) => el.id === id);
+      return element && !element.isLocked;
+    });
+
+    if (deletableIds.length === 0) {
+      state.clearSelection();
+      return;
+    }
+
+    deletableIds.forEach((id: string) => state.deleteElement(id));
     state.clearSelection();
   },
 

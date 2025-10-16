@@ -18,7 +18,7 @@ const alignElements = (
   targetCalculator: import('../../../utils/transformationUtils').TargetCalculator,
   axis: import('../../../utils/transformationUtils').Axis
 ): CanvasElement[] => {
-  const selectedElements = elements.filter(el => selectedIds.includes(el.id));
+  const selectedElements = elements.filter(el => selectedIds.includes(el.id) && !el.isLocked);
   if (selectedElements.length < 2) return elements;
 
   // Calculate bounds for all selected elements
@@ -37,7 +37,7 @@ const alignElements = (
 
   // Update elements
   return elements.map(el => {
-    if (!selectedIds.includes(el.id) || el.type !== 'path') return el;
+    if (!selectedIds.includes(el.id) || el.isLocked || el.type !== 'path') return el;
 
     const pathData = el.data as import('../../../types').PathData;
     const currentBounds = measurePath(pathData.subPaths, pathData.strokeWidth, zoom);
@@ -93,7 +93,7 @@ const distributeElements = (
   zoom: number,
   axis: 'x' | 'y'
 ): CanvasElement[] => {
-  const selectedElements = elements.filter((el: CanvasElement) => selectedIds.includes(el.id));
+  const selectedElements = elements.filter((el: CanvasElement) => selectedIds.includes(el.id) && !el.isLocked);
   if (selectedElements.length < 3) return elements;
 
   // Calculate bounds for all selected elements

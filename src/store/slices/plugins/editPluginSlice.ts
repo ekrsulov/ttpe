@@ -442,6 +442,11 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
   startDraggingPoint: (elementId, commandIndex, pointIndex, offsetX, offsetY) => {
     const state = get() as FullCanvasState;
 
+    const targetElement = state.elements.find(el => el.id === elementId);
+    if (targetElement?.isLocked) {
+      return;
+    }
+
     // Check if the point being dragged is in the selection
     const isSelected = state.selectedCommands.some((cmd) =>
       cmd.elementId === elementId &&
@@ -475,7 +480,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
       // Get initial positions of all selected points
       currentState.selectedCommands.forEach((cmd) => {
         const element = state.elements.find((el) => el.id === cmd.elementId);
-        if (element && element.type === 'path') {
+        if (element && element.type === 'path' && !element.isLocked) {
           const pathData = element.data as PathData;
           const commands = pathData.subPaths.flat();
           const points = extractEditablePoints(commands);
@@ -580,7 +585,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
   getPointsInRange: (elementId: string, startCommandIndex: number, startPointIndex: number, endCommandIndex: number, endPointIndex: number) => {
     const state = get() as FullCanvasState;
     const element = state.elements.find(el => el.id === elementId);
-    if (!element || element.type !== 'path') return [];
+    if (!element || element.type !== 'path' || element.isLocked) return [];
 
     const pathData = element.data as PathData;
     const subpaths = pathData.subPaths;

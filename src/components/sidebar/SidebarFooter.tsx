@@ -21,9 +21,10 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
   const hasSelectedIds = useCanvasStore(state => state.selectedIds.length > 0);
   const hasSelectedCommands = useCanvasStore(state => state.selectedCommands.length > 0);
   const hasSelectedSubpaths = useCanvasStore(state => state.selectedSubpaths.length > 0);
-  
+  const areAllSelectedLocked = useCanvasStore(state => state.areAllSelectedLocked());
+
   const hasSelection = hasSelectedIds || hasSelectedCommands || hasSelectedSubpaths;
-  
+
   if (!hasSelection) {
     return null;
   }
@@ -40,6 +41,12 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
       flexDirection="column"
     >
       {isArrangeExpanded && <ArrangePanel />}
+
+      {hasSelectedIds && areAllSelectedLocked && (
+        <Box px={3} py={2} fontSize="11px" color="gray.600">
+          Selected elements are locked. Unlock them to edit or arrange.
+        </Box>
+      )}
 
       {/* Expand/Collapse Divider with Button */}
       <Flex position="relative" my={1} align="center">

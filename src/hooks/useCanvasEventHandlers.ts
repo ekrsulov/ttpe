@@ -38,6 +38,7 @@ interface EventHandlerDeps {
   updateShapeCreation: (point: Point, shiftPressed: boolean) => void;
   endShapeCreation: () => void;
   setMode: (mode: string) => void;
+  isElementLocked: (id: string) => boolean;
 }
 
 export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
@@ -77,6 +78,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     updateShapeCreation,
     endShapeCreation,
     setMode,
+    isElementLocked,
   } = deps;
 
   // Apply snap to dragged elements or subpaths
@@ -235,7 +237,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     const state = useCanvasStore.getState();
     const element = state.elements.find(el => el.id === elementId);
 
-    if (!element || element.type !== 'path') return;
+    if (!element || element.type !== 'path' || isElementLocked(elementId)) return;
 
     const pathData = element.data as import('../types').PathData;
 
@@ -270,7 +272,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       }
       // If same element, do nothing
     }
-  }, [activePlugin]);
+  }, [activePlugin, isElementLocked]);
 
   // Handle subpath double click
   const handleSubpathDoubleClick = useCallback((elementId: string, subpathIndex: number, e: React.MouseEvent<SVGPathElement>) => {
@@ -283,6 +285,10 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     const wasAlreadySelected = state.selectedSubpaths.length === 1 &&
       state.selectedSubpaths[0].elementId === elementId &&
       state.selectedSubpaths[0].subpathIndex === subpathIndex;
+
+    if (isElementLocked(elementId)) {
+      return;
+    }
 
     if (activePlugin === 'subpath') {
       if (wasAlreadySelected) {
@@ -307,7 +313,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       }
       // If same subpath, do nothing
     }
-  }, [activePlugin]);  // Handle element pointer down for drag
+  }, [activePlugin, isElementLocked]);  // Handle element pointer down for drag
   const handleElementPointerDown = useCallback((elementId: string, e: React.PointerEvent) => {
     if (activePlugin === 'select') {
       e.stopPropagation(); // Prevent handlePointerDown from starting selection rectangle
@@ -326,20 +332,27 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
           useCanvasStore.getState().selectElement(elementId, false);
         }
 
+        if (isElementLocked(elementId)) {
+          return;
+        }
+
         // Start dragging
         setIsDragging(true);
         setDragStart(screenToCanvas(e.clientX, e.clientY));
         setHasDragMoved(false);
       }
     }
-  }, [activePlugin, screenToCanvas, setIsDragging, setDragStart, setHasDragMoved, isVirtualShiftActive]);
+  }, [activePlugin, screenToCanvas, setIsDragging, setDragStart, setHasDragMoved, isVirtualShiftActive, isElementLocked]);
 
   // Handle transformation handler pointer down
   const handleTransformationHandlerPointerDown = useCallback((e: React.PointerEvent, elementId: string, handler: string) => {
     e.stopPropagation();
+    if (isElementLocked(elementId)) {
+      return;
+    }
     const point = screenToCanvas(e.clientX, e.clientY);
     startTransformation(elementId, handler, point);
-  }, [screenToCanvas, startTransformation]);
+  }, [screenToCanvas, startTransformation, isElementLocked]);
 
   // Handle transformation handler pointer up
   const handleTransformationHandlerPointerUp = useCallback((_e: React.PointerEvent) => {

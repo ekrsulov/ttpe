@@ -4,7 +4,7 @@ import { commandsToString } from '../../utils/path';
 import { mapSvgToCanvas } from '../../utils/geometry';
 import { useCanvasStore } from '../../store/canvasStore';
 import { getEffectiveShift } from '../../hooks/useEffectiveShift';
-import type { PathData, SubPath, Point } from '../../types';
+import type { CanvasElement, PathData, SubPath, Point } from '../../types';
 
 interface SubpathOverlayProps {
   element: {
@@ -12,6 +12,7 @@ interface SubpathOverlayProps {
     type: string;
     data: unknown;
     zIndex: number;
+    isLocked: boolean;
   };
   selectedSubpaths: Array<{
     elementId: string;
@@ -42,6 +43,9 @@ export const SubpathOverlay: React.FC<SubpathOverlayProps> = ({
   isVisible = true,
 }) => {
   if (element.type !== 'path') return null;
+
+  const isLocked = (element as CanvasElement).isLocked;
+  if (isLocked) return null;
 
   const pathData = element.data as PathData;
 

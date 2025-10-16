@@ -3,13 +3,14 @@ import { getCommandStartPoint } from '../../utils/path';
 import { mapSvgToCanvas } from '../../utils/geometry';
 import { useCanvasStore } from '../../store/canvasStore';
 import { getEffectiveShift } from '../../hooks/useEffectiveShift';
-import type { Point, PathData, Command } from '../../types';
+import type { CanvasElement, Point, PathData, Command } from '../../types';
 
 interface EditPointsOverlayProps {
   element: {
     id: string;
     type: string;
     data: unknown;
+    isLocked: boolean;
   };
   selectedCommands: Array<{
     elementId: string;
@@ -80,6 +81,9 @@ export const EditPointsOverlay: React.FC<EditPointsOverlayProps> = ({
   onSelectCommand,
 }) => {
   if (element.type !== 'path') return null;
+
+  const isLocked = (element as CanvasElement).isLocked;
+  if (isLocked) return null;
 
   const pathData = element.data as PathData;
   const commands = pathData.subPaths.flat();
@@ -188,11 +192,7 @@ const getPointStyle = (
     commandIndex: number;
     pointIndex: number;
   }>,
-  element: {
-    id: string;
-    type: string;
-    data: unknown;
-  },
+  element: CanvasElement,
   smoothBrush: {
     isActive: boolean;
     affectedPoints: Array<{
@@ -280,11 +280,7 @@ const handlePointPointerDown = (
     y: number;
     isControl: boolean;
   },
-  element: {
-    id: string;
-    type: string;
-    data: unknown;
-  },
+  element: CanvasElement,
   selectedCommands: Array<{
     elementId: string;
     commandIndex: number;

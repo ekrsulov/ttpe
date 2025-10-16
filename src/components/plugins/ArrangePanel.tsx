@@ -32,6 +32,7 @@ const ArrangePanelComponent: React.FC = () => {
   const selectedCount = useCanvasStore(state => state.selectedIds.length);
   const selectedCommandsCount = useCanvasStore(state => state.selectedCommands.length);
   const selectedSubpathsCount = useCanvasStore(state => state.selectedSubpaths.length);
+  const hasLockedSelection = useCanvasStore(state => state.hasLockedSelection());
   
   // Get current state without subscribing - fresh on every render
   const state = useCanvasStore.getState();
@@ -46,26 +47,25 @@ const ArrangePanelComponent: React.FC = () => {
 
   // Button configurations - now using the consolidated handlers
   const distributionButtons: ButtonConfig[] = [
-    { handler: currentHandlers.distributeHorizontally, icon: <MoveHorizontal size={10} />, title: "Distribute Horizontally", disabled: !canDistribute },
-    { handler: currentHandlers.distributeVertically, icon: <MoveVertical size={10} />, title: "Distribute Vertically", disabled: !canDistribute }
+    { handler: currentHandlers.distributeHorizontally, icon: <MoveHorizontal size={10} />, title: "Distribute Horizontally", disabled: !canDistribute || hasLockedSelection },
+    { handler: currentHandlers.distributeVertically, icon: <MoveVertical size={10} />, title: "Distribute Vertically", disabled: !canDistribute || hasLockedSelection }
   ];
 
   const orderButtons: ButtonConfig[] = activePlugin === 'edit' ? [] : [
-    { handler: currentHandlers.bringToFront, icon: <Triangle size={10} />, title: `Bring ${activePlugin === 'subpath' ? 'Subpath' : ''} to Front`, disabled: activePlugin === 'subpath' ? selectedSubpathsCount === 0 : selectedCount === 0 },
-    { handler: currentHandlers.sendForward, icon: <ChevronUp size={10} />, title: `Send ${activePlugin === 'subpath' ? 'Subpath' : ''} Forward`, disabled: activePlugin === 'subpath' ? selectedSubpathsCount === 0 : selectedCount === 0 },
-    { handler: currentHandlers.sendBackward, icon: <ChevronDown size={10} />, title: `Send ${activePlugin === 'subpath' ? 'Subpath' : ''} Backward`, disabled: activePlugin === 'subpath' ? selectedSubpathsCount === 0 : selectedCount === 0 },
-    { handler: currentHandlers.sendToBack, icon: <Triangle size={10} style={{ transform: 'rotate(180deg)' }} />, title: `Send ${activePlugin === 'subpath' ? 'Subpath' : ''} to Back`, disabled: activePlugin === 'subpath' ? selectedSubpathsCount === 0 : selectedCount === 0 }
+    { handler: currentHandlers.bringToFront, icon: <Triangle size={10} />, title: `Bring ${activePlugin === 'subpath' ? 'Subpath' : ''} to Front`, disabled: (activePlugin === 'subpath' ? selectedSubpathsCount === 0 : selectedCount === 0) || hasLockedSelection },
+    { handler: currentHandlers.sendForward, icon: <ChevronUp size={10} />, title: `Send ${activePlugin === 'subpath' ? 'Subpath' : ''} Forward`, disabled: (activePlugin === 'subpath' ? selectedSubpathsCount === 0 : selectedCount === 0) || hasLockedSelection },
+    { handler: currentHandlers.sendBackward, icon: <ChevronDown size={10} />, title: `Send ${activePlugin === 'subpath' ? 'Subpath' : ''} Backward`, disabled: (activePlugin === 'subpath' ? selectedSubpathsCount === 0 : selectedCount === 0) || hasLockedSelection },
+    { handler: currentHandlers.sendToBack, icon: <Triangle size={10} style={{ transform: 'rotate(180deg)' }} />, title: `Send ${activePlugin === 'subpath' ? 'Subpath' : ''} to Back`, disabled: (activePlugin === 'subpath' ? selectedSubpathsCount === 0 : selectedCount === 0) || hasLockedSelection }
   ];
 
   const alignmentButtons: ButtonConfig[] = [
-    { handler: currentHandlers.alignLeft, icon: <AlignLeft size={10} />, title: "Align Left", disabled: !canAlign },
-    { handler: currentHandlers.alignCenter, icon: <AlignCenter size={10} />, title: "Align Center", disabled: !canAlign },
-    { handler: currentHandlers.alignRight, icon: <AlignRight size={10} />, title: "Align Right", disabled: !canAlign },
-    { handler: currentHandlers.alignTop, icon: <AlignVerticalJustifyStart size={10} />, title: "Align Top", disabled: !canAlign },
-    { handler: currentHandlers.alignMiddle, icon: <AlignVerticalJustifyCenter size={10} />, title: "Align Middle", disabled: !canAlign },
-    { handler: currentHandlers.alignBottom, icon: <AlignVerticalJustifyEnd size={10} />, title: "Align Bottom", disabled: !canAlign }
+    { handler: currentHandlers.alignLeft, icon: <AlignLeft size={10} />, title: "Align Left", disabled: !canAlign || hasLockedSelection },
+    { handler: currentHandlers.alignCenter, icon: <AlignCenter size={10} />, title: "Align Center", disabled: !canAlign || hasLockedSelection },
+    { handler: currentHandlers.alignRight, icon: <AlignRight size={10} />, title: "Align Right", disabled: !canAlign || hasLockedSelection },
+    { handler: currentHandlers.alignTop, icon: <AlignVerticalJustifyStart size={10} />, title: "Align Top", disabled: !canAlign || hasLockedSelection},
+    { handler: currentHandlers.alignMiddle, icon: <AlignVerticalJustifyCenter size={10} />, title: "Align Middle", disabled: !canAlign || hasLockedSelection },
+    { handler: currentHandlers.alignBottom, icon: <AlignVerticalJustifyEnd size={10} />, title: "Align Bottom", disabled: !canAlign || hasLockedSelection }
   ];
-
   const renderButtonRow = (buttons: ButtonConfig[]) => (
     <HStack spacing={0.5} w="full">
       {buttons.map((button, index) => (

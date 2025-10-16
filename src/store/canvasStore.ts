@@ -14,6 +14,7 @@ import { createViewportSlice, type ViewportSlice } from './slices/features/viewp
 import { createSelectionSlice, type SelectionSlice } from './slices/features/selectionSlice';
 import { createOrderSlice, type OrderSlice } from './slices/features/orderSlice';
 import { createArrangeSlice, type ArrangeSlice } from './slices/features/arrangeSlice';
+import { createLockSlice, type LockSlice } from './slices/features/lockSlice';
 import { createPencilPluginSlice, type PencilPluginSlice } from './slices/plugins/pencilPluginSlice';
 import { createTextPluginSlice, type TextPluginSlice } from './slices/plugins/textPluginSlice';
 import { createShapePluginSlice, type ShapePluginSlice } from './slices/plugins/shapePluginSlice';
@@ -48,6 +49,7 @@ export type CanvasStore = BaseSlice &
   ViewportSlice &
   SelectionSlice &
   OrderSlice &
+  LockSlice &
   ArrangeSlice &
   PencilPluginSlice &
   TextPluginSlice &
@@ -89,6 +91,9 @@ export const useCanvasStore = create<CanvasStore>()(
 
         // Arrange slice
         ...createArrangeSlice(set, get, api),
+
+        // Lock slice
+        ...createLockSlice(set, get, api),
 
         // Pencil plugin slice
         ...createPencilPluginSlice(set, get, api),
@@ -461,6 +466,20 @@ export const useCanvasStore = create<CanvasStore>()(
       }
     ), {
     name: 'canvas-app-state',
+    version: 1,
+    migrate: (persistedState: CanvasStore | undefined) => {
+      if (!persistedState) {
+        return persistedState as CanvasStore | undefined;
+      }
+
+      return {
+        ...persistedState,
+        elements: (persistedState.elements || []).map((element) => ({
+          ...element,
+          isLocked: element.isLocked ?? false,
+        })),
+      } as CanvasStore;
+    },
     partialize: (state: CanvasStore) => {
       const { ...rest } = state;
       return rest;

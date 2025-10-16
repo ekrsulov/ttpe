@@ -43,7 +43,7 @@ export const useCanvasTransformControls = () => {
     }
 
     const element = elements.find(el => el.id === realElementId);
-    if (!element) return;
+    if (!element || element.isLocked) return;
 
     // Calculate bounds based on element type and ID
     let bounds;

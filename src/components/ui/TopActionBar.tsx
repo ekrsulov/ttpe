@@ -1,6 +1,6 @@
 import React from 'react';
-import { Box, HStack, IconButton } from '@chakra-ui/react';
-import { Menu } from 'lucide-react';
+import { Box, HStack, IconButton, Divider } from '@chakra-ui/react';
+import { Lock, Menu, Unlock } from 'lucide-react';
 import { RenderCountBadgeWrapper } from './RenderCountBadgeWrapper';
 import type { CanvasElement } from '../../types';
 import { TOOL_DEFINITIONS } from '../../config/toolDefinitions';
@@ -13,6 +13,15 @@ interface TopActionBarProps {
   isSidebarOpen?: boolean;
   onMenuClick?: () => void;
   selectedPaths?: CanvasElement[];
+  hasSelection?: boolean;
+  hasLockedSelection?: boolean;
+  areAllSelectedLocked?: boolean;
+  hasLockedElements?: boolean;
+  totalElements?: number;
+  onLockSelection?: () => void;
+  onUnlockSelection?: () => void;
+  onLockAll?: () => void;
+  onUnlockAll?: () => void;
 }
 
 export const TopActionBar: React.FC<TopActionBarProps> = ({
@@ -23,9 +32,31 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
   isSidebarOpen = false,
   onMenuClick,
   selectedPaths = [],
+  hasSelection = false,
+  hasLockedSelection = false,
+  areAllSelectedLocked = false,
+  hasLockedElements = false,
+  totalElements = 0,
+  onLockSelection,
+  onUnlockSelection,
+  onLockAll,
+  onUnlockAll,
 }) => {
   const showMenuButton = !isSidebarPinned;
   const isPositionedForSidebar = sidebarWidth > 0;
+
+  const lockSelectionDisabled = !hasSelection;
+  const unlockSelectionDisabled = !hasSelection || !hasLockedSelection;
+  const lockAllDisabled = totalElements === 0;
+  const unlockAllDisabled = !hasLockedElements;
+
+  const lockSelectionVariant = areAllSelectedLocked
+    ? 'solid'
+    : hasLockedSelection
+      ? 'outline'
+      : 'ghost';
+
+  const lockSelectionColor = areAllSelectedLocked ? 'blue' : 'gray';
 
   return (
     <Box
@@ -83,7 +114,79 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
             />
           );
         })}
-        
+
+        {(onLockSelection || onUnlockSelection || onLockAll || onUnlockAll) && (
+          <>
+            <Divider orientation="vertical" h="18px" borderColor="gray.200" />
+            <HStack spacing={0.5} pl={0.5}>
+              {onLockSelection && (
+                <IconButton
+                  aria-label="Lock selection"
+                  icon={<Lock size={14} />}
+                  onClick={onLockSelection}
+                  size="xs"
+                  variant={lockSelectionVariant}
+                  colorScheme={lockSelectionColor}
+                  title={areAllSelectedLocked ? 'Selection locked' : 'Lock selection'}
+                  isDisabled={lockSelectionDisabled}
+                  sx={{
+                    minHeight: '28px',
+                    minWidth: '28px',
+                  }}
+                />
+              )}
+              {onUnlockSelection && (
+                <IconButton
+                  aria-label="Unlock selection"
+                  icon={<Unlock size={14} />}
+                  onClick={onUnlockSelection}
+                  size="xs"
+                  variant="ghost"
+                  colorScheme="gray"
+                  title="Unlock selection"
+                  isDisabled={unlockSelectionDisabled}
+                  sx={{
+                    minHeight: '28px',
+                    minWidth: '28px',
+                  }}
+                />
+              )}
+              {onLockAll && (
+                <IconButton
+                  aria-label="Lock all elements"
+                  icon={<Lock size={14} />}
+                  onClick={onLockAll}
+                  size="xs"
+                  variant="ghost"
+                  colorScheme="gray"
+                  title="Lock all elements"
+                  isDisabled={lockAllDisabled}
+                  sx={{
+                    minHeight: '28px',
+                    minWidth: '28px',
+                  }}
+                />
+              )}
+              {onUnlockAll && (
+                <IconButton
+                  aria-label="Unlock all elements"
+                  icon={<Unlock size={14} />}
+                  onClick={onUnlockAll}
+                  size="xs"
+                  variant="ghost"
+                  colorScheme="gray"
+                  title="Unlock all elements"
+                  isDisabled={unlockAllDisabled}
+                  sx={{
+                    minHeight: '28px',
+                    minWidth: '28px',
+                  }}
+                />
+              )}
+            </HStack>
+          </>
+        )}
+
         {/* Hamburger menu button - al final */}
         {showMenuButton && (
           <IconButton

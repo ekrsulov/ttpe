@@ -3,7 +3,7 @@ import { deriveElementSelectionColors, SUBPATH_SELECTION_COLOR } from '../../uti
 import { measureSubpathBounds } from '../../utils/geometry';
 import { computeAdjustedBounds } from '../../utils/overlayHelpers';
 import { TransformationHandlers } from '../TransformationHandlers';
-import type { PathData } from '../../types';
+import type { CanvasElement, PathData } from '../../types';
 import { logger } from '../../utils';
 
 interface TransformationOverlayProps {
@@ -12,6 +12,7 @@ interface TransformationOverlayProps {
     type: string;
     data: unknown;
     zIndex: number;
+    isLocked: boolean;
   };
   bounds: { minX: number; minY: number; maxX: number; maxY: number } | null;
   selectedSubpaths: Array<{
@@ -46,9 +47,11 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
 }) => {
   // Show handlers for complete elements when in transformation mode
   // Show handlers for subpaths only when in transformation mode AND exactly one subpath is selected
+  const isLocked = (element as CanvasElement).isLocked;
+
   const shouldShowHandlers = !isWorkingWithSubpaths
-    ? activePlugin === 'transformation'
-    : activePlugin === 'transformation' && selectedSubpaths.length === 1;
+    ? activePlugin === 'transformation' && !isLocked
+    : activePlugin === 'transformation' && selectedSubpaths.length === 1 && !isLocked;
 
   if (!bounds || !shouldShowHandlers) return null;
 

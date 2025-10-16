@@ -14,7 +14,10 @@ export const createOrderSlice: StateCreator<OrderSlice> = (set, get, _api) => ({
   // Actions
   bringToFront: () => {
     const store = get() as CanvasStore;
-    const selectedIds = store.selectedIds;
+    const selectedIds = store.selectedIds.filter((id) => {
+      const element = store.elements.find((el) => el.id === id);
+      return element && !element.isLocked;
+    });
     if (selectedIds.length === 0) return;
 
     const maxZIndex = Math.max(...store.elements.map((el: CanvasElement) => el.zIndex));
@@ -31,7 +34,10 @@ export const createOrderSlice: StateCreator<OrderSlice> = (set, get, _api) => ({
 
   sendForward: () => {
     const store = get() as CanvasStore;
-    const selectedIds = store.selectedIds;
+    const selectedIds = store.selectedIds.filter((id) => {
+      const element = store.elements.find((el) => el.id === id);
+      return element && !element.isLocked;
+    });
     if (selectedIds.length === 0) return;
 
     const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
@@ -63,7 +69,10 @@ export const createOrderSlice: StateCreator<OrderSlice> = (set, get, _api) => ({
 
   sendBackward: () => {
     const store = get() as CanvasStore;
-    const selectedIds = store.selectedIds;
+    const selectedIds = store.selectedIds.filter((id) => {
+      const element = store.elements.find((el) => el.id === id);
+      return element && !element.isLocked;
+    });
     if (selectedIds.length === 0) return;
 
     const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
@@ -95,7 +104,10 @@ export const createOrderSlice: StateCreator<OrderSlice> = (set, get, _api) => ({
 
   sendToBack: () => {
     const store = get() as CanvasStore;
-    const selectedIds = store.selectedIds;
+    const selectedIds = store.selectedIds.filter((id) => {
+      const element = store.elements.find((el) => el.id === id);
+      return element && !element.isLocked;
+    });
     if (selectedIds.length === 0) return;
 
     const minZIndex = Math.min(...store.elements.map((el: CanvasElement) => el.zIndex));
