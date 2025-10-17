@@ -1,5 +1,5 @@
 import type { StateCreator } from 'zustand';
-import type { CanvasElement, GroupData, GroupElement, PathData, PathElement } from '../../types';
+import type { CanvasElement, GroupElement, PathData, PathElement } from '../../types';
 import type { CanvasStore } from '../canvasStore';
 import { performPathUnion as performUnionOp, performPathSubtraction, performPathUnionPaperJS, performPathIntersect, performPathExclude, performPathDivide, commandsToString } from '../../utils/path';
 import { measurePath } from '../../utils';
@@ -21,7 +21,7 @@ export interface BaseSlice {
 
   // Actions
   addElement: (element: Omit<CanvasElement, 'id' | 'zIndex'>) => string;
-  updateElement: (id: string, updates: Partial<CanvasElement>) => void;
+  updateElement: (id: string, updates: Omit<Partial<CanvasElement>, 'data'> & { data?: unknown }) => void;
   deleteElement: (id: string) => void;
   deleteSelectedElements: () => void;
   setActivePlugin: (plugin: string | null) => void;
@@ -213,16 +213,16 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
         }
 
         if (element.type === 'group') {
-          const groupUpdates = updates as Partial<GroupElement>;
+          const groupUpdates = updates as Omit<Partial<GroupElement>, 'data'> & { data?: unknown };
           const updatedData = groupUpdates.data
-            ? { ...element.data, ...(groupUpdates.data as GroupData) }
+            ? { ...element.data, ...(groupUpdates.data as Record<string, unknown>) }
             : element.data;
           return { ...element, ...groupUpdates, data: updatedData };
         }
 
-        const pathUpdates = updates as Partial<PathElement>;
+        const pathUpdates = updates as Omit<Partial<PathElement>, 'data'> & { data?: unknown };
         const updatedPathData = pathUpdates.data
-          ? { ...element.data, ...(pathUpdates.data as PathData) }
+          ? { ...element.data, ...(pathUpdates.data as Record<string, unknown>) }
           : element.data;
         return { ...element, ...pathUpdates, data: updatedPathData };
       }) as CanvasElement[],
