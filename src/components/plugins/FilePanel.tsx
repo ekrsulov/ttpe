@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Button as ChakraButton, HStack, VStack, Input, InputGroup, InputLeftAddon, useToast, FormControl, FormLabel, Text, Box } from '@chakra-ui/react';
+import { Button as ChakraButton, HStack, VStack, Input, InputGroup, InputLeftAddon, useToast, FormControl, FormLabel, Text, Box, Collapse, useDisclosure, IconButton as ChakraIconButton } from '@chakra-ui/react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { logger, importSVGWithDimensions, measurePath, translateCommands, performPathUnion, transformCommands, calculateScaledStrokeWidth, flattenImportedElements } from '../../utils';
 import { Panel } from '../ui/Panel';
@@ -133,6 +134,9 @@ export const FilePanel: React.FC = () => {
   const [localDocumentName, setLocalDocumentName] = useState(documentName);
   const [isSaving, setIsSaving] = useState(false);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Collapsible Advanced section state
+  const { isOpen: isAdvancedOpen, onToggle: onAdvancedToggle } = useDisclosure();
 
   // Sync local state with store
   useEffect(() => {
@@ -411,6 +415,33 @@ export const FilePanel: React.FC = () => {
   return (
     <Panel>
       <VStack spacing={2} align="stretch" pt={2}>
+        {/* Document Name */}
+        <FormControl position="relative">
+          <FormLabel fontSize="12px" fontWeight="medium" color="gray.600" mb={1}>
+            Document Name
+          </FormLabel>
+          <Input
+            value={localDocumentName}
+            onChange={handleDocumentNameChange}
+            placeholder="Enter document name"
+            size="sm"
+          />
+          {isSaving && (
+            <Text
+              position="absolute"
+              right={2}
+              top="28px"
+              fontSize="12px"
+              color="gray.500"
+              bg="white"
+              px={1}
+              pointerEvents="none"
+            >
+              Saving...
+            </Text>
+          )}
+        </FormControl>
+
         <HStack spacing={1}>
           <ChakraButton
             onClick={handleSave}
@@ -474,6 +505,32 @@ export const FilePanel: React.FC = () => {
           style={{ display: 'none' }}
           onChange={handleSVGFileSelected}
         />
+
+        {/* Advanced Section - Collapsible */}
+        <Box mt={1}>
+          <HStack
+            justify="space-between"
+            py={1}
+            px={2}
+          >
+            <Text fontSize="xs" fontWeight="semibold" color="gray.600">
+              Advanced
+            </Text>
+            <ChakraIconButton
+              aria-label={isAdvancedOpen ? "Collapse Advanced" : "Expand Advanced"}
+              icon={isAdvancedOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              onClick={onAdvancedToggle}
+              variant="ghost"
+              size="xs"
+              h="20px"
+              minW="20px"
+              flexShrink={0}
+              bg="transparent"
+            />
+          </HStack>
+
+          <Collapse in={isAdvancedOpen} animateOpacity>
+            <VStack spacing={2} align="stretch" mt={2}>
 
         <PanelToggle
           isChecked={appendMode}
@@ -548,32 +605,9 @@ export const FilePanel: React.FC = () => {
           </HStack>
         )}
 
-        {/* Document Name */}
-        <FormControl position="relative" pt={3}>
-          <FormLabel fontSize="12px" fontWeight="medium" color="gray.600" mb={1}>
-            Document Name
-          </FormLabel>
-          <Input
-            value={localDocumentName}
-            onChange={handleDocumentNameChange}
-            placeholder="Enter document name"
-            size="sm"
-          />
-          {isSaving && (
-            <Text
-              position="absolute"
-              right={2}
-              top="28px"
-              fontSize="12px"
-              color="gray.500"
-              bg="white"
-              px={1}
-              pointerEvents="none"
-            >
-              Saving...
-            </Text>
-          )}
-        </FormControl>
+            </VStack>
+          </Collapse>
+        </Box>
 
         {/* Reset Application */}
         <Box pt={3}>
