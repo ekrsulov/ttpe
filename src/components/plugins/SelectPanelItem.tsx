@@ -225,12 +225,18 @@ const arePropsEqual = (prevProps: SelectPanelItemProps, nextProps: SelectPanelIt
       return false;
     }
     
-    // Check if the bounding box changed significantly (for path elements)
+    // Check if strokeWidth or bounding box changed (for path elements)
     if (prevEl.type === 'path' && nextEl.type === 'path') {
-      const prevCommands = (prevEl.data as PathData).subPaths.flat();
-      const nextCommands = (nextEl.data as PathData).subPaths.flat();
       const prevStrokeWidth = (prevEl.data as PathData).strokeWidth || 1;
       const nextStrokeWidth = (nextEl.data as PathData).strokeWidth || 1;
+      
+      // If strokeWidth changed, re-render (affects displayed coordinates)
+      if (prevStrokeWidth !== nextStrokeWidth) {
+        return false;
+      }
+      
+      const prevCommands = (prevEl.data as PathData).subPaths.flat();
+      const nextCommands = (nextEl.data as PathData).subPaths.flat();
       
       const prevBoundsResult = prevCommands.length > 0 
         ? measureSubpathBounds(prevCommands, prevStrokeWidth, 1) 
@@ -268,15 +274,21 @@ const arePropsEqual = (prevProps: SelectPanelItemProps, nextProps: SelectPanelIt
       return false;
     }
     
-    // Check if the bounding box of the specific subpath changed
+    // Check if strokeWidth or bounding box of the specific subpath changed
     const prevEl = prevProps.item.element;
     const nextEl = nextProps.item.element;
     
     if (prevEl.type === 'path' && nextEl.type === 'path') {
-      const prevSubpaths = extractSubpaths((prevEl.data as PathData).subPaths.flat());
-      const nextSubpaths = extractSubpaths((nextEl.data as PathData).subPaths.flat());
       const prevStrokeWidth = (prevEl.data as PathData).strokeWidth || 1;
       const nextStrokeWidth = (nextEl.data as PathData).strokeWidth || 1;
+      
+      // If strokeWidth changed, re-render (affects displayed coordinates)
+      if (prevStrokeWidth !== nextStrokeWidth) {
+        return false;
+      }
+      
+      const prevSubpaths = extractSubpaths((prevEl.data as PathData).subPaths.flat());
+      const nextSubpaths = extractSubpaths((nextEl.data as PathData).subPaths.flat());
       
       const prevSubpath = prevSubpaths[prevProps.item.subpathIndex];
       const nextSubpath = nextSubpaths[nextProps.item.subpathIndex];
