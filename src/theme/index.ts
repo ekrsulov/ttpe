@@ -75,5 +75,5 @@ export const theme = extendTheme({
   },
 })
 
-// Type exports for TypeScript
-export type Theme = typeof theme
+// Internal type - not consumed externally
+// export type Theme = typeof theme

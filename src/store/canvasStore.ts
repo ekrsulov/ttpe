@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { temporal } from 'zundo';
 import { textToPathCommands } from '../utils/canvas';
 import { logger } from '../utils';
+import { getSelectedSubpathElements } from './utils/pluginSliceHelpers';
 
 import { extractSubpaths, createSquareCommands, createRectangleCommands, createCircleCommands, createTriangleCommands, reverseSubPath } from '../utils/path';
 import type { Point, Command } from '../types';
@@ -344,13 +345,7 @@ export const useCanvasStore = create<CanvasStore>()(
             state.selectedIds.includes(el.id) && el.type === 'path'
           );
 
-          const selectedSubpathElements = state.selectedSubpaths.map(sp => {
-            const element = state.elements.find(el => el.id === sp.elementId);
-            if (element && element.type === 'path') {
-              return { element, subpathIndex: sp.subpathIndex };
-            }
-            return null;
-          }).filter(Boolean) as Array<{ element: import('../types').CanvasElement; subpathIndex: number }>;
+          const selectedSubpathElements = getSelectedSubpathElements(state.elements, state.selectedSubpaths);
 
           // Handle full selected paths - split each subpath into separate paths
           selectedPaths.forEach(pathElement => {
@@ -414,13 +409,7 @@ export const useCanvasStore = create<CanvasStore>()(
         performSubPathReverse: () => {
           // Reverse selected subpaths
           const state = get();
-          const selectedSubpathElements = state.selectedSubpaths.map(sp => {
-            const element = state.elements.find(el => el.id === sp.elementId);
-            if (element && element.type === 'path') {
-              return { element, subpathIndex: sp.subpathIndex };
-            }
-            return null;
-          }).filter(Boolean) as Array<{ element: import('../types').CanvasElement; subpathIndex: number }>;
+          const selectedSubpathElements = getSelectedSubpathElements(state.elements, state.selectedSubpaths);
 
           // Reverse each selected subpath
           selectedSubpathElements.forEach(({ element, subpathIndex }) => {

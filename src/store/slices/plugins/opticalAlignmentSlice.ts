@@ -14,7 +14,9 @@ import {
   computeVisualAlignment,
   translateSubPaths,
   calculateMathematicalOffset,
-  calculateBounds
+  calculateBounds,
+  mathematicalAlignmentStrategy
+  // visualAlignmentStrategy not used - applyOpticalAlignmentToAllPairs uses computeVisualAlignment directly
 } from '../../../utils/opticalAlignmentHelpers';
 
 // Minimum area ratio required for container/content pair recognition
@@ -41,7 +43,7 @@ export interface OpticalAlignmentSlice {
   canPerformOpticalAlignment: () => boolean;
   applyOpticalAlignmentToAllPairs: () => Promise<void>;
   applyMathematicalAlignment: () => void;
-  applyMathematicalAlignmentToAllPairs: () => void;
+  applyMathematicalAlignmentToAllPairs: () => Promise<void>; // Now async for consistency
   selectAllContainers: () => void;
   selectAllContents: () => void;
 }
@@ -207,6 +209,62 @@ function getPathElementsInfo(elements: CanvasElement[], zoom: number = 1): PathE
       };
       return { element: el, bounds, area, center };
     });
+}
+
+/**
+ * Centralized helper to process feasible pairs with a given alignment strategy
+ * Eliminates duplication between applyOpticalAlignmentToAllPairs and applyMathematicalAlignmentToAllPairs
+ * 
+ * @param pairs - Array of container-content pairs
+ * @param strategy - Alignment strategy function (visual or mathematical)
+ * @param state - Canvas store state
+ * @param zoom - Viewport zoom level
+ * @param withPadding - Whether to apply protection padding (only for visual alignment)
+ */
+async function processFeasiblePairs(
+  pairs: Array<{ container: CanvasElement; content: CanvasElement }>,
+  strategy: (context: import('../../../utils/opticalAlignmentHelpers').AlignmentContext) => { x: number; y: number } | Promise<{ x: number; y: number }>,
+  state: CanvasStore,
+  zoom: number,
+  withPadding: boolean = false
+): Promise<void> {
+  for (const pair of pairs) {
+    // Prepare alignment context using shared helper
+    const context = prepareAlignmentContext(pair.container, pair.content, zoom);
+
+    // Compute offset using the provided strategy
+    let offset = await strategy(context);
+
+    // Apply protection padding if requested (only for visual alignment)
+    if (withPadding) {
+      offset = applyProtectionPadding(offset, context.contentBounds, context.containerBounds);
+    }
+
+    // Apply the offset to all subpaths
+    const translatedSubPaths = translateSubPaths(context.contentData.subPaths, offset);
+
+    // Update the element
+    state.updateElement(pair.content.id, {
+      data: {
+        ...context.contentData,
+        subPaths: translatedSubPaths
+      }
+    });
+  }
+}
+
+/**
+ * Helper to get container/content IDs from feasible pairs
+ * Eliminates duplication between selectAllContainers and selectAllContents
+ */
+function getContainerContentIds(pairs: Array<{ container: CanvasElement; content: CanvasElement }>): {
+  containerIds: string[];
+  contentIds: string[];
+} {
+  return {
+    containerIds: pairs.map(pair => pair.container.id),
+    contentIds: pairs.map(pair => pair.content.id)
+  };
 }
 
 export const createOpticalAlignmentSlice: StateCreator<
@@ -511,7 +569,7 @@ export const createOpticalAlignmentSlice: StateCreator<
     });
   },
 
-  applyMathematicalAlignmentToAllPairs: () => {
+  applyMathematicalAlignmentToAllPairs: async () => {
     const state = get();
 
     // Get all path elements with their bounds and areas using helper
@@ -520,38 +578,14 @@ export const createOpticalAlignmentSlice: StateCreator<
     // Find all feasible pairs using the helper function
     const feasiblePairs = findFeasiblePairs(pathElements);
 
-    // Apply mathematical alignment to each pair
-    for (const pair of feasiblePairs) {
-      const containerData = pair.container.data as PathData;
-      const contentData = pair.content.data as PathData;
-      const zoom = state.viewport.zoom;
-
-      // Calculate bounds for both elements (including stroke width)
-      const containerBounds = calculateBounds(
-        containerData.subPaths,
-        containerData.strokeWidth || 0,
-        zoom
-      );
-      const contentBounds = calculateBounds(
-        contentData.subPaths,
-        contentData.strokeWidth || 0,
-        zoom
-      );
-
-      // Calculate offset using helper function
-      const offset = calculateMathematicalOffset(containerBounds, contentBounds);
-
-      // Apply the offset to all subpaths
-      const translatedSubPaths = translateSubPaths(contentData.subPaths, offset);
-
-      // Update the element
-      state.updateElement(pair.content.id, {
-        data: {
-          ...contentData,
-          subPaths: translatedSubPaths
-        }
-      });
-    }
+    // Use centralized helper with mathematical alignment strategy
+    await processFeasiblePairs(
+      feasiblePairs,
+      mathematicalAlignmentStrategy,
+      state,
+      state.viewport.zoom,
+      false // No protection padding for mathematical alignment
+    );
   },
 
   selectAllContainers: () => {
@@ -563,8 +597,8 @@ export const createOpticalAlignmentSlice: StateCreator<
     // Find all feasible pairs
     const feasiblePairs = findFeasiblePairs(pathElements);
 
-    // Extract container IDs
-    const containerIds = feasiblePairs.map(pair => pair.container.id);
+    // Use centralized helper to extract IDs
+    const { containerIds } = getContainerContentIds(feasiblePairs);
 
     // Select all containers
     state.selectElements(containerIds);
@@ -579,8 +613,8 @@ export const createOpticalAlignmentSlice: StateCreator<
     // Find all feasible pairs
     const feasiblePairs = findFeasiblePairs(pathElements);
 
-    // Extract content IDs
-    const contentIds = feasiblePairs.map(pair => pair.content.id);
+    // Use centralized helper to extract IDs
+    const { contentIds } = getContainerContentIds(feasiblePairs);
 
     // Select all contents
     state.selectElements(contentIds);

@@ -2,7 +2,8 @@ import React from 'react';
 import { Button } from '@chakra-ui/react';
 import type { ButtonProps } from '@chakra-ui/react';
 
-export interface AlignmentActionButtonProps extends Omit<ButtonProps, 'variant' | 'size'> {
+// Internal interface - only used within this component
+interface AlignmentActionButtonProps extends Omit<ButtonProps, 'variant' | 'size'> {
   children: React.ReactNode;
 }
 

@@ -15,7 +15,8 @@ export interface Bounds {
   maxY: number;
 }
 
-export interface BoundsOptions {
+// Internal interface - only used within this module
+interface BoundsOptions {
   zoom?: number;
   includeStroke?: boolean;
 }

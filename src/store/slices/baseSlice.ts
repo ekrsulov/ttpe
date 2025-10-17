@@ -1,8 +1,10 @@
 import type { StateCreator } from 'zustand';
 import type { CanvasElement, GroupElement, PathData, PathElement } from '../../types';
 import type { CanvasStore } from '../canvasStore';
-import { performPathUnion as performUnionOp, performPathSubtraction, performPathUnionPaperJS, performPathIntersect, performPathExclude, performPathDivide, commandsToString } from '../../utils/path';
-import { measurePath } from '../../utils';
+import { performPathUnion as performUnionOp, performPathSubtraction, performPathUnionPaperJS, performPathIntersect, performPathExclude, performPathDivide } from '../../utils/path';
+// Removed unused imports: commandsToString, measurePath (now in exportUtils), getSelectedSubpathElements (not used in this file)
+import { getSelectedPaths } from '../utils/pluginSliceHelpers';
+import { serializePathsForExport } from '../../utils/exportUtils';
 
 export interface BaseSlice {
   // State
@@ -60,39 +62,13 @@ const modeRules: Record<string, ModeRule> = {
   subpath: { canToggleOff: true, defaultFallback: 'select' },
 };
 
-// Helper to get selected paths for boolean operations
-const getSelectedPaths = (state: CanvasStore): PathData[] => {
-  const selectedPaths = state.elements.filter(el =>
-    state.selectedIds.includes(el.id) && el.type === 'path'
-  ).map(el => el.data as PathData);
-
-  const selectedSubpathElements = state.selectedSubpaths.map(sp => {
-    const element = state.elements.find(el => el.id === sp.elementId);
-    if (element && element.type === 'path') {
-      return { element, subpathIndex: sp.subpathIndex };
-    }
-    return null;
-  }).filter(Boolean) as Array<{ element: CanvasElement; subpathIndex: number }>;
-
-  // Handle selected subpaths by extracting them as separate paths
-  const subpathPaths = selectedSubpathElements.map(({ element, subpathIndex }) => {
-    const pathData = element.data as PathData;
-    return {
-      ...pathData,
-      subPaths: [pathData.subPaths[subpathIndex]]
-    };
-  });
-
-  return [...selectedPaths, ...subpathPaths];
-};
-
 // Generic handler for boolean path operations
 const performBooleanOperation = (
   state: CanvasStore,
   operation: (paths: PathData[]) => PathData | null,
   minPaths: number = 2
 ) => {
-  const allPaths = getSelectedPaths(state);
+  const allPaths = getSelectedPaths(state.elements, state.selectedIds, state.selectedSubpaths);
 
   if (allPaths.length < minPaths) return;
 
@@ -126,7 +102,7 @@ const performBinaryBooleanOperation = (
   state: CanvasStore,
   operation: (path1: PathData, path2: PathData) => PathData | null
 ) => {
-  const allPaths = getSelectedPaths(state);
+  const allPaths = getSelectedPaths(state.elements, state.selectedIds, state.selectedSubpaths);
 
   if (allPaths.length !== 2) return;
 
@@ -409,173 +385,18 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
       return;
     }
 
-    interface ExportNode {
-      element: CanvasElement;
-      children: ExportNode[];
-    }
+    // Use centralized serialization helper
+    const result = serializePathsForExport(
+      state.elements,
+      state.selectedIds,
+      { selectedOnly, padding: selectedOnly ? 0 : 20 }
+    );
 
-    const elementMap = new Map<string, CanvasElement>();
-    state.elements.forEach(element => {
-      elementMap.set(element.id, element);
-    });
-
-    const selectedSet = new Set(state.selectedIds);
-
-    const hasSelectedAncestor = (element: CanvasElement): boolean => {
-      let currentParentId = element.parentId ?? null;
-      while (currentParentId) {
-        if (selectedSet.has(currentParentId)) {
-          return true;
-        }
-        const parent = elementMap.get(currentParentId);
-        currentParentId = parent?.parentId ?? null;
-      }
-      return false;
-    };
-
-    const buildExportNode = (element: CanvasElement): ExportNode | null => {
-      if (element.type === 'path') {
-        return { element, children: [] };
-      }
-
-      if (element.type === 'group') {
-        const childNodes = element.data.childIds
-          .map(childId => elementMap.get(childId))
-          .filter((child): child is CanvasElement => Boolean(child))
-          .map(child => buildExportNode(child))
-          .filter((node): node is ExportNode => Boolean(node));
-
-        if (childNodes.length === 0 && selectedOnly) {
-          return null;
-        }
-
-        return { element, children: childNodes };
-      }
-
-      return null;
-    };
-
-    let rootElements: CanvasElement[];
-    if (selectedOnly) {
-      rootElements = state.selectedIds
-        .map(id => elementMap.get(id))
-        .filter((element): element is CanvasElement => Boolean(element))
-        .filter(element => !hasSelectedAncestor(element))
-        .sort((a, b) => a.zIndex - b.zIndex);
-    } else {
-      rootElements = state.elements
-        .filter(element => !element.parentId)
-        .sort((a, b) => a.zIndex - b.zIndex);
-    }
-
-    const exportNodes = rootElements
-      .map(element => buildExportNode(element))
-      .filter((node): node is ExportNode => Boolean(node));
-
-    const collectPathElements = (nodes: ExportNode[]): PathElement[] => {
-      const paths: PathElement[] = [];
-      nodes.forEach(node => {
-        if (node.element.type === 'path') {
-          paths.push(node.element as PathElement);
-        } else {
-          paths.push(...collectPathElements(node.children));
-        }
-      });
-      return paths;
-    };
-
-    const pathElements = collectPathElements(exportNodes);
-
-    if (pathElements.length === 0) {
-      console.warn('No elements to export');
+    if (!result) {
       return;
     }
 
-    let minX = Infinity;
-    let minY = Infinity;
-    let maxX = -Infinity;
-    let maxY = -Infinity;
-
-    pathElements.forEach(pathElement => {
-      const pathData = pathElement.data as PathData;
-      const bounds = measurePath(pathData.subPaths, pathData.strokeWidth, 1);
-      minX = Math.min(minX, bounds.minX);
-      minY = Math.min(minY, bounds.minY);
-      maxX = Math.max(maxX, bounds.maxX);
-      maxY = Math.max(maxY, bounds.maxY);
-    });
-
-    const padding = selectedOnly ? 0 : 20;
-    minX -= padding;
-    minY -= padding;
-    maxX += padding;
-    maxY += padding;
-
-    const width = maxX - minX;
-    const height = maxY - minY;
-
-    const escapeAttribute = (value: string): string => {
-      return value
-        .replace(/&/g, '&amp;')
-        .replace(/"/g, '&quot;');
-    };
-
-    const serializeNode = (node: ExportNode, indentLevel: number): string => {
-      const indent = '  '.repeat(indentLevel);
-
-      if (node.element.type === 'path') {
-        const pathElement = node.element as PathElement;
-        const pathData = pathElement.data as PathData;
-        const pathD = commandsToString(pathData.subPaths.flat());
-
-        const effectiveStrokeColor = pathData.isPencilPath && pathData.strokeColor === 'none'
-          ? '#000000'
-          : pathData.strokeColor;
-
-        let result = `${indent}<path id="${pathElement.id}" d="${pathD}" stroke="${effectiveStrokeColor}" stroke-width="${pathData.strokeWidth}" fill="${pathData.fillColor}" fill-opacity="${pathData.fillOpacity}" stroke-opacity="${pathData.strokeOpacity}"`;
-
-        if (pathData.strokeLinecap) {
-          result += ` stroke-linecap="${pathData.strokeLinecap}"`;
-        }
-        if (pathData.strokeLinejoin) {
-          result += ` stroke-linejoin="${pathData.strokeLinejoin}"`;
-        }
-        if (pathData.fillRule) {
-          result += ` fill-rule="${pathData.fillRule}"`;
-        }
-        if (pathData.strokeDasharray && pathData.strokeDasharray !== 'none') {
-          result += ` stroke-dasharray="${pathData.strokeDasharray}"`;
-        }
-
-        result += ' />';
-
-        return result;
-      }
-
-      const groupElement = node.element as GroupElement;
-      const attributes: string[] = [`id="${groupElement.id}"`];
-      if (groupElement.data.name) {
-        attributes.push(`data-name="${escapeAttribute(groupElement.data.name)}"`);
-      }
-
-      if (node.children.length === 0) {
-        return `${indent}<g${attributes.length ? ' ' + attributes.join(' ') : ''} />`;
-      }
-
-      const childrenContent = node.children.map(child => serializeNode(child, indentLevel + 1)).join('\n');
-      return `${indent}<g${attributes.length ? ' ' + attributes.join(' ') : ''}>\n${childrenContent}\n${indent}</g>`;
-    };
-
-    const serializedElements = exportNodes.map(node => serializeNode(node, 1)).join('\n');
-
-    let svgContent = `<?xml version="1.0" encoding="UTF-8"?>\n`;
-    svgContent += `<svg width="${width}" height="${height}" viewBox="${minX} ${minY} ${width} ${height}" xmlns="http://www.w3.org/2000/svg">`;
-
-    if (serializedElements) {
-      svgContent += `\n${serializedElements}\n`;
-    }
-
-    svgContent += `</svg>`;
+    const { svgContent } = result;
 
     const dataBlob = new Blob([svgContent], { type: 'image/svg+xml' });
     const url = URL.createObjectURL(dataBlob);
@@ -592,86 +413,23 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
     saveAsPng: (selectedOnly: boolean = false) => {
     const state = get() as CanvasStore;
 
-    // Calculate bounds of all elements to export
-    let minX = Infinity;
-    let minY = Infinity;
-    let maxX = -Infinity;
-    let maxY = -Infinity;
-
-    // Filter elements based on selection if needed
-    const elementsToExport = selectedOnly
-      ? state.elements.filter(el => state.selectedIds.includes(el.id))
-      : state.elements;
-
-    if (elementsToExport.length === 0) {
+    if (state.elements.length === 0) {
       console.warn('No elements to export');
       return;
     }
 
-    // Calculate bounds from element data
-    elementsToExport.forEach(element => {
-      if (element.type === 'path') {
-        const pathData = element.data as PathData;
-        pathData.subPaths.forEach(subPath => {
-          subPath.forEach(command => {
-            if (command.type === 'M' || command.type === 'L') {
-              minX = Math.min(minX, command.position.x);
-              minY = Math.min(minY, command.position.y);
-              maxX = Math.max(maxX, command.position.x);
-              maxY = Math.max(maxY, command.position.y);
-            } else if (command.type === 'C') {
-              minX = Math.min(minX, command.position.x, command.controlPoint1.x, command.controlPoint2.x);
-              minY = Math.min(minY, command.position.y, command.controlPoint1.y, command.controlPoint2.y);
-              maxX = Math.max(maxX, command.position.x, command.controlPoint1.x, command.controlPoint2.x);
-              maxY = Math.max(maxY, command.position.y, command.controlPoint1.y, command.controlPoint2.y);
-            }
-          });
-        });
-      }
-    });
+    // Use centralized serialization helper (same as saveAsSvg)
+    const result = serializePathsForExport(
+      state.elements,
+      state.selectedIds,
+      { selectedOnly, padding: selectedOnly ? 0 : 20 }
+    );
 
-    const padding = selectedOnly ? 0 : 20;
-    const width = Math.max(maxX - minX + (padding * 2), 100);
-    const height = Math.max(maxY - minY + (padding * 2), 100);
+    if (!result) {
+      return;
+    }
 
-    // Create SVG content manually
-    let svgContent = `<?xml version="1.0" encoding="UTF-8"?>\n`;
-    svgContent += `<svg width="${width}" height="${height}" viewBox="${minX - padding} ${minY - padding} ${width} ${height}" xmlns="http://www.w3.org/2000/svg">\n`;
-
-    // Add elements
-    elementsToExport.forEach(element => {
-      if (element.type === 'path') {
-        const pathData = element.data as PathData;
-        const pathD = commandsToString(pathData.subPaths.flat());
-
-        // For pencil paths, if strokeColor is 'none', render with black
-        const effectiveStrokeColor = pathData.isPencilPath && pathData.strokeColor === 'none'
-          ? '#000000'
-          : pathData.strokeColor;
-
-        svgContent += `  <path d="${pathD}" `;
-        svgContent += `stroke="${effectiveStrokeColor}" `;
-        svgContent += `stroke-width="${pathData.strokeWidth}" `;
-        svgContent += `fill="${pathData.fillColor}" `;
-        svgContent += `fill-opacity="${pathData.fillOpacity}" `;
-        svgContent += `stroke-opacity="${pathData.strokeOpacity}" `;
-        if (pathData.strokeLinecap) {
-          svgContent += `stroke-linecap="${pathData.strokeLinecap}" `;
-        }
-        if (pathData.strokeLinejoin) {
-          svgContent += `stroke-linejoin="${pathData.strokeLinejoin}" `;
-        }
-        if (pathData.fillRule) {
-          svgContent += `fill-rule="${pathData.fillRule}" `;
-        }
-        if (pathData.strokeDasharray && pathData.strokeDasharray !== 'none') {
-          svgContent += `stroke-dasharray="${pathData.strokeDasharray}" `;
-        }
-        svgContent += `/>\n`;
-      }
-    });
-
-    svgContent += `</svg>`;
+    const { svgContent, bounds } = result;
 
     // Convert SVG to data URL
     const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgContent)}`;
@@ -684,8 +442,8 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
       return;
     }
 
-    canvas.width = width;
-    canvas.height = height;
+    canvas.width = bounds.width;
+    canvas.height = bounds.height;
 
     const img = new Image();
     img.onload = () => {

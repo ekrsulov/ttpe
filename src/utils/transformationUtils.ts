@@ -1,8 +1,6 @@
 import type { PathData, Command } from '../types';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from './index';
-import { extractSubpaths } from './pathParserUtils';
-import { transformCommands, calculateScaledStrokeWidth } from './sharedTransformUtils';
-import { logger } from './logger';
+// Removed unused imports: extractSubpaths, transformCommands, calculateScaledStrokeWidth, logger
 
 /**
  * Translates commands by deltaX and deltaY with configurable formatting options.
@@ -112,6 +110,12 @@ export const alignmentTargets = {
     Math.max(...bounds.map(b => b.maxY))
 } as const;
 
+/**
+ * Unused export - removed to clean up public API
+ * This function is not called anywhere in the codebase
+ * If transformation is needed, use transformCommands from sharedTransformUtils
+ */
+/*
 export function transformPathData(
   pathData: PathData,
   scaleX: number,
@@ -150,3 +154,4 @@ export function transformPathData(
     return pathData; // Return original if transformation fails
   }
 }
+*/

@@ -8,6 +8,18 @@ import { PanelActionButton } from '../ui/PanelActionButton';
 import { useCanvasStore } from '../../store/canvasStore';
 import { measureCommandsBounds } from '../../utils/measurementUtils';
 
+/**
+ * Helper to convert bounds result to rounded bbox
+ * Centralizes the repeated rounding logic
+ */
+function getRoundedBbox(boundsResult: ReturnType<typeof measureCommandsBounds>) {
+  if (!boundsResult) return null;
+  return {
+    topLeft: { x: Math.round(boundsResult.minX), y: Math.round(boundsResult.minY) },
+    bottomRight: { x: Math.round(boundsResult.maxX), y: Math.round(boundsResult.maxY) }
+  };
+}
+
 type SelectPanelItemType =
   | {
       type: 'element';
@@ -61,12 +73,9 @@ const SelectPanelItemComponent: React.FC<SelectPanelItemProps> = ({
     }
   }
 
-  // Use centralized bounds calculation
+  // Use centralized bounds calculation with rounding helper
   const boundsResult = measureCommandsBounds(thumbnailCommands);
-  const bbox = boundsResult ? {
-    topLeft: { x: Math.round(boundsResult.minX), y: Math.round(boundsResult.minY) },
-    bottomRight: { x: Math.round(boundsResult.maxX), y: Math.round(boundsResult.maxY) }
-  } : null;
+  const bbox = getRoundedBbox(boundsResult);
 
   const elementId = item.element.id;
   const subpathIndex = item.type === 'subpath' ? item.subpathIndex : undefined;
@@ -228,15 +237,8 @@ const arePropsEqual = (prevProps: SelectPanelItemProps, nextProps: SelectPanelIt
       const prevBoundsResult = measureCommandsBounds(prevCommands);
       const nextBoundsResult = measureCommandsBounds(nextCommands);
       
-      const prevBbox = prevBoundsResult ? {
-        topLeft: { x: Math.round(prevBoundsResult.minX), y: Math.round(prevBoundsResult.minY) },
-        bottomRight: { x: Math.round(prevBoundsResult.maxX), y: Math.round(prevBoundsResult.maxY) }
-      } : null;
-      
-      const nextBbox = nextBoundsResult ? {
-        topLeft: { x: Math.round(nextBoundsResult.minX), y: Math.round(nextBoundsResult.minY) },
-        bottomRight: { x: Math.round(nextBoundsResult.maxX), y: Math.round(nextBoundsResult.maxY) }
-      } : null;
+      const prevBbox = getRoundedBbox(prevBoundsResult);
+      const nextBbox = getRoundedBbox(nextBoundsResult);
       
       // Compare bounding boxes
       if (prevBbox && nextBbox) {
@@ -279,15 +281,8 @@ const arePropsEqual = (prevProps: SelectPanelItemProps, nextProps: SelectPanelIt
         const prevBoundsResult = measureCommandsBounds(prevSubpath.commands);
         const nextBoundsResult = measureCommandsBounds(nextSubpath.commands);
         
-        const prevBbox = prevBoundsResult ? {
-          topLeft: { x: Math.round(prevBoundsResult.minX), y: Math.round(prevBoundsResult.minY) },
-          bottomRight: { x: Math.round(prevBoundsResult.maxX), y: Math.round(prevBoundsResult.maxY) }
-        } : null;
-        
-        const nextBbox = nextBoundsResult ? {
-          topLeft: { x: Math.round(nextBoundsResult.minX), y: Math.round(nextBoundsResult.minY) },
-          bottomRight: { x: Math.round(nextBoundsResult.maxX), y: Math.round(nextBoundsResult.maxY) }
-        } : null;
+        const prevBbox = getRoundedBbox(prevBoundsResult);
+        const nextBbox = getRoundedBbox(nextBoundsResult);
         
         // Compare bounding boxes
         if (prevBbox && nextBbox) {

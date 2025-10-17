@@ -171,6 +171,20 @@ const distributeElements = (
   });
 };
 
+// Helper function for distribution - reduces duplication in horizontal/vertical distribution
+const performDistribution = (
+  set: (updater: (state: CanvasStore) => Partial<CanvasStore>) => void,
+  get: () => ArrangeSlice,
+  axis: 'x' | 'y'
+) => {
+  const fullState = get() as CanvasStore;
+  const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+
+  setStore((state) => ({
+    elements: distributeElements(state.elements, fullState.selectedIds, fullState.viewport.zoom, axis)
+  }));
+};
+
 export interface ArrangeSlice {
   // Actions
   alignLeft: () => void;
@@ -210,20 +224,10 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
   },
 
   distributeHorizontally: () => {
-    const fullState = get() as CanvasStore;
-    const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
-
-    setStore((state) => ({
-      elements: distributeElements(state.elements, fullState.selectedIds, fullState.viewport.zoom, 'x')
-    }));
+    performDistribution(set, get, 'x');
   },
 
   distributeVertically: () => {
-    const fullState = get() as CanvasStore;
-    const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
-
-    setStore((state) => ({
-      elements: distributeElements(state.elements, fullState.selectedIds, fullState.viewport.zoom, 'y')
-    }));
+    performDistribution(set, get, 'y');
   },
 });

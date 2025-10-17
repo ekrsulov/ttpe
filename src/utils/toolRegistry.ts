@@ -27,8 +27,9 @@ export type ToolRegistry = Record<string, ToolConfig>;
 /**
  * Get cursor style for a tool mode
  * Uses centralized tool definitions
+ * Internal helper - only used within this module
  */
-export const getToolCursor = (mode: ToolMode): string => {
+const getToolCursor = (mode: ToolMode): string => {
   const toolDef = TOOL_DEFINITIONS.find(tool => tool.mode === mode);
   return toolDef?.cursor || 'default';
 };

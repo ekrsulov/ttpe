@@ -7,11 +7,13 @@ import type { CanvasElement, PathData, Command } from '../types';
 import { calculateVisualCenter, pathToRGBMatrix } from './visualCenterUtils';
 import { commandsToString } from './path';
 import { calculateBounds, type Bounds } from './boundsUtils';
+import { translateCommands } from './transformationUtils';
 
 export type { Bounds } from './boundsUtils';
 export { calculateBounds } from './boundsUtils';
 
-export interface ContainerContentPair {
+// Internal interface - only used within this module
+interface ContainerContentPair {
   container: CanvasElement;
   content: CanvasElement;
 }
@@ -183,42 +185,16 @@ export async function computeVisualAlignment(
 
 /**
  * Apply translation offset to path subpaths
+ * Now delegates to shared translateCommands utility for consistency
  */
 export function translateSubPaths(
   subPaths: Command[][], 
   offset: { x: number; y: number }
 ): Command[][] {
+  // Use the shared translateCommands function for each subpath
+  // This ensures future fixes to translation logic apply everywhere
   return subPaths.map(subPath =>
-    subPath.map(cmd => {
-      if (cmd.type === 'M' || cmd.type === 'L') {
-        return {
-          ...cmd,
-          position: {
-            x: cmd.position.x + offset.x,
-            y: cmd.position.y + offset.y
-          }
-        };
-      } else if (cmd.type === 'C') {
-        return {
-          ...cmd,
-          controlPoint1: {
-            ...cmd.controlPoint1,
-            x: cmd.controlPoint1.x + offset.x,
-            y: cmd.controlPoint1.y + offset.y
-          },
-          controlPoint2: {
-            ...cmd.controlPoint2,
-            x: cmd.controlPoint2.x + offset.x,
-            y: cmd.controlPoint2.y + offset.y
-          },
-          position: {
-            x: cmd.position.x + offset.x,
-            y: cmd.position.y + offset.y
-          }
-        };
-      }
-      return cmd;
-    })
+    translateCommands(subPath, offset.x, offset.y)
   );
 }
 
@@ -244,3 +220,23 @@ export function calculateMathematicalOffset(
     y: containerMathCenter.y - contentMathCenter.y
   };
 }
+
+/**
+ * Alignment strategy type - defines how to compute the offset
+ */
+export type AlignmentStrategy = (context: AlignmentContext) => { x: number; y: number } | Promise<{ x: number; y: number }>;
+
+/**
+ * Mathematical alignment strategy - uses geometric centers
+ */
+export const mathematicalAlignmentStrategy: AlignmentStrategy = (context: AlignmentContext) => {
+  return calculateMathematicalOffset(context.containerBounds, context.contentBounds);
+};
+
+/**
+ * Visual (optical) alignment strategy - uses visual perception
+ */
+export const visualAlignmentStrategy: AlignmentStrategy = async (context: AlignmentContext) => {
+  const result = await computeVisualAlignment(context);
+  return result.offset;
+};

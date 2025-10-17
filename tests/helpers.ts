@@ -13,11 +13,14 @@ export function getToolButton(page: Page, title: string): Locator {
 }
 
 /**
- * Get an action button from the BottomActionBar by its aria-label
+ * Unused helper - removed to clean up public API
+ * Not referenced by any test files
  */
+/*
 export function getActionButton(page: Page, ariaLabel: string): Locator {
   return page.locator(`[aria-label="${ariaLabel}"]`);
 }
+*/
 
 /**
  * Click a tool button (Select, Pencil, Text, Shape, etc.) from the TopActionBar
@@ -27,11 +30,14 @@ export async function clickToolButton(page: Page, title: string): Promise<void> 
 }
 
 /**
- * Click an action button (Undo, Redo, Delete, etc.) from the BottomActionBar
+ * Unused helper - removed to clean up public API
+ * Not referenced by any test files
  */
+/*
 export async function clickActionButton(page: Page, ariaLabel: string): Promise<void> {
   await getActionButton(page, ariaLabel).click();
 }
+*/
 
 /**
  * Get the canvas SVG element
@@ -62,8 +68,11 @@ export async function isToolButtonEnabled(page: Page, title: string): Promise<bo
 }
 
 /**
- * Check if an action button is enabled
+ * Unused helper - removed to clean up public API
+ * Not referenced by any test files
  */
+/*
 export async function isActionButtonEnabled(page: Page, ariaLabel: string): Promise<boolean> {
   return await getActionButton(page, ariaLabel).isEnabled();
 }
+*/

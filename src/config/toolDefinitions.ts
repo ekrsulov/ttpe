@@ -18,8 +18,9 @@ export type ToolMode = 'select' | 'pencil' | 'text' | 'shape' | 'subpath' | 'tra
 /**
  * Unified tool definition interface
  * Contains all metadata for a tool in one place
+ * Internal interface - only the array is exported
  */
-export interface ToolDefinition {
+interface ToolDefinition {
   mode: ToolMode;
   label: string;
   icon: ComponentType<{ size?: number }>;
