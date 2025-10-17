@@ -29,8 +29,11 @@ export function computeAdjustedBounds(
 export interface SubpathBoundsResult {
   subpathIndex: number;
   bounds: AdjustedBounds;
+  rawBounds: { minX: number; minY: number; maxX: number; maxY: number };
   width: number;
   height: number;
+  centerX: number;
+  centerY: number;
 }
 
 /**
@@ -70,12 +73,17 @@ export function measureSelectedSubpaths(
         const adjustedBounds = computeAdjustedBounds(rawBounds, zoom, offsetPx);
         const width = adjustedBounds.maxX - adjustedBounds.minX;
         const height = adjustedBounds.maxY - adjustedBounds.minY;
+        const centerX = rawBounds.minX + (rawBounds.maxX - rawBounds.minX) / 2;
+        const centerY = rawBounds.minY + (rawBounds.maxY - rawBounds.minY) / 2;
 
         results.push({
           subpathIndex: selected.subpathIndex,
           bounds: adjustedBounds,
+          rawBounds,
           width,
           height,
+          centerX,
+          centerY,
         });
       });
   } catch (error) {

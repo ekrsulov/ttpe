@@ -1,8 +1,6 @@
 import React, { Suspense, useMemo } from 'react';
 import { Box } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
-import type { PathData } from '../../types';
-import { calculateBounds } from '../../utils/guidelinesHelpers';
 import { 
   PANEL_CONFIGS, 
   type SmoothBrush, 
@@ -59,38 +57,8 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
   // Check if we're in special panel mode (file or settings)
   const isInSpecialPanelMode = showFilePanel || showSettingsPanel;
   
-  // Get canPerformOpticalAlignment function and check current state
-  const canPerformOpticalAlignment = useCanvasStore(state => {
-    const selectedElements = state.elements.filter(el => 
-      state.selectedIds.includes(el.id) && el.type === 'path'
-    );
-
-    if (selectedElements.length !== 2) return false;
-
-    // Use centralized stroke-aware bounds calculation
-    const pathData1 = selectedElements[0].data as PathData;
-    const pathData2 = selectedElements[1].data as PathData;
-    
-    const bounds1 = calculateBounds(
-      pathData1.subPaths, 
-      pathData1.strokeWidth || 0,
-      1,
-      { includeStroke: true }
-    );
-    
-    const bounds2 = calculateBounds(
-      pathData2.subPaths, 
-      pathData2.strokeWidth || 0,
-      1,
-      { includeStroke: true }
-    );
-
-    const area1 = (bounds1.maxX - bounds1.minX) * (bounds1.maxY - bounds1.minY);
-    const area2 = (bounds2.maxX - bounds2.minX) * (bounds2.maxY - bounds2.minY);
-
-    // One should be at least 1.5x larger than the other
-    return Math.max(area1, area2) / Math.min(area1, area2) >= 1.5;
-  });
+  // Use centralized optical alignment eligibility check from store
+  const canPerformOpticalAlignment = useCanvasStore(state => state.canPerformOpticalAlignment());
 
   // Prepare the context for condition evaluation
   const conditionContext = useMemo(() => ({

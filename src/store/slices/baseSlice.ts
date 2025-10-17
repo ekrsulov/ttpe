@@ -4,7 +4,7 @@ import type { CanvasStore } from '../canvasStore';
 import { performPathUnion as performUnionOp, performPathSubtraction, performPathUnionPaperJS, performPathIntersect, performPathExclude, performPathDivide } from '../../utils/path';
 // Removed unused imports: commandsToString, measurePath (now in exportUtils), getSelectedSubpathElements (not used in this file)
 import { getSelectedPaths } from '../utils/pluginSliceHelpers';
-import { serializePathsForExport } from '../../utils/exportUtils';
+import { exportSelection } from '../../utils/exportUtils';
 
 export interface BaseSlice {
   // State
@@ -379,97 +379,12 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
 
   saveAsSvg: (selectedOnly: boolean = false) => {
     const state = get() as CanvasStore;
-
-    if (state.elements.length === 0) {
-      console.warn('No elements to export');
-      return;
-    }
-
-    // Use centralized serialization helper
-    const result = serializePathsForExport(
-      state.elements,
-      state.selectedIds,
-      { selectedOnly, padding: selectedOnly ? 0 : 20 }
-    );
-
-    if (!result) {
-      return;
-    }
-
-    const { svgContent } = result;
-
-    const dataBlob = new Blob([svgContent], { type: 'image/svg+xml' });
-    const url = URL.createObjectURL(dataBlob);
-
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${state.documentName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.svg`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    exportSelection('svg', state.elements, state.selectedIds, state.documentName, selectedOnly);
   },
 
-    saveAsPng: (selectedOnly: boolean = false) => {
+  saveAsPng: (selectedOnly: boolean = false) => {
     const state = get() as CanvasStore;
-
-    if (state.elements.length === 0) {
-      console.warn('No elements to export');
-      return;
-    }
-
-    // Use centralized serialization helper (same as saveAsSvg)
-    const result = serializePathsForExport(
-      state.elements,
-      state.selectedIds,
-      { selectedOnly, padding: selectedOnly ? 0 : 20 }
-    );
-
-    if (!result) {
-      return;
-    }
-
-    const { svgContent, bounds } = result;
-
-    // Convert SVG to data URL
-    const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgContent)}`;
-
-    // Create canvas and draw SVG
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      console.error('Could not get canvas context');
-      return;
-    }
-
-    canvas.width = bounds.width;
-    canvas.height = bounds.height;
-
-    const img = new Image();
-    img.onload = () => {
-      ctx.drawImage(img, 0, 0);
-
-      // Convert to PNG and download
-      canvas.toBlob((blob) => {
-        if (!blob) {
-          console.error('Could not create PNG blob');
-          return;
-        }
-
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `${state.documentName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-      }, 'image/png');
-    };
-    img.onerror = () => {
-      console.error('Failed to load SVG image');
-    };
-    img.src = svgDataUrl;
+    exportSelection('png', state.elements, state.selectedIds, state.documentName, selectedOnly);
   },
 
   loadDocument: async (append: boolean = false) => {

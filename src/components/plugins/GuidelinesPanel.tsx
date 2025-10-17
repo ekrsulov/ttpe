@@ -5,23 +5,18 @@ import { Ruler } from 'lucide-react';
 import { Panel } from '../ui/Panel';
 import { PanelToggleGroup } from '../ui/PanelToggleGroup';
 import { PanelToggle } from '../ui/PanelToggle';
+import { usePanelToggleHandlers } from '../../hooks/usePanelToggleHandlers';
 
 const GuidelinesPanelComponent: React.FC = () => {
   // Only subscribe to guidelines state
   const guidelines = useCanvasStore(state => state.guidelines);
   const updateGuidelinesState = useCanvasStore(state => state.updateGuidelinesState);
 
-  const handleToggleGuidelines = (e: React.ChangeEvent<HTMLInputElement>) => {
-    updateGuidelinesState({ enabled: e.target.checked });
-  };
-
-  const handleToggleDistanceGuidelines = (e: React.ChangeEvent<HTMLInputElement>) => {
-    updateGuidelinesState({ distanceEnabled: e.target.checked });
-  };
-
-  const handleToggleDebugMode = (e: React.ChangeEvent<HTMLInputElement>) => {
-    updateGuidelinesState({ debugMode: e.target.checked });
-  };
+  // Use shared hook for toggle handlers
+  const { createToggleHandler } = usePanelToggleHandlers(updateGuidelinesState);
+  const handleToggleGuidelines = createToggleHandler('enabled');
+  const handleToggleDistanceGuidelines = createToggleHandler('distanceEnabled');
+  const handleToggleDebugMode = createToggleHandler('debugMode');
 
   return (
     <Panel 

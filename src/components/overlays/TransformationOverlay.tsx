@@ -1,13 +1,11 @@
 import React from 'react';
 import { deriveElementSelectionColors, SUBPATH_SELECTION_COLOR } from '../../utils/canvas';
-import { measureSubpathBounds } from '../../utils/geometry';
-import { computeAdjustedBounds } from '../../utils/overlayHelpers';
+import { computeAdjustedBounds, measureSelectedSubpaths } from '../../utils/overlayHelpers';
 import { TransformationHandlers } from '../TransformationHandlers';
 import { CenterMarker } from './CenterMarker';
 import { CornerCoordinateLabels } from './CornerCoordinateLabels';
 import { MeasurementRulers } from './MeasurementRulers';
-import type { PathData } from '../../types';
-import { logger } from '../../utils';
+import { SelectionRects } from './SelectionRects';
 
 interface TransformationOverlayProps {
   element: {
@@ -67,21 +65,33 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
 
   const handlerSize = 10 / viewport.zoom;
 
+  // Measure selected subpaths using shared helper
+  const subpathBoundsResults = isWorkingWithSubpaths
+    ? measureSelectedSubpaths(element, selectedSubpaths, viewport.zoom)
+    : [];
+
+  // Build selection rectangles for subpaths when not transforming exactly one
+  const shouldShowSubpathSelectionRect = isWorkingWithSubpaths && 
+    !(activePlugin === 'transformation' && selectedSubpaths.length === 1);
+  
+  const selectionRects = shouldShowSubpathSelectionRect && adjustedWidth > 0 && adjustedHeight > 0
+    ? [{
+        x: adjustedBounds.minX,
+        y: adjustedBounds.minY,
+        width: adjustedWidth,
+        height: adjustedHeight,
+        key: `element-${element.id}`,
+      }]
+    : [];
+
   return (
     <g key={`transformation-${element.id}`}>
       {/* Selection rectangle - only show when working with subpaths but NOT in transformation mode with exactly one subpath selected */}
-      {isWorkingWithSubpaths && !(activePlugin === 'transformation' && selectedSubpaths.length === 1) && adjustedWidth > 0 && adjustedHeight > 0 && (
-        <rect
-          x={adjustedBounds.minX}
-          y={adjustedBounds.minY}
-          width={adjustedWidth}
-          height={adjustedHeight}
-          fill="none"
-          stroke={selectionColor}
-          strokeWidth={strokeWidth}
-          pointerEvents="none"
-        />
-      )}
+      <SelectionRects
+        rects={selectionRects}
+        color={selectionColor}
+        strokeWidth={strokeWidth}
+      />
 
       {/* Transformation handlers */}
       {!isWorkingWithSubpaths ? (
@@ -97,65 +107,45 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
         />
       ) : (
         // For subpaths - show individual handlers for each selected subpath
-        selectedSubpaths
-          .filter(sp => sp.elementId === element.id)
-          .map((selected) => {
-            // Get bounds for individual subpath
-            if (element.type !== 'path') return null;
+        subpathBoundsResults.map((result) => (
+          <g key={`subpath-handlers-${element.id}-${result.subpathIndex}`}>
+            <TransformationHandlers
+              bounds={result.bounds}
+              elementId={element.id}
+              subpathIndex={result.subpathIndex}
+              handlerSize={handlerSize}
+              selectionColor={SUBPATH_SELECTION_COLOR}
+              viewport={viewport}
+              onPointerDown={onTransformationHandlerPointerDown}
+              onPointerUp={onTransformationHandlerPointerUp}
+            />
 
-            try {
-              const pathData = element.data as PathData;
-              const subpath = pathData.subPaths[selected.subpathIndex];
-              const subpathBounds = measureSubpathBounds(subpath, pathData.strokeWidth || 1, viewport.zoom);
+            {/* Center marker for subpath */}
+            <CenterMarker
+              centerX={result.centerX}
+              centerY={result.centerY}
+              color={SUBPATH_SELECTION_COLOR}
+              zoom={viewport.zoom}
+              showCoordinates={transformation?.showCoordinates}
+            />
 
-              if (!subpathBounds) return null;
+            {/* Corner coordinates for subpath */}
+            {transformation?.showCoordinates && (
+              <CornerCoordinateLabels
+                bounds={result.rawBounds}
+                zoom={viewport.zoom}
+              />
+            )}
 
-              const adjustedSubpathBounds = computeAdjustedBounds(subpathBounds, viewport.zoom);
-
-              return (
-                <g key={`subpath-handlers-${selected.elementId}-${selected.subpathIndex}`}>
-                  <TransformationHandlers
-                    bounds={adjustedSubpathBounds}
-                    elementId={element.id}
-                    subpathIndex={selected.subpathIndex}
-                    handlerSize={handlerSize}
-                    selectionColor={SUBPATH_SELECTION_COLOR}
-                    viewport={viewport}
-                    onPointerDown={onTransformationHandlerPointerDown}
-                    onPointerUp={onTransformationHandlerPointerUp}
-                  />
-
-                  {/* Center marker for subpath */}
-                  <CenterMarker
-                    centerX={subpathBounds.minX + (subpathBounds.maxX - subpathBounds.minX) / 2}
-                    centerY={subpathBounds.minY + (subpathBounds.maxY - subpathBounds.minY) / 2}
-                    color={SUBPATH_SELECTION_COLOR}
-                    zoom={viewport.zoom}
-                    showCoordinates={transformation?.showCoordinates}
-                  />
-
-                  {/* Corner coordinates for subpath */}
-                  {transformation?.showCoordinates && (
-                    <CornerCoordinateLabels
-                      bounds={subpathBounds}
-                      zoom={viewport.zoom}
-                    />
-                  )}
-
-                  {/* Measurement rulers for subpath */}
-                  {transformation?.showRulers && (
-                    <MeasurementRulers
-                      bounds={subpathBounds}
-                      zoom={viewport.zoom}
-                    />
-                  )}
-                </g>
-              );
-            } catch (error) {
-              logger.warn('Failed to calculate subpath bounds', error);
-              return null;
-            }
-          })
+            {/* Measurement rulers for subpath */}
+            {transformation?.showRulers && (
+              <MeasurementRulers
+                bounds={result.rawBounds}
+                zoom={viewport.zoom}
+              />
+            )}
+          </g>
+        ))
       )}
 
       {/* Center marker and coordinates for complete path */}

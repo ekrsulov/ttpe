@@ -2,7 +2,7 @@ import React, { memo } from 'react';
 import { VStack, HStack, Text } from '@chakra-ui/react';
 import { Copy, Clipboard, MousePointer2, Eye, EyeOff, Lock, Unlock, Group as GroupIcon } from 'lucide-react';
 import { extractSubpaths } from '../../utils/path';
-import type { CanvasElement, PathData, Command, PathElement } from '../../types';
+import type { PathData, Command } from '../../types';
 import { PathThumbnail } from '../ui/PathThumbnail';
 import { PanelActionButton } from '../ui/PanelActionButton';
 import { useCanvasStore } from '../../store/canvasStore';
@@ -20,29 +20,19 @@ function getRoundedBbox(boundsResult: ReturnType<typeof measureCommandsBounds>) 
   };
 }
 
-type SelectPanelItemType =
-  | {
-      type: 'element';
-      element: CanvasElement;
-      pointCount: number;
-    }
-  | {
-      type: 'subpath';
-      element: PathElement;
-      subpathIndex: number;
-      pointCount: number;
-    };
+// Import shared type instead of duplicating
+import type { SelectPanelItemData } from './SelectPanel.types';
 
 interface SelectPanelItemProps {
-  item: SelectPanelItemType;
+  item: SelectPanelItemData;
   isSelected: boolean;
   isHidden: boolean;
   isLocked: boolean;
   directHidden: boolean;
   directLocked: boolean;
   canGroup: boolean;
-  onDuplicate: (item: SelectPanelItemType) => void;
-  onCopyPath: (item: SelectPanelItemType) => void;
+  onDuplicate: (item: SelectPanelItemData) => void;
+  onCopyPath: (item: SelectPanelItemData) => void;
 }
 
 const SelectPanelItemComponent: React.FC<SelectPanelItemProps> = ({

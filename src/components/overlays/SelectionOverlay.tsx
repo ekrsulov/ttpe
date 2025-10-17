@@ -1,6 +1,7 @@
 import React from 'react';
 import { deriveElementSelectionColors, SUBPATH_SELECTION_COLOR } from '../../utils/canvas';
 import { computeAdjustedBounds, measureSelectedSubpaths } from '../../utils/overlayHelpers';
+import { SelectionRects } from './SelectionRects';
 
 interface SelectionOverlayProps {
   element: {
@@ -41,43 +42,41 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
     ? measureSelectedSubpaths(element, selectedSubpaths, viewport.zoom)
     : [];
 
+  // Build element rect
+  const elementRects = adjustedElementBounds
+    ? [{
+        x: adjustedElementBounds.minX,
+        y: adjustedElementBounds.minY,
+        width: adjustedElementBounds.maxX - adjustedElementBounds.minX,
+        height: adjustedElementBounds.maxY - adjustedElementBounds.minY,
+        key: `element-${element.id}`,
+      }]
+    : [];
+
+  // Build subpath rects
+  const subpathRects = subpathBoundsResults.map((result) => ({
+    x: result.bounds.minX,
+    y: result.bounds.minY,
+    width: result.width,
+    height: result.height,
+    key: `subpath-${element.id}-${result.subpathIndex}`,
+  }));
+
   return (
     <g key={`selection-${element.id}`}>
       {/* Selection rectangle for complete path */}
-      {adjustedElementBounds && (() => {
-        const width = adjustedElementBounds.maxX - adjustedElementBounds.minX;
-        const height = adjustedElementBounds.maxY - adjustedElementBounds.minY;
-
-        return width > 0 && height > 0 ? (
-          <rect
-            x={adjustedElementBounds.minX}
-            y={adjustedElementBounds.minY}
-            width={width}
-            height={height}
-            fill="none"
-            stroke={selectionColor}
-            strokeWidth={strokeWidth}
-            pointerEvents="none"
-          />
-        ) : null;
-      })()}
+      <SelectionRects
+        rects={elementRects}
+        color={selectionColor}
+        strokeWidth={strokeWidth}
+      />
 
       {/* Selection rectangles for subpaths */}
-      {subpathBoundsResults.map((result) => {
-        return result.width > 0 && result.height > 0 ? (
-          <rect
-            key={`subpath-${element.id}-${result.subpathIndex}`}
-            x={result.bounds.minX}
-            y={result.bounds.minY}
-            width={result.width}
-            height={result.height}
-            fill="none"
-            stroke={SUBPATH_SELECTION_COLOR}
-            strokeWidth={strokeWidth}
-            pointerEvents="none"
-          />
-        ) : null;
-      })}
+      <SelectionRects
+        rects={subpathRects}
+        color={SUBPATH_SELECTION_COLOR}
+        strokeWidth={strokeWidth}
+      />
     </g>
   );
 };

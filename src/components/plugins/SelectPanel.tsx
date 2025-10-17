@@ -3,7 +3,7 @@ import { useCanvasStore } from '../../store/canvasStore';
 import { MousePointer2, Eye, EyeOff, Lock, Unlock, ChevronDown, ChevronRight, Ungroup as UngroupIcon } from 'lucide-react';
 import { VStack, HStack, Box, Text, Editable, EditableInput, EditablePreview } from '@chakra-ui/react';
 import { extractEditablePoints, extractSubpaths, commandsToString, translateCommands } from '../../utils/path';
-import type { CanvasElement, PathData, Command, GroupElement, PathElement } from '../../types';
+import type { CanvasElement, PathData, Command, GroupElement } from '../../types';
 import { logger } from '../../utils';
 import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
 import { PathThumbnail } from '../ui/PathThumbnail';
@@ -24,18 +24,8 @@ const getSubpathData = (element: CanvasElement, subpathIndex: number) => {
   return subpaths[subpathIndex] || null;
 };
 
-type SelectPanelItem =
-  | {
-      type: 'element';
-      element: CanvasElement;
-      pointCount: number;
-    }
-  | {
-      type: 'subpath';
-      element: PathElement;
-      subpathIndex: number;
-      pointCount: number;
-    };
+// Import shared type instead of duplicating
+import type { SelectPanelItemData } from './SelectPanel.types';
 
 const omitIdAndZIndex = <T extends { id: string; zIndex: number }>(element: T): Omit<T, 'id' | 'zIndex'> => {
   const { id: _id, zIndex: _zIndex, ...rest } = element;
@@ -150,17 +140,8 @@ const SelectPanelComponent: React.FC = () => {
     };
   }, [isResizing, setPanelHeight]);
 
-  useEffect(() => {
-    if (typeof ResizeObserver !== 'undefined') {
-      return;
-    }
-
-    document.documentElement.style.setProperty('--sidebar-footer-height', `${panelHeight + 80}px`);
-
-    return () => {
-      document.documentElement.style.removeProperty('--sidebar-footer-height');
-    };
-  }, [panelHeight]);
+  // Note: Footer height CSS variable is managed by SidebarFooter component using useSidebarFooterHeight hook
+  // No need for manual fallback - ResizeObserver is widely supported
 
   const orderedGroups = useMemo(() => {
     return groups;
@@ -195,8 +176,8 @@ const SelectPanelComponent: React.FC = () => {
   );
 
   // Build list of items to display
-  const items = useMemo<SelectPanelItem[]>(() => {
-    const allItems: SelectPanelItem[] = [];
+  const items = useMemo<SelectPanelItemData[]>(() => {
+    const allItems: SelectPanelItemData[] = [];
 
     elements.forEach((element) => {
       if (element.type === 'group') {
@@ -205,14 +186,14 @@ const SelectPanelComponent: React.FC = () => {
 
       if (element.type !== 'path') {
         const nonPathElement = element as CanvasElement;
-        const baseItem: SelectPanelItem = { type: 'element', element: nonPathElement, pointCount: 0 };
+        const baseItem: SelectPanelItemData = { type: 'element', element: nonPathElement, pointCount: 0 };
         allItems.push(baseItem);
         return;
       }
 
       const commands = (element.data as PathData).subPaths.flat();
       const pointCount = extractEditablePoints(commands).length;
-      const baseItem: SelectPanelItem = { type: 'element', element, pointCount };
+      const baseItem: SelectPanelItemData = { type: 'element', element, pointCount };
 
       allItems.push(baseItem);
 
@@ -239,7 +220,7 @@ const SelectPanelComponent: React.FC = () => {
     return allItems;
   }, [elements, selectedIdSet, selectedSubpathsByElement]);
 
-  const duplicateItem = (item: SelectPanelItem) => {
+  const duplicateItem = (item: SelectPanelItemData) => {
     if (item.type === 'element') {
       // Duplicate the entire element
       const elementData = omitIdAndZIndex(item.element);
@@ -280,7 +261,7 @@ const SelectPanelComponent: React.FC = () => {
     }
   };
 
-  const copyPathToClipboard = async (item: SelectPanelItem) => {
+  const copyPathToClipboard = async (item: SelectPanelItemData) => {
     let pathData = '';
 
     if (item.type === 'element') {

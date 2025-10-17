@@ -233,10 +233,4 @@ export const mathematicalAlignmentStrategy: AlignmentStrategy = (context: Alignm
   return calculateMathematicalOffset(context.containerBounds, context.contentBounds);
 };
 
-/**
- * Visual (optical) alignment strategy - uses visual perception
- */
-export const visualAlignmentStrategy: AlignmentStrategy = async (context: AlignmentContext) => {
-  const result = await computeVisualAlignment(context);
-  return result.offset;
-};
+// Note: visualAlignmentStrategy was removed as unused - applyOpticalAlignmentToAllPairs uses computeVisualAlignment directly

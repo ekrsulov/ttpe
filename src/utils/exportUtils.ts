@@ -241,3 +241,95 @@ export function serializePathsForExport(
     bounds: { minX, minY, maxX, maxY, width, height }
   };
 }
+
+/**
+ * Helper to download a blob as a file
+ */
+function downloadBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+/**
+ * Convert SVG content to PNG and download
+ */
+function convertSvgToPngAndDownload(
+  svgContent: string,
+  bounds: SerializedExport['bounds'],
+  filename: string
+): void {
+  const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgContent)}`;
+
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    console.error('Could not get canvas context');
+    return;
+  }
+
+  canvas.width = bounds.width;
+  canvas.height = bounds.height;
+
+  const img = new Image();
+  img.onload = () => {
+    ctx.drawImage(img, 0, 0);
+
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        console.error('Could not create PNG blob');
+        return;
+      }
+      downloadBlob(blob, filename);
+    }, 'image/png');
+  };
+  img.onerror = () => {
+    console.error('Failed to load SVG image');
+  };
+  img.src = svgDataUrl;
+}
+
+/**
+ * Unified export function for both SVG and PNG formats
+ * Eliminates duplication between saveAsSvg and saveAsPng
+ */
+export function exportSelection(
+  format: 'svg' | 'png',
+  elements: CanvasElement[],
+  selectedIds: string[],
+  documentName: string,
+  selectedOnly: boolean = false
+): void {
+  // Validation
+  if (elements.length === 0) {
+    console.warn('No elements to export');
+    return;
+  }
+
+  // Serialize paths
+  const result = serializePathsForExport(
+    elements,
+    selectedIds,
+    { selectedOnly, padding: selectedOnly ? 0 : 20 }
+  );
+
+  if (!result) {
+    return;
+  }
+
+  const { svgContent, bounds } = result;
+  const sanitizedName = documentName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+
+  // Export based on format
+  if (format === 'svg') {
+    const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+    downloadBlob(blob, `${sanitizedName}.svg`);
+  } else if (format === 'png') {
+    convertSvgToPngAndDownload(svgContent, bounds, `${sanitizedName}.png`);
+  }
+}

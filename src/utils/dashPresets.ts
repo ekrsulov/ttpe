@@ -55,6 +55,8 @@ export const DASH_PRESETS: DashPreset[] = [
     dashArray: '12,3,3,3,3,3',
     description: 'Morse code style pattern'
   },
+  // Note: The following presets are currently not surfaced in the UI (DashArrayPresets component)
+  // but are available for custom selection via DashArrayCustomInput
   {
     id: 'fine-dots',
     name: 'Fine Dots',
@@ -101,6 +103,6 @@ export const DASH_PRESETS: DashPreset[] = [
     id: 'dash-triple-dot',
     name: 'Dash Triple Dot',
     dashArray: '8,2,1,2,1,2,1,2',
-    description: 'Dash followed by three tiny dots'
+    description: 'Dash followed by three tiny dots' // Also not currently in UI
   }
 ];

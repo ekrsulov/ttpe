@@ -572,10 +572,9 @@ export function commandsToString(commands: Command[]): string {
 }
 
 /**
- * Determine the alignment type between two control points
-```
+ * Determine the alignment type between two control points (internal function)
  */
-export function determineControlPointAlignment(
+function determineControlPointAlignment(
   commands: Command[],
   commandIndex1: number,
   pointIndex1: number,
@@ -655,9 +654,9 @@ export function determineControlPointAlignment(
 }
 
 /**
- * Find the paired control point for a given control point
+ * Find the paired control point for a given control point (internal function)
  */
-export function findPairedControlPoint(
+function findPairedControlPoint(
   commands: Command[],
   commandIndex: number,
   pointIndex: number

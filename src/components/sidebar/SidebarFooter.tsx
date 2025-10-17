@@ -1,9 +1,10 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import { Box, Flex, IconButton, Divider } from '@chakra-ui/react';
 import { ArrangePanel } from '../plugins/ArrangePanel';
 import { SelectPanel } from '../plugins/SelectPanel';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 import { useCanvasStore } from '../../store/canvasStore';
+import { useSidebarFooterHeight } from '../../hooks/useSidebarFooterHeight';
 
 interface SidebarFooterProps {
   isArrangeExpanded: boolean;
@@ -17,34 +18,8 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
   isArrangeExpanded,
   setIsArrangeExpanded,
 }) => {
-  const footerRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const node = footerRef.current;
-    if (!node) {
-      return;
-    }
-
-    const updateHeightVariable = () => {
-      document.documentElement.style.setProperty('--sidebar-footer-height', `${node.offsetHeight}px`);
-    };
-
-    updateHeightVariable();
-
-    if (typeof ResizeObserver === 'undefined') {
-      return () => {
-        document.documentElement.style.removeProperty('--sidebar-footer-height');
-      };
-    }
-
-    const resizeObserver = new ResizeObserver(updateHeightVariable);
-    resizeObserver.observe(node);
-
-    return () => {
-      resizeObserver.disconnect();
-      document.documentElement.style.removeProperty('--sidebar-footer-height');
-    };
-  }, []);
+  // Use shared hook for managing footer height CSS variable
+  const footerRef = useSidebarFooterHeight();
 
   // Subscribe to individual selection state to avoid unnecessary re-renders
   const hasSelectedIds = useCanvasStore(state => state.selectedIds.length > 0);

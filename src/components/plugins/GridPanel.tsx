@@ -5,23 +5,18 @@ import { Grid3X3 } from 'lucide-react';
 import { Panel } from '../ui/Panel';
 import { PanelToggleGroup } from '../ui/PanelToggleGroup';
 import { SliderControl } from '../ui/SliderControl';
+import { usePanelToggleHandlers } from '../../hooks/usePanelToggleHandlers';
 
 const GridPanelComponent: React.FC = () => {
   // Only subscribe to grid state
   const grid = useCanvasStore(state => state.grid);
   const updateGridState = useCanvasStore(state => state.updateGridState);
 
-  const handleToggleGrid = (e: React.ChangeEvent<HTMLInputElement>) => {
-    updateGridState({ enabled: e.target.checked });
-  };
-
-  const handleToggleSnap = (e: React.ChangeEvent<HTMLInputElement>) => {
-    updateGridState({ snapEnabled: e.target.checked });
-  };
-
-  const handleToggleRulers = (e: React.ChangeEvent<HTMLInputElement>) => {
-    updateGridState({ showRulers: e.target.checked });
-  };
+  // Use shared hook for toggle handlers
+  const { createToggleHandler } = usePanelToggleHandlers(updateGridState);
+  const handleToggleGrid = createToggleHandler('enabled');
+  const handleToggleSnap = createToggleHandler('snapEnabled');
+  const handleToggleRulers = createToggleHandler('showRulers');
 
   const handleSpacingChange = (value: number) => {
     updateGridState({ spacing: value });
