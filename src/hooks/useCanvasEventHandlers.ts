@@ -365,6 +365,12 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       return;
     }
 
+    // If we're in file or settings mode, switch to select mode when clicking on canvas
+    if (activePlugin === 'file' || activePlugin === 'settings') {
+      setMode('select');
+      return;
+    }
+
     // Handle curves tool
     if (activePlugin === 'curves') {
       handleCurvesPointerDown(point);
@@ -374,7 +380,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     if (activePlugin && pluginManager.hasTool(activePlugin)) {
       pluginManager.executeHandler(activePlugin, e, point, target, isSmoothBrushActive, beginSelectionRectangle, startShapeCreation);
     }
-  }, [activePlugin, screenToCanvas, isSpacePressed, beginSelectionRectangle, startShapeCreation, isSmoothBrushActive, handleCurvesPointerDown]);
+  }, [activePlugin, screenToCanvas, isSpacePressed, setMode, beginSelectionRectangle, startShapeCreation, isSmoothBrushActive, handleCurvesPointerDown]);
 
   // Handle pointer move
   const handlePointerMove = useCallback((e: React.PointerEvent) => {

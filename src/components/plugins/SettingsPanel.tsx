@@ -3,13 +3,8 @@ import {
   VStack,
   FormControl,
   FormLabel,
-  Input,
-  Button,
-  Select,
-  Text,
-  Box
+  Select
 } from '@chakra-ui/react';
-import { Settings } from 'lucide-react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { logger, LogLevel } from '../../utils';
 import { Panel } from '../ui/Panel';
@@ -18,20 +13,12 @@ import { SliderControl } from '../ui/SliderControl';
 
 export const SettingsPanel: React.FC = () => {
   // Use individual selectors to prevent re-renders on unrelated changes
-  const documentName = useCanvasStore(state => state.documentName);
   const settings = useCanvasStore(state => state.settings);
   const updateSettings = useCanvasStore(state => state.updateSettings);
   
-  const [localDocumentName, setLocalDocumentName] = useState(documentName);
   const [logLevel, setLogLevel] = useState<LogLevel>(LogLevel.WARN); // Default log level
-  const [isSaving, setIsSaving] = useState(false);
   const [showCallerInfo, setShowCallerInfo] = useState(false);
   const [keyboardPrecision, setKeyboardPrecision] = useState(settings.keyboardMovementPrecision);
-
-  // Sync local state with store
-  useEffect(() => {
-    setLocalDocumentName(documentName);
-  }, [documentName]);
 
   // Sync keyboard precision with settings
   useEffect(() => {
@@ -82,73 +69,37 @@ export const SettingsPanel: React.FC = () => {
     }
   };
 
-  const handleDocumentNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newName = e.target.value;
-    setLocalDocumentName(newName);
-    setIsSaving(true);
-    
-    // Debounced save
-    setTimeout(() => {
-      useCanvasStore.getState().setDocumentName(newName);
-      setIsSaving(false);
-      logger.debug('Document name auto-saved', { documentName: newName });
-    }, 500);
-  };
-
   return (
-    <Panel icon={<Settings size={16} />} title="Settings">
-      <VStack spacing={3} align="stretch">
-        {/* Document Name */}
-        <FormControl position="relative">
-          <FormLabel fontSize="12px" fontWeight="medium" color="gray.600" mb={1}>
-            Document Name
-          </FormLabel>
-          <Input
-            value={localDocumentName}
-            onChange={handleDocumentNameChange}
-            placeholder="Enter document name"
-            size="sm"
-          />
-          {isSaving && (
-            <Text
-              position="absolute"
-              right={2}
-              top="28px"
-              fontSize="12px"
-              color="gray.500"
-              bg="white"
-              px={1}
-              pointerEvents="none"
+    <Panel>
+      <VStack spacing={3} align="stretch" pt={2}>
+        {/* Log Level Selector - Only in development */}
+        {import.meta.env.DEV && (
+          <FormControl>
+            <FormLabel fontSize="12px" fontWeight="medium" color="gray.600" mb={1}>
+              Log Level
+            </FormLabel>
+            <Select
+              value={logLevel}
+              onChange={(e) => handleLogLevelChange(parseInt(e.target.value) as LogLevel)}
+              size="sm"
             >
-              Saving...
-            </Text>
-          )}
-        </FormControl>
+              <option value={LogLevel.DEBUG}>DEBUG</option>
+              <option value={LogLevel.INFO}>INFO</option>
+              <option value={LogLevel.WARN}>WARN</option>
+              <option value={LogLevel.ERROR}>ERROR</option>
+            </Select>
+          </FormControl>
+        )}
 
-        {/* Log Level Selector */}
-        <FormControl>
-          <FormLabel fontSize="12px" fontWeight="medium" color="gray.600" mb={1}>
-            Log Level
-          </FormLabel>
-          <Select
-            value={logLevel}
-            onChange={(e) => handleLogLevelChange(parseInt(e.target.value) as LogLevel)}
-            size="sm"
+        {/* Show Caller Info Checkbox - Only in development */}
+        {import.meta.env.DEV && (
+          <PanelToggle
+            isChecked={showCallerInfo}
+            onChange={(e) => handleCallerInfoToggle(e.target.checked)}
           >
-            <option value={LogLevel.DEBUG}>DEBUG</option>
-            <option value={LogLevel.INFO}>INFO</option>
-            <option value={LogLevel.WARN}>WARN</option>
-            <option value={LogLevel.ERROR}>ERROR</option>
-          </Select>
-        </FormControl>
-
-        {/* Show Caller Info Checkbox */}
-        <PanelToggle
-          isChecked={showCallerInfo}
-          onChange={(e) => handleCallerInfoToggle(e.target.checked)}
-        >
-          Show caller info in logs
-        </PanelToggle>
+            Show caller info in logs
+          </PanelToggle>
+        )}
 
         {/* Show Render Count Badges */}
         {import.meta.env.DEV && (
@@ -170,23 +121,6 @@ export const SettingsPanel: React.FC = () => {
           onChange={handleKeyboardPrecisionChange}
           title="Number of decimal places for keyboard movement (0 = integers only)"
         />
-
-        {/* Reset Application */}
-        <Box pt={3}>
-          <Button
-            onClick={() => {
-              localStorage.removeItem('canvas-app-state');
-              window.location.reload();
-            }}
-            colorScheme="gray"
-            size="sm"
-            width="full"
-            variant="outline"
-            title="Reset Application - This will clear all data and reload the page"
-          >
-            Reset App
-          </Button>
-        </Box>
       </VStack>
     </Panel>
   );

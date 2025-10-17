@@ -10,6 +10,7 @@ import { PathThumbnail } from '../ui/PathThumbnail';
 import { PanelActionButton } from '../ui/PanelActionButton';
 import { SelectPanelItem } from './SelectPanelItem';
 // import { useVirtualList } from '../../hooks/useVirtualList'; // Disponible para usar cuando sea necesario
+import { usePersistentState } from '../../hooks/usePersistentState';
 
 const DEFAULT_PANEL_HEIGHT = 140;
 const MIN_PANEL_HEIGHT = 96;
@@ -100,7 +101,7 @@ const SelectPanelComponent: React.FC = () => {
     return map;
   }, [selectedSubpaths]);
 
-  const [panelHeight, setPanelHeight] = useState(DEFAULT_PANEL_HEIGHT);
+  const [panelHeight, setPanelHeight] = usePersistentState('select-panel-height', DEFAULT_PANEL_HEIGHT);
   const [isResizing, setIsResizing] = useState(false);
   const resizeStartYRef = useRef(0);
   const resizeStartHeightRef = useRef(DEFAULT_PANEL_HEIGHT);
@@ -114,7 +115,7 @@ const SelectPanelComponent: React.FC = () => {
 
   const handleResetHeight = useCallback(() => {
     setPanelHeight(DEFAULT_PANEL_HEIGHT);
-  }, []);
+  }, [setPanelHeight]);
 
   useEffect(() => {
     if (!isResizing) {
@@ -148,7 +149,7 @@ const SelectPanelComponent: React.FC = () => {
       document.body.style.userSelect = '';
       document.body.style.cursor = '';
     };
-  }, [isResizing]);
+  }, [isResizing, setPanelHeight]);
 
   useEffect(() => {
     if (typeof ResizeObserver !== 'undefined') {
@@ -163,11 +164,8 @@ const SelectPanelComponent: React.FC = () => {
   }, [panelHeight]);
 
   const orderedGroups = useMemo(() => {
-    const selectedSet = new Set(selectedIds);
-    const selectedGroups = groups.filter(group => selectedSet.has(group.id));
-    const unselectedGroups = groups.filter(group => !selectedSet.has(group.id));
-    return [...selectedGroups, ...unselectedGroups];
-  }, [groups, selectedIds]);
+    return groups;
+  }, [groups]);
 
   const groupHasSelectedDescendant = useCallback(
     (group: GroupElement) => {
@@ -199,9 +197,7 @@ const SelectPanelComponent: React.FC = () => {
 
   // Build list of items to display
   const items = useMemo<SelectPanelItem[]>(() => {
-    const orderedItems: SelectPanelItem[] = [];
-
-    const unselectedItems: SelectPanelItem[] = [];
+    const allItems: SelectPanelItem[] = [];
 
     elements.forEach((element) => {
       if (element.type === 'group') {
@@ -211,11 +207,7 @@ const SelectPanelComponent: React.FC = () => {
       if (element.type !== 'path') {
         const nonPathElement = element as CanvasElement;
         const baseItem: SelectPanelItem = { type: 'element', element: nonPathElement, pointCount: 0 };
-        if (selectedIdSet.has(nonPathElement.id)) {
-          orderedItems.push(baseItem);
-        } else {
-          unselectedItems.push(baseItem);
-        }
+        allItems.push(baseItem);
         return;
       }
 
@@ -223,9 +215,10 @@ const SelectPanelComponent: React.FC = () => {
       const pointCount = extractEditablePoints(commands).length;
       const baseItem: SelectPanelItem = { type: 'element', element, pointCount };
 
-      if (selectedIdSet.has(element.id)) {
-        orderedItems.push(baseItem);
+      allItems.push(baseItem);
 
+      // Add subpaths if this element is selected
+      if (selectedIdSet.has(element.id)) {
         const subpaths = extractSubpaths(commands);
         const subpathSelections = selectedSubpathsByElement.get(element.id) ?? [];
         subpathSelections.forEach((selection) => {
@@ -234,19 +227,17 @@ const SelectPanelComponent: React.FC = () => {
             return;
           }
           const subPointCount = extractEditablePoints(subpathData.commands).length;
-          orderedItems.push({
+          allItems.push({
             type: 'subpath',
             element,
             subpathIndex: selection.subpathIndex,
             pointCount: subPointCount,
           });
         });
-      } else {
-        unselectedItems.push(baseItem);
       }
     });
 
-    return [...orderedItems, ...unselectedItems];
+    return allItems;
   }, [elements, selectedIdSet, selectedSubpathsByElement]);
 
   const duplicateItem = (item: SelectPanelItem) => {

@@ -1,6 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { Button as ChakraButton, HStack, VStack, Input, InputGroup, InputLeftAddon, useToast } from '@chakra-ui/react';
-import { File } from 'lucide-react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { Button as ChakraButton, HStack, VStack, Input, InputGroup, InputLeftAddon, useToast, FormControl, FormLabel, Text, Box } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { logger, importSVGWithDimensions, measurePath, translateCommands, performPathUnion, transformCommands, calculateScaledStrokeWidth, flattenImportedElements } from '../../utils';
 import { Panel } from '../ui/Panel';
@@ -127,6 +126,47 @@ export const FilePanel: React.FC = () => {
   const [svgSelectedOnly, setSvgSelectedOnly] = useState(false);
   const svgInputRef = useRef<HTMLInputElement>(null);
   const toast = useToast();
+
+  // Document name state
+  const documentName = useCanvasStore(state => state.documentName);
+  const setDocumentName = useCanvasStore(state => state.setDocumentName);
+  const [localDocumentName, setLocalDocumentName] = useState(documentName);
+  const [isSaving, setIsSaving] = useState(false);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Sync local state with store
+  useEffect(() => {
+    setLocalDocumentName(documentName);
+  }, [documentName]);
+
+  // Handle document name change with throttling
+  const handleDocumentNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const newName = e.target.value;
+    setLocalDocumentName(newName);
+    
+    // Clear any existing timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    
+    // Set saving indicator immediately
+    setIsSaving(true);
+    
+    // Throttle the save operation
+    saveTimeoutRef.current = setTimeout(() => {
+      setDocumentName(newName);
+      setIsSaving(false);
+    }, 500); // 500ms delay
+  }, [setDocumentName]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Helper function to create a frame rectangle
   const createFrame = (width: number, height: number): PathData => {
@@ -369,8 +409,8 @@ export const FilePanel: React.FC = () => {
   };
 
   return (
-    <Panel icon={<File size={16} />} title="File">
-      <VStack spacing={2} align="stretch">
+    <Panel>
+      <VStack spacing={2} align="stretch" pt={2}>
         <HStack spacing={1}>
           <ChakraButton
             onClick={handleSave}
@@ -507,6 +547,50 @@ export const FilePanel: React.FC = () => {
             </InputGroup>
           </HStack>
         )}
+
+        {/* Document Name */}
+        <FormControl position="relative" pt={3}>
+          <FormLabel fontSize="12px" fontWeight="medium" color="gray.600" mb={1}>
+            Document Name
+          </FormLabel>
+          <Input
+            value={localDocumentName}
+            onChange={handleDocumentNameChange}
+            placeholder="Enter document name"
+            size="sm"
+          />
+          {isSaving && (
+            <Text
+              position="absolute"
+              right={2}
+              top="28px"
+              fontSize="12px"
+              color="gray.500"
+              bg="white"
+              px={1}
+              pointerEvents="none"
+            >
+              Saving...
+            </Text>
+          )}
+        </FormControl>
+
+        {/* Reset Application */}
+        <Box pt={3}>
+          <ChakraButton
+            onClick={() => {
+              localStorage.removeItem('canvas-app-state');
+              window.location.reload();
+            }}
+            colorScheme="gray"
+            size="sm"
+            width="full"
+            variant="outline"
+            title="Reset Application - This will clear all data and reload the page"
+          >
+            Reset App
+          </ChakraButton>
+        </Box>
       </VStack>
     </Panel>
   );

@@ -12,7 +12,6 @@ import {
   Text,
   Box,
   Collapse,
-  useDisclosure,
   Input,
   useBreakpointValue
 } from '@chakra-ui/react';
@@ -25,6 +24,7 @@ import { DashArrayCustomInput, DashArrayPresets } from '../ui/DashArraySelector'
 import { PRESETS, type Preset } from '../../utils/fillAndStrokePresets';
 import { useSelectedPathProperty } from '../../utils/pathPropertyUtils';
 import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
+import { usePersistentState } from '../../hooks/usePersistentState';
 
 export const EditorPanel: React.FC = () => {
   // Use specific selectors instead of destructuring the entire store
@@ -123,8 +123,11 @@ export const EditorPanel: React.FC = () => {
   const currentFillRule = useSelectedPathProperty('fillRule', pencil.fillRule);
   const currentStrokeDasharray = useSelectedPathProperty('strokeDasharray', pencil.strokeDasharray);
 
-  const { isOpen: isColorControlsOpen, onToggle: onColorControlsToggle } = useDisclosure({ defaultIsOpen: import.meta.env.DEV });
-  const { isOpen: isAdvancedStrokeOpen, onToggle: onAdvancedStrokeToggle } = useDisclosure({ defaultIsOpen: false });
+  const [isColorControlsOpen, setIsColorControlsOpen] = usePersistentState('editor-color-controls-open', import.meta.env.DEV);
+  const [isAdvancedStrokeOpen, setIsAdvancedStrokeOpen] = usePersistentState('editor-advanced-stroke-open', false);
+
+  const onColorControlsToggle = () => setIsColorControlsOpen(!isColorControlsOpen);
+  const onAdvancedStrokeToggle = () => setIsAdvancedStrokeOpen(!isAdvancedStrokeOpen);
 
   // Responsive columns for preset grid
   const presetColumns = useBreakpointValue({ base: 8, md: 10 }) || 10;

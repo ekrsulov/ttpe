@@ -9,9 +9,9 @@ import { ChevronDown, ChevronUp } from 'lucide-react'
 
 export interface PanelHeaderProps {
   /** Icon to display */
-  icon: React.ReactNode
+  icon?: React.ReactNode
   /** Header title */
-  title: string
+  title?: string
   /** Optional actions (badges, buttons) */
   actions?: React.ReactNode
   /** Whether panel is collapsible */
@@ -45,26 +45,30 @@ export const PanelHeader: React.FC<PanelHeaderProps> = ({
       transition="background 0.2s ease"
     >
       {/* Icon */}
-      <Box 
-        as="span" 
-        mr={1.5} 
-        color="gray.600"
-        display="flex"
-        alignItems="center"
-      >
-        {icon}
-      </Box>
+      {icon && (
+        <Box 
+          as="span" 
+          mr={1.5} 
+          color="gray.600"
+          display="flex"
+          alignItems="center"
+        >
+          {icon}
+        </Box>
+      )}
 
       {/* Title */}
-      <Heading 
-        as="h3" 
-        size="xs" 
-        fontWeight="extrabold" 
-        color="gray.700"
-        fontSize="sm"
-      >
-        {title}
-      </Heading>
+      {title && (
+        <Heading 
+          as="h3" 
+          size="xs" 
+          fontWeight="extrabold" 
+          color="gray.700"
+          fontSize="sm"
+        >
+          {title}
+        </Heading>
+      )}
 
       {/* Spacer pushes actions to the right */}
       <Spacer />

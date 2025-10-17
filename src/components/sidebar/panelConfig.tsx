@@ -155,12 +155,12 @@ export const PANEL_CONFIGS: PanelConfig[] = [
   },
   {
     key: 'guidelines',
-    condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'select',
+    condition: (ctx) => ctx.showSettingsPanel,
     component: GuidelinesPanel,
   },
   {
     key: 'grid',
-    condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'select',
+    condition: (ctx) => ctx.showSettingsPanel,
     component: GridPanel,
   },
   {

@@ -10,9 +10,9 @@ import { RenderCountBadgeWrapper } from './RenderCountBadgeWrapper'
 
 export interface PanelProps {
   /** Icon to display in header */
-  icon: React.ReactNode
+  icon?: React.ReactNode
   /** Panel title */
-  title: string
+  title?: string
   /** Panel content */
   children: React.ReactNode
   /** Optional actions in header (e.g., badges, buttons) */
@@ -39,17 +39,19 @@ export const Panel: React.FC<PanelProps> = ({
   return (
     <Box bg="white" mb={0.5} position="relative">
       {showRenderCount && (
-        <RenderCountBadgeWrapper componentName={`Panel: ${title}`} position="top-left" />
+        <RenderCountBadgeWrapper componentName={`Panel: ${title || 'Untitled'}`} position="top-left" />
       )}
       
-      <PanelHeader
-        icon={icon}
-        title={title}
-        actions={headerActions}
-        isCollapsible={isCollapsible}
-        isOpen={isOpen}
-        onToggle={onToggle}
-      />
+      {(icon || title) && (
+        <PanelHeader
+          icon={icon}
+          title={title}
+          actions={headerActions}
+          isCollapsible={isCollapsible}
+          isOpen={isOpen}
+          onToggle={onToggle}
+        />
+      )}
       
       {isCollapsible ? (
         <Collapse in={isOpen} animateOpacity>

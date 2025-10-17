@@ -11,6 +11,7 @@ import {
 import { useCanvasStore } from '../store/canvasStore';
 import { SidebarContent } from './sidebar/SidebarContent';
 import { RenderCountBadgeWrapper } from './ui/RenderCountBadgeWrapper';
+import { usePersistentState } from '../hooks/usePersistentState';
 
 interface SidebarProps {
   onPinnedChange?: (isPinned: boolean) => void;
@@ -47,7 +48,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [isPinned, setIsPinned] = useState(isDesktop ?? true);
   
   // Sidebar width state (only for pinned mode)
-  const [sidebarWidth, setSidebarWidth] = useState(250);
+  const [sidebarWidth, setSidebarWidth] = usePersistentState('sidebar-width', 250);
   const initialWidth = 250; // Ancho inicial para reset
   
   // Sync isPinned with desktop/mobile changes
@@ -78,12 +79,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   // Handle sidebar resize
   const handleResize = useCallback((newWidth: number) => {
     setSidebarWidth(newWidth);
-  }, []);
+  }, [setSidebarWidth]);
 
   // Handle reset to initial width (double-click)
   const handleReset = useCallback(() => {
     setSidebarWidth(initialWidth);
-  }, [initialWidth]);
+  }, [initialWidth, setSidebarWidth]);
   
   // Use individual selectors to prevent unnecessary re-renders
   // This way we only re-render when specific values change
@@ -142,7 +143,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const setShowSettingsPanel = useCanvasStore((state) => state.setShowSettingsPanel);
   
   // Local state for arrange panel expansion
-  const [isArrangeExpanded, setIsArrangeExpanded] = useState(import.meta.env.DEV);
+  const [isArrangeExpanded, setIsArrangeExpanded] = usePersistentState('arrange-panel-expanded', import.meta.env.DEV);
 
   // Close special panels when switching to tool modes
   useEffect(() => {
