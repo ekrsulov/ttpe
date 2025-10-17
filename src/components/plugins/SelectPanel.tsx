@@ -366,6 +366,16 @@ const SelectPanelComponent: React.FC = () => {
     const isSelected = options?.isSelected ?? false;
     const hasSelectedDescendant = options?.hasSelectedDescendant ?? false;
 
+    // Create thumbnail commands from all paths in the group
+    const groupThumbnailCommands: Command[] = [];
+    groupData.childIds.forEach(childId => {
+      const child = elements.find(el => el.id === childId);
+      if (child && child.type === 'path') {
+        const pathData = child.data as PathData;
+        groupThumbnailCommands.push(...pathData.subPaths.flat());
+      }
+    });
+
     const backgroundColor = isSelected
       ? 'blue.50'
       : hasSelectedDescendant
@@ -427,45 +437,52 @@ const SelectPanelComponent: React.FC = () => {
           </HStack>
         </HStack>
         {groupData.isExpanded && (
-          <VStack align="stretch" spacing={1} pl={6} pt={2} fontSize="9px">
-            {groupData.childIds.map((childId) => {
-              const child = elements.find(el => el.id === childId);
-              if (!child) {
-                return null;
-              }
+          <HStack spacing={2} align="flex-start" pl={6} pt={2}>
+            {groupThumbnailCommands.length > 0 && (
+              <PathThumbnail
+                commands={groupThumbnailCommands}
+              />
+            )}
+            <VStack align="stretch" spacing={1} flex={1} fontSize="9px">
+              {groupData.childIds.map((childId) => {
+                const child = elements.find(el => el.id === childId);
+                if (!child) {
+                  return null;
+                }
 
-              const childHidden = isElementHidden(child.id);
-              const childLocked = isElementLocked(child.id);
-              const childLabel = child.type === 'group'
-                ? child.data.name
-                : `${child.type} (${child.id.slice(-4)})`;
-              const childIsSelected = selectedIdSet.has(child.id);
+                const childHidden = isElementHidden(child.id);
+                const childLocked = isElementLocked(child.id);
+                const childLabel = child.type === 'group'
+                  ? child.data.name
+                  : `${child.type} (${child.id.slice(-4)})`;
+                const childIsSelected = selectedIdSet.has(child.id);
 
-              return (
-                <HStack
-                  key={childId}
-                  spacing={2}
-                  justify="space-between"
-                  color={childHidden ? 'gray.400' : childIsSelected ? 'blue.600' : 'gray.700'}
-                  fontWeight={childIsSelected ? '600' : 'normal'}
-                >
-                  <HStack spacing={1} align="center">
-                    <Text>{childLabel}</Text>
-                    {childLocked && <Lock size={10} color="#6b7280" />}
-                    {childHidden && <EyeOff size={10} color="#6b7280" />}
+                return (
+                  <HStack
+                    key={childId}
+                    spacing={2}
+                    justify="space-between"
+                    color={childHidden ? 'gray.400' : childIsSelected ? 'blue.600' : 'gray.700'}
+                    fontWeight={childIsSelected ? '600' : 'normal'}
+                  >
+                    <HStack spacing={1} align="center">
+                      <Text>{childLabel}</Text>
+                      {childLocked && <Lock size={10} color="#6b7280" />}
+                      {childHidden && <EyeOff size={10} color="#6b7280" />}
+                    </HStack>
+                    <PanelActionButton
+                      label="Select element"
+                      icon={MousePointer2}
+                      iconSize={11}
+                      height="18px"
+                      onClick={() => selectElements([childId])}
+                      isDisabled={childLocked || childHidden}
+                    />
                   </HStack>
-                  <PanelActionButton
-                    label="Select element"
-                    icon={MousePointer2}
-                    iconSize={11}
-                    height="18px"
-                    onClick={() => selectElements([childId])}
-                    isDisabled={childLocked || childHidden}
-                  />
-                </HStack>
-              );
-            })}
-          </VStack>
+                );
+              })}
+            </VStack>
+          </HStack>
         )}
       </Box>
     );
@@ -565,7 +582,7 @@ const SelectPanelComponent: React.FC = () => {
                           {primaryLabel}
                         </Text>
                         <HStack spacing={1} ml="auto">
-                          {item.type === 'element' && (
+                          {item.type === 'element' && isSelectedElement && (
                             <PanelActionButton
                               label="Group selected elements"
                               icon={GroupIcon}
