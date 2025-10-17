@@ -6,13 +6,13 @@ import type { PathData, Command } from '../../types';
 import { PathThumbnail } from '../ui/PathThumbnail';
 import { PanelActionButton } from '../ui/PanelActionButton';
 import { useCanvasStore } from '../../store/canvasStore';
-import { measureCommandsBounds } from '../../utils/measurementUtils';
+import { measureSubpathBounds } from '../../utils/measurementUtils';
 
 /**
  * Helper to convert bounds result to rounded bbox
  * Centralizes the repeated rounding logic
  */
-function getRoundedBbox(boundsResult: ReturnType<typeof measureCommandsBounds>) {
+function getRoundedBbox(boundsResult: ReturnType<typeof measureSubpathBounds> | null) {
   if (!boundsResult) return null;
   return {
     topLeft: { x: Math.round(boundsResult.minX), y: Math.round(boundsResult.minY) },
@@ -54,17 +54,23 @@ const SelectPanelItemComponent: React.FC<SelectPanelItemProps> = ({
 
   // Get commands for thumbnail and bbox
   let thumbnailCommands: Command[] = [];
+  let strokeWidth = 1; // Default stroke width
+  
   if (item.type === 'element' && item.element.type === 'path') {
     thumbnailCommands = (item.element.data as PathData).subPaths.flat();
+    strokeWidth = (item.element.data as PathData).strokeWidth || 1;
   } else if (item.type === 'subpath' && item.subpathIndex !== undefined) {
     const subpathData = extractSubpaths((item.element.data as PathData).subPaths.flat())[item.subpathIndex];
     if (subpathData) {
       thumbnailCommands = subpathData.commands;
     }
+    strokeWidth = (item.element.data as PathData).strokeWidth || 1;
   }
 
-  // Use centralized bounds calculation with rounding helper
-  const boundsResult = measureCommandsBounds(thumbnailCommands);
+  // Use stroke-aware bounds calculation (same as transformation overlay)
+  const boundsResult = thumbnailCommands.length > 0 
+    ? measureSubpathBounds(thumbnailCommands, strokeWidth, 1) 
+    : null;
   const bbox = getRoundedBbox(boundsResult);
 
   const elementId = item.element.id;
@@ -223,9 +229,15 @@ const arePropsEqual = (prevProps: SelectPanelItemProps, nextProps: SelectPanelIt
     if (prevEl.type === 'path' && nextEl.type === 'path') {
       const prevCommands = (prevEl.data as PathData).subPaths.flat();
       const nextCommands = (nextEl.data as PathData).subPaths.flat();
+      const prevStrokeWidth = (prevEl.data as PathData).strokeWidth || 1;
+      const nextStrokeWidth = (nextEl.data as PathData).strokeWidth || 1;
       
-      const prevBoundsResult = measureCommandsBounds(prevCommands);
-      const nextBoundsResult = measureCommandsBounds(nextCommands);
+      const prevBoundsResult = prevCommands.length > 0 
+        ? measureSubpathBounds(prevCommands, prevStrokeWidth, 1) 
+        : null;
+      const nextBoundsResult = nextCommands.length > 0 
+        ? measureSubpathBounds(nextCommands, nextStrokeWidth, 1) 
+        : null;
       
       const prevBbox = getRoundedBbox(prevBoundsResult);
       const nextBbox = getRoundedBbox(nextBoundsResult);
@@ -263,13 +275,15 @@ const arePropsEqual = (prevProps: SelectPanelItemProps, nextProps: SelectPanelIt
     if (prevEl.type === 'path' && nextEl.type === 'path') {
       const prevSubpaths = extractSubpaths((prevEl.data as PathData).subPaths.flat());
       const nextSubpaths = extractSubpaths((nextEl.data as PathData).subPaths.flat());
+      const prevStrokeWidth = (prevEl.data as PathData).strokeWidth || 1;
+      const nextStrokeWidth = (nextEl.data as PathData).strokeWidth || 1;
       
       const prevSubpath = prevSubpaths[prevProps.item.subpathIndex];
       const nextSubpath = nextSubpaths[nextProps.item.subpathIndex];
       
       if (prevSubpath && nextSubpath) {
-        const prevBoundsResult = measureCommandsBounds(prevSubpath.commands);
-        const nextBoundsResult = measureCommandsBounds(nextSubpath.commands);
+        const prevBoundsResult = measureSubpathBounds(prevSubpath.commands, prevStrokeWidth, 1);
+        const nextBoundsResult = measureSubpathBounds(nextSubpath.commands, nextStrokeWidth, 1);
         
         const prevBbox = getRoundedBbox(prevBoundsResult);
         const nextBbox = getRoundedBbox(nextBoundsResult);
