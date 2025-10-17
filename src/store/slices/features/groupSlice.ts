@@ -66,15 +66,15 @@ const helpers: GroupSliceHelpers = {
   getElementMap: (elements) => new Map(elements.map((element) => [element.id, element])),
   collectDescendants: (group, map) => {
     const descendants: string[] = [];
-    const stack = [...group.data.childIds];
+    const queue = [...group.data.childIds];
 
-    while (stack.length > 0) {
-      const childId = stack.pop();
+    while (queue.length > 0) {
+      const childId = queue.shift();
       if (!childId) continue;
       descendants.push(childId);
       const childElement = map.get(childId);
       if (childElement && childElement.type === 'group') {
-        stack.push(...childElement.data.childIds);
+        queue.push(...childElement.data.childIds);
       }
     }
 
