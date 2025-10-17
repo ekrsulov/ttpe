@@ -9,6 +9,19 @@ import { parsePath, absolutize, normalize } from 'path-data-parser';
 import { parsePathD } from './pathParserUtils';
 import type { Command, PathData, SubPath } from '../types';
 
+export interface ImportedPathElement {
+  type: 'path';
+  data: PathData;
+}
+
+export interface ImportedGroupElement {
+  type: 'group';
+  name?: string;
+  children: ImportedElement[];
+}
+
+export type ImportedElement = ImportedPathElement | ImportedGroupElement;
+
 /**
  * Matrix for SVG transformations
  */
@@ -408,8 +421,8 @@ function normalizeToMLCZ(pathData: string): string {
 /**
  * Process an SVG element and extract path data
  */
-function processElement(element: Element, parentTransform: Matrix = { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 }): PathData[] {
-  const results: PathData[] = [];
+function processElement(element: Element, parentTransform: Matrix = { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 }): ImportedElement[] {
+  const results: ImportedElement[] = [];
   
   // Get element's own transform
   const transformAttr = element.getAttribute('transform');
@@ -423,9 +436,27 @@ function processElement(element: Element, parentTransform: Matrix = { a: 1, b: 0
   
   // Handle groups - recursively process children
   if (tagName === 'g') {
+    const groupChildren: ImportedElement[] = [];
     Array.from(element.children).forEach(child => {
-      results.push(...processElement(child, combinedTransform));
+      groupChildren.push(...processElement(child, combinedTransform));
     });
+
+    if (groupChildren.length === 0) {
+      return results;
+    }
+
+    const groupNameAttr = element.getAttribute('id') ||
+      element.getAttribute('data-name') ||
+      element.getAttribute('inkscape:label') ||
+      element.getAttribute('sodipodi:label') ||
+      undefined;
+
+    results.push({
+      type: 'group',
+      name: groupNameAttr || undefined,
+      children: groupChildren,
+    });
+
     return results;
   }
   
@@ -487,8 +518,11 @@ function processElement(element: Element, parentTransform: Matrix = { a: 1, b: 0
     strokeDasharray: styleAttrs.strokeDasharray,
   };
   
-  results.push(pathDataObj);
-  
+  results.push({
+    type: 'path',
+    data: pathDataObj,
+  });
+
   return results;
 }
 
@@ -512,6 +546,7 @@ export interface SVGDimensions {
 export interface SVGImportResult {
   dimensions: SVGDimensions;
   paths: PathData[];
+  elements: ImportedElement[];
 }
 
 /**
@@ -554,17 +589,19 @@ export async function importSVGWithDimensions(file: File): Promise<SVGImportResu
         const dimensions = extractSVGDimensions(svgElement);
         
         // Process all elements
-        const paths: PathData[] = [];
+        const elements: ImportedElement[] = [];
         Array.from(svgElement.children).forEach(child => {
-          paths.push(...processElement(child));
+          elements.push(...processElement(child));
         });
-        
+
+        const paths = flattenImportedElements(elements);
+
         if (paths.length === 0) {
           reject(new Error('No valid paths found in SVG'));
           return;
         }
-        
-        resolve({ dimensions, paths });
+
+        resolve({ dimensions, paths, elements });
       } catch (error) {
         reject(error);
       }
@@ -576,6 +613,20 @@ export async function importSVGWithDimensions(file: File): Promise<SVGImportResu
     
     reader.readAsText(file);
   });
+}
+
+export function flattenImportedElements(elements: ImportedElement[]): PathData[] {
+  const paths: PathData[] = [];
+
+  elements.forEach(element => {
+    if (element.type === 'path') {
+      paths.push(element.data);
+    } else {
+      paths.push(...flattenImportedElements(element.children));
+    }
+  });
+
+  return paths;
 }
 
 /**

@@ -2,6 +2,7 @@ import type { StateCreator } from 'zustand';
 import type { CanvasElement, GroupData, GroupElement, PathData, PathElement } from '../../types';
 import type { CanvasStore } from '../canvasStore';
 import { performPathUnion as performUnionOp, performPathSubtraction, performPathUnionPaperJS, performPathIntersect, performPathExclude, performPathDivide, commandsToString } from '../../utils/path';
+import { measurePath } from '../../utils';
 
 export interface BaseSlice {
   // State
@@ -402,97 +403,183 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
 
   saveAsSvg: (selectedOnly: boolean = false) => {
     const state = get() as CanvasStore;
-    
-    // Filter elements based on selection if needed
-    const elementsToExport = selectedOnly
-      ? state.elements.filter(el => state.selectedIds.includes(el.id))
-      : state.elements;
 
-    if (elementsToExport.length === 0) {
+    if (state.elements.length === 0) {
       console.warn('No elements to export');
       return;
     }
-    
-    // Calculate bounds of elements to export
+
+    interface ExportNode {
+      element: CanvasElement;
+      children: ExportNode[];
+    }
+
+    const elementMap = new Map<string, CanvasElement>();
+    state.elements.forEach(element => {
+      elementMap.set(element.id, element);
+    });
+
+    const selectedSet = new Set(state.selectedIds);
+
+    const hasSelectedAncestor = (element: CanvasElement): boolean => {
+      let currentParentId = element.parentId ?? null;
+      while (currentParentId) {
+        if (selectedSet.has(currentParentId)) {
+          return true;
+        }
+        const parent = elementMap.get(currentParentId);
+        currentParentId = parent?.parentId ?? null;
+      }
+      return false;
+    };
+
+    const buildExportNode = (element: CanvasElement): ExportNode | null => {
+      if (element.type === 'path') {
+        return { element, children: [] };
+      }
+
+      if (element.type === 'group') {
+        const childNodes = element.data.childIds
+          .map(childId => elementMap.get(childId))
+          .filter((child): child is CanvasElement => Boolean(child))
+          .map(child => buildExportNode(child))
+          .filter((node): node is ExportNode => Boolean(node));
+
+        if (childNodes.length === 0 && selectedOnly) {
+          return null;
+        }
+
+        return { element, children: childNodes };
+      }
+
+      return null;
+    };
+
+    let rootElements: CanvasElement[];
+    if (selectedOnly) {
+      rootElements = state.selectedIds
+        .map(id => elementMap.get(id))
+        .filter((element): element is CanvasElement => Boolean(element))
+        .filter(element => !hasSelectedAncestor(element))
+        .sort((a, b) => a.zIndex - b.zIndex);
+    } else {
+      rootElements = state.elements
+        .filter(element => !element.parentId)
+        .sort((a, b) => a.zIndex - b.zIndex);
+    }
+
+    const exportNodes = rootElements
+      .map(element => buildExportNode(element))
+      .filter((node): node is ExportNode => Boolean(node));
+
+    const collectPathElements = (nodes: ExportNode[]): PathElement[] => {
+      const paths: PathElement[] = [];
+      nodes.forEach(node => {
+        if (node.element.type === 'path') {
+          paths.push(node.element as PathElement);
+        } else {
+          paths.push(...collectPathElements(node.children));
+        }
+      });
+      return paths;
+    };
+
+    const pathElements = collectPathElements(exportNodes);
+
+    if (pathElements.length === 0) {
+      console.warn('No elements to export');
+      return;
+    }
+
     let minX = Infinity;
     let minY = Infinity;
     let maxX = -Infinity;
     let maxY = -Infinity;
-    
-    elementsToExport.forEach(element => {
-      if (element.type === 'path') {
-        const pathData = element.data as PathData;
-        pathData.subPaths.forEach(subPath => {
-          subPath.forEach(command => {
-            if (command.type === 'M' || command.type === 'L') {
-              minX = Math.min(minX, command.position.x);
-              minY = Math.min(minY, command.position.y);
-              maxX = Math.max(maxX, command.position.x);
-              maxY = Math.max(maxY, command.position.y);
-            } else if (command.type === 'C') {
-              minX = Math.min(minX, command.position.x, command.controlPoint1.x, command.controlPoint2.x);
-              minY = Math.min(minY, command.position.y, command.controlPoint1.y, command.controlPoint2.y);
-              maxX = Math.max(maxX, command.position.x, command.controlPoint1.x, command.controlPoint2.x);
-              maxY = Math.max(maxY, command.position.y, command.controlPoint1.y, command.controlPoint2.y);
-            }
-          });
-        });
-      }
+
+    pathElements.forEach(pathElement => {
+      const pathData = pathElement.data as PathData;
+      const bounds = measurePath(pathData.subPaths, pathData.strokeWidth, 1);
+      minX = Math.min(minX, bounds.minX);
+      minY = Math.min(minY, bounds.minY);
+      maxX = Math.max(maxX, bounds.maxX);
+      maxY = Math.max(maxY, bounds.maxY);
     });
-    
-    // Add padding only when exporting all elements (not selected only)
+
     const padding = selectedOnly ? 0 : 20;
     minX -= padding;
     minY -= padding;
     maxX += padding;
     maxY += padding;
-    
+
     const width = maxX - minX;
     const height = maxY - minY;
-    
-    // Create SVG content
-    let svgContent = `<?xml version="1.0" encoding="UTF-8"?>\n`;
-    svgContent += `<svg width="${width}" height="${height}" viewBox="${minX} ${minY} ${width} ${height}" xmlns="http://www.w3.org/2000/svg">\n`;
-    
-    // Add elements
-    elementsToExport.forEach(element => {
-      if (element.type === 'path') {
-        const pathData = element.data as PathData;
+
+    const escapeAttribute = (value: string): string => {
+      return value
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;');
+    };
+
+    const serializeNode = (node: ExportNode, indentLevel: number): string => {
+      const indent = '  '.repeat(indentLevel);
+
+      if (node.element.type === 'path') {
+        const pathElement = node.element as PathElement;
+        const pathData = pathElement.data as PathData;
         const pathD = commandsToString(pathData.subPaths.flat());
-        
-        // For pencil paths, if strokeColor is 'none', render with black
+
         const effectiveStrokeColor = pathData.isPencilPath && pathData.strokeColor === 'none'
           ? '#000000'
           : pathData.strokeColor;
-        
-        svgContent += `  <path d="${pathD}" `;
-        svgContent += `stroke="${effectiveStrokeColor}" `;
-        svgContent += `stroke-width="${pathData.strokeWidth}" `;
-        svgContent += `fill="${pathData.fillColor}" `;
-        svgContent += `fill-opacity="${pathData.fillOpacity}" `;
-        svgContent += `stroke-opacity="${pathData.strokeOpacity}" `;
+
+        let result = `${indent}<path id="${pathElement.id}" d="${pathD}" stroke="${effectiveStrokeColor}" stroke-width="${pathData.strokeWidth}" fill="${pathData.fillColor}" fill-opacity="${pathData.fillOpacity}" stroke-opacity="${pathData.strokeOpacity}"`;
+
         if (pathData.strokeLinecap) {
-          svgContent += `stroke-linecap="${pathData.strokeLinecap}" `;
+          result += ` stroke-linecap="${pathData.strokeLinecap}"`;
         }
         if (pathData.strokeLinejoin) {
-          svgContent += `stroke-linejoin="${pathData.strokeLinejoin}" `;
+          result += ` stroke-linejoin="${pathData.strokeLinejoin}"`;
         }
         if (pathData.fillRule) {
-          svgContent += `fill-rule="${pathData.fillRule}" `;
+          result += ` fill-rule="${pathData.fillRule}"`;
         }
         if (pathData.strokeDasharray && pathData.strokeDasharray !== 'none') {
-          svgContent += `stroke-dasharray="${pathData.strokeDasharray}" `;
+          result += ` stroke-dasharray="${pathData.strokeDasharray}"`;
         }
-        svgContent += `/>\n`;
+
+        result += ' />';
+
+        return result;
       }
-    });
-    
+
+      const groupElement = node.element as GroupElement;
+      const attributes: string[] = [`id="${groupElement.id}"`];
+      if (groupElement.data.name) {
+        attributes.push(`data-name="${escapeAttribute(groupElement.data.name)}"`);
+      }
+
+      if (node.children.length === 0) {
+        return `${indent}<g${attributes.length ? ' ' + attributes.join(' ') : ''} />`;
+      }
+
+      const childrenContent = node.children.map(child => serializeNode(child, indentLevel + 1)).join('\n');
+      return `${indent}<g${attributes.length ? ' ' + attributes.join(' ') : ''}>\n${childrenContent}\n${indent}</g>`;
+    };
+
+    const serializedElements = exportNodes.map(node => serializeNode(node, 1)).join('\n');
+
+    let svgContent = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+    svgContent += `<svg width="${width}" height="${height}" viewBox="${minX} ${minY} ${width} ${height}" xmlns="http://www.w3.org/2000/svg">`;
+
+    if (serializedElements) {
+      svgContent += `\n${serializedElements}\n`;
+    }
+
     svgContent += `</svg>`;
-    
-    // Create blob and download
+
     const dataBlob = new Blob([svgContent], { type: 'image/svg+xml' });
     const url = URL.createObjectURL(dataBlob);
-    
+
     const link = document.createElement('a');
     link.href = url;
     link.download = `${state.documentName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.svg`;
