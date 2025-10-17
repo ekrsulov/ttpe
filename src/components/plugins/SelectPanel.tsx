@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { Copy, Clipboard, MousePointer2, Eye, EyeOff, Lock, Unlock, ChevronDown, ChevronRight, Group as GroupIcon, Ungroup as UngroupIcon } from 'lucide-react';
+import { MousePointer2, Eye, EyeOff, Lock, Unlock, ChevronDown, ChevronRight, Ungroup as UngroupIcon } from 'lucide-react';
 import { VStack, HStack, Box, Text, Editable, EditableInput, EditablePreview } from '@chakra-ui/react';
 import { extractEditablePoints, extractSubpaths, commandsToString, translateCommands } from '../../utils/path';
 import type { CanvasElement, PathData, Command, GroupElement, PathElement } from '../../types';
@@ -8,6 +8,8 @@ import { logger } from '../../utils';
 import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
 import { PathThumbnail } from '../ui/PathThumbnail';
 import { PanelActionButton } from '../ui/PanelActionButton';
+import { SelectPanelItem } from './SelectPanelItem';
+// import { useVirtualList } from '../../hooks/useVirtualList'; // Disponible para usar cuando sea necesario
 
 const DEFAULT_PANEL_HEIGHT = 140;
 const MIN_PANEL_HEIGHT = 96;
@@ -20,51 +22,6 @@ const getSubpathData = (element: CanvasElement, subpathIndex: number) => {
   const commands = (element.data as PathData).subPaths.flat();
   const subpaths = extractSubpaths(commands);
   return subpaths[subpathIndex] || null;
-};
-
-// Helper to calculate bounding box coordinates
-const getBoundingBoxCoords = (commands: Command[]) => {
-  if (commands.length === 0) return null;
-  
-  let minX = Infinity;
-  let minY = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
-
-  commands.forEach(cmd => {
-    const points: number[] = [];
-    
-    switch (cmd.type) {
-      case 'M':
-      case 'L':
-        points.push(cmd.position.x, cmd.position.y);
-        break;
-      case 'C':
-        points.push(
-          cmd.controlPoint1.x, cmd.controlPoint1.y,
-          cmd.controlPoint2.x, cmd.controlPoint2.y,
-          cmd.position.x, cmd.position.y
-        );
-        break;
-      case 'Z':
-        // Z command doesn't add new points
-        break;
-    }
-
-    for (let i = 0; i < points.length; i += 2) {
-      const x = points[i];
-      const y = points[i + 1];
-      if (x < minX) minX = x;
-      if (x > maxX) maxX = x;
-      if (y < minY) minY = y;
-      if (y > maxY) maxY = y;
-    }
-  });
-
-  return {
-    topLeft: { x: Math.round(minX), y: Math.round(minY) },
-    bottomRight: { x: Math.round(maxX), y: Math.round(maxY) }
-  };
 };
 
 type SelectPanelItem =
@@ -88,23 +45,23 @@ const omitIdAndZIndex = <T extends { id: string; zIndex: number }>(element: T): 
 const SelectPanelComponent: React.FC = () => {
   const selectedSubpaths = useCanvasStore(state => state.selectedSubpaths);
   const addElement = useCanvasStore(state => state.addElement);
-  const createGroup = useCanvasStore(state => state.createGroupFromSelection);
   const ungroupGroupById = useCanvasStore(state => state.ungroupGroupById);
   const renameGroup = useCanvasStore(state => state.renameGroup);
   const setGroupExpanded = useCanvasStore(state => state.setGroupExpanded);
   const toggleGroupVisibility = useCanvasStore(state => state.toggleGroupVisibility);
   const toggleGroupLock = useCanvasStore(state => state.toggleGroupLock);
-  const toggleElementVisibility = useCanvasStore(state => state.toggleElementVisibility);
-  const toggleElementLock = useCanvasStore(state => state.toggleElementLock);
   const isElementHidden = useCanvasStore(state => state.isElementHidden);
   const isElementLocked = useCanvasStore(state => state.isElementLocked);
   const selectElements = useCanvasStore(state => state.selectElements);
   const hiddenElementIds = useCanvasStore(state => state.hiddenElementIds);
   const lockedElementIds = useCanvasStore(state => state.lockedElementIds);
 
-  // Subscribe to elements and selectedIds separately to avoid infinite re-renders
-  const elements = useCanvasStore(state => state.elements);
+  // Optimize subscriptions - only re-subscribe when elements structure changes (not data)
+  // This prevents re-renders when elements are transformed/moved
   const selectedIds = useCanvasStore(state => state.selectedIds);
+  
+  // Get elements from store
+  const elements = useCanvasStore(state => state.elements);
   
   // Memoize the filtered selected elements to prevent unnecessary re-renders
   const selectedElements = useMemo(() =>
@@ -522,131 +479,30 @@ const SelectPanelComponent: React.FC = () => {
           {items.length > 0 ? (
             <VStack spacing={1} align="stretch">
               {items.map((item) => {
-                // Get commands for thumbnail and bbox
-                let thumbnailCommands: Command[] = [];
-                if (item.type === 'element' && item.element.type === 'path') {
-                  thumbnailCommands = (item.element.data as PathData).subPaths.flat();
-                } else if (item.type === 'subpath' && item.subpathIndex !== undefined) {
-                  const subpathData = getSubpathData(item.element, item.subpathIndex);
-                  if (subpathData) {
-                    thumbnailCommands = subpathData.commands;
-                  }
-                }
-
-                // Calculate bbox coordinates
-                const bbox = getBoundingBoxCoords(thumbnailCommands);
-
                 const elementId = item.element.id;
                 const elementHidden = isElementHidden(elementId);
                 const elementLocked = isElementLocked(elementId);
                 const isSelectedElement = selectedIdSet.has(elementId);
                 const directHidden = hiddenIdSet.has(elementId);
                 const directLocked = lockedIdSet.has(elementId);
-                const subpathIndex = item.type === 'subpath' ? item.subpathIndex : undefined;
-                const primaryLabel = item.type === 'element'
-                  ? `z: ${item.element.zIndex} - p: ${item.pointCount}`
-                  : `Subpath ${subpathIndex ?? 0} - p: ${item.pointCount}`;
-                const coordinateText = bbox
-                  ? `${bbox.topLeft.x},${bbox.topLeft.y} ${bbox.bottomRight.x},${bbox.bottomRight.y}`
-                  : null;
-                const canCopyPath = item.type === 'element' && item.element.type === 'path';
-                const containerBg = isSelectedElement ? 'blue.50' : 'gray.50';
-
-                const itemKey = subpathIndex !== undefined
-                  ? `${item.element.id}-${item.type}-${subpathIndex}`
+                
+                const itemKey = item.type === 'subpath' && item.subpathIndex !== undefined
+                  ? `${item.element.id}-${item.type}-${item.subpathIndex}`
                   : `${item.element.id}-${item.type}`;
 
                 return (
-                  <HStack
+                  <SelectPanelItem
                     key={itemKey}
-                    spacing={2}
-                    px={1}
-                    py={1}
-                    bg={containerBg}
-                    borderRadius="sm"
-                    fontSize="10px"
-                    align="center"
-                  >
-                    {thumbnailCommands.length > 0 && (
-                      <PathThumbnail
-                        commands={thumbnailCommands}
-                      />
-                    )}
-                    <VStack spacing={1} align="stretch" flex={1}>
-                      <HStack spacing={2} align="center">
-                        <Text
-                          fontWeight="500"
-                          fontSize="10px"
-                          color={elementHidden ? 'gray.400' : isSelectedElement ? 'blue.700' : 'gray.800'}
-                        >
-                          {primaryLabel}
-                        </Text>
-                        <HStack spacing={1} ml="auto">
-                          {item.type === 'element' && isSelectedElement && (
-                            <PanelActionButton
-                              label="Group selected elements"
-                              icon={GroupIcon}
-                              iconSize={10}
-                              height="auto"
-                              onClick={() => createGroup()}
-                              isDisabled={!canGroup}
-                            />
-                          )}
-                          <PanelActionButton
-                            label="Duplicate"
-                            icon={Copy}
-                            iconSize={10}
-                            height="auto"
-                            onClick={() => duplicateItem(item)}
-                          />
-                          <PanelActionButton
-                            label="Copy path to clipboard"
-                            icon={Clipboard}
-                            iconSize={10}
-                            height="auto"
-                            onClick={() => copyPathToClipboard(item)}
-                            isDisabled={!canCopyPath}
-                          />
-                        </HStack>
-                      </HStack>
-                      {(coordinateText || item.type === 'element') && (
-                        <HStack spacing={2} align="center">
-                          <Text
-                            fontSize="9px"
-                            color={elementHidden ? 'gray.400' : 'gray.600'}
-                            flex={1}
-                            noOfLines={1}
-                          >
-                            {coordinateText ?? '—'}
-                          </Text>
-                          <HStack spacing={1}>
-                            <PanelActionButton
-                              label={directLocked ? 'Unlock element' : 'Lock element'}
-                              icon={directLocked ? Unlock : Lock}
-                              iconSize={10}
-                              height="auto"
-                              onClick={() => toggleElementLock(elementId)}
-                            />
-                            <PanelActionButton
-                              label={directHidden ? 'Show element' : 'Hide element'}
-                              icon={directHidden ? Eye : EyeOff}
-                              iconSize={10}
-                              height="auto"
-                              onClick={() => toggleElementVisibility(elementId)}
-                            />
-                            <PanelActionButton
-                              label="Select element"
-                              icon={MousePointer2}
-                              iconSize={10}
-                              height="auto"
-                              onClick={() => selectElements([elementId])}
-                              isDisabled={elementLocked || elementHidden}
-                            />
-                          </HStack>
-                        </HStack>
-                      )}
-                    </VStack>
-                  </HStack>
+                    item={item}
+                    isSelected={isSelectedElement}
+                    isHidden={elementHidden}
+                    isLocked={elementLocked}
+                    directHidden={directHidden}
+                    directLocked={directLocked}
+                    canGroup={canGroup}
+                    onDuplicate={duplicateItem}
+                    onCopyPath={copyPathToClipboard}
+                  />
                 );
               })}
             </VStack>
