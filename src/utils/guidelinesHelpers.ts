@@ -9,9 +9,10 @@
  */
 
 import type { PathData, SubPath } from '../types';
-import { getSubPathsBounds, type Bounds } from './boundsUtils';
+import { calculateBounds, type Bounds } from './boundsUtils';
 
 export type { Bounds } from './boundsUtils';
+export { calculateBounds } from './boundsUtils';
 
 export interface ElementBoundsInfo {
   id: string;
@@ -23,24 +24,6 @@ export interface ElementBoundsInfo {
 // Memoization cache for bounds calculations
 const boundsCache = new WeakMap<SubPath[], Bounds>();
 const cacheKeys = new WeakMap<SubPath[], string>();
-
-/**
- * Calculate stroke-aware bounds for a single element
- * 
- * @param subPaths - The subpaths of the element
- * @param strokeWidth - The stroke width (default: 0)
- * @param zoom - The zoom level (default: 1)
- * @param options - Options for bounds calculation
- * @returns The bounds including stroke if specified
- */
-export function calculateBounds(
-  subPaths: SubPath[],
-  strokeWidth: number = 0,
-  zoom: number = 1,
-  options: { includeStroke?: boolean } = { includeStroke: true }
-): Bounds {
-  return getSubPathsBounds(subPaths, strokeWidth, { zoom, includeStroke: options.includeStroke });
-}
 
 /**
  * Calculate stroke-aware bounds with memoization support

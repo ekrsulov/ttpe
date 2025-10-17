@@ -3,23 +3,12 @@
  * Ensures logs only appear in development builds
  */
 
-type LogLevel = 'log' | 'info' | 'warn' | 'error' | 'debug';
-
 /**
  * Log a message only in development mode
  */
 export function debugLog(message: string, ...args: unknown[]): void {
   if (import.meta.env.DEV) {
     console.log(message, ...args);
-  }
-}
-
-/**
- * Log with specific level only in development mode
- */
-export function debugLogLevel(level: LogLevel, message: string, ...args: unknown[]): void {
-  if (import.meta.env.DEV) {
-    console[level](message, ...args);
   }
 }
 

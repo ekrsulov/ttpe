@@ -9,7 +9,6 @@ import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
 import { PathThumbnail } from '../ui/PathThumbnail';
 import { PanelActionButton } from '../ui/PanelActionButton';
 import { SelectPanelItem } from './SelectPanelItem';
-// import { useVirtualList } from '../../hooks/useVirtualList'; // Disponible para usar cuando sea necesario
 import { usePersistentState } from '../../hooks/usePersistentState';
 
 const DEFAULT_PANEL_HEIGHT = 140;

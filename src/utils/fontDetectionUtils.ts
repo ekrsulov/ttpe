@@ -2,7 +2,8 @@
 // Based on width comparison method to detect available system fonts
 
 // A comprehensive list of common fonts across different operating systems
-export const FONTS_TO_CHECK = [
+// Private to this module - only used internally by scanAvailableFonts
+const FONTS_TO_CHECK = [
   // Windows
   'Arial', 'Arial Black', 'Bahnschrift', 'Calibri', 'Cambria', 'Cambria Math', 'Candara',
   'Comic Sans MS', 'Consolas', 'Constantia', 'Corbel', 'Courier New', 'Ebrima',

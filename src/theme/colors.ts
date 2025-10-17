@@ -98,20 +98,3 @@ export const colors = {
     900: '#0c6475',
   },
 }
-
-/**
- * Semantic color tokens for dark mode support (future)
- */
-export const darkModeColors = {
-  sidebar: {
-    bg: 'rgba(26, 32, 44, 0.95)',
-    panelBg: '#1a202c',
-    headerBg: '#2d3748',
-    border: '#4a5568',
-    divider: '#4a5568',
-    toolBg: '#2d3748',
-    toolHover: '#4a5568',
-    toolActive: '#007bff',
-    toolActiveText: '#ffffff',
-  },
-}

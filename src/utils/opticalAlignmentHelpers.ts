@@ -6,9 +6,10 @@
 import type { CanvasElement, PathData, Command } from '../types';
 import { calculateVisualCenter, pathToRGBMatrix } from './visualCenterUtils';
 import { commandsToString } from './path';
-import { getSubPathsBounds, type Bounds } from './boundsUtils';
+import { calculateBounds, type Bounds } from './boundsUtils';
 
 export type { Bounds } from './boundsUtils';
+export { calculateBounds } from './boundsUtils';
 
 export interface ContainerContentPair {
   container: CanvasElement;
@@ -29,18 +30,6 @@ export interface VisualAlignmentResult {
   visualCenter: { x: number; y: number };
   mathematicalCenter: { x: number; y: number };
   offset: { x: number; y: number };
-}
-
-/**
- * Calculate bounds from subpaths including stroke width
- * Uses the centralized bounds utility
- */
-export function calculateBounds(
-  subPaths: Command[][], 
-  strokeWidth: number = 0,
-  zoom: number = 1
-): Bounds {
-  return getSubPathsBounds(subPaths, strokeWidth, { zoom, includeStroke: true });
 }
 
 /**

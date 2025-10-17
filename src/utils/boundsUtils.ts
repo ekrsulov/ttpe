@@ -100,3 +100,22 @@ export function getBoundsArea(bounds: Bounds): number {
   const { width, height } = getBoundsDimensions(bounds);
   return width * height;
 }
+
+/**
+ * Calculate bounds from subpaths - convenience wrapper
+ * This is an alias for getSubPathsBounds for backwards compatibility
+ * 
+ * @param subPaths - The subpaths to measure
+ * @param strokeWidth - The stroke width (default: 0)
+ * @param zoom - The zoom level (default: 1)
+ * @param options - Options for bounds calculation
+ * @returns The bounds including stroke if specified
+ */
+export function calculateBounds(
+  subPaths: SubPath[],
+  strokeWidth: number = 0,
+  zoom: number = 1,
+  options: { includeStroke?: boolean } = { includeStroke: true }
+): Bounds {
+  return getSubPathsBounds(subPaths, strokeWidth, { zoom, includeStroke: options.includeStroke });
+}
