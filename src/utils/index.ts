@@ -19,9 +19,6 @@ export * from './path';
 export * from './canvas';
 export * from './overlayHelpers';
 
-// Export SVG import utilities
-export * from './svgImportUtils';
-
 export function formatToPrecision(num: number, precision: number = 2): number {
   return parseFloat(num.toFixed(precision));
 }

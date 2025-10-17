@@ -65,6 +65,132 @@ interface UseCanvasDragInteractionsProps {
   callbacks: DragCallbacks;
 }
 
+type ControlPointUpdatePayload = {
+  commandIndex: number;
+  pointIndex: number;
+  x: number;
+  y: number;
+  isControl: boolean;
+};
+
+interface AlignmentUpdateOptions {
+  preserveAlignedMagnitude?: boolean;
+  alignedDirection?: 'opposite' | 'same';
+}
+
+const createAlignedControlPointUpdate = (
+  commands: Command[],
+  points: ReturnType<typeof extractEditablePoints>,
+  editingPoint: { commandIndex: number; pointIndex: number },
+  target: { x: number; y: number },
+  options: AlignmentUpdateOptions = {}
+): ControlPointUpdatePayload | null => {
+  const alignmentInfo = getControlPointAlignmentInfo(
+    commands,
+    points,
+    editingPoint.commandIndex,
+    editingPoint.pointIndex
+  );
+
+  if (!alignmentInfo || (alignmentInfo.type !== 'aligned' && alignmentInfo.type !== 'mirrored')) {
+    return null;
+  }
+
+  const { anchor, pairedCommandIndex, pairedPointIndex } = alignmentInfo;
+
+  if (pairedCommandIndex === undefined || pairedPointIndex === undefined) {
+    return null;
+  }
+
+  const baseVector = {
+    x: target.x - anchor.x,
+    y: target.y - anchor.y
+  };
+  const magnitude = Math.sqrt(baseVector.x * baseVector.x + baseVector.y * baseVector.y);
+
+  if (magnitude === 0) {
+    return null;
+  }
+
+  const unitVector = {
+    x: baseVector.x / magnitude,
+    y: baseVector.y / magnitude
+  };
+
+  let directionMultiplier: 1 | -1 = -1;
+  if (alignmentInfo.type === 'aligned' && options.alignedDirection === 'same') {
+    directionMultiplier = 1;
+  }
+
+  let targetMagnitude = magnitude;
+
+  if (alignmentInfo.type === 'aligned' && options.preserveAlignedMagnitude) {
+    const pairedPoint = points.find(
+      point => point.commandIndex === pairedCommandIndex && point.pointIndex === pairedPointIndex
+    );
+
+    if (pairedPoint) {
+      const originalVector = {
+        x: pairedPoint.x - anchor.x,
+        y: pairedPoint.y - anchor.y
+      };
+      const originalMagnitude = Math.sqrt(
+        originalVector.x * originalVector.x + originalVector.y * originalVector.y
+      );
+
+      if (originalMagnitude > 0) {
+        targetMagnitude = originalMagnitude;
+      }
+    }
+  }
+
+  const pairedX = anchor.x + directionMultiplier * unitVector.x * targetMagnitude;
+  const pairedY = anchor.y + directionMultiplier * unitVector.y * targetMagnitude;
+
+  return {
+    commandIndex: pairedCommandIndex,
+    pointIndex: pairedPointIndex,
+    x: formatToPrecision(pairedX, PATH_DECIMAL_PRECISION),
+    y: formatToPrecision(pairedY, PATH_DECIMAL_PRECISION),
+    isControl: true
+  };
+};
+
+const applyGroupedPointUpdates = (
+  groupedUpdates: Record<string, ControlPointUpdatePayload[]>,
+  elements: Array<CanvasElement>,
+  originalPathDataMap: Record<string, SubPath[]> | null,
+  onUpdateElement: DragCallbacks['onUpdateElement']
+) => {
+  Object.entries(groupedUpdates).forEach(([elementId, updates]) => {
+    const originalSubPaths = originalPathDataMap?.[elementId];
+    if (!originalSubPaths) {
+      return;
+    }
+
+    const originalCommands = originalSubPaths.flat();
+    const updatedCommands = updateCommands(
+      originalCommands,
+      updates.map(update => ({
+        ...update,
+        type: 'independent' as const,
+        anchor: { x: update.x, y: update.y }
+      }))
+    );
+    const newSubPaths = extractSubpaths(updatedCommands).map(sp => sp.commands);
+
+    const element = elements.find(el => el.id === elementId);
+    if (element) {
+      onUpdateElement(elementId, {
+        data: {
+          ...(element.data as PathData),
+          subPaths: newSubPaths
+        }
+      });
+    }
+  });
+};
+
 export const useCanvasDragInteractions = ({
   dragState,
   viewport,
@@ -145,68 +271,25 @@ export const useCanvasDragInteractions = ({
 
           const pointsToUpdate = [pointToUpdate];
 
-          // Handle control point alignment logic
           if (pointToUpdate.isControl) {
-            // Calculate alignment info on-demand
-            const alignmentInfo = getControlPointAlignmentInfo(commands, points, editingPoint.commandIndex, editingPoint.pointIndex);
+            const alignedUpdate = createAlignedControlPointUpdate(
+              commands,
+              points,
+              { commandIndex: editingPoint.commandIndex, pointIndex: editingPoint.pointIndex },
+              { x: newX, y: newY },
+              { preserveAlignedMagnitude: true, alignedDirection: 'opposite' }
+            );
 
-            if (alignmentInfo && (alignmentInfo.type === 'aligned' || alignmentInfo.type === 'mirrored')) {
-              const pairedCommandIndex = alignmentInfo.pairedCommandIndex;
-              const pairedPointIndex = alignmentInfo.pairedPointIndex;
-              const anchor = alignmentInfo.anchor;
+            if (alignedUpdate) {
+              const pairedPointToUpdate = points.find(p =>
+                p.commandIndex === alignedUpdate.commandIndex &&
+                p.pointIndex === alignedUpdate.pointIndex
+              );
 
-              if (pairedCommandIndex !== undefined && pairedPointIndex !== undefined) {
-                // Calculate the synchronized position for the paired control point
-                const currentVector = {
-                  x: newX - anchor.x,
-                  y: newY - anchor.y
-                };
-                const magnitude = Math.sqrt(currentVector.x * currentVector.x + currentVector.y * currentVector.y);
-
-                if (magnitude > 0) {
-                  const unitVector = {
-                    x: currentVector.x / magnitude,
-                    y: currentVector.y / magnitude
-                  };
-
-                  let pairedX: number;
-                  let pairedY: number;
-
-                  if (alignmentInfo.type === 'mirrored') {
-                    // Opposite direction, same magnitude
-                    pairedX = anchor.x + (-unitVector.x * magnitude);
-                    pairedY = anchor.y + (-unitVector.y * magnitude);
-                  } else {
-                    // Opposite direction, maintain original magnitude
-                    const pairedPoint = points.find(p =>
-                      p.commandIndex === pairedCommandIndex &&
-                      p.pointIndex === pairedPointIndex
-                    );
-                    if (pairedPoint) {
-                      const originalVector = {
-                        x: pairedPoint.x - anchor.x,
-                        y: pairedPoint.y - anchor.y
-                      };
-                      const originalMagnitude = Math.sqrt(originalVector.x * originalVector.x + originalVector.y * originalVector.y);
-                      pairedX = anchor.x + (-unitVector.x * originalMagnitude);
-                      pairedY = anchor.y + (-unitVector.y * originalMagnitude);
-                    } else {
-                      pairedX = anchor.x + (-unitVector.x * magnitude);
-                      pairedY = anchor.y + (-unitVector.y * magnitude);
-                    }
-                  }
-
-                  // Find and update the paired point
-                  const pairedPointToUpdate = points.find(p =>
-                    p.commandIndex === pairedCommandIndex &&
-                    p.pointIndex === pairedPointIndex
-                  );
-                  if (pairedPointToUpdate) {
-                    pairedPointToUpdate.x = formatToPrecision(pairedX, PATH_DECIMAL_PRECISION);
-                    pairedPointToUpdate.y = formatToPrecision(pairedY, PATH_DECIMAL_PRECISION);
-                    pointsToUpdate.push(pairedPointToUpdate);
-                  }
-                }
+              if (pairedPointToUpdate) {
+                pairedPointToUpdate.x = alignedUpdate.x;
+                pairedPointToUpdate.y = alignedUpdate.y;
+                pointsToUpdate.push(pairedPointToUpdate);
               }
             }
           }
@@ -245,13 +328,7 @@ export const useCanvasDragInteractions = ({
 
       if (originalPathDataMap) {
         // Group updates by element
-        const elementUpdates: Record<string, Array<{
-          commandIndex: number;
-          pointIndex: number;
-          x: number;
-          y: number;
-          isControl: boolean;
-        }>> = {};
+        const elementUpdates: Record<string, ControlPointUpdatePayload[]> = {};
 
         draggingSelection.initialPositions.forEach(initialPos => {
           if (!elementUpdates[initialPos.elementId]) {
@@ -267,25 +344,7 @@ export const useCanvasDragInteractions = ({
           });
         });
 
-        // Update each element
-        Object.entries(elementUpdates).forEach(([elementId, updates]) => {
-          const originalSubPaths = originalPathDataMap[elementId];
-          if (originalSubPaths) {
-            const originalCommands = originalSubPaths.flat();
-            const updatedCommands = updateCommands(originalCommands, updates.map(u => ({ ...u, type: 'independent' as const, anchor: { x: u.x, y: u.y } })));
-            const newSubPaths = extractSubpaths(updatedCommands).map(sp => sp.commands);
-
-            const element = elements.find(el => el.id === elementId);
-            if (element) {
-              callbacks.onUpdateElement(elementId, {
-                data: {
-                  ...(element.data as PathData),
-                  subPaths: newSubPaths
-                }
-              });
-            }
-          }
-        });
+        applyGroupedPointUpdates(elementUpdates, elements, originalPathDataMap, callbacks.onUpdateElement);
       }
     };
 
@@ -312,7 +371,7 @@ export const useCanvasDragInteractions = ({
 
               if (pointToUpdate) {
                 // Create update for the snapped position
-                const updates = [{
+                const updates: ControlPointUpdatePayload[] = [{
                   commandIndex: pointToUpdate.commandIndex,
                   pointIndex: pointToUpdate.pointIndex,
                   x: formatToPrecision(snapped.x, PATH_DECIMAL_PRECISION),
@@ -320,45 +379,17 @@ export const useCanvasDragInteractions = ({
                   isControl: pointToUpdate.isControl
                 }];
 
-                // Handle control point alignment logic
-                const alignmentInfo = getControlPointAlignmentInfo(commands, points, editingPoint.commandIndex, editingPoint.pointIndex);
-                if (alignmentInfo && (alignmentInfo.type === 'aligned' || alignmentInfo.type === 'mirrored')) {
-                  const pairedCommandIndex = alignmentInfo.pairedCommandIndex;
-                  const pairedPointIndex = alignmentInfo.pairedPointIndex;
-                  const anchor = alignmentInfo.anchor;
+                if (pointToUpdate.isControl) {
+                  const alignedUpdate = createAlignedControlPointUpdate(
+                    commands,
+                    points,
+                    { commandIndex: editingPoint.commandIndex, pointIndex: editingPoint.pointIndex },
+                    { x: snapped.x, y: snapped.y },
+                    { alignedDirection: 'same' }
+                  );
 
-                  if (pairedCommandIndex !== undefined && pairedPointIndex !== undefined) {
-                    const currentVector = {
-                      x: snapped.x - anchor.x,
-                      y: snapped.y - anchor.y
-                    };
-                    const magnitude = Math.sqrt(currentVector.x * currentVector.x + currentVector.y * currentVector.y);
-
-                    if (magnitude > 0) {
-                      const unitVector = {
-                        x: currentVector.x / magnitude,
-                        y: currentVector.y / magnitude
-                      };
-
-                      let pairedX: number;
-                      let pairedY: number;
-
-                      if (alignmentInfo.type === 'mirrored') {
-                        pairedX = anchor.x + (-unitVector.x * magnitude);
-                        pairedY = anchor.y + (-unitVector.y * magnitude);
-                      } else {
-                        pairedX = anchor.x + unitVector.x * magnitude;
-                        pairedY = anchor.y + unitVector.y * magnitude;
-                      }
-
-                      updates.push({
-                        commandIndex: pairedCommandIndex,
-                        pointIndex: pairedPointIndex,
-                        x: formatToPrecision(pairedX, PATH_DECIMAL_PRECISION),
-                        y: formatToPrecision(pairedY, PATH_DECIMAL_PRECISION),
-                        isControl: true
-                      });
-                    }
+                  if (alignedUpdate) {
+                    updates.push(alignedUpdate);
                   }
                 }
 
@@ -405,13 +436,7 @@ export const useCanvasDragInteractions = ({
               const snapOffsetY = snappedCenter.y - currentCenterY;
 
               // Apply snap offset to all points
-              const elementUpdates: Record<string, Array<{
-                commandIndex: number;
-                pointIndex: number;
-                x: number;
-                y: number;
-                isControl: boolean;
-              }>> = {};
+              const elementUpdates: Record<string, ControlPointUpdatePayload[]> = {};
 
               draggingSelection.initialPositions.forEach(pos => {
                 const element = elements.find(el => el.id === pos.elementId);
@@ -441,25 +466,7 @@ export const useCanvasDragInteractions = ({
                 }
               });
 
-              // Update each element
-              Object.entries(elementUpdates).forEach(([elementId, updates]) => {
-                const originalSubPaths = originalPathDataMap?.[elementId];
-                if (originalSubPaths) {
-                  const originalCommands = originalSubPaths.flat();
-                  const updatedCommands = updateCommands(originalCommands, updates.map(u => ({ ...u, type: 'independent' as const, anchor: { x: u.x, y: u.y } })));
-                  const newSubPaths = extractSubpaths(updatedCommands).map(sp => sp.commands);
-
-                  const element = elements.find(el => el.id === elementId);
-                  if (element) {
-                    callbacks.onUpdateElement(elementId, {
-                      data: {
-                        ...(element.data as PathData),
-                        subPaths: newSubPaths
-                      }
-                    });
-                  }
-                }
-              });
+              applyGroupedPointUpdates(elementUpdates, elements, originalPathDataMap, callbacks.onUpdateElement);
             }
           } else if (draggingSubpaths?.isDragging) {
             // Apply snap to subpath dragging using top-left corner of bounding box
