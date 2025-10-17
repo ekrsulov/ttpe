@@ -71,8 +71,8 @@ const SelectPanelItemComponent: React.FC<SelectPanelItemProps> = ({
   const elementId = item.element.id;
   const subpathIndex = item.type === 'subpath' ? item.subpathIndex : undefined;
   const primaryLabel = item.type === 'element'
-    ? `path (${item.pointCount}) z: ${item.element.zIndex}`
-    : `Subpath ${subpathIndex ?? 0} - p: ${item.pointCount}`;
+    ? `path (${item.pointCount}) z-idx: ${item.element.zIndex}`
+    : `Subpath ${subpathIndex ?? 0} (${item.pointCount})`;
   const canCopyPath = item.type === 'element' && item.element.type === 'path';
   const containerBg = isSelected ? 'blue.50' : 'gray.50';
 
