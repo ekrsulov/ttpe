@@ -1,12 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Copy, Clipboard, MousePointer2, Eye, EyeOff, Lock, Unlock, ChevronDown, ChevronRight, Group as GroupIcon, Ungroup as UngroupIcon } from 'lucide-react';
-import { VStack, HStack, Box, Text, IconButton as ChakraIconButton, Tooltip, Editable, EditableInput, EditablePreview } from '@chakra-ui/react';
+import { VStack, HStack, Box, Text, Editable, EditableInput, EditablePreview } from '@chakra-ui/react';
 import { extractEditablePoints, extractSubpaths, commandsToString, translateCommands } from '../../utils/path';
 import type { CanvasElement, PathData, Command, GroupElement, PathElement } from '../../types';
 import { logger } from '../../utils';
 import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
 import { PathThumbnail } from '../ui/PathThumbnail';
+import { PanelActionButton } from '../ui/PanelActionButton';
 
 const DEFAULT_PANEL_HEIGHT = 140;
 const MIN_PANEL_HEIGHT = 96;
@@ -365,12 +366,6 @@ const SelectPanelComponent: React.FC = () => {
     const isSelected = options?.isSelected ?? false;
     const hasSelectedDescendant = options?.hasSelectedDescendant ?? false;
 
-    const borderColor = isSelected
-      ? 'blue.400'
-      : hasSelectedDescendant
-        ? 'blue.200'
-        : 'gray.200';
-
     const backgroundColor = isSelected
       ? 'blue.50'
       : hasSelectedDescendant
@@ -384,19 +379,13 @@ const SelectPanelComponent: React.FC = () => {
         py={1}
         bg={backgroundColor}
         borderRadius="sm"
-        borderWidth="1px"
-        borderColor={borderColor}
         boxShadow={isSelected ? '0 0 0 1px rgba(59, 130, 246, 0.4)' : undefined}
-        transition="background-color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease"
+        transition="background-color 0.2s ease, box-shadow 0.2s ease"
       >
         <HStack spacing={2} align="center">
-          <ChakraIconButton
-            aria-label={groupData.isExpanded ? 'Collapse group' : 'Expand group'}
-            icon={groupData.isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-            size="xs"
-            variant="ghost"
-            minW="auto"
-            h="20px"
+          <PanelActionButton
+            label={groupData.isExpanded ? 'Collapse group' : 'Expand group'}
+            icon={groupData.isExpanded ? ChevronDown : ChevronRight}
             onClick={() => setGroupExpanded(group.id, !groupData.isExpanded)}
           />
           <Editable
@@ -414,51 +403,27 @@ const SelectPanelComponent: React.FC = () => {
             {groupData.childIds.length} items
           </Text>
           <HStack spacing={1} ml="auto">
-            <Tooltip label="Ungroup" openDelay={200}>
-              <ChakraIconButton
-                aria-label="Ungroup"
-                icon={<UngroupIcon size={12} />}
-                size="xs"
-                variant="ghost"
-                minW="auto"
-                h="20px"
-                onClick={() => ungroupGroupById(group.id)}
-                isDisabled={groupLocked}
-              />
-            </Tooltip>
-            <Tooltip label={groupLocked ? 'Unlock group' : 'Lock group'} openDelay={200}>
-              <ChakraIconButton
-                aria-label={groupLocked ? 'Unlock group' : 'Lock group'}
-                icon={groupLocked ? <Unlock size={12} /> : <Lock size={12} />}
-                size="xs"
-                variant="ghost"
-                minW="auto"
-                h="20px"
-                onClick={() => toggleGroupLock(group.id)}
-              />
-            </Tooltip>
-            <Tooltip label={groupHidden ? 'Show group' : 'Hide group'} openDelay={200}>
-              <ChakraIconButton
-                aria-label={groupHidden ? 'Show group' : 'Hide group'}
-                icon={groupHidden ? <Eye size={12} /> : <EyeOff size={12} />}
-                size="xs"
-                variant="ghost"
-                minW="auto"
-                h="20px"
-                onClick={() => toggleGroupVisibility(group.id)}
-              />
-            </Tooltip>
-            <Tooltip label="Select group" openDelay={200}>
-              <ChakraIconButton
-                aria-label="Select group"
-                icon={<MousePointer2 size={12} />}
-                size="xs"
-                variant="ghost"
-                minW="auto"
-                h="20px"
-                onClick={() => selectElements([group.id])}
-              />
-            </Tooltip>
+            <PanelActionButton
+              label="Ungroup"
+              icon={UngroupIcon}
+              onClick={() => ungroupGroupById(group.id)}
+              isDisabled={groupLocked}
+            />
+            <PanelActionButton
+              label={groupLocked ? 'Unlock group' : 'Lock group'}
+              icon={groupLocked ? Unlock : Lock}
+              onClick={() => toggleGroupLock(group.id)}
+            />
+            <PanelActionButton
+              label={groupHidden ? 'Show group' : 'Hide group'}
+              icon={groupHidden ? Eye : EyeOff}
+              onClick={() => toggleGroupVisibility(group.id)}
+            />
+            <PanelActionButton
+              label="Select group"
+              icon={MousePointer2}
+              onClick={() => selectElements([group.id])}
+            />
           </HStack>
         </HStack>
         {groupData.isExpanded && (
@@ -489,18 +454,14 @@ const SelectPanelComponent: React.FC = () => {
                     {childLocked && <Lock size={10} color="#6b7280" />}
                     {childHidden && <EyeOff size={10} color="#6b7280" />}
                   </HStack>
-                  <Tooltip label="Select element" openDelay={200}>
-                    <ChakraIconButton
-                      aria-label="Select element"
-                      icon={<MousePointer2 size={11} />}
-                      size="xs"
-                      variant="ghost"
-                      minW="auto"
-                      h="18px"
-                      onClick={() => selectElements([childId])}
-                      isDisabled={childLocked || childHidden}
-                    />
-                  </Tooltip>
+                  <PanelActionButton
+                    label="Select element"
+                    icon={MousePointer2}
+                    iconSize={11}
+                    height="18px"
+                    onClick={() => selectElements([childId])}
+                    isDisabled={childLocked || childHidden}
+                  />
                 </HStack>
               );
             })}
@@ -573,7 +534,6 @@ const SelectPanelComponent: React.FC = () => {
                   : null;
                 const canCopyPath = item.type === 'element' && item.element.type === 'path';
                 const containerBg = isSelectedElement ? 'blue.50' : 'gray.50';
-                const containerBorderColor = isSelectedElement ? 'blue.200' : 'gray.100';
 
                 const itemKey = subpathIndex !== undefined
                   ? `${item.element.id}-${item.type}-${subpathIndex}`
@@ -586,8 +546,6 @@ const SelectPanelComponent: React.FC = () => {
                     px={1}
                     py={1}
                     bg={containerBg}
-                    borderWidth="1px"
-                    borderColor={containerBorderColor}
                     borderRadius="sm"
                     fontSize="10px"
                     align="center"
@@ -608,36 +566,28 @@ const SelectPanelComponent: React.FC = () => {
                         </Text>
                         <HStack spacing={1} ml="auto">
                           {item.type === 'element' && (
-                            <Tooltip label="Group selected elements" openDelay={200}>
-                              <ChakraIconButton
-                                aria-label="Group selected elements"
-                                icon={<GroupIcon size={10} />}
-                                onClick={() => createGroup()}
-                                size="xs"
-                                minW="auto"
-                                h="auto"
-                                p={1}
-                                isDisabled={!canGroup}
-                              />
-                            </Tooltip>
+                            <PanelActionButton
+                              label="Group selected elements"
+                              icon={GroupIcon}
+                              iconSize={10}
+                              height="auto"
+                              onClick={() => createGroup()}
+                              isDisabled={!canGroup}
+                            />
                           )}
-                          <ChakraIconButton
-                            aria-label="Duplicate"
-                            icon={<Copy size={10} />}
+                          <PanelActionButton
+                            label="Duplicate"
+                            icon={Copy}
+                            iconSize={10}
+                            height="auto"
                             onClick={() => duplicateItem(item)}
-                            size="xs"
-                            minW="auto"
-                            h="auto"
-                            p={1}
                           />
-                          <ChakraIconButton
-                            aria-label="Copy path to clipboard"
-                            icon={<Clipboard size={10} />}
+                          <PanelActionButton
+                            label="Copy path to clipboard"
+                            icon={Clipboard}
+                            iconSize={10}
+                            height="auto"
                             onClick={() => copyPathToClipboard(item)}
-                            size="xs"
-                            minW="auto"
-                            h="auto"
-                            p={1}
                             isDisabled={!canCopyPath}
                           />
                         </HStack>
@@ -653,40 +603,28 @@ const SelectPanelComponent: React.FC = () => {
                             {coordinateText ?? '—'}
                           </Text>
                           <HStack spacing={1}>
-                            <Tooltip label={directLocked ? 'Unlock element' : 'Lock element'} openDelay={200}>
-                              <ChakraIconButton
-                                aria-label={directLocked ? 'Unlock element' : 'Lock element'}
-                                icon={directLocked ? <Unlock size={10} /> : <Lock size={10} />}
-                                onClick={() => toggleElementLock(elementId)}
-                                size="xs"
-                                minW="auto"
-                                h="auto"
-                                p={1}
-                              />
-                            </Tooltip>
-                            <Tooltip label={directHidden ? 'Show element' : 'Hide element'} openDelay={200}>
-                              <ChakraIconButton
-                                aria-label={directHidden ? 'Show element' : 'Hide element'}
-                                icon={directHidden ? <Eye size={10} /> : <EyeOff size={10} />}
-                                onClick={() => toggleElementVisibility(elementId)}
-                                size="xs"
-                                minW="auto"
-                                h="auto"
-                                p={1}
-                              />
-                            </Tooltip>
-                            <Tooltip label="Select element" openDelay={200}>
-                              <ChakraIconButton
-                                aria-label="Select element"
-                                icon={<MousePointer2 size={10} />}
-                                onClick={() => selectElements([elementId])}
-                                size="xs"
-                                minW="auto"
-                                h="auto"
-                                p={1}
-                                isDisabled={elementLocked || elementHidden}
-                              />
-                            </Tooltip>
+                            <PanelActionButton
+                              label={directLocked ? 'Unlock element' : 'Lock element'}
+                              icon={directLocked ? Unlock : Lock}
+                              iconSize={10}
+                              height="auto"
+                              onClick={() => toggleElementLock(elementId)}
+                            />
+                            <PanelActionButton
+                              label={directHidden ? 'Show element' : 'Hide element'}
+                              icon={directHidden ? Eye : EyeOff}
+                              iconSize={10}
+                              height="auto"
+                              onClick={() => toggleElementVisibility(elementId)}
+                            />
+                            <PanelActionButton
+                              label="Select element"
+                              icon={MousePointer2}
+                              iconSize={10}
+                              height="auto"
+                              onClick={() => selectElements([elementId])}
+                              isDisabled={elementLocked || elementHidden}
+                            />
                           </HStack>
                         </HStack>
                       )}
