@@ -112,15 +112,16 @@ const SelectPanelItemComponent: React.FC<SelectPanelItemProps> = ({
   const primaryLabel = item.type === 'element'
     ? `z: ${item.element.zIndex} - p: ${item.pointCount}`
     : `Subpath ${subpathIndex ?? 0} - p: ${item.pointCount}`;
-  const coordinateText = bbox
-    ? `${bbox.topLeft.x},${bbox.topLeft.y} ${bbox.bottomRight.x},${bbox.bottomRight.y}`
-    : null;
   const canCopyPath = item.type === 'element' && item.element.type === 'path';
   const containerBg = isSelected ? 'blue.50' : 'gray.50';
 
   const itemKey = subpathIndex !== undefined
     ? `${item.element.id}-${item.type}-${subpathIndex}`
     : `${item.element.id}-${item.type}`;
+
+  // Separar las coordenadas para mostrar en líneas diferentes
+  const coord1 = bbox ? `${bbox.topLeft.x}, ${bbox.topLeft.y}` : null;
+  const coord2 = bbox ? `${bbox.bottomRight.x}, ${bbox.bottomRight.y}` : null;
 
   return (
     <HStack
@@ -138,79 +139,87 @@ const SelectPanelItemComponent: React.FC<SelectPanelItemProps> = ({
           commands={thumbnailCommands}
         />
       )}
-      <VStack spacing={1} align="stretch" flex={1}>
-        <HStack spacing={2} align="center">
-          <Text
-            fontWeight="500"
-            fontSize="10px"
-            color={isHidden ? 'gray.400' : isSelected ? 'blue.700' : 'gray.800'}
-          >
-            {primaryLabel}
-          </Text>
-          <HStack spacing={1} ml="auto">
-            {item.type === 'element' && isSelected && (
-              <PanelActionButton
-                label="Group selected elements"
-                icon={GroupIcon}
-                iconSize={10}
-                height="auto"
-                onClick={() => createGroup()}
-                isDisabled={!canGroup}
-              />
-            )}
+      <VStack spacing={0} align="stretch" flex={1} justifyContent="center">
+        {/* Línea 1: Info principal */}
+        <Text
+          fontWeight="500"
+          fontSize="10px"
+          color={isHidden ? 'gray.400' : isSelected ? 'blue.700' : 'gray.800'}
+          lineHeight="1.4"
+        >
+          {primaryLabel}
+        </Text>
+        {/* Línea 2: Primera coordenada */}
+        <Text
+          fontSize="9px"
+          color={isHidden ? 'gray.400' : 'gray.600'}
+          lineHeight="1.4"
+        >
+          {coord1 ?? '—'}
+        </Text>
+        {/* Línea 3: Segunda coordenada */}
+        <Text
+          fontSize="9px"
+          color={isHidden ? 'gray.400' : 'gray.600'}
+          lineHeight="1.4"
+        >
+          {coord2 ?? '—'}
+        </Text>
+      </VStack>
+      <VStack spacing={1} align="flex-end">
+        {/* Fila 1: Group (si aplica), Duplicate, Clipboard */}
+        <HStack spacing={1}>
+          {item.type === 'element' && isSelected && (
             <PanelActionButton
-              label="Duplicate"
-              icon={Copy}
+              label="Group selected elements"
+              icon={GroupIcon}
               iconSize={10}
               height="auto"
-              onClick={() => onDuplicate(item)}
+              onClick={() => createGroup()}
+              isDisabled={!canGroup}
             />
-            <PanelActionButton
-              label="Copy path to clipboard"
-              icon={Clipboard}
-              iconSize={10}
-              height="auto"
-              onClick={() => onCopyPath(item)}
-              isDisabled={!canCopyPath}
-            />
-          </HStack>
+          )}
+          <PanelActionButton
+            label="Duplicate"
+            icon={Copy}
+            iconSize={10}
+            height="auto"
+            onClick={() => onDuplicate(item)}
+          />
+          <PanelActionButton
+            label="Copy path to clipboard"
+            icon={Clipboard}
+            iconSize={10}
+            height="auto"
+            onClick={() => onCopyPath(item)}
+            isDisabled={!canCopyPath}
+          />
         </HStack>
-        {(coordinateText || item.type === 'element') && (
-          <HStack spacing={2} align="center">
-            <Text
-              fontSize="9px"
-              color={isHidden ? 'gray.400' : 'gray.600'}
-              flex={1}
-              noOfLines={1}
-            >
-              {coordinateText ?? '—'}
-            </Text>
-            <HStack spacing={1}>
-              <PanelActionButton
-                label={directLocked ? 'Unlock element' : 'Lock element'}
-                icon={directLocked ? Unlock : Lock}
-                iconSize={10}
-                height="auto"
-                onClick={() => toggleElementLock(elementId)}
-              />
-              <PanelActionButton
-                label={directHidden ? 'Show element' : 'Hide element'}
-                icon={directHidden ? Eye : EyeOff}
-                iconSize={10}
-                height="auto"
-                onClick={() => toggleElementVisibility(elementId)}
-              />
-              <PanelActionButton
-                label="Select element"
-                icon={MousePointer2}
-                iconSize={10}
-                height="auto"
-                onClick={() => selectElements([elementId])}
-                isDisabled={isLocked || isHidden}
-              />
-            </HStack>
-          </HStack>
-        )}
+        {/* Fila 2: Lock, View, Select */}
+        <HStack spacing={1}>
+          <PanelActionButton
+            label={directLocked ? 'Unlock element' : 'Lock element'}
+            icon={directLocked ? Unlock : Lock}
+            iconSize={10}
+            height="auto"
+            onClick={() => toggleElementLock(elementId)}
+          />
+          <PanelActionButton
+            label={directHidden ? 'Show element' : 'Hide element'}
+            icon={directHidden ? Eye : EyeOff}
+            iconSize={10}
+            height="auto"
+            onClick={() => toggleElementVisibility(elementId)}
+          />
+          <PanelActionButton
+            label="Select element"
+            icon={MousePointer2}
+            iconSize={10}
+            height="auto"
+            onClick={() => selectElements([elementId])}
+            isDisabled={isLocked || isHidden}
+          />
+        </HStack>
       </VStack>
     </HStack>
   );

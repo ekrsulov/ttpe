@@ -105,7 +105,7 @@ const SelectPanelComponent: React.FC = () => {
   const resizeStartYRef = useRef(0);
   const resizeStartHeightRef = useRef(DEFAULT_PANEL_HEIGHT);
 
-  const handleResizeStart = useCallback((event: React.MouseEvent) => {
+  const handleResizeStart = useCallback((event: React.PointerEvent) => {
     event.preventDefault();
     resizeStartYRef.current = event.clientY;
     resizeStartHeightRef.current = panelHeight;
@@ -124,7 +124,7 @@ const SelectPanelComponent: React.FC = () => {
       };
     }
 
-    const handleMouseMove = (event: MouseEvent) => {
+    const handleMouseMove = (event: PointerEvent) => {
       const deltaY = resizeStartYRef.current - event.clientY;
       const newHeight = Math.min(
         Math.max(resizeStartHeightRef.current + deltaY, MIN_PANEL_HEIGHT),
@@ -137,14 +137,14 @@ const SelectPanelComponent: React.FC = () => {
       setIsResizing(false);
     };
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('pointermove', handleMouseMove);
+    document.addEventListener('pointerup', handleMouseUp);
     document.body.style.userSelect = 'none';
     document.body.style.cursor = 'ns-resize';
 
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('pointermove', handleMouseMove);
+      document.removeEventListener('pointerup', handleMouseUp);
       document.body.style.userSelect = '';
       document.body.style.cursor = '';
     };
@@ -346,8 +346,7 @@ const SelectPanelComponent: React.FC = () => {
         py={1}
         bg={backgroundColor}
         borderRadius="sm"
-        boxShadow={isSelected ? '0 0 0 1px rgba(59, 130, 246, 0.4)' : undefined}
-        transition="background-color 0.2s ease, box-shadow 0.2s ease"
+        transition="background-color 0.2s ease"
       >
         <HStack spacing={2} align="center">
           <PanelActionButton
@@ -454,7 +453,7 @@ const SelectPanelComponent: React.FC = () => {
       <Box
         height="6px"
         cursor="ns-resize"
-        onMouseDown={handleResizeStart}
+        onPointerDown={handleResizeStart}
         onDoubleClick={handleResetHeight}
         bg={isResizing ? 'blue.400' : 'gray.200'}
         borderRadius="full"

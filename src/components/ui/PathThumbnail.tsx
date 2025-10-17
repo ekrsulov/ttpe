@@ -58,7 +58,6 @@ export const PathThumbnail: React.FC<PathThumbnailProps> = ({
       <Box 
         width="48px" 
         height="48px" 
-        bg="gray.100" 
         borderRadius="sm"
       />
     );
@@ -89,7 +88,6 @@ export const PathThumbnail: React.FC<PathThumbnailProps> = ({
     <Box 
       width="48px" 
       height="48px"
-      bg="white" 
       borderRadius="sm"
       display="flex"
       alignItems="center"

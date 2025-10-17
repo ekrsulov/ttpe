@@ -35,7 +35,6 @@ export const PanelActionButton: React.FC<PanelActionButtonProps> = ({
         p={1}
         onClick={onClick}
         isDisabled={isDisabled}
-        bg="white"
         border="none"
         _hover={{ bg: 'gray.50' }}
         _active={{ bg: 'gray.100' }}
