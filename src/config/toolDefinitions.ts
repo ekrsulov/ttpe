@@ -24,7 +24,6 @@ export interface ToolDefinition {
   label: string;
   icon: ComponentType<{ size?: number }>;
   cursor: string;
-  panelKey?: string;
 }
 
 /**
@@ -37,35 +36,30 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     label: 'Select',
     icon: MousePointer,
     cursor: 'default',
-    panelKey: 'select',
   },
   {
     mode: 'pan',
     label: 'Pan',
     icon: Hand,
     cursor: 'grab',
-    panelKey: 'pan',
   },
   {
     mode: 'pencil',
     label: 'Pencil',
     icon: Pen,
     cursor: 'crosshair',
-    panelKey: 'pencil',
   },
   {
     mode: 'text',
     label: 'Text',
     icon: Type,
     cursor: 'text',
-    panelKey: 'text',
   },
   {
     mode: 'shape',
     label: 'Shape',
     icon: Shapes,
     cursor: 'crosshair',
-    panelKey: 'shape',
   },
   {
     mode: 'subpath',
@@ -78,13 +72,11 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     label: 'Transform',
     icon: SquareDashedMousePointer,
     cursor: 'move',
-    panelKey: 'transformation',
   },
   {
     mode: 'edit',
     label: 'Edit',
     icon: MousePointerClick,
     cursor: 'pointer',
-    panelKey: 'edit',
   },
 ];

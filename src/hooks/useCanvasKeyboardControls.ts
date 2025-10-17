@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
+import { isTextFieldFocused } from '../utils/domHelpers';
 
 export const useCanvasKeyboardControls = () => {
   const [isSpacePressed, setIsSpacePressed] = useState(false);
@@ -28,16 +29,6 @@ export const useCanvasKeyboardControls = () => {
 
   // Handle space and delete keys
   useEffect(() => {
-    // Utility function to check if focus is on a text input field
-    const isTextFieldFocused = (): boolean => {
-      const activeElement = document.activeElement;
-      return !!(activeElement && (
-        activeElement.tagName === 'INPUT' ||
-        activeElement.tagName === 'TEXTAREA' ||
-        (activeElement as HTMLElement).contentEditable === 'true'
-      ));
-    };
-
     const handleKeyDown = (e: KeyboardEvent) => {
       // Don't activate pan mode if user is typing in an input or textarea
       if (e.code === 'Space' && !e.repeat) {
@@ -84,15 +75,6 @@ export const useCanvasKeyboardControls = () => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Only handle if not typing in an input
-      const isTextFieldFocused = (): boolean => {
-        const activeElement = document.activeElement;
-        return !!(activeElement && (
-          activeElement.tagName === 'INPUT' ||
-          activeElement.tagName === 'TEXTAREA' ||
-          (activeElement as HTMLElement).contentEditable === 'true'
-        ));
-      };
-
       if (isTextFieldFocused()) return;
 
       const delta = e.shiftKey ? 10 : 1;
@@ -158,15 +140,6 @@ export const useCanvasKeyboardControls = () => {
 
     const handleKeyDown = (e: KeyboardEvent) => {
       // Only handle if not typing in an input
-      const isTextFieldFocused = (): boolean => {
-        const activeElement = document.activeElement;
-        return !!(activeElement && (
-          activeElement.tagName === 'INPUT' ||
-          activeElement.tagName === 'TEXTAREA' ||
-          (activeElement as HTMLElement).contentEditable === 'true'
-        ));
-      };
-
       if (isTextFieldFocused()) return;
 
       // Delete selected curve point

@@ -356,7 +356,7 @@ const SelectPanelComponent: React.FC = () => {
             <EditableInput />
           </Editable>
           <Text fontSize="10px" color="gray.600">
-            {groupData.childIds.length} items
+            ({groupData.childIds.length})
           </Text>
           <HStack spacing={1} ml="auto">
             <PanelActionButton
@@ -383,7 +383,7 @@ const SelectPanelComponent: React.FC = () => {
           </HStack>
         </HStack>
         {groupData.isExpanded && (
-          <HStack spacing={2} align="flex-start" pl={6} pt={2}>
+          <HStack spacing={2} align="flex-start" >
             {groupThumbnailCommands.length > 0 && (
               <PathThumbnail
                 commands={groupThumbnailCommands}

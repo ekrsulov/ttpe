@@ -1,14 +1,12 @@
 import React, { useMemo } from 'react';
 import type { GuidelineMatch, DistanceGuidelineMatch } from '../../store/slices/plugins/guidelinesPluginSlice';
-import type { PathData } from '../../types';
 import { 
-  calculateElementBoundsMap, 
-  calculatePerpendicularMidpoint,
-  rangesOverlap,
+  calculateElementBoundsMap,
+  guidelineDistanceScan,
   type Bounds
-} from '../../utils/guidelinesHelpers';
+} from '../../utils/guidelinesCore';
+import { calculatePerpendicularMidpoint } from '../../utils/guidelinesHelpers';
 import { GuidelineLine, DistanceLabel } from './GuidelineComponents';
-import { measurePath } from '../../utils/measurementUtils';
 
 interface GuidelinesOverlayProps {
   guidelines: {
@@ -48,10 +46,6 @@ export const GuidelinesOverlay: React.FC<GuidelinesOverlayProps> = ({
     const boundsMap = calculateElementBoundsMap(elements, selectedIds, viewport.zoom);
     
     const debugGuidelinesArray: GuidelineMatch[] = [];
-    const debugDistancesArray: Array<DistanceGuidelineMatch & { 
-      bounds1?: Bounds;
-      bounds2?: Bounds;
-    }> = [];
 
     // Generate guidelines for each element
     boundsMap.forEach((info) => {
@@ -63,102 +57,23 @@ export const GuidelinesOverlay: React.FC<GuidelinesOverlayProps> = ({
       debugGuidelinesArray.push({ type: 'centerY', position: info.centerY, elementIds: [info.id] });
     });
 
-    // Calculate all possible distances between elements (filtered by projection bands)
+    // Use centralized distance scan function
     const boundsArray = Array.from(boundsMap.values());
+    const distanceResults = guidelineDistanceScan(boundsArray, { roundDistance: true });
     
-    // Horizontal distances - only for elements whose Y ranges overlap
-    for (let i = 0; i < boundsArray.length - 1; i++) {
-      for (let j = i + 1; j < boundsArray.length; j++) {
-        const info1 = boundsArray[i];
-        const info2 = boundsArray[j];
-        
-        // Check if Y ranges overlap (in horizontal band)
-        if (!rangesOverlap(info1.bounds.minY, info1.bounds.maxY, info2.bounds.minY, info2.bounds.maxY)) {
-          continue;
-        }
-        
-        // Check if elements are horizontally adjacent
-        const distance1 = Math.round(info2.bounds.minX - info1.bounds.maxX);
-        const distance2 = Math.round(info1.bounds.minX - info2.bounds.maxX);
-        
-        if (distance1 > 0) {
-          debugDistancesArray.push({
-            axis: 'horizontal',
-            distance: distance1,
-            referenceStart: info1.bounds.maxX,
-            referenceEnd: info2.bounds.minX,
-            referenceElementIds: [info1.id, info2.id],
-            currentStart: info1.bounds.maxX,
-            currentEnd: info2.bounds.minX,
-            currentElementId: info1.id,
-            bounds1: info1.bounds,
-            bounds2: info2.bounds,
-          });
-        }
-        
-        if (distance2 > 0) {
-          debugDistancesArray.push({
-            axis: 'horizontal',
-            distance: distance2,
-            referenceStart: info2.bounds.maxX,
-            referenceEnd: info1.bounds.minX,
-            referenceElementIds: [info2.id, info1.id],
-            currentStart: info2.bounds.maxX,
-            currentEnd: info1.bounds.minX,
-            currentElementId: info2.id,
-            bounds1: info2.bounds,
-            bounds2: info1.bounds,
-          });
-        }
-      }
-    }
-    
-    // Vertical distances - only for elements whose X ranges overlap
-    for (let i = 0; i < boundsArray.length - 1; i++) {
-      for (let j = i + 1; j < boundsArray.length; j++) {
-        const info1 = boundsArray[i];
-        const info2 = boundsArray[j];
-        
-        // Check if X ranges overlap (in vertical band)
-        if (!rangesOverlap(info1.bounds.minX, info1.bounds.maxX, info2.bounds.minX, info2.bounds.maxX)) {
-          continue;
-        }
-        
-        // Check if elements are vertically adjacent
-        const distance1 = Math.round(info2.bounds.minY - info1.bounds.maxY);
-        const distance2 = Math.round(info1.bounds.minY - info2.bounds.maxY);
-        
-        if (distance1 > 0) {
-          debugDistancesArray.push({
-            axis: 'vertical',
-            distance: distance1,
-            referenceStart: info1.bounds.maxY,
-            referenceEnd: info2.bounds.minY,
-            referenceElementIds: [info1.id, info2.id],
-            currentStart: info1.bounds.maxY,
-            currentEnd: info2.bounds.minY,
-            currentElementId: info1.id,
-            bounds1: info1.bounds,
-            bounds2: info2.bounds,
-          });
-        }
-        
-        if (distance2 > 0) {
-          debugDistancesArray.push({
-            axis: 'vertical',
-            distance: distance2,
-            referenceStart: info2.bounds.maxY,
-            referenceEnd: info1.bounds.minY,
-            referenceElementIds: [info2.id, info1.id],
-            currentStart: info2.bounds.maxY,
-            currentEnd: info1.bounds.minY,
-            currentElementId: info2.id,
-            bounds1: info2.bounds,
-            bounds2: info1.bounds,
-          });
-        }
-      }
-    }
+    // Convert results to the format expected by the overlay
+    const debugDistancesArray = distanceResults.map((result) => ({
+      axis: result.axis,
+      distance: result.distance,
+      referenceStart: result.referenceStart,
+      referenceEnd: result.referenceEnd,
+      referenceElementIds: result.referenceElementIds,
+      currentStart: result.referenceStart,
+      currentEnd: result.referenceEnd,
+      currentElementId: result.referenceElementIds[0],
+      bounds1: result.bounds1,
+      bounds2: result.bounds2,
+    }));
 
     return { debugGuidelines: debugGuidelinesArray, debugDistances: debugDistancesArray };
   }, [guidelines.enabled, guidelines.debugMode, elements, selectedIds, viewport.zoom]);
@@ -248,13 +163,11 @@ export const GuidelinesOverlay: React.FC<GuidelinesOverlayProps> = ({
           m => Math.abs(m.distance - minDistance) < 0.1 // Use small epsilon for floating point comparison
         );
         
-        // Calculate element bounds once for all matches (performance optimization)
+        // Use centralized bounds calculation instead of manual iteration
+        const elementBoundsInfo = calculateElementBoundsMap(elements, [], viewport.zoom);
         const elementBoundsMap = new Map<string, Bounds>();
-        elements.forEach(el => {
-          if (el.type === 'path') {
-            const bounds = measurePath((el.data as PathData).subPaths, (el.data as PathData).strokeWidth || 0, viewport.zoom);
-            elementBoundsMap.set(el.id, bounds);
-          }
+        elementBoundsInfo.forEach((info, id) => {
+          elementBoundsMap.set(id, info.bounds);
         });
         
         return matchesWithMinDistance.map((match, index) => {

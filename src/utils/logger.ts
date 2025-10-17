@@ -247,11 +247,6 @@ class Logger {
     return this.config.showCallerInfo || false;
   }
 
-  // Método para obtener la configuración actual
-  getConfig(): LoggerConfig {
-    return { ...this.config };
-  }
-
   // Método para obtener el nivel actual
   getLogLevel(): LogLevel {
     return this.config.level;
@@ -260,6 +255,3 @@ class Logger {
 
 // Instancia singleton del logger
 export const logger = new Logger();
-
-// Exportar también la clase para casos especiales
-export { Logger };

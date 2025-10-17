@@ -2,6 +2,7 @@ import React from 'react';
 import { Box } from '@chakra-ui/react';
 import type { Command } from '../../types';
 import { commandsToString } from '../../utils/path';
+import { measureCommandsBounds } from '../../utils/measurementUtils';
 
 interface PathThumbnailProps {
   commands: Command[];
@@ -13,46 +14,6 @@ interface PathThumbnailProps {
 export const PathThumbnail: React.FC<PathThumbnailProps> = ({ 
   commands
 }) => {
-  // Calculate bounding box of the path
-  const getBoundingBox = (cmds: Command[]) => {
-    let minX = Infinity;
-    let minY = Infinity;
-    let maxX = -Infinity;
-    let maxY = -Infinity;
-
-    cmds.forEach(cmd => {
-      const points: number[] = [];
-      
-      switch (cmd.type) {
-        case 'M':
-        case 'L':
-          points.push(cmd.position.x, cmd.position.y);
-          break;
-        case 'C':
-          points.push(
-            cmd.controlPoint1.x, cmd.controlPoint1.y,
-            cmd.controlPoint2.x, cmd.controlPoint2.y,
-            cmd.position.x, cmd.position.y
-          );
-          break;
-        case 'Z':
-          // Z command doesn't add new points
-          break;
-      }
-
-      for (let i = 0; i < points.length; i += 2) {
-        const x = points[i];
-        const y = points[i + 1];
-        if (x < minX) minX = x;
-        if (x > maxX) maxX = x;
-        if (y < minY) minY = y;
-        if (y > maxY) maxY = y;
-      }
-    });
-
-    return { minX, minY, maxX, maxY };
-  };
-
   if (commands.length === 0) {
     return (
       <Box 
@@ -63,7 +24,19 @@ export const PathThumbnail: React.FC<PathThumbnailProps> = ({
     );
   }
 
-  const bbox = getBoundingBox(commands);
+  // Use centralized bounds calculation
+  const bbox = measureCommandsBounds(commands);
+  
+  if (!bbox) {
+    return (
+      <Box 
+        width="48px" 
+        height="48px" 
+        borderRadius="sm"
+      />
+    );
+  }
+
   const width = bbox.maxX - bbox.minX;
   const height = bbox.maxY - bbox.minY;
 

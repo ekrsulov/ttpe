@@ -550,14 +550,6 @@ export interface SVGImportResult {
 }
 
 /**
- * Import SVG file and convert to PathData array with dimensions
- */
-export async function importSVG(file: File): Promise<PathData[]> {
-  const result = await importSVGWithDimensions(file);
-  return result.paths;
-}
-
-/**
  * Import SVG file and return both dimensions and PathData array
  */
 export async function importSVGWithDimensions(file: File): Promise<SVGImportResult> {

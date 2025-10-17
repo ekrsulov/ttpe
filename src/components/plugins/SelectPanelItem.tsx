@@ -6,6 +6,7 @@ import type { CanvasElement, PathData, Command, PathElement } from '../../types'
 import { PathThumbnail } from '../ui/PathThumbnail';
 import { PanelActionButton } from '../ui/PanelActionButton';
 import { useCanvasStore } from '../../store/canvasStore';
+import { measureCommandsBounds } from '../../utils/measurementUtils';
 
 type SelectPanelItemType =
   | {
@@ -19,50 +20,6 @@ type SelectPanelItemType =
       subpathIndex: number;
       pointCount: number;
     };
-
-// Helper to calculate bounding box coordinates
-const getBoundingBoxCoords = (commands: Command[]) => {
-  if (commands.length === 0) return null;
-  
-  let minX = Infinity;
-  let minY = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
-
-  commands.forEach(cmd => {
-    const points: number[] = [];
-    
-    switch (cmd.type) {
-      case 'M':
-      case 'L':
-        points.push(cmd.position.x, cmd.position.y);
-        break;
-      case 'C':
-        points.push(
-          cmd.controlPoint1.x, cmd.controlPoint1.y,
-          cmd.controlPoint2.x, cmd.controlPoint2.y,
-          cmd.position.x, cmd.position.y
-        );
-        break;
-      case 'Z':
-        break;
-    }
-
-    for (let i = 0; i < points.length; i += 2) {
-      const x = points[i];
-      const y = points[i + 1];
-      if (x < minX) minX = x;
-      if (x > maxX) maxX = x;
-      if (y < minY) minY = y;
-      if (y > maxY) maxY = y;
-    }
-  });
-
-  return {
-    topLeft: { x: Math.round(minX), y: Math.round(minY) },
-    bottomRight: { x: Math.round(maxX), y: Math.round(maxY) }
-  };
-};
 
 interface SelectPanelItemProps {
   item: SelectPanelItemType;
@@ -104,13 +61,17 @@ const SelectPanelItemComponent: React.FC<SelectPanelItemProps> = ({
     }
   }
 
-  // Calculate bbox coordinates
-  const bbox = getBoundingBoxCoords(thumbnailCommands);
+  // Use centralized bounds calculation
+  const boundsResult = measureCommandsBounds(thumbnailCommands);
+  const bbox = boundsResult ? {
+    topLeft: { x: Math.round(boundsResult.minX), y: Math.round(boundsResult.minY) },
+    bottomRight: { x: Math.round(boundsResult.maxX), y: Math.round(boundsResult.maxY) }
+  } : null;
 
   const elementId = item.element.id;
   const subpathIndex = item.type === 'subpath' ? item.subpathIndex : undefined;
   const primaryLabel = item.type === 'element'
-    ? `z: ${item.element.zIndex} - p: ${item.pointCount}`
+    ? `path (${item.pointCount}) z: ${item.element.zIndex}`
     : `Subpath ${subpathIndex ?? 0} - p: ${item.pointCount}`;
   const canCopyPath = item.type === 'element' && item.element.type === 'path';
   const containerBg = isSelected ? 'blue.50' : 'gray.50';
@@ -263,8 +224,19 @@ const arePropsEqual = (prevProps: SelectPanelItemProps, nextProps: SelectPanelIt
     if (prevEl.type === 'path' && nextEl.type === 'path') {
       const prevCommands = (prevEl.data as PathData).subPaths.flat();
       const nextCommands = (nextEl.data as PathData).subPaths.flat();
-      const prevBbox = getBoundingBoxCoords(prevCommands);
-      const nextBbox = getBoundingBoxCoords(nextCommands);
+      
+      const prevBoundsResult = measureCommandsBounds(prevCommands);
+      const nextBoundsResult = measureCommandsBounds(nextCommands);
+      
+      const prevBbox = prevBoundsResult ? {
+        topLeft: { x: Math.round(prevBoundsResult.minX), y: Math.round(prevBoundsResult.minY) },
+        bottomRight: { x: Math.round(prevBoundsResult.maxX), y: Math.round(prevBoundsResult.maxY) }
+      } : null;
+      
+      const nextBbox = nextBoundsResult ? {
+        topLeft: { x: Math.round(nextBoundsResult.minX), y: Math.round(nextBoundsResult.minY) },
+        bottomRight: { x: Math.round(nextBoundsResult.maxX), y: Math.round(nextBoundsResult.maxY) }
+      } : null;
       
       // Compare bounding boxes
       if (prevBbox && nextBbox) {
@@ -304,8 +276,18 @@ const arePropsEqual = (prevProps: SelectPanelItemProps, nextProps: SelectPanelIt
       const nextSubpath = nextSubpaths[nextProps.item.subpathIndex];
       
       if (prevSubpath && nextSubpath) {
-        const prevBbox = getBoundingBoxCoords(prevSubpath.commands);
-        const nextBbox = getBoundingBoxCoords(nextSubpath.commands);
+        const prevBoundsResult = measureCommandsBounds(prevSubpath.commands);
+        const nextBoundsResult = measureCommandsBounds(nextSubpath.commands);
+        
+        const prevBbox = prevBoundsResult ? {
+          topLeft: { x: Math.round(prevBoundsResult.minX), y: Math.round(prevBoundsResult.minY) },
+          bottomRight: { x: Math.round(prevBoundsResult.maxX), y: Math.round(prevBoundsResult.maxY) }
+        } : null;
+        
+        const nextBbox = nextBoundsResult ? {
+          topLeft: { x: Math.round(nextBoundsResult.minX), y: Math.round(nextBoundsResult.minY) },
+          bottomRight: { x: Math.round(nextBoundsResult.maxX), y: Math.round(nextBoundsResult.maxY) }
+        } : null;
         
         // Compare bounding boxes
         if (prevBbox && nextBbox) {

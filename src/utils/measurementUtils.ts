@@ -95,6 +95,59 @@ export const measureSubpathBounds = (
 };
 
 /**
+ * Calculate simple bounding box from commands (without stroke)
+ * This is a lightweight alternative to measurePath that doesn't use DOM
+ * Used primarily for UI purposes like thumbnails and coordinate display
+ * 
+ * @param commands - Array of path commands
+ * @returns Bounding box coordinates or null if no commands
+ */
+export const measureCommandsBounds = (
+  commands: import('../types').Command[]
+): { minX: number; minY: number; maxX: number; maxY: number } | null => {
+  if (commands.length === 0) {
+    return null;
+  }
+
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+
+  commands.forEach(cmd => {
+    const points: number[] = [];
+    
+    switch (cmd.type) {
+      case 'M':
+      case 'L':
+        points.push(cmd.position.x, cmd.position.y);
+        break;
+      case 'C':
+        points.push(
+          cmd.controlPoint1.x, cmd.controlPoint1.y,
+          cmd.controlPoint2.x, cmd.controlPoint2.y,
+          cmd.position.x, cmd.position.y
+        );
+        break;
+      case 'Z':
+        // Z command doesn't add new points
+        break;
+    }
+
+    for (let i = 0; i < points.length; i += 2) {
+      const x = points[i];
+      const y = points[i + 1];
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    }
+  });
+
+  return minX === Infinity ? null : { minX, minY, maxX, maxY };
+};
+
+/**
  * Accumulate bounding boxes from multiple command sets
  * Centralizes the logic that was duplicated in Canvas and transformationPluginSlice
  */

@@ -1,8 +1,9 @@
 import React from 'react';
-import { VStack, HStack } from '@chakra-ui/react';
+import { VStack } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Ruler } from 'lucide-react';
 import { Panel } from '../ui/Panel';
+import { PanelToggleGroup } from '../ui/PanelToggleGroup';
 import { PanelToggle } from '../ui/PanelToggle';
 
 const GuidelinesPanelComponent: React.FC = () => {
@@ -29,22 +30,21 @@ const GuidelinesPanelComponent: React.FC = () => {
     >
       <VStack spacing={2} align="stretch">
         {/* Alignment and Distance Guidelines Toggles on one line */}
-        <HStack spacing={4} align="stretch">
-          <PanelToggle
-            isChecked={guidelines.enabled}
-            onChange={handleToggleGuidelines}
-          >
-            Alignment
-          </PanelToggle>
-
-          <PanelToggle
-            isChecked={guidelines.distanceEnabled}
-            onChange={handleToggleDistanceGuidelines}
-            isDisabled={!guidelines.enabled}
-          >
-            Distance
-          </PanelToggle>
-        </HStack>
+        <PanelToggleGroup
+          toggles={[
+            {
+              label: 'Alignment',
+              isChecked: guidelines.enabled,
+              onChange: handleToggleGuidelines,
+            },
+            {
+              label: 'Distance',
+              isChecked: guidelines.distanceEnabled,
+              onChange: handleToggleDistanceGuidelines,
+              isDisabled: !guidelines.enabled,
+            },
+          ]}
+        />
 
         {/* Debug Mode Toggle - Only in development */}
         {import.meta.env.DEV && (

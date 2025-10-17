@@ -1,7 +1,7 @@
 import type { StateCreator } from 'zustand';
 import type { PathData } from '../../../types';
 import { measurePath } from '../../../utils/measurementUtils';
-import { rangesOverlap } from '../../../utils/guidelinesHelpers';
+import { rangesOverlap, calculateElementBoundsMap } from '../../../utils/guidelinesHelpers';
 
 export interface GuidelineMatch {
   type: 'left' | 'right' | 'top' | 'bottom' | 'centerX' | 'centerY';
@@ -440,13 +440,15 @@ export const createGuidelinesPluginSlice: StateCreator<GuidelinesPluginSlice, []
         return []; // Need at least 2 other elements to establish a distance pattern
       }
 
-      // Calculate bounds for all elements
+      // Use centralized helper to calculate bounds for all elements
+      const boundsInfo = calculateElementBoundsMap(
+        otherElements.map(el => ({ id: el.id, type: el.type, data: el.data })), 
+        [], 
+        viewport.zoom
+      );
       const elementBounds = new Map<string, { minX: number; minY: number; maxX: number; maxY: number }>();
-      
-      otherElements.forEach((element) => {
-        const pathData = element.data as PathData;
-        const bounds = measurePath(pathData.subPaths, pathData.strokeWidth, viewport.zoom);
-        elementBounds.set(element.id, bounds);
+      boundsInfo.forEach((info, id) => {
+        elementBounds.set(id, info.bounds);
       });
 
       // === HORIZONTAL DISTANCES ===

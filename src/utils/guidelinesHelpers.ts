@@ -8,7 +8,7 @@
  * - Memoization support for performance
  */
 
-import type { PathData, SubPath } from '../types';
+import type { PathData } from '../types';
 import { calculateBounds, type Bounds } from './boundsUtils';
 
 export type { Bounds } from './boundsUtils';
@@ -19,46 +19,6 @@ export interface ElementBoundsInfo {
   bounds: Bounds;
   centerX: number;
   centerY: number;
-}
-
-// Memoization cache for bounds calculations
-const boundsCache = new WeakMap<SubPath[], Bounds>();
-const cacheKeys = new WeakMap<SubPath[], string>();
-
-/**
- * Calculate stroke-aware bounds with memoization support
- * Uses a cache key based on structural properties to avoid redundant calculations
- * 
- * @param subPaths - The subpaths of the element
- * @param strokeWidth - The stroke width
- * @param zoom - The zoom level
- * @param cacheKey - Optional cache key (e.g., element ID + version)
- * @returns The bounds including stroke
- */
-export function getMemoizedBounds(
-  subPaths: SubPath[],
-  strokeWidth: number,
-  zoom: number,
-  cacheKey?: string
-): Bounds {
-  // If cache key is provided and matches, return cached value
-  if (cacheKey && cacheKeys.get(subPaths) === cacheKey) {
-    const cached = boundsCache.get(subPaths);
-    if (cached) {
-      return cached;
-    }
-  }
-
-  // Calculate new bounds
-  const bounds = calculateBounds(subPaths, strokeWidth, zoom);
-
-  // Cache the result
-  if (cacheKey) {
-    cacheKeys.set(subPaths, cacheKey);
-  }
-  boundsCache.set(subPaths, bounds);
-
-  return bounds;
 }
 
 /**
