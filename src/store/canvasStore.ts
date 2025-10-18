@@ -161,7 +161,7 @@ export const registerPluginSlices = (
   pluginSliceCleanups.set(pluginId, cleanups);
 };
 
-export function unregisterPluginSlices(storeApi: CanvasStoreApi, pluginId: string): void {
+export function unregisterPluginSlices(_storeApi: CanvasStoreApi, pluginId: string): void {
   const cleanups = pluginSliceCleanups.get(pluginId);
   if (!cleanups) {
     return;
