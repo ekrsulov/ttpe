@@ -161,7 +161,7 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => {
   settings: {
     keyboardMovementPrecision: 0, // Default to 0 (integers only)
     showRenderCountBadges: false, // Show badges in development by default
-    showMinimap: true, // Show minimap by default
+    showMinimap: false, // Show minimap by default
   },
 
   // Actions
