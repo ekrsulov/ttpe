@@ -83,7 +83,7 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
         WebkitUserSelect: 'none',
         backdropFilter: 'blur(10px)',
         backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        transition: 'top 0.2s ease-in-out',
+        transition: 'top 0.2s ease-in-out, left 0.3s ease-in-out, right 0.3s ease-in-out, transform 0.3s ease-in-out',
       }}
     >
       <HStack 

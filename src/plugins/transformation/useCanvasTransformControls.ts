@@ -53,7 +53,7 @@ export const useCanvasTransformControls = () => {
       const subpathIndex = parseInt(parts[2]);
       const subpathBounds = measureSubpathBounds(
         (element.data as PathData).subPaths[subpathIndex],
-        (element.data as PathData).strokeWidth || 1,
+        (element.data as PathData).strokeWidth ?? 1,
         1 // zoom
       );
       if (subpathBounds) {
@@ -61,7 +61,7 @@ export const useCanvasTransformControls = () => {
       }
     } else {
       // Regular element bounds
-      bounds = measurePath((element.data as PathData).subPaths, (element.data as PathData).strokeWidth, 1);
+      bounds = measurePath((element.data as PathData).subPaths, (element.data as PathData).strokeWidth ?? 1, 1);
     }
 
     if (bounds) {

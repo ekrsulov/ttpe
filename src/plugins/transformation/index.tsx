@@ -70,7 +70,7 @@ export const transformationPlugin: PluginDefinition<CanvasStore> = {
                 const subpathIndex = selection.subpathIndex;
                 bounds = measureSubpathBounds(
                   pathData.subPaths[subpathIndex],
-                  pathData.strokeWidth || 1,
+                  pathData.strokeWidth ?? 1,
                   viewport.zoom
                 );
               }

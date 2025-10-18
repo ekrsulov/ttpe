@@ -58,13 +58,13 @@ const SelectPanelItemComponent: React.FC<SelectPanelItemProps> = ({
   
   if (item.type === 'element' && item.element.type === 'path') {
     thumbnailCommands = (item.element.data as PathData).subPaths.flat();
-    strokeWidth = (item.element.data as PathData).strokeWidth || 1;
+    strokeWidth = (item.element.data as PathData).strokeWidth ?? 1;
   } else if (item.type === 'subpath' && item.subpathIndex !== undefined) {
     const subpathData = extractSubpaths((item.element.data as PathData).subPaths.flat())[item.subpathIndex];
     if (subpathData) {
       thumbnailCommands = subpathData.commands;
     }
-    strokeWidth = (item.element.data as PathData).strokeWidth || 1;
+    strokeWidth = (item.element.data as PathData).strokeWidth ?? 1;
   }
 
   // Use stroke-aware bounds calculation (same as transformation overlay)
@@ -227,8 +227,8 @@ const arePropsEqual = (prevProps: SelectPanelItemProps, nextProps: SelectPanelIt
     
     // Check if strokeWidth or bounding box changed (for path elements)
     if (prevEl.type === 'path' && nextEl.type === 'path') {
-      const prevStrokeWidth = (prevEl.data as PathData).strokeWidth || 1;
-      const nextStrokeWidth = (nextEl.data as PathData).strokeWidth || 1;
+      const prevStrokeWidth = (prevEl.data as PathData).strokeWidth ?? 1;
+      const nextStrokeWidth = (nextEl.data as PathData).strokeWidth ?? 1;
       
       // If strokeWidth changed, re-render (affects displayed coordinates)
       if (prevStrokeWidth !== nextStrokeWidth) {
@@ -279,8 +279,8 @@ const arePropsEqual = (prevProps: SelectPanelItemProps, nextProps: SelectPanelIt
     const nextEl = nextProps.item.element;
     
     if (prevEl.type === 'path' && nextEl.type === 'path') {
-      const prevStrokeWidth = (prevEl.data as PathData).strokeWidth || 1;
-      const nextStrokeWidth = (nextEl.data as PathData).strokeWidth || 1;
+      const prevStrokeWidth = (prevEl.data as PathData).strokeWidth ?? 1;
+      const nextStrokeWidth = (nextEl.data as PathData).strokeWidth ?? 1;
       
       // If strokeWidth changed, re-render (affects displayed coordinates)
       if (prevStrokeWidth !== nextStrokeWidth) {

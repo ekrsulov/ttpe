@@ -100,6 +100,9 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
       boxShadow="lg"
       backdropFilter="blur(10px)"
       backgroundColor="rgba(255, 255, 255, 0.95)"
+      sx={{
+        transition: 'left 0.3s ease-in-out, right 0.3s ease-in-out, transform 0.3s ease-in-out',
+      }}
     >
       <HStack spacing={1.5}>
         {pluginBottomActions.length > 0 ? (

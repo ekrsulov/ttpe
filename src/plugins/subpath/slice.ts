@@ -94,7 +94,7 @@ const collectSubpathBounds = (
       const subpathCommands = subpaths[selected.subpathIndex]?.commands;
 
       if (subpathCommands) {
-        const bounds = measureSubpathBounds(subpathCommands, pathData.strokeWidth || 1);
+        const bounds = measureSubpathBounds(subpathCommands, pathData.strokeWidth ?? 1);
 
         subpathBounds.push({
           elementId: selected.elementId,
@@ -542,7 +542,7 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
         const subpaths = extractSubpaths(allCommands);
 
         if (subpaths[subpathIndex]) {
-          const bounds = measureSubpathBounds(subpaths[subpathIndex].commands, pathData.strokeWidth || 1);
+          const bounds = measureSubpathBounds(subpaths[subpathIndex].commands, pathData.strokeWidth ?? 1);
           initialPositions.push({
             elementId,
             subpathIndex,

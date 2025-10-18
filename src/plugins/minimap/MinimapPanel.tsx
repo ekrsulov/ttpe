@@ -103,6 +103,8 @@ const minimapToWorld = (value: number, scale: number, offset: number): number =>
 export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const clipPathId = useId();
+  const lastClickRef = useRef<{ elementId: string; time: number } | null>(null);
+  
   const [dragState, setDragState] = useState<DragState>({
     isActive: false,
     pointerId: null,
@@ -193,6 +195,56 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) 
     [minimapMetrics]
   );
 
+  const handleElementDoubleClick = useCallback(
+    (bounds: Bounds) => {
+      // Calculate the center of the element
+      const centerX = (bounds.minX + bounds.maxX) / 2;
+      const centerY = (bounds.minY + bounds.maxY) / 2;
+
+      // Calculate the dimensions of the element
+      const elementWidth = bounds.maxX - bounds.minX;
+      const elementHeight = bounds.maxY - bounds.minY;
+
+      // Calculate zoom to fit the element in the viewport with some padding
+      const padding = 100; // pixels of padding around the element
+      const targetWidth = elementWidth + padding * 2;
+      const targetHeight = elementHeight + padding * 2;
+
+      // Calculate zoom level to fit element in viewport
+      const zoomX = canvasSize.width / targetWidth;
+      const zoomY = canvasSize.height / targetHeight;
+      const newZoom = Math.min(zoomX, zoomY, 4); // Cap at 4x zoom
+
+      // Calculate pan to center the element
+      const panX = canvasSize.width / 2 - centerX * newZoom;
+      const panY = canvasSize.height / 2 - centerY * newZoom;
+
+      setViewport({ panX, panY, zoom: newZoom });
+    },
+    [canvasSize.width, canvasSize.height, setViewport]
+  );
+
+  const handleElementClick = useCallback(
+    (elementId: string, bounds: Bounds) => {
+      const now = Date.now();
+      const DOUBLE_CLICK_THRESHOLD = 300; // ms
+
+      if (
+        lastClickRef.current &&
+        lastClickRef.current.elementId === elementId &&
+        now - lastClickRef.current.time < DOUBLE_CLICK_THRESHOLD
+      ) {
+        // Double click detected!
+        lastClickRef.current = null; // Reset
+        handleElementDoubleClick(bounds);
+      } else {
+        // Single click
+        lastClickRef.current = { elementId, time: now };
+      }
+    },
+    [handleElementDoubleClick]
+  );
+
   const handlePointerDown = useCallback(
     (event: React.PointerEvent<SVGSVGElement>) => {
       if (!minimapMetrics) {
@@ -202,6 +254,14 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) 
       const worldPoint = getWorldPoint(event);
       if (!worldPoint) {
         return;
+      }
+
+      // Check if clicking on an element (don't interfere with click events)
+      const target = event.target as SVGElement;
+      const isElement = target.dataset?.elementId;
+      
+      if (isElement) {
+        return; // Don't start drag on element click, let onClick handle it
       }
 
       event.preventDefault();
@@ -336,22 +396,61 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) 
                 vectorEffect="non-scaling-stroke"
                 rx={1}
                 ry={1}
+                style={{ cursor: 'pointer' }}
+                data-element-id={element.id}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleElementClick(element.id, bounds);
+                }}
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                }}
               />
             );
           })}
         </g>
-        <rect
-          x={viewportRect.x}
-          y={viewportRect.y}
-          width={Math.max(16, viewportRect.width)}
-          height={Math.max(16, viewportRect.height)}
-          fill="rgba(59, 130, 246, 0.1)"
-          stroke="rgba(59, 130, 246, 1)"
-          strokeWidth={2}
-          rx={4}
-          ry={4}
-          data-role="minimap-viewport"
-        />
+        {/* Viewport rectangle - separated into layers to allow element clicks underneath */}
+        <g>
+          {/* Visual fill (no pointer events) */}
+          <rect
+            x={viewportRect.x}
+            y={viewportRect.y}
+            width={Math.max(16, viewportRect.width)}
+            height={Math.max(16, viewportRect.height)}
+            fill="rgba(59, 130, 246, 0.1)"
+            stroke="none"
+            rx={4}
+            ry={4}
+            style={{ pointerEvents: 'none' }}
+          />
+          {/* Invisible thick stroke for drag interaction */}
+          <rect
+            x={viewportRect.x}
+            y={viewportRect.y}
+            width={Math.max(16, viewportRect.width)}
+            height={Math.max(16, viewportRect.height)}
+            fill="none"
+            stroke="transparent"
+            strokeWidth={12}
+            rx={4}
+            ry={4}
+            data-role="minimap-viewport"
+            style={{ cursor: 'move' }}
+          />
+          {/* Visible stroke (no pointer events) */}
+          <rect
+            x={viewportRect.x}
+            y={viewportRect.y}
+            width={Math.max(16, viewportRect.width)}
+            height={Math.max(16, viewportRect.height)}
+            fill="none"
+            stroke="rgba(59, 130, 246, 1)"
+            strokeWidth={2}
+            rx={4}
+            ry={4}
+            style={{ pointerEvents: 'none' }}
+          />
+        </g>
       </svg>
     </Box>
   );

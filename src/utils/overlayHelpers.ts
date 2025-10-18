@@ -66,7 +66,7 @@ export function measureSelectedSubpaths(
         if (selected.subpathIndex >= subpaths.length) return;
 
         const subpath = subpaths[selected.subpathIndex];
-        const rawBounds = measureSubpathBounds(subpath, pathData.strokeWidth || 1, zoom);
+        const rawBounds = measureSubpathBounds(subpath, pathData.strokeWidth ?? 1, zoom);
 
         if (!rawBounds) return;
 
