@@ -94,7 +94,7 @@ export class CanvasEventBus<EventMap extends Record<string, unknown> = CanvasEve
 
 const CanvasEventBusContext = createContext<CanvasEventBus | null>(null);
 
-export interface CanvasEventBusProviderProps extends PropsWithChildren<{ value?: CanvasEventBus }> {}
+export type CanvasEventBusProviderProps = PropsWithChildren<{ value?: CanvasEventBus }>;
 
 export const CanvasEventBusProvider = ({ value, children }: CanvasEventBusProviderProps) => {
   const busRef = useRef<CanvasEventBus | null>(value ?? null);
@@ -107,6 +107,7 @@ export const CanvasEventBusProvider = ({ value, children }: CanvasEventBusProvid
   return <CanvasEventBusContext.Provider value={bus}>{children}</CanvasEventBusContext.Provider>;
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useCanvasEventBus = () => {
   const bus = useContext(CanvasEventBusContext);
   if (!bus) {

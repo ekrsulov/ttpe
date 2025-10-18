@@ -633,6 +633,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     beginSelectionRectangle,
     completeSelectionRectangle,
     endShapeCreation,
+    startShapeCreation,
     eventBus,
   ]);
 
@@ -713,6 +714,8 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     eventBus,
     dragStart,
     isSmoothBrushActive,
+    beginSelectionRectangle,
+    startShapeCreation,
   ]);
 
   // Handle keyboard events for tools
