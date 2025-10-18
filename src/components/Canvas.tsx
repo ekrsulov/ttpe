@@ -1,5 +1,5 @@
 import React, { useRef, useCallback, useState, useEffect, useMemo } from 'react';
-import { measurePath, mapPointerToCanvas } from '../utils/geometry';
+import { mapPointerToCanvas } from '../utils/geometry';
 import { extractEditablePoints } from '../utils/path';
 import { useCanvasDragInteractions } from '../hooks/useCanvasDragInteractions';
 import { useCanvasKeyboardControls } from '../hooks/useCanvasKeyboardControls';
@@ -11,7 +11,7 @@ import { useCanvasEventHandlers } from '../hooks/useCanvasEventHandlers';
 import { pluginManager } from '../utils/pluginManager';
 import { logger } from '../utils';
 import { RenderCountBadgeWrapper } from './ui/RenderCountBadgeWrapper';
-import type { Point, PathData, CanvasElement, GroupElement } from '../types';
+import type { Point, PathData, CanvasElement } from '../types';
 import { useCanvasController } from '../canvas/controller/CanvasControllerContext';
 import { CanvasControllerProvider } from '../canvas/controller/CanvasControllerProvider';
 import { CanvasLayers } from './CanvasLayers';
@@ -29,6 +29,7 @@ import {
   type CanvasRenderContext,
 } from '../canvas/renderers';
 import { usePointerStateController } from '../canvas/interactions/usePointerStateController';
+import { useCanvasGeometry } from '../hooks/useCanvasGeometry';
 
 const CanvasContent: React.FC = () => {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -222,62 +223,6 @@ const CanvasContent: React.FC = () => {
     };
   }, []);
 
-  const calculateGroupBounds = useCallback(
-    (group: GroupElement, visited: Set<string> = new Set()): { minX: number; minY: number; maxX: number; maxY: number } | null => {
-      if (visited.has(group.id)) {
-        return null;
-      }
-      visited.add(group.id);
-
-      let minX = Infinity;
-      let minY = Infinity;
-      let maxX = -Infinity;
-      let maxY = -Infinity;
-      let hasBounds = false;
-
-      group.data.childIds.forEach((childId) => {
-        const child = elementMap.get(childId);
-        if (!child) {
-          return;
-        }
-
-        if (isElementHidden && isElementHidden(child.id)) {
-          return;
-        }
-
-        if (child.type === 'group') {
-          const childBounds = calculateGroupBounds(child as GroupElement, visited);
-          if (childBounds) {
-            minX = Math.min(minX, childBounds.minX);
-            minY = Math.min(minY, childBounds.minY);
-            maxX = Math.max(maxX, childBounds.maxX);
-            maxY = Math.max(maxY, childBounds.maxY);
-            hasBounds = true;
-          }
-        } else if (child.type === 'path') {
-          const pathData = child.data as PathData;
-          const bounds = measurePath(pathData.subPaths, pathData.strokeWidth, viewport.zoom);
-          if (bounds) {
-            minX = Math.min(minX, bounds.minX);
-            minY = Math.min(minY, bounds.minY);
-            maxX = Math.max(maxX, bounds.maxX);
-            maxY = Math.max(maxY, bounds.maxY);
-            hasBounds = true;
-          }
-        }
-      });
-
-      visited.delete(group.id);
-
-      if (!hasBounds) {
-        return null;
-      }
-
-      return { minX, minY, maxX, maxY };
-    },
-    [elementMap, isElementHidden, viewport.zoom]
-  );
-
   // Transform screen coordinates to canvas coordinates
   const screenToCanvas = useCallback(
     (screenX: number, screenY: number): Point => {
@@ -287,13 +232,12 @@ const CanvasContent: React.FC = () => {
   );
 
   // Helper function to get element bounds considering current transform
-  const getElementBounds = useCallback((element: typeof elements[0]) => {
-    if (element.type === 'path') {
-      const pathData = element.data as import('../types').PathData;
-      return measurePath(pathData.subPaths, pathData.strokeWidth, viewport.zoom);
-    }
-    return null;
-  }, [viewport.zoom]);
+  const { getElementBounds, getTransformedBounds, selectedGroupBounds } = useCanvasGeometry({
+    elementMap,
+    viewport,
+    selectedIds,
+    isElementHidden,
+  });
 
   useCanvasZoom(svgRef);
 
@@ -459,14 +403,6 @@ const CanvasContent: React.FC = () => {
   });
 
   // Helper function to get transformed bounds
-  const getTransformedBounds = useCallback((element: typeof elements[0]) => {
-    if (element.type === 'path') {
-      const pathData = element.data as PathData;
-      return measurePath(pathData.subPaths, pathData.strokeWidth, viewport.zoom);
-    }
-    return null;
-  }, [viewport.zoom]);
-
   const isElementSelected = useCallback(
     (elementId: string) => selectedIds.includes(elementId),
     [selectedIds]
@@ -494,51 +430,6 @@ const CanvasContent: React.FC = () => {
 
   const renderElement = (element: typeof elements[0]) =>
     canvasRendererRegistry.render(element, renderContext);
-
-  const selectedGroupBounds = useMemo(() => {
-    const groupIds = new Set<string>();
-
-    selectedIds.forEach((id) => {
-      const element = elementMap.get(id);
-      if (!element) {
-        return;
-      }
-
-      if (element.type === 'group') {
-        groupIds.add(element.id);
-      }
-
-      let currentParentId = element.parentId ?? null;
-      const visitedAncestors = new Set<string>();
-      while (currentParentId) {
-        if (visitedAncestors.has(currentParentId)) {
-          break;
-        }
-        visitedAncestors.add(currentParentId);
-
-        const parent = elementMap.get(currentParentId);
-        if (parent && parent.type === 'group') {
-          groupIds.add(parent.id);
-          currentParentId = parent.parentId ?? null;
-        } else {
-          break;
-        }
-      }
-    });
-
-    return Array.from(groupIds)
-      .map((groupId) => {
-        const group = elementMap.get(groupId);
-        if (group && group.type === 'group') {
-          const bounds = calculateGroupBounds(group as GroupElement);
-          if (bounds) {
-            return { id: group.id, bounds };
-          }
-        }
-        return null;
-      })
-      .filter((value): value is { id: string; bounds: { minX: number; minY: number; maxX: number; maxY: number } } => Boolean(value));
-  }, [selectedIds, elementMap, calculateGroupBounds]);
 
   const canvasLayerContext = useMemo(
     () => ({

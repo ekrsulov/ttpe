@@ -1,0 +1,61 @@
+import { useCallback, useMemo } from 'react';
+import type { CanvasElement, GroupElement, Viewport } from '../types';
+import type { Bounds } from '../utils/boundsUtils';
+import {
+  getElementBounds as serviceGetElementBounds,
+  getGroupBounds as serviceGetGroupBounds,
+  measureSelectionBounds as serviceMeasureSelectionBounds,
+  type ElementMap,
+  type ElementVisibilityChecker,
+} from '../canvas/geometry/CanvasGeometryService';
+
+interface UseCanvasGeometryParams {
+  elementMap: ElementMap;
+  viewport: Viewport;
+  selectedIds: string[];
+  isElementHidden?: ElementVisibilityChecker;
+}
+
+interface UseCanvasGeometryResult {
+  getElementBounds: (element: CanvasElement) => Bounds | null;
+  getTransformedBounds: (element: CanvasElement) => Bounds | null;
+  getGroupBounds: (group: GroupElement) => Bounds | null;
+  selectedGroupBounds: Array<{ id: string; bounds: Bounds }>;
+}
+
+export const useCanvasGeometry = ({
+  elementMap,
+  viewport,
+  selectedIds,
+  isElementHidden,
+}: UseCanvasGeometryParams): UseCanvasGeometryResult => {
+  const getElementBounds = useCallback(
+    (element: CanvasElement) => serviceGetElementBounds(element, viewport),
+    [viewport]
+  );
+
+  const getTransformedBounds = useCallback(
+    (element: CanvasElement) => serviceGetElementBounds(element, viewport),
+    [viewport]
+  );
+
+  const getGroupBounds = useCallback(
+    (group: GroupElement) => serviceGetGroupBounds(group, elementMap, viewport, isElementHidden),
+    [elementMap, viewport, isElementHidden]
+  );
+
+  const selectedGroupBounds = useMemo(
+    () => serviceMeasureSelectionBounds(selectedIds, elementMap, viewport, isElementHidden),
+    [selectedIds, elementMap, viewport, isElementHidden]
+  );
+
+  return useMemo(
+    () => ({
+      getElementBounds,
+      getTransformedBounds,
+      getGroupBounds,
+      selectedGroupBounds,
+    }),
+    [getElementBounds, getTransformedBounds, getGroupBounds, selectedGroupBounds]
+  );
+};
