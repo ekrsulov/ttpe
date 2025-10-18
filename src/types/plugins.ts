@@ -5,6 +5,13 @@ import type { Point } from '.';
 export interface PluginUIContribution<TProps = Record<string, unknown>> {
   id: string;
   component: ComponentType<TProps>;
+  placement?: 'tool' | 'global';
+}
+
+export interface PluginActionContribution<TProps = Record<string, unknown>> {
+  id: string;
+  component: ComponentType<TProps>;
+  placement: 'top' | 'bottom';
 }
 
 export type PluginSliceFactory<TStore extends object = object> = (
@@ -38,5 +45,6 @@ export interface PluginDefinition<TStore extends object = object> {
   keyboardShortcuts?: Record<string, (event: KeyboardEvent) => void>;
   overlays?: PluginUIContribution[];
   panels?: PluginUIContribution[];
+  actions?: PluginActionContribution[];
   slices?: PluginSliceFactory<TStore>[];
 }

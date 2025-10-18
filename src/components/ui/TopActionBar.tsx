@@ -4,6 +4,12 @@ import { Menu } from 'lucide-react';
 import { RenderCountBadgeWrapper } from './RenderCountBadgeWrapper';
 import type { CanvasElement } from '../../types';
 import { TOOL_DEFINITIONS } from '../../config/toolDefinitions';
+import type { ToolMode } from '../../config/toolDefinitions';
+import { pluginManager } from '../../utils/pluginManager';
+
+const TOOL_DEFINITION_MAP = new Map(
+  TOOL_DEFINITIONS.map((definition) => [definition.mode, definition])
+);
 
 interface TopActionBarProps {
   activeMode: string | null;
@@ -34,6 +40,25 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
   const topWithRulers = { base: 6, md: 10 };
   const topPosition = showGridRulers ? topWithRulers : baseTop;
 
+  const registeredTools = pluginManager.getRegisteredTools().map((plugin) => {
+    const fallbackDefinition = TOOL_DEFINITION_MAP.get(plugin.id as ToolMode);
+    const Icon = plugin.metadata.icon ?? fallbackDefinition?.icon ?? Menu;
+
+    return {
+      id: plugin.id,
+      label: plugin.metadata.label ?? fallbackDefinition?.label ?? plugin.id,
+      icon: Icon,
+    };
+  });
+
+  const toolsToRender = registeredTools.length
+    ? registeredTools
+    : TOOL_DEFINITIONS.map(({ mode, label, icon }) => ({
+        id: mode,
+        label,
+        icon,
+      }));
+
   return (
     <Box
       position="fixed"
@@ -63,12 +88,12 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
         justify="center"
       >
         {/* Tool buttons */}
-        {TOOL_DEFINITIONS.map(({ mode, icon: Icon, label }) => {
+        {toolsToRender.map(({ id, icon: Icon, label }) => {
           const isDisabled = (() => {
-            if (mode === 'transformation' || mode === 'edit') {
+            if (id === 'transformation' || id === 'edit') {
               return selectedPaths.length !== 1;
             }
-            if (mode === 'subpath') {
+            if (id === 'subpath') {
               if (selectedPaths.length !== 1) {
                 return true;
               }
@@ -83,13 +108,13 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
           })();
           return (
             <IconButton
-              key={mode}
+              key={id}
               aria-label={label}
               icon={<Icon size={14} />}
-              onClick={() => onModeChange(mode)}
+              onClick={() => onModeChange(id)}
               size="xs"
-              variant={activeMode === mode ? 'solid' : 'ghost'}
-              colorScheme={activeMode === mode ? 'blue' : 'gray'}
+              variant={activeMode === id ? 'solid' : 'ghost'}
+              colorScheme={activeMode === id ? 'blue' : 'gray'}
               title={label}
               isDisabled={isDisabled}
               sx={{

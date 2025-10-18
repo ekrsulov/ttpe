@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box } from '@chakra-ui/react';
 import { SidebarToolGrid } from './SidebarToolGrid';
-import { SidebarPanels } from './SidebarPanels';
+import { SidebarPanelHost } from './SidebarPanelHost';
 import { SidebarFooter } from './SidebarFooter';
 import { SidebarResizer } from './SidebarResizer';
 import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
@@ -103,7 +103,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
         />
 
         {/* Main Panels - Scrollable middle section */}
-        <SidebarPanels
+        <SidebarPanelHost
           activePlugin={activePlugin}
           showFilePanel={showFilePanel}
           showSettingsPanel={showSettingsPanel}

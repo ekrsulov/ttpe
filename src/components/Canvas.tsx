@@ -930,8 +930,12 @@ export const Canvas: React.FC = () => {
       />
 
       {/* Tool-specific overlays */}
+      {pluginManager.getGlobalOverlays().map((OverlayComponent, index) => (
+        <OverlayComponent key={`global-overlay-${index}`} viewport={viewport} />
+      ))}
+
       {activePlugin && pluginManager.getOverlays(activePlugin).map((OverlayComponent, index) => (
-        <OverlayComponent key={index} viewport={viewport} />
+        <OverlayComponent key={`plugin-overlay-${index}`} viewport={viewport} />
       ))}
     </svg>
     </>
