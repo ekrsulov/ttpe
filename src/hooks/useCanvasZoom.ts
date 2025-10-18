@@ -1,23 +1,14 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import type { RefObject } from 'react';
 import { pluginManager } from '../utils/pluginManager';
 import { useCanvasController } from '../canvas/controller/CanvasControllerContext';
 import { useCanvasEventBus } from '../canvas/CanvasEventBusContext';
-import { useCanvasStore } from '../store/canvasStore';
+import { canvasStoreApi } from '../store/canvasStore';
 import { ZOOM_SERVICE_ID } from '../canvas/listeners/ZoomListener';
 
 export const useCanvasZoom = (svgRef: RefObject<SVGSVGElement | null>): void => {
   const controller = useCanvasController();
   const eventBus = useCanvasEventBus();
-
-  const storeApi = useMemo(
-    () => ({
-      getState: useCanvasStore.getState,
-      setState: useCanvasStore.setState,
-      subscribe: useCanvasStore.subscribe,
-    }),
-    []
-  );
 
   useEffect(() => {
     const svg = svgRef.current;
@@ -29,7 +20,7 @@ export const useCanvasZoom = (svgRef: RefObject<SVGSVGElement | null>): void => 
       svg,
       controller,
       eventBus,
-      store: storeApi,
+      store: canvasStoreApi,
     });
-  }, [controller, eventBus, storeApi, svgRef]);
+  }, [controller, eventBus, svgRef]);
 };

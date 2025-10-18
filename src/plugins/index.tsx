@@ -1,6 +1,5 @@
 import type { PluginDefinition } from '../types/plugins';
 import type { CanvasStore } from '../store/canvasStore';
-import { useCanvasStore } from '../store/canvasStore';
 import { getToolMetadata } from './toolMetadata';
 
 import { pencilPlugin } from './pencil';
@@ -26,11 +25,12 @@ const selectPlugin: PluginDefinition<CanvasStore> = {
     _isSmoothBrushActive,
     beginSelectionRectangle,
     _startShapeCreation,
-    _context
+    context
   ) => {
     if (target.tagName === 'svg') {
       if (!event.shiftKey) {
-        useCanvasStore.getState().clearSelection();
+        const state = context.store.getState();
+        state.clearSelection?.();
       }
       beginSelectionRectangle(point);
     }

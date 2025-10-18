@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import type { StoreApi } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { temporal } from 'zundo';
 import type { PluginSliceFactory } from '../types/plugins';
@@ -107,30 +108,38 @@ export const useCanvasStore = create<CanvasStore>()(
   )
 );
 
+export type CanvasStoreApi = StoreApi<CanvasStore>;
+
+export const canvasStoreApi: CanvasStoreApi = useCanvasStore as unknown as CanvasStoreApi;
+
 type CanvasPluginSlice = ReturnType<PluginSliceFactory<CanvasStore>>;
 
 const pluginSliceCleanups = new Map<string, Array<() => void>>();
 
-const applyPluginSlice = (partial: Partial<CanvasStore>): (() => void) => {
+const applyPluginSlice = (
+  storeApi: CanvasStoreApi,
+  partial: Partial<CanvasStore>
+): (() => void) => {
   const previousValues: Partial<Record<keyof CanvasStore, CanvasStore[keyof CanvasStore] | null>> = {};
   const keys = Object.keys(partial) as (keyof CanvasStore)[];
 
   keys.forEach((key) => {
-    previousValues[key] = useCanvasStore.getState()[key];
+    previousValues[key] = storeApi.getState()[key];
   });
 
-  useCanvasStore.setState(partial as Partial<CanvasStore>);
+  storeApi.setState(partial as Partial<CanvasStore>);
 
   return () => {
-  const restore: Partial<Record<keyof CanvasStore, CanvasStore[keyof CanvasStore] | null>> = {};
+    const restore: Partial<Record<keyof CanvasStore, CanvasStore[keyof CanvasStore] | null>> = {};
     keys.forEach((key) => {
       restore[key] = previousValues[key];
     });
-    useCanvasStore.setState(restore as Partial<CanvasStore>);
+    storeApi.setState(restore as Partial<CanvasStore>);
   };
 };
 
 export const registerPluginSlices = (
+  storeApi: CanvasStoreApi,
   pluginId: string,
   contributions: CanvasPluginSlice[]
 ): void => {
@@ -138,21 +147,21 @@ export const registerPluginSlices = (
     return;
   }
 
-  unregisterPluginSlices(pluginId);
+  unregisterPluginSlices(storeApi, pluginId);
 
   const cleanups: Array<() => void> = [];
 
   contributions.forEach(({ state, cleanup }) => {
-    cleanups.push(applyPluginSlice(state));
+    cleanups.push(applyPluginSlice(storeApi, state));
     if (cleanup) {
-      cleanups.push(() => cleanup(useCanvasStore.setState, useCanvasStore.getState, useCanvasStore));
+      cleanups.push(() => cleanup(storeApi.setState, storeApi.getState, storeApi));
     }
   });
 
   pluginSliceCleanups.set(pluginId, cleanups);
 };
 
-export function unregisterPluginSlices(pluginId: string): void {
+export function unregisterPluginSlices(storeApi: CanvasStoreApi, pluginId: string): void {
   const cleanups = pluginSliceCleanups.get(pluginId);
   if (!cleanups) {
     return;
