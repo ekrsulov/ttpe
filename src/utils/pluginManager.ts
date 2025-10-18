@@ -1,67 +1,99 @@
-import React from 'react';
-import type { ToolRegistry } from './toolRegistry';
-import type { Point } from '../types';
-import { toolRegistry } from './toolRegistry';
+import type React from 'react';
+import type { PluginDefinition, PluginUIContribution } from '../types/plugins';
+import type { CanvasStore } from '../store/canvasStore';
+import { useCanvasStore, registerPluginSlices, unregisterPluginSlices } from '../store/canvasStore';
+import { DEFAULT_PLUGIN_DEFINITIONS } from './pluginDefaults';
 
 export class PluginManager {
-  private registry: ToolRegistry = {};
+  private registry = new Map<string, PluginDefinition<CanvasStore>>();
 
-  constructor(initialRegistry: ToolRegistry) {
-    this.registry = { ...initialRegistry };
+  constructor(initialPlugins: PluginDefinition<CanvasStore>[] = []) {
+    initialPlugins.forEach((plugin) => this.register(plugin));
   }
 
-  /**
-   * Check if tool exists
-   */
-  hasTool(name: string): boolean {
-    return name in this.registry;
-  }
+  register(plugin: PluginDefinition<CanvasStore>): void {
+    if (this.registry.has(plugin.id)) {
+      this.unregister(plugin.id);
+    }
 
-  /**
-   * Handle keyboard event for active tool
-   */
-  handleKeyboardEvent(toolName: string, e: KeyboardEvent): void {
-    const tool = this.registry[toolName];
-    if (tool?.keyboardShortcuts?.[e.key]) {
-      tool.keyboardShortcuts[e.key](e);
+    this.registry.set(plugin.id, plugin);
+
+    if (plugin.slices?.length) {
+      const contributions = plugin.slices.map((factory) =>
+        factory(useCanvasStore.setState, useCanvasStore.getState, useCanvasStore)
+      );
+      registerPluginSlices(plugin.id, contributions);
     }
   }
 
-  /**
-   * Get cursor for tool
-   */
+  unregister(pluginId: string): void {
+    const existing = this.registry.get(pluginId);
+    if (!existing) {
+      return;
+    }
+
+    this.registry.delete(pluginId);
+
+    if (existing.slices?.length) {
+      unregisterPluginSlices(pluginId);
+    }
+  }
+
+  hasTool(name: string): boolean {
+    return this.registry.has(name);
+  }
+
+  getPlugin(id: string): PluginDefinition<CanvasStore> | undefined {
+    return this.registry.get(id);
+  }
+
+  getAll(): PluginDefinition<CanvasStore>[] {
+    return Array.from(this.registry.values());
+  }
+
+  handleKeyboardEvent(toolName: string, event: KeyboardEvent): void {
+    const tool = this.registry.get(toolName);
+    const handler = tool?.keyboardShortcuts?.[event.key];
+    if (handler) {
+      handler(event);
+    }
+  }
+
   getCursor(toolName: string): string {
-    return this.registry[toolName]?.feedback?.cursor || 'default';
+    return this.registry.get(toolName)?.metadata.cursor ?? 'default';
   }
 
-  /**
-   * Get overlays for tool
-   */
   getOverlays(toolName: string): React.ComponentType<Record<string, unknown>>[] {
-    return this.registry[toolName]?.overlays || [];
+    const tool = this.registry.get(toolName);
+    return tool?.overlays?.map((overlay: PluginUIContribution) => overlay.component as React.ComponentType<Record<string, unknown>>)
+      ?? [];
   }
 
-  /**
-   * Execute tool handler
-   */
+  getPanels(toolName: string): PluginUIContribution[] {
+    return this.registry.get(toolName)?.panels ?? [];
+  }
+
   executeHandler(
     toolName: string,
-    e: React.PointerEvent,
-    point: Point,
+    event: React.PointerEvent,
+    point: import('../types').Point,
     target: Element,
     isSmoothBrushActive: boolean,
-    beginSelectionRectangle: (point: Point, shiftKey?: boolean, subpathMode?: boolean) => void,
-    startShapeCreation: (point: Point) => void
+    beginSelectionRectangle: (point: import('../types').Point, shiftKey?: boolean, subpathMode?: boolean) => void,
+    startShapeCreation: (point: import('../types').Point) => void
   ): void {
-    const tool = this.registry[toolName];
-    if (tool) {
-      tool.handler(e, point, target, isSmoothBrushActive, beginSelectionRectangle, startShapeCreation);
+    const tool = this.registry.get(toolName);
+    if (tool?.handler) {
+      tool.handler(
+        event,
+        point,
+        target,
+        isSmoothBrushActive,
+        beginSelectionRectangle,
+        startShapeCreation
+      );
     }
   }
 }
 
-/**
- * Singleton instance of PluginManager with the default tool registry
- * Use this instead of creating new instances to ensure consistency
- */
-export const pluginManager = new PluginManager(toolRegistry);
+export const pluginManager = new PluginManager(DEFAULT_PLUGIN_DEFINITIONS);

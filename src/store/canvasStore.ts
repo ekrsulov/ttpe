@@ -4,6 +4,7 @@ import { temporal } from 'zundo';
 import { textToPathCommands } from '../utils/canvas';
 import { logger } from '../utils';
 import { getSelectedSubpathElements } from './utils/pluginSliceHelpers';
+import type { PluginSliceFactory } from '../types/plugins';
 
 import { extractSubpaths, createSquareCommands, createRectangleCommands, createCircleCommands, createTriangleCommands, reverseSubPath } from '../utils/path';
 import type { Point, Command } from '../types';
@@ -462,3 +463,61 @@ export const useCanvasStore = create<CanvasStore>()(
   }
   )
 );
+
+type CanvasPluginSlice = ReturnType<PluginSliceFactory<CanvasStore>>;
+
+const pluginSliceCleanups = new Map<string, Array<() => void>>();
+
+const applyPluginSlice = (partial: Partial<CanvasStore>): (() => void) => {
+  const previousValues: Partial<CanvasStore> = {};
+  const keys = Object.keys(partial) as (keyof CanvasStore)[];
+
+  keys.forEach((key) => {
+    previousValues[key] = useCanvasStore.getState()[key];
+  });
+
+  useCanvasStore.setState(partial);
+
+  return () => {
+    const restore: Partial<CanvasStore> = {};
+    keys.forEach((key) => {
+      restore[key] = previousValues[key];
+    });
+    useCanvasStore.setState(restore);
+  };
+};
+
+export const registerPluginSlices = (
+  pluginId: string,
+  contributions: CanvasPluginSlice[]
+): void => {
+  if (contributions.length === 0) {
+    return;
+  }
+
+  unregisterPluginSlices(pluginId);
+
+  const cleanups: Array<() => void> = [];
+
+  contributions.forEach(({ state, cleanup }) => {
+    cleanups.push(applyPluginSlice(state));
+    if (cleanup) {
+      cleanups.push(() => cleanup(useCanvasStore.setState, useCanvasStore.getState, useCanvasStore));
+    }
+  });
+
+  pluginSliceCleanups.set(pluginId, cleanups);
+};
+
+export function unregisterPluginSlices(pluginId: string): void {
+  const cleanups = pluginSliceCleanups.get(pluginId);
+  if (!cleanups) {
+    return;
+  }
+
+  [...cleanups].reverse().forEach((cleanup) => {
+    cleanup();
+  });
+
+  pluginSliceCleanups.delete(pluginId);
+}
