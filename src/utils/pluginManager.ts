@@ -13,6 +13,29 @@ import type {
   CanvasEventMap,
   CanvasPointerEventPayload,
 } from '../canvas/CanvasEventBusContext';
+import type { CanvasControllerValue } from '../canvas/controller/CanvasControllerContext';
+
+type CanvasStoreApi = {
+  getState: typeof useCanvasStore.getState;
+  subscribe: typeof useCanvasStore.subscribe;
+};
+
+export interface CanvasServiceContext {
+  svg: SVGSVGElement;
+  controller: CanvasControllerValue;
+  eventBus: CanvasEventBus;
+  store: CanvasStoreApi;
+}
+
+export interface CanvasServiceInstance<TState = unknown> {
+  update?: (state: TState) => void;
+  dispose: () => void;
+}
+
+export interface CanvasService<TState = unknown> {
+  id: string;
+  create: (context: CanvasServiceContext) => CanvasServiceInstance<TState>;
+}
 
 export class PluginManager {
   private registry = new Map<string, PluginDefinition<CanvasStore>>();
@@ -20,6 +43,8 @@ export class PluginManager {
   private canvasLayerOrder: string[] = [];
   private eventBus: CanvasEventBus | null = null;
   private interactionSubscriptions = new Map<string, Set<() => void>>();
+  private canvasServices = new Map<string, CanvasService<unknown>>();
+  private activeCanvasServices = new Map<string, CanvasServiceInstance<unknown>>();
 
   constructor(initialPlugins: PluginDefinition<CanvasStore>[] = []) {
     initialPlugins.forEach((plugin) => this.register(plugin));
@@ -54,6 +79,48 @@ export class PluginManager {
     }
 
     this.bindPluginInteractions(plugin);
+  }
+
+  registerCanvasService<TState>(service: CanvasService<TState>): void {
+    if (this.canvasServices.has(service.id)) {
+      this.unregisterCanvasService(service.id);
+    }
+
+    this.canvasServices.set(service.id, service as CanvasService<unknown>);
+  }
+
+  unregisterCanvasService(serviceId: string): void {
+    this.deactivateCanvasService(serviceId);
+    this.canvasServices.delete(serviceId);
+  }
+
+  activateCanvasService(serviceId: string, context: CanvasServiceContext): () => void {
+    const service = this.canvasServices.get(serviceId);
+    if (!service) {
+      throw new Error(`Canvas service "${serviceId}" is not registered.`);
+    }
+
+    this.deactivateCanvasService(serviceId);
+
+    const instance = service.create(context);
+    this.activeCanvasServices.set(serviceId, instance);
+
+    return () => this.deactivateCanvasService(serviceId);
+  }
+
+  updateCanvasServiceState<TState>(serviceId: string, state: TState): void {
+    const instance = this.activeCanvasServices.get(serviceId) as CanvasServiceInstance<TState> | undefined;
+    instance?.update?.(state);
+  }
+
+  deactivateCanvasService(serviceId: string): void {
+    const instance = this.activeCanvasServices.get(serviceId);
+    if (!instance) {
+      return;
+    }
+
+    instance.dispose();
+    this.activeCanvasServices.delete(serviceId);
   }
 
   unregister(pluginId: string): void {
