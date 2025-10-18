@@ -51,7 +51,8 @@ export const useSmoothBrushNativeListeners = ({
       eventBus,
       store: storeApi,
     });
-  }, [controller, eventBus, storeApi, svgRef]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [eventBus, storeApi, svgRef]); // Removed controller to prevent service recreation
 
   useEffect(() => {
     const svg = svgRef.current;
@@ -64,7 +65,7 @@ export const useSmoothBrushNativeListeners = ({
       isSmoothBrushActive,
       screenToCanvas,
       emitPointerEvent,
-      applySmoothBrush: controller.applySmoothBrush,
+      getApplySmoothBrush: () => controller.applySmoothBrush,
       setSmoothBrushCursor,
     };
 

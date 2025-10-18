@@ -3,7 +3,7 @@ import type { StoreApi } from 'zustand';
 import type { Point, CanvasElement } from '.';
 import type { CanvasControllerValue } from '../canvas/controller/CanvasControllerContext';
 import type { ShapeCreationState } from '../hooks/useCanvasShapeCreation';
-import type { TransformFeedback } from '../canvasInteractions/TransformController';
+import type { TransformFeedback } from '../canvas/interactions/TransformController';
 import type { Bounds } from '../utils/boundsUtils';
 import type { EditPluginSlice } from '../plugins/edit/slice';
 

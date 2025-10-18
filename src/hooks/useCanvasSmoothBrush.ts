@@ -1,6 +1,6 @@
 import { useCallback, useState, useMemo } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
-import { SmoothBrushController } from '../canvasInteractions/SmoothBrushController';
+import { SmoothBrushController } from '../canvas/interactions/SmoothBrushController';
 import type { Point } from '../types';
 import type { EditPluginSlice } from '../plugins/edit/slice';
 

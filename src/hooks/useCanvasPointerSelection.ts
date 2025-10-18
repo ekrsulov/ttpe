@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
-import { SelectionController, type SelectionCallbacks } from '../canvasInteractions/SelectionController';
+import { SelectionController, type SelectionCallbacks } from '../canvas/interactions/SelectionController';
 import type { Point } from '../types';
 
 export const useCanvasPointerSelection = (isShiftPressed: boolean = false) => {

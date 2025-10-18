@@ -1,7 +1,7 @@
-import type { Point, CurvePoint, CurveState, CurvePointType, CanvasElement } from '../types';
-import { parsePathD, extractSubpaths } from '../utils/path';
-import { logger } from '../utils';
-import { applyGridSnap } from '../utils/gridSnapUtils';
+import type { Point, CurvePoint, CurveState, CurvePointType, CanvasElement } from '../../types';
+import { parsePathD, extractSubpaths } from '../../utils/path';
+import { logger } from '../../utils';
+import { applyGridSnap } from '../../utils/gridSnapUtils';
 
 export interface CurvesCallbacks {
   addElement: (element: CanvasElement) => string;

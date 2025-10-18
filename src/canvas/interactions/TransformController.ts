@@ -1,6 +1,6 @@
-import { transformManager, type TransformBounds } from '../utils/transformManager';
-import { transformCommands, calculateScaledStrokeWidth } from '../utils/sharedTransformUtils';
-import type { Point, PathData, CanvasElement } from '../types';
+import { transformManager, type TransformBounds } from '../../utils/transformManager';
+import { transformCommands, calculateScaledStrokeWidth } from '../../utils/sharedTransformUtils';
+import type { Point, PathData, CanvasElement } from '../../types';
 
 export interface TransformState {
   isTransforming: boolean;

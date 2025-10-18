@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useEffect, useRef } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { CurvesController } from '../../canvasInteractions/CurvesController';
+import { CurvesController } from '../../canvas/interactions/CurvesController';
 import type { Point, CurveState } from '../../types';
 
 export interface CurvesActions {

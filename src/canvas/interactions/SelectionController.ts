@@ -1,6 +1,6 @@
-import { extractEditablePoints } from '../utils/path';
-import { measurePath, measureSubpathBounds } from '../utils/geometry';
-import type { Point, PathData, CanvasElement } from '../types';
+import { extractEditablePoints } from '../../utils/path';
+import { measurePath, measureSubpathBounds } from '../../utils/geometry';
+import type { Point, PathData, CanvasElement } from '../../types';
 
 export interface SelectionCallbacks {
   selectCommands: (commands: Array<{ elementId: string; commandIndex: number; pointIndex: number }>, isShiftPressed: boolean) => void;

@@ -1,7 +1,7 @@
 import React from 'react';
 import { deriveElementSelectionColors, SUBPATH_SELECTION_COLOR } from '../../utils/canvas';
 import { computeAdjustedBounds, measureSelectedSubpaths } from '../../utils/overlayHelpers';
-import { TransformationHandlers } from '../../components/TransformationHandlers';
+import { TransformationHandlers } from './TransformationHandlers';
 import { CenterMarker } from './CenterMarker';
 import { CornerCoordinateLabels } from './CornerCoordinateLabels';
 import { MeasurementRulers } from './MeasurementRulers';
