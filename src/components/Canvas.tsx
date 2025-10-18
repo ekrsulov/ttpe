@@ -1,5 +1,4 @@
 import React, { useRef, useCallback, useState, useEffect, useMemo } from 'react';
-import { mapPointerToCanvas } from '../utils/geometry';
 import { extractEditablePoints } from '../utils/path';
 import { useCanvasDragInteractions } from '../hooks/useCanvasDragInteractions';
 import { useCanvasKeyboardControls } from '../hooks/useCanvasKeyboardControls';
@@ -30,6 +29,7 @@ import {
 } from '../canvas/renderers';
 import { usePointerStateController } from '../canvas/interactions/usePointerStateController';
 import { useCanvasGeometry } from '../hooks/useCanvasGeometry';
+import { useViewportController } from '../hooks/useViewportController';
 
 const CanvasContent: React.FC = () => {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -73,13 +73,13 @@ const CanvasContent: React.FC = () => {
   // Use shallow selector to prevent unnecessary re-renders
   // Only re-render when values actually change (not just reference)
   const controller = useCanvasController();
+  const { viewport, screenToCanvas: mapScreenPointToCanvas, getViewBoxString } = useViewportController();
   const eventBus = useCanvasEventBus();
 
   const {
     elements,
     sortedElements,
     elementMap,
-    viewport,
     activePlugin,
     selectedIds,
     editingPoint,
@@ -226,9 +226,9 @@ const CanvasContent: React.FC = () => {
   // Transform screen coordinates to canvas coordinates
   const screenToCanvas = useCallback(
     (screenX: number, screenY: number): Point => {
-      return mapPointerToCanvas(svgRef.current, viewport, screenX, screenY);
+      return mapScreenPointToCanvas(svgRef.current, screenX, screenY);
     },
-    [viewport]
+    [mapScreenPointToCanvas]
   );
 
   // Helper function to get element bounds considering current transform
@@ -572,7 +572,7 @@ const CanvasContent: React.FC = () => {
         ref={svgRef}
         width={canvasSize.width}
         height={canvasSize.height}
-        viewBox={`${-viewport.panX / viewport.zoom} ${-viewport.panY / viewport.zoom} ${canvasSize.width / viewport.zoom} ${canvasSize.height / viewport.zoom}`}
+        viewBox={getViewBoxString(canvasSize)}
         style={{
           width: '100%',
           height: '100%',
