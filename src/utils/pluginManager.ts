@@ -1,10 +1,18 @@
-import type React from 'react';
-import type { PluginDefinition, PluginUIContribution, PluginActionContribution } from '../types/plugins';
+import React from 'react';
+import type {
+  PluginDefinition,
+  PluginUIContribution,
+  PluginActionContribution,
+  CanvasLayerContribution,
+  CanvasLayerPlacement,
+} from '../types/plugins';
 import type { CanvasStore } from '../store/canvasStore';
 import { useCanvasStore, registerPluginSlices, unregisterPluginSlices } from '../store/canvasStore';
 
 export class PluginManager {
   private registry = new Map<string, PluginDefinition<CanvasStore>>();
+  private canvasLayers = new Map<string, CanvasLayerContribution[]>();
+  private canvasLayerOrder: string[] = [];
 
   constructor(initialPlugins: PluginDefinition<CanvasStore>[] = []) {
     initialPlugins.forEach((plugin) => this.register(plugin));
@@ -16,6 +24,9 @@ export class PluginManager {
     }
 
     this.registry.set(plugin.id, plugin);
+
+    const layerContributions = this.composeCanvasLayers(plugin);
+    this.setCanvasLayers(plugin.id, layerContributions);
 
     if (plugin.slices?.length) {
       const contributions = plugin.slices.map((factory) =>
@@ -32,6 +43,7 @@ export class PluginManager {
     }
 
     this.registry.delete(pluginId);
+    this.unregisterCanvasLayers(pluginId);
 
     if (existing.slices?.length) {
       unregisterPluginSlices(pluginId);
@@ -92,6 +104,38 @@ export class PluginManager {
     return this.getAll();
   }
 
+  registerCanvasLayers(pluginId: string, layers: CanvasLayerContribution[]): void {
+    this.setCanvasLayers(pluginId, layers);
+  }
+
+  unregisterCanvasLayers(pluginId: string): void {
+    this.canvasLayers.delete(pluginId);
+    this.canvasLayerOrder = this.canvasLayerOrder.filter((id) => id !== pluginId);
+  }
+
+  getCanvasLayers(): Array<CanvasLayerContribution & { pluginId: string }> {
+    const placementBuckets: Record<CanvasLayerPlacement, Array<CanvasLayerContribution & { pluginId: string }>> = {
+      background: [],
+      midground: [],
+      foreground: [],
+    };
+
+    for (const pluginId of this.canvasLayerOrder) {
+      const layers = this.canvasLayers.get(pluginId);
+      if (!layers?.length) {
+        continue;
+      }
+
+      layers.forEach((layer) => {
+        const placement = layer.placement ?? 'midground';
+        placementBuckets[placement].push({ ...layer, pluginId });
+      });
+    }
+
+    const placementOrder: CanvasLayerPlacement[] = ['background', 'midground', 'foreground'];
+    return placementOrder.flatMap((placement) => placementBuckets[placement]);
+  }
+
   executeHandler(
     toolName: string,
     event: React.PointerEvent,
@@ -112,6 +156,43 @@ export class PluginManager {
         startShapeCreation
       );
     }
+  }
+
+  private composeCanvasLayers(plugin: PluginDefinition<CanvasStore>): CanvasLayerContribution[] {
+    const layers = [...(plugin.canvasLayers ?? [])];
+
+    if (plugin.overlays?.length) {
+      plugin.overlays.forEach((overlay) => {
+        const OverlayComponent = overlay.component as React.ComponentType<Record<string, unknown>>;
+        layers.push({
+          id: `overlay-${overlay.id}`,
+          placement: 'foreground',
+          render: ({ activePlugin, viewport }) => {
+            if (overlay.placement === 'global') {
+              return React.createElement(OverlayComponent, { viewport });
+            }
+            return plugin.id === activePlugin
+              ? React.createElement(OverlayComponent, { viewport })
+              : null;
+          },
+        });
+      });
+    }
+
+    return layers;
+  }
+
+  private setCanvasLayers(pluginId: string, layers: CanvasLayerContribution[]): void {
+    if (!layers.length) {
+      this.unregisterCanvasLayers(pluginId);
+      return;
+    }
+
+    if (!this.canvasLayerOrder.includes(pluginId)) {
+      this.canvasLayerOrder.push(pluginId);
+    }
+
+    this.canvasLayers.set(pluginId, layers);
   }
 }
 
