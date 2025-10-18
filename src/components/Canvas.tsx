@@ -3,7 +3,7 @@ import { mapPointerToCanvas } from '../utils/geometry';
 import { extractEditablePoints } from '../utils/path';
 import { useCanvasDragInteractions } from '../hooks/useCanvasDragInteractions';
 import { useCanvasKeyboardControls } from '../hooks/useCanvasKeyboardControls';
-import { useCanvasPointerSelection } from '../hooks/useCanvasPointerSelection';
+import { useSelectionController } from '../hooks/useSelectionController';
 import { useCanvasTransformControls } from '../plugins/transformation/useCanvasTransformControls';
 import { useCanvasShapeCreation } from '../hooks/useCanvasShapeCreation';
 import { useCanvasSmoothBrush } from '../hooks/useCanvasSmoothBrush';
@@ -33,15 +33,16 @@ import { useCanvasGeometry } from '../hooks/useCanvasGeometry';
 
 const CanvasContent: React.FC = () => {
   const svgRef = useRef<SVGSVGElement>(null);
-  const { isSpacePressed, isShiftPressed } = useCanvasKeyboardControls();
+  const { isSpacePressed } = useCanvasKeyboardControls();
   const {
     isSelecting,
     selectionStart,
     selectionEnd,
     beginSelectionRectangle,
     updateSelectionRectangle,
-    completeSelectionRectangle
-  } = useCanvasPointerSelection(isShiftPressed);
+    completeSelectionRectangle,
+    selectElement: applySelectionChange,
+  } = useSelectionController();
   const {
     transformState,
     feedback,
@@ -97,7 +98,6 @@ const CanvasContent: React.FC = () => {
     isElementHidden,
     moveSelectedElements,
     moveSelectedSubpaths,
-    selectElement,
     setMode,
     startPath,
     addPointToPath,
@@ -105,7 +105,7 @@ const CanvasContent: React.FC = () => {
 
   const moveSelectedElementsRef = useRef(moveSelectedElements);
   const moveSelectedSubpathsRef = useRef(moveSelectedSubpaths);
-  const selectElementRef = useRef(selectElement);
+  const selectElementRef = useRef(applySelectionChange);
   const setModeRef = useRef(setMode);
 
   useEffect(() => {
@@ -117,8 +117,8 @@ const CanvasContent: React.FC = () => {
   }, [moveSelectedSubpaths]);
 
   useEffect(() => {
-    selectElementRef.current = selectElement;
-  }, [selectElement]);
+    selectElementRef.current = applySelectionChange;
+  }, [applySelectionChange]);
 
   useEffect(() => {
     setModeRef.current = setMode;
