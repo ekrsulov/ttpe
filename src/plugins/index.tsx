@@ -19,7 +19,15 @@ import { SelectionOverlay } from '../components/overlays';
 const selectPlugin: PluginDefinition<CanvasStore> = {
   id: 'select',
   metadata: getToolMetadata('select'),
-  handler: (event, point, target, _isSmoothBrushActive, beginSelectionRectangle) => {
+  handler: (
+    event,
+    point,
+    target,
+    _isSmoothBrushActive,
+    beginSelectionRectangle,
+    _startShapeCreation,
+    _context
+  ) => {
     if (target.tagName === 'svg') {
       if (!event.shiftKey) {
         useCanvasStore.getState().clearSelection();
@@ -148,7 +156,15 @@ const selectPlugin: PluginDefinition<CanvasStore> = {
 const panPlugin: PluginDefinition<CanvasStore> = {
   id: 'pan',
   metadata: getToolMetadata('pan'),
-  handler: () => {
+  handler: (
+    _event,
+    _point,
+    _target,
+    _isSmoothBrushActive,
+    _beginSelectionRectangle,
+    _startShapeCreation,
+    _context
+  ) => {
     // Pan tool relies on pointer event listeners elsewhere
   },
 };

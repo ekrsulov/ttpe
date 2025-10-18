@@ -1,6 +1,5 @@
 import type { PluginDefinition, PluginSliceFactory } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
-import { useCanvasStore } from '../../store/canvasStore';
 import { getToolMetadata } from '../toolMetadata';
 import { createSubpathPluginSlice } from './slice';
 import type { SubpathPluginSlice } from './slice';
@@ -19,7 +18,7 @@ const subpathSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => 
 export const subpathPlugin: PluginDefinition<CanvasStore> = {
   id: 'subpath',
   metadata: getToolMetadata('subpath'),
-  handler: (event, point, target, _isSmoothBrushActive, beginSelectionRectangle) => {
+  handler: (event, point, target, _isSmoothBrushActive, beginSelectionRectangle, _startShapeCreation, _context) => {
     if (target.tagName === 'svg') {
       beginSelectionRectangle(point, false, !event.shiftKey);
     }
@@ -77,14 +76,14 @@ export const subpathPlugin: PluginDefinition<CanvasStore> = {
     },
   ],
   slices: [subpathSliceFactory],
-  api: {
+  createApi: ({ store }) => ({
     performPathSimplify: () => {
-      performPathSimplify(useCanvasStore.getState);
+      performPathSimplify(store.getState);
     },
     performSubPathReverse: () => {
-      performSubPathReverse(useCanvasStore.getState);
+      performSubPathReverse(store.getState);
     },
-  },
+  }),
 };
 
 export type { SubpathPluginSlice };

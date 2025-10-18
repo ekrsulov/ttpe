@@ -77,6 +77,22 @@ export interface PluginActionContribution<TProps = Record<string, unknown>> {
   placement: 'top' | 'bottom';
 }
 
+export type PluginStoreApi<TStore extends object> = Pick<StoreApi<TStore>, 'getState' | 'setState' | 'subscribe'>;
+
+export interface PluginApiContext<TStore extends object> {
+  store: PluginStoreApi<TStore>;
+}
+
+export interface PluginHandlerContext<TStore extends object> extends PluginApiContext<TStore> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  api: Record<string, (...args: any[]) => any>;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type PluginApiFactory<TStore extends object> = (
+  context: PluginApiContext<TStore>
+) => Record<string, (...args: any[]) => any>;
+
 export type PluginSliceFactory<TStore extends object = object> = (
   set: StoreApi<TStore>['setState'],
   get: StoreApi<TStore>['getState'],
@@ -103,7 +119,8 @@ export interface PluginDefinition<TStore extends object = object> {
     target: Element,
     isSmoothBrushActive: boolean,
     beginSelectionRectangle: (point: Point, shiftKey?: boolean, subpathMode?: boolean) => void,
-    startShapeCreation: (point: Point) => void
+    startShapeCreation: (point: Point) => void,
+    context: PluginHandlerContext<TStore>
   ) => void;
   keyboardShortcuts?: CanvasShortcutMap;
   overlays?: PluginUIContribution[];
@@ -112,9 +129,8 @@ export interface PluginDefinition<TStore extends object = object> {
   actions?: PluginActionContribution[];
   slices?: PluginSliceFactory<TStore>[];
   /**
-   * Public API exposed by the plugin for use by other parts of the application.
+   * Public API factory exposed by the plugin for use by other parts of the application.
    * This allows plugins to expose functionality without coupling to the store.
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  api?: Record<string, (...args: any[]) => any>;
+  createApi?: PluginApiFactory<TStore>;
 }

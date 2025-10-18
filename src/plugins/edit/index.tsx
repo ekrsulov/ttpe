@@ -18,7 +18,15 @@ const editSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
 export const editPlugin: PluginDefinition<CanvasStore> = {
   id: 'edit',
   metadata: getToolMetadata('edit'),
-  handler: (event, point, target, isSmoothBrushActive, beginSelectionRectangle) => {
+  handler: (
+    event,
+    point,
+    target,
+    isSmoothBrushActive,
+    beginSelectionRectangle,
+    _startShapeCreation,
+    _context
+  ) => {
     if (target.tagName === 'svg' && !isSmoothBrushActive) {
       beginSelectionRectangle(point, !event.shiftKey, false);
     }
