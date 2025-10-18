@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { getCanvas, waitForLoad, getToolButton } from './helpers';
+import { getCanvas, getCanvasPaths, waitForLoad, getToolButton } from './helpers';
 
 test.describe('Shape Creation', () => {
   test('should create different shapes', async ({ page }) => {
@@ -15,7 +15,7 @@ test.describe('Shape Creation', () => {
     if (!canvasBox) throw new Error('SVG canvas not found');
 
     // Count initial elements
-    const initialPaths = await canvas.locator('path').count();
+    const initialPaths = await getCanvasPaths(page).count();
 
     // Test creating a square
     await page.locator('[aria-label="Square"]').click();
@@ -39,7 +39,7 @@ test.describe('Shape Creation', () => {
     await page.waitForTimeout(100);
 
     // Verify square was created
-    const pathsAfterSquare = await canvas.locator('path').count();
+    const pathsAfterSquare = await getCanvasPaths(page).count();
     expect(pathsAfterSquare).toBeGreaterThan(initialPaths);
 
     // Switch to select mode explicitly
@@ -81,7 +81,7 @@ test.describe('Shape Creation', () => {
     await page.waitForTimeout(100);
 
     // Verify circle was created
-    const pathsAfterCircle = await canvas.locator('path').count();
+    const pathsAfterCircle = await getCanvasPaths(page).count();
     expect(pathsAfterCircle).toBeGreaterThan(pathsAfterSquare);
 
     // Click on the created circle to select it

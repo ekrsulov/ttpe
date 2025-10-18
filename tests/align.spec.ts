@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { getCanvas, waitForLoad, getToolButton } from './helpers';
+import { getCanvas, getCanvasPaths, waitForLoad, getToolButton } from './helpers';
 
 test.describe('Align Tests', () => {
   test('should align elements to the left', async ({ page }) => {
@@ -78,7 +78,7 @@ test.describe('Align Tests', () => {
     });
 
     // Verify circles were created
-    const pathsCount = await canvas.locator('path').count();
+    const pathsCount = await getCanvasPaths(page).count();
     expect(pathsCount).toBe(circlePositions.length);
 
     // Select all circles by dragging a selection box around them
@@ -146,7 +146,7 @@ test.describe('Align Tests', () => {
     expect(positionsChanged).toBe(true);
 
     // Verify circles still exist after alignment
-    const pathsAfterAlign = await canvas.locator('path').count();
+    const pathsAfterAlign = await getCanvasPaths(page).count();
     expect(pathsAfterAlign).toBe(circlePositions.length);
   });
 
@@ -214,7 +214,7 @@ test.describe('Align Tests', () => {
     });
 
     // Verify circles were created
-    const pathsCount = await canvas.locator('path').count();
+    const pathsCount = await getCanvasPaths(page).count();
     expect(pathsCount).toBe(circlePositions.length);
 
     // Select all circles by dragging a selection box around them
@@ -283,7 +283,7 @@ test.describe('Align Tests', () => {
     expect(positionsChanged).toBe(true);
 
     // Verify circles still exist after alignment
-    const pathsAfterAlign = await canvas.locator('path').count();
+    const pathsAfterAlign = await getCanvasPaths(page).count();
     expect(pathsAfterAlign).toBe(circlePositions.length);
   });
 
@@ -350,7 +350,7 @@ test.describe('Align Tests', () => {
     });
 
     // Verify circles were created
-    const pathsCount = await canvas.locator('path').count();
+    const pathsCount = await getCanvasPaths(page).count();
     expect(pathsCount).toBe(circlePositions.length);
 
     // Select all circles using the exposed store
@@ -416,7 +416,7 @@ test.describe('Align Tests', () => {
     expect(positionsChanged).toBe(true);
 
     // Verify circles still exist after alignment
-    const pathsAfterAlign = await canvas.locator('path').count();
+    const pathsAfterAlign = await getCanvasPaths(page).count();
     expect(pathsAfterAlign).toBe(circlePositions.length);
   });
 
@@ -483,7 +483,7 @@ test.describe('Align Tests', () => {
     });
 
     // Verify circles were created
-    const pathsCount = await canvas.locator('path').count();
+    const pathsCount = await getCanvasPaths(page).count();
     expect(pathsCount).toBe(circlePositions.length);
 
     // Select all circles using the exposed store
@@ -549,7 +549,7 @@ test.describe('Align Tests', () => {
     expect(positionsChanged).toBe(true);
 
     // Verify circles still exist after alignment
-    const pathsAfterAlign = await canvas.locator('path').count();
+    const pathsAfterAlign = await getCanvasPaths(page).count();
     expect(pathsAfterAlign).toBe(circlePositions.length);
   });
 
@@ -616,7 +616,7 @@ test.describe('Align Tests', () => {
     });
 
     // Verify circles were created
-    const pathsCount = await canvas.locator('path').count();
+    const pathsCount = await getCanvasPaths(page).count();
     expect(pathsCount).toBe(circlePositions.length);
 
     // Select all circles using the exposed store
@@ -683,7 +683,7 @@ test.describe('Align Tests', () => {
     expect(positionsChanged).toBe(true);
 
     // Verify circles still exist after alignment
-    const pathsAfterAlign = await canvas.locator('path').count();
+    const pathsAfterAlign = await getCanvasPaths(page).count();
     expect(pathsAfterAlign).toBe(circlePositions.length);
   });
 
@@ -750,7 +750,7 @@ test.describe('Align Tests', () => {
     });
 
     // Verify circles were created
-    const pathsCount = await canvas.locator('path').count();
+    const pathsCount = await getCanvasPaths(page).count();
     expect(pathsCount).toBe(circlePositions.length);
 
     // Select all circles using the exposed store
@@ -816,7 +816,7 @@ test.describe('Align Tests', () => {
     expect(positionsChanged).toBe(true);
 
     // Verify circles still exist after alignment
-    const pathsAfterAlign = await canvas.locator('path').count();
+    const pathsAfterAlign = await getCanvasPaths(page).count();
     expect(pathsAfterAlign).toBe(circlePositions.length);
   });
 });

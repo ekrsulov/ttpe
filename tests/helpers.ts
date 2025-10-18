@@ -47,6 +47,16 @@ export function getCanvas(page: Page): Locator {
 }
 
 /**
+ * Get canvas paths (excluding minimap and other overlay paths)
+ * This returns only the main canvas elements, not the minimap preview
+ */
+export function getCanvasPaths(page: Page): Locator {
+  // Get paths that have data-element-id attribute, which are the actual canvas elements
+  // This excludes paths in the minimap and other overlays
+  return page.locator('path[data-element-id]');
+}
+
+/**
  * Wait for network to be idle
  */
 export async function waitForLoad(page: Page): Promise<void> {

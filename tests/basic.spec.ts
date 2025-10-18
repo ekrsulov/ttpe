@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { getCanvas, waitForLoad, getToolButton } from './helpers';
+import { getCanvas, getCanvasPaths, waitForLoad, getToolButton } from './helpers';
 
 test.describe('TTPE Application', () => {
   test('should load the application successfully', async ({ page }) => {
@@ -68,7 +68,7 @@ test.describe('TTPE Application', () => {
     await page.waitForTimeout(100);
 
     // Verify the path was created
-    const pathsAfterCreation = await canvas.locator('path').count();
+    const pathsAfterCreation = await getCanvasPaths(page).count();
     expect(pathsAfterCreation).toBeGreaterThan(0);
 
     // Switch to select mode

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { getCanvas, waitForLoad, getToolButton } from './helpers';
+import { getCanvas, getCanvasPaths, waitForLoad, getToolButton } from './helpers';
 
 // Helper function to draw a zig-zag pattern with multiple jumps and small irregularities
 async function drawZigZagPath(page: any, canvasBox: any) {
@@ -56,7 +56,7 @@ test.describe('Edit Functionality', () => {
     if (!canvasBox) throw new Error('SVG canvas not found');
 
     // Count initial elements
-    const initialPaths = await canvas.locator('path').count();
+    const initialPaths = await getCanvasPaths(page).count();
 
     // Draw a zig-zag path with multiple jumps
     await drawZigZagPath(page, canvasBox);
@@ -65,7 +65,7 @@ test.describe('Edit Functionality', () => {
     await page.waitForTimeout(100);
 
     // Verify path was created
-    const pathsAfterCreation = await canvas.locator('path').count();
+    const pathsAfterCreation = await getCanvasPaths(page).count();
     expect(pathsAfterCreation).toBeGreaterThan(initialPaths);
 
     // Switch to select mode explicitly
@@ -112,7 +112,7 @@ test.describe('Edit Functionality', () => {
     if (!canvasBox) throw new Error('SVG canvas not found');
 
     // Count initial elements
-    const initialPaths = await canvas.locator('path').count();
+    const initialPaths = await getCanvasPaths(page).count();
 
     // Draw a zig-zag path with multiple jumps
     await drawZigZagPath(page, canvasBox);
@@ -121,7 +121,7 @@ test.describe('Edit Functionality', () => {
     await page.waitForTimeout(100);
 
     // Verify path was created
-    const pathsAfterCreation = await canvas.locator('path').count();
+    const pathsAfterCreation = await getCanvasPaths(page).count();
     expect(pathsAfterCreation).toBeGreaterThan(initialPaths);
 
     // Switch to select mode explicitly
@@ -178,7 +178,7 @@ test.describe('Edit Functionality', () => {
     if (!canvasBox) throw new Error('SVG canvas not found');
 
     // Count initial elements
-    const initialPaths = await canvas.locator('path').count();
+    const initialPaths = await getCanvasPaths(page).count();
 
     // Draw a zig-zag path with multiple jumps
     await drawZigZagPath(page, canvasBox);
@@ -187,7 +187,7 @@ test.describe('Edit Functionality', () => {
     await page.waitForTimeout(100);
 
     // Verify path was created
-    const pathsAfterCreation = await canvas.locator('path').count();
+    const pathsAfterCreation = await getCanvasPaths(page).count();
     expect(pathsAfterCreation).toBeGreaterThan(initialPaths);
 
     // Switch to select mode explicitly

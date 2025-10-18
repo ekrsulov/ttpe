@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { getCanvas, waitForLoad, getToolButton } from './helpers';
+import { getCanvas, getCanvasPaths, waitForLoad, getToolButton } from './helpers';
 
 test.describe('Text Functionality', () => {
   test('should add text with spaces, change font properties, and position to the left', async ({ page }) => {
@@ -19,7 +19,7 @@ test.describe('Text Functionality', () => {
     if (!canvasBox) throw new Error('SVG canvas not found');
 
     // Count initial elements
-    const initialPaths = await canvas.locator('path').count();
+    const initialPaths = await getCanvasPaths(page).count();
 
     // Enter text first, then modify font properties
     const initialTextInput = page.locator('input[placeholder="Enter text"]');
@@ -71,7 +71,7 @@ test.describe('Text Functionality', () => {
     await page.waitForTimeout(300); // Extra wait for text creation
 
     // Verify text was created (should appear as a path element)
-    const pathsAfterText = await canvas.locator('path').count();
+    const pathsAfterText = await getCanvasPaths(page).count();
     expect(pathsAfterText).toBeGreaterThan(initialPaths);
 
     // Switch to select mode explicitly

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { getCanvas, waitForLoad, getToolButton } from './helpers';
+import { getCanvas, getCanvasPaths, waitForLoad, getToolButton } from './helpers';
 
 test.describe('Bring to Front and Send to Back', () => {
   test('should arrange elements using bring to front and send to back', async ({ page }) => {
@@ -247,7 +247,7 @@ test.describe('Bring to Front and Send to Back', () => {
     }
 
     // Verify both shapes still exist
-    const pathsAfterArrange = await canvas.locator('path').count();
+    const pathsAfterArrange = await getCanvasPaths(page).count();
     expect(pathsAfterArrange).toBe(2);
   });
 });

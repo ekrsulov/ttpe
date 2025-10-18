@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { getCanvas, waitForLoad, getToolButton } from './helpers';
+import { getCanvas, getCanvasPaths, waitForLoad, getToolButton } from './helpers';
 
 test.describe('Distribution Tests', () => {
   test('should distribute elements horizontally', async ({ page }) => {
@@ -80,7 +80,7 @@ test.describe('Distribution Tests', () => {
     });
 
     // Verify circles were created
-    const pathsCount = await canvas.locator('path').count();
+    const pathsCount = await getCanvasPaths(page).count();
     expect(pathsCount).toBe(circlePositions.length);
 
     // Verify elements exist in store
@@ -153,7 +153,7 @@ test.describe('Distribution Tests', () => {
     expect(positionsChanged).toBe(true);
 
     // Verify circles still exist after distribution
-    const pathsAfterDistribute = await canvas.locator('path').count();
+    const pathsAfterDistribute = await getCanvasPaths(page).count();
     expect(pathsAfterDistribute).toBe(circlePositions.length);
   });
 
@@ -239,7 +239,7 @@ test.describe('Distribution Tests', () => {
     });
 
     // Verify circles were created
-    const pathsCount = await canvas.locator('path').count();
+    const pathsCount = await getCanvasPaths(page).count();
     expect(pathsCount).toBe(circlePositions.length);
 
     // Select all circles
@@ -307,7 +307,7 @@ test.describe('Distribution Tests', () => {
     expect(positionsChanged).toBe(true);
 
     // Verify circles still exist after distribution
-    const pathsAfterDistribute = await canvas.locator('path').count();
+    const pathsAfterDistribute = await getCanvasPaths(page).count();
     expect(pathsAfterDistribute).toBe(circlePositions.length);
   });
 });

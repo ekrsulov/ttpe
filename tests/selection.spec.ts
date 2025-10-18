@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { getCanvas, waitForLoad, getToolButton } from './helpers';
+import { getCanvas, getCanvasPaths, waitForLoad, getToolButton } from './helpers';
 
 test.describe('Selection and Transformation', () => {
   test('should select and transform elements', async ({ page }) => {
@@ -15,7 +15,7 @@ test.describe('Selection and Transformation', () => {
     if (!canvasBox) throw new Error('SVG canvas not found');
 
     // Count initial elements
-    const initialPaths = await canvas.locator('path').count();
+    const initialPaths = await getCanvasPaths(page).count();
 
     // Draw a square
     await page.mouse.move(
@@ -36,7 +36,7 @@ test.describe('Selection and Transformation', () => {
     await page.waitForTimeout(100);
 
     // Verify square was created
-    const pathsAfterCreation = await canvas.locator('path').count();
+    const pathsAfterCreation = await getCanvasPaths(page).count();
     expect(pathsAfterCreation).toBeGreaterThan(initialPaths);
 
     // Ensure we're in select mode
@@ -73,7 +73,7 @@ test.describe('Selection and Transformation', () => {
     if (!canvasBox) throw new Error('SVG canvas not found');
 
     // Count initial elements
-    const initialPaths = await canvas.locator('path').count();
+    const initialPaths = await getCanvasPaths(page).count();
 
     // Draw a circle
     await page.mouse.move(
@@ -94,7 +94,7 @@ test.describe('Selection and Transformation', () => {
     await page.waitForTimeout(100);
 
     // Verify circle was created
-    const pathsAfterCreation = await canvas.locator('path').count();
+    const pathsAfterCreation = await getCanvasPaths(page).count();
     expect(pathsAfterCreation).toBeGreaterThan(initialPaths);
 
     // Ensure we're in select mode

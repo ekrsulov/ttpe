@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { getCanvas, waitForLoad, getToolButton } from './helpers';
+import { getCanvas, getCanvasPaths, waitForLoad, getToolButton } from './helpers';
 
 test.describe('Path Movement Tests', () => {
   test('should move complete paths in select mode', async ({ page }) => {
@@ -14,7 +14,7 @@ test.describe('Path Movement Tests', () => {
     if (!canvasBox) throw new Error('SVG canvas not found');
 
     // Count initial elements
-    const initialPaths = await canvas.locator('path').count();
+    const initialPaths = await getCanvasPaths(page).count();
 
     // Draw a path
     await page.mouse.move(
@@ -53,7 +53,7 @@ test.describe('Path Movement Tests', () => {
     await page.waitForTimeout(100);
 
     // Verify path was created
-    const pathsAfterCreation = await canvas.locator('path').count();
+    const pathsAfterCreation = await getCanvasPaths(page).count();
     expect(pathsAfterCreation).toBeGreaterThan(initialPaths);
 
     // Get initial path data from store
@@ -113,7 +113,7 @@ test.describe('Path Movement Tests', () => {
     await expect(finalPath).toBeVisible();
 
     // Verify the path count remains the same (no new paths created)
-    const pathsAfterMovement = await canvas.locator('path').count();
+    const pathsAfterMovement = await getCanvasPaths(page).count();
     expect(pathsAfterMovement).toBe(pathsAfterCreation);
   });
 
@@ -403,7 +403,7 @@ test.describe('Path Movement Tests', () => {
     await page.waitForTimeout(100);
 
     // Verify both elements were created
-    const initialPaths = await canvas.locator('path').count();
+    const initialPaths = await getCanvasPaths(page).count();
     expect(initialPaths).toBeGreaterThanOrEqual(2);
 
     // Switch to select mode
@@ -440,7 +440,7 @@ test.describe('Path Movement Tests', () => {
     await page.waitForTimeout(100);
 
     // Verify both elements still exist and were moved
-    const finalPaths = await canvas.locator('path').count();
+    const finalPaths = await getCanvasPaths(page).count();
     expect(finalPaths).toBeGreaterThanOrEqual(2);
   });
 });
