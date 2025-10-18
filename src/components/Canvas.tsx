@@ -1,15 +1,7 @@
 import React, { useRef, useCallback, useState, useEffect, useMemo } from 'react';
-import { measurePath, measureSubpathBounds, mapPointerToCanvas } from '../utils/geometry';
+import { measurePath, mapPointerToCanvas } from '../utils/geometry';
 import { extractEditablePoints, commandsToString } from '../utils/path';
 import { useCanvasDragInteractions } from '../hooks/useCanvasDragInteractions';
-import { SelectionOverlay, FeedbackOverlay } from './overlays';
-import { EditPointsOverlay } from '../plugins/edit/EditPointsOverlay';
-import { SubpathOverlay } from '../plugins/subpath/SubpathOverlay';
-import { ShapePreview } from '../plugins/shape/ShapePreview';
-import { TransformationOverlay } from '../plugins/transformation/TransformationOverlay';
-import { GuidelinesOverlay } from '../plugins/guidelines/GuidelinesOverlay';
-import { GridOverlay } from '../plugins/grid/GridOverlay';
-import { CurvesRenderer } from '../plugins/curves/CurvesRenderer';
 import { useCanvasKeyboardControls } from '../hooks/useCanvasKeyboardControls';
 import { useCanvasPointerSelection } from '../hooks/useCanvasPointerSelection';
 import { useCanvasTransformControls } from '../plugins/transformation/useCanvasTransformControls';
@@ -22,6 +14,7 @@ import { RenderCountBadgeWrapper } from './ui/RenderCountBadgeWrapper';
 import type { Point, PathData, CanvasElement, GroupElement } from '../types';
 import { useCanvasController } from '../canvas/controller/CanvasControllerContext';
 import { CanvasControllerProvider } from '../canvas/controller/CanvasControllerProvider';
+import { CanvasLayers } from './CanvasLayers';
 
 const CanvasContent: React.FC = () => {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -59,34 +52,28 @@ const CanvasContent: React.FC = () => {
   } = useCanvasSmoothBrush();
   
   // Local state for smooth brush cursor position (not in store to avoid re-renders)
-  const [smoothBrushCursor, setSmoothBrushCursor] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [smoothBrushCursor, setSmoothBrushCursor] = useState<Point>({ x: 0, y: 0 });
 
   // Use shallow selector to prevent unnecessary re-renders
   // Only re-render when values actually change (not just reference)
+  const controller = useCanvasController();
+
   const {
     elements,
     sortedElements,
     elementMap,
     viewport,
     activePlugin,
-    transformation,
-    shape,
     selectedIds,
     editingPoint,
     selectedCommands,
     selectedSubpaths,
     draggingSelection,
-    guidelines,
-    grid,
     pencil,
     updateElement,
-    startDraggingPoint,
     stopDraggingPoint,
     emergencyCleanupDrag,
-    selectCommand,
-    selectSubpath,
     isWorkingWithSubpaths,
-    getFilteredEditablePoints,
     getControlPointInfo,
     saveAsPng,
     snapToGrid,
@@ -100,7 +87,7 @@ const CanvasContent: React.FC = () => {
     startPath,
     addPointToPath,
     zoom,
-  } = useCanvasController();
+  } = controller;
 
   const moveSelectedElementsRef = useRef(moveSelectedElements);
   const moveSelectedSubpathsRef = useRef(moveSelectedSubpaths);
@@ -142,6 +129,10 @@ const CanvasContent: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<Point | null>(null);
   const [hasDragMoved, setHasDragMoved] = useState(false);
+
+  const setDragStartForLayers = useCallback((point: Point | null) => {
+    setDragStart(point);
+  }, []);
   
   // Use dynamic canvas size that updates with viewport changes (Safari toolbar show/hide)
   const [canvasSize, setCanvasSize] = useState({ 
@@ -404,61 +395,6 @@ const CanvasContent: React.FC = () => {
                 pointerEvents: activePlugin === 'subpath' ? 'none' : 'auto'
               }}
             />
-            {/* Selection overlay */}
-            {isSelected && (activePlugin !== 'transformation' || selectedSubpaths.some(sp => sp.elementId === element.id)) && (
-              <SelectionOverlay
-                element={element}
-                bounds={getTransformedBounds(element)}
-                viewport={viewport}
-                selectedSubpaths={selectedSubpaths}
-                activePlugin={activePlugin}
-              />
-            )}
-
-            {/* Transformation overlay - always render but control visibility */}
-            <div style={{ display: isSelected && activePlugin === 'transformation' ? 'block' : 'none' }}>
-              <TransformationOverlay
-                element={element}
-                bounds={getTransformedBounds(element)}
-                selectedSubpaths={selectedSubpaths}
-                viewport={viewport}
-                activePlugin={activePlugin}
-                transformation={transformation}
-                isWorkingWithSubpaths={isWorkingWithSubpaths()}
-                onTransformationHandlerPointerDown={handleTransformationHandlerPointerDown}
-                onTransformationHandlerPointerUp={handleTransformationHandlerPointerUp}
-              />
-            </div>
-
-            {/* Edit overlay - always render but control visibility */}
-            {(isSelected || selectedSubpaths.some(sp => sp.elementId === element.id)) && activePlugin === 'edit' && (
-              <EditPointsOverlay
-                element={element}
-                selectedCommands={selectedCommands}
-                editingPoint={editingPoint}
-                draggingSelection={draggingSelection}
-                dragPosition={dragPosition}
-                viewport={viewport}
-                smoothBrush={smoothBrush}
-                getFilteredEditablePoints={getFilteredEditablePoints}
-                onStartDraggingPoint={startDraggingPoint}
-                onSelectCommand={selectCommand}
-              />
-            )}
-
-            {/* Subpath overlay - render in subpath mode, and also in transformation/edit mode for double-click handling */}
-            {((activePlugin === 'subpath') || (activePlugin === 'transformation') || (activePlugin === 'edit')) && element.type === 'path' && (element.data as import('../types').PathData).subPaths?.length > 1 && (
-              <SubpathOverlay
-                element={element}
-                selectedSubpaths={selectedSubpaths}
-                viewport={viewport}
-                smoothBrush={smoothBrush}
-                onSelectSubpath={selectSubpath}
-                onSetDragStart={setDragStart}
-                onSubpathDoubleClick={handleSubpathDoubleClick}
-                isVisible={activePlugin === 'subpath'}
-              />
-            )}
           </g>
         );
       }
@@ -511,6 +447,57 @@ const CanvasContent: React.FC = () => {
       })
       .filter((value): value is { id: string; bounds: { minX: number; minY: number; maxX: number; maxY: number } } => Boolean(value));
   }, [selectedIds, elementMap, calculateGroupBounds]);
+
+  const canvasLayerContext = useMemo(
+    () => ({
+      ...controller,
+      canvasSize,
+      isSelecting,
+      selectionStart,
+      selectionEnd,
+      selectedGroupBounds,
+      isCreatingShape,
+      shapeStart,
+      shapeEnd,
+      shapeFeedback,
+      isSmoothBrushActive,
+      smoothBrush,
+      smoothBrushCursor,
+      dragPosition,
+      isDragging,
+      transformFeedback: feedback,
+      getElementBounds,
+      getTransformedBounds,
+      handleTransformationHandlerPointerDown,
+      handleTransformationHandlerPointerUp,
+      handleSubpathDoubleClick,
+      setDragStart: setDragStartForLayers,
+    }),
+    [
+      controller,
+      canvasSize,
+      isSelecting,
+      selectionStart,
+      selectionEnd,
+      selectedGroupBounds,
+      isCreatingShape,
+      shapeStart,
+      shapeEnd,
+      shapeFeedback,
+      isSmoothBrushActive,
+      smoothBrush,
+      smoothBrushCursor,
+      dragPosition,
+      isDragging,
+      feedback,
+      getElementBounds,
+      getTransformedBounds,
+      handleTransformationHandlerPointerDown,
+      handleTransformationHandlerPointerUp,
+      handleSubpathDoubleClick,
+      setDragStartForLayers,
+    ]
+  );
 
   // Handle keyboard events
   useEffect(() => {
@@ -797,141 +784,9 @@ const CanvasContent: React.FC = () => {
         onPointerUp={handlePointerUp}
         onDoubleClick={handleCanvasDoubleClick}
       >
-      {/* Grid Overlay - At the very bottom */}
-      <GridOverlay
-        grid={grid}
-        viewport={viewport}
-        canvasSize={canvasSize}
-      />
-
       {/* Sort elements by zIndex */}
       {sortedElements.map(renderElement)}
-
-      {/* Group selection overlays */}
-      {selectedGroupBounds.map(({ id, bounds }) => (
-        <rect
-          key={`group-selection-${id}`}
-          x={bounds.minX}
-          y={bounds.minY}
-          width={bounds.maxX - bounds.minX}
-          height={bounds.maxY - bounds.minY}
-          fill="none"
-          stroke="#2563eb"
-          strokeWidth={1 / viewport.zoom}
-          strokeDasharray={`${6 / viewport.zoom} ${4 / viewport.zoom}`}
-          pointerEvents="none"
-        />
-      ))}
-
-      {/* Selection rectangle */}
-      {isSelecting && selectionStart && selectionEnd && (
-        <rect
-          x={Math.min(selectionStart.x, selectionEnd.x)}
-          y={Math.min(selectionStart.y, selectionEnd.y)}
-          width={Math.abs(selectionEnd.x - selectionStart.x)}
-          height={Math.abs(selectionEnd.y - selectionStart.y)}
-          fill="rgba(0, 123, 255, 0.1)"
-          stroke="#007bff"
-          strokeWidth={1 / viewport.zoom}
-          strokeDasharray={`${2 / viewport.zoom} ${2 / viewport.zoom}`}
-        />
-      )}
-
-      {/* Shape preview */}
-      {isCreatingShape && shapeStart && shapeEnd && (
-        <ShapePreview
-          selectedShape={shape?.selectedShape}
-          shapeStart={shapeStart}
-          shapeEnd={shapeEnd}
-          viewport={viewport}
-        />
-      )}
-
-      {/* Curves Renderer */}
-      {activePlugin === 'curves' && <CurvesRenderer />}
-
-      {/* Smooth Brush Cursor */}
-      {activePlugin === 'edit' && isSmoothBrushActive && (
-        <ellipse
-          cx={smoothBrushCursor.x}
-          cy={smoothBrushCursor.y}
-          rx={smoothBrush.radius}
-          ry={smoothBrush.radius}
-          fill="none"
-          stroke="#38bdf8"
-          strokeWidth="1.2"
-          style={{ pointerEvents: 'none' }}
-        />
-      )}
-
-      {/* Transformation Overlay */}
-      {((selectedIds.length > 0 && selectedSubpaths.length === 0) || selectedSubpaths.length > 0) &&
-        (selectedSubpaths.length > 0 ? selectedSubpaths : selectedIds).map(item => {
-          const elementId = typeof item === 'string' ? item : item.elementId;
-          const element = elements.find(el => el.id === elementId);
-          if (!element) return null;
-
-          // Calculate bounds for the element or subpath
-          let bounds = null;
-          if (element.type === 'path') {
-            if (selectedSubpaths.length > 0) {
-              // For subpaths, calculate bounds for the specific subpath
-              const subpathIndex = typeof item === 'string' ? 0 : item.subpathIndex;
-              const pathData = element.data as import('../types').PathData;
-              bounds = measureSubpathBounds(
-                pathData.subPaths[subpathIndex],
-                pathData.strokeWidth || 1,
-                viewport.zoom
-              );
-            } else {
-              // For regular elements, calculate full bounds
-              bounds = getElementBounds(element);
-            }
-          }
-
-          return (
-            <TransformationOverlay
-              key={selectedSubpaths.length > 0 ? `subpath-${elementId}-${typeof item === 'string' ? 0 : item.subpathIndex}` : elementId}
-              element={element}
-              bounds={bounds}
-              selectedSubpaths={selectedSubpaths}
-              viewport={viewport}
-              activePlugin={activePlugin}
-              transformation={transformation}
-              isWorkingWithSubpaths={selectedSubpaths.length > 0}
-              onTransformationHandlerPointerDown={handleTransformationHandlerPointerDown}
-              onTransformationHandlerPointerUp={handleTransformationHandlerPointerUp}
-            />
-          );
-        })}
-
-      {/* Guidelines Overlay */}
-      {activePlugin === 'select' && guidelines && (isDragging || editingPoint?.isDragging || draggingSelection?.isDragging) && (
-        <GuidelinesOverlay
-          guidelines={guidelines}
-          viewport={viewport}
-          elements={elements}
-          selectedIds={selectedIds}
-        />
-      )}
-
-      <FeedbackOverlay
-        viewport={viewport}
-        canvasSize={canvasSize}
-        rotationFeedback={feedback.rotation}
-        resizeFeedback={feedback.resize}
-        shapeFeedback={shapeFeedback.shape}
-        pointPositionFeedback={shapeFeedback.pointPosition}
-      />
-
-      {/* Tool-specific overlays */}
-      {pluginManager.getGlobalOverlays().map((OverlayComponent, index) => (
-        <OverlayComponent key={`global-overlay-${index}`} viewport={viewport} />
-      ))}
-
-      {activePlugin && pluginManager.getOverlays(activePlugin).map((OverlayComponent, index) => (
-        <OverlayComponent key={`plugin-overlay-${index}`} viewport={viewport} />
-      ))}
+      <CanvasLayers context={canvasLayerContext} />
     </svg>
     </>
   );

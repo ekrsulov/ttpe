@@ -4,6 +4,7 @@ import { createCurvesPluginSlice } from './slice';
 import type { CurvesPluginSlice } from './slice';
 import { CurvesPanel } from './CurvesPanel';
 import { getToolMetadata } from '../toolMetadata';
+import { CurvesRenderer } from './CurvesRenderer';
 
 const curvesSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => ({
   state: createCurvesPluginSlice(set, get, api),
@@ -15,6 +16,13 @@ export const curvesPlugin: PluginDefinition<CanvasStore> = {
   handler: () => {
     // Curves tool relies on dedicated canvas interactions
   },
+  canvasLayers: [
+    {
+      id: 'curves-renderer',
+      placement: 'midground',
+      render: ({ activePlugin }) => (activePlugin === 'curves' ? <CurvesRenderer /> : null),
+    },
+  ],
   slices: [curvesSliceFactory],
 };
 

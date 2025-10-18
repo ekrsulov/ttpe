@@ -4,6 +4,7 @@ import { getToolMetadata } from '../toolMetadata';
 import { createShapePluginSlice } from './slice';
 import type { ShapePluginSlice } from './slice';
 import { ShapePanel } from './ShapePanel';
+import { ShapePreview } from './ShapePreview';
 
 const shapeSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => ({
   state: createShapePluginSlice(set, get, api),
@@ -20,6 +21,26 @@ export const shapePlugin: PluginDefinition<CanvasStore> = {
       // Reserved for cancelling shape creation
     },
   },
+  canvasLayers: [
+    {
+      id: 'shape-preview',
+      placement: 'midground',
+      render: ({ isCreatingShape, shapeStart, shapeEnd, shape, viewport }) => {
+        if (!isCreatingShape || !shapeStart || !shapeEnd) {
+          return null;
+        }
+
+        return (
+          <ShapePreview
+            selectedShape={shape?.selectedShape}
+            shapeStart={shapeStart}
+            shapeEnd={shapeEnd}
+            viewport={viewport}
+          />
+        );
+      },
+    },
+  ],
   slices: [shapeSliceFactory],
 };
 
