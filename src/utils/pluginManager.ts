@@ -8,14 +8,32 @@ import type {
 } from '../types/plugins';
 import type { CanvasStore } from '../store/canvasStore';
 import { useCanvasStore, registerPluginSlices, unregisterPluginSlices } from '../store/canvasStore';
+import type {
+  CanvasEventBus,
+  CanvasEventMap,
+  CanvasPointerEventPayload,
+} from '../canvas/CanvasEventBusContext';
 
 export class PluginManager {
   private registry = new Map<string, PluginDefinition<CanvasStore>>();
   private canvasLayers = new Map<string, CanvasLayerContribution[]>();
   private canvasLayerOrder: string[] = [];
+  private eventBus: CanvasEventBus | null = null;
+  private interactionSubscriptions = new Map<string, Set<() => void>>();
 
   constructor(initialPlugins: PluginDefinition<CanvasStore>[] = []) {
     initialPlugins.forEach((plugin) => this.register(plugin));
+  }
+
+  setEventBus(eventBus: CanvasEventBus | null): void {
+    const activeSubscriptions = Array.from(this.interactionSubscriptions.keys());
+    activeSubscriptions.forEach((pluginId) => this.teardownPluginInteractions(pluginId));
+
+    this.eventBus = eventBus;
+
+    if (this.eventBus) {
+      this.registry.forEach((plugin) => this.bindPluginInteractions(plugin));
+    }
   }
 
   register(plugin: PluginDefinition<CanvasStore>): void {
@@ -34,6 +52,8 @@ export class PluginManager {
       );
       registerPluginSlices(plugin.id, contributions);
     }
+
+    this.bindPluginInteractions(plugin);
   }
 
   unregister(pluginId: string): void {
@@ -44,6 +64,7 @@ export class PluginManager {
 
     this.registry.delete(pluginId);
     this.unregisterCanvasLayers(pluginId);
+    this.teardownPluginInteractions(pluginId);
 
     if (existing.slices?.length) {
       unregisterPluginSlices(pluginId);
@@ -68,6 +89,31 @@ export class PluginManager {
     if (handler) {
       handler(event);
     }
+  }
+
+  registerInteractionHandler<K extends keyof CanvasEventMap>(
+    pluginId: string,
+    eventType: K,
+    handler: (payload: CanvasEventMap[K]) => void
+  ): () => void {
+    if (!this.eventBus) {
+      throw new Error('Canvas event bus is not available. Ensure the canvas is mounted before registering handlers.');
+    }
+
+    const wrappedHandler = (payload: CanvasEventMap[K]) => {
+      if (payload.activePlugin !== pluginId) {
+        return;
+      }
+      handler(payload);
+    };
+
+    const unsubscribe = this.eventBus.subscribe(eventType, wrappedHandler);
+    this.addInteractionSubscription(pluginId, unsubscribe);
+
+    return () => {
+      unsubscribe();
+      this.removeInteractionSubscription(pluginId, unsubscribe);
+    };
   }
 
   getCursor(toolName: string): string {
@@ -193,6 +239,88 @@ export class PluginManager {
     }
 
     this.canvasLayers.set(pluginId, layers);
+  }
+
+  private addInteractionSubscription(pluginId: string, unsubscribe: () => void): void {
+    if (!this.interactionSubscriptions.has(pluginId)) {
+      this.interactionSubscriptions.set(pluginId, new Set());
+    }
+
+    this.interactionSubscriptions.get(pluginId)!.add(unsubscribe);
+  }
+
+  private removeInteractionSubscription(pluginId: string, unsubscribe: () => void): void {
+    const subscriptions = this.interactionSubscriptions.get(pluginId);
+    if (!subscriptions) {
+      return;
+    }
+
+    subscriptions.delete(unsubscribe);
+    if (subscriptions.size === 0) {
+      this.interactionSubscriptions.delete(pluginId);
+    }
+  }
+
+  private teardownPluginInteractions(pluginId: string): void {
+    const subscriptions = this.interactionSubscriptions.get(pluginId);
+    if (!subscriptions) {
+      return;
+    }
+
+    subscriptions.forEach((unsubscribe) => unsubscribe());
+    this.interactionSubscriptions.delete(pluginId);
+  }
+
+  private bindPluginInteractions(plugin: PluginDefinition<CanvasStore>): void {
+    if (!this.eventBus) {
+      return;
+    }
+
+    this.teardownPluginInteractions(plugin.id);
+
+    if (plugin.handler) {
+      const handler = plugin.handler;
+      const unsubscribe = this.eventBus.subscribe('pointerdown', (payload: CanvasPointerEventPayload) => {
+        if (payload.activePlugin !== plugin.id) {
+          return;
+        }
+
+        const target = payload.target as Element | null;
+        if (!target) {
+          return;
+        }
+
+        const beginSelectionRectangle = payload.helpers.beginSelectionRectangle ?? (() => {});
+        const startShapeCreation = payload.helpers.startShapeCreation ?? (() => {});
+        const isSmoothBrushActive = Boolean(payload.helpers.isSmoothBrushActive);
+
+        handler(
+          payload.event as React.PointerEvent,
+          payload.point,
+          target,
+          isSmoothBrushActive,
+          beginSelectionRectangle,
+          startShapeCreation
+        );
+      });
+
+      this.addInteractionSubscription(plugin.id, unsubscribe);
+    }
+
+    if (plugin.keyboardShortcuts) {
+      const unsubscribe = this.eventBus.subscribe('keyboard', ({ event, activePlugin }) => {
+        if (activePlugin !== plugin.id) {
+          return;
+        }
+
+        const handler = plugin.keyboardShortcuts?.[event.key];
+        if (handler) {
+          handler(event);
+        }
+      });
+
+      this.addInteractionSubscription(plugin.id, unsubscribe);
+    }
   }
 }
 

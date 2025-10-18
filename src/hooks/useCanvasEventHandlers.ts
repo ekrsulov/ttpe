@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
-import { pluginManager } from '../utils/pluginManager';
 import { useCanvasCurves } from '../plugins/curves/useCanvasCurves';
 import { getEffectiveShift } from './useEffectiveShift';
 import type { Point } from '../types';
+import { useCanvasEventBus } from '../canvas/CanvasEventBusContext';
 
 interface EventHandlerDeps {
   svgRef: React.RefObject<SVGSVGElement | null>;
@@ -78,6 +78,8 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     endShapeCreation,
     setMode,
   } = deps;
+
+  const eventBus = useCanvasEventBus();
 
   // Apply snap to dragged elements or subpaths
   const applySnapToDraggedElements = useCallback(() => {
@@ -358,33 +360,88 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
   // Handle pointer down
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     const point = screenToCanvas(e.clientX, e.clientY);
-    const target = e.target as Element;
+    const target = (e.target as Element) ?? null;
 
     if (isSpacePressed || activePlugin === 'pan') {
-      // Start panning
       return;
     }
 
-    // If we're in file or settings mode, switch to select mode when clicking on canvas
     if (activePlugin === 'file' || activePlugin === 'settings') {
       setMode('select');
       return;
     }
 
-    // Handle curves tool
     if (activePlugin === 'curves') {
       handleCurvesPointerDown(point);
-      return;
     }
 
-    if (activePlugin && pluginManager.hasTool(activePlugin)) {
-      pluginManager.executeHandler(activePlugin, e, point, target, isSmoothBrushActive, beginSelectionRectangle, startShapeCreation);
-    }
-  }, [activePlugin, screenToCanvas, isSpacePressed, setMode, beginSelectionRectangle, startShapeCreation, isSmoothBrushActive, handleCurvesPointerDown]);
+    eventBus.emit('pointerdown', {
+      event: e,
+      point,
+      target,
+      activePlugin,
+      helpers: {
+        beginSelectionRectangle,
+        updateSelectionRectangle,
+        completeSelectionRectangle,
+        startShapeCreation,
+        updateShapeCreation,
+        endShapeCreation,
+        isSmoothBrushActive,
+      },
+      state: {
+        isSelecting,
+        isCreatingShape,
+        isDragging,
+        dragStart,
+      },
+    });
+  }, [
+    activePlugin,
+    screenToCanvas,
+    isSpacePressed,
+    setMode,
+    handleCurvesPointerDown,
+    eventBus,
+    beginSelectionRectangle,
+    updateSelectionRectangle,
+    completeSelectionRectangle,
+    startShapeCreation,
+    updateShapeCreation,
+    endShapeCreation,
+    isSmoothBrushActive,
+    isSelecting,
+    isCreatingShape,
+    isDragging,
+    dragStart,
+  ]);
 
   // Handle pointer move
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     const point = screenToCanvas(e.clientX, e.clientY);
+    const target = (e.target as Element) ?? null;
+
+    eventBus.emit('pointermove', {
+      event: e,
+      point,
+      target,
+      activePlugin,
+      helpers: {
+        beginSelectionRectangle,
+        updateSelectionRectangle,
+        completeSelectionRectangle,
+        startShapeCreation,
+        updateShapeCreation,
+        endShapeCreation,
+        isSmoothBrushActive,
+      },
+      state: {
+        isSelecting,
+        isCreatingShape,
+        isDragging,
+        dragStart,
+      },
+    });
 
     if (isSpacePressed && e.buttons === 1) {
       // Pan the canvas with spacebar + pointer button
@@ -573,10 +630,39 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     updateSelectionRectangle,
     isVirtualShiftActive,
     selectedIds,
+    beginSelectionRectangle,
+    completeSelectionRectangle,
+    endShapeCreation,
+    eventBus,
   ]);
 
   // Handle pointer up
-  const handlePointerUp = useCallback((_e: React.PointerEvent) => {
+  const handlePointerUp = useCallback((e: React.PointerEvent) => {
+    const point = screenToCanvas(e.clientX, e.clientY);
+    const target = (e.target as Element) ?? null;
+
+    eventBus.emit('pointerup', {
+      event: e,
+      point,
+      target,
+      activePlugin,
+      helpers: {
+        beginSelectionRectangle,
+        updateSelectionRectangle,
+        completeSelectionRectangle,
+        startShapeCreation,
+        updateShapeCreation,
+        endShapeCreation,
+        isSmoothBrushActive,
+      },
+      state: {
+        isSelecting,
+        isCreatingShape,
+        isDragging,
+        dragStart,
+      },
+    });
+
     // Handle curves tool
     if (activePlugin === 'curves') {
       handleCurvesPointerUp();
@@ -621,10 +707,21 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     endShapeCreation,
     transformStateIsTransforming,
     endTransformation,
+    screenToCanvas,
+    updateSelectionRectangle,
+    updateShapeCreation,
+    eventBus,
+    dragStart,
+    isSmoothBrushActive,
   ]);
 
   // Handle keyboard events for tools
   const handleKeyboard = useCallback((e: KeyboardEvent) => {
+    eventBus.emit('keyboard', {
+      event: e,
+      activePlugin,
+    });
+
     // Handle Escape key to clear selections or go back to select mode
     if (e.key === 'Escape') {
       e.preventDefault();
@@ -674,14 +771,21 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       return;
     }
 
-    if (activePlugin) {
-      pluginManager.handleKeyboardEvent(activePlugin, e);
-    }
-  }, [activePlugin, selectedIds, selectedSubpaths]);
+  }, [
+    activePlugin,
+    selectedIds,
+    selectedSubpaths,
+    eventBus,
+  ]);
 
   // Handle wheel
   const handleWheel = useCallback((e: React.WheelEvent<SVGSVGElement>) => {
     e.preventDefault();
+    eventBus.emit('wheel', {
+      event: e,
+      activePlugin,
+      svg: svgRef.current,
+    });
     const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
     const rect = svgRef.current?.getBoundingClientRect();
     if (rect) {
@@ -689,7 +793,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       const centerY = e.clientY - rect.top;
       useCanvasStore.getState().zoom(zoomFactor, centerX, centerY);
     }
-  }, [svgRef]);
+  }, [svgRef, eventBus, activePlugin]);
 
   // Handle double click on empty canvas to return to select mode
   const handleCanvasDoubleClick = useCallback((e: React.MouseEvent) => {
