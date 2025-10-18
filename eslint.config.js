@@ -25,12 +25,26 @@ export default tseslint.config([
         'varsIgnorePattern': '^_',
         'caughtErrorsIgnorePattern': '^_'
       }],
+      'react-refresh/only-export-components': ['warn', { 
+        allowExportNames: [
+          'curvesPlugin', 'editPlugin', 'gridPlugin', 'guidelinesPlugin', 
+          'shapePlugin', 'subpathPlugin', 'transformationPlugin',
+          'useCanvasCurves', 'useCanvasTransformControls'
+        ],
+        allowConstantExport: true,
+      }],
     },
   },
   {
     files: ['tests/**/*.{ts,tsx}'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
+  {
+    files: ['src/plugins/index.tsx'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
     },
   },
 ])

@@ -226,13 +226,13 @@ const CanvasContent: React.FC = () => {
   );
 
   // Helper function to get element bounds considering current transform
-  const getElementBounds = (element: typeof elements[0]) => {
+  const getElementBounds = useCallback((element: typeof elements[0]) => {
     if (element.type === 'path') {
       const pathData = element.data as import('../types').PathData;
       return measurePath(pathData.subPaths, pathData.strokeWidth, viewport.zoom);
     }
     return null;
-  };
+  }, [viewport.zoom]);
 
   const eventHandlerDeps = useMemo(() => ({
     svgRef,
@@ -339,13 +339,13 @@ const CanvasContent: React.FC = () => {
   });
 
   // Helper function to get transformed bounds
-  const getTransformedBounds = (element: typeof elements[0]) => {
+  const getTransformedBounds = useCallback((element: typeof elements[0]) => {
     if (element.type === 'path') {
       const pathData = element.data as PathData;
       return measurePath(pathData.subPaths, pathData.strokeWidth, viewport.zoom);
     }
     return null;
-  };
+  }, [viewport.zoom]);
 
   // Render elements
   const renderElement = (element: typeof elements[0]) => {
