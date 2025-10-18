@@ -111,6 +111,14 @@ export const SettingsPanel: React.FC = () => {
           </PanelToggle>
         )}
 
+        {/* Show Minimap */}
+        <PanelToggle
+          isChecked={settings.showMinimap}
+          onChange={(e) => updateSettings({ showMinimap: e.target.checked })}
+        >
+          Show minimap
+        </PanelToggle>
+
         {/* Keyboard Movement Precision */}
         <SliderControl
           label="Precision:"

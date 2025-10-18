@@ -3,6 +3,7 @@ import { Sidebar } from './components/Sidebar';
 import { TopActionBar } from './components/ui/TopActionBar';
 import { BottomActionBar } from './components/ui/BottomActionBar';
 import { VirtualShiftButton } from './components/ui/VirtualShiftButton';
+import { MinimapPanel } from './plugins/minimap/MinimapPanel';
 import { useCanvasStore } from './store/canvasStore';
 import './App.css';
 import type { CSSProperties } from 'react';
@@ -104,6 +105,9 @@ function App() {
         sidebarWidth={sidebarWidth}
       />
       <VirtualShiftButton 
+        sidebarWidth={sidebarWidth}
+      />
+      <MinimapPanel 
         sidebarWidth={sidebarWidth}
       />
     </div>

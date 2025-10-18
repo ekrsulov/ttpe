@@ -1,12 +1,12 @@
 import { useCallback, useId, useMemo, useRef, useState } from 'react';
-import { Box, useBreakpointValue } from '@chakra-ui/react';
-import type { CanvasLayerContext } from '../../types/plugins';
+import { Box } from '@chakra-ui/react';
 import type { Bounds } from '../../utils/boundsUtils';
+import { calculateBounds } from '../../utils/boundsUtils';
 import type { PathElement } from '../../types';
 import { useCanvasStore } from '../../store/canvasStore';
 
-interface MinimapOverlayProps {
-  context: CanvasLayerContext;
+interface MinimapPanelProps {
+  sidebarWidth?: number;
 }
 
 interface DragState {
@@ -52,8 +52,8 @@ const expandBounds = (bounds: Bounds, padding: number): Bounds => ({
 });
 
 const getViewportBounds = (
-  viewport: CanvasLayerContext['viewport'],
-  canvasSize: CanvasLayerContext['canvasSize']
+  viewport: { panX: number; panY: number; zoom: number },
+  canvasSize: { width: number; height: number }
 ): Bounds => {
   const viewWidth = canvasSize.width / viewport.zoom;
   const viewHeight = canvasSize.height / viewport.zoom;
@@ -100,15 +100,7 @@ const worldToMinimap = (value: number, scale: number, offset: number): number =>
 
 const minimapToWorld = (value: number, scale: number, offset: number): number => (value - offset) / scale;
 
-export const MinimapOverlay: React.FC<MinimapOverlayProps> = ({ context }) => {
-  const {
-    elements,
-    isElementHidden,
-    getElementBounds,
-    viewport,
-    canvasSize,
-  } = context;
-
+export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const clipPathId = useId();
   const [dragState, setDragState] = useState<DragState>({
@@ -117,9 +109,29 @@ export const MinimapOverlay: React.FC<MinimapOverlayProps> = ({ context }) => {
     offset: { x: 0, y: 0 },
   });
 
+  // Get state from store
+  const elements = useCanvasStore((state) => state.elements);
+  const viewport = useCanvasStore((state) => state.viewport);
   const setViewport = useCanvasStore((state) => state.setViewport);
+  const isElementHidden = useCanvasStore((state) => state.isElementHidden);
+  const showMinimap = useCanvasStore((state) => state.settings.showMinimap);
 
-  const isDesktop = useBreakpointValue({ base: false, md: true }, { fallback: 'md' });
+  // Helper to calculate bounds for a path element
+  const getElementBounds = useCallback((element: PathElement): Bounds | null => {
+    const pathData = element.data;
+    if (!pathData?.subPaths || pathData.subPaths.length === 0) {
+      return null;
+    }
+    
+    const strokeWidth = pathData.strokeWidth || 0;
+    return calculateBounds(pathData.subPaths, strokeWidth);
+  }, []);
+
+  // Get canvas size from viewport (we'll use a large default if not available)
+  const canvasSize = useMemo(() => ({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  }), []);
 
   const visiblePaths = useMemo(() => {
     return elements.filter((element): element is PathElement => {
@@ -254,7 +266,7 @@ export const MinimapOverlay: React.FC<MinimapOverlayProps> = ({ context }) => {
     }
   }, [dragState, resetDragState]);
 
-  if (!minimapMetrics || !isDesktop) {
+  if (!showMinimap || !minimapMetrics) {
     return null;
   }
 
@@ -266,83 +278,81 @@ export const MinimapOverlay: React.FC<MinimapOverlayProps> = ({ context }) => {
     height: (viewBounds.maxY - viewBounds.minY) * minimapMetrics.scale,
   };
 
-  // Fixed position in bottom-right
-  const minimapX = canvasSize.width - MINIMAP_WIDTH - MINIMAP_MARGIN;
-  const minimapY = canvasSize.height - MINIMAP_HEIGHT - MINIMAP_MARGIN;
-
   return (
-    <g transform={`translate(${minimapX} ${minimapY})`} style={{ pointerEvents: 'none' }}>
-      <foreignObject width={MINIMAP_WIDTH} height={MINIMAP_HEIGHT} style={{ pointerEvents: 'auto' }}>
-        <Box
-          width={MINIMAP_WIDTH}
-          height={MINIMAP_HEIGHT}
-          borderRadius="xl"
-          boxShadow="0 4px 20px rgba(0, 0, 0, 0.1)"
-          backdropFilter="blur(12px)"
-          bg="rgba(255, 255, 255, 0.95)"
-          border="1px solid rgba(0, 0, 0, 0.1)"
-          overflow="hidden"
-          position="relative"
-        >
-          <svg
-            ref={svgRef}
-            viewBox={`0 0 ${MINIMAP_WIDTH} ${MINIMAP_HEIGHT}`}
-            width="100%"
-            height="100%"
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerEnd}
-            onPointerCancel={handlePointerEnd}
-            onPointerLeave={handlePointerEnd}
-          >
-            <defs>
-              <clipPath id={clipPathId}>
-                <rect x="0" y="0" width={MINIMAP_WIDTH} height={MINIMAP_HEIGHT} rx="14" ry="14" />
-              </clipPath>
-            </defs>
-            <rect x="0" y="0" width={MINIMAP_WIDTH} height={MINIMAP_HEIGHT} fill="rgba(248, 250, 252, 0.95)" />
-            <g clipPath={`url(#${clipPathId})`}>
-              {visiblePaths.map((element) => {
-                const bounds = getElementBounds(element);
-                if (!bounds) return null;
+    <Box
+      position="fixed"
+      bottom={`${MINIMAP_MARGIN}px`}
+      right={`${MINIMAP_MARGIN + sidebarWidth}px`}
+      width={`${MINIMAP_WIDTH}px`}
+      height={`${MINIMAP_HEIGHT}px`}
+      borderRadius="xl"
+      boxShadow="0 4px 20px rgba(0, 0, 0, 0.1)"
+      backdropFilter="blur(12px)"
+      bg="rgba(255, 255, 255, 0.95)"
+      border="1px solid rgba(0, 0, 0, 0.1)"
+      overflow="hidden"
+      zIndex={100}
+      transition="right 0.2s ease"
+      display={{ base: 'none', md: 'block' }}
+    >
+      <svg
+        ref={svgRef}
+        viewBox={`0 0 ${MINIMAP_WIDTH} ${MINIMAP_HEIGHT}`}
+        width="100%"
+        height="100%"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerEnd}
+        onPointerCancel={handlePointerEnd}
+        onPointerLeave={handlePointerEnd}
+        style={{ cursor: dragState.isActive ? 'grabbing' : 'grab' }}
+      >
+        <defs>
+          <clipPath id={clipPathId}>
+            <rect x="0" y="0" width={MINIMAP_WIDTH} height={MINIMAP_HEIGHT} rx="14" ry="14" />
+          </clipPath>
+        </defs>
+        <rect x="0" y="0" width={MINIMAP_WIDTH} height={MINIMAP_HEIGHT} fill="rgba(248, 250, 252, 0.95)" />
+        <g clipPath={`url(#${clipPathId})`}>
+          {visiblePaths.map((element) => {
+            const bounds = getElementBounds(element);
+            if (!bounds) return null;
 
-                const x = worldToMinimap(bounds.minX, minimapMetrics.scale, minimapMetrics.offsetX);
-                const y = worldToMinimap(bounds.minY, minimapMetrics.scale, minimapMetrics.offsetY);
-                const width = (bounds.maxX - bounds.minX) * minimapMetrics.scale;
-                const height = (bounds.maxY - bounds.minY) * minimapMetrics.scale;
+            const x = worldToMinimap(bounds.minX, minimapMetrics.scale, minimapMetrics.offsetX);
+            const y = worldToMinimap(bounds.minY, minimapMetrics.scale, minimapMetrics.offsetY);
+            const width = (bounds.maxX - bounds.minX) * minimapMetrics.scale;
+            const height = (bounds.maxY - bounds.minY) * minimapMetrics.scale;
 
-                return (
-                  <rect
-                    key={element.id}
-                    x={x}
-                    y={y}
-                    width={width}
-                    height={height}
-                    fill="rgba(59, 130, 246, 0.2)"
-                    stroke="rgba(59, 130, 246, 0.6)"
-                    strokeWidth={0.5}
-                    vectorEffect="non-scaling-stroke"
-                    rx={1}
-                    ry={1}
-                  />
-                );
-              })}
-            </g>
-            <rect
-              x={viewportRect.x}
-              y={viewportRect.y}
-              width={Math.max(16, viewportRect.width)}
-              height={Math.max(16, viewportRect.height)}
-              fill="rgba(59, 130, 246, 0.1)"
-              stroke="rgba(59, 130, 246, 1)"
-              strokeWidth={2}
-              rx={4}
-              ry={4}
-              data-role="minimap-viewport"
-            />
-          </svg>
-        </Box>
-      </foreignObject>
-    </g>
+            return (
+              <rect
+                key={element.id}
+                x={x}
+                y={y}
+                width={width}
+                height={height}
+                fill="rgba(59, 130, 246, 0.2)"
+                stroke="rgba(59, 130, 246, 0.6)"
+                strokeWidth={0.5}
+                vectorEffect="non-scaling-stroke"
+                rx={1}
+                ry={1}
+              />
+            );
+          })}
+        </g>
+        <rect
+          x={viewportRect.x}
+          y={viewportRect.y}
+          width={Math.max(16, viewportRect.width)}
+          height={Math.max(16, viewportRect.height)}
+          fill="rgba(59, 130, 246, 0.1)"
+          stroke="rgba(59, 130, 246, 1)"
+          strokeWidth={2}
+          rx={4}
+          ry={4}
+          data-role="minimap-viewport"
+        />
+      </svg>
+    </Box>
   );
 };
