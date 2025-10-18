@@ -4,7 +4,6 @@ import { useCanvasCurves } from '../plugins/curves/useCanvasCurves';
 import { getEffectiveShift } from './useEffectiveShift';
 import type { Point } from '../types';
 import { useCanvasEventBus } from '../canvas/CanvasEventBusContext';
-import type { CanvasModeListeners } from './useCanvasModeMachine';
 
 interface EventHandlerDeps {
   svgRef: React.RefObject<SVGSVGElement | null>;
@@ -39,7 +38,6 @@ interface EventHandlerDeps {
   updateShapeCreation: (point: Point, shiftPressed: boolean) => void;
   endShapeCreation: () => void;
   setMode: (mode: string) => void;
-  modeListeners: CanvasModeListeners;
 }
 
 export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
@@ -79,7 +77,6 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     updateShapeCreation,
     endShapeCreation,
     setMode,
-    modeListeners,
   } = deps;
 
   const eventBus = useCanvasEventBus();
@@ -378,16 +375,8 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       handleCurvesPointerDown(point);
     }
 
-    if (modeListeners.pointerdown) {
-      modeListeners.pointerdown(
-        e,
-        point,
-        target,
-        isSmoothBrushActive,
-        beginSelectionRectangle,
-        startShapeCreation
-      );
-    }
+    // Plugin handlers are now executed via the eventBus in pluginManager
+    // to avoid duplicate execution
 
     eventBus.emit('pointerdown', {
       event: e,
@@ -416,7 +405,6 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     isSpacePressed,
     setMode,
     handleCurvesPointerDown,
-    modeListeners,
     eventBus,
     beginSelectionRectangle,
     updateSelectionRectangle,

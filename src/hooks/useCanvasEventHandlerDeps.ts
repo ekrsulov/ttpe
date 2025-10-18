@@ -1,6 +1,5 @@
 import { useMemo, type RefObject } from 'react';
 import type { Point } from '../types';
-import type { CanvasModeListeners } from './useCanvasModeMachine';
 
 export interface CanvasEventHandlerDepsInput {
   svgRef: RefObject<SVGSVGElement | null>;
@@ -37,7 +36,6 @@ export interface CanvasEventHandlerDepsInput {
   moveSelectedSubpaths: (deltaX: number, deltaY: number) => void;
   selectElement: (elementId: string, toggle: boolean) => void;
   setMode: (mode: string) => void;
-  modeListeners: CanvasModeListeners;
 }
 
 export interface CanvasEventHandlerDeps {
@@ -73,7 +71,6 @@ export interface CanvasEventHandlerDeps {
   moveSelectedSubpaths: (deltaX: number, deltaY: number) => void;
   selectElement: (elementId: string, toggle: boolean) => void;
   setMode: (mode: string) => void;
-  modeListeners: CanvasModeListeners;
 }
 
 /**
@@ -116,7 +113,6 @@ export function useCanvasEventHandlerDeps(
     moveSelectedSubpaths: input.moveSelectedSubpaths,
     selectElement: input.selectElement,
     setMode: input.setMode,
-    modeListeners: input.modeListeners,
   }), [
     input.svgRef,
     input.screenToCanvas,
@@ -150,6 +146,5 @@ export function useCanvasEventHandlerDeps(
     input.moveSelectedSubpaths,
     input.selectElement,
     input.setMode,
-    input.modeListeners,
   ]);
 }

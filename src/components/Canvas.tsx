@@ -74,7 +74,6 @@ const CanvasContent: React.FC = () => {
   const {
     currentMode,
     transition: transitionCanvasMode,
-    effects: modeEffects,
   } = useCanvasModeMachine();
   const { viewport, screenToCanvas: mapScreenPointToCanvas, getViewBoxString } = useViewportController();
   const eventBus = useCanvasEventBus();
@@ -269,7 +268,6 @@ const CanvasContent: React.FC = () => {
     moveSelectedSubpaths: handleMoveSelectedSubpaths,
     selectElement: handleSelectElement,
     setMode: handleSetMode,
-    modeListeners: modeEffects.listeners,
   });
 
   const {
