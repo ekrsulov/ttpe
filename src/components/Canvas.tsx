@@ -660,7 +660,8 @@ const CanvasContent: React.FC = () => {
     const nativePointerDown = (e: PointerEvent) => {
       e.stopPropagation(); // Prevent React's handler from receiving this
       const point = screenToCanvas(e.clientX, e.clientY);
-      emitPointerEvent('pointerdown', e, point);
+      // Don't emit pointerdown event here - it would create an extra path with just M command
+      // The actual path will be created in pointerUp with all the collected points
       isDrawing = true;
       allPoints = [point];
 
