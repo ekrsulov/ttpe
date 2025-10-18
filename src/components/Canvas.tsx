@@ -32,6 +32,8 @@ import { useCanvasGeometry } from '../hooks/useCanvasGeometry';
 import { useViewportController } from '../hooks/useViewportController';
 import { useCanvasShortcuts } from '../hooks/useCanvasShortcuts';
 import { canvasShortcutRegistry } from '../canvas/shortcuts';
+import { useCanvasModeMachine } from '../hooks/useCanvasModeMachine';
+import type { CanvasMode } from '../canvas/modes/CanvasModeMachine';
 
 const CanvasContent: React.FC = () => {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -75,6 +77,11 @@ const CanvasContent: React.FC = () => {
   // Use shallow selector to prevent unnecessary re-renders
   // Only re-render when values actually change (not just reference)
   const controller = useCanvasController();
+  const {
+    currentMode,
+    transition: transitionCanvasMode,
+    effects: modeEffects,
+  } = useCanvasModeMachine();
   const { viewport, screenToCanvas: mapScreenPointToCanvas, getViewBoxString } = useViewportController();
   const eventBus = useCanvasEventBus();
 
@@ -84,7 +91,6 @@ const CanvasContent: React.FC = () => {
     elements,
     sortedElements,
     elementMap,
-    activePlugin,
     selectedIds,
     editingPoint,
     selectedCommands,
@@ -102,7 +108,6 @@ const CanvasContent: React.FC = () => {
     isElementHidden,
     moveSelectedElements,
     moveSelectedSubpaths,
-    setMode,
     startPath,
     addPointToPath,
   } = controller;
@@ -110,7 +115,7 @@ const CanvasContent: React.FC = () => {
   const moveSelectedElementsRef = useRef(moveSelectedElements);
   const moveSelectedSubpathsRef = useRef(moveSelectedSubpaths);
   const selectElementRef = useRef(applySelectionChange);
-  const setModeRef = useRef(setMode);
+  const modeTransitionRef = useRef(transitionCanvasMode);
 
   useEffect(() => {
     moveSelectedElementsRef.current = moveSelectedElements;
@@ -125,8 +130,8 @@ const CanvasContent: React.FC = () => {
   }, [applySelectionChange]);
 
   useEffect(() => {
-    setModeRef.current = setMode;
-  }, [setMode]);
+    modeTransitionRef.current = transitionCanvasMode;
+  }, [transitionCanvasMode]);
 
   const handleMoveSelectedElements = useCallback((deltaX: number, deltaY: number) => {
     moveSelectedElementsRef.current(deltaX, deltaY);
@@ -141,7 +146,7 @@ const CanvasContent: React.FC = () => {
   }, []);
 
   const handleSetMode = useCallback((mode: string) => {
-    setModeRef.current(mode);
+    modeTransitionRef.current(mode as CanvasMode);
   }, []);
   
   const {
@@ -175,7 +180,7 @@ const CanvasContent: React.FC = () => {
         event,
         point,
         target,
-        activePlugin,
+        activePlugin: currentMode,
         helpers: {
           beginSelectionRectangle: helpersSnapshot.beginSelectionRectangle,
           updateSelectionRectangle: helpersSnapshot.updateSelectionRectangle,
@@ -193,7 +198,7 @@ const CanvasContent: React.FC = () => {
         },
       });
     },
-    [eventBus, activePlugin, helpers, stateRefs]
+    [eventBus, currentMode, helpers, stateRefs]
   );
 
   const setDragStartForLayers = useCallback((point: Point | null) => {
@@ -247,7 +252,7 @@ const CanvasContent: React.FC = () => {
 
   useSmoothBrushNativeListeners({
     svgRef,
-    activePlugin,
+    activePlugin: currentMode,
     isSmoothBrushActive,
     screenToCanvas,
     emitPointerEvent,
@@ -282,7 +287,7 @@ const CanvasContent: React.FC = () => {
 
   useEffect(() => {
     return activeSmoothBrushService.attachSmoothBrushListeners(svgRef, {
-      activePlugin,
+      activePlugin: currentMode,
       pencil,
       viewportZoom: viewport.zoom,
       screenToCanvas,
@@ -293,7 +298,7 @@ const CanvasContent: React.FC = () => {
   }, [
     activeSmoothBrushService,
     svgRef,
-    activePlugin,
+    currentMode,
     pencil,
     viewport.zoom,
     screenToCanvas,
@@ -306,7 +311,7 @@ const CanvasContent: React.FC = () => {
     svgRef,
     screenToCanvas,
     isSpacePressed,
-    activePlugin,
+    activePlugin: currentMode,
     isSelecting,
     selectionStart,
     isDragging,
@@ -337,11 +342,12 @@ const CanvasContent: React.FC = () => {
     moveSelectedSubpaths: handleMoveSelectedSubpaths,
     selectElement: handleSelectElement,
     setMode: handleSetMode,
+    modeListeners: modeEffects.listeners,
   }), [
     svgRef,
     screenToCanvas,
     isSpacePressed,
-    activePlugin,
+    currentMode,
     isSelecting,
     selectionStart,
     isDragging,
@@ -372,6 +378,7 @@ const CanvasContent: React.FC = () => {
     handleMoveSelectedSubpaths,
     handleSelectElement,
     handleSetMode,
+    modeEffects.listeners,
   ]);
 
   const {
@@ -413,7 +420,7 @@ const CanvasContent: React.FC = () => {
 
   const renderContext = useMemo<CanvasRenderContext>(() => ({
     viewport,
-    activePlugin,
+    activePlugin: currentMode,
     isElementHidden,
     isElementSelected,
     eventHandlers: {
@@ -423,7 +430,7 @@ const CanvasContent: React.FC = () => {
     },
   }), [
     viewport,
-    activePlugin,
+    currentMode,
     isElementHidden,
     isElementSelected,
     handleElementClick,
@@ -437,6 +444,7 @@ const CanvasContent: React.FC = () => {
   const canvasLayerContext = useMemo(
     () => ({
       ...controller,
+      activePlugin: currentMode,
       canvasSize,
       isSelecting,
       selectionStart,
@@ -461,6 +469,7 @@ const CanvasContent: React.FC = () => {
     }),
     [
       controller,
+      currentMode,
       canvasSize,
       isSelecting,
       selectionStart,
@@ -487,10 +496,10 @@ const CanvasContent: React.FC = () => {
 
   // Update point position feedback when selection changes
   useEffect(() => {
-    if (activePlugin === 'edit' && selectedCommands.length === 1) {
+    if (currentMode === 'edit' && selectedCommands.length === 1) {
       const selectedCommand = selectedCommands[0];
       const element = elements.find(el => el.id === selectedCommand.elementId);
-      
+
       if (element && element.type === 'path') {
         const pathData = element.data as PathData;
         const commands = pathData.subPaths.flat();
@@ -511,7 +520,7 @@ const CanvasContent: React.FC = () => {
     
     // Hide feedback if conditions not met
     updatePointPositionFeedback(0, 0, false);
-  }, [activePlugin, selectedCommands, elements, updatePointPositionFeedback]);
+  }, [currentMode, selectedCommands, elements, updatePointPositionFeedback]);
 
     // Emergency cleanup listeners for drag states
   useEffect(() => {
@@ -570,8 +579,8 @@ const CanvasContent: React.FC = () => {
           width: '100%',
           height: '100%',
           border: 'none',
-          cursor: (isSpacePressed || activePlugin === 'pan') ? 'grabbing' :
-            pluginManager.getCursor(activePlugin || 'select')
+          cursor: (isSpacePressed || currentMode === 'pan') ? 'grabbing' :
+            pluginManager.getCursor(currentMode || 'select')
         }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}

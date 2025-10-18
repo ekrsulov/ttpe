@@ -6,6 +6,8 @@ import type {
   CanvasLayerContribution,
   CanvasLayerPlacement,
   CanvasShortcutDefinition,
+  CanvasShortcutContext,
+  CanvasShortcutHandler,
   CanvasShortcutMap,
   CanvasShortcutOptions,
 } from '../types/plugins';
@@ -50,6 +52,22 @@ export class PluginManager {
   private canvasServices = new Map<string, CanvasService<unknown>>();
   private activeCanvasServices = new Map<string, CanvasServiceInstance<unknown>>();
   private shortcutSubscriptions = new Map<string, () => void>();
+
+  private createShortcutContext(svg?: SVGSVGElement | null): CanvasShortcutContext {
+    if (!this.eventBus) {
+      throw new Error('Canvas event bus is not available.');
+    }
+
+    return {
+      eventBus: this.eventBus,
+      controller: {} as CanvasControllerValue,
+      store: {
+        getState: useCanvasStore.getState,
+        subscribe: useCanvasStore.subscribe,
+      },
+      svg: svg ?? undefined,
+    };
+  }
 
   constructor(initialPlugins: PluginDefinition<CanvasStore>[] = []) {
     initialPlugins.forEach((plugin) => this.register(plugin));
@@ -158,10 +176,15 @@ export class PluginManager {
   }
 
   handleKeyboardEvent(toolName: string, event: KeyboardEvent): void {
+    if (!this.eventBus) {
+      return;
+    }
+
     const tool = this.registry.get(toolName);
     const handler = tool?.keyboardShortcuts?.[event.key];
     if (handler) {
-      handler(event);
+      const context = this.createShortcutContext();
+      (handler as CanvasShortcutHandler)(event, context);
     }
   }
 
@@ -447,7 +470,8 @@ export class PluginManager {
 
         const handler = plugin.keyboardShortcuts?.[event.key];
         if (handler) {
-          handler(event);
+          const context = this.createShortcutContext();
+          (handler as CanvasShortcutHandler)(event, context);
         }
       });
 

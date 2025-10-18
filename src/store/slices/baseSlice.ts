@@ -5,6 +5,11 @@ import { performPathUnion as performUnionOp, performPathSubtraction, performPath
 // Removed unused imports: commandsToString, measurePath (now in exportUtils), getSelectedSubpathElements (not used in this file)
 import { getSelectedPaths } from '../utils/pluginSliceHelpers';
 import { exportSelection } from '../../utils/exportUtils';
+import {
+  CANVAS_MODE_MACHINE,
+  transitionCanvasMode,
+  type CanvasMode,
+} from '../../canvas/modes/CanvasModeMachine';
 
 export interface BaseSlice {
   // State
@@ -45,22 +50,6 @@ export interface BaseSlice {
   performPathExclude: () => void;
   performPathDivide: () => void;
 }
-
-type ModeRule = {
-  canToggleOff: boolean;
-  defaultFallback?: string;
-};
-
-const modeRules: Record<string, ModeRule> = {
-  select: { canToggleOff: false },
-  pan: { canToggleOff: false },
-  pencil: { canToggleOff: false },
-  text: { canToggleOff: false },
-  shape: { canToggleOff: false },
-  transformation: { canToggleOff: true, defaultFallback: 'select' },
-  edit: { canToggleOff: true, defaultFallback: 'select' },
-  subpath: { canToggleOff: true, defaultFallback: 'select' },
-};
 
 // Generic handler for boolean path operations
 const performBooleanOperation = (
@@ -126,7 +115,39 @@ const performBinaryBooleanOperation = (
   state.clearSubpathSelection();
 };
 
-export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
+export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => {
+  const applyModeTransition = (requestedMode: string) => {
+    const state = get() as CanvasStore;
+    const currentMode = (state.activePlugin ?? CANVAS_MODE_MACHINE.initial) as CanvasMode;
+    const targetMode = (requestedMode || CANVAS_MODE_MACHINE.initial) as CanvasMode;
+
+    const result = transitionCanvasMode(currentMode, {
+      type: 'ACTIVATE',
+      value: targetMode,
+    });
+
+    if (!result.changed) {
+      return;
+    }
+
+    set({ activePlugin: result.mode });
+
+    const updatedState = get() as CanvasStore;
+    for (const action of result.actions) {
+      switch (action) {
+        case 'clearGuidelines':
+          updatedState.clearGuidelines?.();
+          break;
+        case 'clearSubpathSelection':
+          updatedState.clearSubpathSelection?.();
+          break;
+        default:
+          break;
+      }
+    }
+  };
+
+  return ({
   // Initial state
   elements: [],
   activePlugin: 'select',
@@ -284,49 +305,15 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
   },
 
   setActivePlugin: (plugin) => {
-    set({ activePlugin: plugin });
-    // When switching to select mode, clear any subpath selections
-    if (plugin === 'select') {
-      const state = get() as CanvasStore;
-      if (state.clearSubpathSelection) {
-        state.clearSubpathSelection();
-      }
+    if (!plugin) {
+      set({ activePlugin: null });
+      return;
     }
-    // Clear guidelines when changing modes to avoid showing stale guidelines
-    const state = get() as CanvasStore;
-    if (state.clearGuidelines) {
-      state.clearGuidelines();
-    }
+    applyModeTransition(plugin);
   },
 
   setMode: (mode) => {
-    const current = get().activePlugin;
-    const rule = modeRules[mode] || { canToggleOff: false };
-
-    if (current === mode) {
-      if (rule.canToggleOff) {
-        // Apagar, pero pasar al fallback o al mismo
-        const fallback = rule.defaultFallback || mode;
-        set({ activePlugin: fallback });
-        // When switching to select mode, clear any subpath selections
-        if (fallback === 'select') {
-          const state = get() as CanvasStore;
-          if (state.clearSubpathSelection) {
-            state.clearSubpathSelection();
-          }
-        }
-      }
-      // Para modos que no se pueden apagar, no hacer nada
-    } else {
-      set({ activePlugin: mode });
-      // When switching to select mode, clear any subpath selections
-      if (mode === 'select') {
-        const state = get() as CanvasStore;
-        if (state.clearSubpathSelection) {
-          state.clearSubpathSelection();
-        }
-      }
-    }
+    applyModeTransition(mode);
   },
 
   setDocumentName: (name) => {
@@ -475,3 +462,4 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => ({
     performBinaryBooleanOperation(state, performPathDivide);
   },
 });
+};
