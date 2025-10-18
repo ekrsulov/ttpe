@@ -30,6 +30,8 @@ import {
 import { usePointerStateController } from '../canvas/interactions/usePointerStateController';
 import { useCanvasGeometry } from '../hooks/useCanvasGeometry';
 import { useViewportController } from '../hooks/useViewportController';
+import { useCanvasShortcuts } from '../hooks/useCanvasShortcuts';
+import { canvasShortcutRegistry } from '../canvas/shortcuts';
 
 const CanvasContent: React.FC = () => {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -75,6 +77,8 @@ const CanvasContent: React.FC = () => {
   const controller = useCanvasController();
   const { viewport, screenToCanvas: mapScreenPointToCanvas, getViewBoxString } = useViewportController();
   const eventBus = useCanvasEventBus();
+
+  useCanvasShortcuts(canvasShortcutRegistry, svgRef);
 
   const {
     elements,
@@ -380,7 +384,6 @@ const CanvasContent: React.FC = () => {
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
-    handleKeyboard,
     handleCanvasDoubleClick,
   } = useCanvasEventHandlers(eventHandlerDeps);
 
@@ -481,16 +484,6 @@ const CanvasContent: React.FC = () => {
       setDragStartForLayers,
     ]
   );
-
-  // Handle keyboard events
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      handleKeyboard(e);
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleKeyboard]);
 
   // Update point position feedback when selection changes
   useEffect(() => {

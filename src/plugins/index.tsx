@@ -28,8 +28,9 @@ const selectPlugin: PluginDefinition<CanvasStore> = {
     }
   },
   keyboardShortcuts: {
-    Delete: () => {
-      useCanvasStore.getState().deleteSelectedElements();
+    Delete: (_event, { store }) => {
+      const state = store.getState() as CanvasStore;
+      state.deleteSelectedElements();
     },
     a: (event) => {
       if (event.ctrlKey || event.metaKey) {

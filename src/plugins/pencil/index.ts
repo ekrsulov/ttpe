@@ -17,8 +17,9 @@ export const pencilPlugin: PluginDefinition<CanvasStore> = {
     useCanvasStore.getState().startPath(point);
   },
   keyboardShortcuts: {
-    Delete: () => {
-      useCanvasStore.getState().deleteSelectedElements();
+    Delete: (_event, { store }) => {
+      const state = store.getState() as CanvasStore;
+      state.deleteSelectedElements();
     },
   },
   slices: [pencilSliceFactory],

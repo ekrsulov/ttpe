@@ -6,6 +6,32 @@ import type { ShapeCreationState } from '../hooks/useCanvasShapeCreation';
 import type { TransformFeedback } from '../canvas/interactions/TransformController';
 import type { Bounds } from '../utils/boundsUtils';
 import type { EditPluginSlice } from '../plugins/edit/slice';
+import type { CanvasEventBus } from '../canvas/CanvasEventBusContext';
+
+export type CanvasShortcutStoreApi = Pick<StoreApi<object>, 'getState' | 'subscribe'>;
+
+export interface CanvasShortcutContext {
+  eventBus: CanvasEventBus;
+  controller: CanvasControllerValue;
+  store: CanvasShortcutStoreApi;
+  svg?: SVGSVGElement | null;
+}
+
+export type CanvasShortcutHandler = (event: KeyboardEvent, context: CanvasShortcutContext) => void;
+
+export interface CanvasShortcutOptions {
+  preventDefault?: boolean;
+  stopPropagation?: boolean;
+  allowWhileTyping?: boolean;
+  when?: (context: CanvasShortcutContext, event: KeyboardEvent) => boolean;
+}
+
+export interface CanvasShortcutDefinition {
+  handler: CanvasShortcutHandler;
+  options?: CanvasShortcutOptions;
+}
+
+export type CanvasShortcutMap = Record<string, CanvasShortcutDefinition | CanvasShortcutHandler>;
 
 export interface PluginUIContribution<TProps = Record<string, unknown>> {
   id: string;
@@ -79,7 +105,7 @@ export interface PluginDefinition<TStore extends object = object> {
     beginSelectionRectangle: (point: Point, shiftKey?: boolean, subpathMode?: boolean) => void,
     startShapeCreation: (point: Point) => void
   ) => void;
-  keyboardShortcuts?: Record<string, (event: KeyboardEvent) => void>;
+  keyboardShortcuts?: CanvasShortcutMap;
   overlays?: PluginUIContribution[];
   canvasLayers?: CanvasLayerContribution[];
   panels?: PluginUIContribution[];

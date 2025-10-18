@@ -718,69 +718,6 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     startShapeCreation,
   ]);
 
-  // Handle keyboard events for tools
-  const handleKeyboard = useCallback((e: KeyboardEvent) => {
-    eventBus.emit('keyboard', {
-      event: e,
-      activePlugin,
-    });
-
-    // Handle Escape key to clear selections or go back to select mode
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      
-      const store = useCanvasStore.getState();
-      
-      // If file panel is open, close it and go to select mode
-      if (store.showFilePanel) {
-        store.setShowFilePanel(false);
-        store.setActivePlugin('select');
-        return;
-      }
-      
-      // If settings panel is open, close it and go to select mode
-      if (store.showSettingsPanel) {
-        store.setShowSettingsPanel(false);
-        store.setActivePlugin('select');
-        return;
-      }
-      
-      // If in select mode and there are element selections, clear them first
-      if (activePlugin === 'select' && selectedIds.length > 0) {
-        store.clearSelection();
-        return;
-      }
-      
-      // If in subpath mode and there are subpath selections, clear them first
-      if (activePlugin === 'subpath' && selectedSubpaths.length > 0) {
-        store.clearSubpathSelection();
-        return;
-      }
-      
-      // If in edit mode and there are selected commands, clear them first
-      if (activePlugin === 'edit' && store.selectedCommands.length > 0) {
-        store.clearSelectedCommands();
-        return;
-      }
-      
-      // If in transformation or edit mode and there are subpath selections, go to subpath mode
-      if ((activePlugin === 'transformation' || activePlugin === 'edit') && selectedSubpaths.length > 0) {
-        store.setActivePlugin('subpath');
-        return;
-      }
-      
-      // If no selections to clear, go back to select mode
-      store.setActivePlugin('select');
-      return;
-    }
-
-  }, [
-    activePlugin,
-    selectedIds,
-    selectedSubpaths,
-    eventBus,
-  ]);
-
   // Handle wheel
   const handleWheel = useCallback((e: React.WheelEvent<SVGSVGElement>) => {
     e.preventDefault();
@@ -822,7 +759,6 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     handlePointerMove,
     handlePointerUp,
     handleWheel,
-    handleKeyboard,
     handleCanvasDoubleClick,
   };
 };
