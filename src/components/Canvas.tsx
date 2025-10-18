@@ -1,6 +1,4 @@
 import React, { useRef, useCallback, useState, useEffect, useMemo } from 'react';
-import { useCanvasStore } from '../store/canvasStore';
-import { useShallow } from 'zustand/react/shallow';
 import { measurePath, measureSubpathBounds, mapPointerToCanvas } from '../utils/geometry';
 import { extractEditablePoints, commandsToString } from '../utils/path';
 import { useCanvasDragInteractions } from '../hooks/useCanvasDragInteractions';
@@ -22,8 +20,10 @@ import { pluginManager } from '../utils/pluginManager';
 import { logger } from '../utils';
 import { RenderCountBadgeWrapper } from './ui/RenderCountBadgeWrapper';
 import type { Point, PathData, CanvasElement, GroupElement } from '../types';
+import { useCanvasController } from '../canvas/controller/CanvasControllerContext';
+import { CanvasControllerProvider } from '../canvas/controller/CanvasControllerProvider';
 
-export const Canvas: React.FC = () => {
+const CanvasContent: React.FC = () => {
   const svgRef = useRef<SVGSVGElement>(null);
   const { isSpacePressed, isShiftPressed } = useCanvasKeyboardControls();
   const {
@@ -65,6 +65,8 @@ export const Canvas: React.FC = () => {
   // Only re-render when values actually change (not just reference)
   const {
     elements,
+    sortedElements,
+    elementMap,
     viewport,
     activePlugin,
     transformation,
@@ -76,6 +78,7 @@ export const Canvas: React.FC = () => {
     draggingSelection,
     guidelines,
     grid,
+    pencil,
     updateElement,
     startDraggingPoint,
     stopDraggingPoint,
@@ -89,35 +92,52 @@ export const Canvas: React.FC = () => {
     snapToGrid,
     clearGuidelines,
     isElementHidden,
-  } = useCanvasStore(
-    useShallow((state) => ({
-      elements: state.elements,
-      viewport: state.viewport,
-      activePlugin: state.activePlugin,
-      transformation: state.transformation,
-      shape: state.shape,
-      selectedIds: state.selectedIds,
-      editingPoint: state.editingPoint,
-      selectedCommands: state.selectedCommands,
-      selectedSubpaths: state.selectedSubpaths,
-      draggingSelection: state.draggingSelection,
-      guidelines: state.guidelines,
-      grid: state.grid,
-      updateElement: state.updateElement,
-      startDraggingPoint: state.startDraggingPoint,
-      stopDraggingPoint: state.stopDraggingPoint,
-      emergencyCleanupDrag: state.emergencyCleanupDrag,
-      selectCommand: state.selectCommand,
-      selectSubpath: state.selectSubpath,
-      isWorkingWithSubpaths: state.isWorkingWithSubpaths,
-      getFilteredEditablePoints: state.getFilteredEditablePoints,
-      getControlPointInfo: state.getControlPointInfo,
-      saveAsPng: state.saveAsPng,
-      snapToGrid: state.snapToGrid,
-      clearGuidelines: state.clearGuidelines,
-      isElementHidden: state.isElementHidden,
-    }))
-  );
+    moveSelectedElements,
+    moveSelectedSubpaths,
+    selectElement,
+    setMode,
+    applySmoothBrush,
+    startPath,
+    addPointToPath,
+    zoom,
+  } = useCanvasController();
+
+  const moveSelectedElementsRef = useRef(moveSelectedElements);
+  const moveSelectedSubpathsRef = useRef(moveSelectedSubpaths);
+  const selectElementRef = useRef(selectElement);
+  const setModeRef = useRef(setMode);
+
+  useEffect(() => {
+    moveSelectedElementsRef.current = moveSelectedElements;
+  }, [moveSelectedElements]);
+
+  useEffect(() => {
+    moveSelectedSubpathsRef.current = moveSelectedSubpaths;
+  }, [moveSelectedSubpaths]);
+
+  useEffect(() => {
+    selectElementRef.current = selectElement;
+  }, [selectElement]);
+
+  useEffect(() => {
+    setModeRef.current = setMode;
+  }, [setMode]);
+
+  const handleMoveSelectedElements = useCallback((deltaX: number, deltaY: number) => {
+    moveSelectedElementsRef.current(deltaX, deltaY);
+  }, []);
+
+  const handleMoveSelectedSubpaths = useCallback((deltaX: number, deltaY: number) => {
+    moveSelectedSubpathsRef.current(deltaX, deltaY);
+  }, []);
+
+  const handleSelectElement = useCallback((elementId: string, toggle: boolean) => {
+    selectElementRef.current(elementId, toggle);
+  }, []);
+
+  const handleSetMode = useCallback((mode: string) => {
+    setModeRef.current(mode);
+  }, []);
   
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<Point | null>(null);
@@ -149,19 +169,6 @@ export const Canvas: React.FC = () => {
       window.visualViewport?.removeEventListener('scroll', updateCanvasSize);
     };
   }, []);
-
-  // Memoize sorted elements to prevent unnecessary re-renders
-  const sortedElements = useMemo(() => {
-    return [...elements].sort((a, b) => a.zIndex - b.zIndex);
-  }, [elements]);
-
-  const elementMap = useMemo(() => {
-    const map = new Map<string, CanvasElement>();
-    elements.forEach((el) => {
-      map.set(el.id, el);
-    });
-    return map;
-  }, [elements]);
 
   const calculateGroupBounds = useCallback(
     (group: GroupElement, visited: Set<string> = new Set()): { minX: number; minY: number; maxX: number; maxY: number } | null => {
@@ -219,28 +226,13 @@ export const Canvas: React.FC = () => {
     [elementMap, isElementHidden, viewport.zoom]
   );
 
-  // Helper functions for event handlers
-  const moveSelectedElements = useCallback((deltaX: number, deltaY: number) => {
-    useCanvasStore.getState().moveSelectedElements(deltaX, deltaY);
-  }, []);
-
-  const moveSelectedSubpaths = useCallback((deltaX: number, deltaY: number) => {
-    useCanvasStore.getState().moveSelectedSubpaths(deltaX, deltaY);
-  }, []);
-
-  const selectElement = useCallback((elementId: string, toggle: boolean) => {
-    useCanvasStore.getState().selectElement(elementId, toggle);
-  }, []);
-
-  const setMode = useCallback((mode: string) => {
-    useCanvasStore.getState().setMode(mode);
-  }, []);
-
   // Transform screen coordinates to canvas coordinates
-  const screenToCanvas = useCallback((screenX: number, screenY: number): Point => {
-    const currentViewport = useCanvasStore.getState().viewport;
-    return mapPointerToCanvas(svgRef.current, currentViewport, screenX, screenY);
-  }, []);
+  const screenToCanvas = useCallback(
+    (screenX: number, screenY: number): Point => {
+      return mapPointerToCanvas(svgRef.current, viewport, screenX, screenY);
+    },
+    [viewport]
+  );
 
   // Helper function to get element bounds considering current transform
   const getElementBounds = (element: typeof elements[0]) => {
@@ -273,19 +265,19 @@ export const Canvas: React.FC = () => {
     setIsDragging,
     setDragStart,
     setHasDragMoved,
-    moveSelectedElements,
-    moveSelectedSubpaths,
     isWorkingWithSubpaths,
     selectedSubpaths,
     selectedIds,
-    selectElement,
     startTransformation,
     endTransformation,
     completeSelectionRectangle,
     updateSelectionRectangle,
     updateShapeCreation,
     endShapeCreation,
-    setMode,
+    moveSelectedElements: handleMoveSelectedElements,
+    moveSelectedSubpaths: handleMoveSelectedSubpaths,
+    selectElement: handleSelectElement,
+    setMode: handleSetMode,
   }), [
     svgRef,
     screenToCanvas,
@@ -308,19 +300,19 @@ export const Canvas: React.FC = () => {
     setIsDragging,
     setDragStart,
     setHasDragMoved,
-    moveSelectedElements,
-    moveSelectedSubpaths,
     isWorkingWithSubpaths,
     selectedSubpaths,
     selectedIds,
-    selectElement,
     startTransformation,
     endTransformation,
     completeSelectionRectangle,
     updateSelectionRectangle,
     updateShapeCreation,
     endShapeCreation,
-    setMode,
+    handleMoveSelectedElements,
+    handleMoveSelectedSubpaths,
+    handleSelectElement,
+    handleSetMode,
   ]);
 
   const {
@@ -603,8 +595,8 @@ export const Canvas: React.FC = () => {
 
       // Create temporary SVG path for immediate visual feedback
       tempPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      const { strokeWidth, strokeColor, strokeOpacity } = useCanvasStore.getState().pencil;
-      const currentZoom = useCanvasStore.getState().viewport.zoom;
+      const { strokeWidth, strokeColor, strokeOpacity } = pencil;
+      const currentZoom = viewport.zoom;
       const effectiveStrokeColor = strokeColor === 'none' ? '#000000' : strokeColor;
       
       tempPath.setAttribute('fill', 'none');
@@ -654,12 +646,11 @@ export const Canvas: React.FC = () => {
 
       // Add all points to store
       if (pointsToAdd.length > 0) {
-        const state = useCanvasStore.getState();
-        state.startPath(pointsToAdd[0]);
-        
+        startPath(pointsToAdd[0]);
+
         // Add remaining points (skip first one as it's used in startPath)
         for (let i = 1; i < pointsToAdd.length; i++) {
-          state.addPointToPath(pointsToAdd[i]);
+          addPointToPath(pointsToAdd[i]);
         }
       }
     };
@@ -685,7 +676,7 @@ export const Canvas: React.FC = () => {
       const tempPaths = svgElement.querySelectorAll('[data-temp-path="true"]');
       tempPaths.forEach(path => path.remove());
     };
-  }, [activePlugin, screenToCanvas]);
+  }, [activePlugin, screenToCanvas, pencil, viewport, startPath, addPointToPath]);
 
   // Native DOM event listeners for smooth brush (bypassing React's synthetic events)
   useEffect(() => {
@@ -703,8 +694,7 @@ export const Canvas: React.FC = () => {
       lastApplyTime = 0; // Reset throttle
       
       // Apply brush immediately on pointer down
-      const state = useCanvasStore.getState();
-      state.applySmoothBrush(point.x, point.y);
+      applySmoothBrush(point.x, point.y);
       lastApplyTime = Date.now();
     };
 
@@ -719,8 +709,7 @@ export const Canvas: React.FC = () => {
       // Throttle brush applications to reduce re-renders
       const now = Date.now();
       if (now - lastApplyTime >= APPLY_THROTTLE) {
-        const state = useCanvasStore.getState();
-        state.applySmoothBrush(point.x, point.y);
+        applySmoothBrush(point.x, point.y);
         lastApplyTime = now;
       }
     };
@@ -743,7 +732,7 @@ export const Canvas: React.FC = () => {
       svgElement.removeEventListener('pointerup', nativePointerUp);
       svgElement.removeEventListener('pointercancel', nativePointerUp);
     };
-  }, [activePlugin, isSmoothBrushActive, screenToCanvas]);
+  }, [activePlugin, isSmoothBrushActive, screenToCanvas, applySmoothBrush]);
 
   // Handle wheel event with passive: false to allow preventDefault
   useEffect(() => {
@@ -757,7 +746,7 @@ export const Canvas: React.FC = () => {
       if (rect) {
         const centerX = e.clientX - rect.left;
         const centerY = e.clientY - rect.top;
-        useCanvasStore.getState().zoom(zoomFactor, centerX, centerY);
+        zoom(zoomFactor, centerX, centerY);
       }
     };
 
@@ -766,7 +755,7 @@ export const Canvas: React.FC = () => {
     return () => {
       svgElement.removeEventListener('wheel', wheelHandler);
     };
-  }, []);
+  }, [zoom]);
 
   // Listen for saveAsPng events from FilePanel
   useEffect(() => {
@@ -947,3 +936,9 @@ export const Canvas: React.FC = () => {
     </>
   );
 };
+
+export const Canvas: React.FC = () => (
+  <CanvasControllerProvider>
+    <CanvasContent />
+  </CanvasControllerProvider>
+);
