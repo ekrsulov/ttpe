@@ -34,6 +34,7 @@ export const useSmoothBrushNativeListeners = ({
   const storeApi = useMemo(
     () => ({
       getState: useCanvasStore.getState,
+      setState: useCanvasStore.setState,
       subscribe: useCanvasStore.subscribe,
     }),
     []

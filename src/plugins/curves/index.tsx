@@ -16,7 +16,15 @@ const curvesSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
 export const curvesPlugin: PluginDefinition<CanvasStore> = {
   id: 'curves',
   metadata: getToolMetadata('curves'),
-  handler: () => {
+  handler: (
+    _event,
+    _point,
+    _target,
+    _isSmoothBrushActive,
+    _beginSelectionRectangle,
+    _startShapeCreation,
+    _context
+  ) => {
     // Curves tool relies on dedicated canvas interactions
   },
   canvasLayers: [

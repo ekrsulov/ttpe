@@ -13,6 +13,7 @@ export const useCanvasZoom = (svgRef: RefObject<SVGSVGElement | null>): void => 
   const storeApi = useMemo(
     () => ({
       getState: useCanvasStore.getState,
+      setState: useCanvasStore.setState,
       subscribe: useCanvasStore.subscribe,
     }),
     []

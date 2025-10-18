@@ -1,12 +1,16 @@
 import type { PluginDefinition, PluginSliceFactory } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
-import { useCanvasStore } from '../../store/canvasStore';
 import { getToolMetadata } from '../toolMetadata';
 import { createPencilPluginSlice } from './slice';
 import type { PencilPluginSlice } from './slice';
 import { PencilPanel } from './PencilPanel';
 import { startPath, addPointToPath } from './actions';
 import type { Point } from '../../types';
+
+type PencilPluginApi = {
+  startPath: (point: Point) => void;
+  addPointToPath: (point: Point) => void;
+};
 
 const pencilSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
   // Call the slice creator and cast appropriately
@@ -19,12 +23,9 @@ const pencilSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
 export const pencilPlugin: PluginDefinition<CanvasStore> = {
   id: 'pencil',
   metadata: getToolMetadata('pencil'),
-  handler: (_event, point) => {
-    // Use the plugin API instead of store action
-    const api = pencilPlugin.api;
-    if (api && api.startPath) {
-      api.startPath(point);
-    }
+  handler: (_event, point, _target, _isSmoothBrushActive, _beginSelectionRectangle, _startShapeCreation, context) => {
+    const api = context.api as PencilPluginApi;
+    api.startPath(point);
   },
   keyboardShortcuts: {
     Delete: (_event, { store }) => {
@@ -33,14 +34,14 @@ export const pencilPlugin: PluginDefinition<CanvasStore> = {
     },
   },
   slices: [pencilSliceFactory],
-  api: {
+  createApi: ({ store }) => ({
     startPath: (point: Point) => {
-      startPath(point, useCanvasStore.getState);
+      startPath(point, store.getState);
     },
     addPointToPath: (point: Point) => {
-      addPointToPath(point, useCanvasStore.getState);
+      addPointToPath(point, store.getState);
     },
-  },
+  }),
 };
 
 export type { PencilPluginSlice };

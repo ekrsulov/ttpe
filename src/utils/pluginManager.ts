@@ -10,6 +10,8 @@ import type {
   CanvasShortcutHandler,
   CanvasShortcutMap,
   CanvasShortcutOptions,
+  PluginApiContext,
+  PluginHandlerContext,
 } from '../types/plugins';
 import type { CanvasStore } from '../store/canvasStore';
 import { useCanvasStore, registerPluginSlices, unregisterPluginSlices } from '../store/canvasStore';
@@ -23,6 +25,7 @@ import { canvasShortcutRegistry } from '../canvas/shortcuts';
 
 type CanvasStoreApi = {
   getState: typeof useCanvasStore.getState;
+  setState: typeof useCanvasStore.setState;
   subscribe: typeof useCanvasStore.subscribe;
 };
 
@@ -54,6 +57,11 @@ export class PluginManager {
   private shortcutSubscriptions = new Map<string, () => void>();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private pluginApis = new Map<string, Record<string, (...args: any[]) => any>>();
+  private readonly storeApi: CanvasStoreApi = {
+    getState: useCanvasStore.getState,
+    setState: useCanvasStore.setState,
+    subscribe: useCanvasStore.subscribe,
+  };
 
   private createShortcutContext(svg?: SVGSVGElement | null): CanvasShortcutContext {
     if (!this.eventBus) {
@@ -64,8 +72,8 @@ export class PluginManager {
       eventBus: this.eventBus,
       controller: {} as CanvasControllerValue,
       store: {
-        getState: useCanvasStore.getState,
-        subscribe: useCanvasStore.subscribe,
+        getState: this.storeApi.getState,
+        subscribe: this.storeApi.subscribe,
       },
       svg: svg ?? undefined,
     };
@@ -104,12 +112,19 @@ export class PluginManager {
     }
 
     // Register plugin API
-    if (plugin.api) {
-      this.pluginApis.set(plugin.id, plugin.api);
+    if (plugin.createApi) {
+      const api = plugin.createApi(this.createPluginApiContext());
+      this.pluginApis.set(plugin.id, api);
+    } else {
+      this.pluginApis.delete(plugin.id);
     }
 
     this.bindPluginInteractions(plugin);
     this.bindPluginShortcuts(plugin);
+  }
+
+  private createPluginApiContext(): PluginApiContext<CanvasStore> {
+    return { store: this.storeApi };
   }
 
   registerCanvasService<TState>(service: CanvasService<TState>): void {
@@ -381,13 +396,19 @@ export class PluginManager {
   ): void {
     const tool = this.registry.get(toolName);
     if (tool?.handler) {
+      const api = this.pluginApis.get(toolName) ?? {};
+      const context: PluginHandlerContext<CanvasStore> = {
+        ...this.createPluginApiContext(),
+        api,
+      };
       tool.handler(
         event,
         point,
         target,
         isSmoothBrushActive,
         beginSelectionRectangle,
-        startShapeCreation
+        startShapeCreation,
+        context
       );
     }
   }
@@ -482,13 +503,20 @@ export class PluginManager {
         const startShapeCreation = payload.helpers.startShapeCreation ?? (() => {});
         const isSmoothBrushActive = Boolean(payload.helpers.isSmoothBrushActive);
 
+        const api = this.pluginApis.get(plugin.id) ?? {};
+        const context: PluginHandlerContext<CanvasStore> = {
+          ...this.createPluginApiContext(),
+          api,
+        };
+
         handler(
           payload.event as React.PointerEvent,
           payload.point,
           target,
           isSmoothBrushActive,
           beginSelectionRectangle,
-          startShapeCreation
+          startShapeCreation,
+          context
         );
       });
 

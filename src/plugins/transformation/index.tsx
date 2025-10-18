@@ -19,7 +19,15 @@ const transformationSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, a
 export const transformationPlugin: PluginDefinition<CanvasStore> = {
   id: 'transformation',
   metadata: getToolMetadata('transformation'),
-  handler: () => {
+  handler: (
+    _event,
+    _point,
+    _target,
+    _isSmoothBrushActive,
+    _beginSelectionRectangle,
+    _startShapeCreation,
+    _context
+  ) => {
     // Transformation tool relies on pointer event listeners elsewhere
   },
   canvasLayers: [
