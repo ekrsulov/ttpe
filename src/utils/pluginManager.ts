@@ -13,8 +13,8 @@ import type {
   PluginApiContext,
   PluginHandlerContext,
 } from '../types/plugins';
-import type { CanvasStore } from '../store/canvasStore';
-import { useCanvasStore, registerPluginSlices, unregisterPluginSlices } from '../store/canvasStore';
+import type { CanvasStore, CanvasStoreApi } from '../store/canvasStore';
+import { registerPluginSlices, unregisterPluginSlices } from '../store/canvasStore';
 import type {
   CanvasEventBus,
   CanvasEventMap,
@@ -22,12 +22,6 @@ import type {
 } from '../canvas/CanvasEventBusContext';
 import type { CanvasControllerValue } from '../canvas/controller/CanvasControllerContext';
 import { canvasShortcutRegistry } from '../canvas/shortcuts';
-
-type CanvasStoreApi = {
-  getState: typeof useCanvasStore.getState;
-  setState: typeof useCanvasStore.setState;
-  subscribe: typeof useCanvasStore.subscribe;
-};
 
 export interface CanvasServiceContext {
   svg: SVGSVGElement;
@@ -46,6 +40,11 @@ export interface CanvasService<TState = unknown> {
   create: (context: CanvasServiceContext) => CanvasServiceInstance<TState>;
 }
 
+interface PluginManagerOptions {
+  initialPlugins?: PluginDefinition<CanvasStore>[];
+  storeApi?: CanvasStoreApi | null;
+}
+
 export class PluginManager {
   private registry = new Map<string, PluginDefinition<CanvasStore>>();
   private canvasLayers = new Map<string, CanvasLayerContribution[]>();
@@ -57,30 +56,52 @@ export class PluginManager {
   private shortcutSubscriptions = new Map<string, () => void>();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private pluginApis = new Map<string, Record<string, (...args: any[]) => any>>();
-  private readonly storeApi: CanvasStoreApi = {
-    getState: useCanvasStore.getState,
-    setState: useCanvasStore.setState,
-    subscribe: useCanvasStore.subscribe,
-  };
+  private storeApi: CanvasStoreApi | null;
 
   private createShortcutContext(svg?: SVGSVGElement | null): CanvasShortcutContext {
     if (!this.eventBus) {
       throw new Error('Canvas event bus is not available.');
     }
 
+    const storeApi = this.requireStoreApi();
+
     return {
       eventBus: this.eventBus,
       controller: {} as CanvasControllerValue,
       store: {
-        getState: this.storeApi.getState,
-        subscribe: this.storeApi.subscribe,
+        getState: storeApi.getState,
+        subscribe: storeApi.subscribe,
       },
       svg: svg ?? undefined,
     };
   }
 
-  constructor(initialPlugins: PluginDefinition<CanvasStore>[] = []) {
+  constructor({ initialPlugins = [], storeApi = null }: PluginManagerOptions = {}) {
+    this.storeApi = storeApi;
+
     initialPlugins.forEach((plugin) => this.register(plugin));
+  }
+
+  setStoreApi(storeApi: CanvasStoreApi): void {
+    this.storeApi = storeApi;
+
+    this.registry.forEach((plugin) => {
+      if (plugin.slices?.length) {
+        this.applyPluginSlices(plugin);
+      }
+
+      this.initializePluginApi(plugin);
+    });
+  }
+
+  private requireStoreApi(): CanvasStoreApi {
+    if (!this.storeApi) {
+      throw new Error(
+        'Canvas store API is not available. Ensure PluginManager.setStoreApi() is called before using store-dependent features.'
+      );
+    }
+
+    return this.storeApi;
   }
 
   setEventBus(eventBus: CanvasEventBus | null): void {
@@ -104,19 +125,14 @@ export class PluginManager {
     const layerContributions = this.composeCanvasLayers(plugin);
     this.setCanvasLayers(plugin.id, layerContributions);
 
-    if (plugin.slices?.length) {
-      const contributions = plugin.slices.map((factory) =>
-        factory(useCanvasStore.setState, useCanvasStore.getState, useCanvasStore)
-      );
-      registerPluginSlices(plugin.id, contributions);
-    }
+    this.pluginApis.delete(plugin.id);
 
-    // Register plugin API
-    if (plugin.createApi) {
-      const api = plugin.createApi(this.createPluginApiContext());
-      this.pluginApis.set(plugin.id, api);
-    } else {
-      this.pluginApis.delete(plugin.id);
+    if (this.storeApi) {
+      if (plugin.slices?.length) {
+        this.applyPluginSlices(plugin);
+      }
+
+      this.initializePluginApi(plugin);
     }
 
     this.bindPluginInteractions(plugin);
@@ -124,7 +140,38 @@ export class PluginManager {
   }
 
   private createPluginApiContext(): PluginApiContext<CanvasStore> {
-    return { store: this.storeApi };
+    const storeApi = this.requireStoreApi();
+
+    return {
+      store: {
+        getState: storeApi.getState,
+        setState: storeApi.setState,
+        subscribe: storeApi.subscribe,
+      },
+    };
+  }
+
+  private applyPluginSlices(plugin: PluginDefinition<CanvasStore>): void {
+    if (!plugin.slices?.length) {
+      return;
+    }
+
+    const storeApi = this.requireStoreApi();
+    const contributions = plugin.slices.map((factory) =>
+      factory(storeApi.setState, storeApi.getState, storeApi)
+    );
+
+    registerPluginSlices(storeApi, plugin.id, contributions);
+  }
+
+  private initializePluginApi(plugin: PluginDefinition<CanvasStore>): void {
+    if (!plugin.createApi) {
+      this.pluginApis.delete(plugin.id);
+      return;
+    }
+
+    const api = plugin.createApi(this.createPluginApiContext());
+    this.pluginApis.set(plugin.id, api);
   }
 
   registerCanvasService<TState>(service: CanvasService<TState>): void {
@@ -181,8 +228,8 @@ export class PluginManager {
     this.teardownPluginShortcuts(pluginId);
     this.pluginApis.delete(pluginId);
 
-    if (existing.slices?.length) {
-      unregisterPluginSlices(pluginId);
+    if (existing.slices?.length && this.storeApi) {
+      unregisterPluginSlices(this.storeApi, pluginId);
     }
   }
 

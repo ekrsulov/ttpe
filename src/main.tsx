@@ -6,7 +6,9 @@ import App from './App.tsx'
 import { theme } from './theme'
 import { pluginManager } from './utils/pluginManager'
 import { CORE_PLUGINS } from './plugins'
+import { canvasStoreApi } from './store/canvasStore'
 
+pluginManager.setStoreApi(canvasStoreApi)
 CORE_PLUGINS.forEach((plugin) => {
   pluginManager.register(plugin)
 })
