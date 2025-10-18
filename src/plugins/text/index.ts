@@ -11,6 +11,7 @@ type TextPluginApi = {
 };
 
 const textSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const slice = createTextPluginSlice(set as any, get as any, api as any);
   return {
     state: slice,

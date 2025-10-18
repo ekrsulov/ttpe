@@ -9,6 +9,7 @@ import { PathOperationsPanel } from './PathOperationsPanel';
 import { EditPointsOverlay } from './EditPointsOverlay';
 
 const editSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const slice = createEditPluginSlice(set as any, get as any, api as any);
   return {
     state: slice,

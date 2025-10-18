@@ -7,6 +7,7 @@ import { getToolMetadata } from '../toolMetadata';
 import { CurvesRenderer } from './CurvesRenderer';
 
 const curvesSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const slice = createCurvesPluginSlice(set as any, get as any, api as any);
   return {
     state: slice,

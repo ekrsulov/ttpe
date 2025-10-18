@@ -6,6 +6,7 @@ import { GuidelinesPanel } from './GuidelinesPanel';
 import { GuidelinesOverlay } from './GuidelinesOverlay';
 
 const guidelinesSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const slice = createGuidelinesPluginSlice(set as any, get as any, api as any);
   return {
     state: slice,

@@ -84,14 +84,13 @@ export interface PluginApiContext<TStore extends object> {
 }
 
 export interface PluginHandlerContext<TStore extends object> extends PluginApiContext<TStore> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  api: Record<string, (...args: any[]) => any>;
+  api: Record<string, (...args: never[]) => unknown>;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export type PluginApiFactory<TStore extends object> = (
   context: PluginApiContext<TStore>
-) => Record<string, (...args: any[]) => any>;
+) => Record<string, (...args: never[]) => unknown>;
 
 export type PluginSliceFactory<TStore extends object = object> = (
   set: StoreApi<TStore>['setState'],

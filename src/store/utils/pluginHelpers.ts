@@ -30,6 +30,7 @@ export function getPluginState<K extends keyof CanvasStore>(
 /**
  * Safely call a plugin method if it exists
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function callPluginMethod<T extends (...args: any[]) => any>(
   method: T | undefined,
   ...args: Parameters<T>

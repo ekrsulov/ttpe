@@ -9,6 +9,7 @@ import { createShape } from './actions';
 import type { Point } from '../../types';
 
 const shapeSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const slice = createShapePluginSlice(set as any, get as any, api as any);
   return {
     state: slice,

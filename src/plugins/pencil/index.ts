@@ -14,6 +14,7 @@ type PencilPluginApi = {
 
 const pencilSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
   // Call the slice creator and cast appropriately
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const slice = createPencilPluginSlice(set as any, get as any, api as any);
   return {
     state: slice,

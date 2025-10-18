@@ -10,6 +10,7 @@ import { measureSubpathBounds } from '../../utils/geometry';
 import type { PathData } from '../../types';
 
 const transformationSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const slice = createTransformationPluginSlice(set as any, get as any, api as any);
   return {
     state: slice,

@@ -5,6 +5,7 @@ import type { OpticalAlignmentSlice } from './slice';
 import { OpticalAlignmentPanel } from './OpticalAlignmentPanel';
 
 const opticalAlignmentSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const slice = createOpticalAlignmentSlice(set as any, get as any, api as any);
   return {
     state: slice,

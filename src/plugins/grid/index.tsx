@@ -6,6 +6,7 @@ import GridPanelComponent from './GridPanel';
 import { GridOverlay } from './GridOverlay';
 
 const gridSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const slice = createGridPluginSlice(set as any, get as any, api as any);
   return {
     state: slice,
