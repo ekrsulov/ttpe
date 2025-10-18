@@ -12,6 +12,7 @@ import { curvesPlugin } from './curves';
 import { opticalAlignmentPlugin } from './opticalAlignment';
 import { guidelinesPlugin } from './guidelines';
 import { gridPlugin } from './grid';
+import { minimapPlugin } from './minimap';
 import { SelectionOverlay } from '../components/overlays';
 
 
@@ -182,6 +183,7 @@ export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   opticalAlignmentPlugin,
   guidelinesPlugin,
   gridPlugin,
+  minimapPlugin,
 ];
 
 export * from './pencil';
@@ -194,3 +196,4 @@ export * from './curves';
 export * from './opticalAlignment';
 export * from './guidelines';
 export * from './grid';
+export * from './minimap';
