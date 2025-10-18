@@ -2,7 +2,7 @@ import { useCallback, useState, useMemo } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
 import { SmoothBrushController } from '../canvasInteractions/SmoothBrushController';
 import type { Point } from '../types';
-import type { EditPluginSlice } from '../store/slices/plugins/editPluginSlice';
+import type { EditPluginSlice } from '../plugins/edit/slice';
 
 export interface SmoothBrushState {
   isActive: boolean;

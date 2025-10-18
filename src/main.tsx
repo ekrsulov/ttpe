@@ -4,6 +4,12 @@ import { ChakraProvider } from '@chakra-ui/react'
 import './index.css'
 import App from './App.tsx'
 import { theme } from './theme'
+import { pluginManager } from './utils/pluginManager'
+import { CORE_PLUGINS } from './plugins'
+
+CORE_PLUGINS.forEach((plugin) => {
+  pluginManager.register(plugin)
+})
 
 // Conditionally expose test globals whenever we're not in production
 if (process.env.NODE_ENV !== 'production') {

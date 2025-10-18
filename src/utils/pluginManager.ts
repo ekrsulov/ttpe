@@ -2,7 +2,6 @@ import type React from 'react';
 import type { PluginDefinition, PluginUIContribution, PluginActionContribution } from '../types/plugins';
 import type { CanvasStore } from '../store/canvasStore';
 import { useCanvasStore, registerPluginSlices, unregisterPluginSlices } from '../store/canvasStore';
-import { DEFAULT_PLUGIN_DEFINITIONS } from './pluginDefaults';
 
 export class PluginManager {
   private registry = new Map<string, PluginDefinition<CanvasStore>>();
@@ -116,4 +115,4 @@ export class PluginManager {
   }
 }
 
-export const pluginManager = new PluginManager(DEFAULT_PLUGIN_DEFINITIONS);
+export const pluginManager = new PluginManager();

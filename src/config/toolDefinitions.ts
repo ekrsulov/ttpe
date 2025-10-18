@@ -1,6 +1,7 @@
 import {
   MousePointer,
   Pen,
+  PenTool,
   Type,
   Shapes,
   Route,
@@ -13,7 +14,7 @@ import type { ComponentType } from 'react';
 /**
  * Tool mode type definition
  */
-export type ToolMode = 'select' | 'pencil' | 'text' | 'shape' | 'subpath' | 'transformation' | 'edit' | 'pan';
+export type ToolMode = 'select' | 'pencil' | 'text' | 'shape' | 'curves' | 'subpath' | 'transformation' | 'edit' | 'pan';
 
 /**
  * Unified tool definition interface
@@ -37,6 +38,12 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     label: 'Select',
     icon: MousePointer,
     cursor: 'default',
+  },
+  {
+    mode: 'curves',
+    label: 'Curves',
+    icon: PenTool,
+    cursor: 'crosshair',
   },
   {
     mode: 'pan',

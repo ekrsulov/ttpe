@@ -40,16 +40,19 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
   const topWithRulers = { base: 6, md: 10 };
   const topPosition = showGridRulers ? topWithRulers : baseTop;
 
-  const registeredTools = pluginManager.getRegisteredTools().map((plugin) => {
-    const fallbackDefinition = TOOL_DEFINITION_MAP.get(plugin.id as ToolMode);
-    const Icon = plugin.metadata.icon ?? fallbackDefinition?.icon ?? Menu;
+  const registeredTools = pluginManager
+    .getRegisteredTools()
+    .filter((plugin) => TOOL_DEFINITION_MAP.has(plugin.id as ToolMode))
+    .map((plugin) => {
+      const fallbackDefinition = TOOL_DEFINITION_MAP.get(plugin.id as ToolMode);
+      const Icon = plugin.metadata.icon ?? fallbackDefinition?.icon ?? Menu;
 
-    return {
-      id: plugin.id,
-      label: plugin.metadata.label ?? fallbackDefinition?.label ?? plugin.id,
-      icon: Icon,
-    };
-  });
+      return {
+        id: plugin.id,
+        label: plugin.metadata.label ?? fallbackDefinition?.label ?? plugin.id,
+        icon: Icon,
+      };
+    });
 
   const toolsToRender = registeredTools.length
     ? registeredTools
