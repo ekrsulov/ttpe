@@ -20,6 +20,8 @@ import {
   CanvasEventBus,
   useCanvasEventBus,
 } from '../canvas/CanvasEventBusContext';
+import { useCanvasZoom } from '../hooks/useCanvasZoom';
+import { useSmoothBrushNativeListeners } from '../hooks/useSmoothBrushNativeListeners';
 
 const CanvasContent: React.FC = () => {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -89,10 +91,8 @@ const CanvasContent: React.FC = () => {
     moveSelectedSubpaths,
     selectElement,
     setMode,
-    applySmoothBrush,
     startPath,
     addPointToPath,
-    zoom,
   } = controller;
 
   const moveSelectedElementsRef = useRef(moveSelectedElements);
@@ -316,6 +316,17 @@ const CanvasContent: React.FC = () => {
     }
     return null;
   }, [viewport.zoom]);
+
+  useCanvasZoom(svgRef);
+
+  useSmoothBrushNativeListeners({
+    svgRef,
+    activePlugin,
+    isSmoothBrushActive,
+    screenToCanvas,
+    emitPointerEvent,
+    setSmoothBrushCursor,
+  });
 
   const eventHandlerDeps = useMemo(() => ({
     svgRef,
@@ -754,95 +765,6 @@ const CanvasContent: React.FC = () => {
       tempPaths.forEach(path => path.remove());
     };
   }, [activePlugin, screenToCanvas, pencil, viewport, startPath, addPointToPath, emitPointerEvent]);
-
-  // Native DOM event listeners for smooth brush (bypassing React's synthetic events)
-  useEffect(() => {
-    const svgElement = svgRef.current;
-    if (!svgElement || activePlugin !== 'edit' || !isSmoothBrushActive) return;
-
-    let isBrushing = false;
-    let lastApplyTime = 0;
-    const APPLY_THROTTLE = 200; // Apply smooth brush at most every 100ms
-
-    const nativePointerDown = (e: PointerEvent) => {
-      if (e.button !== 0) return; // Only left mouse button
-      const point = screenToCanvas(e.clientX, e.clientY);
-      emitPointerEvent('pointerdown', e, point);
-      isBrushing = true;
-      lastApplyTime = 0; // Reset throttle
-
-      // Apply brush immediately on pointer down
-      applySmoothBrush(point.x, point.y);
-      lastApplyTime = Date.now();
-    };
-
-    const nativePointerMove = (e: PointerEvent) => {
-      const point = screenToCanvas(e.clientX, e.clientY);
-      emitPointerEvent('pointermove', e, point);
-
-      // Update local cursor position for visual feedback (doesn't cause store re-renders)
-      setSmoothBrushCursor({ x: point.x, y: point.y });
-
-      if (!isBrushing) return;
-
-      // Throttle brush applications to reduce re-renders
-      const now = Date.now();
-      if (now - lastApplyTime >= APPLY_THROTTLE) {
-        applySmoothBrush(point.x, point.y);
-        lastApplyTime = now;
-      }
-    };
-
-    const nativePointerUp = (e: PointerEvent) => {
-      const point = screenToCanvas(e.clientX, e.clientY);
-      emitPointerEvent('pointerup', e, point);
-
-      if (!isBrushing) return;
-      isBrushing = false;
-      lastApplyTime = 0;
-    };
-
-    // Add native event listeners with passive: true for better performance
-    svgElement.addEventListener('pointerdown', nativePointerDown, { passive: true });
-    svgElement.addEventListener('pointermove', nativePointerMove, { passive: true });
-    svgElement.addEventListener('pointerup', nativePointerUp, { passive: true });
-    svgElement.addEventListener('pointercancel', nativePointerUp as EventListener, { passive: true });
-
-    return () => {
-      svgElement.removeEventListener('pointerdown', nativePointerDown);
-      svgElement.removeEventListener('pointermove', nativePointerMove);
-      svgElement.removeEventListener('pointerup', nativePointerUp);
-      svgElement.removeEventListener('pointercancel', nativePointerUp as EventListener);
-    };
-  }, [activePlugin, isSmoothBrushActive, screenToCanvas, applySmoothBrush, emitPointerEvent]);
-
-  // Handle wheel event with passive: false to allow preventDefault
-  useEffect(() => {
-    const svgElement = svgRef.current;
-    if (!svgElement) return;
-
-    const wheelHandler = (e: WheelEvent) => {
-      e.preventDefault();
-      eventBus.emit('wheel', {
-        event: e,
-        activePlugin,
-        svg: svgElement,
-      });
-      const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
-      const rect = svgElement.getBoundingClientRect();
-      if (rect) {
-        const centerX = e.clientX - rect.left;
-        const centerY = e.clientY - rect.top;
-        zoom(zoomFactor, centerX, centerY);
-      }
-    };
-
-    svgElement.addEventListener('wheel', wheelHandler, { passive: false });
-
-    return () => {
-      svgElement.removeEventListener('wheel', wheelHandler);
-    };
-  }, [zoom, eventBus, activePlugin]);
 
   // Listen for saveAsPng events from FilePanel
   useEffect(() => {
