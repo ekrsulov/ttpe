@@ -30,8 +30,8 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
   const isPositionedForSidebar = sidebarWidth > 0;
   
   // Calculate top position - move down when grid rulers are shown
-  const baseTop = { base: 4, md: 6 };
-  const topWithRulers = { base: 8, md: 10 };
+  const baseTop = { base: 2, md: 6 };
+  const topWithRulers = { base: 6, md: 10 };
   const topPosition = showGridRulers ? topWithRulers : baseTop;
 
   return (
