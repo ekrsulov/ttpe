@@ -23,8 +23,8 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
 
   // Subscribe to individual selection state to avoid unnecessary re-renders
   const hasSelectedIds = useCanvasStore(state => state.selectedIds.length > 0);
-  const hasSelectedCommands = useCanvasStore(state => state.selectedCommands.length > 0);
-  const hasSelectedSubpaths = useCanvasStore(state => state.selectedSubpaths.length > 0);
+  const hasSelectedCommands = useCanvasStore(state => (state.selectedCommands?.length ?? 0) > 0);
+  const hasSelectedSubpaths = useCanvasStore(state => (state.selectedSubpaths?.length ?? 0) > 0);
   
   const hasSelection = hasSelectedIds || hasSelectedCommands || hasSelectedSubpaths;
 

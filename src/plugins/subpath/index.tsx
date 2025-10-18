@@ -1,15 +1,20 @@
 import type { PluginDefinition, PluginSliceFactory } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
+import { useCanvasStore } from '../../store/canvasStore';
 import { getToolMetadata } from '../toolMetadata';
 import { createSubpathPluginSlice } from './slice';
 import type { SubpathPluginSlice } from './slice';
 import { SubPathOperationsPanel } from './SubPathOperationsPanel';
 import { SubpathOverlay } from './SubpathOverlay';
 import type { PathData } from '../../types';
+import { performPathSimplify, performSubPathReverse } from './actions';
 
-const subpathSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => ({
-  state: createSubpathPluginSlice(set, get, api),
-});
+const subpathSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
+  const slice = createSubpathPluginSlice(set as any, get as any, api as any);
+  return {
+    state: slice,
+  };
+};
 
 export const subpathPlugin: PluginDefinition<CanvasStore> = {
   id: 'subpath',
@@ -57,10 +62,10 @@ export const subpathPlugin: PluginDefinition<CanvasStore> = {
                 <SubpathOverlay
                   key={`subpath-overlay-${element.id}`}
                   element={element}
-                  selectedSubpaths={selectedSubpaths}
+                  selectedSubpaths={selectedSubpaths ?? []}
                   viewport={viewport}
                   smoothBrush={smoothBrush}
-                  onSelectSubpath={selectSubpath}
+                  onSelectSubpath={selectSubpath ?? (() => {})}
                   onSetDragStart={setDragStart}
                   onSubpathDoubleClick={handleSubpathDoubleClick}
                   isVisible={activePlugin === 'subpath'}
@@ -72,6 +77,14 @@ export const subpathPlugin: PluginDefinition<CanvasStore> = {
     },
   ],
   slices: [subpathSliceFactory],
+  api: {
+    performPathSimplify: () => {
+      performPathSimplify(useCanvasStore.getState);
+    },
+    performSubPathReverse: () => {
+      performSubPathReverse(useCanvasStore.getState);
+    },
+  },
 };
 
 export type { SubpathPluginSlice };

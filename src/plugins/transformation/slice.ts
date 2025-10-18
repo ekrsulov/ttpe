@@ -17,7 +17,12 @@ export interface TransformationPluginSlice {
   isWorkingWithSubpaths: () => boolean;
 }
 
-export const createTransformationPluginSlice: StateCreator<TransformationPluginSlice, [], [], TransformationPluginSlice> = (set, get) => {
+export const createTransformationPluginSlice: StateCreator<
+  TransformationPluginSlice,
+  [],
+  [],
+  TransformationPluginSlice
+> = (set, get) => {
   return {
     // Initial state
     transformation: {
@@ -37,20 +42,20 @@ export const createTransformationPluginSlice: StateCreator<TransformationPluginS
     // Check if transformation should work with subpaths instead of full elements
     isWorkingWithSubpaths: () => {
       const state = get() as CanvasStore;
-      return state.selectedSubpaths && state.selectedSubpaths.length > 0;
+      return (state.selectedSubpaths?.length ?? 0) > 0;
     },
 
     // Get bounds for transformation - either from selected subpaths or selected elements
     getTransformationBounds: () => {
       const state = get() as CanvasStore;
-      const isSubpathMode = (get() as CanvasStore).isWorkingWithSubpaths();
+      const isSubpathMode = (get() as CanvasStore).isWorkingWithSubpaths?.() ?? false;
 
-      if (isSubpathMode && state.selectedSubpaths && state.selectedSubpaths.length > 0) {
+      if (isSubpathMode && (state.selectedSubpaths?.length ?? 0) > 0) {
         // Calculate bounds for selected subpaths
         const subpathCommandsToMeasure: import('../../types').Command[][] = [];
         let strokeWidth = 1; // Default stroke width
 
-        state.selectedSubpaths.forEach(({ elementId, subpathIndex }) => {
+        (state.selectedSubpaths ?? []).forEach(({ elementId, subpathIndex }) => {
           const element = state.elements.find((el) => el.id === elementId);
           if (element && element.type === 'path') {
             const pathData = element.data as import('../../types').PathData;

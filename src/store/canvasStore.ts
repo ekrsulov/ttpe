@@ -1,32 +1,29 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { temporal } from 'zundo';
-import { textToPathCommands } from '../utils/canvas';
-import { logger } from '../utils';
-import { getSelectedSubpathElements } from './utils/pluginSliceHelpers';
 import type { PluginSliceFactory } from '../types/plugins';
-
-import { extractSubpaths, createSquareCommands, createRectangleCommands, createCircleCommands, createTriangleCommands, reverseSubPath } from '../utils/path';
-import type { Point, Command } from '../types';
 import isDeepEqual from 'fast-deep-equal';
 
-// Import all slices
+// Import only core structural slices
 import { createBaseSlice, type BaseSlice } from './slices/baseSlice';
 import { createViewportSlice, type ViewportSlice } from './slices/features/viewportSlice';
 import { createSelectionSlice, type SelectionSlice } from './slices/features/selectionSlice';
 import { createGroupSlice, type GroupSlice } from './slices/features/groupSlice';
 import { createOrderSlice, type OrderSlice } from './slices/features/orderSlice';
 import { createArrangeSlice, type ArrangeSlice } from './slices/features/arrangeSlice';
-import { createPencilPluginSlice, type PencilPluginSlice } from '../plugins/pencil/slice';
-import { createTextPluginSlice, type TextPluginSlice } from '../plugins/text/slice';
-import { createShapePluginSlice, type ShapePluginSlice } from '../plugins/shape/slice';
-import { createTransformationPluginSlice, type TransformationPluginSlice } from '../plugins/transformation/slice';
-import { createEditPluginSlice, type EditPluginSlice } from '../plugins/edit/slice';
-import { createSubpathPluginSlice, type SubpathPluginSlice } from '../plugins/subpath/slice';
-import { createOpticalAlignmentSlice, type OpticalAlignmentSlice } from '../plugins/opticalAlignment/slice';
-import { createCurvesPluginSlice, type CurvesPluginSlice } from '../plugins/curves/slice';
-import { createGuidelinesPluginSlice, type GuidelinesPluginSlice } from '../plugins/guidelines/slice';
-import { createGridPluginSlice, type GridPluginSlice } from '../plugins/grid/slice';
+
+// Plugin slices are now registered dynamically through PluginManager
+// Import plugin types for backwards compatibility
+import type { PencilPluginSlice } from '../plugins/pencil/slice';
+import type { TextPluginSlice } from '../plugins/text/slice';
+import type { ShapePluginSlice } from '../plugins/shape/slice';
+import type { TransformationPluginSlice } from '../plugins/transformation/slice';
+import type { EditPluginSlice } from '../plugins/edit/slice';
+import type { SubpathPluginSlice } from '../plugins/subpath/slice';
+import type { OpticalAlignmentSlice } from '../plugins/opticalAlignment/slice';
+import type { CurvesPluginSlice } from '../plugins/curves/slice';
+import type { GuidelinesPluginSlice } from '../plugins/guidelines/slice';
+import type { GridPluginSlice } from '../plugins/grid/slice';
 
 // Debounce function to implement cool-off period
 function debounce<T extends (...args: never[]) => void>(
@@ -46,397 +43,43 @@ function debounce<T extends (...args: never[]) => void>(
   }) as T;
 }
 
-// Combine all slice types
-export type CanvasStore = BaseSlice &
+// Core Canvas Store - only structural slices
+export type CoreCanvasStore = BaseSlice &
   ViewportSlice &
   SelectionSlice &
   GroupSlice &
   OrderSlice &
-  ArrangeSlice &
-  PencilPluginSlice &
-  TextPluginSlice &
-  ShapePluginSlice &
-  TransformationPluginSlice &
-  EditPluginSlice &
-  SubpathPluginSlice &
-  OpticalAlignmentSlice &
-  CurvesPluginSlice &
-  GuidelinesPluginSlice &
-  GridPluginSlice & {
-    // Additional actions that need cross-slice functionality
-    startPath: (point: Point) => void;
-    addPointToPath: (point: Point) => void;
-    addText: (x: number, y: number, text: string) => Promise<void>;
-    deleteSelectedElements: () => void;
-    createShape: (startPoint: Point, endPoint: Point) => void;
-    performPathSimplify: () => void;
-    performSubPathReverse: () => void;
-  };
+  ArrangeSlice;
 
-// Create the store with all slices combined and temporal middleware
+// Extended Canvas Store - includes plugin slices for type safety
+// Plugins will extend this dynamically at runtime
+export type CanvasStore = CoreCanvasStore &
+  Partial<PencilPluginSlice> &
+  Partial<TextPluginSlice> &
+  Partial<ShapePluginSlice> &
+  Partial<TransformationPluginSlice> &
+  Partial<EditPluginSlice> &
+  Partial<SubpathPluginSlice> &
+  Partial<OpticalAlignmentSlice> &
+  Partial<CurvesPluginSlice> &
+  Partial<GuidelinesPluginSlice> &
+  Partial<GridPluginSlice>;
+
+// Create the store with core slices only - plugins will register dynamically
 export const useCanvasStore = create<CanvasStore>()(
   persist(
-
     temporal(
       (set, get, api) => ({
-        // Base slice
+        // Core structural slices only
         ...createBaseSlice(set, get, api),
-
-        // Viewport slice
         ...createViewportSlice(set, get, api),
-
-        // Selection slice
         ...createSelectionSlice(set, get, api),
-
-        // Group slice
         ...createGroupSlice(set, get, api),
-
-        // Order slice
         ...createOrderSlice(set, get, api),
-
-        // Arrange slice
         ...createArrangeSlice(set, get, api),
 
-        // Pencil plugin slice
-        ...createPencilPluginSlice(set, get, api),
-
-        // Text plugin slice
-        ...createTextPluginSlice(set, get, api),
-
-        // Shape plugin slice
-        ...createShapePluginSlice(set, get, api),
-
-        // Transformation plugin slice
-        ...createTransformationPluginSlice(set, get, api),
-
-        // Edit plugin slice
-        ...createEditPluginSlice(set, get, api),
-
-        // Subpath plugin slice
-        ...createSubpathPluginSlice(set, get, api),
-
-        // Optical alignment slice
-        ...createOpticalAlignmentSlice(set, get, api),
-
-        // Curves plugin slice
-        ...createCurvesPluginSlice(set, get, api),
-
-        // Guidelines plugin slice
-        ...createGuidelinesPluginSlice(set, get, api),
-
-        // Grid plugin slice
-        ...createGridPluginSlice(set, get, api),
-
-        // Cross-slice actions
-        startPath: (point) => {
-          const { strokeWidth, strokeColor, strokeOpacity, reusePath } = get().pencil;
-          // For pencil paths, if strokeColor is 'none', use black instead
-          const effectiveStrokeColor = strokeColor === 'none' ? '#000000' : strokeColor;
-
-          // Check if we should reuse an existing pencil path
-          const lastElement = get().elements[get().elements.length - 1];
-          const hasExistingPencilPath = lastElement?.type === 'path' &&
-            (lastElement.data as import('../types').PathData).isPencilPath === true;
-
-          if (reusePath && hasExistingPencilPath) {
-            // Reuse existing path - add the starting point as a new subpath
-            const pathData = lastElement.data as import('../types').PathData;
-            get().updateElement(lastElement.id, {
-              data: {
-                ...pathData,
-                subPaths: [...pathData.subPaths, [{ type: 'M', position: point }]]
-              },
-            });
-          } else {
-            // Create new path
-            get().addElement({
-              type: 'path',
-              data: {
-                subPaths: [[{ type: 'M', position: point }]],
-                strokeWidth,
-                strokeColor: effectiveStrokeColor,
-                strokeOpacity,
-                fillColor: 'none',  // Always no fill for pencil strokes
-                fillOpacity: 1,     // Always 100% fill opacity for pencil strokes
-                strokeLinecap: get().pencil.strokeLinecap || 'round',
-                strokeLinejoin: get().pencil.strokeLinejoin || 'round',
-                fillRule: get().pencil.fillRule || 'nonzero',
-                strokeDasharray: get().pencil.strokeDasharray || 'none',
-                isPencilPath: true, // Mark this as a pencil-created path
-              },
-            });
-          }
-        },
-
-        addPointToPath: (point) => {
-          const state = get();
-          // Find the last pencil path element
-          const pencilPathElement = [...state.elements].reverse().find(
-            el => el.type === 'path' && (el.data as import('../types').PathData).isPencilPath === true
-          );
-
-          if (pencilPathElement) {
-            const pathData = pencilPathElement.data as import('../types').PathData;
-
-            // Parse the current path to get the last point
-            const commands = pathData.subPaths.flat();
-            if (commands.length > 0) {
-              const lastCommand = commands[commands.length - 1];
-              if (lastCommand.type !== 'Z') {
-                let lastPoint: Point;
-                if (lastCommand.type === 'M' || lastCommand.type === 'L') {
-                  lastPoint = lastCommand.position;
-                } else if (lastCommand.type === 'C') {
-                  lastPoint = lastCommand.position;
-                } else {
-                  lastPoint = { x: 0, y: 0 }; // fallback
-                }
-
-                // Check minimum step distance (like in the provided code)
-                const minStep = 1.25;
-                const distance = Math.sqrt((point.x - lastPoint.x) ** 2 + (point.y - lastPoint.y) ** 2);
-                if (distance < minStep) {
-                  return; // Don't add point if too close
-                }
-              }
-            }
-
-            // Update subPaths by adding L command to the last subpath
-            const lastSubpathIndex = pathData.subPaths.length - 1;
-            const updatedSubPaths = [...pathData.subPaths];
-            updatedSubPaths[lastSubpathIndex] = [...updatedSubPaths[lastSubpathIndex], { type: 'L', position: point }];
-            get().updateElement(pencilPathElement.id, {
-              data: {
-                ...pathData,
-                subPaths: updatedSubPaths
-              },
-            });
-          }
-        },
-
-        addText: async (x, y, text) => {
-          const { fontSize, fontFamily, fontWeight, fontStyle } = get().text;
-          const { fillColor, fillOpacity, strokeColor, strokeWidth, strokeOpacity } = get().pencil;
-
-          try {
-            // Convert text to path commands directly without string parsing
-            const commands = await textToPathCommands(
-              text,
-              x,
-              y,
-              fontSize,
-              fontFamily,
-              fontWeight,
-              fontStyle
-            );
-
-            if (commands.length > 0) {
-              // Extract subpaths directly from commands
-              const subPaths = extractSubpaths(commands);
-
-              // Create path element with the converted text
-              get().addElement({
-                type: 'path',
-                data: {
-                  subPaths: subPaths.map(sp => sp.commands),
-                  strokeWidth,
-                  strokeColor,
-                  strokeOpacity,
-                  fillColor,
-                  fillOpacity,
-                  strokeLinecap: get().pencil.strokeLinecap || 'round',
-                  strokeLinejoin: get().pencil.strokeLinejoin || 'round',
-                  fillRule: get().pencil.fillRule || 'nonzero',
-                  strokeDasharray: get().pencil.strokeDasharray || 'none',
-                },
-              });
-            } else {
-              logger.error('Failed to convert text to path');
-            }
-          } catch (error) {
-            logger.error('Error converting text to path', error);
-          }
-
-          // Auto-switch to select mode after adding text
-          get().setActivePlugin('select');
-        },
-
-        deleteSelectedElements: () => {
-          const selectedIds = get().selectedIds;
-          set((state) => ({
-            elements: state.elements.filter((el) => !selectedIds.includes(el.id)),
-            selectedIds: [],
-          }));
-        },
-
-        createShape: (startPoint, endPoint) => {
-          const { strokeWidth, strokeColor, strokeOpacity, fillColor, fillOpacity } = get().pencil;
-          const selectedShape = get().shape.selectedShape;
-
-          // Calculate shape dimensions
-          const width = Math.abs(endPoint.x - startPoint.x);
-          const height = Math.abs(endPoint.y - startPoint.y);
-          const centerX = (startPoint.x + endPoint.x) / 2;
-          const centerY = (startPoint.y + endPoint.y) / 2;
-
-          let commands: Command[] = [];
-
-          switch (selectedShape) {
-            case 'square': {
-              // Create a square using path commands
-              const halfSize = Math.min(width, height) / 2;
-              commands = createSquareCommands(centerX, centerY, halfSize);
-              break;
-            }
-
-            case 'rectangle': {
-              // Create a rectangle using path commands
-              commands = createRectangleCommands(startPoint.x, startPoint.y, endPoint.x, endPoint.y);
-              break;
-            }
-
-            case 'circle': {
-              // Create a circle using C commands (Bézier curves)
-              const radius = Math.min(width, height) / 2;
-              commands = createCircleCommands(centerX, centerY, radius);
-              break;
-            }
-
-            case 'triangle': {
-              // Create a triangle using path commands
-              commands = createTriangleCommands(centerX, startPoint.y, endPoint.x, endPoint.y, startPoint.x);
-              break;
-            }
-
-            default: {
-              // Default to square if unknown shape
-              const defaultHalfSize = Math.min(width, height) / 2;
-              commands = createSquareCommands(centerX, centerY, defaultHalfSize);
-              break;
-            }
-          }
-
-          // Extract subpaths directly from generated commands
-          const parsedSubPaths = extractSubpaths(commands);
-
-          get().addElement({
-            type: 'path',
-            data: {
-              subPaths: parsedSubPaths.map(sp => sp.commands),
-              strokeWidth,
-              strokeColor,
-              strokeOpacity,
-              fillColor,
-              fillOpacity,
-              strokeLinecap: get().pencil.strokeLinecap || 'round',
-              strokeLinejoin: get().pencil.strokeLinejoin || 'round',
-              fillRule: get().pencil.fillRule || 'nonzero',
-              strokeDasharray: get().pencil.strokeDasharray || 'none',
-            },
-          });
-
-          // Auto-switch to select mode after creating shape
-          get().setActivePlugin('select');
-        },
-
-        performPathSimplify: () => {
-          // Split subpaths into separate paths
-          const state = get();
-          const selectedPaths = state.elements.filter(el =>
-            state.selectedIds.includes(el.id) && el.type === 'path'
-          );
-
-          const selectedSubpathElements = getSelectedSubpathElements(state.elements, state.selectedSubpaths);
-
-          // Handle full selected paths - split each subpath into separate paths
-          selectedPaths.forEach(pathElement => {
-            const pathData = pathElement.data as import('../types').PathData;
-            
-            if (pathData.subPaths.length > 1) {
-              // Create a new path for each subpath
-              pathData.subPaths.forEach((subPath) => {
-                const newPathData: import('../types').PathData = {
-                  ...pathData,
-                  subPaths: [subPath]
-                };
-                
-                get().addElement({
-                  type: 'path',
-                  data: newPathData
-                });
-              });
-              
-              // Remove the original path
-              get().deleteElement(pathElement.id);
-            }
-          });
-
-          // Handle selected subpaths - create new paths for each selected subpath
-          selectedSubpathElements.forEach(({ element, subpathIndex }) => {
-            const pathData = element.data as import('../types').PathData;
-            
-            // Create a new path with only the selected subpath
-            const newPathData: import('../types').PathData = {
-              ...pathData,
-              subPaths: [pathData.subPaths[subpathIndex]]
-            };
-            
-            get().addElement({
-              type: 'path',
-              data: newPathData
-            });
-            
-            // Remove the selected subpath from the original path
-            const remainingSubPaths = pathData.subPaths.filter((_, index) => index !== subpathIndex);
-            if (remainingSubPaths.length > 0) {
-              get().updateElement(element.id, {
-                data: {
-                  ...pathData,
-                  subPaths: remainingSubPaths
-                }
-              });
-            } else {
-              // If no subpaths left, remove the original path
-              get().deleteElement(element.id);
-            }
-          });
-
-          // Clear selection after operation
-          const fullState = get() as CanvasStore;
-          fullState.clearSelection();
-          fullState.clearSubpathSelection();
-        },
-
-        performSubPathReverse: () => {
-          // Reverse selected subpaths
-          const state = get();
-          const selectedSubpathElements = getSelectedSubpathElements(state.elements, state.selectedSubpaths);
-
-          // Reverse each selected subpath
-          selectedSubpathElements.forEach(({ element, subpathIndex }) => {
-            const pathData = element.data as import('../types').PathData;
-            const reversedSubPath = reverseSubPath(pathData.subPaths[subpathIndex]);
-            
-            // Update the subpath in the element
-            const updatedSubPaths = [...pathData.subPaths];
-            updatedSubPaths[subpathIndex] = reversedSubPath;
-            
-            get().updateElement(element.id, {
-              data: {
-                ...pathData,
-                subPaths: updatedSubPaths
-              }
-            });
-          });
-
-          // Clear selection after operation
-          const fullState = get() as CanvasStore;
-          fullState.clearSelection();
-          fullState.clearSubpathSelection();
-
-          // Switch back to select mode after operation
-          fullState.setActivePlugin('select');
-        },
+        // Plugin slices are now registered dynamically through registerPluginSlices
+        // Cross-slice actions have been moved to their respective plugins
       }),
       {
         // Zundo temporal options

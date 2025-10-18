@@ -444,11 +444,11 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     const state = get() as FullCanvasState;
 
     // Check if the point being dragged is in the selection
-    const isSelected = state.selectedCommands.some((cmd) =>
+    const isSelected = state.selectedCommands?.some((cmd) =>
       cmd.elementId === elementId &&
       cmd.commandIndex === commandIndex &&
       cmd.pointIndex === pointIndex
-    );
+    ) ?? false;
 
     // If the point is not selected, select it first (single selection)
     if (!isSelected) {
@@ -457,13 +457,13 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
 
     // Now determine the drag type based on current selection
     const currentState = get() as FullCanvasState;
-    const currentIsSelected = currentState.selectedCommands.some((cmd) =>
+    const currentIsSelected = currentState.selectedCommands?.some((cmd) =>
       cmd.elementId === elementId &&
       cmd.commandIndex === commandIndex &&
       cmd.pointIndex === pointIndex
-    );
+    ) ?? false;
 
-    if (currentIsSelected && currentState.selectedCommands.length > 1) {
+    if (currentIsSelected && (currentState.selectedCommands?.length ?? 0) > 1) {
       // Multiple points selected - prepare for group drag
       const initialPositions: Array<{
         elementId: string;
@@ -474,7 +474,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
       }> = [];
 
       // Get initial positions of all selected points
-      currentState.selectedCommands.forEach((cmd) => {
+      currentState.selectedCommands?.forEach((cmd) => {
         const element = state.elements.find((el) => el.id === cmd.elementId);
         if (element && element.type === 'path') {
           const pathData = element.data as PathData;
@@ -711,7 +711,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     const state = get() as FullCanvasState;
     const selectedCommands = state.selectedCommands;
 
-    if (selectedCommands.length === 0) return;
+    if (!selectedCommands || selectedCommands.length === 0) return;
 
     // Group commands by elementId using helper
     const commandsByElement = groupSelectedCommandsByElement(selectedCommands);
@@ -834,55 +834,55 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
   alignLeftCommands: () => {
     const state = get() as FullCanvasState;
     const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
-    applyAlignment(state.selectedCommands, alignmentStrategies.left, 'x', state, setStore);
+    applyAlignment(state.selectedCommands ?? [], alignmentStrategies.left, 'x', state, setStore);
   },
 
   alignCenterCommands: () => {
     const state = get() as FullCanvasState;
     const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
-    applyAlignment(state.selectedCommands, alignmentStrategies.center, 'x', state, setStore);
+    applyAlignment(state.selectedCommands ?? [], alignmentStrategies.center, 'x', state, setStore);
   },
 
   alignRightCommands: () => {
     const state = get() as FullCanvasState;
     const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
-    applyAlignment(state.selectedCommands, alignmentStrategies.right, 'x', state, setStore);
+    applyAlignment(state.selectedCommands ?? [], alignmentStrategies.right, 'x', state, setStore);
   },
 
   alignTopCommands: () => {
     const state = get() as FullCanvasState;
     const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
-    applyAlignment(state.selectedCommands, alignmentStrategies.top, 'y', state, setStore);
+    applyAlignment(state.selectedCommands ?? [], alignmentStrategies.top, 'y', state, setStore);
   },
 
   alignMiddleCommands: () => {
     const state = get() as FullCanvasState;
     const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
-    applyAlignment(state.selectedCommands, alignmentStrategies.middle, 'y', state, setStore);
+    applyAlignment(state.selectedCommands ?? [], alignmentStrategies.middle, 'y', state, setStore);
   },
 
   alignBottomCommands: () => {
     const state = get() as FullCanvasState;
     const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
-    applyAlignment(state.selectedCommands, alignmentStrategies.bottom, 'y', state, setStore);
+    applyAlignment(state.selectedCommands ?? [], alignmentStrategies.bottom, 'y', state, setStore);
   },
 
   distributeHorizontallyCommands: () => {
     const state = get() as FullCanvasState;
     const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
-    applyDistribution(state.selectedCommands, 'x', state, setStore);
+    applyDistribution(state.selectedCommands ?? [], 'x', state, setStore);
   },
 
   distributeVerticallyCommands: () => {
     const state = get() as FullCanvasState;
     const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
-    applyDistribution(state.selectedCommands, 'y', state, setStore);
+    applyDistribution(state.selectedCommands ?? [], 'y', state, setStore);
   },
 
   // Check if edit should work with subpaths instead of all points
   isWorkingWithSubpaths: () => {
     const state = get() as FullCanvasState;
-    return state.selectedSubpaths && state.selectedSubpaths.length > 0;
+    return (state.selectedSubpaths?.length ?? 0) > 0;
   },
 
   // Get filtered editable points - either from selected subpaths or all points
@@ -903,7 +903,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     }
 
     // Subpath mode: filter points to only include those from selected subpaths
-    const selectedSubpaths = state.selectedSubpaths.filter((sp) => sp.elementId === elementId);
+    const selectedSubpaths = (state.selectedSubpaths ?? []).filter((sp) => sp.elementId === elementId);
     if (selectedSubpaths.length === 0) return [];
 
     const subpaths = extractSubpaths(commands);
@@ -932,11 +932,13 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
 
   applySmoothBrush: (centerX?: number, centerY?: number) => {
     const state = get() as FullCanvasState;
+    if (!state.smoothBrush) return;
+    
     const { radius, strength, simplifyPoints: shouldSimplifyPoints, simplificationTolerance, minDistance } = state.smoothBrush;
 
     // Find the active element (first selected or the one being edited)
     let targetElementId: string | null = null;
-    if (state.selectedCommands.length > 0) {
+    if ((state.selectedCommands?.length ?? 0) > 0 && state.selectedCommands) {
       targetElementId = state.selectedCommands[0].elementId;
     } else if (state.editingPoint) {
       targetElementId = state.editingPoint.elementId;
@@ -960,9 +962,9 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     let editablePoints = extractEditablePoints(commands);
 
     // Check if we have selected subpaths - filter editable points accordingly
-    const hasSelectedSubpaths = state.selectedSubpaths && state.selectedSubpaths.length > 0;
+    const hasSelectedSubpaths = (state.selectedSubpaths?.length ?? 0) > 0;
     const selectedSubpathsForElement = hasSelectedSubpaths 
-      ? state.selectedSubpaths.filter(sp => sp.elementId === targetElementId)
+      ? (state.selectedSubpaths ?? []).filter(sp => sp.elementId === targetElementId)
       : [];
 
     if (selectedSubpathsForElement.length > 0) {
@@ -1011,10 +1013,10 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
       isControl: boolean;
     }> = [];
 
-    if (state.selectedCommands.length > 0) {
+    if ((state.selectedCommands?.length ?? 0) > 0) {
       // Apply smoothing only to selected commands
 
-      state.selectedCommands.forEach((selectedCmd) => {
+      (state.selectedCommands ?? []).forEach((selectedCmd) => {
         const point = editablePoints.find(p =>
           p.commandIndex === selectedCmd.commandIndex &&
           p.pointIndex === selectedCmd.pointIndex
@@ -1137,7 +1139,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
       // Apply point simplification if enabled
       if (shouldSimplifyPoints) {
 
-        if (state.selectedCommands.length > 0) {
+        if ((state.selectedCommands?.length ?? 0) > 0) {
           
           // When points are selected, simplify only the updated points (those that were smoothed)
           // First, create a map of the updated points for quick lookup
@@ -1390,12 +1392,12 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
 
   applyPathSimplification: () => {
     const state = get() as FullCanvasState;
-    const { tolerance } = state.pathSimplification;
+    const { tolerance } = state.pathSimplification ?? { tolerance: 1 };
 
     // Find the active element (first selected or the one being edited)
     let targetElementId: string | null = null;
-    if (state.selectedCommands.length > 0) {
-      targetElementId = state.selectedCommands[0].elementId;
+    if ((state.selectedCommands?.length ?? 0) > 0) {
+      targetElementId = state.selectedCommands?.[0].elementId ?? null;
     } else if (state.editingPoint) {
       targetElementId = state.editingPoint.elementId;
     } else if ((state as CanvasStore).selectedIds && (state as CanvasStore).selectedIds.length > 0) {
@@ -1412,9 +1414,9 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     const allCommands = pathData.subPaths.flat();
 
     // Check if we have selected subpaths
-    const hasSelectedSubpaths = state.selectedSubpaths && state.selectedSubpaths.length > 0;
+    const hasSelectedSubpaths = (state.selectedSubpaths?.length ?? 0) > 0;
     const selectedSubpathsForElement = hasSelectedSubpaths 
-      ? state.selectedSubpaths.filter(sp => sp.elementId === targetElementId)
+      ? (state.selectedSubpaths ?? []).filter(sp => sp.elementId === targetElementId)
       : [];
 
     if (selectedSubpathsForElement.length > 0) {
@@ -1453,10 +1455,10 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
           subPaths: newSubPaths
         },
       });
-    } else if (state.selectedCommands.length > 0) {
+    } else if ((state.selectedCommands?.length ?? 0) > 0) {
       // Simplify only the selected portion of the path
-      const selectedElementId = state.selectedCommands[0].elementId;
-      const selectedCommands = state.selectedCommands.filter(cmd => cmd.elementId === selectedElementId);
+      const selectedElementId = state.selectedCommands?.[0].elementId ?? '';
+      const selectedCommands = (state.selectedCommands ?? []).filter(cmd => cmd.elementId === selectedElementId);
 
       // Get the range of commands that contain the selected points
       const commandIndices = selectedCommands.map(cmd => cmd.commandIndex);
@@ -1538,7 +1540,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
         });
 
         // Clear selection after simplification
-        state.clearSelectedCommands();
+        state.clearSelectedCommands?.();
       }
     } else {
       // No selection - simplify the entire path
@@ -2073,7 +2075,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
 
     // Clear selection after cutting subpath (indices may have changed)
     const currentState = get() as FullCanvasState;
-    currentState.clearSelectedCommands();
+    currentState.clearSelectedCommands?.();
   },  updatePathRounding: (settings) => {
     set((state) => ({
       pathRounding: { ...state.pathRounding, ...settings },
@@ -2082,12 +2084,12 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
 
   applyPathRounding: () => {
     const state = get() as FullCanvasState;
-    const { radius } = state.pathRounding;
+    const { radius } = state.pathRounding ?? { radius: 5 };
 
     // Find the active element (first selected or the one being edited)
     let targetElementId: string | null = null;
-    if (state.selectedCommands.length > 0) {
-      targetElementId = state.selectedCommands[0].elementId;
+    if ((state.selectedCommands?.length ?? 0) > 0) {
+      targetElementId = state.selectedCommands?.[0].elementId ?? null;
     } else if (state.editingPoint) {
       targetElementId = state.editingPoint.elementId;
     } else if ((state as CanvasStore).selectedIds && (state as CanvasStore).selectedIds.length > 0) {
@@ -2103,9 +2105,9 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     const pathData = element.data as import('../../types').PathData;
 
     // Check if we have selected subpaths
-    const hasSelectedSubpaths = state.selectedSubpaths && state.selectedSubpaths.length > 0;
+    const hasSelectedSubpaths = (state.selectedSubpaths?.length ?? 0) > 0;
     const selectedSubpathsForElement = hasSelectedSubpaths 
-      ? state.selectedSubpaths.filter(sp => sp.elementId === targetElementId)
+      ? (state.selectedSubpaths ?? []).filter(sp => sp.elementId === targetElementId)
       : [];
 
     if (selectedSubpathsForElement.length > 0) {
@@ -2147,7 +2149,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
       });
 
       // Clear selection after rounding
-      state.clearSelectedCommands();
+      state.clearSelectedCommands?.();
     } else {
       // Apply path rounding using the utility function to the entire path
       const roundedPathData = performPathRound(pathData, radius);
@@ -2159,7 +2161,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
         });
 
         // Clear selection after rounding
-        state.clearSelectedCommands();
+        state.clearSelectedCommands?.();
       }
     }
   },

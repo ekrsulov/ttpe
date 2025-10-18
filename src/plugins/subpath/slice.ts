@@ -302,15 +302,15 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
         return state;
       }
 
-      const isSelected = state.selectedSubpaths.some(
+      const isSelected = (state.selectedSubpaths ?? []).some(
         s => s.elementId === elementId && s.subpathIndex === subpathIndex
       );
 
       if (multiSelect) {
         return {
           selectedSubpaths: isSelected
-            ? state.selectedSubpaths.filter(s => !(s.elementId === elementId && s.subpathIndex === subpathIndex))
-            : [...state.selectedSubpaths, { elementId, subpathIndex }]
+            ? (state.selectedSubpaths ?? []).filter(s => !(s.elementId === elementId && s.subpathIndex === subpathIndex))
+            : [...(state.selectedSubpaths ?? []), { elementId, subpathIndex }]
         };
       } else {
         return {
@@ -329,12 +329,12 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
   },
 
   getSelectedSubpathsCount: () => {
-    return get().selectedSubpaths.length;
+    return (get().selectedSubpaths?.length ?? 0);
   },
 
   deleteSelectedSubpaths: () => {
     const state = get() as CanvasStore;
-    const selectedSubpaths = get().selectedSubpaths;
+    const selectedSubpaths = get().selectedSubpaths ?? [];
 
     if (selectedSubpaths.length === 0) return;
 
@@ -368,7 +368,7 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
 
   moveSelectedSubpaths: (deltaX: number, deltaY: number) => {
     const state = get() as CanvasStore;
-    const selectedSubpaths = get().selectedSubpaths;
+    const selectedSubpaths = get().selectedSubpaths ?? [];
     const precision = state.settings.keyboardMovementPrecision;
 
     if (selectedSubpaths.length === 0) return;
@@ -402,28 +402,28 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
   // Order functions
   bringSubpathToFront: () => {
     const state = get() as CanvasStore;
-    const selectedSubpaths = get().selectedSubpaths;
+    const selectedSubpaths = get().selectedSubpaths ?? [];
     const newSelection = processSubpathOrderChange(state, selectedSubpaths, 'toFront');
     set({ selectedSubpaths: newSelection });
   },
 
   sendSubpathForward: () => {
     const state = get() as CanvasStore;
-    const selectedSubpaths = get().selectedSubpaths;
+    const selectedSubpaths = get().selectedSubpaths ?? [];
     const newSelection = processSubpathOrderChange(state, selectedSubpaths, 'forward');
     set({ selectedSubpaths: newSelection });
   },
 
   sendSubpathBackward: () => {
     const state = get() as CanvasStore;
-    const selectedSubpaths = get().selectedSubpaths;
+    const selectedSubpaths = get().selectedSubpaths ?? [];
     const newSelection = processSubpathOrderChange(state, selectedSubpaths, 'backward');
     set({ selectedSubpaths: newSelection });
   },
 
   sendSubpathToBack: () => {
     const state = get() as CanvasStore;
-    const selectedSubpaths = get().selectedSubpaths;
+    const selectedSubpaths = get().selectedSubpaths ?? [];
     const newSelection = processSubpathOrderChange(state, selectedSubpaths, 'toBack');
     set({ selectedSubpaths: newSelection });
   },
@@ -431,7 +431,7 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
   // Alignment functions
   alignLeftSubpaths: () => {
     const state = get() as CanvasStore;
-    const selectedSubpaths = get().selectedSubpaths;
+    const selectedSubpaths = get().selectedSubpaths ?? [];
 
     performSubpathAlignment(state, selectedSubpaths, (subpathBounds) => {
       const minX = Math.min(...subpathBounds.map(sb => sb.bounds.minX));
@@ -444,7 +444,7 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
 
   alignCenterSubpaths: () => {
     const state = get() as CanvasStore;
-    const selectedSubpaths = get().selectedSubpaths;
+    const selectedSubpaths = get().selectedSubpaths ?? [];
 
     performSubpathAlignment(state, selectedSubpaths, (subpathBounds) => {
       const targetCenterX = subpathBounds.reduce((sum, sb) => sum + sb.centerX, 0) / subpathBounds.length;
@@ -457,7 +457,7 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
 
   alignRightSubpaths: () => {
     const state = get() as CanvasStore;
-    const selectedSubpaths = get().selectedSubpaths;
+    const selectedSubpaths = get().selectedSubpaths ?? [];
 
     performSubpathAlignment(state, selectedSubpaths, (subpathBounds) => {
       const maxX = Math.max(...subpathBounds.map(sb => sb.bounds.maxX));
@@ -470,7 +470,7 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
 
   alignTopSubpaths: () => {
     const state = get() as CanvasStore;
-    const selectedSubpaths = get().selectedSubpaths;
+    const selectedSubpaths = get().selectedSubpaths ?? [];
 
     performSubpathAlignment(state, selectedSubpaths, (subpathBounds) => {
       const minY = Math.min(...subpathBounds.map(sb => sb.bounds.minY));
@@ -483,7 +483,7 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
 
   alignMiddleSubpaths: () => {
     const state = get() as CanvasStore;
-    const selectedSubpaths = get().selectedSubpaths;
+    const selectedSubpaths = get().selectedSubpaths ?? [];
 
     performSubpathAlignment(state, selectedSubpaths, (subpathBounds) => {
       const targetCenterY = subpathBounds.reduce((sum, sb) => sum + sb.centerY, 0) / subpathBounds.length;
@@ -496,7 +496,7 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
 
   alignBottomSubpaths: () => {
     const state = get() as CanvasStore;
-    const selectedSubpaths = get().selectedSubpaths;
+    const selectedSubpaths = get().selectedSubpaths ?? [];
 
     performSubpathAlignment(state, selectedSubpaths, (subpathBounds) => {
       const maxY = Math.max(...subpathBounds.map(sb => sb.bounds.maxY));
@@ -509,20 +509,20 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
 
   distributeHorizontallySubpaths: () => {
     const state = get() as CanvasStore;
-    const selectedSubpaths = get().selectedSubpaths;
+    const selectedSubpaths = get().selectedSubpaths ?? [];
     distributeSubpathsAlongAxis(state, selectedSubpaths, 'horizontal');
   },
 
   distributeVerticallySubpaths: () => {
     const state = get() as CanvasStore;
-    const selectedSubpaths = get().selectedSubpaths;
+    const selectedSubpaths = get().selectedSubpaths ?? [];
     distributeSubpathsAlongAxis(state, selectedSubpaths, 'vertical');
   },
 
   // Drag actions
   startDraggingSubpaths: (canvasX: number, canvasY: number) => {
     const state = get() as CanvasStore;
-    const selectedSubpaths = get().selectedSubpaths;
+    const selectedSubpaths = get().selectedSubpaths ?? [];
 
     if (selectedSubpaths.length === 0) return;
 

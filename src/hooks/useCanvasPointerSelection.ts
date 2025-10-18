@@ -19,7 +19,7 @@ export const useCanvasPointerSelection = (isShiftPressed: boolean = false) => {
     selectCommands: (commands, isShift) => {
       if (isShift) {
         useCanvasStore.setState(state => {
-          const combined = [...state.selectedCommands, ...commands];
+          const combined = [...(state.selectedCommands ?? []), ...commands];
           const unique = combined.filter((command, index, self) =>
             index === self.findIndex(c =>
               c.elementId === command.elementId &&
@@ -36,7 +36,7 @@ export const useCanvasPointerSelection = (isShiftPressed: boolean = false) => {
     selectSubpaths: (subpaths, isShift) => {
       if (isShift) {
         useCanvasStore.setState(state => {
-          const combined = [...state.selectedSubpaths, ...subpaths];
+          const combined = [...(state.selectedSubpaths ?? []), ...subpaths];
           const unique = combined.filter((subpath, index, self) =>
             index === self.findIndex(s =>
               s.elementId === subpath.elementId &&
@@ -68,10 +68,10 @@ export const useCanvasPointerSelection = (isShiftPressed: boolean = false) => {
     setSelectionEnd(point);
 
     if (shouldClearCommands) {
-      clearSelectedCommands();
+      clearSelectedCommands?.();
     }
     if (shouldClearSubpaths) {
-      clearSubpathSelection();
+      clearSubpathSelection?.();
     }
   }, [clearSelectedCommands, clearSubpathSelection]);
 

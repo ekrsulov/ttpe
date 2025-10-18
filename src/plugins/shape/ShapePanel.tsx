@@ -20,7 +20,7 @@ export const ShapePanel: React.FC = () => {
   ];
 
   const handleShapeSelect = (shapeType: ShapeType) => {
-    updateShapeState({ selectedShape: shapeType });
+    updateShapeState?.({ selectedShape: shapeType });
     // Auto-switch to shape mode when selecting a shape
     setActivePlugin('shape');
   };
@@ -30,7 +30,7 @@ export const ShapePanel: React.FC = () => {
       <HStack spacing={1}>
         {shapes.map((shapeItem) => {
           const IconComponent = shapeItem.icon;
-          const isShapeSelected = shape.selectedShape === shapeItem.type;
+          const isShapeSelected = shape?.selectedShape === shapeItem.type;
           const isShapeModeActive = activePlugin === 'shape';
           const shouldHighlight = isShapeModeActive && isShapeSelected;
 

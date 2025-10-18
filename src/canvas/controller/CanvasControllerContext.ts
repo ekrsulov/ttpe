@@ -1,7 +1,8 @@
 import { createContext, useContext, useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
-import type { CanvasElement } from '../../types';
+import type { CanvasElement, Point } from '../../types';
+import { pluginManager } from '../../utils/pluginManager';
 
 export interface CanvasControllerValue
   extends Pick<
@@ -38,12 +39,13 @@ export interface CanvasControllerValue
     | 'selectElement'
     | 'setMode'
     | 'applySmoothBrush'
-    | 'startPath'
-    | 'addPointToPath'
     | 'zoom'
   > {
   sortedElements: CanvasElement[];
   elementMap: Map<string, CanvasElement>;
+  // Compatibility functions that delegate to plugin APIs
+  startPath: (point: Point) => void;
+  addPointToPath: (point: Point) => void;
 }
 
 export const CanvasControllerContext = createContext<CanvasControllerValue | null>(null);
@@ -82,8 +84,6 @@ export const useCanvasControllerSource = (): CanvasControllerValue => {
       selectElement: store.selectElement,
       setMode: store.setMode,
       applySmoothBrush: store.applySmoothBrush,
-      startPath: store.startPath,
-      addPointToPath: store.addPointToPath,
       zoom: store.zoom,
     }))
   );
@@ -100,13 +100,24 @@ export const useCanvasControllerSource = (): CanvasControllerValue => {
     return map;
   }, [state.elements]);
 
+  // Compatibility functions that delegate to plugin APIs
+  const startPath = useMemo(() => (point: Point) => {
+    pluginManager.callPluginApi('pencil', 'startPath', point);
+  }, []);
+
+  const addPointToPath = useMemo(() => (point: Point) => {
+    pluginManager.callPluginApi('pencil', 'addPointToPath', point);
+  }, []);
+
   return useMemo(
     () => ({
       ...state,
       sortedElements,
       elementMap,
+      startPath,
+      addPointToPath,
     }),
-    [state, sortedElements, elementMap]
+    [state, sortedElements, elementMap, startPath, addPointToPath]
   );
 };
 

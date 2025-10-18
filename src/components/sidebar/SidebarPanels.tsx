@@ -61,7 +61,7 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
   const isInSpecialPanelMode = showFilePanel || showSettingsPanel;
   
   // Use centralized optical alignment eligibility check from store
-  const canPerformOpticalAlignment = useCanvasStore(state => state.canPerformOpticalAlignment());
+  const canPerformOpticalAlignment = useCanvasStore(state => state.canPerformOpticalAlignment?.() ?? false);
 
   // Prepare the context for condition evaluation
   const conditionContext = useMemo(() => ({

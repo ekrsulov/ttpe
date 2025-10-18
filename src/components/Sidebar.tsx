@@ -96,13 +96,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const selectedSubpaths = useCanvasStore((state) => state.selectedSubpaths);
   
   // For smoothBrush, select only the properties we need (exclude affectedPoints)
-  const smoothBrushRadius = useCanvasStore((state) => state.smoothBrush.radius);
-  const smoothBrushStrength = useCanvasStore((state) => state.smoothBrush.strength);
-  const smoothBrushIsActive = useCanvasStore((state) => state.smoothBrush.isActive);
+  const smoothBrushRadius = useCanvasStore((state) => state.smoothBrush?.radius ?? 50);
+  const smoothBrushStrength = useCanvasStore((state) => state.smoothBrush?.strength ?? 0.5);
+  const smoothBrushIsActive = useCanvasStore((state) => state.smoothBrush?.isActive ?? false);
   // Don't subscribe to cursorX/cursorY - they update on every mouse move and aren't needed in Sidebar
-  const smoothBrushSimplifyPoints = useCanvasStore((state) => state.smoothBrush.simplifyPoints);
-  const smoothBrushSimplificationTolerance = useCanvasStore((state) => state.smoothBrush.simplificationTolerance);
-  const smoothBrushMinDistance = useCanvasStore((state) => state.smoothBrush.minDistance);
+  const smoothBrushSimplifyPoints = useCanvasStore((state) => state.smoothBrush?.simplifyPoints ?? true);
+  const smoothBrushSimplificationTolerance = useCanvasStore((state) => state.smoothBrush?.simplificationTolerance ?? 1);
+  const smoothBrushMinDistance = useCanvasStore((state) => state.smoothBrush?.minDistance ?? 5);
   
   // Actions (these are stable references)
   const updateSmoothBrush = useCanvasStore((state) => state.updateSmoothBrush);
@@ -226,19 +226,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
           onTogglePin={() => setIsPinned(false)}
           isDesktop={isDesktop}
           smoothBrush={smoothBrush}
-          pathSimplification={pathSimplification}
-          pathRounding={pathRounding}
-          selectedCommands={selectedCommands}
-          selectedSubpaths={selectedSubpaths}
-          updateSmoothBrush={updateSmoothBrush}
-          updatePathSimplification={updatePathSimplification}
-          updatePathRounding={updatePathRounding}
-          applySmoothBrush={applySmoothBrush}
-          applyPathSimplification={applyPathSimplification}
-          applyPathRounding={applyPathRounding}
-          activateSmoothBrush={activateSmoothBrush}
-          deactivateSmoothBrush={deactivateSmoothBrush}
-          resetSmoothBrush={resetSmoothBrush}
+          pathSimplification={pathSimplification ?? { tolerance: 1 }}
+          pathRounding={pathRounding ?? { radius: 0 }}
+          selectedCommands={selectedCommands ?? []}
+          selectedSubpaths={selectedSubpaths ?? []}
+          updateSmoothBrush={updateSmoothBrush ?? (() => {})}
+          updatePathSimplification={updatePathSimplification ?? (() => {})}
+          updatePathRounding={updatePathRounding ?? (() => {})}
+          applySmoothBrush={applySmoothBrush ?? (() => {})}
+          applyPathSimplification={applyPathSimplification ?? (() => {})}
+          applyPathRounding={applyPathRounding ?? (() => {})}
+          activateSmoothBrush={activateSmoothBrush ?? (() => {})}
+          deactivateSmoothBrush={deactivateSmoothBrush ?? (() => {})}
+          resetSmoothBrush={resetSmoothBrush ?? (() => {})}
           isArrangeExpanded={isArrangeExpanded}
           setIsArrangeExpanded={setIsArrangeExpanded}
           onResize={handleResize}
@@ -316,19 +316,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
               onTogglePin={() => setIsPinned(true)}
               isDesktop={isDesktop}
               smoothBrush={smoothBrush}
-              pathSimplification={pathSimplification}
-              pathRounding={pathRounding}
-              selectedCommands={selectedCommands}
-              selectedSubpaths={selectedSubpaths}
-              updateSmoothBrush={updateSmoothBrush}
-              updatePathSimplification={updatePathSimplification}
-              updatePathRounding={updatePathRounding}
-              applySmoothBrush={applySmoothBrush}
-              applyPathSimplification={applyPathSimplification}
-              applyPathRounding={applyPathRounding}
-              activateSmoothBrush={activateSmoothBrush}
-              deactivateSmoothBrush={deactivateSmoothBrush}
-              resetSmoothBrush={resetSmoothBrush}
+              pathSimplification={pathSimplification ?? { tolerance: 1 }}
+              pathRounding={pathRounding ?? { radius: 0 }}
+              selectedCommands={selectedCommands ?? []}
+              selectedSubpaths={selectedSubpaths ?? []}
+              updateSmoothBrush={updateSmoothBrush ?? (() => {})}
+              updatePathSimplification={updatePathSimplification ?? (() => {})}
+              updatePathRounding={updatePathRounding ?? (() => {})}
+              applySmoothBrush={applySmoothBrush ?? (() => {})}
+              applyPathSimplification={applyPathSimplification ?? (() => {})}
+              applyPathRounding={applyPathRounding ?? (() => {})}
+              activateSmoothBrush={activateSmoothBrush ?? (() => {})}
+              deactivateSmoothBrush={deactivateSmoothBrush ?? (() => {})}
+              resetSmoothBrush={resetSmoothBrush ?? (() => {})}
               isArrangeExpanded={isArrangeExpanded}
               setIsArrangeExpanded={setIsArrangeExpanded}
             />

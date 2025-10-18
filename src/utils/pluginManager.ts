@@ -52,6 +52,8 @@ export class PluginManager {
   private canvasServices = new Map<string, CanvasService<unknown>>();
   private activeCanvasServices = new Map<string, CanvasServiceInstance<unknown>>();
   private shortcutSubscriptions = new Map<string, () => void>();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private pluginApis = new Map<string, Record<string, (...args: any[]) => any>>();
 
   private createShortcutContext(svg?: SVGSVGElement | null): CanvasShortcutContext {
     if (!this.eventBus) {
@@ -99,6 +101,11 @@ export class PluginManager {
         factory(useCanvasStore.setState, useCanvasStore.getState, useCanvasStore)
       );
       registerPluginSlices(plugin.id, contributions);
+    }
+
+    // Register plugin API
+    if (plugin.api) {
+      this.pluginApis.set(plugin.id, plugin.api);
     }
 
     this.bindPluginInteractions(plugin);
@@ -157,6 +164,7 @@ export class PluginManager {
     this.unregisterCanvasLayers(pluginId);
     this.teardownPluginInteractions(pluginId);
     this.teardownPluginShortcuts(pluginId);
+    this.pluginApis.delete(pluginId);
 
     if (existing.slices?.length) {
       unregisterPluginSlices(pluginId);
@@ -303,6 +311,31 @@ export class PluginManager {
 
   getRegisteredTools(): Array<PluginDefinition<CanvasStore>> {
     return this.getAll();
+  }
+
+  /**
+   * Get the public API of a plugin
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getPluginApi<T extends Record<string, (...args: any[]) => any>>(pluginId: string): T | undefined {
+    return this.pluginApis.get(pluginId) as T | undefined;
+  }
+
+  /**
+   * Call a plugin API method
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  callPluginApi<TArgs extends any[], TReturn>(
+    pluginId: string,
+    methodName: string,
+    ...args: TArgs
+  ): TReturn | undefined {
+    const api = this.pluginApis.get(pluginId);
+    if (!api || !api[methodName]) {
+      console.warn(`Plugin API method "${methodName}" not found in plugin "${pluginId}"`);
+      return undefined;
+    }
+    return api[methodName](...args) as TReturn;
   }
 
   registerCanvasLayers(pluginId: string, layers: CanvasLayerContribution[]): void {

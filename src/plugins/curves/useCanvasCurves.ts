@@ -37,7 +37,7 @@ export const useCanvasCurves = (): UseCanvasCurvesReturn => {
   useEffect(() => {
     const unsubscribe = controller.addListener(() => {
       const newState = controller.getState();
-      useCanvasStore.getState().setCurveState(newState);
+      useCanvasStore.getState().setCurveState?.(newState);
     });
     return unsubscribe;
   }, [controller]);
@@ -91,7 +91,12 @@ export const useCanvasCurves = (): UseCanvasCurvesReturn => {
     controller.setPointType(pointId, type);
   }, [controller]);
 
-  const curveState = useCanvasStore(state => state.curveState);
+  const curveState = useCanvasStore(state => state.curveState ?? {
+    mode: 'inactive' as const,
+    isActive: false,
+    points: [],
+    isClosingPath: false,
+  });
 
   return {
     isActive: curveState.isActive,

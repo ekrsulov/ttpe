@@ -111,4 +111,10 @@ export interface PluginDefinition<TStore extends object = object> {
   panels?: PluginUIContribution[];
   actions?: PluginActionContribution[];
   slices?: PluginSliceFactory<TStore>[];
+  /**
+   * Public API exposed by the plugin for use by other parts of the application.
+   * This allows plugins to expose functionality without coupling to the store.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  api?: Record<string, (...args: any[]) => any>;
 }

@@ -25,19 +25,19 @@ const handleEscapeShortcut = (state: CanvasStore) => {
     return;
   }
 
-  if (state.activePlugin === 'subpath' && state.selectedSubpaths.length > 0) {
-    state.clearSubpathSelection();
+  if (state.activePlugin === 'subpath' && (state.selectedSubpaths?.length ?? 0) > 0) {
+    state.clearSubpathSelection?.();
     return;
   }
 
-  if (state.activePlugin === 'edit' && state.selectedCommands.length > 0) {
-    state.clearSelectedCommands();
+  if (state.activePlugin === 'edit' && (state.selectedCommands?.length ?? 0) > 0) {
+    state.clearSelectedCommands?.();
     return;
   }
 
   if (
     (state.activePlugin === 'transformation' || state.activePlugin === 'edit') &&
-    state.selectedSubpaths.length > 0
+    (state.selectedSubpaths?.length ?? 0) > 0
   ) {
     state.setActivePlugin('subpath');
     return;

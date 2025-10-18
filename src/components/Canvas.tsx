@@ -131,7 +131,9 @@ const CanvasContent: React.FC = () => {
   }, []);
 
   const handleMoveSelectedSubpaths = useCallback((deltaX: number, deltaY: number) => {
-    moveSelectedSubpathsRef.current(deltaX, deltaY);
+    if (moveSelectedSubpathsRef.current) {
+      moveSelectedSubpathsRef.current(deltaX, deltaY);
+    }
   }, []);
 
   const handleSelectElement = useCallback((elementId: string, toggle: boolean) => {
@@ -223,7 +225,18 @@ const CanvasContent: React.FC = () => {
   const {  smoothBrushCursor, canvasServicesValue } = useSmoothBrushIntegration({
     svgRef,
     currentMode,
-    pencil,
+    pencil: pencil ?? {
+      strokeWidth: 4,
+      strokeColor: '#000000',
+      strokeOpacity: 1,
+      fillColor: 'none',
+      fillOpacity: 1,
+      strokeLinecap: 'round' as const,
+      strokeLinejoin: 'round' as const,
+      fillRule: 'nonzero' as const,
+      strokeDasharray: 'none',
+      reusePath: false,
+    },
     viewportZoom: viewport.zoom,
     screenToCanvas,
     emitPointerEvent,
@@ -255,8 +268,8 @@ const CanvasContent: React.FC = () => {
     setIsDragging,
     setDragStart,
     setHasDragMoved,
-    isWorkingWithSubpaths,
-    selectedSubpaths,
+    isWorkingWithSubpaths: isWorkingWithSubpaths ?? (() => false),
+    selectedSubpaths: selectedSubpaths ?? [],
     selectedIds,
     startTransformation,
     endTransformation,
@@ -286,16 +299,16 @@ const CanvasContent: React.FC = () => {
   // Use the custom hook for drag interactions
   const { dragPosition } = useCanvasDragInteractions({
     dragState: {
-      editingPoint,
-      draggingSelection
+      editingPoint: editingPoint ?? null,
+      draggingSelection: draggingSelection ?? null
     },
     viewport,
     elements: elements as CanvasElement[],
     smoothBrush,
     callbacks: {
-      onStopDraggingPoint: stopDraggingPoint,
+      onStopDraggingPoint: stopDraggingPoint ?? (() => {}),
       onUpdateElement: updateElement,
-      getControlPointInfo,
+      getControlPointInfo: getControlPointInfo ?? (() => null),
       snapToGrid,
       clearGuidelines,
     }
@@ -386,12 +399,12 @@ const CanvasContent: React.FC = () => {
   // Use side effects hook to manage feedback, cleanup, and save
   useCanvasSideEffects({
     currentMode,
-    selectedCommands,
+    selectedCommands: selectedCommands ?? [],
     elements,
     updatePointPositionFeedback,
-    editingPoint,
-    draggingSelection,
-    emergencyCleanupDrag,
+    editingPoint: editingPoint ?? null,
+    draggingSelection: draggingSelection ?? null,
+    emergencyCleanupDrag: emergencyCleanupDrag ?? (() => {}),
     saveAsPng,
     svgRef,
   });

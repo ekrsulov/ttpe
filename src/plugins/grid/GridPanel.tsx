@@ -13,13 +13,13 @@ const GridPanelComponent: React.FC = () => {
   const updateGridState = useCanvasStore(state => state.updateGridState);
 
   // Use shared hook for toggle handlers
-  const { createToggleHandler } = usePanelToggleHandlers(updateGridState);
+  const { createToggleHandler } = usePanelToggleHandlers(updateGridState ?? (() => {}));
   const handleToggleGrid = createToggleHandler('enabled');
   const handleToggleSnap = createToggleHandler('snapEnabled');
   const handleToggleRulers = createToggleHandler('showRulers');
 
   const handleSpacingChange = (value: number) => {
-    updateGridState({ spacing: value });
+    updateGridState?.({ spacing: value });
   };
 
   return (
@@ -30,20 +30,20 @@ const GridPanelComponent: React.FC = () => {
           toggles={[
             {
               label: 'Show',
-              isChecked: grid.enabled,
+              isChecked: grid?.enabled ?? false,
               onChange: handleToggleGrid,
             },
             {
               label: 'Snap',
-              isChecked: grid.snapEnabled,
+              isChecked: grid?.snapEnabled ?? false,
               onChange: handleToggleSnap,
-              isDisabled: !grid.enabled,
+              isDisabled: !(grid?.enabled ?? false),
             },
             {
               label: 'Rulers',
-              isChecked: grid.showRulers,
+              isChecked: grid?.showRulers ?? false,
               onChange: handleToggleRulers,
-              isDisabled: !grid.enabled,
+              isDisabled: !(grid?.enabled ?? false),
             },
           ]}
         />
@@ -51,7 +51,7 @@ const GridPanelComponent: React.FC = () => {
         {/* Grid Spacing Slider */}
         <SliderControl
           label="Spacing"
-          value={grid.spacing}
+          value={grid?.spacing ?? 20}
           min={5}
           max={100}
           step={5}

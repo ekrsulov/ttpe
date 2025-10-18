@@ -5,9 +5,12 @@ import type { GridPluginSlice } from './slice';
 import GridPanelComponent from './GridPanel';
 import { GridOverlay } from './GridOverlay';
 
-const gridSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => ({
-  state: createGridPluginSlice(set, get, api),
-});
+const gridSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
+  const slice = createGridPluginSlice(set as any, get as any, api as any);
+  return {
+    state: slice,
+  };
+};
 
 export const gridPlugin: PluginDefinition<CanvasStore> = {
   id: 'grid',
@@ -20,7 +23,7 @@ export const gridPlugin: PluginDefinition<CanvasStore> = {
       id: 'grid-overlay',
       placement: 'background',
       render: ({ grid, viewport, canvasSize }) => (
-        <GridOverlay grid={grid} viewport={viewport} canvasSize={canvasSize} />
+        <GridOverlay grid={grid ?? { enabled: false, snapEnabled: false, spacing: 20, showRulers: false }} viewport={viewport} canvasSize={canvasSize} />
       ),
     },
   ],

@@ -65,7 +65,7 @@ export const useSmoothBrushNativeListeners = ({
       isSmoothBrushActive,
       screenToCanvas,
       emitPointerEvent,
-      getApplySmoothBrush: () => controller.applySmoothBrush,
+      getApplySmoothBrush: () => controller.applySmoothBrush ?? (() => {}),
       setSmoothBrushCursor,
     };
 

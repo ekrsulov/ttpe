@@ -9,9 +9,12 @@ import { FeedbackOverlay } from '../../components/overlays';
 import { measureSubpathBounds } from '../../utils/geometry';
 import type { PathData } from '../../types';
 
-const transformationSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => ({
-  state: createTransformationPluginSlice(set, get, api),
-});
+const transformationSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
+  const slice = createTransformationPluginSlice(set as any, get as any, api as any);
+  return {
+    state: slice,
+  };
+};
 
 export const transformationPlugin: PluginDefinition<CanvasStore> = {
   id: 'transformation',
@@ -36,8 +39,8 @@ export const transformationPlugin: PluginDefinition<CanvasStore> = {
         handleTransformationHandlerPointerUp,
         getElementBounds,
       }) => {
-        const selections = selectedSubpaths.length > 0 ? selectedSubpaths : selectedIds;
-        if (!selections.length) {
+        const selections = (selectedSubpaths ?? []).length > 0 ? selectedSubpaths ?? [] : selectedIds;
+        if (!selections || selections.length === 0) {
           return null;
         }
 
@@ -68,11 +71,11 @@ export const transformationPlugin: PluginDefinition<CanvasStore> = {
                   key={typeof selection === 'string' ? elementId : `subpath-${elementId}-${selection.subpathIndex}`}
                   element={element}
                   bounds={bounds}
-                  selectedSubpaths={selectedSubpaths}
+                  selectedSubpaths={selectedSubpaths ?? []}
                   viewport={viewport}
                   activePlugin={activePlugin}
                   transformation={transformation}
-                  isWorkingWithSubpaths={isWorkingWithSubpaths()}
+                  isWorkingWithSubpaths={isWorkingWithSubpaths?.() ?? false}
                   onTransformationHandlerPointerDown={handleTransformationHandlerPointerDown}
                   onTransformationHandlerPointerUp={handleTransformationHandlerPointerUp}
                 />

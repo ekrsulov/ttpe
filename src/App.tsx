@@ -98,7 +98,7 @@ function App() {
         isSidebarOpen={isSidebarOpen}
         onMenuClick={handleMenuClick}
         selectedPaths={selectedPaths}
-        showGridRulers={grid.enabled && grid.showRulers}
+        showGridRulers={grid?.enabled && grid?.showRulers}
       />
       <BottomActionBar 
         sidebarWidth={sidebarWidth}

@@ -47,38 +47,38 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
   } = useCanvasStore.getState();
 
   // Calculate canAlign based on current selectedIds (will recalculate on each render)
-  const canAlign = canPerformOpticalAlignment();
+  const canAlign = canPerformOpticalAlignment?.() ?? false;
 
   const handleCalculate = async () => {
-    await calculateOpticalAlignment();
+    await calculateOpticalAlignment?.();
   };
 
   const handleApply = () => {
-    applyOpticalAlignment();
+    applyOpticalAlignment?.();
   };
 
   const handleApplyDirectly = async () => {
-    await calculateOpticalAlignment();
+    await calculateOpticalAlignment?.();
     // Apply immediately after calculation
     setTimeout(() => {
-      applyOpticalAlignment();
+      applyOpticalAlignment?.();
     }, 100);
   };
 
   const handleClear = () => {
-    clearOpticalAlignment();
+    clearOpticalAlignment?.();
   };
 
   const handleApplyToAll = async () => {
-    await applyOpticalAlignmentToAllPairs();
+    await applyOpticalAlignmentToAllPairs?.();
   };
 
   const handleMathematicalAlign = () => {
-    applyMathematicalAlignment();
+    applyMathematicalAlignment?.();
   };
 
   const handleMathematicalAlignAll = () => {
-    applyMathematicalAlignmentToAllPairs();
+    applyMathematicalAlignmentToAllPairs?.();
   };
 
   // Calculate offset from mathematical center

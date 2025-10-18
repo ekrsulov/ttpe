@@ -5,9 +5,12 @@ import type { GuidelinesPluginSlice } from './slice';
 import { GuidelinesPanel } from './GuidelinesPanel';
 import { GuidelinesOverlay } from './GuidelinesOverlay';
 
-const guidelinesSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => ({
-  state: createGuidelinesPluginSlice(set, get, api),
-});
+const guidelinesSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
+  const slice = createGuidelinesPluginSlice(set as any, get as any, api as any);
+  return {
+    state: slice,
+  };
+};
 
 export const guidelinesPlugin: PluginDefinition<CanvasStore> = {
   id: 'guidelines',

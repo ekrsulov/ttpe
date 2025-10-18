@@ -5,12 +5,13 @@ import { Scissors } from 'lucide-react';
 import { Panel } from '../../components/ui/Panel';
 import { OperationButton } from '../../components/ui/OperationButton';
 import type { PathData } from '../../types';
+import { pluginManager } from '../../utils/pluginManager';
 
 const PathOperationsPanelComponent: React.FC = () => {
   // Subscribe only to the keys we need to detect changes in selection
   const selectedIdsKey = useCanvasStore(state => state.selectedIds.join(','));
   const selectedSubpathsKey = useCanvasStore(state => 
-    state.selectedSubpaths.map(sp => `${sp.elementId}-${sp.subpathIndex}`).join(',')
+    (state.selectedSubpaths ?? []).map(sp => `${sp.elementId}-${sp.subpathIndex}`).join(',')
   );
   
   // Memoize the calculation based on selection keys - only recalculates when selection actually changes
@@ -28,7 +29,7 @@ const PathOperationsPanelComponent: React.FC = () => {
       return pathEl && (pathEl.data as PathData).subPaths?.length > 1;
     });
     
-    const totalSelectedItems = selectedPathsCount + selectedSubpaths.length;
+    const totalSelectedItems = selectedPathsCount + (selectedSubpaths?.length ?? 0);
     
     return {
       totalSelectedItems,
@@ -45,13 +46,17 @@ const PathOperationsPanelComponent: React.FC = () => {
     performPathIntersect,
     performPathExclude,
     performPathDivide,
-    performPathSimplify,
   } = useCanvasStore.getState();
 
   // Show panel only if there are buttons to display
   if (!selectionInfo.hasPathWithMultipleSubpaths && selectionInfo.totalSelectedItems < 2) {
     return null;
   }
+
+  const performPathSimplify = () => {
+    // Use plugin API instead of store action
+    pluginManager.callPluginApi('subpath', 'performPathSimplify');
+  };
 
   const { totalSelectedItems, hasPathWithMultipleSubpaths } = selectionInfo;
 

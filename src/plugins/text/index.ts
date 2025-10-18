@@ -5,17 +5,24 @@ import { getToolMetadata } from '../toolMetadata';
 import { createTextPluginSlice } from './slice';
 import type { TextPluginSlice } from './slice';
 import { TextPanel } from './TextPanel';
+import { addText } from './actions';
 
-const textSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => ({
-  state: createTextPluginSlice(set, get, api),
-});
+const textSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
+  const slice = createTextPluginSlice(set as any, get as any, api as any);
+  return {
+    state: slice,
+  };
+};
 
 export const textPlugin: PluginDefinition<CanvasStore> = {
   id: 'text',
   metadata: getToolMetadata('text'),
   handler: (_event, point) => {
     const state = useCanvasStore.getState();
-    void state.addText(point.x, point.y, state.text.text);
+    const api = textPlugin.api;
+    if (api && api.addText) {
+      void api.addText(point.x, point.y, state.text?.text ?? '');
+    }
   },
   keyboardShortcuts: {
     Enter: () => {
@@ -23,6 +30,11 @@ export const textPlugin: PluginDefinition<CanvasStore> = {
     },
   },
   slices: [textSliceFactory],
+  api: {
+    addText: (x: number, y: number, text: string) => {
+      return addText(x, y, text, useCanvasStore.getState);
+    },
+  },
 };
 
 export type { TextPluginSlice };

@@ -46,7 +46,7 @@ export const useCanvasKeyboardControls = () => {
       // Handle Delete key for deleting selected commands
       if (e.code === 'Delete' || e.code === 'Backspace') {
         // Only delete if not typing in an input and we have selected commands
-        if (!isTextFieldFocused() && selectedCommands.length > 0) {
+        if (!isTextFieldFocused() && (selectedCommands?.length ?? 0) > 0 && deleteSelectedCommands) {
           deleteSelectedCommands();
           e.preventDefault();
         }
@@ -69,7 +69,7 @@ export const useCanvasKeyboardControls = () => {
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('keyup', handleKeyUp);
     };
-  }, [selectedCommands.length, deleteSelectedCommands]);
+  }, [selectedCommands?.length, deleteSelectedCommands]);
 
   // Handle arrow keys for movement and delete for other selections
   useEffect(() => {
@@ -104,10 +104,10 @@ export const useCanvasKeyboardControls = () => {
 
         // Check what is selected and move accordingly
         // Priority: points > subpaths > paths
-        if (selectedCommands.length > 0) {
+        if ((selectedCommands?.length ?? 0) > 0 && moveSelectedPoints) {
           // Move selected points
           moveSelectedPoints(roundedDeltaX, roundedDeltaY);
-        } else if (selectedSubpaths.length > 0) {
+        } else if ((selectedSubpaths?.length ?? 0) > 0 && moveSelectedSubpaths) {
           // Move selected subpaths
           moveSelectedSubpaths(roundedDeltaX, roundedDeltaY);
         } else if (selectedIds.length > 0) {
@@ -117,9 +117,9 @@ export const useCanvasKeyboardControls = () => {
       } else if (e.key === 'Delete' || e.key === 'Backspace') {
         // Delete selected items
         // Priority: points > subpaths > paths
-        if (selectedCommands.length > 0) {
+        if ((selectedCommands?.length ?? 0) > 0 && deleteSelectedCommands) {
           deleteSelectedCommands();
-        } else if (selectedSubpaths.length > 0) {
+        } else if ((selectedSubpaths?.length ?? 0) > 0 && deleteSelectedSubpaths) {
           deleteSelectedSubpaths();
         } else if (selectedIds.length > 0) {
           deleteSelectedElements();
@@ -132,7 +132,7 @@ export const useCanvasKeyboardControls = () => {
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [selectedCommands.length, selectedSubpaths.length, selectedIds.length, settings.keyboardMovementPrecision, moveSelectedPoints, moveSelectedSubpaths, moveSelectedElements, deleteSelectedCommands, deleteSelectedSubpaths, deleteSelectedElements]);
+  }, [selectedCommands?.length, selectedSubpaths?.length, selectedIds.length, settings.keyboardMovementPrecision, moveSelectedPoints, moveSelectedSubpaths, moveSelectedElements, deleteSelectedCommands, deleteSelectedSubpaths, deleteSelectedElements]);
 
   // Handle curves mode keyboard shortcuts
   useEffect(() => {
@@ -143,19 +143,19 @@ export const useCanvasKeyboardControls = () => {
       if (isTextFieldFocused()) return;
 
       // Delete selected curve point
-      if ((e.key === 'Delete' || e.key === 'Backspace') && curveState.selectedPointId) {
+      if ((e.key === 'Delete' || e.key === 'Backspace') && curveState?.selectedPointId && deleteCurvePoint) {
         deleteCurvePoint(curveState.selectedPointId);
         e.preventDefault();
       }
 
       // Escape to cancel curve
-      if (e.key === 'Escape' && curveState.points.length > 0) {
+      if (e.key === 'Escape' && (curveState?.points.length ?? 0) > 0 && cancelCurve) {
         cancelCurve();
         e.preventDefault();
       }
 
       // Enter to finish curve
-      if (e.key === 'Enter' && curveState.points.length >= 2) {
+      if (e.key === 'Enter' && (curveState?.points.length ?? 0) >= 2 && finishCurve) {
         finishCurve();
         e.preventDefault();
       }
@@ -166,7 +166,7 @@ export const useCanvasKeyboardControls = () => {
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [activePlugin, curveState.selectedPointId, curveState.points.length, deleteCurvePoint, cancelCurve, finishCurve]);
+  }, [activePlugin, curveState?.selectedPointId, curveState?.points.length, deleteCurvePoint, cancelCurve, finishCurve]);
 
   return {
     isSpacePressed,

@@ -3,11 +3,12 @@ import { useCanvasStore } from '../../store/canvasStore';
 import { RotateCcw } from 'lucide-react';
 import { Panel } from '../../components/ui/Panel';
 import { OperationButton } from '../../components/ui/OperationButton';
+import { pluginManager } from '../../utils/pluginManager';
 
 const SubPathOperationsPanelComponent: React.FC = () => {
   // Subscribe only to primitives to minimize re-renders
   const activePlugin = useCanvasStore(state => state.activePlugin);
-  const selectedSubpathsCount = useCanvasStore(state => state.selectedSubpaths.length);
+  const selectedSubpathsCount = useCanvasStore(state => state.selectedSubpaths?.length || 0);
 
   // Show only when subpath plugin is active and exactly 1 subpath is selected
   if (activePlugin !== 'subpath' || selectedSubpathsCount !== 1) {
@@ -15,7 +16,8 @@ const SubPathOperationsPanelComponent: React.FC = () => {
   }
 
   const performReverse = () => {
-    useCanvasStore.getState().performSubPathReverse();
+    // Use plugin API instead of store action
+    pluginManager.callPluginApi('subpath', 'performSubPathReverse');
   };
 
   return (

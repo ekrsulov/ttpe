@@ -1,14 +1,20 @@
 import type { PluginDefinition, PluginSliceFactory } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
+import { useCanvasStore } from '../../store/canvasStore';
 import { getToolMetadata } from '../toolMetadata';
 import { createShapePluginSlice } from './slice';
 import type { ShapePluginSlice } from './slice';
 import { ShapePanel } from './ShapePanel';
 import { ShapePreview } from './ShapePreview';
+import { createShape } from './actions';
+import type { Point } from '../../types';
 
-const shapeSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => ({
-  state: createShapePluginSlice(set, get, api),
-});
+const shapeSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
+  const slice = createShapePluginSlice(set as any, get as any, api as any);
+  return {
+    state: slice,
+  };
+};
 
 export const shapePlugin: PluginDefinition<CanvasStore> = {
   id: 'shape',
@@ -42,6 +48,11 @@ export const shapePlugin: PluginDefinition<CanvasStore> = {
     },
   ],
   slices: [shapeSliceFactory],
+  api: {
+    createShape: (startPoint: Point, endPoint: Point) => {
+      createShape(startPoint, endPoint, useCanvasStore.getState);
+    },
+  },
 };
 
 export type { ShapePluginSlice };

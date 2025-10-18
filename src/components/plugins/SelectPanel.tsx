@@ -73,7 +73,7 @@ const SelectPanelComponent: React.FC = () => {
 
   const selectedSubpathsByElement = useMemo(() => {
     const map = new Map<string, typeof selectedSubpaths>();
-    selectedSubpaths.forEach(subpath => {
+    (selectedSubpaths ?? []).forEach(subpath => {
       if (!map.has(subpath.elementId)) {
         map.set(subpath.elementId, []);
       }

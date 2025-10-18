@@ -6,9 +6,12 @@ import { CurvesPanel } from './CurvesPanel';
 import { getToolMetadata } from '../toolMetadata';
 import { CurvesRenderer } from './CurvesRenderer';
 
-const curvesSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => ({
-  state: createCurvesPluginSlice(set, get, api),
-});
+const curvesSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
+  const slice = createCurvesPluginSlice(set as any, get as any, api as any);
+  return {
+    state: slice,
+  };
+};
 
 export const curvesPlugin: PluginDefinition<CanvasStore> = {
   id: 'curves',

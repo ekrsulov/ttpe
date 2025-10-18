@@ -50,8 +50,8 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
   const isZoomDifferent = currentZoom !== 100;
 
   const selectedCount = useMemo(() => selectedIds.length, [selectedIds]);
-  const selectedCommandsCount = useMemo(() => selectedCommands.length, [selectedCommands]);
-  const selectedSubpathsCount = useMemo(() => getSelectedSubpathsCount(), [selectedSubpaths]); // eslint-disable-line react-hooks/exhaustive-deps
+  const selectedCommandsCount = useMemo(() => selectedCommands?.length ?? 0, [selectedCommands]);
+  const selectedSubpathsCount = useMemo(() => getSelectedSubpathsCount?.() ?? 0, [selectedSubpaths]); // eslint-disable-line react-hooks/exhaustive-deps
   const canUndo = useMemo(() => pastStates.length > 0, [pastStates.length]);
   const canRedo = useMemo(() => futureStates.length > 0, [futureStates.length]);
 
@@ -60,9 +60,9 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
   // Handle delete action based on active plugin
   const handleDelete = () => {
     if (activePlugin === 'edit' && selectedCommandsCount > 0) {
-      deleteSelectedCommands();
+      deleteSelectedCommands?.();
     } else if (activePlugin === 'subpath' && selectedSubpathsCount > 0) {
-      deleteSelectedSubpaths();
+      deleteSelectedSubpaths?.();
     } else if (activePlugin === 'select' && selectedCount > 0) {
       deleteSelectedElements();
     }

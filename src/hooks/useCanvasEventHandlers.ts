@@ -4,6 +4,7 @@ import { useCanvasCurves } from '../plugins/curves/useCanvasCurves';
 import { getEffectiveShift } from './useEffectiveShift';
 import type { Point } from '../types';
 import { useCanvasEventBus } from '../canvas/CanvasEventBusContext';
+import { pluginManager } from '../utils/pluginManager';
 
 interface EventHandlerDeps {
   svgRef: React.RefObject<SVGSVGElement | null>;
@@ -87,7 +88,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     if (((activePlugin === 'select' && selectedIds.length > 0 && !isWorkingWithSubpaths()) ||
          (activePlugin === 'subpath' && selectedSubpaths.length > 0 && isWorkingWithSubpaths()))) {
       const state = useCanvasStore.getState();
-      if (state.grid.snapEnabled && state.snapToGrid) {
+      if (state.grid?.snapEnabled && state.snapToGrid) {
 
         if (activePlugin === 'subpath' && selectedSubpaths.length > 0) {
           // Snap subpaths using their bounds
@@ -110,7 +111,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
                   }
                 });
 
-                if (isFinite(minX)) {
+                if (isFinite(minX) && state.snapToGrid) {
                   // Snap the top-left corner
                   const snappedTopLeft = state.snapToGrid(minX, minY);
 
@@ -291,9 +292,9 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     const state = useCanvasStore.getState();
 
     // Check if this subpath was already selected
-    const wasAlreadySelected = state.selectedSubpaths.length === 1 &&
-      state.selectedSubpaths[0].elementId === elementId &&
-      state.selectedSubpaths[0].subpathIndex === subpathIndex;
+    const wasAlreadySelected = (state.selectedSubpaths?.length ?? 0) === 1 &&
+      state.selectedSubpaths?.[0].elementId === elementId &&
+      state.selectedSubpaths?.[0].subpathIndex === subpathIndex;
 
     if (activePlugin === 'subpath') {
       if (wasAlreadySelected) {
@@ -464,7 +465,8 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
 
     // Handle pencil drawing
     if (activePlugin === 'pencil' && e.buttons === 1) {
-      useCanvasStore.getState().addPointToPath(point);
+      // Use plugin API instead of store action
+      pluginManager.callPluginApi('pencil', 'addPointToPath', point);
       return;
     }
 
@@ -535,23 +537,27 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
                 };
                 
                 // Find alignment guidelines
-                const alignmentMatches = state.findAlignmentGuidelines(firstElementId, projectedBounds);
+                const alignmentMatches = state.findAlignmentGuidelines?.(firstElementId, projectedBounds) ?? [];
                 
                 // Find distance guidelines if enabled (pass alignment matches for 2-element detection)
-                const distanceMatches = state.guidelines.distanceEnabled 
+                const distanceMatches = (state.guidelines?.distanceEnabled && state.findDistanceGuidelines)
                   ? state.findDistanceGuidelines(firstElementId, projectedBounds, alignmentMatches)
                   : [];
                 
                 // Update the guidelines state
-                state.updateGuidelinesState({
-                  currentMatches: alignmentMatches,
-                  currentDistanceMatches: distanceMatches,
-                });
+                if (state.updateGuidelinesState) {
+                  state.updateGuidelinesState({
+                    currentMatches: alignmentMatches,
+                    currentDistanceMatches: distanceMatches,
+                  });
+                }
                 
                 // Apply sticky snap
-                const snappedDelta = state.checkStickySnap(deltaX, deltaY, projectedBounds);
-                deltaX = snappedDelta.x;
-                deltaY = snappedDelta.y;
+                if (state.checkStickySnap) {
+                  const snappedDelta = state.checkStickySnap(deltaX, deltaY, projectedBounds);
+                  deltaX = snappedDelta.x;
+                  deltaY = snappedDelta.y;
+                }
               }
             }
           }

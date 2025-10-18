@@ -46,44 +46,44 @@ export const TextPanel: React.FC = () => {
   }, []);
 
   const handleFontSizeChange = (value: number) => {
-    updateTextState({ fontSize: value });
+    updateTextState?.({ fontSize: value });
   };
 
   const handleFontFamilyChange = (value: string) => {
-    updateTextState({ fontFamily: value });
+    updateTextState?.({ fontFamily: value });
   };
 
   const handleFontWeightChange = (value: 'normal' | 'bold') => {
-    updateTextState({ fontWeight: value });
+    updateTextState?.({ fontWeight: value });
   };
 
   const handleFontStyleChange = (value: 'normal' | 'italic') => {
-    updateTextState({ fontStyle: value });
+    updateTextState?.({ fontStyle: value });
   };
 
   const handleTextChange = (value: string) => {
-    updateTextState({ text: value });
+    updateTextState?.({ text: value });
   };
 
   // Get current values from plugin defaults
   const getCurrentFontSize = () => {
-    return text.fontSize;
+    return text?.fontSize ?? 16;
   };
 
   const getCurrentFontFamily = () => {
-    return text.fontFamily;
+    return text?.fontFamily ?? 'Arial';
   };
 
   const getCurrentText = () => {
-    return text.text;
+    return text?.text ?? '';
   };
 
   const getCurrentFontWeight = () => {
-    return text.fontWeight;
+    return text?.fontWeight ?? 'normal';
   };
 
   const getCurrentFontStyle = () => {
-    return text.fontStyle;
+    return text?.fontStyle ?? 'normal';
   };
 
   return (

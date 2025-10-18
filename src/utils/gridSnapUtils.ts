@@ -16,7 +16,7 @@ export function applyGridSnap(point: Point): Point {
   const { grid, snapToGrid } = state;
   
   // Only snap if grid is enabled and snap is enabled
-  if (!grid.enabled || !grid.snapEnabled || !snapToGrid) {
+  if (!grid?.enabled || !grid?.snapEnabled || !snapToGrid) {
     return point;
   }
   

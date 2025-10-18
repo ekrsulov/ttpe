@@ -66,7 +66,7 @@ const selectPlugin: PluginDefinition<CanvasStore> = {
               .map((element) => {
                 const shouldRender =
                   activePlugin !== 'transformation' ||
-                  selectedSubpaths.some((subpath) => subpath.elementId === element.id);
+                  (selectedSubpaths ?? []).some((subpath) => subpath.elementId === element.id);
 
                 if (!shouldRender) {
                   return null;

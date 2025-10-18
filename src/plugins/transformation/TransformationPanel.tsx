@@ -13,10 +13,10 @@ export const TransformationPanel: React.FC = () => {
   const updateTransformationState = useCanvasStore(state => state.updateTransformationState);
   const isWorkingWithSubpaths = useCanvasStore(state => state.isWorkingWithSubpaths);
   
-  const { showCoordinates, showRulers } = transformation;
+  const { showCoordinates, showRulers } = transformation ?? { showCoordinates: false, showRulers: false };
 
-  const isSubpathMode = isWorkingWithSubpaths();
-  const selectedCount = isSubpathMode ? selectedSubpaths.length : selectedIds.length;
+  const isSubpathMode = isWorkingWithSubpaths?.() ?? false;
+  const selectedCount = isSubpathMode ? (selectedSubpaths?.length ?? 0) : selectedIds.length;
 
   return (
     <Panel 
@@ -38,14 +38,14 @@ export const TransformationPanel: React.FC = () => {
         <VStack spacing={2} align="stretch">
           <PanelToggle
             isChecked={showCoordinates}
-            onChange={(e) => updateTransformationState({ showCoordinates: e.target.checked })}
+            onChange={(e) => updateTransformationState?.({ showCoordinates: e.target.checked })}
           >
             Coordinates
           </PanelToggle>
 
           <PanelToggle
             isChecked={showRulers}
-            onChange={(e) => updateTransformationState({ showRulers: e.target.checked })}
+            onChange={(e) => updateTransformationState?.({ showRulers: e.target.checked })}
           >
             Rulers
           </PanelToggle>

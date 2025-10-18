@@ -40,9 +40,9 @@ export const EditorPanel: React.FC = () => {
   // Helper to update selected paths or fall back to pencil defaults
   const updatePathProperty = <T,>(property: string, value: T) => {
     if (selectedPathsCount > 0) {
-      updateSelectedPaths({ [property]: value });
+      updateSelectedPaths?.({ [property]: value });
     } else {
-      updatePencilState({ [property]: value });
+      updatePencilState?.({ [property]: value });
     }
   };
 
@@ -77,7 +77,7 @@ export const EditorPanel: React.FC = () => {
 
   const handlePresetSelect = (preset: Preset) => {
     if (selectedPathsCount > 0) {
-      updateSelectedPaths({
+      updateSelectedPaths?.({
         strokeWidth: preset.strokeWidth,
         strokeColor: preset.strokeColor,
         strokeOpacity: preset.strokeOpacity,
@@ -85,7 +85,7 @@ export const EditorPanel: React.FC = () => {
         fillOpacity: preset.fillOpacity
       });
     } else {
-      updatePencilState({
+      updatePencilState?.({
         strokeWidth: preset.strokeWidth,
         strokeColor: preset.strokeColor,
         strokeOpacity: preset.strokeOpacity,
@@ -113,15 +113,15 @@ export const EditorPanel: React.FC = () => {
   };
 
   // Get current values from selected elements or plugin defaults
-  const currentStrokeWidth = useSelectedPathProperty('strokeWidth', pencil.strokeWidth);
-  const currentStrokeColor = useSelectedPathProperty('strokeColor', pencil.strokeColor);
-  const currentOpacity = useSelectedPathProperty('strokeOpacity', pencil.strokeOpacity);
-  const currentFillColor = useSelectedPathProperty('fillColor', pencil.fillColor);
-  const currentFillOpacity = useSelectedPathProperty('fillOpacity', pencil.fillOpacity);
-  const currentStrokeLinecap = useSelectedPathProperty('strokeLinecap', pencil.strokeLinecap);
-  const currentStrokeLinejoin = useSelectedPathProperty('strokeLinejoin', pencil.strokeLinejoin);
-  const currentFillRule = useSelectedPathProperty('fillRule', pencil.fillRule);
-  const currentStrokeDasharray = useSelectedPathProperty('strokeDasharray', pencil.strokeDasharray);
+  const currentStrokeWidth = useSelectedPathProperty('strokeWidth', pencil?.strokeWidth ?? 4);
+  const currentStrokeColor = useSelectedPathProperty('strokeColor', pencil?.strokeColor ?? '#000000');
+  const currentOpacity = useSelectedPathProperty('strokeOpacity', pencil?.strokeOpacity ?? 1);
+  const currentFillColor = useSelectedPathProperty('fillColor', pencil?.fillColor ?? 'none');
+  const currentFillOpacity = useSelectedPathProperty('fillOpacity', pencil?.fillOpacity ?? 1);
+  const currentStrokeLinecap = useSelectedPathProperty('strokeLinecap', pencil?.strokeLinecap ?? 'round');
+  const currentStrokeLinejoin = useSelectedPathProperty('strokeLinejoin', pencil?.strokeLinejoin ?? 'round');
+  const currentFillRule = useSelectedPathProperty('fillRule', pencil?.fillRule ?? 'nonzero');
+  const currentStrokeDasharray = useSelectedPathProperty('strokeDasharray', pencil?.strokeDasharray ?? 'none');
 
   const [isColorControlsOpen, setIsColorControlsOpen] = usePersistentState('editor-color-controls-open', import.meta.env.DEV);
   const [isAdvancedStrokeOpen, setIsAdvancedStrokeOpen] = usePersistentState('editor-advanced-stroke-open', false);

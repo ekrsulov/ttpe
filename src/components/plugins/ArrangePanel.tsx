@@ -30,8 +30,8 @@ const ArrangePanelComponent: React.FC = () => {
   
   // Subscribe to selection changes to trigger re-renders
   const selectedCount = useCanvasStore(state => state.selectedIds.length);
-  const selectedCommandsCount = useCanvasStore(state => state.selectedCommands.length);
-  const selectedSubpathsCount = useCanvasStore(state => state.selectedSubpaths.length);
+  const selectedCommandsCount = useCanvasStore(state => state.selectedCommands?.length ?? 0);
+  const selectedSubpathsCount = useCanvasStore(state => state.selectedSubpaths?.length ?? 0);
   
   // Get current state without subscribing - fresh on every render
   const state = useCanvasStore.getState();

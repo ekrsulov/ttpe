@@ -303,7 +303,7 @@ export const createOpticalAlignmentSlice: StateCreator<
   calculateOpticalAlignment: async () => {
     const state = get();
     
-    if (!get().canPerformOpticalAlignment()) {
+    if (!get().canPerformOpticalAlignment?.()) {
       return;
     }
 
@@ -517,7 +517,7 @@ export const createOpticalAlignmentSlice: StateCreator<
   applyMathematicalAlignment: () => {
     const state = get();
     
-    if (!get().canPerformOpticalAlignment()) {
+    if (!get().canPerformOpticalAlignment?.()) {
       return;
     }
 

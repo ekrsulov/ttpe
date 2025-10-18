@@ -2,6 +2,7 @@ import { useCallback, useState, useMemo } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
 import { ShapeCreationController } from '../canvas/interactions/ShapeCreationController';
 import type { Point } from '../types';
+import { pluginManager } from '../utils/pluginManager';
 
 export interface ShapeFeedback {
   width: number;
@@ -61,8 +62,11 @@ export const useCanvasShapeCreation = (): UseCanvasShapeCreationReturn => {
   });
 
   const controller = useMemo(() => new ShapeCreationController({
-    createShape: (start, end) => useCanvasStore.getState().createShape(start, end),
-    getSelectedShape: () => useCanvasStore.getState().shape.selectedShape,
+    createShape: (start, end) => {
+      // Use plugin API instead of store action
+      pluginManager.callPluginApi('shape', 'createShape', start, end);
+    },
+    getSelectedShape: () => useCanvasStore.getState().shape?.selectedShape || 'square',
   }), []);
 
   const startShapeCreation = useCallback((startPoint: Point) => {

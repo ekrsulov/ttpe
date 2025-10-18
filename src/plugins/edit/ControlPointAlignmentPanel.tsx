@@ -33,7 +33,8 @@ export const ControlPointAlignmentPanel: React.FC = () => {
   
   // Filter elements in useMemo to avoid recalculation and infinite loops
   const elements = useMemo(() => {
-    if (selectedCommands.length === 0) return allElements;
+    if ((selectedCommands?.length ?? 0) === 0) return allElements;
+    if (!selectedCommands) return allElements;
     const selectedElementIds = [...new Set(selectedCommands.map(cmd => cmd.elementId))];
     return allElements.filter(el => selectedElementIds.includes(el.id));
   }, [allElements, selectedCommands]);
@@ -190,7 +191,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
 
   // Get info for a single selected control point
   const getSinglePointInfo = useCallback(() => {
-    if (activePlugin !== 'edit' || selectedCommands.length !== 1) {
+    if (activePlugin !== 'edit' || !selectedCommands || selectedCommands.length !== 1) {
       return null;
     }
 
@@ -291,9 +292,12 @@ export const ControlPointAlignmentPanel: React.FC = () => {
   const singlePointInfo = useMemo(() => getSinglePointInfo(), [getSinglePointInfo]);
 
   // Early return AFTER all hooks: Only render when in edit mode and exactly one point is selected
-  if (activePlugin !== 'edit' || selectedCommands.length !== 1) {
+  if (activePlugin !== 'edit' || !selectedCommands || selectedCommands.length !== 1) {
     return null;
   }
+
+  // At this point, TypeScript knows selectedCommands is defined and has exactly one element
+  const selectedCmd = selectedCommands[0];
 
   // Always show the panel, even when no control point is selected
   // if (!singlePointInfo) {
@@ -301,11 +305,11 @@ export const ControlPointAlignmentPanel: React.FC = () => {
   // }
 
   const handleAlignmentChange = (type: 'independent' | 'aligned' | 'mirrored') => {
-    if (singlePointInfo && singlePointInfo.pairedPoint) {
+    if (singlePointInfo && singlePointInfo.pairedPoint && setControlPointAlignmentType) {
       setControlPointAlignmentType(
-        selectedCommands[0].elementId,
-        selectedCommands[0].commandIndex,
-        selectedCommands[0].pointIndex,
+        selectedCmd.elementId,
+        selectedCmd.commandIndex,
+        selectedCmd.pointIndex,
         singlePointInfo.pairedPoint.commandIndex,
         singlePointInfo.pairedPoint.pointIndex,
         type
@@ -498,10 +502,10 @@ export const ControlPointAlignmentPanel: React.FC = () => {
       {singlePointInfo && singlePointInfo.isAnchor && (
         <VStack spacing={2} align="stretch" fontSize="11px" color="gray.600" lineHeight="1.4">
           <Text><Text as="strong" color="gray.700">Location:</Text> {singlePointInfo.location}</Text>
-          {hasClosingZCommand(selectedCommands[0].elementId, selectedCommands[0].commandIndex) && (
+          {hasClosingZCommand(selectedCmd.elementId, selectedCmd.commandIndex) && (
             <>
               <Button
-                onClick={() => deleteZCommandForMPoint(selectedCommands[0].elementId, selectedCommands[0].commandIndex)}
+                onClick={() => deleteZCommandForMPoint?.(selectedCmd.elementId, selectedCmd.commandIndex)}
                 colorScheme="gray"
                 size="xs"
                 fontSize="12px"
@@ -512,7 +516,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
                 Delete Z Command
               </Button>
               <Button
-                onClick={() => convertZToLineForMPoint(selectedCommands[0].elementId, selectedCommands[0].commandIndex)}
+                onClick={() => convertZToLineForMPoint?.(selectedCmd.elementId, selectedCmd.commandIndex)}
                 colorScheme="gray"
                 size="xs"
                 fontSize="12px"
@@ -525,10 +529,10 @@ export const ControlPointAlignmentPanel: React.FC = () => {
             </>
           )}
           {(singlePointInfo.command.type === 'L' || singlePointInfo.command.type === 'C') &&
-            isLastPointOfSubpath(selectedCommands[0].elementId, selectedCommands[0].commandIndex, selectedCommands[0].pointIndex) &&
-            !isAtMPosition(selectedCommands[0].elementId, selectedCommands[0].commandIndex, selectedCommands[0].pointIndex) && (
+            isLastPointOfSubpath(selectedCmd.elementId, selectedCmd.commandIndex, selectedCmd.pointIndex) &&
+            !isAtMPosition(selectedCmd.elementId, selectedCmd.commandIndex, selectedCmd.pointIndex) && (
               <Button
-                onClick={() => moveToM(selectedCommands[0].elementId, selectedCommands[0].commandIndex, selectedCommands[0].pointIndex)}
+                onClick={() => moveToM?.(selectedCmd.elementId, selectedCmd.commandIndex, selectedCmd.pointIndex)}
                 colorScheme="gray"
                 size="xs"
                 fontSize="12px"
@@ -541,7 +545,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
             )}
           {(singlePointInfo.command.type === 'L' || singlePointInfo.command.type === 'C') && (
             <Button
-              onClick={() => convertCommandType(selectedCommands[0].elementId, selectedCommands[0].commandIndex)}
+              onClick={() => convertCommandType?.(selectedCmd.elementId, selectedCmd.commandIndex)}
               colorScheme="gray"
               size="xs"
               fontSize="12px"
@@ -553,9 +557,9 @@ export const ControlPointAlignmentPanel: React.FC = () => {
             </Button>
           )}
           {(singlePointInfo.command.type === 'L' || singlePointInfo.command.type === 'C') &&
-            canCutSubpathAtPoint(selectedCommands[0].elementId, selectedCommands[0].commandIndex, selectedCommands[0].pointIndex) && (
+            canCutSubpathAtPoint(selectedCmd.elementId, selectedCmd.commandIndex, selectedCmd.pointIndex) && (
               <Button
-                onClick={() => cutSubpathAtPoint(selectedCommands[0].elementId, selectedCommands[0].commandIndex, selectedCommands[0].pointIndex)}
+                onClick={() => cutSubpathAtPoint?.(selectedCmd.elementId, selectedCmd.commandIndex, selectedCmd.pointIndex)}
                 colorScheme="gray"
                 size="xs"
                 fontSize="12px"

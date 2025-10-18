@@ -13,7 +13,7 @@ const GuidelinesPanelComponent: React.FC = () => {
   const updateGuidelinesState = useCanvasStore(state => state.updateGuidelinesState);
 
   // Use shared hook for toggle handlers
-  const { createToggleHandler } = usePanelToggleHandlers(updateGuidelinesState);
+  const { createToggleHandler } = usePanelToggleHandlers(updateGuidelinesState ?? (() => {}));
   const handleToggleGuidelines = createToggleHandler('enabled');
   const handleToggleDistanceGuidelines = createToggleHandler('distanceEnabled');
   const handleToggleDebugMode = createToggleHandler('debugMode');
@@ -29,14 +29,14 @@ const GuidelinesPanelComponent: React.FC = () => {
           toggles={[
             {
               label: 'Alignment',
-              isChecked: guidelines.enabled,
+              isChecked: guidelines?.enabled ?? false,
               onChange: handleToggleGuidelines,
             },
             {
               label: 'Distance',
-              isChecked: guidelines.distanceEnabled,
+              isChecked: guidelines?.distanceEnabled ?? false,
               onChange: handleToggleDistanceGuidelines,
-              isDisabled: !guidelines.enabled,
+              isDisabled: !(guidelines?.enabled ?? false),
             },
           ]}
         />
@@ -44,9 +44,9 @@ const GuidelinesPanelComponent: React.FC = () => {
         {/* Debug Mode Toggle - Only in development */}
         {import.meta.env.DEV && (
           <PanelToggle
-            isChecked={guidelines.debugMode || false}
+            isChecked={guidelines?.debugMode ?? false}
             onChange={handleToggleDebugMode}
-            isDisabled={!guidelines.enabled}
+            isDisabled={!(guidelines?.enabled ?? false)}
             accentColor="orange"
           >
             Debug (show all)

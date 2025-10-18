@@ -30,8 +30,8 @@ const CurvesPanelComponent: React.FC = () => {
   
   // Subscribe to primitives only to minimize re-renders
   const curves = useCanvasStore(state => state.curves);
-  const pointsCount = useCanvasStore(state => state.curveState.points.length);
-  const selectedPointId = useCanvasStore(state => state.curveState.selectedPointId);
+  const pointsCount = useCanvasStore(state => state.curveState?.points.length ?? 0);
+  const selectedPointId = useCanvasStore(state => state.curveState?.selectedPointId);
   
   // Get actions and current state directly when needed (doesn't cause re-renders)
   const {
@@ -48,12 +48,12 @@ const CurvesPanelComponent: React.FC = () => {
 
   const hasPoints = pointsCount > 0;
   const hasSelectedPoint = selectedPointId !== undefined;
-  const selectedPoint = curveState.points.find(p => p.id === selectedPointId);
+  const selectedPoint = (curveState?.points ?? []).find(p => p.id === selectedPointId);
   const canFinishCurve = pointsCount >= 2;
 
   // Generic toggle handler for boolean curve settings
   const toggleCurvesSetting = (key: 'snapToGrid' | 'showHandles' | 'showPreview') => {
-    updateCurvesSettings({ [key]: !curves[key] });
+    updateCurvesSettings?.({ [key]: !(curves?.[key] ?? false) });
   };
 
   const handleToggleSnapToGrid = () => toggleCurvesSetting('snapToGrid');
@@ -61,25 +61,25 @@ const CurvesPanelComponent: React.FC = () => {
   const handleToggleShowPreview = () => toggleCurvesSetting('showPreview');
 
   const handleGridSizeChange = (gridSize: number) => {
-    updateCurvesSettings({ gridSize });
+    updateCurvesSettings?.({ gridSize });
   };
 
   const handleDeleteSelectedPoint = () => {
     if (selectedPointId) {
-      deleteCurvePoint(selectedPointId);
+      deleteCurvePoint?.(selectedPointId);
     }
   };
 
   const handleDeselectPoint = () => {
-    selectCurvePoint(undefined);
+    selectCurvePoint?.(undefined);
   };
 
   const handleFinishCurve = () => {
-    finishCurve();
+    finishCurve?.();
   };
 
   const handleCancelCurve = () => {
-    cancelCurve();
+    cancelCurve?.();
   };
 
   return (
@@ -191,7 +191,7 @@ const CurvesPanelComponent: React.FC = () => {
               </Text>
               <HStack spacing={1}>
                 <Button
-                  onClick={() => updateCurvePoint(selectedPoint.id, { type: 'corner' })}
+                  onClick={() => updateCurvePoint?.(selectedPoint.id, { type: 'corner' })}
                   size="xs"
                   colorScheme={selectedPoint.type === 'corner' ? 'brand' : 'gray'}
                   variant={selectedPoint.type === 'corner' ? 'solid' : 'outline'}
@@ -201,7 +201,7 @@ const CurvesPanelComponent: React.FC = () => {
                   Corner
                 </Button>
                 <Button
-                  onClick={() => updateCurvePoint(selectedPoint.id, { type: 'smooth' })}
+                  onClick={() => updateCurvePoint?.(selectedPoint.id, { type: 'smooth' })}
                   size="xs"
                   colorScheme={selectedPoint.type === 'smooth' ? 'brand' : 'gray'}
                   variant={selectedPoint.type === 'smooth' ? 'solid' : 'outline'}
@@ -211,7 +211,7 @@ const CurvesPanelComponent: React.FC = () => {
                   Smooth
                 </Button>
                 <Button
-                  onClick={() => updateCurvePoint(selectedPoint.id, { type: 'asymmetric' })}
+                  onClick={() => updateCurvePoint?.(selectedPoint.id, { type: 'asymmetric' })}
                   size="xs"
                   colorScheme={selectedPoint.type === 'asymmetric' ? 'brand' : 'gray'}
                   variant={selectedPoint.type === 'asymmetric' ? 'solid' : 'outline'}
@@ -283,7 +283,7 @@ const CurvesPanelComponent: React.FC = () => {
           <HStack spacing={2} mb={2} justify="space-between">
             <Text fontSize="12px" color="gray.600">Snap to Grid:</Text>
             <PanelToggle
-              isChecked={curves.snapToGrid}
+              isChecked={curves?.snapToGrid ?? false}
               onChange={handleToggleSnapToGrid}
             >
               {''}
@@ -291,11 +291,11 @@ const CurvesPanelComponent: React.FC = () => {
           </HStack>
 
           {/* Grid Size Slider */}
-          {curves.snapToGrid && (
+          {(curves?.snapToGrid ?? false) && (
             <SliderControl
               icon={<Grid size={14} />}
               label="Size"
-              value={curves.gridSize}
+              value={curves?.gridSize ?? 20}
               min={5}
               max={50}
               step={5}
@@ -309,7 +309,7 @@ const CurvesPanelComponent: React.FC = () => {
           <HStack spacing={2} mb={2} justify="space-between">
             <Text fontSize="12px" color="gray.600">Show Handles:</Text>
             <PanelToggle
-              isChecked={curves.showHandles}
+              isChecked={curves?.showHandles ?? true}
               onChange={handleToggleShowHandles}
             >
               {''}
@@ -320,7 +320,7 @@ const CurvesPanelComponent: React.FC = () => {
           <HStack spacing={2} mb={2} justify="space-between">
             <Text fontSize="12px" color="gray.600">Show Preview:</Text>
             <PanelToggle
-              isChecked={curves.showPreview}
+              isChecked={curves?.showPreview ?? true}
               onChange={handleToggleShowPreview}
             >
               {''}

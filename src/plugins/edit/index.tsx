@@ -8,9 +8,12 @@ import { ControlPointAlignmentPanel } from './ControlPointAlignmentPanel';
 import { PathOperationsPanel } from './PathOperationsPanel';
 import { EditPointsOverlay } from './EditPointsOverlay';
 
-const editSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => ({
-  state: createEditPluginSlice(set, get, api),
-});
+const editSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
+  const slice = createEditPluginSlice(set as any, get as any, api as any);
+  return {
+    state: slice,
+  };
+};
 
 export const editPlugin: PluginDefinition<CanvasStore> = {
   id: 'edit',
@@ -57,7 +60,7 @@ export const editPlugin: PluginDefinition<CanvasStore> = {
               )
               .map((element) => {
                 const isSelected = selectedIds.includes(element.id);
-                const hasSelectedSubpath = selectedSubpaths.some((subpath) => subpath.elementId === element.id);
+                const hasSelectedSubpath = (selectedSubpaths ?? []).some((subpath) => subpath.elementId === element.id);
 
                 if (!isSelected && !hasSelectedSubpath) {
                   return null;
@@ -67,15 +70,15 @@ export const editPlugin: PluginDefinition<CanvasStore> = {
                   <EditPointsOverlay
                     key={`edit-overlay-${element.id}`}
                     element={element}
-                    selectedCommands={selectedCommands}
-                    editingPoint={editingPoint}
-                    draggingSelection={draggingSelection}
+                    selectedCommands={selectedCommands ?? []}
+                    editingPoint={editingPoint ?? null}
+                    draggingSelection={draggingSelection ?? null}
                     dragPosition={dragPosition}
                     viewport={viewport}
                     smoothBrush={smoothBrush}
-                    getFilteredEditablePoints={getFilteredEditablePoints}
-                    onStartDraggingPoint={startDraggingPoint}
-                    onSelectCommand={selectCommand}
+                    getFilteredEditablePoints={getFilteredEditablePoints ?? (() => [])}
+                    onStartDraggingPoint={startDraggingPoint ?? (() => {})}
+                    onSelectCommand={selectCommand ?? (() => {})}
                   />
                 );
               })}
