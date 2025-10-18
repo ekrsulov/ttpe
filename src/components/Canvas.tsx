@@ -22,6 +22,8 @@ import {
 } from '../canvas/CanvasEventBusContext';
 import { useCanvasZoom } from '../hooks/useCanvasZoom';
 import { useSmoothBrushNativeListeners } from '../hooks/useSmoothBrushNativeListeners';
+import { SmoothBrushNativeService } from '../canvas/services/SmoothBrushNativeService';
+import { CanvasServicesProvider } from '../canvas/services/CanvasServicesProvider';
 import {
   canvasRendererRegistry,
   type CanvasRenderContext,
@@ -303,6 +305,54 @@ const CanvasContent: React.FC = () => {
     emitPointerEvent,
     setSmoothBrushCursor,
   });
+
+  const defaultSmoothBrushService = useMemo(
+    () => new SmoothBrushNativeService({ eventBus }),
+    [eventBus]
+  );
+  const [smoothBrushServiceOverride, setSmoothBrushServiceOverride] = useState<SmoothBrushNativeService | null>(
+    null
+  );
+  const activeSmoothBrushService = smoothBrushServiceOverride ?? defaultSmoothBrushService;
+
+  const registerSmoothBrushService = useCallback((service: SmoothBrushNativeService) => {
+    setSmoothBrushServiceOverride(service);
+  }, []);
+
+  const resetSmoothBrushService = useCallback(() => {
+    setSmoothBrushServiceOverride(null);
+  }, []);
+
+  const canvasServicesValue = useMemo(
+    () => ({
+      smoothBrushService: activeSmoothBrushService,
+      registerSmoothBrushService,
+      resetSmoothBrushService,
+    }),
+    [activeSmoothBrushService, registerSmoothBrushService, resetSmoothBrushService]
+  );
+
+  useEffect(() => {
+    return activeSmoothBrushService.attachSmoothBrushListeners(svgRef, {
+      activePlugin,
+      pencil,
+      viewportZoom: viewport.zoom,
+      screenToCanvas,
+      emitPointerEvent,
+      startPath,
+      addPointToPath,
+    });
+  }, [
+    activeSmoothBrushService,
+    svgRef,
+    activePlugin,
+    pencil,
+    viewport.zoom,
+    screenToCanvas,
+    emitPointerEvent,
+    startPath,
+    addPointToPath,
+  ]);
 
   const eventHandlerDeps = useMemo(() => ({
     svgRef,
@@ -603,117 +653,6 @@ const CanvasContent: React.FC = () => {
     };
   }, [editingPoint?.isDragging, draggingSelection?.isDragging, emergencyCleanupDrag]);
 
-  // Native DOM event listeners for pencil tool (bypassing React's synthetic events)
-  useEffect(() => {
-    const svgElement = svgRef.current;
-    if (!svgElement || activePlugin !== 'pencil') return;
-
-    // Cleanup any orphaned temp paths from previous sessions
-    const orphanedTempPaths = svgElement.querySelectorAll('[data-temp-path="true"]');
-    orphanedTempPaths.forEach(path => path.remove());
-
-    let isDrawing = false;
-    let tempPath: SVGPathElement | null = null;
-    let allPoints: Point[] = [];
-
-    const nativePointerDown = (e: PointerEvent) => {
-      e.stopPropagation(); // Prevent React's handler from receiving this
-      const point = screenToCanvas(e.clientX, e.clientY);
-      // Don't emit pointerdown event here - it would create an extra path with just M command
-      // The actual path will be created in pointerUp with all the collected points
-      isDrawing = true;
-      allPoints = [point];
-
-      // Create temporary SVG path for immediate visual feedback
-      tempPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      const { strokeWidth, strokeColor, strokeOpacity } = pencil;
-      const currentZoom = viewport.zoom;
-      const effectiveStrokeColor = strokeColor === 'none' ? '#000000' : strokeColor;
-      
-      tempPath.setAttribute('fill', 'none');
-      tempPath.setAttribute('stroke', effectiveStrokeColor);
-      tempPath.setAttribute('stroke-width', (strokeWidth / currentZoom).toString());
-      tempPath.setAttribute('stroke-opacity', strokeOpacity.toString());
-      tempPath.setAttribute('stroke-linecap', 'round');
-      tempPath.setAttribute('stroke-linejoin', 'round');
-      tempPath.setAttribute('d', `M ${point.x} ${point.y}`);
-      tempPath.setAttribute('data-temp-path', 'true'); // Mark as temporary
-      tempPath.style.pointerEvents = 'none'; // Prevent interaction
-      
-      svgElement.appendChild(tempPath);
-    };
-
-    const nativePointerMove = (e: PointerEvent) => {
-      const point = screenToCanvas(e.clientX, e.clientY);
-      emitPointerEvent('pointermove', e, point);
-
-      if (!isDrawing || !tempPath) return;
-      e.stopPropagation(); // Prevent React's handler from receiving this
-
-      allPoints.push(point);
-
-      // Update temporary path with all points
-      const pathD = allPoints.map((p, i) => 
-        i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`
-      ).join(' ');
-      
-      tempPath.setAttribute('d', pathD);
-    };
-
-    const nativePointerUp = (e: PointerEvent) => {
-      const point = screenToCanvas(e.clientX, e.clientY);
-      emitPointerEvent('pointerup', e, point);
-
-      e.stopPropagation(); // Prevent React's handler from receiving this
-      if (!isDrawing) return;
-      isDrawing = false;
-
-      // Store points before clearing
-      const pointsToAdd = [...allPoints];
-      
-      // Clear state immediately
-      allPoints = [];
-
-      // Remove temporary path from DOM immediately
-      if (tempPath && tempPath.parentNode) {
-        tempPath.parentNode.removeChild(tempPath);
-        tempPath = null;
-      }
-
-      // Add all points to store
-      if (pointsToAdd.length > 0) {
-        startPath(pointsToAdd[0]);
-
-        // Add remaining points (skip first one as it's used in startPath)
-        for (let i = 1; i < pointsToAdd.length; i++) {
-          addPointToPath(pointsToAdd[i]);
-        }
-      }
-    };
-
-    // Add native event listeners (NOT passive so we can stopPropagation)
-    svgElement.addEventListener('pointerdown', nativePointerDown);
-    svgElement.addEventListener('pointermove', nativePointerMove);
-    svgElement.addEventListener('pointerup', nativePointerUp);
-    svgElement.addEventListener('pointercancel', nativePointerUp);
-
-    return () => {
-      svgElement.removeEventListener('pointerdown', nativePointerDown);
-      svgElement.removeEventListener('pointermove', nativePointerMove);
-      svgElement.removeEventListener('pointerup', nativePointerUp);
-      svgElement.removeEventListener('pointercancel', nativePointerUp);
-      
-      // Cleanup temp path if it exists
-      if (tempPath && tempPath.parentNode) {
-        tempPath.parentNode.removeChild(tempPath);
-      }
-      
-      // Also cleanup any orphaned temp paths
-      const tempPaths = svgElement.querySelectorAll('[data-temp-path="true"]');
-      tempPaths.forEach(path => path.remove());
-    };
-  }, [activePlugin, screenToCanvas, pencil, viewport, startPath, addPointToPath, emitPointerEvent]);
-
   // Listen for saveAsPng events from FilePanel
   useEffect(() => {
     const handleSaveAsPng = (event: CustomEvent) => {
@@ -731,12 +670,13 @@ const CanvasContent: React.FC = () => {
   }, [saveAsPng]);
 
   return (
-    <>
-      <RenderCountBadgeWrapper 
-        componentName="Canvas" 
-        position="top-left"
-        wrapperStyle={{ position: 'fixed', top: 0, left: 0, zIndex: 10000 }}
-      />
+    <CanvasServicesProvider value={canvasServicesValue}>
+      <>
+        <RenderCountBadgeWrapper
+          componentName="Canvas"
+          position="top-left"
+          wrapperStyle={{ position: 'fixed', top: 0, left: 0, zIndex: 10000 }}
+        />
       <svg
         ref={svgRef}
         width={canvasSize.width}
@@ -757,8 +697,9 @@ const CanvasContent: React.FC = () => {
       {/* Sort elements by zIndex */}
       {sortedElements.map(renderElement)}
       <CanvasLayers context={canvasLayerContext} />
-    </svg>
-    </>
+      </svg>
+      </>
+    </CanvasServicesProvider>
   );
 };
 
