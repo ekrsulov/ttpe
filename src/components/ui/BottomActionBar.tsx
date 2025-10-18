@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { RenderCountBadgeWrapper } from './RenderCountBadgeWrapper';
+import { pluginManager } from '../../utils/pluginManager';
 
 // Custom hook to subscribe to temporal state changes
 const useTemporalState = () => {
@@ -79,6 +80,8 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
 
   const isSidebarPinned = sidebarWidth > 0;
 
+  const pluginBottomActions = pluginManager.getActions('bottom');
+
   return (
     <Box
       position="fixed"
@@ -99,197 +102,206 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
       backgroundColor="rgba(255, 255, 255, 0.95)"
     >
       <HStack spacing={1.5}>
-        {/* Undo/Redo Group */}
-        <HStack spacing={0.5}>
-          <Tooltip label="Undo" placement="top">
-            <Box position="relative">
-              <IconButton
-                aria-label="Undo"
-                icon={<Undo2 size={14} />}
-                onClick={() => undo()}
-                isDisabled={!canUndo}
-                colorScheme="gray"
-                variant="ghost"
-                size="xs"
-                sx={{
-                  minHeight: '28px',
-                  minWidth: '28px',
-                }}
-              />
-                            {pastStates.length > 0 && (
-                <Box
-                  position="absolute"
-                  bottom="-4px"
-                  left="50%"
-                  transform="translateX(-50%)"
-                  bg="gray.50"
-                  color="gray.600"
-                  borderRadius="full"
-                  minW="16px"
-                  h="11px"
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                  fontSize="9px"
-                  fontWeight="bold"
-                  px="3px"
-                >
-                  {pastStates.length}
+        {pluginBottomActions.length > 0 ? (
+          pluginBottomActions.map((action) => {
+            const ActionComponent = action.component as React.ComponentType<Record<string, unknown>>;
+            return <ActionComponent key={action.id} />;
+          })
+        ) : (
+          <>
+            {/* Undo/Redo Group */}
+            <HStack spacing={0.5}>
+              <Tooltip label="Undo" placement="top">
+                <Box position="relative">
+                  <IconButton
+                    aria-label="Undo"
+                    icon={<Undo2 size={14} />}
+                    onClick={() => undo()}
+                    isDisabled={!canUndo}
+                    colorScheme="gray"
+                    variant="ghost"
+                    size="xs"
+                    sx={{
+                      minHeight: '28px',
+                      minWidth: '28px',
+                    }}
+                  />
+                  {pastStates.length > 0 && (
+                    <Box
+                      position="absolute"
+                      bottom="-4px"
+                      left="50%"
+                      transform="translateX(-50%)"
+                      bg="gray.50"
+                      color="gray.600"
+                      borderRadius="full"
+                      minW="16px"
+                      h="11px"
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
+                      fontSize="9px"
+                      fontWeight="bold"
+                      px="3px"
+                    >
+                      {pastStates.length}
+                    </Box>
+                  )}
                 </Box>
-              )}
-            </Box>
-          </Tooltip>
+              </Tooltip>
 
-          <Tooltip label="Redo" placement="top">
-            <Box position="relative">
-              <IconButton
-                aria-label="Redo"
-                icon={<Redo2 size={14} />}
-                onClick={() => redo()}
-                isDisabled={!canRedo}
-                colorScheme="gray"
-                variant="ghost"
-                size="xs"
-                sx={{
-                  minHeight: '28px',
-                  minWidth: '28px',
-                }}
-              />
-              {futureStates.length > 0 && (
-                <Box
-                  position="absolute"
-                  bottom="-4px"
-                  left="50%"
-                  transform="translateX(-50%)"
-                  bg="gray.50"
-                  color="gray.600"
-                  borderRadius="full"
-                  minW="16px"
-                  h="11px"
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                  fontSize="9px"
-                  fontWeight="bold"
-                  px="3px"
-                >
-                  {futureStates.length}
+              <Tooltip label="Redo" placement="top">
+                <Box position="relative">
+                  <IconButton
+                    aria-label="Redo"
+                    icon={<Redo2 size={14} />}
+                    onClick={() => redo()}
+                    isDisabled={!canRedo}
+                    colorScheme="gray"
+                    variant="ghost"
+                    size="xs"
+                    sx={{
+                      minHeight: '28px',
+                      minWidth: '28px',
+                    }}
+                  />
+                  {futureStates.length > 0 && (
+                    <Box
+                      position="absolute"
+                      bottom="-4px"
+                      left="50%"
+                      transform="translateX(-50%)"
+                      bg="gray.50"
+                      color="gray.600"
+                      borderRadius="full"
+                      minW="16px"
+                      h="11px"
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
+                      fontSize="9px"
+                      fontWeight="bold"
+                      px="3px"
+                    >
+                      {futureStates.length}
+                    </Box>
+                  )}
                 </Box>
-              )}
-            </Box>
-          </Tooltip>
-        </HStack>
+              </Tooltip>
+            </HStack>
 
-        {/* Zoom Group */}
-        <HStack spacing={0.5}>
-          <Tooltip label="Zoom Out" placement="top">
-            <IconButton
-              aria-label="Zoom Out"
-              icon={<ZoomOut size={14} />}
-              onClick={() => zoom(1 / zoomFactor)}
-              colorScheme="gray"
-              variant="ghost"
-              size="xs"
-              sx={{
-                minHeight: '28px',
-                minWidth: '28px',
-              }}
-            />
-          </Tooltip>
+            {/* Zoom Group */}
+            <HStack spacing={0.5}>
+              <Tooltip label="Zoom Out" placement="top">
+                <IconButton
+                  aria-label="Zoom Out"
+                  icon={<ZoomOut size={14} />}
+                  onClick={() => zoom(1 / zoomFactor)}
+                  colorScheme="gray"
+                  variant="ghost"
+                  size="xs"
+                  sx={{
+                    minHeight: '28px',
+                    minWidth: '28px',
+                  }}
+                />
+              </Tooltip>
 
-          <Tooltip label="Reset Zoom" placement="top">
-            <Box position="relative">
-              <IconButton
-                aria-label="Reset Zoom"
-                icon={<Maximize2 size={14} />}
-                onClick={() => resetZoom()}
-                colorScheme="gray"
-                variant="ghost"
-                size="xs"
-                sx={{
-                  minHeight: '28px',
-                  minWidth: '28px',
-                }}
-              />
-              {isZoomDifferent && (
-                <Box
-                  position="absolute"
-                  bottom="-4px"
-                  left="50%"
-                  transform="translateX(-50%)"
-                  bg="gray.50"
-                  color="gray.600"
-                  borderRadius="full"
-                  minW="28px"
-                  h="11px"
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                  fontSize="9px"
-                  fontWeight="bold"
-                  px="3px"
-                >
-                  {currentZoom}%
+              <Tooltip label="Reset Zoom" placement="top">
+                <Box position="relative">
+                  <IconButton
+                    aria-label="Reset Zoom"
+                    icon={<Maximize2 size={14} />}
+                    onClick={() => resetZoom()}
+                    colorScheme="gray"
+                    variant="ghost"
+                    size="xs"
+                    sx={{
+                      minHeight: '28px',
+                      minWidth: '28px',
+                    }}
+                  />
+                  {isZoomDifferent && (
+                    <Box
+                      position="absolute"
+                      bottom="-4px"
+                      left="50%"
+                      transform="translateX(-50%)"
+                      bg="gray.50"
+                      color="gray.600"
+                      borderRadius="full"
+                      minW="28px"
+                      h="11px"
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
+                      fontSize="9px"
+                      fontWeight="bold"
+                      px="3px"
+                    >
+                      {currentZoom}%
+                    </Box>
+                  )}
                 </Box>
-              )}
-            </Box>
-          </Tooltip>
+              </Tooltip>
 
-          <Tooltip label="Zoom In" placement="top">
-            <IconButton
-              aria-label="Zoom In"
-              icon={<ZoomIn size={14} />}
-              onClick={() => zoom(zoomFactor)}
-              colorScheme="gray"
-              variant="ghost"
-              size="xs"
-              sx={{
-                minHeight: '28px',
-                minWidth: '28px',
-              }}
-            />
-          </Tooltip>
-        </HStack>
+              <Tooltip label="Zoom In" placement="top">
+                <IconButton
+                  aria-label="Zoom In"
+                  icon={<ZoomIn size={14} />}
+                  onClick={() => zoom(zoomFactor)}
+                  colorScheme="gray"
+                  variant="ghost"
+                  size="xs"
+                  sx={{
+                    minHeight: '28px',
+                    minWidth: '28px',
+                  }}
+                />
+              </Tooltip>
+            </HStack>
 
-        {/* Delete Button */}
-        <Tooltip label="Delete" placement="top">
-          <Box position="relative">
-            <IconButton
-              aria-label="Delete"
-              icon={<Trash2 size={14} />}
-              onClick={handleDelete}
-              isDisabled={!canDelete}
-              variant="ghost"
-              size="xs"
-              sx={{
-                minHeight: '28px',
-                minWidth: '28px',
-                color: canDelete ? 'red.500' : 'gray.400',
-              }}
-            />
-            {deleteCount > 0 && (
-              <Box
-                position="absolute"
-                bottom="-4px"
-                left="50%"
-                transform="translateX(-50%)"
-                bg="red.50"
-                color="red.500"
-                borderRadius="full"
-                minW="16px"
-                h="11px"
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-                fontSize="9px"
-                fontWeight="bold"
-                px="3px"
-              >
-                {deleteCount}
+            {/* Delete Button */}
+            <Tooltip label="Delete" placement="top">
+              <Box position="relative">
+                <IconButton
+                  aria-label="Delete"
+                  icon={<Trash2 size={14} />}
+                  onClick={handleDelete}
+                  isDisabled={!canDelete}
+                  variant="ghost"
+                  size="xs"
+                  sx={{
+                    minHeight: '28px',
+                    minWidth: '28px',
+                    color: canDelete ? 'red.500' : 'gray.400',
+                  }}
+                />
+                {deleteCount > 0 && (
+                  <Box
+                    position="absolute"
+                    bottom="-4px"
+                    left="50%"
+                    transform="translateX(-50%)"
+                    bg="red.50"
+                    color="red.500"
+                    borderRadius="full"
+                    minW="16px"
+                    h="11px"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                    fontSize="9px"
+                    fontWeight="bold"
+                    px="3px"
+                  >
+                    {deleteCount}
+                  </Box>
+                )}
               </Box>
-            )}
-          </Box>
-        </Tooltip>
+            </Tooltip>
+          </>
+        )}
       </HStack>
       <RenderCountBadgeWrapper componentName="BottomActionBar" position="bottom-right" />
     </Box>

@@ -1,5 +1,5 @@
 import type React from 'react';
-import type { PluginDefinition, PluginUIContribution } from '../types/plugins';
+import type { PluginDefinition, PluginUIContribution, PluginActionContribution } from '../types/plugins';
 import type { CanvasStore } from '../store/canvasStore';
 import { useCanvasStore, registerPluginSlices, unregisterPluginSlices } from '../store/canvasStore';
 import { DEFAULT_PLUGIN_DEFINITIONS } from './pluginDefaults';
@@ -65,12 +65,32 @@ export class PluginManager {
 
   getOverlays(toolName: string): React.ComponentType<Record<string, unknown>>[] {
     const tool = this.registry.get(toolName);
-    return tool?.overlays?.map((overlay: PluginUIContribution) => overlay.component as React.ComponentType<Record<string, unknown>>)
+    return tool?.overlays
+      ?.filter((overlay: PluginUIContribution) => overlay.placement !== 'global')
+      .map((overlay: PluginUIContribution) => overlay.component as React.ComponentType<Record<string, unknown>>)
       ?? [];
+  }
+
+  getGlobalOverlays(): React.ComponentType<Record<string, unknown>>[] {
+    return this.getAll()
+      .flatMap((plugin) =>
+        plugin.overlays?.filter((overlay) => overlay.placement === 'global') ?? []
+      )
+      .map((overlay) => overlay.component as React.ComponentType<Record<string, unknown>>);
   }
 
   getPanels(toolName: string): PluginUIContribution[] {
     return this.registry.get(toolName)?.panels ?? [];
+  }
+
+  getActions(placement: PluginActionContribution['placement']): PluginActionContribution[] {
+    return this.getAll().flatMap((plugin) =>
+      plugin.actions?.filter((action) => action.placement === placement) ?? []
+    );
+  }
+
+  getRegisteredTools(): Array<PluginDefinition<CanvasStore>> {
+    return this.getAll();
   }
 
   executeHandler(

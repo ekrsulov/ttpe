@@ -1,16 +1,17 @@
 import React, { Suspense, useMemo } from 'react';
 import { Box } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { 
-  PANEL_CONFIGS, 
-  type SmoothBrush, 
-  type PathSimplification, 
-  type PathRounding, 
+import {
+  PANEL_CONFIGS,
+  type SmoothBrush,
+  type PathSimplification,
+  type PathRounding,
   type SelectedCommand,
-  type PanelComponentProps 
+  type PanelComponentProps
 } from './panelConfig';
+import type { PluginUIContribution } from '../../types/plugins';
 
-interface SidebarPanelsProps {
+export interface SidebarPanelsProps {
   activePlugin: string | null;
   showFilePanel: boolean;
   showSettingsPanel: boolean;
@@ -29,6 +30,7 @@ interface SidebarPanelsProps {
   activateSmoothBrush: () => void;
   deactivateSmoothBrush: () => void;
   resetSmoothBrush: () => void;
+  panelContributions?: PluginUIContribution[];
 }
 
 /**
@@ -53,6 +55,7 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
   activateSmoothBrush,
   deactivateSmoothBrush,
   resetSmoothBrush,
+  panelContributions = [],
 }) => {
   // Check if we're in special panel mode (file or settings)
   const isInSpecialPanelMode = showFilePanel || showSettingsPanel;
@@ -136,18 +139,24 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
       <Suspense fallback={<Box h="20px" bg="gray.100" />}>
         {PANEL_CONFIGS.map((panelConfig) => {
           const shouldShow = panelConfig.condition(conditionContext);
-          
+
           if (!shouldShow) {
             return null;
           }
 
           const PanelComponent = panelConfig.component;
-          const panelProps = panelConfig.getProps 
-            ? panelConfig.getProps(allPanelProps) 
+          const panelProps = panelConfig.getProps
+            ? panelConfig.getProps(allPanelProps)
             : {};
 
           return <PanelComponent key={panelConfig.key} {...panelProps} />;
         })}
+
+        {!isInSpecialPanelMode &&
+          panelContributions.map((panel) => {
+            const PanelComponent = panel.component as React.ComponentType<PanelComponentProps>;
+            return <PanelComponent key={panel.id} {...allPanelProps} />;
+          })}
       </Suspense>
     </Box>
   );
