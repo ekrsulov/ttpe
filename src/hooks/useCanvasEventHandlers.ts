@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
 import { pluginManager } from '../utils/pluginManager';
-import { useCanvasCurves } from '../hooks/useCanvasCurves';
+import { useCanvasCurves } from '../plugins/curves/useCanvasCurves';
 import { getEffectiveShift } from './useEffectiveShift';
 import type { Point } from '../types';
 

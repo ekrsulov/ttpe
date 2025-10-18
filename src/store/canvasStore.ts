@@ -17,16 +17,16 @@ import { createSelectionSlice, type SelectionSlice } from './slices/features/sel
 import { createGroupSlice, type GroupSlice } from './slices/features/groupSlice';
 import { createOrderSlice, type OrderSlice } from './slices/features/orderSlice';
 import { createArrangeSlice, type ArrangeSlice } from './slices/features/arrangeSlice';
-import { createPencilPluginSlice, type PencilPluginSlice } from './slices/plugins/pencilPluginSlice';
-import { createTextPluginSlice, type TextPluginSlice } from './slices/plugins/textPluginSlice';
-import { createShapePluginSlice, type ShapePluginSlice } from './slices/plugins/shapePluginSlice';
-import { createTransformationPluginSlice, type TransformationPluginSlice } from './slices/plugins/transformationPluginSlice';
-import { createEditPluginSlice, type EditPluginSlice } from './slices/plugins/editPluginSlice';
-import { createSubpathPluginSlice, type SubpathPluginSlice } from './slices/plugins/subpathPluginSlice';
-import { createOpticalAlignmentSlice, type OpticalAlignmentSlice } from './slices/plugins/opticalAlignmentSlice';
-import { createCurvesPluginSlice, type CurvesPluginSlice } from './slices/plugins/curvesPluginSlice';
-import { createGuidelinesPluginSlice, type GuidelinesPluginSlice } from './slices/plugins/guidelinesPluginSlice';
-import { createGridPluginSlice, type GridPluginSlice } from './slices/plugins/gridPluginSlice';
+import { createPencilPluginSlice, type PencilPluginSlice } from '../plugins/pencil/slice';
+import { createTextPluginSlice, type TextPluginSlice } from '../plugins/text/slice';
+import { createShapePluginSlice, type ShapePluginSlice } from '../plugins/shape/slice';
+import { createTransformationPluginSlice, type TransformationPluginSlice } from '../plugins/transformation/slice';
+import { createEditPluginSlice, type EditPluginSlice } from '../plugins/edit/slice';
+import { createSubpathPluginSlice, type SubpathPluginSlice } from '../plugins/subpath/slice';
+import { createOpticalAlignmentSlice, type OpticalAlignmentSlice } from '../plugins/opticalAlignment/slice';
+import { createCurvesPluginSlice, type CurvesPluginSlice } from '../plugins/curves/slice';
+import { createGuidelinesPluginSlice, type GuidelinesPluginSlice } from '../plugins/guidelines/slice';
+import { createGridPluginSlice, type GridPluginSlice } from '../plugins/grid/slice';
 
 // Debounce function to implement cool-off period
 function debounce<T extends (...args: never[]) => void>(
@@ -469,21 +469,21 @@ type CanvasPluginSlice = ReturnType<PluginSliceFactory<CanvasStore>>;
 const pluginSliceCleanups = new Map<string, Array<() => void>>();
 
 const applyPluginSlice = (partial: Partial<CanvasStore>): (() => void) => {
-  const previousValues: Partial<CanvasStore> = {};
+  const previousValues: Partial<Record<keyof CanvasStore, CanvasStore[keyof CanvasStore] | null>> = {};
   const keys = Object.keys(partial) as (keyof CanvasStore)[];
 
   keys.forEach((key) => {
     previousValues[key] = useCanvasStore.getState()[key];
   });
 
-  useCanvasStore.setState(partial);
+  useCanvasStore.setState(partial as Partial<CanvasStore>);
 
   return () => {
-    const restore: Partial<CanvasStore> = {};
+  const restore: Partial<Record<keyof CanvasStore, CanvasStore[keyof CanvasStore] | null>> = {};
     keys.forEach((key) => {
       restore[key] = previousValues[key];
     });
-    useCanvasStore.setState(restore);
+    useCanvasStore.setState(restore as Partial<CanvasStore>);
   };
 };
 

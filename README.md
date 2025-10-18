@@ -9,6 +9,22 @@ TTPE is an SVG-based vector graphics editor presented in a full-screen layout: a
 The app is built with React 19, TypeScript, and Vite; it uses Zustand for state and Playwright for E2E tests. State is composed of multiple slices (base, viewport, selection, ordering, alignment, pencil, text, shapes, transforms, advanced editing, subpaths, optical alignment, curves, guides, and grid), with local persistence and undo/redo history (up to 50 steps, ~100 ms cooldown).
 The base slice manages elements, the active plugin, panel visibility, the "virtual shift," and settings such as keyboard move precision and render counters.
 
+### Plugin architecture
+
+Each interactive tool or feature slice now lives under `src/plugins/<name>/`. A plugin module groups:
+
+* `slice.ts` – the Zustand slice factory and TypeScript types for that plugin's state.
+* UI/behavior components – panels, overlays, hooks, or renderers belonging to the plugin (e.g. `src/plugins/pencil/PencilPanel.tsx`).
+* `index.ts` – the plugin's `PluginDefinition`, where handlers, keyboard shortcuts, overlays, panels and slice factories are registered.
+
+All plugin definitions are exported from `src/plugins/index.ts` as `CORE_PLUGINS` and registered during boot in `main.tsx` via `pluginManager.register`. To add a plugin:
+
+1. Create `src/plugins/<id>/` with the slice and any UI.
+2. Export a `PluginDefinition` in `index.ts`, configuring metadata, handler, keyboard shortcuts, optional `panels`/`overlays`, and the `PluginSliceFactory` array that wires the slice into the store.
+3. Append the definition to `CORE_PLUGINS` so it is registered at start-up.
+
+`PluginDefinition` supports keyboard shortcuts through `keyboardShortcuts`, overlays via `overlays` (global vs. tool placements), sidebar contributions with `panels`, contextual actions through `actions`, and slice registration with `slices`. `pluginManager` exposes helpers (`register`, `unregister`, `handleKeyboardEvent`, `getPanels`, `getOverlays`, etc.) to render and dispatch plugin contributions.
+
 ## Creation Tools
 
 * **Pencil / Freehand**: starts or reuses paths with the current stroke attributes; filters points by a minimum distance to avoid noise and marks paths as "freehand."
