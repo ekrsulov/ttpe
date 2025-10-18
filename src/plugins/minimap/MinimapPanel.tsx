@@ -4,6 +4,7 @@ import type { Bounds } from '../../utils/boundsUtils';
 import { calculateBounds } from '../../utils/boundsUtils';
 import type { PathElement } from '../../types';
 import { useCanvasStore } from '../../store/canvasStore';
+import { RenderCountBadgeWrapper } from '../../components/ui/RenderCountBadgeWrapper';
 
 interface MinimapPanelProps {
   sidebarWidth?: number;
@@ -22,8 +23,8 @@ interface MinimapMetrics {
   offsetY: number;
 }
 
-const MINIMAP_WIDTH = 220;
-const MINIMAP_HEIGHT = 160;
+const MINIMAP_WIDTH = 150;
+const MINIMAP_HEIGHT = 100;
 const MINIMAP_MARGIN = 16;
 const CONTENT_PADDING = 32;
 
@@ -83,10 +84,8 @@ const computeMinimapMetrics = (
   const availableWidth = width - padding;
   const availableHeight = height - padding;
   const scale = Math.min(availableWidth / boundsWidth, availableHeight / boundsHeight);
-  const scaledWidth = boundsWidth * scale;
-  const scaledHeight = boundsHeight * scale;
-  const offsetX = (width - scaledWidth) / 2 - bounds.minX * scale;
-  const offsetY = (height - scaledHeight) / 2 - bounds.minY * scale;
+  const offsetX = MINIMAP_MARGIN - bounds.minX * scale;
+  const offsetY = MINIMAP_MARGIN - bounds.minY * scale;
 
   return {
     bounds,
@@ -349,7 +348,6 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) 
       boxShadow="0 4px 20px rgba(0, 0, 0, 0.1)"
       backdropFilter="blur(12px)"
       bg="rgba(255, 255, 255, 0.95)"
-      border="1px solid rgba(0, 0, 0, 0.1)"
       overflow="hidden"
       zIndex={100}
       transition="right 0.2s ease"
@@ -452,6 +450,7 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) 
           />
         </g>
       </svg>
+      <RenderCountBadgeWrapper componentName="MinimapPanel" position="top-right" />
     </Box>
   );
 };
