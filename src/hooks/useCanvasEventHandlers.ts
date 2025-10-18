@@ -239,7 +239,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
   }, [activePlugin, isDragging, dragStart, selectedIds, selectElement, setIsDragging, setDragStart, setHasDragMoved, hasDragMoved, isVirtualShiftActive, applySnapToDraggedElements]);
 
   // Handle element double click
-  const handleElementDoubleClick = useCallback((elementId: string, e: React.MouseEvent<SVGPathElement>) => {
+  const handleElementDoubleClick = useCallback((elementId: string, e: React.MouseEvent<Element>) => {
     e.stopPropagation();
     e.preventDefault();
 

@@ -1,4 +1,3 @@
-import React from 'react';
 import { commandsToString } from '../../utils/path';
 import type { PathElement } from '../../types';
 import type {
