@@ -1,6 +1,6 @@
 import React, { useRef, useCallback, useState, useEffect, useMemo } from 'react';
 import { measurePath, mapPointerToCanvas } from '../utils/geometry';
-import { extractEditablePoints, commandsToString } from '../utils/path';
+import { extractEditablePoints } from '../utils/path';
 import { useCanvasDragInteractions } from '../hooks/useCanvasDragInteractions';
 import { useCanvasKeyboardControls } from '../hooks/useCanvasKeyboardControls';
 import { useCanvasPointerSelection } from '../hooks/useCanvasPointerSelection';
@@ -22,6 +22,10 @@ import {
 } from '../canvas/CanvasEventBusContext';
 import { useCanvasZoom } from '../hooks/useCanvasZoom';
 import { useSmoothBrushNativeListeners } from '../hooks/useSmoothBrushNativeListeners';
+import {
+  canvasRendererRegistry,
+  type CanvasRenderContext,
+} from '../canvas/renderers';
 
 const CanvasContent: React.FC = () => {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -441,61 +445,33 @@ const CanvasContent: React.FC = () => {
     return null;
   }, [viewport.zoom]);
 
-  // Render elements
-  const renderElement = (element: typeof elements[0]) => {
-    const { data, type } = element;
-    const isSelected = selectedIds.includes(element.id);
+  const isElementSelected = useCallback(
+    (elementId: string) => selectedIds.includes(elementId),
+    [selectedIds]
+  );
 
-    if (isElementHidden && isElementHidden(element.id)) {
-      return null;
-    }
+  const renderContext = useMemo<CanvasRenderContext>(() => ({
+    viewport,
+    activePlugin,
+    isElementHidden,
+    isElementSelected,
+    eventHandlers: {
+      onPointerUp: handleElementClick,
+      onPointerDown: handleElementPointerDown,
+      onDoubleClick: handleElementDoubleClick,
+    },
+  }), [
+    viewport,
+    activePlugin,
+    isElementHidden,
+    isElementSelected,
+    handleElementClick,
+    handleElementPointerDown,
+    handleElementDoubleClick,
+  ]);
 
-    switch (type) {
-      case 'path': {
-        const pathData = data as PathData;
-        
-        // Handle stroke color rendering
-        let effectiveStrokeColor = pathData.strokeColor;
-        if (pathData.strokeColor === 'none') {
-          // For paths with stroke='none', use almost transparent black to make them selectable
-          // Exception: pencil paths with stroke='none' use solid black for visibility
-          effectiveStrokeColor = pathData.isPencilPath ? '#000000' : '#00000001';
-        }
-
-        // For paths with fill='none', use almost transparent white to make them selectable
-        const effectiveFillColor = pathData.fillColor === 'none' ? '#ffffff01' : pathData.fillColor;
-
-        const pathD = commandsToString(pathData.subPaths.flat());
-
-        return (
-          <g key={element.id}>
-            <path
-              data-element-id={element.id}
-              d={pathD}
-              stroke={effectiveStrokeColor}
-              strokeWidth={pathData.strokeWidth / viewport.zoom}
-              fill={effectiveFillColor}
-              fillOpacity={pathData.fillOpacity}
-              strokeOpacity={pathData.strokeOpacity}
-              strokeLinecap={pathData.strokeLinecap || "round"}
-              strokeLinejoin={pathData.strokeLinejoin || "round"}
-              fillRule={pathData.fillRule || "nonzero"}
-              strokeDasharray={pathData.strokeDasharray && pathData.strokeDasharray !== 'none' ? pathData.strokeDasharray : undefined}
-              onPointerUp={(e) => handleElementClick(element.id, e)}
-              onPointerDown={(e) => handleElementPointerDown(element.id, e)}
-              onDoubleClick={(e) => handleElementDoubleClick(element.id, e)}
-              style={{
-                cursor: activePlugin === 'select' ? (isSelected ? 'move' : 'pointer') : 'default',
-                pointerEvents: activePlugin === 'subpath' ? 'none' : 'auto'
-              }}
-            />
-          </g>
-        );
-      }
-      default:
-        return null;
-    }
-  };
+  const renderElement = (element: typeof elements[0]) =>
+    canvasRendererRegistry.render(element, renderContext);
 
   const selectedGroupBounds = useMemo(() => {
     const groupIds = new Set<string>();
