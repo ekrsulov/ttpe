@@ -1,5 +1,4 @@
 import type { RefObject } from 'react';
-import type { CanvasEventBus } from '../CanvasEventBusContext';
 import type { Point } from '../../types';
 import type { PencilPluginSlice } from '../../plugins/pencil/slice';
 
@@ -18,12 +17,9 @@ export interface AttachSmoothBrushListenersOptions {
 }
 
 export class SmoothBrushNativeService {
-  private readonly eventBus: CanvasEventBus | null;
   private detachHandlers: (() => void) | null = null;
 
-  constructor({ eventBus }: { eventBus: CanvasEventBus | null }) {
-    this.eventBus = eventBus;
-  }
+  constructor() {}
 
   attachSmoothBrushListeners(
     svgRef: RefObject<SVGSVGElement | null>,

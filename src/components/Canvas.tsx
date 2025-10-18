@@ -251,8 +251,8 @@ const CanvasContent: React.FC = () => {
   });
 
   const defaultSmoothBrushService = useMemo(
-    () => new SmoothBrushNativeService({ eventBus }),
-    [eventBus]
+    () => new SmoothBrushNativeService(),
+    []
   );
   const [smoothBrushServiceOverride, setSmoothBrushServiceOverride] = useState<SmoothBrushNativeService | null>(
     null
