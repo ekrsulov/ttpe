@@ -1,5 +1,4 @@
-import React, { useRef, useCallback, useState, useEffect, useMemo } from 'react';
-import { extractEditablePoints } from '../utils/path';
+import React, { useRef, useCallback, useEffect, useMemo } from 'react';
 import { useCanvasDragInteractions } from '../hooks/useCanvasDragInteractions';
 import { useCanvasKeyboardControls } from '../hooks/useCanvasKeyboardControls';
 import { useSelectionController } from '../hooks/useSelectionController';
@@ -7,22 +6,22 @@ import { useCanvasTransformControls } from '../plugins/transformation/useCanvasT
 import { useCanvasShapeCreation } from '../hooks/useCanvasShapeCreation';
 import { useCanvasSmoothBrush } from '../hooks/useCanvasSmoothBrush';
 import { useCanvasEventHandlers } from '../hooks/useCanvasEventHandlers';
-import { pluginManager } from '../utils/pluginManager';
-import { logger } from '../utils';
 import { RenderCountBadgeWrapper } from './ui/RenderCountBadgeWrapper';
-import type { Point, PathData, CanvasElement } from '../types';
+import type { Point, CanvasElement } from '../types';
 import { useCanvasController } from '../canvas/controller/CanvasControllerContext';
 import { CanvasControllerProvider } from '../canvas/controller/CanvasControllerProvider';
-import { CanvasLayers } from './CanvasLayers';
 import {
   CanvasEventBusProvider,
-  CanvasEventBus,
   useCanvasEventBus,
 } from '../canvas/CanvasEventBusContext';
 import { useCanvasZoom } from '../hooks/useCanvasZoom';
-import { useSmoothBrushNativeListeners } from '../hooks/useSmoothBrushNativeListeners';
-import { SmoothBrushNativeService } from '../canvas/services/SmoothBrushNativeService';
 import { CanvasServicesProvider } from '../canvas/services/CanvasServicesProvider';
+import { useSmoothBrushIntegration } from '../hooks/useSmoothBrushIntegration';
+import { useDynamicCanvasSize } from '../hooks/useDynamicCanvasSize';
+import { useCanvasSideEffects } from '../hooks/useCanvasSideEffects';
+import { useCanvasEventHandlerDeps } from '../hooks/useCanvasEventHandlerDeps';
+import { CanvasStage } from './CanvasStage';
+import { useCanvasEventBusManager } from '../hooks/useCanvasEventBusManager';
 import {
   canvasRendererRegistry,
   type CanvasRenderContext,
@@ -70,12 +69,7 @@ const CanvasContent: React.FC = () => {
     applyBrush,
     updateCursorPosition
   } = useCanvasSmoothBrush();
-  
-  // Local state for smooth brush cursor position (not in store to avoid re-renders)
-  const [smoothBrushCursor, setSmoothBrushCursor] = useState<Point>({ x: 0, y: 0 });
 
-  // Use shallow selector to prevent unnecessary re-renders
-  // Only re-render when values actually change (not just reference)
   const controller = useCanvasController();
   const {
     currentMode,
@@ -205,32 +199,8 @@ const CanvasContent: React.FC = () => {
     setDragStart(point);
   }, [setDragStart]);
   
-  // Use dynamic canvas size that updates with viewport changes (Safari toolbar show/hide)
-  const [canvasSize, setCanvasSize] = useState({ 
-    width: window.innerWidth, 
-    height: window.innerHeight 
-  });
-
-  // Update canvas size on resize and viewport changes (Safari iOS toolbar)
-  useEffect(() => {
-    const updateCanvasSize = () => {
-      // Use visualViewport if available (better for mobile Safari)
-      const width = window.visualViewport?.width ?? window.innerWidth;
-      const height = window.visualViewport?.height ?? window.innerHeight;
-      setCanvasSize({ width, height });
-    };
-
-    // Listen to both resize and visualViewport changes
-    window.addEventListener('resize', updateCanvasSize);
-    window.visualViewport?.addEventListener('resize', updateCanvasSize);
-    window.visualViewport?.addEventListener('scroll', updateCanvasSize);
-
-    return () => {
-      window.removeEventListener('resize', updateCanvasSize);
-      window.visualViewport?.removeEventListener('resize', updateCanvasSize);
-      window.visualViewport?.removeEventListener('scroll', updateCanvasSize);
-    };
-  }, []);
+  // Use dynamic canvas size hook
+  const canvasSize = useDynamicCanvasSize();
 
   // Transform screen coordinates to canvas coordinates
   const screenToCanvas = useCallback(
@@ -240,7 +210,9 @@ const CanvasContent: React.FC = () => {
     [mapScreenPointToCanvas]
   );
 
-  // Helper function to get element bounds considering current transform
+  useCanvasZoom(svgRef);
+
+  //  Helper function to get element bounds considering current transform
   const { getElementBounds, getTransformedBounds, selectedGroupBounds } = useCanvasGeometry({
     elementMap,
     viewport,
@@ -248,66 +220,21 @@ const CanvasContent: React.FC = () => {
     isElementHidden,
   });
 
-  useCanvasZoom(svgRef);
-
-  useSmoothBrushNativeListeners({
-    svgRef,
-    activePlugin: currentMode,
-    isSmoothBrushActive,
-    screenToCanvas,
-    emitPointerEvent,
-    setSmoothBrushCursor,
-  });
-
-  const defaultSmoothBrushService = useMemo(
-    () => new SmoothBrushNativeService(),
-    []
-  );
-  const [smoothBrushServiceOverride, setSmoothBrushServiceOverride] = useState<SmoothBrushNativeService | null>(
-    null
-  );
-  const activeSmoothBrushService = smoothBrushServiceOverride ?? defaultSmoothBrushService;
-
-  const registerSmoothBrushService = useCallback((service: SmoothBrushNativeService) => {
-    setSmoothBrushServiceOverride(service);
-  }, []);
-
-  const resetSmoothBrushService = useCallback(() => {
-    setSmoothBrushServiceOverride(null);
-  }, []);
-
-  const canvasServicesValue = useMemo(
-    () => ({
-      smoothBrushService: activeSmoothBrushService,
-      registerSmoothBrushService,
-      resetSmoothBrushService,
-    }),
-    [activeSmoothBrushService, registerSmoothBrushService, resetSmoothBrushService]
-  );
-
-  useEffect(() => {
-    return activeSmoothBrushService.attachSmoothBrushListeners(svgRef, {
-      activePlugin: currentMode,
-      pencil,
-      viewportZoom: viewport.zoom,
-      screenToCanvas,
-      emitPointerEvent,
-      startPath,
-      addPointToPath,
-    });
-  }, [
-    activeSmoothBrushService,
+  // Use smooth brush integration hook
+  const {  smoothBrushCursor, canvasServicesValue } = useSmoothBrushIntegration({
     svgRef,
     currentMode,
     pencil,
-    viewport.zoom,
+    viewportZoom: viewport.zoom,
     screenToCanvas,
     emitPointerEvent,
     startPath,
     addPointToPath,
-  ]);
+    isSmoothBrushActive,
+  });
 
-  const eventHandlerDeps = useMemo(() => ({
+  // Use event handler deps hook
+  const eventHandlerDeps = useCanvasEventHandlerDeps({
     svgRef,
     screenToCanvas,
     isSpacePressed,
@@ -343,43 +270,7 @@ const CanvasContent: React.FC = () => {
     selectElement: handleSelectElement,
     setMode: handleSetMode,
     modeListeners: modeEffects.listeners,
-  }), [
-    svgRef,
-    screenToCanvas,
-    isSpacePressed,
-    currentMode,
-    isSelecting,
-    selectionStart,
-    isDragging,
-    dragStart,
-    hasDragMoved,
-    isCreatingShape,
-    shapeStart,
-    transformState.isTransforming,
-    updateTransformation,
-    applyBrush,
-    updateCursorPosition,
-    beginSelectionRectangle,
-    startShapeCreation,
-    isSmoothBrushActive,
-    setIsDragging,
-    setDragStart,
-    setHasDragMoved,
-    isWorkingWithSubpaths,
-    selectedSubpaths,
-    selectedIds,
-    startTransformation,
-    endTransformation,
-    completeSelectionRectangle,
-    updateSelectionRectangle,
-    updateShapeCreation,
-    endShapeCreation,
-    handleMoveSelectedElements,
-    handleMoveSelectedSubpaths,
-    handleSelectElement,
-    handleSetMode,
-    modeEffects.listeners,
-  ]);
+  });
 
   const {
     handleElementClick,
@@ -494,73 +385,18 @@ const CanvasContent: React.FC = () => {
     ]
   );
 
-  // Update point position feedback when selection changes
-  useEffect(() => {
-    if (currentMode === 'edit' && selectedCommands.length === 1) {
-      const selectedCommand = selectedCommands[0];
-      const element = elements.find(el => el.id === selectedCommand.elementId);
-
-      if (element && element.type === 'path') {
-        const pathData = element.data as PathData;
-        const commands = pathData.subPaths.flat();
-        const points = extractEditablePoints(commands);
-        
-        // Find the specific point
-        const point = points.find(p => 
-          p.commandIndex === selectedCommand.commandIndex && 
-          p.pointIndex === selectedCommand.pointIndex
-        );
-        
-        if (point) {
-          updatePointPositionFeedback(point.x, point.y, true);
-          return;
-        }
-      }
-    }
-    
-    // Hide feedback if conditions not met
-    updatePointPositionFeedback(0, 0, false);
-  }, [currentMode, selectedCommands, elements, updatePointPositionFeedback]);
-
-    // Emergency cleanup listeners for drag states
-  useEffect(() => {
-    const handleEmergencyCleanup = () => {
-      if (editingPoint?.isDragging || draggingSelection?.isDragging) {
-        logger.debug('Emergency cleanup triggered - force stopping drag');
-        emergencyCleanupDrag();
-      }
-    };
-
-    // Multiple emergency cleanup triggers
-    window.addEventListener('beforeunload', handleEmergencyCleanup);
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) {
-        handleEmergencyCleanup();
-      }
-    });
-
-    // Cleanup on component unmount
-    return () => {
-      handleEmergencyCleanup();
-      window.removeEventListener('beforeunload', handleEmergencyCleanup);
-    };
-  }, [editingPoint?.isDragging, draggingSelection?.isDragging, emergencyCleanupDrag]);
-
-  // Listen for saveAsPng events from FilePanel
-  useEffect(() => {
-    const handleSaveAsPng = (event: CustomEvent) => {
-      const { selectedOnly } = event.detail;
-      if (svgRef.current) {
-        saveAsPng(selectedOnly);
-      }
-    };
-
-    window.addEventListener('saveAsPng', handleSaveAsPng as EventListener);
-
-    return () => {
-      window.removeEventListener('saveAsPng', handleSaveAsPng as EventListener);
-    };
-  }, [saveAsPng]);
+  // Use side effects hook to manage feedback, cleanup, and save
+  useCanvasSideEffects({
+    currentMode,
+    selectedCommands,
+    elements,
+    updatePointPositionFeedback,
+    editingPoint,
+    draggingSelection,
+    emergencyCleanupDrag,
+    saveAsPng,
+    svgRef,
+  });
 
   return (
     <CanvasServicesProvider value={canvasServicesValue}>
@@ -570,51 +406,30 @@ const CanvasContent: React.FC = () => {
           position="top-left"
           wrapperStyle={{ position: 'fixed', top: 0, left: 0, zIndex: 10000 }}
         />
-      <svg
-        ref={svgRef}
-        width={canvasSize.width}
-        height={canvasSize.height}
-        viewBox={getViewBoxString(canvasSize)}
-        style={{
-          width: '100%',
-          height: '100%',
-          border: 'none',
-          cursor: (isSpacePressed || currentMode === 'pan') ? 'grabbing' :
-            pluginManager.getCursor(currentMode || 'select')
-        }}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onDoubleClick={handleCanvasDoubleClick}
-      >
-      {/* Sort elements by zIndex */}
-      {sortedElements.map(renderElement)}
-      <CanvasLayers context={canvasLayerContext} />
-      </svg>
+        <CanvasStage
+          svgRef={svgRef}
+          canvasSize={canvasSize}
+          getViewBoxString={getViewBoxString}
+          isSpacePressed={isSpacePressed}
+          currentMode={currentMode}
+          sortedElements={sortedElements}
+          renderElement={renderElement}
+          canvasLayerContext={canvasLayerContext}
+          handlePointerDown={handlePointerDown}
+          handlePointerMove={handlePointerMove}
+          handlePointerUp={handlePointerUp}
+          handleCanvasDoubleClick={handleCanvasDoubleClick}
+        />
       </>
     </CanvasServicesProvider>
   );
 };
 
 export const Canvas: React.FC = () => {
-  const eventBusRef = useRef<CanvasEventBus | null>(null);
-
-  if (!eventBusRef.current) {
-    eventBusRef.current = new CanvasEventBus();
-  }
-
-  useEffect(() => {
-    const bus = eventBusRef.current!;
-    pluginManager.setEventBus(bus);
-
-    return () => {
-      pluginManager.setEventBus(null);
-      bus.clear();
-    };
-  }, []);
+  const eventBus = useCanvasEventBusManager();
 
   return (
-    <CanvasEventBusProvider value={eventBusRef.current}>
+    <CanvasEventBusProvider value={eventBus}>
       <CanvasControllerProvider>
         <CanvasContent />
       </CanvasControllerProvider>
