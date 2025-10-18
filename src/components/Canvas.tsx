@@ -15,6 +15,11 @@ import type { Point, PathData, CanvasElement, GroupElement } from '../types';
 import { useCanvasController } from '../canvas/controller/CanvasControllerContext';
 import { CanvasControllerProvider } from '../canvas/controller/CanvasControllerProvider';
 import { CanvasLayers } from './CanvasLayers';
+import {
+  CanvasEventBusProvider,
+  CanvasEventBus,
+  useCanvasEventBus,
+} from '../canvas/CanvasEventBusContext';
 
 const CanvasContent: React.FC = () => {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -57,6 +62,7 @@ const CanvasContent: React.FC = () => {
   // Use shallow selector to prevent unnecessary re-renders
   // Only re-render when values actually change (not just reference)
   const controller = useCanvasController();
+  const eventBus = useCanvasEventBus();
 
   const {
     elements,
@@ -129,6 +135,83 @@ const CanvasContent: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<Point | null>(null);
   const [hasDragMoved, setHasDragMoved] = useState(false);
+
+  const pointerStateRef = useRef({
+    isSelecting,
+    isCreatingShape,
+    isDragging,
+    dragStart,
+  });
+
+  useEffect(() => {
+    pointerStateRef.current = {
+      isSelecting,
+      isCreatingShape,
+      isDragging,
+      dragStart,
+    };
+  }, [isSelecting, isCreatingShape, isDragging, dragStart]);
+
+  const pointerHelpersRef = useRef({
+    beginSelectionRectangle,
+    updateSelectionRectangle,
+    completeSelectionRectangle,
+    startShapeCreation,
+    updateShapeCreation,
+    endShapeCreation,
+    isSmoothBrushActive,
+  });
+
+  useEffect(() => {
+    pointerHelpersRef.current = {
+      beginSelectionRectangle,
+      updateSelectionRectangle,
+      completeSelectionRectangle,
+      startShapeCreation,
+      updateShapeCreation,
+      endShapeCreation,
+      isSmoothBrushActive,
+    };
+  }, [
+    beginSelectionRectangle,
+    updateSelectionRectangle,
+    completeSelectionRectangle,
+    startShapeCreation,
+    updateShapeCreation,
+    endShapeCreation,
+    isSmoothBrushActive,
+  ]);
+
+  const emitPointerEvent = useCallback(
+    (type: 'pointerdown' | 'pointermove' | 'pointerup', event: PointerEvent, point: Point) => {
+      const helpers = pointerHelpersRef.current;
+      const state = pointerStateRef.current;
+      const target = (event.target as Element) ?? null;
+
+      eventBus.emit(type, {
+        event,
+        point,
+        target,
+        activePlugin,
+        helpers: {
+          beginSelectionRectangle: helpers.beginSelectionRectangle,
+          updateSelectionRectangle: helpers.updateSelectionRectangle,
+          completeSelectionRectangle: helpers.completeSelectionRectangle,
+          startShapeCreation: helpers.startShapeCreation,
+          updateShapeCreation: helpers.updateShapeCreation,
+          endShapeCreation: helpers.endShapeCreation,
+          isSmoothBrushActive: helpers.isSmoothBrushActive,
+        },
+        state: {
+          isSelecting: state.isSelecting,
+          isCreatingShape: state.isCreatingShape,
+          isDragging: state.isDragging,
+          dragStart: state.dragStart,
+        },
+      });
+    },
+    [eventBus, activePlugin]
+  );
 
   const setDragStartForLayers = useCallback((point: Point | null) => {
     setDragStart(point);
@@ -577,6 +660,7 @@ const CanvasContent: React.FC = () => {
     const nativePointerDown = (e: PointerEvent) => {
       e.stopPropagation(); // Prevent React's handler from receiving this
       const point = screenToCanvas(e.clientX, e.clientY);
+      emitPointerEvent('pointerdown', e, point);
       isDrawing = true;
       allPoints = [point];
 
@@ -600,10 +684,12 @@ const CanvasContent: React.FC = () => {
     };
 
     const nativePointerMove = (e: PointerEvent) => {
+      const point = screenToCanvas(e.clientX, e.clientY);
+      emitPointerEvent('pointermove', e, point);
+
       if (!isDrawing || !tempPath) return;
       e.stopPropagation(); // Prevent React's handler from receiving this
 
-      const point = screenToCanvas(e.clientX, e.clientY);
       allPoints.push(point);
 
       // Update temporary path with all points
@@ -615,6 +701,9 @@ const CanvasContent: React.FC = () => {
     };
 
     const nativePointerUp = (e: PointerEvent) => {
+      const point = screenToCanvas(e.clientX, e.clientY);
+      emitPointerEvent('pointerup', e, point);
+
       e.stopPropagation(); // Prevent React's handler from receiving this
       if (!isDrawing) return;
       isDrawing = false;
@@ -663,7 +752,7 @@ const CanvasContent: React.FC = () => {
       const tempPaths = svgElement.querySelectorAll('[data-temp-path="true"]');
       tempPaths.forEach(path => path.remove());
     };
-  }, [activePlugin, screenToCanvas, pencil, viewport, startPath, addPointToPath]);
+  }, [activePlugin, screenToCanvas, pencil, viewport, startPath, addPointToPath, emitPointerEvent]);
 
   // Native DOM event listeners for smooth brush (bypassing React's synthetic events)
   useEffect(() => {
@@ -677,9 +766,10 @@ const CanvasContent: React.FC = () => {
     const nativePointerDown = (e: PointerEvent) => {
       if (e.button !== 0) return; // Only left mouse button
       const point = screenToCanvas(e.clientX, e.clientY);
+      emitPointerEvent('pointerdown', e, point);
       isBrushing = true;
       lastApplyTime = 0; // Reset throttle
-      
+
       // Apply brush immediately on pointer down
       applySmoothBrush(point.x, point.y);
       lastApplyTime = Date.now();
@@ -687,7 +777,8 @@ const CanvasContent: React.FC = () => {
 
     const nativePointerMove = (e: PointerEvent) => {
       const point = screenToCanvas(e.clientX, e.clientY);
-      
+      emitPointerEvent('pointermove', e, point);
+
       // Update local cursor position for visual feedback (doesn't cause store re-renders)
       setSmoothBrushCursor({ x: point.x, y: point.y });
 
@@ -701,7 +792,10 @@ const CanvasContent: React.FC = () => {
       }
     };
 
-    const nativePointerUp = () => {
+    const nativePointerUp = (e: PointerEvent) => {
+      const point = screenToCanvas(e.clientX, e.clientY);
+      emitPointerEvent('pointerup', e, point);
+
       if (!isBrushing) return;
       isBrushing = false;
       lastApplyTime = 0;
@@ -711,15 +805,15 @@ const CanvasContent: React.FC = () => {
     svgElement.addEventListener('pointerdown', nativePointerDown, { passive: true });
     svgElement.addEventListener('pointermove', nativePointerMove, { passive: true });
     svgElement.addEventListener('pointerup', nativePointerUp, { passive: true });
-    svgElement.addEventListener('pointercancel', nativePointerUp, { passive: true });
+    svgElement.addEventListener('pointercancel', nativePointerUp as EventListener, { passive: true });
 
     return () => {
       svgElement.removeEventListener('pointerdown', nativePointerDown);
       svgElement.removeEventListener('pointermove', nativePointerMove);
       svgElement.removeEventListener('pointerup', nativePointerUp);
-      svgElement.removeEventListener('pointercancel', nativePointerUp);
+      svgElement.removeEventListener('pointercancel', nativePointerUp as EventListener);
     };
-  }, [activePlugin, isSmoothBrushActive, screenToCanvas, applySmoothBrush]);
+  }, [activePlugin, isSmoothBrushActive, screenToCanvas, applySmoothBrush, emitPointerEvent]);
 
   // Handle wheel event with passive: false to allow preventDefault
   useEffect(() => {
@@ -728,6 +822,11 @@ const CanvasContent: React.FC = () => {
 
     const wheelHandler = (e: WheelEvent) => {
       e.preventDefault();
+      eventBus.emit('wheel', {
+        event: e,
+        activePlugin,
+        svg: svgElement,
+      });
       const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
       const rect = svgElement.getBoundingClientRect();
       if (rect) {
@@ -742,7 +841,7 @@ const CanvasContent: React.FC = () => {
     return () => {
       svgElement.removeEventListener('wheel', wheelHandler);
     };
-  }, [zoom]);
+  }, [zoom, eventBus, activePlugin]);
 
   // Listen for saveAsPng events from FilePanel
   useEffect(() => {
@@ -792,8 +891,28 @@ const CanvasContent: React.FC = () => {
   );
 };
 
-export const Canvas: React.FC = () => (
-  <CanvasControllerProvider>
-    <CanvasContent />
-  </CanvasControllerProvider>
-);
+export const Canvas: React.FC = () => {
+  const eventBusRef = useRef<CanvasEventBus | null>(null);
+
+  if (!eventBusRef.current) {
+    eventBusRef.current = new CanvasEventBus();
+  }
+
+  useEffect(() => {
+    const bus = eventBusRef.current!;
+    pluginManager.setEventBus(bus);
+
+    return () => {
+      pluginManager.setEventBus(null);
+      bus.clear();
+    };
+  }, []);
+
+  return (
+    <CanvasEventBusProvider value={eventBusRef.current}>
+      <CanvasControllerProvider>
+        <CanvasContent />
+      </CanvasControllerProvider>
+    </CanvasEventBusProvider>
+  );
+};
