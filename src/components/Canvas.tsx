@@ -26,6 +26,7 @@ import {
   canvasRendererRegistry,
   type CanvasRenderContext,
 } from '../canvas/renderers';
+import { usePointerStateController } from '../canvas/interactions/usePointerStateController';
 
 const CanvasContent: React.FC = () => {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -136,27 +137,18 @@ const CanvasContent: React.FC = () => {
     setModeRef.current(mode);
   }, []);
   
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState<Point | null>(null);
-  const [hasDragMoved, setHasDragMoved] = useState(false);
-
-  const pointerStateRef = useRef({
-    isSelecting,
-    isCreatingShape,
+  const {
     isDragging,
     dragStart,
-  });
-
-  useEffect(() => {
-    pointerStateRef.current = {
-      isSelecting,
-      isCreatingShape,
-      isDragging,
-      dragStart,
-    };
-  }, [isSelecting, isCreatingShape, isDragging, dragStart]);
-
-  const pointerHelpersRef = useRef({
+    hasDragMoved,
+    setIsDragging,
+    setDragStart,
+    setHasDragMoved,
+    stateRefs,
+    helpers,
+  } = usePointerStateController({
+    isSelecting,
+    isCreatingShape,
     beginSelectionRectangle,
     updateSelectionRectangle,
     completeSelectionRectangle,
@@ -165,31 +157,11 @@ const CanvasContent: React.FC = () => {
     endShapeCreation,
     isSmoothBrushActive,
   });
-
-  useEffect(() => {
-    pointerHelpersRef.current = {
-      beginSelectionRectangle,
-      updateSelectionRectangle,
-      completeSelectionRectangle,
-      startShapeCreation,
-      updateShapeCreation,
-      endShapeCreation,
-      isSmoothBrushActive,
-    };
-  }, [
-    beginSelectionRectangle,
-    updateSelectionRectangle,
-    completeSelectionRectangle,
-    startShapeCreation,
-    updateShapeCreation,
-    endShapeCreation,
-    isSmoothBrushActive,
-  ]);
 
   const emitPointerEvent = useCallback(
     (type: 'pointerdown' | 'pointermove' | 'pointerup', event: PointerEvent, point: Point) => {
-      const helpers = pointerHelpersRef.current;
-      const state = pointerStateRef.current;
+      const helpersSnapshot = helpers.current;
+      const state = stateRefs.pointer.current;
       const target = (event.target as Element) ?? null;
 
       eventBus.emit(type, {
@@ -198,13 +170,13 @@ const CanvasContent: React.FC = () => {
         target,
         activePlugin,
         helpers: {
-          beginSelectionRectangle: helpers.beginSelectionRectangle,
-          updateSelectionRectangle: helpers.updateSelectionRectangle,
-          completeSelectionRectangle: helpers.completeSelectionRectangle,
-          startShapeCreation: helpers.startShapeCreation,
-          updateShapeCreation: helpers.updateShapeCreation,
-          endShapeCreation: helpers.endShapeCreation,
-          isSmoothBrushActive: helpers.isSmoothBrushActive,
+          beginSelectionRectangle: helpersSnapshot.beginSelectionRectangle,
+          updateSelectionRectangle: helpersSnapshot.updateSelectionRectangle,
+          completeSelectionRectangle: helpersSnapshot.completeSelectionRectangle,
+          startShapeCreation: helpersSnapshot.startShapeCreation,
+          updateShapeCreation: helpersSnapshot.updateShapeCreation,
+          endShapeCreation: helpersSnapshot.endShapeCreation,
+          isSmoothBrushActive: helpersSnapshot.isSmoothBrushActive,
         },
         state: {
           isSelecting: state.isSelecting,
@@ -214,12 +186,12 @@ const CanvasContent: React.FC = () => {
         },
       });
     },
-    [eventBus, activePlugin]
+    [eventBus, activePlugin, helpers, stateRefs]
   );
 
   const setDragStartForLayers = useCallback((point: Point | null) => {
     setDragStart(point);
-  }, []);
+  }, [setDragStart]);
   
   // Use dynamic canvas size that updates with viewport changes (Safari toolbar show/hide)
   const [canvasSize, setCanvasSize] = useState({ 
