@@ -13,6 +13,7 @@ interface TopActionBarProps {
   isSidebarOpen?: boolean;
   onMenuClick?: () => void;
   selectedPaths?: CanvasElement[];
+  showGridRulers?: boolean;
 }
 
 export const TopActionBar: React.FC<TopActionBarProps> = ({
@@ -23,14 +24,20 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
   isSidebarOpen = false,
   onMenuClick,
   selectedPaths = [],
+  showGridRulers = false,
 }) => {
   const showMenuButton = !isSidebarPinned;
   const isPositionedForSidebar = sidebarWidth > 0;
+  
+  // Calculate top position - move down when grid rulers are shown
+  const baseTop = { base: 4, md: 6 };
+  const topWithRulers = { base: 8, md: 10 };
+  const topPosition = showGridRulers ? topWithRulers : baseTop;
 
   return (
     <Box
       position="fixed"
-      top={{ base: 4, md: 6 }}
+      top={topPosition}
       left={isPositionedForSidebar ? "0" : "50%"}
       right={isPositionedForSidebar ? `${sidebarWidth}px` : "auto"}
       transform={isPositionedForSidebar ? "none" : "translateX(-50%)"}
@@ -48,6 +55,7 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
         WebkitUserSelect: 'none',
         backdropFilter: 'blur(10px)',
         backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        transition: 'top 0.2s ease-in-out',
       }}
     >
       <HStack 

@@ -13,6 +13,7 @@ function App() {
   const activePlugin = useCanvasStore(state => state.activePlugin);
   const setMode = useCanvasStore(state => state.setMode);
   const selectedIds = useCanvasStore(state => state.selectedIds);
+  const grid = useCanvasStore(state => state.grid);
   const selectedPaths = useMemo(() => {
     const elements = useCanvasStore.getState().elements;
     return elements.filter((el: CanvasElement) => selectedIds.includes(el.id) && el.type === 'path');
@@ -97,6 +98,7 @@ function App() {
         isSidebarOpen={isSidebarOpen}
         onMenuClick={handleMenuClick}
         selectedPaths={selectedPaths}
+        showGridRulers={grid.enabled && grid.showRulers}
       />
       <BottomActionBar 
         sidebarWidth={sidebarWidth}
