@@ -5,6 +5,9 @@ import type {
   PluginActionContribution,
   CanvasLayerContribution,
   CanvasLayerPlacement,
+  CanvasShortcutDefinition,
+  CanvasShortcutMap,
+  CanvasShortcutOptions,
 } from '../types/plugins';
 import type { CanvasStore } from '../store/canvasStore';
 import { useCanvasStore, registerPluginSlices, unregisterPluginSlices } from '../store/canvasStore';
@@ -14,6 +17,7 @@ import type {
   CanvasPointerEventPayload,
 } from '../canvas/CanvasEventBusContext';
 import type { CanvasControllerValue } from '../canvas/controller/CanvasControllerContext';
+import { canvasShortcutRegistry } from '../canvas/shortcuts';
 
 type CanvasStoreApi = {
   getState: typeof useCanvasStore.getState;
@@ -45,6 +49,7 @@ export class PluginManager {
   private interactionSubscriptions = new Map<string, Set<() => void>>();
   private canvasServices = new Map<string, CanvasService<unknown>>();
   private activeCanvasServices = new Map<string, CanvasServiceInstance<unknown>>();
+  private shortcutSubscriptions = new Map<string, () => void>();
 
   constructor(initialPlugins: PluginDefinition<CanvasStore>[] = []) {
     initialPlugins.forEach((plugin) => this.register(plugin));
@@ -79,6 +84,7 @@ export class PluginManager {
     }
 
     this.bindPluginInteractions(plugin);
+    this.bindPluginShortcuts(plugin);
   }
 
   registerCanvasService<TState>(service: CanvasService<TState>): void {
@@ -132,6 +138,7 @@ export class PluginManager {
     this.registry.delete(pluginId);
     this.unregisterCanvasLayers(pluginId);
     this.teardownPluginInteractions(pluginId);
+    this.teardownPluginShortcuts(pluginId);
 
     if (existing.slices?.length) {
       unregisterPluginSlices(pluginId);
@@ -193,6 +200,64 @@ export class PluginManager {
       ?.filter((overlay: PluginUIContribution) => overlay.placement !== 'global')
       .map((overlay: PluginUIContribution) => overlay.component as React.ComponentType<Record<string, unknown>>)
       ?? [];
+  }
+
+  private bindPluginShortcuts(plugin: PluginDefinition<CanvasStore>): void {
+    const shortcuts = plugin.keyboardShortcuts;
+    if (!shortcuts) {
+      return;
+    }
+
+    this.teardownPluginShortcuts(plugin.id);
+
+    const scopedShortcuts: CanvasShortcutMap = {};
+
+    for (const [combination, definition] of Object.entries(shortcuts)) {
+      const normalized = this.normalizeShortcutDefinition(definition);
+      const existingWhen = normalized.options?.when;
+
+      const when: CanvasShortcutOptions['when'] = (context, event) => {
+        const state = context.store.getState() as { activePlugin?: string };
+        if (state?.activePlugin !== plugin.id) {
+          return false;
+        }
+
+        return existingWhen ? existingWhen(context, event) : true;
+      };
+
+      scopedShortcuts[combination] = {
+        handler: normalized.handler,
+        options: {
+          ...normalized.options,
+          when,
+        },
+      };
+    }
+
+    if (Object.keys(scopedShortcuts).length === 0) {
+      return;
+    }
+
+    const unsubscribe = canvasShortcutRegistry.register(`plugin:${plugin.id}`, scopedShortcuts);
+    this.shortcutSubscriptions.set(plugin.id, unsubscribe);
+  }
+
+  private teardownPluginShortcuts(pluginId: string): void {
+    const unsubscribe = this.shortcutSubscriptions.get(pluginId);
+    if (unsubscribe) {
+      unsubscribe();
+      this.shortcutSubscriptions.delete(pluginId);
+    }
+  }
+
+  private normalizeShortcutDefinition(
+    definition: CanvasShortcutMap[string]
+  ): CanvasShortcutDefinition {
+    if (typeof definition === 'function') {
+      return { handler: definition };
+    }
+
+    return definition;
   }
 
   getGlobalOverlays(): React.ComponentType<Record<string, unknown>>[] {
