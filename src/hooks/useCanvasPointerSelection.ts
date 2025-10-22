@@ -85,10 +85,19 @@ export const useCanvasPointerSelection = (isShiftPressed: boolean = false) => {
     if (!isSelecting || !selectionStart || !selectionEnd || !activePlugin) return;
 
     // Get current state
-    const { elements, viewport } = useCanvasStore.getState();
+    const { elements, viewport, selectedIds, getFilteredEditablePoints } = useCanvasStore.getState();
 
     // Handle selection using the controller
-    selectionController.completeSelection(selectionStart, selectionEnd, activePlugin, elements, viewport.zoom, isShiftPressed);
+    selectionController.completeSelection(
+      selectionStart, 
+      selectionEnd, 
+      activePlugin, 
+      elements, 
+      viewport.zoom, 
+      isShiftPressed,
+      selectedIds,
+      getFilteredEditablePoints
+    );
 
     // Reset selection state
     setIsSelecting(false);

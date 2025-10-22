@@ -24,7 +24,9 @@ export class SelectionController {
     activePlugin: string,
     elements: CanvasElement[],
     viewportZoom: number,
-    isShiftPressed: boolean
+    isShiftPressed: boolean,
+    selectedIds?: string[],
+    getFilteredEditablePoints?: (elementId: string) => Array<{ x: number; y: number; commandIndex: number; pointIndex: number }>
   ): void {
     const minX = Math.min(selectionStart.x, selectionEnd.x);
     const maxX = Math.max(selectionStart.x, selectionEnd.x);
@@ -33,7 +35,7 @@ export class SelectionController {
 
     switch (activePlugin) {
       case 'edit':
-        this.completeEditSelection(minX, maxX, minY, maxY, elements, isShiftPressed);
+        this.completeEditSelection(minX, maxX, minY, maxY, elements, isShiftPressed, selectedIds, getFilteredEditablePoints);
         break;
       case 'subpath':
         this.completeSubpathSelection(minX, maxX, minY, maxY, elements, viewportZoom, isShiftPressed);
@@ -50,15 +52,23 @@ export class SelectionController {
     minY: number,
     maxY: number,
     elements: CanvasElement[],
-    isShiftPressed: boolean
+    isShiftPressed: boolean,
+    selectedIds?: string[],
+    getFilteredEditablePoints?: (elementId: string) => Array<{ x: number; y: number; commandIndex: number; pointIndex: number }>
   ): void {
     const selectedCommands: Array<{ elementId: string; commandIndex: number; pointIndex: number }> = [];
 
-    elements.forEach(el => {
+    // In edit mode, only process elements that are currently selected
+    const elementsToProcess = selectedIds && selectedIds.length > 0
+      ? elements.filter(el => selectedIds.includes(el.id))
+      : elements;
+
+    elementsToProcess.forEach(el => {
       if (el.type === 'path') {
-        const pathData = el.data as PathData;
-        const commands = pathData.subPaths.flat();
-        const points = extractEditablePoints(commands);
+        // Use filtered points if available (respects subpath selection)
+        const points = getFilteredEditablePoints 
+          ? getFilteredEditablePoints(el.id)
+          : extractEditablePoints((el.data as PathData).subPaths.flat());
 
         points.forEach(point => {
           if (point.x >= minX && point.x <= maxX && point.y >= minY && point.y <= maxY) {

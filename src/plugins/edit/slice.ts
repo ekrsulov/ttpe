@@ -650,6 +650,20 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
 
   selectCommand: (command, multiSelect = false) => {
     set((state) => {
+      // Get filtered points to check if this command is visible/selectable
+      const fullState = get() as FullCanvasState;
+      const filteredPoints = fullState.getFilteredEditablePoints?.(command.elementId) ?? [];
+      
+      // Check if the command is in the filtered points (visible in current mode)
+      const isCommandVisible = filteredPoints.some(
+        (p) => p.commandIndex === command.commandIndex && p.pointIndex === command.pointIndex
+      );
+      
+      // If command is not visible, don't select it
+      if (!isCommandVisible) {
+        return state;
+      }
+
       const isAlreadySelected = state.selectedCommands.some(
         (c) => c.elementId === command.elementId &&
           c.commandIndex === command.commandIndex &&
@@ -681,7 +695,14 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
               command.pointIndex
             );
 
-            newSelectedCommands = [...state.selectedCommands, ...pointsInRange];
+            // Filter points in range to only include visible ones
+            const visiblePointsInRange = pointsInRange.filter(p =>
+              filteredPoints.some(fp => 
+                fp.commandIndex === p.commandIndex && fp.pointIndex === p.pointIndex
+              )
+            );
+
+            newSelectedCommands = [...state.selectedCommands, ...visiblePointsInRange];
           } else {
             // Multiple or no existing selection in element, just add the single command
             newSelectedCommands = [...state.selectedCommands, command];
