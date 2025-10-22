@@ -25,7 +25,7 @@ export const PathElementRenderer: CanvasElementRenderer<PathElement> = (
   element,
   context: CanvasRenderContext
 ) => {
-  const { viewport, activePlugin, eventHandlers, isElementSelected, isTransforming, isSelecting, isCreatingShape } = context;
+  const { viewport, activePlugin, eventHandlers, isElementSelected, isElementLocked, isTransforming, isSelecting, isCreatingShape } = context;
   const pathData = element.data;
 
   const effectiveStrokeColor = getEffectiveStrokeColor(pathData);
@@ -36,6 +36,7 @@ export const PathElementRenderer: CanvasElementRenderer<PathElement> = (
   const pointerUpHandler = eventHandlers.onPointerUp;
   const doubleClickHandler = eventHandlers.onDoubleClick;
   const isSelected = isElementSelected?.(element.id) ?? false;
+  const isLocked = isElementLocked?.(element.id) ?? false;
 
   return (
     <g key={element.id}>
@@ -71,7 +72,9 @@ export const PathElementRenderer: CanvasElementRenderer<PathElement> = (
         style={{
           cursor:
             activePlugin === 'select'
-              ? isSelected
+              ? isLocked
+                ? 'default'
+                : isSelected
                 ? 'move'
                 : 'pointer'
               : 'default',

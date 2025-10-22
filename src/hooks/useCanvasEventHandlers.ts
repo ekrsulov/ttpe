@@ -322,9 +322,15 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
   }, [activePlugin]);  // Handle element pointer down for drag
   const handleElementPointerDown = useCallback((elementId: string, e: React.PointerEvent) => {
     if (activePlugin === 'select') {
-      e.stopPropagation(); // Prevent handlePointerDown from starting selection rectangle
-
       const state = useCanvasStore.getState();
+      
+      // Check if element is locked - if so, treat it as empty space
+      if (state.isElementLocked && state.isElementLocked(elementId)) {
+        // Don't stop propagation - let it behave as empty space
+        return;
+      }
+
+      e.stopPropagation(); // Prevent handlePointerDown from starting selection rectangle
       
       // Check if style eyedropper is active
       if (state.styleEyedropper.isActive) {

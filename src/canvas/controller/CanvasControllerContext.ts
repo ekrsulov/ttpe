@@ -34,6 +34,7 @@ export interface CanvasControllerValue
     | 'snapToGrid'
     | 'clearGuidelines'
     | 'isElementHidden'
+    | 'isElementLocked'
     | 'moveSelectedElements'
     | 'moveSelectedSubpaths'
     | 'selectElement'
@@ -79,6 +80,7 @@ export const useCanvasControllerSource = (): CanvasControllerValue => {
       snapToGrid: store.snapToGrid,
       clearGuidelines: store.clearGuidelines,
       isElementHidden: store.isElementHidden,
+      isElementLocked: store.isElementLocked,
       moveSelectedElements: store.moveSelectedElements,
       moveSelectedSubpaths: store.moveSelectedSubpaths,
       selectElement: store.selectElement,

@@ -18,6 +18,7 @@ export interface CanvasRenderContext {
   viewport: Viewport;
   activePlugin: string | null;
   isElementHidden?: (elementId: string) => boolean;
+  isElementLocked?: (elementId: string) => boolean;
   isElementSelected?: (elementId: string) => boolean;
   isTransforming?: boolean;
   isSelecting?: boolean;
