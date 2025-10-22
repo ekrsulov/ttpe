@@ -19,5 +19,32 @@ export default tseslint.config([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      '@typescript-eslint/no-unused-vars': ['error', { 
+        'argsIgnorePattern': '^_',
+        'varsIgnorePattern': '^_',
+        'caughtErrorsIgnorePattern': '^_'
+      }],
+      'react-refresh/only-export-components': ['warn', { 
+        allowExportNames: [
+          'curvesPlugin', 'editPlugin', 'gridPlugin', 'guidelinesPlugin', 
+          'shapePlugin', 'subpathPlugin', 'transformationPlugin',
+          'useCanvasCurves', 'useCanvasTransformControls'
+        ],
+        allowConstantExport: true,
+      }],
+    },
+  },
+  {
+    files: ['tests/**/*.{ts,tsx}'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
+  {
+    files: ['src/plugins/index.tsx'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
   },
 ])

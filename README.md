@@ -1,69 +1,71 @@
-# React + TypeScript + Vite
+# TTPE — Web Vector Editor
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Interface Overview
 
-Currently, two official plugins are available:
+TTPE is an SVG-based vector graphics editor presented in a full-screen layout: a central canvas for editing, top and bottom action bars, a collapsible/resizable sidebar, and a virtual **Shift** button for shortcuts on touch devices. The Canvas coordinates interaction layers (selection, node and subpath editing, shape preview, guides, grid) and supports keyboard shortcuts, drag selection, transforms, shape creation, and a smoothing brush.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Architecture & Global State
 
-## Expanding the ESLint configuration
+The app is built with React 19, TypeScript, and Vite; it uses Zustand for state and Playwright for E2E tests. State is composed of multiple slices (base, viewport, selection, ordering, alignment, pencil, text, shapes, transforms, advanced editing, subpaths, optical alignment, curves, guides, and grid), with local persistence and undo/redo history (up to 50 steps, ~100 ms cooldown).
+The base slice manages elements, the active plugin, panel visibility, the "virtual shift," and settings such as keyboard move precision and render counters.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Plugin architecture
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Each interactive tool or feature slice now lives under `src/plugins/<name>/`. A plugin module groups:
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+* `slice.ts` – the Zustand slice factory and TypeScript types for that plugin's state.
+* UI/behavior components – panels, overlays, hooks, or renderers belonging to the plugin (e.g. `src/plugins/pencil/PencilPanel.tsx`).
+* `index.ts` – the plugin's `PluginDefinition`, where handlers, keyboard shortcuts, overlays, panels and slice factories are registered.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+All plugin definitions are exported from `src/plugins/index.ts` as `CORE_PLUGINS` and registered during boot in `main.tsx` via `pluginManager.register`. To add a plugin:
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+1. Create `src/plugins/<id>/` with the slice and any UI.
+2. Export a `PluginDefinition` in `index.ts`, configuring metadata, handler, keyboard shortcuts, optional `panels`/`overlays`, and the `PluginSliceFactory` array that wires the slice into the store.
+3. Append the definition to `CORE_PLUGINS` so it is registered at start-up.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+`PluginDefinition` supports keyboard shortcuts through `keyboardShortcuts`, overlays via `overlays` (global vs. tool placements), sidebar contributions with `panels`, contextual actions through `actions`, and slice registration with `slices`. `pluginManager` exposes helpers (`register`, `unregister`, `handleKeyboardEvent`, `getPanels`, `getOverlays`, etc.) to render and dispatch plugin contributions.
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Creation Tools
+
+* **Pencil / Freehand**: starts or reuses paths with the current stroke attributes; filters points by a minimum distance to avoid noise and marks paths as "freehand."
+* **Text to Curves**: converts text (font, size, weight, style) into SVG commands via a WASM pipeline (e.g., potrace) and applies active styles.
+* **Parametric Shapes**: generates squares, rectangles, circles (Bézier), and triangles from two points, registering them as editable paths with current styles.
+
+## Selection, Transforms & Organization
+
+* **Selection**: multi-select, context-aware clearing by mode, precision-configurable moves, and bulk property updates (color, opacity, stroke).
+* **Transforms**: handles/controls, optional rulers/coordinates, and bounds for whole elements or subpaths.
+* **Order (z-index)**: bring to front, bring forward, send backward, send to back—preserving relative order.
+* **Align & Distribute**: computes bounding boxes (consistent with zoom and stroke) to align (left/center/right, top/middle/bottom) and distribute evenly on X/Y.
+* **Guides & Grid**: smart guides (edges/centers, repeated distances, sticky mode with zoom-scaled thresholds) and a configurable grid with optional snapping.
+
+## Subpaths & Advanced Editing
+
+* **Subpath Management**: single/multi selection constrained by element, deletion, precision nudging, reordering within the same path, and align/distribute across subpaths.
+* **Path Editing**: select and drag points/groups; convert commands; split subpaths; align/distribute points; simplification and rounding parameters; helpers to align control points.
+* **Smoothing Brush**: configurable (radius, strength, simplification, minimum distance); works on selected points or within a radius and can simplify after smoothing.
+* **Global Actions**: split subpaths into independent paths and reverse direction of selected subpaths, clearing the selection when finished.
+
+## View Control & Touch Support
+
+The viewport slice manages zoom (with limits, re-centering around the focus point) and pan, with quick resets and coordinate rounding for numerical stability. On mobile, the **virtual Shift** enables Shift-dependent shortcuts.
+
+**Mobile Gestures:**
+* **Pinch-to-Zoom**: Use two fingers to pinch or spread for zooming in/out
+* **Two-Finger Pan**: Drag with two fingers to pan the canvas viewport
+
+## File Management & Export
+
+* **Save/Open JSON** documents (name, elements, view) with append or replace options, generating unique IDs and validating structure.
+* **Export to SVG/PNG** honoring partial selection, vector styles, and optional padding (PNG via SVG rasterization).
+* **SVG Import (batch)**: normalizes transforms, converts shapes and groups to editable paths (M/L/C/Z), preserves styles, and offers options such as append, create frames, boolean-union, rescale, and grid distribution.
+
+## Boolean Ops & Pro Features
+
+* **Booleans**: union, PaperJS-based union, subtraction, intersection, exclusion, and division—applicable to paths and also to selected subpaths.
+* **Optical Alignment**: detects container/content pairs, computes the visual center (with guard margins), and applies the resulting translation; supports bulk corrections and reset.
+* **Curves**: incremental mode for designing custom curves with a lattice, live preview, and point handling.
+
+## In Short
+
+TTPE combines a powerful SVG canvas, a modular slice-based architecture with persistence and history, professional-grade creation/editing tools (including optical alignment and boolean ops), organization utilities, and a robust import/export flow—optimized for both desktop and touch.
