@@ -7,7 +7,7 @@ import {
   Text,
   Box
 } from '@chakra-ui/react';
-import { Route, SplinePointer, SquareRoundCorner } from 'lucide-react';
+import { Route, SplinePointer, SquareRoundCorner, Plus } from 'lucide-react';
 import { SliderControl } from '../../components/ui/SliderControl';
 import { SectionHeader } from '../../components/ui/SectionHeader';
 import { RenderCountBadgeWrapper } from '../../components/ui/RenderCountBadgeWrapper';
@@ -29,6 +29,9 @@ interface EditPanelProps {
       x: number;
       y: number;
     }>;
+  };
+  addPointMode?: {
+    isActive: boolean;
   };
   pathSimplification: {
     tolerance: number;
@@ -54,11 +57,14 @@ interface EditPanelProps {
   activateSmoothBrush: () => void;
   deactivateSmoothBrush: () => void;
   resetSmoothBrush: () => void;
+  activateAddPointMode?: () => void;
+  deactivateAddPointMode?: () => void;
 }
 
 export const EditPanel: React.FC<EditPanelProps> = ({
   activePlugin,
   smoothBrush,
+  addPointMode,
   pathSimplification,
   pathRounding,
   selectedCommands,
@@ -72,6 +78,8 @@ export const EditPanel: React.FC<EditPanelProps> = ({
   activateSmoothBrush,
   deactivateSmoothBrush,
   resetSmoothBrush,
+  activateAddPointMode,
+  deactivateAddPointMode,
 }) => {
   if (activePlugin !== 'edit') return null;
 
@@ -225,6 +233,41 @@ export const EditPanel: React.FC<EditPanelProps> = ({
             }
           </Text>
         )}
+      </Box>
+
+      {/* Add Point Mode Section */}
+      <Box>
+        <SectionHeader
+          icon={Plus}
+          title="Add Point"
+        />
+
+        {/* Add Point Mode Toggle */}
+        <HStack spacing={2} mb={2}>
+          <Text fontSize="12px" color="gray.600">Add Point Mode:</Text>
+          <Button
+            onClick={() => {
+              if (addPointMode?.isActive) {
+                deactivateAddPointMode?.();
+              } else {
+                activateAddPointMode?.();
+              }
+            }}
+            size="xs"
+            colorScheme={addPointMode?.isActive ? 'brand' : 'gray'}
+            variant={addPointMode?.isActive ? 'solid' : 'outline'}
+          >
+            {addPointMode?.isActive ? 'On' : 'Off'}
+          </Button>
+        </HStack>
+
+        {/* Instructions */}
+        <Text fontSize="12px" color="gray.600" mt={2} lineHeight="tall">
+          {addPointMode?.isActive
+            ? 'Hover over a path segment to see where a new point will be added. Click to insert the point.'
+            : 'Enable Add Point mode to add new points to path segments by clicking.'
+          }
+        </Text>
       </Box>
 
       {/* Path Simplification Section */}

@@ -21,6 +21,7 @@ export interface CanvasControllerValue
     | 'guidelines'
     | 'grid'
     | 'pencil'
+    | 'addPointMode'
     | 'updateElement'
     | 'startDraggingPoint'
     | 'stopDraggingPoint'
@@ -67,6 +68,7 @@ export const useCanvasControllerSource = (): CanvasControllerValue => {
       guidelines: store.guidelines,
       grid: store.grid,
       pencil: store.pencil,
+      addPointMode: store.addPointMode,
       updateElement: store.updateElement,
       startDraggingPoint: store.startDraggingPoint,
       stopDraggingPoint: store.stopDraggingPoint,

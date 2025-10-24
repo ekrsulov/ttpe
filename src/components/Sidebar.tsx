@@ -104,6 +104,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const smoothBrushSimplificationTolerance = useCanvasStore((state) => state.smoothBrush?.simplificationTolerance ?? 1);
   const smoothBrushMinDistance = useCanvasStore((state) => state.smoothBrush?.minDistance ?? 5);
   
+  // Add Point Mode state
+  const addPointModeIsActive = useCanvasStore((state) => state.addPointMode?.isActive ?? false);
+  
   // Actions (these are stable references)
   const updateSmoothBrush = useCanvasStore((state) => state.updateSmoothBrush);
   const updatePathSimplification = useCanvasStore((state) => state.updatePathSimplification);
@@ -114,6 +117,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const activateSmoothBrush = useCanvasStore((state) => state.activateSmoothBrush);
   const deactivateSmoothBrush = useCanvasStore((state) => state.deactivateSmoothBrush);
   const resetSmoothBrush = useCanvasStore((state) => state.resetSmoothBrush);
+  const activateAddPointMode = useCanvasStore((state) => state.activateAddPointMode);
+  const deactivateAddPointMode = useCanvasStore((state) => state.deactivateAddPointMode);
   
   // Reconstruct smoothBrush object for child components (memoized to prevent re-creation)
   // cursorX/cursorY are omitted - they're only needed in Canvas and cause unnecessary re-renders
@@ -135,6 +140,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
     smoothBrushSimplificationTolerance,
     smoothBrushMinDistance,
   ]);
+
+  // Reconstruct addPointMode object for child components (memoized to prevent re-creation)
+  const addPointMode = useMemo(() => ({
+    isActive: addPointModeIsActive,
+  }), [addPointModeIsActive]);
   
   // Panel state from store (single source of truth)
   const showFilePanel = useCanvasStore((state) => state.showFilePanel);
@@ -226,6 +236,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           onTogglePin={() => setIsPinned(false)}
           isDesktop={isDesktop}
           smoothBrush={smoothBrush}
+          addPointMode={addPointMode}
           pathSimplification={pathSimplification ?? { tolerance: 1 }}
           pathRounding={pathRounding ?? { radius: 0 }}
           selectedCommands={selectedCommands ?? []}
@@ -239,6 +250,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           activateSmoothBrush={activateSmoothBrush ?? (() => {})}
           deactivateSmoothBrush={deactivateSmoothBrush ?? (() => {})}
           resetSmoothBrush={resetSmoothBrush ?? (() => {})}
+          activateAddPointMode={activateAddPointMode ?? (() => {})}
+          deactivateAddPointMode={deactivateAddPointMode ?? (() => {})}
           isArrangeExpanded={isArrangeExpanded}
           setIsArrangeExpanded={setIsArrangeExpanded}
           onResize={handleResize}
@@ -316,6 +329,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               onTogglePin={() => setIsPinned(true)}
               isDesktop={isDesktop}
               smoothBrush={smoothBrush}
+              addPointMode={addPointMode}
               pathSimplification={pathSimplification ?? { tolerance: 1 }}
               pathRounding={pathRounding ?? { radius: 0 }}
               selectedCommands={selectedCommands ?? []}
@@ -329,6 +343,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
               activateSmoothBrush={activateSmoothBrush ?? (() => {})}
               deactivateSmoothBrush={deactivateSmoothBrush ?? (() => {})}
               resetSmoothBrush={resetSmoothBrush ?? (() => {})}
+              activateAddPointMode={activateAddPointMode ?? (() => {})}
+              deactivateAddPointMode={deactivateAddPointMode ?? (() => {})}
               isArrangeExpanded={isArrangeExpanded}
               setIsArrangeExpanded={setIsArrangeExpanded}
             />

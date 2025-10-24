@@ -23,6 +23,9 @@ interface SidebarContentProps {
   onTogglePin: () => void;
   isDesktop: boolean | undefined;
   smoothBrush: SmoothBrush;
+  addPointMode?: {
+    isActive: boolean;
+  };
   pathSimplification: PathSimplification;
   pathRounding: PathRounding;
   selectedCommands: SelectedCommand[];
@@ -36,6 +39,8 @@ interface SidebarContentProps {
   activateSmoothBrush: () => void;
   deactivateSmoothBrush: () => void;
   resetSmoothBrush: () => void;
+  activateAddPointMode?: () => void;
+  deactivateAddPointMode?: () => void;
   isArrangeExpanded: boolean;
   setIsArrangeExpanded: (value: boolean) => void;
   // Resizer props (only for pinned variant)
@@ -54,6 +59,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
   onTogglePin,
   isDesktop,
   smoothBrush,
+  addPointMode,
   pathSimplification,
   pathRounding,
   selectedCommands,
@@ -67,6 +73,8 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
   activateSmoothBrush,
   deactivateSmoothBrush,
   resetSmoothBrush,
+  activateAddPointMode,
+  deactivateAddPointMode,
   isArrangeExpanded,
   setIsArrangeExpanded,
   onResize,
@@ -108,6 +116,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
           showFilePanel={showFilePanel}
           showSettingsPanel={showSettingsPanel}
           smoothBrush={smoothBrush}
+          addPointMode={addPointMode}
           pathSimplification={pathSimplification}
           pathRounding={pathRounding}
           selectedCommands={selectedCommands}
@@ -121,6 +130,8 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
           activateSmoothBrush={activateSmoothBrush}
           deactivateSmoothBrush={deactivateSmoothBrush}
           resetSmoothBrush={resetSmoothBrush}
+          activateAddPointMode={activateAddPointMode}
+          deactivateAddPointMode={deactivateAddPointMode}
         />
 
         {/* Footer with ArrangePanel and SelectPanel - Fixed at bottom */}

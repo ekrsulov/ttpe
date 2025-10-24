@@ -60,6 +60,9 @@ export interface PanelConditionContext {
 export interface PanelComponentProps {
   activePlugin?: string | null;
   smoothBrush?: SmoothBrush;
+  addPointMode?: {
+    isActive: boolean;
+  };
   pathSimplification?: PathSimplification;
   pathRounding?: PathRounding;
   selectedCommands?: SelectedCommand[];
@@ -73,6 +76,8 @@ export interface PanelComponentProps {
   activateSmoothBrush?: () => void;
   deactivateSmoothBrush?: () => void;
   resetSmoothBrush?: () => void;
+  activateAddPointMode?: () => void;
+  deactivateAddPointMode?: () => void;
 }
 
 export interface PanelConfig {
@@ -128,6 +133,7 @@ export const PANEL_CONFIGS: PanelConfig[] = [
     getProps: (allProps) => ({
       activePlugin: allProps.activePlugin,
       smoothBrush: allProps.smoothBrush,
+      addPointMode: allProps.addPointMode,
       pathSimplification: allProps.pathSimplification,
       pathRounding: allProps.pathRounding,
       selectedCommands: allProps.selectedCommands,
@@ -141,6 +147,8 @@ export const PANEL_CONFIGS: PanelConfig[] = [
       activateSmoothBrush: allProps.activateSmoothBrush,
       deactivateSmoothBrush: allProps.deactivateSmoothBrush,
       resetSmoothBrush: allProps.resetSmoothBrush,
+      activateAddPointMode: allProps.activateAddPointMode,
+      deactivateAddPointMode: allProps.deactivateAddPointMode,
     }),
   },
   {

@@ -18,6 +18,8 @@ import { useCanvasZoom } from '../hooks/useCanvasZoom';
 import { useMobileTouchGestures } from '../hooks/useMobileTouchGestures';
 import { CanvasServicesProvider } from '../canvas/services/CanvasServicesProvider';
 import { useSmoothBrushIntegration } from '../hooks/useSmoothBrushIntegration';
+import { useAddPointNativeListeners } from '../hooks/useAddPointNativeListeners';
+import '../canvas/listeners/AddPointListener';
 import { useDynamicCanvasSize } from '../hooks/useDynamicCanvasSize';
 import { useCanvasSideEffects } from '../hooks/useCanvasSideEffects';
 import { useCanvasEventHandlerDeps } from '../hooks/useCanvasEventHandlerDeps';
@@ -91,6 +93,7 @@ const CanvasContent: React.FC = () => {
     selectedSubpaths,
     draggingSelection,
     pencil,
+    addPointMode,
     updateElement,
     stopDraggingPoint,
     emergencyCleanupDrag,
@@ -248,6 +251,15 @@ const CanvasContent: React.FC = () => {
     isSmoothBrushActive,
   });
 
+  // Use add point native listeners
+  useAddPointNativeListeners({
+    svgRef,
+    activePlugin: currentMode,
+    isAddPointModeActive: addPointMode?.isActive ?? false,
+    screenToCanvas,
+    emitPointerEvent,
+  });
+
   // Use event handler deps hook
   const eventHandlerDeps = useCanvasEventHandlerDeps({
     svgRef,
@@ -370,6 +382,7 @@ const CanvasContent: React.FC = () => {
       isSmoothBrushActive,
       smoothBrush,
       smoothBrushCursor,
+      addPointMode,
       dragPosition,
       isDragging,
       transformFeedback: feedback,
@@ -395,6 +408,7 @@ const CanvasContent: React.FC = () => {
       isSmoothBrushActive,
       smoothBrush,
       smoothBrushCursor,
+      addPointMode,
       dragPosition,
       isDragging,
       feedback,

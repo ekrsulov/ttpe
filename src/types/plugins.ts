@@ -54,6 +54,7 @@ export interface CanvasLayerContext extends CanvasControllerValue {
   isSmoothBrushActive: boolean;
   smoothBrush: EditPluginSlice['smoothBrush'];
   smoothBrushCursor: Point;
+  addPointMode?: EditPluginSlice['addPointMode'];
   dragPosition: Point | null;
   isDragging: boolean;
   transformFeedback: TransformFeedback;

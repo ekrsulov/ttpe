@@ -17,6 +17,9 @@ export interface SidebarPanelsProps {
   showSettingsPanel: boolean;
   // EditPanel props
   smoothBrush: SmoothBrush;
+  addPointMode?: {
+    isActive: boolean;
+  };
   pathSimplification: PathSimplification;
   pathRounding: PathRounding;
   selectedCommands: SelectedCommand[];
@@ -30,6 +33,8 @@ export interface SidebarPanelsProps {
   activateSmoothBrush: () => void;
   deactivateSmoothBrush: () => void;
   resetSmoothBrush: () => void;
+  activateAddPointMode?: () => void;
+  deactivateAddPointMode?: () => void;
   panelContributions?: PluginUIContribution[];
 }
 
@@ -42,6 +47,7 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
   showFilePanel,
   showSettingsPanel,
   smoothBrush,
+  addPointMode,
   pathSimplification,
   pathRounding,
   selectedCommands,
@@ -55,6 +61,8 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
   activateSmoothBrush,
   deactivateSmoothBrush,
   resetSmoothBrush,
+  activateAddPointMode,
+  deactivateAddPointMode,
   panelContributions = [],
 }) => {
   // Check if we're in special panel mode (file or settings)
@@ -76,6 +84,7 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
   const allPanelProps: PanelComponentProps = useMemo(() => ({
     activePlugin,
     smoothBrush,
+    addPointMode,
     pathSimplification,
     pathRounding,
     selectedCommands,
@@ -89,9 +98,12 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
     activateSmoothBrush,
     deactivateSmoothBrush,
     resetSmoothBrush,
+    activateAddPointMode,
+    deactivateAddPointMode,
   }), [
     activePlugin,
     smoothBrush,
+    addPointMode,
     pathSimplification,
     pathRounding,
     selectedCommands,
@@ -105,6 +117,8 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
     activateSmoothBrush,
     deactivateSmoothBrush,
     resetSmoothBrush,
+    activateAddPointMode,
+    deactivateAddPointMode,
   ]);
 
   return (
