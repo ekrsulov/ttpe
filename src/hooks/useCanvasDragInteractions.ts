@@ -344,11 +344,27 @@ export const useCanvasDragInteractions = ({
                       let pairedY: number;
 
                       if (alignmentInfo.type === 'mirrored') {
+                        // Opposite direction, same magnitude
                         pairedX = anchor.x + (-unitVector.x * magnitude);
                         pairedY = anchor.y + (-unitVector.y * magnitude);
                       } else {
-                        pairedX = anchor.x + unitVector.x * magnitude;
-                        pairedY = anchor.y + unitVector.y * magnitude;
+                        // Aligned: opposite direction, maintain original magnitude
+                        const pairedPoint = points.find(p =>
+                          p.commandIndex === pairedCommandIndex &&
+                          p.pointIndex === pairedPointIndex
+                        );
+                        if (pairedPoint) {
+                          const originalVector = {
+                            x: pairedPoint.x - anchor.x,
+                            y: pairedPoint.y - anchor.y
+                          };
+                          const originalMagnitude = Math.sqrt(originalVector.x * originalVector.x + originalVector.y * originalVector.y);
+                          pairedX = anchor.x + (-unitVector.x * originalMagnitude);
+                          pairedY = anchor.y + (-unitVector.y * originalMagnitude);
+                        } else {
+                          pairedX = anchor.x + (-unitVector.x * magnitude);
+                          pairedY = anchor.y + (-unitVector.y * magnitude);
+                        }
                       }
 
                       updates.push({

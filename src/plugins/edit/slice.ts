@@ -409,6 +409,11 @@ export interface EditPluginSlice {
   moveSelectedPoints: (deltaX: number, deltaY: number) => void;
 }
 
+// Track last deletion time to prevent double-deletion
+let lastDeletionTime = 0;
+let isDeletingInProgress = false;
+const DELETION_DEBOUNCE_MS = 200;
+
 export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPluginSlice> = (set, get) => ({
   // Initial state
   editingPoint: null,
@@ -729,13 +734,33 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
   },
 
   deleteSelectedCommands: () => {
+    const now = Date.now();
+    
+    // Double protection: check both flag and timestamp
+    if (isDeletingInProgress || now - lastDeletionTime < DELETION_DEBOUNCE_MS) {
+      return;
+    }
+    
+    isDeletingInProgress = true;
+    lastDeletionTime = now;
+
     const state = get() as FullCanvasState;
     const selectedCommands = state.selectedCommands;
 
-    if (!selectedCommands || selectedCommands.length === 0) return;
+    if (!selectedCommands || selectedCommands.length === 0) {
+      isDeletingInProgress = false;
+      return;
+    }
+
+    // Check if only one point is selected to enable auto-selection of next point
+    const isSinglePointSelected = selectedCommands.length === 1;
+    const singleSelectedCommand = isSinglePointSelected ? selectedCommands[0] : null;
 
     // Group commands by elementId using helper
     const commandsByElement = groupSelectedCommandsByElement(selectedCommands);
+
+    // Variable to track the next point coordinates to select (if applicable)
+    let nextPointCoordinates: { x: number; y: number; elementId: string } | null = null;
 
     // Process each element
     Object.entries(commandsByElement).forEach(([elementId, commands]) => {
@@ -753,26 +778,101 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
           )
         );
 
+        // If single point selected, find the next available point before deletion
+        if (isSinglePointSelected && singleSelectedCommand && singleSelectedCommand.elementId === elementId) {
+          const currentPointIndex = allPoints.findIndex(p => 
+            p.commandIndex === singleSelectedCommand.commandIndex &&
+            p.pointIndex === singleSelectedCommand.pointIndex
+          );
+
+          if (currentPointIndex !== -1) {
+            // Try to select the next command point (not control points)
+            let nextIndex = currentPointIndex + 1;
+            
+            // Look for the next command point that won't be deleted
+            while (nextIndex < allPoints.length) {
+              const candidatePoint = allPoints[nextIndex];
+              
+              // Skip control points - only select command points
+              if (candidatePoint.isControl) {
+                nextIndex++;
+                continue;
+              }
+              
+              // Skip if this point is about to be deleted
+              const willBeDeleted = selectedPoints.some(sp => 
+                sp.commandIndex === candidatePoint.commandIndex && 
+                sp.pointIndex === candidatePoint.pointIndex
+              );
+              
+              if (!willBeDeleted) {
+                // Found the next command point - save its coordinates
+                nextPointCoordinates = {
+                  x: candidatePoint.x,
+                  y: candidatePoint.y,
+                  elementId
+                };
+                break;
+              }
+              nextIndex++;
+            }
+
+            // If no next point found, try previous command point
+            if (!nextPointCoordinates) {
+              let prevIndex = currentPointIndex - 1;
+              while (prevIndex >= 0) {
+                const candidatePoint = allPoints[prevIndex];
+                
+                // Skip control points - only select command points
+                if (candidatePoint.isControl) {
+                  prevIndex--;
+                  continue;
+                }
+                
+                const willBeDeleted = selectedPoints.some(sp => 
+                  sp.commandIndex === candidatePoint.commandIndex && 
+                  sp.pointIndex === candidatePoint.pointIndex
+                );
+                
+                if (!willBeDeleted) {
+                  nextPointCoordinates = {
+                    x: candidatePoint.x,
+                    y: candidatePoint.y,
+                    elementId
+                  };
+                  break;
+                }
+                prevIndex--;
+              }
+            }
+          }
+        }
+
         if (selectedPoints.length > 0) {
-          // Sort selected points by command index and point index (process in reverse order to maintain indices)
-          const sortedSelectedPoints = selectedPoints.sort((a, b) => {
-            if (a.commandIndex !== b.commandIndex) return b.commandIndex - a.commandIndex;
-            return b.pointIndex - a.pointIndex;
+          // Group selected points by command index to handle multiple selections per command
+          const pointsByCommand = new Map<number, Set<number>>();
+          selectedPoints.forEach(point => {
+            if (!pointsByCommand.has(point.commandIndex)) {
+              pointsByCommand.set(point.commandIndex, new Set());
+            }
+            pointsByCommand.get(point.commandIndex)!.add(point.pointIndex);
           });
+
+          // Sort command indices in reverse order to maintain indices during deletion
+          const sortedCommandIndices = Array.from(pointsByCommand.keys()).sort((a, b) => b - a);
 
           let updatedCommands = [...parsedCommands];
 
-          // Process each selected point for deletion
-          sortedSelectedPoints.forEach(selectedPoint => {
-            const cmdIndex = selectedPoint.commandIndex;
-            const pointIndex = selectedPoint.pointIndex;
+          // Process each command with selected points
+          sortedCommandIndices.forEach(cmdIndex => {
+            const selectedPointIndices = pointsByCommand.get(cmdIndex)!;
             const command = updatedCommands[cmdIndex];
 
             if (!command) return;
 
             // Handle different command types
             if (command.type === 'M') {
-              // For M commands, we need special handling
+              // For M commands, delete the entire command
               if (cmdIndex < updatedCommands.length - 1) {
                 // Find the next non-Z command to convert to M
                 let nextNonZIndex = cmdIndex + 1;
@@ -795,16 +895,19 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
               // For L commands, remove the entire command
               updatedCommands.splice(cmdIndex, 1);
             } else if (command.type === 'C') {
-              // For C commands, handle control points
-              if (pointIndex === 0 || pointIndex === 1) {
-                // Remove control points, convert to L command
+              // For C commands, check which points are selected
+              const hasControlPoint = selectedPointIndices.has(0) || selectedPointIndices.has(1);
+              const hasEndPoint = selectedPointIndices.has(2);
+
+              if (hasEndPoint) {
+                // If end point is selected (regardless of control points), remove entire command
+                updatedCommands.splice(cmdIndex, 1);
+              } else if (hasControlPoint) {
+                // Only control points selected, convert to L command
                 updatedCommands[cmdIndex] = {
                   type: 'L' as const,
                   position: command.position // Keep only the end point
                 };
-              } else if (pointIndex === 2) {
-                // Remove end point, remove the entire command
-                updatedCommands.splice(cmdIndex, 1);
               }
             } else if (command.type === 'Z') {
               // Can't delete Z command directly, but if it's the only command left, handle it
@@ -827,6 +930,8 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
               ...currentState,
               elements: currentState.elements.filter((el) => el.id !== elementId)
             }));
+            // Clear next point selection since element is deleted
+            nextPointCoordinates = null;
             return;
           }
 
@@ -843,13 +948,58 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
               return el;
             }) as CanvasElement[],
           }));
-
         }
       }
     });
 
-    // Clear selection after processing
-    set({ selectedCommands: [] });
+    // Find and select the next point by coordinates after all deletions
+    // IMPORTANT: Get fresh state after all updates
+    const updatedState = get() as FullCanvasState;
+    let nextPointToSelect: SelectedCommand | null = null;
+    
+    if (nextPointCoordinates) {
+      const coords: { x: number; y: number; elementId: string } = nextPointCoordinates;
+      const element = updatedState.elements.find((el) => el.id === coords.elementId);
+      if (element && element.type === 'path') {
+        const pathData = element.data as PathData;
+        const parsedCommands = pathData.subPaths.flat();
+        const allPoints = extractEditablePoints(parsedCommands);
+
+        // Find point with matching coordinates (with small tolerance for floating point)
+        const TOLERANCE = 0.001;
+        const foundPoint = allPoints.find(p => 
+          Math.abs(p.x - coords.x) < TOLERANCE &&
+          Math.abs(p.y - coords.y) < TOLERANCE
+        );
+
+        if (foundPoint) {
+          nextPointToSelect = {
+            elementId: coords.elementId,
+            commandIndex: foundPoint.commandIndex,
+            pointIndex: foundPoint.pointIndex
+          };
+        } else if (allPoints.length > 0) {
+          // Fallback: select the first available non-control point
+          const firstNonControl = allPoints.find(p => !p.isControl) || allPoints[0];
+          nextPointToSelect = {
+            elementId: coords.elementId,
+            commandIndex: firstNonControl.commandIndex,
+            pointIndex: firstNonControl.pointIndex
+          };
+        }
+      }
+    }
+
+    // Set selection based on whether we have a next point to select
+    if (nextPointToSelect) {
+      set({ selectedCommands: [nextPointToSelect] });
+    } else {
+      // Clear selection after processing
+      set({ selectedCommands: [] });
+    }
+
+    // Reset the deletion flag
+    isDeletingInProgress = false;
   },
 
   alignLeftCommands: () => {

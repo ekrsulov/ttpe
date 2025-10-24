@@ -122,10 +122,13 @@ export const useCanvasKeyboardControls = () => {
         // Priority: points > subpaths > paths
         if ((selectedCommands?.length ?? 0) > 0 && deleteSelectedCommands) {
           deleteSelectedCommands();
+          e.preventDefault();
         } else if ((selectedSubpaths?.length ?? 0) > 0 && deleteSelectedSubpaths) {
           deleteSelectedSubpaths();
+          e.preventDefault();
         } else if (selectedIds.length > 0) {
           deleteSelectedElements();
+          e.preventDefault();
         }
       }
     };
