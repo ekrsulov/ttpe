@@ -7,6 +7,7 @@ import { EditPanel } from './EditPanel';
 import { ControlPointAlignmentPanel } from './ControlPointAlignmentPanel';
 import { PathOperationsPanel } from './PathOperationsPanel';
 import { EditPointsOverlay } from './EditPointsOverlay';
+import { BlockingOverlay } from '../../components/overlays';
 
 const editSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -28,7 +29,8 @@ export const editPlugin: PluginDefinition<CanvasStore> = {
     _startShapeCreation,
     _context
   ) => {
-    if (target.tagName === 'svg' && !isSmoothBrushActive) {
+    // Allow selection rectangle to start on SVG or on path elements (but not on edit points)
+    if ((target.tagName === 'svg' || target.tagName === 'path') && !isSmoothBrushActive) {
       beginSelectionRectangle(point, !event.shiftKey, false);
     }
   },
@@ -38,6 +40,21 @@ export const editPlugin: PluginDefinition<CanvasStore> = {
     },
   },
   canvasLayers: [
+    {
+      id: 'edit-blocking-overlay',
+      placement: 'midground',
+      render: ({ viewport, canvasSize, editingPoint, draggingSelection }) => {
+        // Activate overlay when dragging points or selections
+        const isActive = (editingPoint?.isDragging ?? false) || (draggingSelection?.isDragging ?? false);
+        return (
+          <BlockingOverlay
+            viewport={viewport}
+            canvasSize={canvasSize}
+            isActive={isActive}
+          />
+        );
+      },
+    },
     {
       id: 'edit-points-overlay',
       placement: 'foreground',
