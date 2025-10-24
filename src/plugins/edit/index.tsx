@@ -28,8 +28,17 @@ export const editPlugin: PluginDefinition<CanvasStore> = {
     isSmoothBrushActive,
     beginSelectionRectangle,
     _startShapeCreation,
-    _context
+    context
   ) => {
+    // Check if add point mode is active
+    const state = context.store.getState() as CanvasStore;
+    const isAddPointModeActive = state.addPointMode?.isActive ?? false;
+    
+    // Don't start selection rectangle if add point mode is active
+    if (isAddPointModeActive) {
+      return;
+    }
+    
     // Allow selection rectangle to start on SVG or on path elements (but not on edit points)
     if ((target.tagName === 'svg' || target.tagName === 'path') && !isSmoothBrushActive) {
       beginSelectionRectangle(point, !event.shiftKey, false);

@@ -54,13 +54,18 @@ export const useAddPointNativeListeners = ({
       activePlugin,
       isAddPointModeActive,
       elements: controller.elements,
+      selectedIds: controller.selectedIds,
       screenToCanvas,
       emitPointerEvent,
       updateAddPointHover: (position, elementId, segmentInfo) => {
         canvasStoreApi.getState().updateAddPointHover?.(position, elementId, segmentInfo);
       },
       insertPointOnPath: () => {
-        canvasStoreApi.getState().insertPointOnPath?.();
+        return canvasStoreApi.getState().insertPointOnPath?.() ?? null;
+      },
+      hasValidHover: () => {
+        const addPointMode = canvasStoreApi.getState().addPointMode;
+        return addPointMode?.hoverPosition !== null && addPointMode?.hoverPosition !== undefined;
       },
     };
 
@@ -68,6 +73,7 @@ export const useAddPointNativeListeners = ({
   }, [
     activePlugin,
     controller.elements,
+    controller.selectedIds,
     emitPointerEvent,
     eventBus,
     isAddPointModeActive,

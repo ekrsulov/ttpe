@@ -2,7 +2,7 @@ import type { ToolMode } from '../../config/toolDefinitions';
 
 export type CanvasMode = ToolMode | (string & {});
 
-export type CanvasModeLifecycleAction = 'clearGuidelines' | 'clearSubpathSelection';
+export type CanvasModeLifecycleAction = 'clearGuidelines' | 'clearSubpathSelection' | 'clearSelectedCommands';
 
 export interface CanvasModeResources {
   plugins?: CanvasMode[];
@@ -84,7 +84,7 @@ export const CANVAS_MODE_MACHINE: CanvasModeMachineDefinition = {
       acc[mode] = {
         id: mode,
         description: 'Herramienta por defecto para seleccionar y manipular elementos.',
-        entry: ['clearSubpathSelection'],
+        entry: ['clearSubpathSelection', 'clearSelectedCommands'],
         transitions: {
           pan: { description: 'Permite desplazarse por el lienzo.' },
           pencil: { description: 'Activa el dibujo a mano alzada.' },

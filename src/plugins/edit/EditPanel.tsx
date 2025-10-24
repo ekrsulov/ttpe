@@ -260,14 +260,6 @@ export const EditPanel: React.FC<EditPanelProps> = ({
             {addPointMode?.isActive ? 'On' : 'Off'}
           </Button>
         </HStack>
-
-        {/* Instructions */}
-        <Text fontSize="12px" color="gray.600" mt={2} lineHeight="tall">
-          {addPointMode?.isActive
-            ? 'Hover over a path segment to see where a new point will be added. Click to insert the point.'
-            : 'Enable Add Point mode to add new points to path segments by clicking.'
-          }
-        </Text>
       </Box>
 
       {/* Path Simplification Section */}

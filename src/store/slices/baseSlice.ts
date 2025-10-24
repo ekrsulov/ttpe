@@ -164,6 +164,9 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => {
         case 'clearSubpathSelection':
           updatedState.clearSubpathSelection?.();
           break;
+        case 'clearSelectedCommands':
+          updatedState.clearSelectedCommands?.();
+          break;
         default:
           break;
       }

@@ -13,6 +13,7 @@ export interface AddPointServiceState {
   activePlugin: string | null;
   isAddPointModeActive: boolean;
   elements: CanvasElement[];
+  selectedIds: string[];
   screenToCanvas: (x: number, y: number) => Point;
   emitPointerEvent: (
     type: 'pointerdown' | 'pointermove' | 'pointerup',
@@ -24,7 +25,8 @@ export interface AddPointServiceState {
     elementId: string | null,
     segmentInfo: { commandIndex: number; t: number } | null
   ) => void;
-  insertPointOnPath: () => void;
+  insertPointOnPath: () => { elementId: string; commandIndex: number; pointIndex: number } | null;
+  hasValidHover: () => boolean;
 }
 
 class AddPointListenerService implements CanvasService<AddPointServiceState> {
@@ -55,8 +57,16 @@ class AddPointListenerService implements CanvasService<AddPointServiceState> {
       const point = state.screenToCanvas(event.clientX, event.clientY);
       state.emitPointerEvent('pointermove', event, point);
 
-      // Find path elements
-      const pathElements = state.elements.filter((el) => el.type === 'path');
+      // Find path elements that are selected
+      const pathElements = state.elements.filter(
+        (el) => el.type === 'path' && state.selectedIds.includes(el.id)
+      );
+
+      // If no paths are selected, don't show hover feedback
+      if (pathElements.length === 0) {
+        state.updateAddPointHover(null, null, null);
+        return;
+      }
 
       let closestMatch: {
         element: CanvasElement;
@@ -64,7 +74,7 @@ class AddPointListenerService implements CanvasService<AddPointServiceState> {
       } | null = null;
       let minDistance = Infinity;
 
-      // Check each path element
+      // Check each selected path element
       for (const element of pathElements) {
         const pathData = element.data as PathData;
         const commands = pathData.subPaths.flat();
@@ -107,13 +117,18 @@ class AddPointListenerService implements CanvasService<AddPointServiceState> {
         }
       }
 
-      const point = state.screenToCanvas(event.clientX, event.clientY);
-      state.emitPointerEvent('pointerdown', event, point);
-
-      // Insert the point if we have a valid hover state
+      // Check if we have a valid hover position (cursor is over a path segment)
+      const hasValidHover = state.hasValidHover();
+      
+      if (!hasValidHover) {
+        // No valid hover, allow normal selection behavior
+        return;
+      }
+      
+      // Insert the point - it will automatically be selected and set to dragging state
       state.insertPointOnPath();
 
-      // Prevent default to avoid starting selection
+      // Prevent default and stop propagation to avoid starting selection box
       event.preventDefault();
       event.stopPropagation();
     };

@@ -416,7 +416,7 @@ export interface EditPluginSlice {
   activateAddPointMode: () => void;
   deactivateAddPointMode: () => void;
   updateAddPointHover: (position: Point | null, elementId: string | null, segmentInfo: { commandIndex: number; t: number } | null) => void;
-  insertPointOnPath: () => void;
+  insertPointOnPath: () => { elementId: string; commandIndex: number; pointIndex: number } | null;
 }
 
 // Track last deletion time to prevent double-deletion
@@ -2390,25 +2390,28 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
     const addPointMode = state.addPointMode;
 
     if (!addPointMode || !addPointMode.isActive || !addPointMode.hoverPosition || !addPointMode.targetElement || !addPointMode.targetSegment) {
-      return;
+      return null;
     }
 
     const element = state.elements.find((el: CanvasElement) => el.id === addPointMode.targetElement);
-    if (!element || element.type !== 'path') return;
+    if (!element || element.type !== 'path') return null;
 
     const pathData = element.data as PathData;
     const commands = pathData.subPaths.flat();
     const { commandIndex, t } = addPointMode.targetSegment;
     
     const command = commands[commandIndex];
-    if (!command || (command.type !== 'L' && command.type !== 'C')) return;
+    if (!command || (command.type !== 'L' && command.type !== 'C')) return null;
 
     // Get the start point for this command
     const startPoint = getCommandStartPoint(commands, commandIndex);
-    if (!startPoint) return;
+    if (!startPoint) return null;
 
     const newCommands = [...commands];
     const insertPosition = addPointMode.hoverPosition;
+    
+    // Store info about the newly inserted point
+    let newPointInfo: { elementId: string; commandIndex: number; pointIndex: number } | null = null;
 
     if (command.type === 'L') {
       // For line segments, insert a new L command
@@ -2416,6 +2419,8 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
         { type: 'L', position: insertPosition },
         { type: 'L', position: command.position }
       );
+      // The new point is at commandIndex, and L commands have pointIndex 0
+      newPointInfo = { elementId: addPointMode.targetElement, commandIndex, pointIndex: 0 };
     } else if (command.type === 'C') {
       // For cubic bezier segments, we need to split the curve
       // Using De Casteljau's algorithm to split at parameter t
@@ -2451,6 +2456,8 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
           position: p3
         }
       );
+      // The new point is at commandIndex, pointIndex 2 (the position of the first C command)
+      newPointInfo = { elementId: addPointMode.targetElement, commandIndex, pointIndex: 2 };
     }
 
     // Update the path with new commands
@@ -2462,15 +2469,40 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
       }
     });
 
-    // Clear hover state after inserting
-    set((state) => ({
-      addPointMode: {
-        ...state.addPointMode,
-        hoverPosition: null,
-        targetElement: null,
-        targetSegment: null,
-      },
-    }));
+    // Select the newly created point (but don't start dragging yet)
+    // The dragging will start when the user moves the mouse (handled by useCanvasDragInteractions)
+    if (newPointInfo) {
+      set({
+        selectedCommands: [newPointInfo],
+        editingPoint: {
+          elementId: newPointInfo.elementId,
+          commandIndex: newPointInfo.commandIndex,
+          pointIndex: newPointInfo.pointIndex,
+          isDragging: true, // Start dragging immediately
+          offsetX: insertPosition.x,
+          offsetY: insertPosition.y
+        },
+        draggingSelection: null,
+        addPointMode: {
+          ...addPointMode,
+          hoverPosition: null,
+          targetElement: null,
+          targetSegment: null,
+        },
+      });
+    } else {
+      // Clear hover state after inserting if no point info
+      set((state) => ({
+        addPointMode: {
+          ...state.addPointMode,
+          hoverPosition: null,
+          targetElement: null,
+          targetSegment: null,
+        },
+      }));
+    }
+    
+    return newPointInfo;
   },
 });
 
