@@ -10,28 +10,56 @@ import { extractSubpaths } from '../../utils/pathParserUtils';
 function getGridCellVertices(point: Point, gridType: GridType, spacing: number, state: CanvasStore): Point[] {
   const { grid } = state;
 
-  const pointInTriangle = (p: Point, a: Point, b: Point, c: Point): boolean => {
-    const v0 = { x: c.x - a.x, y: c.y - a.y };
-    const v1 = { x: b.x - a.x, y: b.y - a.y };
-    const v2 = { x: p.x - a.x, y: p.y - a.y };
+  const intersectHalfPlanes = (halfPlanes: Array<{ a: number; b: number; c: number }>): Point[] => {
+    const intersections: Point[] = [];
+    const epsilon = 1e-6;
 
-    const dot00 = v0.x * v0.x + v0.y * v0.y;
-    const dot01 = v0.x * v1.x + v0.y * v1.y;
-    const dot02 = v0.x * v2.x + v0.y * v2.y;
-    const dot11 = v1.x * v1.x + v1.y * v1.y;
-    const dot12 = v1.x * v2.x + v1.y * v2.y;
+    const satisfiesAll = (pt: Point) =>
+      halfPlanes.every(({ a, b, c }) => a * pt.x + b * pt.y + c >= -epsilon);
 
-    const denom = dot00 * dot11 - dot01 * dot01;
-    if (Math.abs(denom) < 1e-9) {
-      return false;
+    for (let i = 0; i < halfPlanes.length; i++) {
+      for (let j = i + 1; j < halfPlanes.length; j++) {
+        const { a: a1, b: b1, c: c1 } = halfPlanes[i];
+        const { a: a2, b: b2, c: c2 } = halfPlanes[j];
+
+        const det = a1 * b2 - a2 * b1;
+        if (Math.abs(det) < epsilon) {
+          continue;
+        }
+
+        const x = (b1 * c2 - b2 * c1) / det;
+        const y = (c1 * a2 - c2 * a1) / det;
+        const candidate = { x, y };
+
+        if (satisfiesAll(candidate)) {
+          intersections.push(candidate);
+        }
+      }
     }
 
-    const invDenom = 1 / denom;
-    const u = (dot11 * dot02 - dot01 * dot12) * invDenom;
-    const v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+    const unique: Point[] = [];
+    for (const pt of intersections) {
+      if (!unique.some((p) => Math.hypot(p.x - pt.x, p.y - pt.y) < epsilon)) {
+        unique.push(pt);
+      }
+    }
 
-    const epsilon = 1e-6;
-    return u >= -epsilon && v >= -epsilon && u + v <= 1 + epsilon;
+    if (unique.length <= 2) {
+      return unique;
+    }
+
+    const centroid = unique.reduce(
+      (acc, pt) => ({ x: acc.x + pt.x, y: acc.y + pt.y }),
+      { x: 0, y: 0 }
+    );
+    centroid.x /= unique.length;
+    centroid.y /= unique.length;
+
+    unique.sort(
+      (p, q) => Math.atan2(p.y - centroid.y, p.x - centroid.x) - Math.atan2(q.y - centroid.y, q.x - centroid.x)
+    );
+
+    return unique;
   };
 
   switch (gridType) {
@@ -65,7 +93,7 @@ function getGridCellVertices(point: Point, gridType: GridType, spacing: number, 
     case 'isometric': {
       const tan30 = Math.tan(Math.PI / 6);
       const cos30 = Math.cos(Math.PI / 6);
-      const spacing60 = spacing * tan30 / cos30;
+      const spacing60 = (spacing * tan30) / cos30;
 
       const verticalIndex = Math.floor(point.x / spacing);
       const xLeft = verticalIndex * spacing;
@@ -81,74 +109,60 @@ function getGridCellVertices(point: Point, gridType: GridType, spacing: number, 
       const c120Low = index120 * spacing60;
       const c120High = (index120 + 1) * spacing60;
 
+      const halfPlanes = [
+        { a: 1, b: 0, c: -xLeft },
+        { a: -1, b: 0, c: xRight },
+        { a: -tan30, b: 1, c: -c60Low },
+        { a: tan30, b: -1, c: c60High },
+        { a: tan30, b: 1, c: -c120Low },
+        { a: -tan30, b: -1, c: c120High },
+      ];
+
+      const polygon = intersectHalfPlanes(halfPlanes);
+      if (polygon.length >= 3) {
+        return polygon;
+      }
+
+      // Fallback: construct minimal triangle if numerical issues occur
       const intersection60 = (x: number, constant: number) => tan30 * x + constant;
       const intersection120 = (x: number, constant: number) => -tan30 * x + constant;
 
       return [
         { x: xLeft, y: intersection120(xLeft, c120Low) },
-        { x: xLeft, y: intersection60(xLeft, c60High) },
-        { x: xRight, y: intersection120(xRight, c120High) },
         { x: xRight, y: intersection60(xRight, c60Low) },
+        { x: (c120Low - c60Low) / (2 * tan30), y: (c60Low + c120Low) / 2 },
       ];
     }
 
     case 'triangular': {
-      const height = spacing * Math.sqrt(3) / 2;
-      const tan60 = Math.sqrt(3);
-      const spacing60 = spacing * tan60;
+      const height = (spacing * Math.sqrt(3)) / 2;
 
-      const row = Math.floor(point.y / height);
-      const yLow = row * height;
-      const yHigh = (row + 1) * height;
+      const latticeV = { x: spacing / 2, y: height };
+      const latticeU = { x: spacing, y: 0 };
 
-      const c60 = point.y - tan60 * point.x;
-      const index60 = Math.floor(c60 / spacing60);
-      const c60Low = index60 * spacing60;
-      const c60High = (index60 + 1) * spacing60;
+      const bCoord = point.y / height;
+      const aCoord = point.x / spacing - bCoord / 2;
 
-      const c120 = point.y + tan60 * point.x;
-      const index120 = Math.floor(c120 / spacing60);
-      const c120Low = index120 * spacing60;
-      const c120High = (index120 + 1) * spacing60;
+      const cellI = Math.floor(aCoord);
+      const cellJ = Math.floor(bCoord);
 
-      const intersect60 = (yValue: number, constant: number) => ({
-        x: (yValue - constant) / tan60,
-        y: yValue,
-      });
+      const fracA = aCoord - cellI;
+      const fracB = bCoord - cellJ;
 
-      const intersect120 = (yValue: number, constant: number) => ({
-        x: (constant - yValue) / tan60,
-        y: yValue,
-      });
-
-      const intersectSlopes = (constantA: number, constantB: number) => {
-        const x = (constantB - constantA) / (2 * tan60);
-        const y = tan60 * x + constantA;
-        return { x, y };
+      const origin = {
+        x: cellI * latticeU.x + cellJ * latticeV.x,
+        y: cellI * latticeU.y + cellJ * latticeV.y,
       };
 
-      const upward = [
-        intersect60(yLow, c60High),
-        intersect120(yLow, c120High),
-        intersectSlopes(c60High, c120High),
-      ];
+      const vertexB = { x: origin.x + latticeU.x, y: origin.y + latticeU.y };
+      const vertexC = { x: origin.x + latticeV.x, y: origin.y + latticeV.y };
+      const vertexD = { x: vertexB.x + latticeV.x, y: vertexB.y + latticeV.y };
 
-      if (pointInTriangle(point, upward[0], upward[1], upward[2])) {
-        return upward;
+      if (fracA + fracB <= 1) {
+        return [origin, vertexB, vertexC];
       }
 
-      const downward = [
-        intersect60(yHigh, c60Low),
-        intersect120(yHigh, c120Low),
-        intersectSlopes(c60Low, c120Low),
-      ];
-
-      if (pointInTriangle(point, downward[0], downward[1], downward[2])) {
-        return downward;
-      }
-
-      // Fallback to upward triangle if numerical issues prevent containment detection
-      return upward;
+      return [vertexB, vertexD, vertexC];
     }
     
     case 'hexagonal': {
@@ -409,14 +423,29 @@ function getGridCellVertices(point: Point, gridType: GridType, spacing: number, 
         { x: cellX, y: cellY + stepY },
       ];
 
-      // Apply warp to vertices
-      return baseVertices.map(v => {
-        const displacement = calculateDisplacement(v.x, v.y, warp);
-        return {
-          x: v.x + displacement.dx,
-          y: v.y + displacement.dy,
-        };
-      });
+      const segments = Math.max(8, Math.ceil(Math.max(stepX, stepY) / 10));
+      const warpedPoints: Point[] = [];
+
+      const pushWarpedPoint = (x: number, y: number) => {
+        const displacement = calculateDisplacement(x, y, warp);
+        warpedPoints.push({ x: x + displacement.dx, y: y + displacement.dy });
+      };
+
+      const sampleEdge = (start: Point, end: Point, includeStart: boolean) => {
+        for (let i = includeStart ? 0 : 1; i <= segments; i++) {
+          const t = i / segments;
+          const x = start.x + (end.x - start.x) * t;
+          const y = start.y + (end.y - start.y) * t;
+          pushWarpedPoint(x, y);
+        }
+      };
+
+      sampleEdge(baseVertices[0], baseVertices[1], true); // top edge
+      sampleEdge(baseVertices[1], baseVertices[2], false); // right edge
+      sampleEdge(baseVertices[2], baseVertices[3], false); // bottom edge
+      sampleEdge(baseVertices[3], baseVertices[0], false); // left edge
+
+      return warpedPoints;
     }
     
     default: {
