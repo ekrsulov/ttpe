@@ -17,6 +17,7 @@ const PathOperationsPanel = React.lazy(() => import('../../plugins/edit/PathOper
 const SubPathOperationsPanel = React.lazy(() => import('../../plugins/subpath/SubPathOperationsPanel').then(module => ({ default: module.SubPathOperationsPanel })));
 const GuidelinesPanel = React.lazy(() => import('../../plugins/guidelines/GuidelinesPanel').then(module => ({ default: module.GuidelinesPanel })));
 const GridPanel = React.lazy(() => import('../../plugins/grid/GridPanel').then(module => ({ default: module.default })));
+const GridFillPanel = React.lazy(() => import('../../plugins/gridFill/GridFillPanel').then(module => ({ default: module.GridFillPanel })));
 
 export interface SmoothBrush {
   radius: number;
@@ -200,5 +201,10 @@ export const PANEL_CONFIGS: PanelConfig[] = [
     key: 'shape',
     condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'shape',
     component: ShapePanel,
+  },
+  {
+    key: 'gridFill',
+    condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'gridFill',
+    component: GridFillPanel,
   },
 ];

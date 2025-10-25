@@ -7,14 +7,15 @@ import {
   Route,
   SquareDashedMousePointer,
   MousePointerClick,
-  Hand
+  Hand,
+  PaintBucket
 } from 'lucide-react';
 import type { ComponentType } from 'react';
 
 /**
  * Tool mode type definition
  */
-export type ToolMode = 'select' | 'pencil' | 'text' | 'shape' | 'curves' | 'subpath' | 'transformation' | 'edit' | 'pan';
+export type ToolMode = 'select' | 'pencil' | 'text' | 'shape' | 'curves' | 'subpath' | 'transformation' | 'edit' | 'pan' | 'gridFill';
 
 /**
  * Unified tool definition interface
@@ -96,5 +97,12 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     icon: MousePointerClick,
     cursor: 'pointer',
     order: 9,
+  },
+  {
+    mode: 'gridFill',
+    label: 'Grid Fill',
+    icon: PaintBucket,
+    cursor: 'crosshair',
+    order: 10,
   },
 ];

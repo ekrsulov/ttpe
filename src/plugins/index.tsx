@@ -13,6 +13,7 @@ import { opticalAlignmentPlugin } from './opticalAlignment';
 import { guidelinesPlugin } from './guidelines';
 import { gridPlugin } from './grid';
 import { minimapPlugin } from './minimap';
+import { gridFillPlugin } from './gridFill';
 import { SelectionOverlay, BlockingOverlay } from '../components/overlays';
 
 
@@ -191,6 +192,7 @@ export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   subpathPlugin,
   transformationPlugin,
   editPlugin,
+  gridFillPlugin,
   opticalAlignmentPlugin,
   guidelinesPlugin,
   gridPlugin,
@@ -207,4 +209,5 @@ export * from './curves';
 export * from './opticalAlignment';
 export * from './guidelines';
 export * from './grid';
+export * from './gridFill';
 export * from './minimap';

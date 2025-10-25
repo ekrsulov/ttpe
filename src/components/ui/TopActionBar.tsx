@@ -6,6 +6,7 @@ import type { CanvasElement } from '../../types';
 import { TOOL_DEFINITIONS } from '../../config/toolDefinitions';
 import type { ToolMode } from '../../config/toolDefinitions';
 import { pluginManager } from '../../utils/pluginManager';
+import { useCanvasStore } from '../../store/canvasStore';
 
 const TOOL_DEFINITION_MAP = new Map(
   TOOL_DEFINITIONS.map((definition) => [definition.mode, definition])
@@ -35,6 +36,9 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
   const showMenuButton = !isSidebarPinned;
   const isPositionedForSidebar = sidebarWidth > 0;
   
+  // Get grid state to conditionally show gridFill tool
+  const gridEnabled = useCanvasStore(state => state.grid?.enabled ?? false);
+  
   // Calculate top position - move down when grid rulers are shown
   const baseTop = { base: 2, md: 6 };
   const topWithRulers = { base: 6, md: 10 };
@@ -43,6 +47,13 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
   const registeredTools = pluginManager
     .getRegisteredTools()
     .filter((plugin) => TOOL_DEFINITION_MAP.has(plugin.id as ToolMode))
+    .filter((plugin) => {
+      // Only show gridFill if grid is enabled
+      if (plugin.id === 'gridFill') {
+        return gridEnabled;
+      }
+      return true;
+    })
     .map((plugin) => {
       const fallbackDefinition = TOOL_DEFINITION_MAP.get(plugin.id as ToolMode);
       const Icon = plugin.metadata.icon ?? fallbackDefinition?.icon ?? Menu;
@@ -59,6 +70,7 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
   const toolsToRender = registeredTools.length
     ? registeredTools
     : TOOL_DEFINITIONS
+        .filter((def) => def.mode !== 'gridFill' || gridEnabled)
         .sort((a, b) => a.order - b.order)
         .map(({ mode, label, icon }) => ({
           id: mode,
