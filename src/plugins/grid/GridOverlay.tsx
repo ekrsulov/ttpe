@@ -1,10 +1,20 @@
 import React from 'react';
+import type { GridType, WarpParams } from './slice';
 
 interface GridOverlayProps {
   grid: {
     enabled: boolean;
+    type: GridType;
     spacing: number;
     showRulers: boolean;
+    polarDivisions?: number;
+    hexOrientation?: 'pointy' | 'flat';
+    opacity?: number;
+    color?: string;
+    emphasizeEvery?: number;
+    parametricStepY?: number;
+    parametricRotation?: number;
+    parametricWarp?: WarpParams;
   };
   viewport: {
     zoom: number;
@@ -19,32 +29,21 @@ interface GridOverlayProps {
 
 /**
  * Calculate optimal ruler interval based on zoom level and grid spacing
- * Follows best practices from design tools (Figma, Sketch, Illustrator)
  */
 function calculateRulerInterval(spacing: number, zoom: number): number {
-  // Base grid spacing in canvas coordinates
   const baseSpacing = spacing;
-  
-  // Target: labels should appear when grid cells are 40-100px on screen
-  // This provides optimal readability across zoom levels
-  const minScreenSpacing = 50; // Minimum distance between labels in screen pixels
-  
-  // Intervals to try (in multiples of base grid spacing)
-  // Follows common ruler patterns: 1, 2, 5, 10, 20, 50, 100, etc.
+  const minScreenSpacing = 50;
   const multipliers = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000];
   
-  // Find the best multiplier that gives us comfortable spacing on screen
   for (const multiplier of multipliers) {
     const intervalSpacing = baseSpacing * multiplier;
     const screenSpacing = intervalSpacing * zoom;
     
-    // Use this interval if it's >= minimum screen spacing
     if (screenSpacing >= minScreenSpacing) {
       return intervalSpacing;
     }
   }
   
-  // Fallback: use the largest multiplier if we're extremely zoomed out
   return baseSpacing * multipliers[multipliers.length - 1];
 }
 
@@ -52,17 +51,710 @@ function calculateRulerInterval(spacing: number, zoom: number): number {
  * Format ruler label for better readability
  */
 function formatRulerLabel(value: number): string {
-  // Round to avoid floating point artifacts
   const rounded = Math.round(value);
   
-  // For large numbers, use k suffix (1000 -> 1k)
   if (Math.abs(rounded) >= 1000) {
     const thousands = rounded / 1000;
-    // Only show decimal if it's not a whole number
     return thousands % 1 === 0 ? `${thousands}k` : `${thousands.toFixed(1)}k`;
   }
   
   return rounded.toString();
+}
+
+/**
+ * Render square/rectangular grid
+ */
+function renderSquareGrid(
+  spacing: number,
+  left: number,
+  right: number,
+  top: number,
+  bottom: number,
+  rulerInterval: number,
+  emphasizeEvery: number,
+  opacity: number,
+  color: string,
+  zoom: number
+): React.ReactElement {
+  let minorPathData = '';
+  let majorPathData = '';
+  let emphasizedPathData = '';
+
+  // Vertical lines
+  const startX = Math.floor(left / spacing) * spacing;
+  const endX = Math.ceil(right / spacing) * spacing;
+  let xIndex = Math.floor(startX / spacing);
+
+  for (let x = startX; x <= endX; x += spacing, xIndex++) {
+    const isMajor = Math.abs(x % rulerInterval) < spacing / 2;
+    const isEmphasized = emphasizeEvery > 0 && xIndex % emphasizeEvery === 0;
+    
+    if (isEmphasized) {
+      emphasizedPathData += `M ${x} ${top} L ${x} ${bottom} `;
+    } else if (isMajor) {
+      majorPathData += `M ${x} ${top} L ${x} ${bottom} `;
+    } else {
+      minorPathData += `M ${x} ${top} L ${x} ${bottom} `;
+    }
+  }
+
+  // Horizontal lines
+  const startY = Math.floor(top / spacing) * spacing;
+  const endY = Math.ceil(bottom / spacing) * spacing;
+  let yIndex = Math.floor(startY / spacing);
+
+  for (let y = startY; y <= endY; y += spacing, yIndex++) {
+    const isMajor = Math.abs(y % rulerInterval) < spacing / 2;
+    const isEmphasized = emphasizeEvery > 0 && yIndex % emphasizeEvery === 0;
+    
+    if (isEmphasized) {
+      emphasizedPathData += `M ${left} ${y} L ${right} ${y} `;
+    } else if (isMajor) {
+      majorPathData += `M ${left} ${y} L ${right} ${y} `;
+    } else {
+      minorPathData += `M ${left} ${y} L ${right} ${y} `;
+    }
+  }
+
+  const minorColor = `rgba(${parseInt(color.slice(1, 3), 16)}, ${parseInt(color.slice(3, 5), 16)}, ${parseInt(color.slice(5, 7), 16)}, ${opacity * 0.3})`;
+  const majorColor = `rgba(${parseInt(color.slice(1, 3), 16)}, ${parseInt(color.slice(3, 5), 16)}, ${parseInt(color.slice(5, 7), 16)}, ${opacity * 0.5})`;
+  const emphasizedColor = `rgba(${parseInt(color.slice(1, 3), 16)}, ${parseInt(color.slice(3, 5), 16)}, ${parseInt(color.slice(5, 7), 16)}, ${opacity * 0.8})`;
+
+  return (
+    <g>
+      {minorPathData && (
+        <path
+          d={minorPathData}
+          stroke={minorColor}
+          strokeWidth={0.5 / zoom}
+          pointerEvents="none"
+          fill="none"
+        />
+      )}
+      {majorPathData && (
+        <path
+          d={majorPathData}
+          stroke={majorColor}
+          strokeWidth={1 / zoom}
+          pointerEvents="none"
+          fill="none"
+        />
+      )}
+      {emphasizedPathData && (
+        <path
+          d={emphasizedPathData}
+          stroke={emphasizedColor}
+          strokeWidth={1.5 / zoom}
+          pointerEvents="none"
+          fill="none"
+        />
+      )}
+    </g>
+  );
+}
+
+/**
+ * Render dot grid
+ */
+function renderDotGrid(
+  spacing: number,
+  left: number,
+  right: number,
+  top: number,
+  bottom: number,
+  opacity: number,
+  color: string,
+  zoom: number
+): React.ReactElement {
+  const dots: React.ReactElement[] = [];
+  
+  const startX = Math.floor(left / spacing) * spacing;
+  const endX = Math.ceil(right / spacing) * spacing;
+  const startY = Math.floor(top / spacing) * spacing;
+  const endY = Math.ceil(bottom / spacing) * spacing;
+
+  const dotColor = `rgba(${parseInt(color.slice(1, 3), 16)}, ${parseInt(color.slice(3, 5), 16)}, ${parseInt(color.slice(5, 7), 16)}, ${opacity})`;
+  const dotRadius = 1 / zoom;
+
+  let index = 0;
+  for (let x = startX; x <= endX; x += spacing) {
+    for (let y = startY; y <= endY; y += spacing) {
+      dots.push(
+        <circle
+          key={`dot-${index++}`}
+          cx={x}
+          cy={y}
+          r={dotRadius}
+          fill={dotColor}
+          pointerEvents="none"
+        />
+      );
+    }
+  }
+
+  return <g>{dots}</g>;
+}
+
+/**
+ * Render isometric grid (60°/120°)
+ */
+function renderIsometricGrid(
+  spacing: number,
+  left: number,
+  right: number,
+  top: number,
+  bottom: number,
+  opacity: number,
+  color: string,
+  zoom: number
+): React.ReactElement {
+  let pathData = '';
+  
+  const cos30 = Math.cos(Math.PI / 6);
+  const tan30 = Math.tan(Math.PI / 6);
+  
+  const gridColor = `rgba(${parseInt(color.slice(1, 3), 16)}, ${parseInt(color.slice(3, 5), 16)}, ${parseInt(color.slice(5, 7), 16)}, ${opacity})`;
+  const extension = Math.max(right - left, bottom - top) * 2;
+
+  // Vertical lines at x = n * spacing
+  const startX = Math.floor(left / spacing) * spacing;
+  const endX = Math.ceil(right / spacing) * spacing;
+  
+  for (let x = startX; x <= endX; x += spacing) {
+    pathData += `M ${x} ${top - extension} L ${x} ${bottom + extension} `;
+  }
+
+  // 60° lines (slope = tan(30°)): y - tan30*x = n*spacing60
+  // where spacing60 = spacing / cos30 * tan30 = spacing * tan30 / cos30
+  const step60 = spacing / cos30;
+  const spacing60 = step60 * tan30;
+  
+  // Find visible range of lines
+  const minConst60 = Math.min(
+    top - tan30 * left,
+    top - tan30 * right,
+    bottom - tan30 * left,
+    bottom - tan30 * right
+  );
+  const maxConst60 = Math.max(
+    top - tan30 * left,
+    top - tan30 * right,
+    bottom - tan30 * left,
+    bottom - tan30 * right
+  );
+  
+  const startConst60 = Math.floor(minConst60 / spacing60) * spacing60;
+  const endConst60 = Math.ceil(maxConst60 / spacing60) * spacing60;
+  
+  for (let c = startConst60; c <= endConst60; c += spacing60) {
+    // Line: y = tan30 * x + c
+    const x1 = left - extension;
+    const y1 = tan30 * x1 + c;
+    const x2 = right + extension;
+    const y2 = tan30 * x2 + c;
+    
+    pathData += `M ${x1} ${y1} L ${x2} ${y2} `;
+  }
+
+  // 120° lines (slope = -tan(30°)): y + tan30*x = n*spacing60
+  const minConst120 = Math.min(
+    top + tan30 * left,
+    top + tan30 * right,
+    bottom + tan30 * left,
+    bottom + tan30 * right
+  );
+  const maxConst120 = Math.max(
+    top + tan30 * left,
+    top + tan30 * right,
+    bottom + tan30 * left,
+    bottom + tan30 * right
+  );
+  
+  const startConst120 = Math.floor(minConst120 / spacing60) * spacing60;
+  const endConst120 = Math.ceil(maxConst120 / spacing60) * spacing60;
+  
+  for (let c = startConst120; c <= endConst120; c += spacing60) {
+    // Line: y = -tan30 * x + c
+    const x1 = left - extension;
+    const y1 = -tan30 * x1 + c;
+    const x2 = right + extension;
+    const y2 = -tan30 * x2 + c;
+    
+    pathData += `M ${x1} ${y1} L ${x2} ${y2} `;
+  }
+
+  return (
+    <path
+      d={pathData}
+      stroke={gridColor}
+      strokeWidth={0.5 / zoom}
+      pointerEvents="none"
+      fill="none"
+    />
+  );
+}
+
+/**
+ * Render triangular grid
+ */
+function renderTriangularGrid(
+  spacing: number,
+  left: number,
+  right: number,
+  top: number,
+  bottom: number,
+  opacity: number,
+  color: string,
+  zoom: number
+): React.ReactElement {
+  let pathData = '';
+  
+  const height = spacing * Math.sqrt(3) / 2;
+  const tan60 = Math.sqrt(3); // tan(60°) = sqrt(3)
+  const gridColor = `rgba(${parseInt(color.slice(1, 3), 16)}, ${parseInt(color.slice(3, 5), 16)}, ${parseInt(color.slice(5, 7), 16)}, ${opacity})`;
+  const extension = Math.max(right - left, bottom - top) * 2;
+
+  // Horizontal lines at y = n * height
+  const startY = Math.floor(top / height) * height;
+  const endY = Math.ceil(bottom / height) * height;
+  
+  for (let y = startY; y <= endY; y += height) {
+    pathData += `M ${left - extension} ${y} L ${right + extension} ${y} `;
+  }
+
+  // 60° lines (slope = tan(60°) = sqrt(3))
+  // Lines where: y - tan60*x = n*spacing (constant along each line)
+  const spacing60 = spacing * tan60;
+  
+  const minConst60 = Math.min(
+    top - tan60 * left,
+    top - tan60 * right,
+    bottom - tan60 * left,
+    bottom - tan60 * right
+  );
+  const maxConst60 = Math.max(
+    top - tan60 * left,
+    top - tan60 * right,
+    bottom - tan60 * left,
+    bottom - tan60 * right
+  );
+  
+  const startConst60 = Math.floor(minConst60 / spacing60) * spacing60;
+  const endConst60 = Math.ceil(maxConst60 / spacing60) * spacing60;
+  
+  for (let c = startConst60; c <= endConst60; c += spacing60) {
+    // Line: y = tan60 * x + c
+    const x1 = left - extension;
+    const y1 = tan60 * x1 + c;
+    const x2 = right + extension;
+    const y2 = tan60 * x2 + c;
+    
+    pathData += `M ${x1} ${y1} L ${x2} ${y2} `;
+  }
+
+  // 120° lines (slope = -tan(60°) = -sqrt(3))
+  // Lines where: y + tan60*x = n*spacing (constant along each line)
+  const minConst120 = Math.min(
+    top + tan60 * left,
+    top + tan60 * right,
+    bottom + tan60 * left,
+    bottom + tan60 * right
+  );
+  const maxConst120 = Math.max(
+    top + tan60 * left,
+    top + tan60 * right,
+    bottom + tan60 * left,
+    bottom + tan60 * right
+  );
+  
+  const startConst120 = Math.floor(minConst120 / spacing60) * spacing60;
+  const endConst120 = Math.ceil(maxConst120 / spacing60) * spacing60;
+  
+  for (let c = startConst120; c <= endConst120; c += spacing60) {
+    // Line: y = -tan60 * x + c
+    const x1 = left - extension;
+    const y1 = -tan60 * x1 + c;
+    const x2 = right + extension;
+    const y2 = -tan60 * x2 + c;
+    
+    pathData += `M ${x1} ${y1} L ${x2} ${y2} `;
+  }
+
+  return (
+    <path
+      d={pathData}
+      stroke={gridColor}
+      strokeWidth={0.5 / zoom}
+      pointerEvents="none"
+      fill="none"
+    />
+  );
+}
+
+/**
+ * Render hexagonal grid
+ */
+function renderHexagonalGrid(
+  spacing: number,
+  left: number,
+  right: number,
+  top: number,
+  bottom: number,
+  orientation: 'pointy' | 'flat',
+  opacity: number,
+  color: string,
+  zoom: number
+): React.ReactElement {
+  const hexagons: React.ReactElement[] = [];
+  const gridColor = `rgba(${parseInt(color.slice(1, 3), 16)}, ${parseInt(color.slice(3, 5), 16)}, ${parseInt(color.slice(5, 7), 16)}, ${opacity})`;
+
+  if (orientation === 'pointy') {
+    const width = spacing * Math.sqrt(3);
+    const height = spacing * 2;
+    const verticalSpacing = height * 0.75;
+    
+    const startCol = Math.floor(left / width) - 1;
+    const endCol = Math.ceil(right / width) + 1;
+    const startRow = Math.floor(top / verticalSpacing) - 1;
+    const endRow = Math.ceil(bottom / verticalSpacing) + 1;
+
+    let index = 0;
+    for (let row = startRow; row <= endRow; row++) {
+      for (let col = startCol; col <= endCol; col++) {
+        const offsetX = (row % 2) * (width / 2);
+        const centerX = col * width + offsetX;
+        const centerY = row * verticalSpacing;
+        
+        // Draw hexagon
+        const points: string[] = [];
+        for (let i = 0; i < 6; i++) {
+          const angle = (Math.PI / 3) * i;
+          const x = centerX + spacing * Math.cos(angle);
+          const y = centerY + spacing * Math.sin(angle);
+          points.push(`${x},${y}`);
+        }
+        
+        hexagons.push(
+          <polygon
+            key={`hex-${index++}`}
+            points={points.join(' ')}
+            fill="none"
+            stroke={gridColor}
+            strokeWidth={0.5 / zoom}
+            pointerEvents="none"
+          />
+        );
+      }
+    }
+  } else {
+    // Flat-top hexagons
+    const width = spacing * 2;
+    const height = spacing * Math.sqrt(3);
+    const horizontalSpacing = width * 0.75;
+    
+    const startCol = Math.floor(left / horizontalSpacing) - 1;
+    const endCol = Math.ceil(right / horizontalSpacing) + 1;
+    const startRow = Math.floor(top / height) - 1;
+    const endRow = Math.ceil(bottom / height) + 1;
+
+    let index = 0;
+    for (let row = startRow; row <= endRow; row++) {
+      for (let col = startCol; col <= endCol; col++) {
+        const offsetY = (col % 2) * (height / 2);
+        const centerX = col * horizontalSpacing;
+        const centerY = row * height + offsetY;
+        
+        // Draw hexagon (rotated 90°)
+        const points: string[] = [];
+        for (let i = 0; i < 6; i++) {
+          const angle = (Math.PI / 3) * i + Math.PI / 6;
+          const x = centerX + spacing * Math.cos(angle);
+          const y = centerY + spacing * Math.sin(angle);
+          points.push(`${x},${y}`);
+        }
+        
+        hexagons.push(
+          <polygon
+            key={`hex-${index++}`}
+            points={points.join(' ')}
+            fill="none"
+            stroke={gridColor}
+            strokeWidth={0.5 / zoom}
+            pointerEvents="none"
+          />
+        );
+      }
+    }
+  }
+
+  return <g>{hexagons}</g>;
+}
+
+/**
+ * Render polar grid
+ */
+function renderPolarGrid(
+  spacing: number,
+  left: number,
+  right: number,
+  top: number,
+  bottom: number,
+  divisions: number,
+  opacity: number,
+  color: string,
+  zoom: number
+): React.ReactElement {
+  const gridColor = `rgba(${parseInt(color.slice(1, 3), 16)}, ${parseInt(color.slice(3, 5), 16)}, ${parseInt(color.slice(5, 7), 16)}, ${opacity})`;
+  const elements: React.ReactElement[] = [];
+
+  // Use origin (0, 0) as center for polar grid
+  const centerX = 0;
+  const centerY = 0;
+  
+  // Calculate maximum radius needed to cover the viewport
+  const maxRadius = Math.sqrt(
+    Math.max(
+      Math.pow(right - centerX, 2) + Math.pow(bottom - centerY, 2),
+      Math.pow(right - centerX, 2) + Math.pow(top - centerY, 2),
+      Math.pow(left - centerX, 2) + Math.pow(bottom - centerY, 2),
+      Math.pow(left - centerX, 2) + Math.pow(top - centerY, 2)
+    )
+  );
+
+  // Concentric circles
+  let index = 0;
+  for (let radius = spacing; radius <= maxRadius; radius += spacing) {
+    elements.push(
+      <circle
+        key={`circle-${index++}`}
+        cx={centerX}
+        cy={centerY}
+        r={radius}
+        fill="none"
+        stroke={gridColor}
+        strokeWidth={0.5 / zoom}
+        pointerEvents="none"
+      />
+    );
+  }
+
+  // Radial lines
+  const angleStep = (Math.PI * 2) / divisions;
+  let pathData = '';
+  
+  for (let i = 0; i < divisions; i++) {
+    const angle = i * angleStep;
+    const x2 = centerX + maxRadius * Math.cos(angle);
+    const y2 = centerY + maxRadius * Math.sin(angle);
+    pathData += `M ${centerX} ${centerY} L ${x2} ${y2} `;
+  }
+
+  elements.push(
+    <path
+      key="radial-lines"
+      d={pathData}
+      stroke={gridColor}
+      strokeWidth={0.5 / zoom}
+      pointerEvents="none"
+      fill="none"
+    />
+  );
+
+  return <g>{elements}</g>;
+}
+
+/**
+ * Render diagonal grid (45°)
+ */
+function renderDiagonalGrid(
+  spacing: number,
+  left: number,
+  right: number,
+  top: number,
+  bottom: number,
+  opacity: number,
+  color: string,
+  zoom: number
+): React.ReactElement {
+  let pathData = '';
+  
+  const gridColor = `rgba(${parseInt(color.slice(1, 3), 16)}, ${parseInt(color.slice(3, 5), 16)}, ${parseInt(color.slice(5, 7), 16)}, ${opacity})`;
+  const extension = Math.max(right - left, bottom - top) * 2;
+
+  // 45° lines pass through points where y - x = n*spacing (for integer n)
+  // Find which lines are visible in the viewport
+  const minDiff = Math.min(top - right, bottom - left, top - left, bottom - right);
+  const maxDiff = Math.max(top - right, bottom - left, top - left, bottom - right);
+  
+  const startDiff = Math.floor(minDiff / spacing) * spacing;
+  const endDiff = Math.ceil(maxDiff / spacing) * spacing;
+  
+  // Draw 45° lines (slope = 1, constant: y - x)
+  for (let diff = startDiff; diff <= endDiff; diff += spacing) {
+    // Line equation: y = x + diff
+    // Find a point on this line to start from
+    const x1 = left - extension;
+    const y1 = x1 + diff;
+    const x2 = right + extension;
+    const y2 = x2 + diff;
+    
+    pathData += `M ${x1} ${y1} L ${x2} ${y2} `;
+  }
+
+  // 135° lines pass through points where y + x = n*spacing (for integer n)
+  const minSum = Math.min(top + left, top + right, bottom + left, bottom + right);
+  const maxSum = Math.max(top + left, top + right, bottom + left, bottom + right);
+  
+  const startSum = Math.floor(minSum / spacing) * spacing;
+  const endSum = Math.ceil(maxSum / spacing) * spacing;
+
+  // Draw 135° lines (slope = -1, constant: y + x)
+  for (let sum = startSum; sum <= endSum; sum += spacing) {
+    // Line equation: y = -x + sum
+    const x1 = left - extension;
+    const y1 = -x1 + sum;
+    const x2 = right + extension;
+    const y2 = -x2 + sum;
+    
+    pathData += `M ${x1} ${y1} L ${x2} ${y2} `;
+  }
+
+  return (
+    <path
+      d={pathData}
+      stroke={gridColor}
+      strokeWidth={0.5 / zoom}
+      pointerEvents="none"
+      fill="none"
+    />
+  );
+}
+
+/**
+ * Render parametric lattice (warped grid)
+ */
+function renderParametricGrid(
+  stepX: number,
+  stepY: number,
+  left: number,
+  right: number,
+  top: number,
+  bottom: number,
+  warp: WarpParams,
+  opacity: number,
+  color: string,
+  zoom: number
+): React.ReactElement {
+  const gridColor = `rgba(${parseInt(color.slice(1, 3), 16)}, ${parseInt(color.slice(3, 5), 16)}, ${parseInt(color.slice(5, 7), 16)}, ${opacity})`;
+  
+  // Helper: calculate displacement
+  const calculateDisplacement = (x: number, y: number): { dx: number; dy: number } => {
+    switch (warp.kind) {
+      case 'sine2d': {
+        const phaseX = warp.phaseX ?? 0;
+        const phaseY = warp.phaseY ?? 0;
+        const dx = warp.ampX * Math.sin(2 * Math.PI * warp.freqX * x / 1024 + phaseX) * 
+                   Math.cos(2 * Math.PI * warp.freqY * y / 1024 + phaseY);
+        const dy = warp.ampY * Math.cos(2 * Math.PI * warp.freqX * x / 1024 + phaseX) * 
+                   Math.sin(2 * Math.PI * warp.freqY * y / 1024 + phaseY);
+        return { dx, dy };
+      }
+      
+      case 'radial': {
+        const cx = warp.centerX ?? 0;
+        const cy = warp.centerY ?? 0;
+        const dx = x - cx;
+        const dy = y - cy;
+        const r = Math.sqrt(dx * dx + dy * dy);
+        const angle = Math.atan2(dy, dx);
+        
+        const swirlTurns = warp.swirlTurns ?? 0;
+        const maxR = 500;
+        const swirlAngle = angle + 2 * Math.PI * swirlTurns * (r / maxR);
+        
+        const windowFactor = 0.5 * (1 - Math.cos(Math.PI * Math.min(r / maxR, 1)));
+        const mag = windowFactor * warp.ampX;
+        
+        return {
+          dx: mag * Math.cos(swirlAngle),
+          dy: mag * Math.sin(swirlAngle)
+        };
+      }
+      
+      case 'perlin2d': {
+        const seed = warp.seed ?? 0;
+        const s1 = Math.sin(x * 0.01 + seed) * Math.cos(y * 0.01 + seed);
+        const s2 = Math.sin(x * 0.02 + seed * 1.3) * Math.cos(y * 0.015 + seed * 1.7);
+        const s3 = Math.sin(x * 0.007 + seed * 2.1) * Math.cos(y * 0.009 + seed * 2.3);
+        
+        const noiseX = (s1 + 0.5 * s2 + 0.25 * s3) / 1.75;
+        const noiseY = (s2 + 0.5 * s3 + 0.25 * s1) / 1.75;
+        
+        return {
+          dx: warp.ampX * noiseX * warp.freqX / 3,
+          dy: warp.ampY * noiseY * warp.freqY / 3
+        };
+      }
+      
+      default:
+        return { dx: 0, dy: 0 };
+    }
+  };
+
+  let pathData = '';
+  const maxSegmentLength = 10; // adaptive sampling
+  
+  // Vertical lines
+  const startCol = Math.floor(left / stepX) - 1;
+  const endCol = Math.ceil(right / stepX) + 1;
+  
+  for (let col = startCol; col <= endCol; col++) {
+    const baseX = col * stepX;
+    const points: string[] = [];
+    
+    // Sample along the vertical line
+    for (let y = top - 100; y <= bottom + 100; y += maxSegmentLength) {
+      const d = calculateDisplacement(baseX, y);
+      const px = baseX + d.dx;
+      const py = y + d.dy;
+      points.push(`${px},${py}`);
+    }
+    
+    if (points.length > 0) {
+      pathData += `M ${points.join(' L ')} `;
+    }
+  }
+  
+  // Horizontal lines
+  const startRow = Math.floor(top / stepY) - 1;
+  const endRow = Math.ceil(bottom / stepY) + 1;
+  
+  for (let row = startRow; row <= endRow; row++) {
+    const baseY = row * stepY;
+    const points: string[] = [];
+    
+    // Sample along the horizontal line
+    for (let x = left - 100; x <= right + 100; x += maxSegmentLength) {
+      const d = calculateDisplacement(x, baseY);
+      const px = x + d.dx;
+      const py = baseY + d.dy;
+      points.push(`${px},${py}`);
+    }
+    
+    if (points.length > 0) {
+      pathData += `M ${points.join(' L ')} `;
+    }
+  }
+
+  return (
+    <path
+      d={pathData}
+      stroke={gridColor}
+      strokeWidth={0.5 / zoom}
+      pointerEvents="none"
+      fill="none"
+    />
+  );
 }
 
 export const GridOverlay: React.FC<GridOverlayProps> = React.memo(({
@@ -74,12 +766,12 @@ export const GridOverlay: React.FC<GridOverlayProps> = React.memo(({
     return null;
   }
 
-  // Grid spacing in world coordinates (constant size regardless of zoom)
   const spacing = grid.spacing;
+  const opacity = grid.opacity ?? 0.3;
+  const color = grid.color ?? '#000000';
+  const emphasizeEvery = grid.emphasizeEvery ?? 0;
 
-  // ViewBox coordinates: The viewBox starts at (-panX/zoom, -panY/zoom)
-  // and has size (canvasWidth/zoom, canvasHeight/zoom)
-  // Add padding to ensure smooth scrolling
+  // ViewBox coordinates
   const padding = 1000;
   const viewBoxLeft = -viewport.panX / viewport.zoom;
   const viewBoxTop = -viewport.panY / viewport.zoom;
@@ -91,22 +783,21 @@ export const GridOverlay: React.FC<GridOverlayProps> = React.memo(({
   const top = viewBoxTop - padding;
   const bottom = viewBoxBottom + padding;
 
-  // Calculate optimal ruler interval based on zoom
+  // Calculate optimal ruler interval
   const rulerInterval = calculateRulerInterval(spacing, viewport.zoom);
   
-  // Build ruler labels and tick marks
+  // Build ruler elements if enabled
   const rulerElements: React.ReactElement[] = [];
   
-  if (grid.showRulers) {
-    // Ruler strip dimensions in world coordinates
-    const rulerHeight = 20 / viewport.zoom; // Height/width of ruler strip (horizontal)
-    const rulerWidth = 35 / viewport.zoom; // Width of vertical ruler strip (wider for numbers)
+  if (grid.showRulers && (grid.type === 'square' || grid.type === 'dots')) {
+    const rulerHeight = 20 / viewport.zoom;
+    const rulerWidth = 35 / viewport.zoom;
     const fontSize = 10 / viewport.zoom;
-    const tickHeight = 4 / viewport.zoom; // Major tick height
-    const minorTickHeight = 2 / viewport.zoom; // Minor tick height
-    const labelOffset = 3 / viewport.zoom; // Space between tick and label
+    const tickHeight = 4 / viewport.zoom;
+    const minorTickHeight = 2 / viewport.zoom;
+    const labelOffset = 3 / viewport.zoom;
     
-    // Background for horizontal ruler (top)
+    // Ruler backgrounds
     rulerElements.push(
       <rect
         key="ruler-bg-h"
@@ -118,11 +809,7 @@ export const GridOverlay: React.FC<GridOverlayProps> = React.memo(({
         stroke="#d0d0d0"
         strokeWidth={0.5 / viewport.zoom}
         pointerEvents="none"
-      />
-    );
-    
-    // Background for vertical ruler (left)
-    rulerElements.push(
+      />,
       <rect
         key="ruler-bg-v"
         x={viewBoxLeft}
@@ -133,11 +820,7 @@ export const GridOverlay: React.FC<GridOverlayProps> = React.memo(({
         stroke="#d0d0d0"
         strokeWidth={0.5 / viewport.zoom}
         pointerEvents="none"
-      />
-    );
-    
-    // Corner piece (where horizontal and vertical rulers meet)
-    rulerElements.push(
+      />,
       <rect
         key="ruler-corner"
         x={viewBoxLeft}
@@ -151,39 +834,30 @@ export const GridOverlay: React.FC<GridOverlayProps> = React.memo(({
       />
     );
 
-    // Horizontal ruler (X-axis) - shows values along the top
+    // Horizontal ruler
     const startX = Math.floor(viewBoxLeft / rulerInterval) * rulerInterval;
     const endX = Math.ceil(viewBoxRight / rulerInterval) * rulerInterval;
     
     for (let x = startX; x <= endX; x += spacing) {
-      const screenX = x;
-      
-      // Only draw if within visible area (with some margin)
-      if (screenX < viewBoxLeft - spacing || screenX > viewBoxRight + spacing) continue;
+      if (x < viewBoxLeft - spacing || x > viewBoxRight + spacing) continue;
       
       const isMajorTick = Math.abs(x % rulerInterval) < spacing / 2;
       
       if (isMajorTick) {
-        // Major tick
         rulerElements.push(
           <line
             key={`h-tick-${x}`}
-            x1={screenX}
+            x1={x}
             y1={viewBoxTop + rulerHeight}
-            x2={screenX}
+            x2={x}
             y2={viewBoxTop + rulerHeight - tickHeight}
             stroke="#666"
             strokeWidth={0.8 / viewport.zoom}
             pointerEvents="none"
-          />
-        );
-        
-        // Label
-        const label = formatRulerLabel(x);
-        rulerElements.push(
+          />,
           <text
             key={`h-label-${x}`}
-            x={screenX}
+            x={x}
             y={viewBoxTop + rulerHeight - tickHeight - labelOffset}
             fontSize={fontSize}
             fill="#444"
@@ -193,17 +867,16 @@ export const GridOverlay: React.FC<GridOverlayProps> = React.memo(({
             pointerEvents="none"
             style={{ userSelect: 'none', fontFamily: 'system-ui, -apple-system, sans-serif' }}
           >
-            {label}
+            {formatRulerLabel(x)}
           </text>
         );
       } else if (rulerInterval / spacing >= 4) {
-        // Minor tick (only show if there's enough space between major ticks)
         rulerElements.push(
           <line
             key={`h-minor-${x}`}
-            x1={screenX}
+            x1={x}
             y1={viewBoxTop + rulerHeight}
-            x2={screenX}
+            x2={x}
             y2={viewBoxTop + rulerHeight - minorTickHeight}
             stroke="#999"
             strokeWidth={0.5 / viewport.zoom}
@@ -213,40 +886,31 @@ export const GridOverlay: React.FC<GridOverlayProps> = React.memo(({
       }
     }
 
-    // Vertical ruler (Y-axis) - shows values along the left
+    // Vertical ruler
     const startY = Math.floor(viewBoxTop / rulerInterval) * rulerInterval;
     const endY = Math.ceil(viewBoxBottom / rulerInterval) * rulerInterval;
     
     for (let y = startY; y <= endY; y += spacing) {
-      const screenY = y;
-      
-      // Only draw if within visible area (with some margin)
-      if (screenY < viewBoxTop - spacing || screenY > viewBoxBottom + spacing) continue;
+      if (y < viewBoxTop - spacing || y > viewBoxBottom + spacing) continue;
       
       const isMajorTick = Math.abs(y % rulerInterval) < spacing / 2;
       
       if (isMajorTick) {
-        // Major tick
         rulerElements.push(
           <line
             key={`v-tick-${y}`}
             x1={viewBoxLeft + rulerWidth}
-            y1={screenY}
+            y1={y}
             x2={viewBoxLeft + rulerWidth - tickHeight}
-            y2={screenY}
+            y2={y}
             stroke="#666"
             strokeWidth={0.8 / viewport.zoom}
             pointerEvents="none"
-          />
-        );
-        
-        // Label
-        const label = formatRulerLabel(y);
-        rulerElements.push(
+          />,
           <text
             key={`v-label-${y}`}
             x={viewBoxLeft + rulerWidth - tickHeight - labelOffset}
-            y={screenY}
+            y={y}
             fontSize={fontSize}
             fill="#444"
             fontWeight="500"
@@ -255,18 +919,17 @@ export const GridOverlay: React.FC<GridOverlayProps> = React.memo(({
             pointerEvents="none"
             style={{ userSelect: 'none', fontFamily: 'system-ui, -apple-system, sans-serif' }}
           >
-            {label}
+            {formatRulerLabel(y)}
           </text>
         );
       } else if (rulerInterval / spacing >= 4) {
-        // Minor tick (only show if there's enough space between major ticks)
         rulerElements.push(
           <line
             key={`v-minor-${y}`}
             x1={viewBoxLeft + rulerWidth}
-            y1={screenY}
+            y1={y}
             x2={viewBoxLeft + rulerWidth - minorTickHeight}
-            y2={screenY}
+            y2={y}
             stroke="#999"
             strokeWidth={0.5 / viewport.zoom}
             pointerEvents="none"
@@ -276,57 +939,60 @@ export const GridOverlay: React.FC<GridOverlayProps> = React.memo(({
     }
   }
 
-  // Build path data for grid lines
-  // Separate major lines (at ruler intervals) from minor lines
-  let minorPathData = '';
-  let majorPathData = '';
+  // Render grid based on type
+  let gridElement: React.ReactElement | null = null;
 
-  // Vertical lines
-  const startX = Math.floor(left / spacing) * spacing;
-  const endX = Math.ceil(right / spacing) * spacing;
-
-  for (let x = startX; x <= endX; x += spacing) {
-    const isMajor = Math.abs(x % rulerInterval) < spacing / 2;
-    if (isMajor) {
-      majorPathData += `M ${x} ${top} L ${x} ${bottom} `;
-    } else {
-      minorPathData += `M ${x} ${top} L ${x} ${bottom} `;
-    }
-  }
-
-  // Horizontal lines
-  const startY = Math.floor(top / spacing) * spacing;
-  const endY = Math.ceil(bottom / spacing) * spacing;
-
-  for (let y = startY; y <= endY; y += spacing) {
-    const isMajor = Math.abs(y % rulerInterval) < spacing / 2;
-    if (isMajor) {
-      majorPathData += `M ${left} ${y} L ${right} ${y} `;
-    } else {
-      minorPathData += `M ${left} ${y} L ${right} ${y} `;
-    }
+  switch (grid.type) {
+    case 'square':
+      gridElement = renderSquareGrid(spacing, left, right, top, bottom, rulerInterval, emphasizeEvery, opacity, color, viewport.zoom);
+      break;
+    
+    case 'dots':
+      gridElement = renderDotGrid(spacing, left, right, top, bottom, opacity, color, viewport.zoom);
+      break;
+    
+    case 'isometric':
+      gridElement = renderIsometricGrid(spacing, left, right, top, bottom, opacity, color, viewport.zoom);
+      break;
+    
+    case 'triangular':
+      gridElement = renderTriangularGrid(spacing, left, right, top, bottom, opacity, color, viewport.zoom);
+      break;
+    
+    case 'hexagonal':
+      gridElement = renderHexagonalGrid(spacing, left, right, top, bottom, grid.hexOrientation ?? 'pointy', opacity, color, viewport.zoom);
+      break;
+    
+    case 'polar':
+      gridElement = renderPolarGrid(spacing, left, right, top, bottom, grid.polarDivisions ?? 12, opacity, color, viewport.zoom);
+      break;
+    
+    case 'diagonal':
+      gridElement = renderDiagonalGrid(spacing, left, right, top, bottom, opacity, color, viewport.zoom);
+      break;
+    
+    case 'parametric':
+      if (grid.parametricWarp) {
+        const stepY = grid.parametricStepY ?? spacing;
+        gridElement = renderParametricGrid(
+          spacing, 
+          stepY, 
+          left, 
+          right, 
+          top, 
+          bottom, 
+          grid.parametricWarp, 
+          opacity, 
+          color, 
+          viewport.zoom
+        );
+      }
+      break;
   }
 
   return (
     <g>
-      {/* Minor grid lines (subtle) */}
-      <path
-        d={minorPathData}
-        stroke="#e8e8e8"
-        strokeWidth={0.5 / viewport.zoom}
-        pointerEvents="none"
-        fill="none"
-      />
-      {/* Major grid lines (more prominent) */}
-      <path
-        d={majorPathData}
-        stroke="#d0d0d0"
-        strokeWidth={1 / viewport.zoom}
-        pointerEvents="none"
-        fill="none"
-      />
-      
-      {/* Ruler elements (rendered last so they appear on top) */}
+      {gridElement}
       {rulerElements}
     </g>
   );
