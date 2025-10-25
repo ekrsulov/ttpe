@@ -6,8 +6,8 @@ import { SliderControl } from '../../components/ui/SliderControl';
 import { PaintBucket } from 'lucide-react';
 
 const GridFillPanel: React.FC = () => {
-  const gridFill = useCanvasStore(state => (state as any).gridFill);
-  const updateGridFillState = useCanvasStore(state => (state as any).updateGridFillState);
+  const gridFill = useCanvasStore(state => state.gridFill);
+  const updateGridFillState = useCanvasStore(state => state.updateGridFillState);
 
   if (!gridFill || !updateGridFillState) {
     return null;

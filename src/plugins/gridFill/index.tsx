@@ -7,6 +7,8 @@ import { GridFillPanel } from './GridFillPanel';
 import { fillGridCell } from './actions';
 import type { Point } from '../../types';
 
+/* eslint-disable react-refresh/only-export-components */
+
 type GridFillPluginApi = {
   fillGridCell: (point: Point) => string | null;
 };

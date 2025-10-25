@@ -24,7 +24,7 @@ export const gridPlugin: PluginDefinition<CanvasStore> = {
       id: 'grid-overlay',
       placement: 'background',
       render: ({ grid, viewport, canvasSize }) => (
-        <GridOverlay grid={grid ?? { enabled: false, snapEnabled: false, spacing: 20, showRulers: false }} viewport={viewport} canvasSize={canvasSize} />
+        <GridOverlay grid={grid ?? { enabled: false, type: 'square', spacing: 20, showRulers: false }} viewport={viewport} canvasSize={canvasSize} />
       ),
     },
   ],

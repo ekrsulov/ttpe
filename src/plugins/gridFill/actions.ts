@@ -528,7 +528,7 @@ function createPathFromVertices(vertices: Point[], getState: () => CanvasStore):
   const subPaths = subPathsData.map(sp => sp.commands);
   
   // Get fill color from Editor (pencil state) or use gridFill default
-  const pencilState = (state as any).pencil;
+  const pencilState = state.pencil;
   let fillColor = gridFill.fillColor; // Default blue
   let fillOpacity = gridFill.fillOpacity;
   
