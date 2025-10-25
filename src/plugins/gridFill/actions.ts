@@ -9,7 +9,31 @@ import { extractSubpaths } from '../../utils/pathParserUtils';
  */
 function getGridCellVertices(point: Point, gridType: GridType, spacing: number, state: CanvasStore): Point[] {
   const { grid } = state;
-  
+
+  const pointInTriangle = (p: Point, a: Point, b: Point, c: Point): boolean => {
+    const v0 = { x: c.x - a.x, y: c.y - a.y };
+    const v1 = { x: b.x - a.x, y: b.y - a.y };
+    const v2 = { x: p.x - a.x, y: p.y - a.y };
+
+    const dot00 = v0.x * v0.x + v0.y * v0.y;
+    const dot01 = v0.x * v1.x + v0.y * v1.y;
+    const dot02 = v0.x * v2.x + v0.y * v2.y;
+    const dot11 = v1.x * v1.x + v1.y * v1.y;
+    const dot12 = v1.x * v2.x + v1.y * v2.y;
+
+    const denom = dot00 * dot11 - dot01 * dot01;
+    if (Math.abs(denom) < 1e-9) {
+      return false;
+    }
+
+    const invDenom = 1 / denom;
+    const u = (dot11 * dot02 - dot01 * dot12) * invDenom;
+    const v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+
+    const epsilon = 1e-6;
+    return u >= -epsilon && v >= -epsilon && u + v <= 1 + epsilon;
+  };
+
   switch (gridType) {
     case 'square': {
       // Find the cell corners for square grid
@@ -37,100 +61,94 @@ function getGridCellVertices(point: Point, gridType: GridType, spacing: number, 
         { x: nearestX - halfSpace, y: nearestY + halfSpace },
       ];
     }
-    
+
     case 'isometric': {
-      // Isometric uses a skewed coordinate system
-      // The grid is made of rhombi that tile the plane
       const tan30 = Math.tan(Math.PI / 6);
-      const sin30 = Math.sin(Math.PI / 6);
       const cos30 = Math.cos(Math.PI / 6);
-      
-      // Rhombus side length in the grid
-      const side = spacing / cos30;
-      
-      // Transform point to isometric coordinates (u, v)
-      // where u is along vertical axis, v is along 60° axis
-      const u = point.x / spacing;
-      const v = (point.y - tan30 * point.x) / (side * sin30);
-      
-      // Find the rhombus cell
-      const iu = Math.floor(u);
-      const iv = Math.floor(v);
-      
-      // Get the 4 corners of the rhombus in world space
-      // Corner at (iu, iv)
-      const x0 = iu * spacing;
-      const y0 = iv * side * sin30 + tan30 * x0;
-      
-      // Corner at (iu+1, iv)  
-      const x1 = (iu + 1) * spacing;
-      const y1 = iv * side * sin30 + tan30 * x1;
-      
-      // Corner at (iu+1, iv+1)
-      const x2 = (iu + 1) * spacing;
-      const y2 = (iv + 1) * side * sin30 + tan30 * x2;
-      
-      // Corner at (iu, iv+1)
-      const x3 = iu * spacing;
-      const y3 = (iv + 1) * side * sin30 + tan30 * x3;
-      
+      const spacing60 = spacing * tan30 / cos30;
+
+      const verticalIndex = Math.floor(point.x / spacing);
+      const xLeft = verticalIndex * spacing;
+      const xRight = (verticalIndex + 1) * spacing;
+
+      const c60 = point.y - tan30 * point.x;
+      const index60 = Math.floor(c60 / spacing60);
+      const c60Low = index60 * spacing60;
+      const c60High = (index60 + 1) * spacing60;
+
+      const c120 = point.y + tan30 * point.x;
+      const index120 = Math.floor(c120 / spacing60);
+      const c120Low = index120 * spacing60;
+      const c120High = (index120 + 1) * spacing60;
+
+      const intersection60 = (x: number, constant: number) => tan30 * x + constant;
+      const intersection120 = (x: number, constant: number) => -tan30 * x + constant;
+
       return [
-        { x: x0, y: y0 },
-        { x: x1, y: y1 },
-        { x: x2, y: y2 },
-        { x: x3, y: y3 },
+        { x: xLeft, y: intersection120(xLeft, c120Low) },
+        { x: xLeft, y: intersection60(xLeft, c60High) },
+        { x: xRight, y: intersection120(xRight, c120High) },
+        { x: xRight, y: intersection60(xRight, c60Low) },
       ];
     }
-    
+
     case 'triangular': {
-      // Triangular grid: each row alternates between up and down triangles
       const height = spacing * Math.sqrt(3) / 2;
-      
-      // Find which row
+      const tan60 = Math.sqrt(3);
+      const spacing60 = spacing * tan60;
+
       const row = Math.floor(point.y / height);
-      const localY = point.y - row * height;
-      
-      // Find which column (each triangle has width = spacing)
-      const col = Math.floor(point.x / spacing);
-      const localX = point.x - col * spacing;
-      
-      // Determine if we're in an upward or downward triangle
-      // based on the local position within the cell
-      const slope = height / (spacing / 2);
-      
-      // Check if point is above or below the diagonal lines
-      const leftLine = slope * localX; // y = slope * x (rises from left)
-      const rightLine = height - slope * (localX - spacing / 2); // y = height - slope * (x - spacing/2) (falls from right)
-      
-      const isUpward = localY < Math.min(leftLine, rightLine);
-      
-      if (isUpward) {
-        // Upward pointing triangle
-        const yTop = row * height;
-        const yBottom = (row + 1) * height;
-        const xLeft = col * spacing;
-        const xRight = (col + 1) * spacing;
-        const xPeak = (col + 0.5) * spacing;
-        
-        return [
-          { x: xLeft, y: yBottom },
-          { x: xRight, y: yBottom },
-          { x: xPeak, y: yTop },
-        ];
-      } else {
-        // Downward pointing triangle
-        const yTop = row * height;
-        const yBottom = (row + 1) * height;
-        const xLeft = col * spacing;
-        const xRight = (col + 1) * spacing;
-        const xPeak = (col + 0.5) * spacing;
-        
-        return [
-          { x: xLeft, y: yTop },
-          { x: xRight, y: yTop },
-          { x: xPeak, y: yBottom },
-        ];
+      const yLow = row * height;
+      const yHigh = (row + 1) * height;
+
+      const c60 = point.y - tan60 * point.x;
+      const index60 = Math.floor(c60 / spacing60);
+      const c60Low = index60 * spacing60;
+      const c60High = (index60 + 1) * spacing60;
+
+      const c120 = point.y + tan60 * point.x;
+      const index120 = Math.floor(c120 / spacing60);
+      const c120Low = index120 * spacing60;
+      const c120High = (index120 + 1) * spacing60;
+
+      const intersect60 = (yValue: number, constant: number) => ({
+        x: (yValue - constant) / tan60,
+        y: yValue,
+      });
+
+      const intersect120 = (yValue: number, constant: number) => ({
+        x: (constant - yValue) / tan60,
+        y: yValue,
+      });
+
+      const intersectSlopes = (constantA: number, constantB: number) => {
+        const x = (constantB - constantA) / (2 * tan60);
+        const y = tan60 * x + constantA;
+        return { x, y };
+      };
+
+      const upward = [
+        intersect60(yLow, c60High),
+        intersect120(yLow, c120High),
+        intersectSlopes(c60High, c120High),
+      ];
+
+      if (pointInTriangle(point, upward[0], upward[1], upward[2])) {
+        return upward;
       }
+
+      const downward = [
+        intersect60(yHigh, c60Low),
+        intersect120(yHigh, c120Low),
+        intersectSlopes(c60Low, c120Low),
+      ];
+
+      if (pointInTriangle(point, downward[0], downward[1], downward[2])) {
+        return downward;
+      }
+
+      // Fallback to upward triangle if numerical issues prevent containment detection
+      return upward;
     }
     
     case 'hexagonal': {
@@ -325,24 +343,27 @@ function getGridCellVertices(point: Point, gridType: GridType, spacing: number, 
     case 'parametric': {
       // For parametric grids, find the base cell and apply warp transformation
       // We need to use the inverse warp to find which cell we're in
+      const stepX = spacing;
+      const stepY = grid?.parametricStepY ?? spacing;
+
       if (!grid?.parametricWarp) {
-        // No warp, use base square
-        const cellX = Math.floor(point.x / spacing) * spacing;
-        const cellY = Math.floor(point.y / spacing) * spacing;
+        // No warp, use base rectangle respecting custom stepY
+        const cellX = Math.floor(point.x / stepX) * stepX;
+        const cellY = Math.floor(point.y / stepY) * stepY;
         return [
           { x: cellX, y: cellY },
-          { x: cellX + spacing, y: cellY },
-          { x: cellX + spacing, y: cellY + spacing },
-          { x: cellX, y: cellY + spacing },
+          { x: cellX + stepX, y: cellY },
+          { x: cellX + stepX, y: cellY + stepY },
+          { x: cellX, y: cellY + stepY },
         ];
       }
-      
+
       const warp = grid.parametricWarp;
-      
+
       // To find which cell contains the point, we need to search nearby cells
       // Start with the approximate cell based on point coordinates
-      const approxCol = Math.floor(point.x / spacing);
-      const approxRow = Math.floor(point.y / spacing);
+      const approxCol = Math.floor(point.x / stepX);
+      const approxRow = Math.floor(point.y / stepY);
       
       // Check this cell and surrounding cells (3x3 grid)
       let bestCol = approxCol;
@@ -353,17 +374,17 @@ function getGridCellVertices(point: Point, gridType: GridType, spacing: number, 
         for (let dc = -1; dc <= 1; dc++) {
           const row = approxRow + dr;
           const col = approxCol + dc;
-          const baseX = col * spacing;
-          const baseY = row * spacing;
-          
+          const baseX = col * stepX;
+          const baseY = row * stepY;
+
           // Calculate center of this cell after warp
           const centerDisp = calculateDisplacement(
-            baseX + spacing / 2,
-            baseY + spacing / 2,
+            baseX + stepX / 2,
+            baseY + stepY / 2,
             warp
           );
-          const warpedCenterX = baseX + spacing / 2 + centerDisp.dx;
-          const warpedCenterY = baseY + spacing / 2 + centerDisp.dy;
+          const warpedCenterX = baseX + stepX / 2 + centerDisp.dx;
+          const warpedCenterY = baseY + stepY / 2 + centerDisp.dy;
           
           const dx = point.x - warpedCenterX;
           const dy = point.y - warpedCenterY;
@@ -378,16 +399,16 @@ function getGridCellVertices(point: Point, gridType: GridType, spacing: number, 
       }
       
       // Now create the warped cell vertices
-      const cellX = bestCol * spacing;
-      const cellY = bestRow * spacing;
-      
+      const cellX = bestCol * stepX;
+      const cellY = bestRow * stepY;
+
       const baseVertices = [
         { x: cellX, y: cellY },
-        { x: cellX + spacing, y: cellY },
-        { x: cellX + spacing, y: cellY + spacing },
-        { x: cellX, y: cellY + spacing },
+        { x: cellX + stepX, y: cellY },
+        { x: cellX + stepX, y: cellY + stepY },
+        { x: cellX, y: cellY + stepY },
       ];
-      
+
       // Apply warp to vertices
       return baseVertices.map(v => {
         const displacement = calculateDisplacement(v.x, v.y, warp);
@@ -398,86 +419,81 @@ function getGridCellVertices(point: Point, gridType: GridType, spacing: number, 
       });
     }
     
-    default:
+    default: {
       // Fallback to square
       const cellX = Math.floor(point.x / spacing) * spacing;
       const cellY = Math.floor(point.y / spacing) * spacing;
-      
+
       return [
         { x: cellX, y: cellY },
         { x: cellX + spacing, y: cellY },
         { x: cellX + spacing, y: cellY + spacing },
         { x: cellX, y: cellY + spacing },
       ];
+    }
   }
 }
 
 /**
  * Calculate displacement for parametric grid (copied from grid slice)
  */
-function calculateDisplacement(x: number, y: number, warp: NonNullable<CanvasStore['grid']>['parametricWarp']): { dx: number; dy: number } {
+function calculateDisplacement(
+  x: number,
+  y: number,
+  warp: NonNullable<CanvasStore['grid']>['parametricWarp']
+): { dx: number; dy: number } {
   if (!warp) return { dx: 0, dy: 0 };
 
-  const { kind, ampX, ampY } = warp;
+  switch (warp.kind) {
+    case 'sine2d': {
+      const phaseX = warp.phaseX ?? 0;
+      const phaseY = warp.phaseY ?? 0;
+      const dx = warp.ampX * Math.sin((2 * Math.PI * warp.freqX * x) / 1024 + phaseX) *
+                 Math.cos((2 * Math.PI * warp.freqY * y) / 1024 + phaseY);
+      const dy = warp.ampY * Math.cos((2 * Math.PI * warp.freqX * x) / 1024 + phaseX) *
+                 Math.sin((2 * Math.PI * warp.freqY * y) / 1024 + phaseY);
+      return { dx, dy };
+    }
 
-  if (kind === 'sine2d') {
-    const { freqX, freqY, phaseX = 0, phaseY = 0 } = warp;
-    const dx = ampX * Math.sin(2 * Math.PI * freqX * x / 1024 + phaseX) * Math.cos(2 * Math.PI * freqY * y / 1024);
-    const dy = ampY * Math.cos(2 * Math.PI * freqX * x / 1024) * Math.sin(2 * Math.PI * freqY * y / 1024 + phaseY);
-    return { dx, dy };
-  }
+    case 'radial': {
+      const cx = warp.centerX ?? 0;
+      const cy = warp.centerY ?? 0;
+      const dx = x - cx;
+      const dy = y - cy;
+      const r = Math.sqrt(dx * dx + dy * dy);
+      const angle = Math.atan2(dy, dx);
 
-  if (kind === 'radial') {
-    const { centerX = 0, centerY = 0, swirlTurns = 0 } = warp;
-    const rx = x - centerX;
-    const ry = y - centerY;
-    const r = Math.sqrt(rx * rx + ry * ry);
-    const maxR = 512;
-    const t = Math.max(0, Math.min(1, r / maxR));
-    const hann = 0.5 * (1 - Math.cos(Math.PI * t));
-    const amp = Math.sqrt(ampX * ampX + ampY * ampY);
-    const radialDisp = amp * hann;
+      const swirlTurns = warp.swirlTurns ?? 0;
+      const maxR = 500;
+      const swirlAngle = angle + (2 * Math.PI * swirlTurns * (r / maxR));
 
-    if (swirlTurns !== 0 && r > 0.01) {
-      const theta = Math.atan2(ry, rx);
-      const swirlAngle = 2 * Math.PI * swirlTurns * (1 - t);
-      const newTheta = theta + swirlAngle;
-      const newRx = r * Math.cos(newTheta);
-      const newRy = r * Math.sin(newTheta);
+      const windowFactor = 0.5 * (1 - Math.cos(Math.PI * Math.min(r / maxR, 1)));
+      const magnitude = windowFactor * warp.ampX;
+
       return {
-        dx: newRx - rx + radialDisp * (rx / r),
-        dy: newRy - ry + radialDisp * (ry / r),
+        dx: magnitude * Math.cos(swirlAngle),
+        dy: magnitude * Math.sin(swirlAngle),
       };
     }
 
-    return r > 0.01 ? { dx: radialDisp * (rx / r), dy: radialDisp * (ry / r) } : { dx: 0, dy: 0 };
-  }
+    case 'perlin2d': {
+      const seed = warp.seed ?? 0;
+      const s1 = Math.sin(x * 0.01 + seed) * Math.cos(y * 0.01 + seed);
+      const s2 = Math.sin(x * 0.02 + seed * 1.3) * Math.cos(y * 0.015 + seed * 1.7);
+      const s3 = Math.sin(x * 0.007 + seed * 2.1) * Math.cos(y * 0.009 + seed * 2.3);
 
-  if (kind === 'perlin2d') {
-    const { freqX, freqY, seed = 0 } = warp;
-    const octaves = 3;
-    let dx = 0;
-    let dy = 0;
-    let amplitude = 1.0;
-    let frequency = 1.0;
+      const noiseX = (s1 + 0.5 * s2 + 0.25 * s3) / 1.75;
+      const noiseY = (s2 + 0.5 * s3 + 0.25 * s1) / 1.75;
 
-    for (let oct = 0; oct < octaves; oct++) {
-      const fx = freqX * frequency;
-      const fy = freqY * frequency;
-      const offsetX = oct * 100 + seed;
-      const offsetY = oct * 200 + seed;
-
-      dx += amplitude * Math.sin(2 * Math.PI * fx * (x + offsetX) / 1024) * Math.cos(2 * Math.PI * fy * (y + offsetY) / 1024);
-      dy += amplitude * Math.cos(2 * Math.PI * fx * (x + offsetX) / 1024) * Math.sin(2 * Math.PI * fy * (y + offsetY) / 1024);
-
-      amplitude *= 0.5;
-      frequency *= 2.0;
+      return {
+        dx: warp.ampX * noiseX * warp.freqX / 3,
+        dy: warp.ampY * noiseY * warp.freqY / 3,
+      };
     }
 
-    return { dx: ampX * dx, dy: ampY * dy };
+    default:
+      return { dx: 0, dy: 0 };
   }
-
-  return { dx: 0, dy: 0 };
 }
 
 /**
