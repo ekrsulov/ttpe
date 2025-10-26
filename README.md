@@ -30,6 +30,7 @@ All plugin definitions are exported from `src/plugins/index.ts` as `CORE_PLUGINS
 * **Pencil / Freehand**: starts or reuses paths with the current stroke attributes; filters points by a minimum distance to avoid noise and marks paths as "freehand."
 * **Text to Curves**: converts text (font, size, weight, style) into SVG commands via a WASM pipeline (e.g., potrace) and applies active styles.
 * **Parametric Shapes**: generates squares, rectangles, circles (Bézier), and triangles from two points, registering them as editable paths with current styles.
+* **Grid Fill**: floods individual grid cells (square, isometric, triangular, hex, polar, diagonal, warped parametric, etc.) with shapes at the current fill color/opacity for rapid tessellation work.
 
 ## Selection, Transforms & Organization
 
@@ -38,6 +39,7 @@ All plugin definitions are exported from `src/plugins/index.ts` as `CORE_PLUGINS
 * **Order (z-index)**: bring to front, bring forward, send backward, send to back—preserving relative order.
 * **Align & Distribute**: computes bounding boxes (consistent with zoom and stroke) to align (left/center/right, top/middle/bottom) and distribute evenly on X/Y.
 * **Guides & Grid**: smart guides (edges/centers, repeated distances, sticky mode with zoom-scaled thresholds) and a configurable grid with optional snapping.
+* **Groups, Visibility & Locking**: nest selections into named groups, reparent or ungroup while preserving order, and toggle visibility/locking for entire groups or individual elements directly from the layer tree.
 
 ## Subpaths & Advanced Editing
 
@@ -53,6 +55,14 @@ The viewport slice manages zoom (with limits, re-centering around the focus poin
 **Mobile Gestures:**
 * **Pinch-to-Zoom**: Use two fingers to pinch or spread for zooming in/out
 * **Two-Finger Pan**: Drag with two fingers to pan the canvas viewport
+
+**Desktop Navigation Extras:**
+* **Interactive Minimap**: optional HUD overlay that previews the whole drawing, allows dragging the viewport rectangle, and supports double-click-to-focus on shapes.
+
+## Styling & Sampling
+
+* **Style Eyedropper**: copy stroke/fill attributes from a selected path, apply them to other elements, and deactivate automatically after use.
+* **Keyboard Precision**: fine-tune arrow-key nudging via the settings panel (0–4 decimals) and toggle debug aids (render badges, log level, caller info) while optionally showing the minimap.
 
 ## File Management & Export
 
