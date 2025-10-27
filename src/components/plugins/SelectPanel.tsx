@@ -36,7 +36,6 @@ const SelectPanelComponent: React.FC = () => {
   const selectedSubpaths = useCanvasStore(state => state.selectedSubpaths);
   const addElement = useCanvasStore(state => state.addElement);
   const isElementHidden = useCanvasStore(state => state.isElementHidden);
-  const isElementLocked = useCanvasStore(state => state.isElementLocked);
   const hiddenElementIds = useCanvasStore(state => state.hiddenElementIds);
   const lockedElementIds = useCanvasStore(state => state.lockedElementIds);
 
@@ -277,7 +276,6 @@ const SelectPanelComponent: React.FC = () => {
               {items.map((item) => {
                 const elementId = item.element.id;
                 const elementHidden = isElementHidden(elementId);
-                const elementLocked = isElementLocked(elementId);
                 const isSelectedElement = selectedIdSet.has(elementId);
                 const directHidden = hiddenIdSet.has(elementId);
                 const directLocked = lockedIdSet.has(elementId);
@@ -292,7 +290,6 @@ const SelectPanelComponent: React.FC = () => {
                     item={item}
                     isSelected={isSelectedElement}
                     isHidden={elementHidden}
-                    isLocked={elementLocked}
                     directHidden={directHidden}
                     directLocked={directLocked}
                     canGroup={canGroup}

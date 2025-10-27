@@ -2,19 +2,14 @@ import type { StateCreator } from 'zustand';
 import { extractEditablePoints, updateCommands, normalizePathCommands, extractSubpaths, simplifyPoints, adjustControlPointForAlignment, getControlPointAlignmentInfo, getCommandStartPoint } from '../../utils/pathParserUtils';
 import { performPathSimplifyPaperJS, performPathRound } from '../../utils/pathOperationsUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../utils';
-import type { CanvasElement, PathData, Point, Command, SubPath } from '../../types';
+import type { CanvasElement, PathData, Point, Command, SubPath, SelectedCommand, PointUpdate } from '../../types';
 import type { CanvasStore } from '../../store/canvasStore';
-import { buildElementUpdatesMap } from '../../utils/elementUpdateUtils';
 
 // Type for the full store state (needed for get() calls)
 type FullCanvasState = CanvasStore;
 
 // ===== HELPER TYPES =====
-type SelectedCommand = {
-  elementId: string;
-  commandIndex: number;
-  pointIndex: number;
-};
+// Note: SelectedCommand and PointUpdate now come from centralized types/selection.ts
 
 type PathElementContext = {
   element: CanvasElement;
@@ -28,14 +23,6 @@ type PathElementContext = {
     isControl: boolean;
     anchor?: { x: number; y: number };
   }>;
-};
-
-type PointUpdate = {
-  commandIndex: number;
-  pointIndex: number;
-  x: number;
-  y: number;
-  isControl: boolean;
 };
 
 type AlignmentStrategy = (points: PathElementContext['editablePoints']) => number;

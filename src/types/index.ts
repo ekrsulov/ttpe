@@ -133,3 +133,6 @@ export interface CurveState {
   previewHandle?: Point;
   isClosingPath?: boolean;
 }
+
+// Re-export selection types for convenience
+export type { SelectedCommand, PointUpdate, SelectedSubpath } from './selection';

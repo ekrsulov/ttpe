@@ -18,7 +18,6 @@ interface SelectPanelItemProps {
   item: SelectPanelItemData;
   isSelected: boolean;
   isHidden: boolean;
-  isLocked: boolean;
   directHidden: boolean;
   directLocked: boolean;
   canGroup: boolean;
@@ -30,7 +29,6 @@ const SelectPanelItemComponent: React.FC<SelectPanelItemProps> = ({
   item,
   isSelected,
   isHidden,
-  isLocked,
   directHidden,
   directLocked,
   canGroup,
@@ -166,7 +164,6 @@ const arePropsEqual = (prevProps: SelectPanelItemProps, nextProps: SelectPanelIt
   if (
     prevProps.isSelected !== nextProps.isSelected ||
     prevProps.isHidden !== nextProps.isHidden ||
-    prevProps.isLocked !== nextProps.isLocked ||
     prevProps.directHidden !== nextProps.directHidden ||
     prevProps.directLocked !== nextProps.directLocked ||
     prevProps.canGroup !== nextProps.canGroup

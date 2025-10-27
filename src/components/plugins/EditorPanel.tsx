@@ -18,6 +18,7 @@ import {
 } from '@chakra-ui/react';
 import { SliderControl } from '../ui/SliderControl';
 import { PresetButton } from '../ui/FillAndStrokePresetButton';
+import { formatPercent } from '../../utils/coreHelpers';
 import { LinecapSelector } from '../ui/LinecapSelector';
 import { LinejoinSelector } from '../ui/LinejoinSelector';
 import { FillRuleSelector } from '../ui/FillRuleSelector';
@@ -242,7 +243,7 @@ export const EditorPanel: React.FC = () => {
                     max={1}
                     step={0.1}
                     onChange={handleFillOpacityChange}
-                    formatter={(value) => `${Math.round(value * 100)}%`}
+                    formatter={(value) => formatPercent(value)}
                     title="Fill Opacity"
                     minWidth="50px"
                     valueWidth="40px"
@@ -294,7 +295,7 @@ export const EditorPanel: React.FC = () => {
                     max={1}
                     step={0.1}
                     onChange={handleOpacityChange}
-                    formatter={(value) => `${Math.round(value * 100)}%`}
+                    formatter={(value) => formatPercent(value)}
                     title="Stroke Opacity"
                     minWidth="50px"
                     valueWidth="40px"

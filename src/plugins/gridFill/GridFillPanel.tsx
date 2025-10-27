@@ -4,6 +4,7 @@ import { useCanvasStore } from '../../store/canvasStore';
 import { Panel } from '../../components/ui/Panel';
 import { SliderControl } from '../../components/ui/SliderControl';
 import { PaintBucket } from 'lucide-react';
+import { formatPercent } from '../../utils/coreHelpers';
 
 const GridFillPanel: React.FC = () => {
   const gridFill = useCanvasStore(state => state.gridFill);
@@ -32,7 +33,7 @@ const GridFillPanel: React.FC = () => {
           max={1}
           step={0.1}
           onChange={handleFillOpacityChange}
-          formatter={(value) => `${Math.round(value * 100)}%`}
+          formatter={(value) => formatPercent(value)}
           title="Fill opacity"
         />
         

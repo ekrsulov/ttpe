@@ -7,6 +7,7 @@ import { PanelToggleGroup } from '../../components/ui/PanelToggleGroup';
 import { SliderControl } from '../../components/ui/SliderControl';
 import { usePanelToggleHandlers } from '../../hooks/usePanelToggleHandlers';
 import type { GridType, GridPluginSlice } from './slice';
+import { formatPercent } from '../../utils/coreHelpers';
 
 const GRID_TYPE_OPTIONS: Array<{ value: GridType; label: string }> = [
   { value: 'square', label: 'Square' },
@@ -221,7 +222,7 @@ const GridPanelComponent: React.FC = () => {
           max={1}
           step={0.1}
           onChange={handleOpacityChange}
-          formatter={(value) => `${Math.round(value * 100)}%`}
+          formatter={(value) => formatPercent(value)}
           title="Grid opacity"
         />
 

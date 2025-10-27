@@ -11,6 +11,7 @@ import { Route, SplinePointer, SquareRoundCorner, Plus } from 'lucide-react';
 import { SliderControl } from '../../components/ui/SliderControl';
 import { SectionHeader } from '../../components/ui/SectionHeader';
 import { RenderCountBadgeWrapper } from '../../components/ui/RenderCountBadgeWrapper';
+import { formatPercent } from '../../utils/coreHelpers';
 
 interface EditPanelProps {
   activePlugin: string | null;
@@ -159,7 +160,7 @@ export const EditPanel: React.FC<EditPanelProps> = ({
           max={1}
           step={0.01}
           onChange={(value) => updateSmoothBrush({ strength: value })}
-          formatter={(value) => `${(value * 100).toFixed(0)}%`}
+          formatter={(value) => formatPercent(value)}
           labelWidth="40px"
           valueWidth="35px"
         />
