@@ -7,7 +7,7 @@ import { MinimapPanel } from './plugins/minimap/MinimapPanel';
 import { useCanvasStore } from './store/canvasStore';
 import './App.css';
 import type { CSSProperties } from 'react';
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import type { CanvasElement } from './types';
 import { CurvesControllerProvider } from './plugins/curves/CurvesControllerContext';
 
@@ -60,6 +60,22 @@ function App() {
     }
   }, [sidebarOpenHandler]);
 
+  // Prevent iOS back swipe from left edge
+  useEffect(() => {
+    const handleTouchStart = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      if (touch && touch.clientX < 20) { // 20px from left edge
+        e.preventDefault();
+      }
+    };
+
+    document.addEventListener('touchstart', handleTouchStart, { passive: false });
+
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+    };
+  }, []);
+
   return (
     <CurvesControllerProvider>
       <div 
@@ -87,6 +103,19 @@ function App() {
         >
           <Canvas />
         </div>
+        {/* Invisible overlay to prevent iOS back swipe from left edge */}
+        <div
+          style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            width: '20px',
+            height: '100%',
+            zIndex: 9999,
+            touchAction: 'none',
+            backgroundColor: 'transparent',
+          }}
+        />
         <Sidebar 
           onWidthChange={handleSidebarWidthChange}
           onPinnedChange={handleSidebarPinnedChange}
