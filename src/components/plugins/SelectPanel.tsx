@@ -86,7 +86,12 @@ const SelectPanelComponent: React.FC = () => {
 
   const [panelHeight, setPanelHeight] = usePersistentState('select-panel-height', DEFAULT_PANEL_HEIGHT);
   
-  const { isDragging: isResizing, handleMouseDown: handleResizeStart, handleDoubleClick: handleResetHeight } = useDragResize({
+  const { 
+    isDragging: isResizing, 
+    handleMouseDown: handleResizeStart, 
+    handleTouchStart: handleResizeTouchStart,
+    handleDoubleClick: handleResetHeight 
+  } = useDragResize({
     onResize: setPanelHeight,
     onReset: () => setPanelHeight(DEFAULT_PANEL_HEIGHT),
     minValue: MIN_PANEL_HEIGHT,
@@ -241,7 +246,8 @@ const SelectPanelComponent: React.FC = () => {
       <Box
         height="6px"
         cursor="ns-resize"
-        onPointerDown={handleResizeStart}
+        onMouseDown={handleResizeStart}
+        onTouchStart={handleResizeTouchStart}
         onDoubleClick={handleResetHeight}
         bg={isResizing ? 'blue.400' : 'gray.200'}
         borderRadius="full"
