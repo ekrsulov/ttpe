@@ -154,7 +154,7 @@ export const TransformationPanel: React.FC = () => {
                       transform="translateY(-50%)"
                       w="40px"
                       h="1px"
-                      bg={maintainAspectRatio ? 'gray.600' : 'gray.300'}
+                      bg={maintainAspectRatio ? 'gray.500' : 'gray.300'}
                       transition="background 0.2s"
                     />
                   </HStack>
@@ -178,7 +178,7 @@ export const TransformationPanel: React.FC = () => {
                       transform="translateY(-50%)"
                       w="40px"
                       h="1px"
-                      bg={maintainAspectRatio ? 'gray.600' : 'gray.300'}
+                      bg={maintainAspectRatio ? 'gray.500' : 'gray.300'}
                       transition="background 0.2s"
                     />
                   </HStack>
@@ -193,7 +193,7 @@ export const TransformationPanel: React.FC = () => {
                     top="3"
                     bottom="3"
                     w="1px" 
-                    bg={maintainAspectRatio ? 'gray.600' : 'gray.300'}
+                    bg={maintainAspectRatio ? 'gray.500' : 'gray.300'}
                     transition="background 0.2s"
                   />
                   
@@ -208,12 +208,12 @@ export const TransformationPanel: React.FC = () => {
                       p={0.5}
                       borderRadius="3px"
                       bg="white"
-                      color={maintainAspectRatio ? 'gray.600' : 'gray.400'}
+                      color={maintainAspectRatio ? 'gray.500' : 'gray.400'}
                       border="1px solid"
-                      borderColor={maintainAspectRatio ? 'gray.600' : 'gray.300'}
+                      borderColor={maintainAspectRatio ? 'gray.500' : 'gray.300'}
                       _hover={{ 
                         bg: 'rgb(247, 250, 252)',
-                        borderColor: maintainAspectRatio ? 'gray.700' : 'gray.400'
+                        borderColor: maintainAspectRatio ? 'gray.600' : 'gray.400'
                       }}
                       transition="all 0.2s"
                       display="flex"
@@ -224,7 +224,7 @@ export const TransformationPanel: React.FC = () => {
                       position="relative"
                       zIndex={1}
                     >
-                      {maintainAspectRatio ? <Lock size={11} strokeWidth={3} /> : <LockOpen size={11} strokeWidth={3} />}
+                      {maintainAspectRatio ? <Lock size={14} strokeWidth={2} /> : <LockOpen size={14} strokeWidth={2} />}
                     </Box>
                   </Tooltip>
                 </Box>
