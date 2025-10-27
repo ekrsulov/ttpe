@@ -13,7 +13,6 @@ interface GridOverlayProps {
     color?: string;
     emphasizeEvery?: number;
     parametricStepY?: number;
-    parametricRotation?: number;
     parametricWarp?: WarpParams;
   };
   viewport: {

@@ -5,7 +5,7 @@
 
 import type { CanvasElement, PathData, PathElement, GroupElement } from '../types';
 import { commandsToString } from './path';
-import { measurePath } from './measurementUtils';
+import { accumulateBounds } from './measurementUtils';
 
 export interface ExportOptions {
   selectedOnly: boolean;
@@ -199,20 +199,26 @@ export function serializePathsForExport(
     return null;
   }
 
-  // Calculate combined bounds
-  let minX = Infinity;
-  let minY = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
-
-  pathElements.forEach(pathElement => {
+  // Calculate combined bounds using centralized logic
+  // Extract all command sets for accumulation
+  const commandsList = pathElements.map(pathElement => {
     const pathData = pathElement.data as PathData;
-    const bounds = measurePath(pathData.subPaths, pathData.strokeWidth, 1);
-    minX = Math.min(minX, bounds.minX);
-    minY = Math.min(minY, bounds.minY);
-    maxX = Math.max(maxX, bounds.maxX);
-    maxY = Math.max(maxY, bounds.maxY);
+    return pathData.subPaths.flat();
   });
+
+  // Use the first path's stroke width as reference (they should be consistent for export)
+  const referenceStrokeWidth = pathElements.length > 0 
+    ? ((pathElements[0].data as PathData).strokeWidth || 0) 
+    : 0;
+
+  const bounds = accumulateBounds(commandsList, referenceStrokeWidth, 1);
+
+  if (!bounds) {
+    console.warn('Could not calculate bounds for export');
+    return null;
+  }
+
+  let { minX, minY, maxX, maxY } = bounds;
 
   // Apply padding
   minX -= padding;

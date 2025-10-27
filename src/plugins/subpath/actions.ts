@@ -5,30 +5,12 @@
  * coupled to the canvas store.
  */
 
-import type { PathData, CanvasElement } from '../../types';
+import type { PathData } from '../../types';
 import type { StoreApi } from 'zustand';
 import type { CanvasStore } from '../../store/types';
 import type { SubpathPluginSlice } from './slice';
 import { reverseSubPath } from '../../utils/path';
-
-/**
- * Helper to get selected subpath elements
- */
-function getSelectedSubpathElements(
-  elements: CanvasElement[],
-  selectedSubpaths: SubpathPluginSlice['selectedSubpaths']
-): Array<{ element: CanvasElement; subpathIndex: number }> {
-  const result: Array<{ element: CanvasElement; subpathIndex: number }> = [];
-  
-  for (const { elementId, subpathIndex } of selectedSubpaths) {
-    const element = elements.find((el) => el.id === elementId);
-    if (element && element.type === 'path') {
-      result.push({ element, subpathIndex });
-    }
-  }
-  
-  return result;
-}
+import { getSelectedSubpathElements } from '../../store/utils/pluginSliceHelpers';
 
 /**
  * Split subpaths into separate path elements

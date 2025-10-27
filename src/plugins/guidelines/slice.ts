@@ -1,6 +1,5 @@
 import type { StateCreator } from 'zustand';
 import type { PathData } from '../../types';
-import { measurePath } from '../../utils/measurementUtils';
 import { rangesOverlap, calculateElementBoundsMap } from '../../utils/guidelinesHelpers';
 
 export interface GuidelineMatch {
@@ -117,20 +116,17 @@ export const createGuidelinesPluginSlice: StateCreator<GuidelinesPluginSlice, []
         priority: number; // 1 = center, 2 = edge
       }> = [];
 
-      // Check against all other elements
-      elements.forEach((element) => {
-        // Skip the element being moved and non-path elements
-        if (element.id === elementId || element.type !== 'path') {
-          return;
-        }
+      // Use centralized bounds calculation with caching
+      const boundsMap = calculateElementBoundsMap(
+        elements,
+        [elementId], // exclude current element
+        viewport.zoom,
+        { includeStroke: true }
+      );
 
-        const pathData = element.data as PathData;
-        
-        // Calculate bounds for this element using measurePath
-        const bounds = measurePath(pathData.subPaths, pathData.strokeWidth, viewport.zoom);
-
-        const centerX = (bounds.minX + bounds.maxX) / 2;
-        const centerY = (bounds.minY + bounds.maxY) / 2;
+      // Check against all other elements using cached bounds
+      boundsMap.forEach((boundsInfo) => {
+        const { id: refElementId, bounds, centerX, centerY } = boundsInfo;
 
         // === HORIZONTAL ALIGNMENTS ===
         
@@ -140,10 +136,10 @@ export const createGuidelinesPluginSlice: StateCreator<GuidelinesPluginSlice, []
             m => m.match.type === 'centerX' && Math.abs(m.match.position - centerX) < threshold
           );
           if (existing) {
-            existing.match.elementIds.push(element.id);
+            existing.match.elementIds.push(refElementId);
           } else {
             potentialMatches.push({
-              match: { type: 'centerX', position: centerX, elementIds: [element.id] },
+              match: { type: 'centerX', position: centerX, elementIds: [refElementId] },
               priority: 1
             });
           }
@@ -155,10 +151,10 @@ export const createGuidelinesPluginSlice: StateCreator<GuidelinesPluginSlice, []
             m => m.match.type === 'left' && Math.abs(m.match.position - bounds.minX) < threshold
           );
           if (existing) {
-            existing.match.elementIds.push(element.id);
+            existing.match.elementIds.push(refElementId);
           } else {
             potentialMatches.push({
-              match: { type: 'left', position: bounds.minX, elementIds: [element.id] },
+              match: { type: 'left', position: bounds.minX, elementIds: [refElementId] },
               priority: 2
             });
           }
@@ -170,10 +166,10 @@ export const createGuidelinesPluginSlice: StateCreator<GuidelinesPluginSlice, []
             m => m.match.type === 'left' && Math.abs(m.match.position - bounds.maxX) < threshold
           );
           if (existing) {
-            existing.match.elementIds.push(element.id);
+            existing.match.elementIds.push(refElementId);
           } else {
             potentialMatches.push({
-              match: { type: 'left', position: bounds.maxX, elementIds: [element.id] },
+              match: { type: 'left', position: bounds.maxX, elementIds: [refElementId] },
               priority: 2
             });
           }
@@ -185,10 +181,10 @@ export const createGuidelinesPluginSlice: StateCreator<GuidelinesPluginSlice, []
             m => m.match.type === 'right' && Math.abs(m.match.position - bounds.maxX) < threshold
           );
           if (existing) {
-            existing.match.elementIds.push(element.id);
+            existing.match.elementIds.push(refElementId);
           } else {
             potentialMatches.push({
-              match: { type: 'right', position: bounds.maxX, elementIds: [element.id] },
+              match: { type: 'right', position: bounds.maxX, elementIds: [refElementId] },
               priority: 2
             });
           }
@@ -200,10 +196,10 @@ export const createGuidelinesPluginSlice: StateCreator<GuidelinesPluginSlice, []
             m => m.match.type === 'right' && Math.abs(m.match.position - bounds.minX) < threshold
           );
           if (existing) {
-            existing.match.elementIds.push(element.id);
+            existing.match.elementIds.push(refElementId);
           } else {
             potentialMatches.push({
-              match: { type: 'right', position: bounds.minX, elementIds: [element.id] },
+              match: { type: 'right', position: bounds.minX, elementIds: [refElementId] },
               priority: 2
             });
           }
@@ -217,10 +213,10 @@ export const createGuidelinesPluginSlice: StateCreator<GuidelinesPluginSlice, []
             m => m.match.type === 'centerY' && Math.abs(m.match.position - centerY) < threshold
           );
           if (existing) {
-            existing.match.elementIds.push(element.id);
+            existing.match.elementIds.push(refElementId);
           } else {
             potentialMatches.push({
-              match: { type: 'centerY', position: centerY, elementIds: [element.id] },
+              match: { type: 'centerY', position: centerY, elementIds: [refElementId] },
               priority: 1
             });
           }
@@ -232,10 +228,10 @@ export const createGuidelinesPluginSlice: StateCreator<GuidelinesPluginSlice, []
             m => m.match.type === 'top' && Math.abs(m.match.position - bounds.minY) < threshold
           );
           if (existing) {
-            existing.match.elementIds.push(element.id);
+            existing.match.elementIds.push(refElementId);
           } else {
             potentialMatches.push({
-              match: { type: 'top', position: bounds.minY, elementIds: [element.id] },
+              match: { type: 'top', position: bounds.minY, elementIds: [refElementId] },
               priority: 2
             });
           }
@@ -247,10 +243,10 @@ export const createGuidelinesPluginSlice: StateCreator<GuidelinesPluginSlice, []
             m => m.match.type === 'top' && Math.abs(m.match.position - bounds.maxY) < threshold
           );
           if (existing) {
-            existing.match.elementIds.push(element.id);
+            existing.match.elementIds.push(refElementId);
           } else {
             potentialMatches.push({
-              match: { type: 'top', position: bounds.maxY, elementIds: [element.id] },
+              match: { type: 'top', position: bounds.maxY, elementIds: [refElementId] },
               priority: 2
             });
           }
@@ -262,10 +258,10 @@ export const createGuidelinesPluginSlice: StateCreator<GuidelinesPluginSlice, []
             m => m.match.type === 'bottom' && Math.abs(m.match.position - bounds.maxY) < threshold
           );
           if (existing) {
-            existing.match.elementIds.push(element.id);
+            existing.match.elementIds.push(refElementId);
           } else {
             potentialMatches.push({
-              match: { type: 'bottom', position: bounds.maxY, elementIds: [element.id] },
+              match: { type: 'bottom', position: bounds.maxY, elementIds: [refElementId] },
               priority: 2
             });
           }
@@ -277,10 +273,10 @@ export const createGuidelinesPluginSlice: StateCreator<GuidelinesPluginSlice, []
             m => m.match.type === 'bottom' && Math.abs(m.match.position - bounds.minY) < threshold
           );
           if (existing) {
-            existing.match.elementIds.push(element.id);
+            existing.match.elementIds.push(refElementId);
           } else {
             potentialMatches.push({
-              match: { type: 'bottom', position: bounds.minY, elementIds: [element.id] },
+              match: { type: 'bottom', position: bounds.minY, elementIds: [refElementId] },
               priority: 2
             });
           }
@@ -334,9 +330,12 @@ export const createGuidelinesPluginSlice: StateCreator<GuidelinesPluginSlice, []
 
       const threshold = state.guidelines.snapThreshold / viewport.zoom;
 
-      // Get all other elements
-      const otherElements = elements.filter(
-        (el) => el.id !== elementId && el.type === 'path'
+      // Use centralized bounds calculation for all other elements
+      const boundsMap = calculateElementBoundsMap(
+        elements,
+        [elementId], // exclude current element
+        viewport.zoom,
+        { includeStroke: true }
       );
 
       // Special case: when an alignment guideline involves exactly 2 elements (current + 1 reference)
@@ -345,11 +344,10 @@ export const createGuidelinesPluginSlice: StateCreator<GuidelinesPluginSlice, []
         // Check if this alignment has exactly 1 reference element (plus the current one = 2 total)
         if (match.elementIds.length === 1) {
           const referenceElementId = match.elementIds[0];
-          const referenceElement = elements.find(el => el.id === referenceElementId);
+          const refBoundsInfo = boundsMap.get(referenceElementId);
           
-          if (referenceElement && referenceElement.type === 'path') {
-            const pathData = referenceElement.data as PathData;
-            const refBounds = measurePath(pathData.subPaths, pathData.strokeWidth, viewport.zoom);
+          if (refBoundsInfo) {
+            const refBounds = refBoundsInfo.bounds;
 
             // Determine axis based on alignment type
             const isVerticalAlignment = match.type === 'centerX' || match.type === 'left' || match.type === 'right';
@@ -432,22 +430,17 @@ export const createGuidelinesPluginSlice: StateCreator<GuidelinesPluginSlice, []
 
       // If we already have matches from 2-element alignments, return them
       // (no need to look for distance patterns with multiple elements)
-      if (matches.length > 0 && otherElements.length < 2) {
+      if (matches.length > 0 && boundsMap.size < 2) {
         return matches;
       }
 
-      if (otherElements.length < 2) {
+      if (boundsMap.size < 2) {
         return []; // Need at least 2 other elements to establish a distance pattern
       }
 
-      // Use centralized helper to calculate bounds for all elements
-      const boundsInfo = calculateElementBoundsMap(
-        otherElements.map(el => ({ id: el.id, type: el.type, data: el.data })), 
-        [], 
-        viewport.zoom
-      );
+      // Convert boundsMap to simple format for distance calculations
       const elementBounds = new Map<string, { minX: number; minY: number; maxX: number; maxY: number }>();
-      boundsInfo.forEach((info, id) => {
+      boundsMap.forEach((info, id) => {
         elementBounds.set(id, info.bounds);
       });
 

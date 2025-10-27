@@ -7,18 +7,7 @@ import { PathThumbnail } from '../ui/PathThumbnail';
 import { PanelActionButton } from '../ui/PanelActionButton';
 import { useCanvasStore } from '../../store/canvasStore';
 import { measureSubpathBounds } from '../../utils/measurementUtils';
-
-/**
- * Helper to convert bounds result to rounded bbox
- * Centralizes the repeated rounding logic
- */
-function getRoundedBbox(boundsResult: ReturnType<typeof measureSubpathBounds> | null) {
-  if (!boundsResult) return null;
-  return {
-    topLeft: { x: Math.round(boundsResult.minX), y: Math.round(boundsResult.minY) },
-    bottomRight: { x: Math.round(boundsResult.maxX), y: Math.round(boundsResult.maxY) }
-  };
-}
+import { getRoundedBbox, areBboxesEqual } from '../../utils/boundsComparisonUtils';
 
 // Import shared type instead of duplicating
 import type { SelectPanelItemData } from './SelectPanel.types';
@@ -246,17 +235,8 @@ const arePropsEqual = (prevProps: SelectPanelItemProps, nextProps: SelectPanelIt
       const prevBbox = getRoundedBbox(prevBoundsResult);
       const nextBbox = getRoundedBbox(nextBoundsResult);
       
-      // Compare bounding boxes
-      if (prevBbox && nextBbox) {
-        if (
-          prevBbox.topLeft.x !== nextBbox.topLeft.x ||
-          prevBbox.topLeft.y !== nextBbox.topLeft.y ||
-          prevBbox.bottomRight.x !== nextBbox.bottomRight.x ||
-          prevBbox.bottomRight.y !== nextBbox.bottomRight.y
-        ) {
-          return false;
-        }
-      } else if (prevBbox !== nextBbox) {
+      // Compare bounding boxes using shared utility
+      if (!areBboxesEqual(prevBbox, nextBbox)) {
         return false;
       }
     }
@@ -298,17 +278,8 @@ const arePropsEqual = (prevProps: SelectPanelItemProps, nextProps: SelectPanelIt
         const prevBbox = getRoundedBbox(prevBoundsResult);
         const nextBbox = getRoundedBbox(nextBoundsResult);
         
-        // Compare bounding boxes
-        if (prevBbox && nextBbox) {
-          if (
-            prevBbox.topLeft.x !== nextBbox.topLeft.x ||
-            prevBbox.topLeft.y !== nextBbox.topLeft.y ||
-            prevBbox.bottomRight.x !== nextBbox.bottomRight.x ||
-            prevBbox.bottomRight.y !== nextBbox.bottomRight.y
-          ) {
-            return false;
-          }
-        } else if (prevBbox !== nextBbox) {
+        // Compare bounding boxes using shared utility
+        if (!areBboxesEqual(prevBbox, nextBbox)) {
           return false;
         }
       }

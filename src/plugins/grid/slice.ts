@@ -43,7 +43,6 @@ export interface GridPluginSlice {
     emphasizeEvery?: number; // Emphasize every Nth line (0 = disabled)
     // Parametric lattice settings
     parametricStepY?: number; // Y spacing (if different from spacing/stepX)
-    parametricRotation?: number; // rotation in degrees
     parametricWarp?: WarpParams; // warp field parameters
   };
 
@@ -139,7 +138,6 @@ export const createGridPluginSlice: StateCreator<GridPluginSlice, [], [], GridPl
       color: '#000000',
       emphasizeEvery: 0,
       parametricStepY: 20,
-      parametricRotation: 0,
       parametricWarp: {
         kind: 'sine2d',
         ampX: 18,
