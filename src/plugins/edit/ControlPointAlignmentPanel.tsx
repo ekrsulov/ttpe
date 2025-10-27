@@ -331,7 +331,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
             aria-label="Independent - Control points move freely"
             onClick={() => handleAlignmentChange('independent')}
             variant="unstyled"
-            size="sm"
+            size="xs"
             bg={(singlePointInfo.info?.type || 'independent') === 'independent' ? 'blue.500' : 'transparent'}
             color={(singlePointInfo.info?.type || 'independent') === 'independent' ? 'white' : 'gray.700'}
             border="1px solid"
@@ -344,7 +344,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
               bg: (singlePointInfo.info?.type || 'independent') === 'independent' ? 'blue.600' : 'gray.50'
             }}
             sx={{
-              minH: '28px',
+              minH: '20px',
               px: 2,
               display: 'flex',
               alignItems: 'center',
@@ -358,7 +358,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
             aria-label="Aligned - Control points maintain opposite directions"
             onClick={() => handleAlignmentChange('aligned')}
             variant="unstyled"
-            size="sm"
+            size="xs"
             bg={(singlePointInfo.info?.type || 'independent') === 'aligned' ? 'blue.500' : 'transparent'}
             color={(singlePointInfo.info?.type || 'independent') === 'aligned' ? 'white' : 'gray.700'}
             border="1px solid"
@@ -371,7 +371,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
               bg: (singlePointInfo.info?.type || 'independent') === 'aligned' ? 'blue.600' : 'gray.50'
             }}
             sx={{
-              minH: '28px',
+              minH: '20px',
               px: 2,
               display: 'flex',
               alignItems: 'center',
@@ -385,7 +385,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
             aria-label="Mirrored - Control points are perfectly mirrored"
             onClick={() => handleAlignmentChange('mirrored')}
             variant="unstyled"
-            size="sm"
+            size="xs"
             bg={(singlePointInfo.info?.type || 'independent') === 'mirrored' ? 'blue.500' : 'transparent'}
             color={(singlePointInfo.info?.type || 'independent') === 'mirrored' ? 'white' : 'gray.700'}
             border="1px solid"
@@ -398,7 +398,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
               bg: (singlePointInfo.info?.type || 'independent') === 'mirrored' ? 'blue.600' : 'gray.50'
             }}
             sx={{
-              minH: '28px',
+              minH: '20px',
               px: 2,
               display: 'flex',
               alignItems: 'center',
@@ -415,7 +415,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
                 icon={showDetails ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 onClick={toggleDetails}
                 variant="ghost"
-                size="sm"
+                size="xs"
                 bg="transparent"
               />
             </Tooltip>

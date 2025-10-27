@@ -49,7 +49,6 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
           onClick={onAction}
           size="xs"
           variant="outline"
-          fontSize="12px"
           title={actionTitle || title}
         >
           {actionLabel}

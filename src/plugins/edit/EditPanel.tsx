@@ -4,9 +4,11 @@ import {
   HStack,
   Button,
   Checkbox as ChakraCheckbox,
-  Text,
   Box,
-  Divider
+  Divider,
+  Switch,
+  Flex,
+  Heading
 } from '@chakra-ui/react';
 import { SliderControl } from '../../components/ui/SliderControl';
 import { PercentSliderControl } from '../../components/ui/PercentSliderControl';
@@ -95,37 +97,86 @@ export const EditPanel: React.FC<EditPanelProps> = ({
     <Box position="relative">
       <RenderCountBadgeWrapper componentName="EditPanel" position="top-left" />
       <VStack spacing={0} align="stretch">
-      {/* Smooth Brush Section */}
+      {/* Add Point Mode Section */}
       <Box>
-        <SectionHeader
-          title="Smooth Brush"
-          actionLabel="Apply"
-          onAction={applySmoothBrush}
-          actionTitle={smoothBrush.isActive && selectedCommands.length > 0
-            ? `Apply Smooth to ${selectedCommands.length} Selected Point${selectedCommands.length === 1 ? '' : 's'}`
-            : 'Apply Smooth Brush'
-          }
-          showAction={!smoothBrush.isActive || (smoothBrush.isActive && selectedCommands.length > 0)}
-        />
-
-        {/* Brush Mode Toggle */}
-        <HStack spacing={2} mb={2}>
-          <Text fontSize="12px" color="gray.600">Brush Mode:</Text>
-          <Button
-            onClick={() => {
-              if (smoothBrush.isActive) {
-                deactivateSmoothBrush();
+        <Flex justify="space-between" align="center">
+          <Heading size="xs" fontWeight="extrabold">Add Point</Heading>
+          <Switch
+            isChecked={addPointMode?.isActive || false}
+            onChange={(e) => {
+              if (e.target.checked) {
+                activateAddPointMode?.();
               } else {
-                activateSmoothBrush();
+                deactivateAddPointMode?.();
               }
             }}
-            size="xs"
-            colorScheme={smoothBrush.isActive ? 'brand' : 'gray'}
-            variant={smoothBrush.isActive ? 'solid' : 'outline'}
+          />
+        </Flex>
+      </Box>
+
+      {/* Separator between Add Point and Smooth Brush */}
+      <Divider my={2} />
+
+      {/* Smooth Brush Section */}
+      <Box>
+        <Flex justify="space-between" align="center" mb={1}>
+          <Heading size="xs" fontWeight="extrabold">Smooth Brush</Heading>
+          <HStack spacing={2}>
+            {!smoothBrush.isActive && (
+              <Button
+                onClick={applySmoothBrush}
+                size="xs"
+                variant="outline"
+                title={smoothBrush.isActive && selectedCommands.length > 0
+                  ? `Apply Smooth to ${selectedCommands.length} Selected Point${selectedCommands.length === 1 ? '' : 's'}`
+                  : 'Apply Smooth Brush'
+                }
+              >
+                Apply
+              </Button>
+            )}
+            <Switch
+              isChecked={smoothBrush.isActive}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  activateSmoothBrush();
+                } else {
+                  deactivateSmoothBrush();
+                }
+              }}
+            />
+          </HStack>
+        </Flex>
+
+        {/* Simplify Points Checkbox */}
+        <HStack justify="space-between" align="center">
+          <ChakraCheckbox
+            id="simplifyPoints"
+            isChecked={smoothBrush.simplifyPoints}
+            onChange={(e) => updateSmoothBrush({ simplifyPoints: e.target.checked })}
+            size="sm"
+            sx={{
+              '& .chakra-checkbox__control': {
+                bg: smoothBrush.simplifyPoints ? 'blue.500' : 'transparent',
+                borderColor: smoothBrush.simplifyPoints ? 'blue.500' : 'gray.400',
+                _checked: {
+                  bg: 'blue.500',
+                  borderColor: 'blue.500',
+                  color: 'white',
+                  _hover: {
+                    bg: 'blue.600',
+                    borderColor: 'blue.600',
+                  }
+                },
+                _hover: {
+                  bg: smoothBrush.simplifyPoints ? 'blue.600' : 'gray.50',
+                  borderColor: smoothBrush.simplifyPoints ? 'blue.600' : 'gray.400',
+                }
+              }
+            }}
           >
-            {smoothBrush.isActive ? 'On' : 'Off'}
-          </Button>
-          
+            Simplify Points
+          </ChakraCheckbox>
           <Button
             onClick={resetSmoothBrush}
             size="xs"
@@ -148,6 +199,7 @@ export const EditPanel: React.FC<EditPanelProps> = ({
             onChange={(value) => updateSmoothBrush({ radius: value })}
             labelWidth="40px"
             valueWidth="25px"
+            marginBottom='0'
           />
         )}
 
@@ -159,37 +211,9 @@ export const EditPanel: React.FC<EditPanelProps> = ({
           onChange={(value) => updateSmoothBrush({ strength: value })}
           labelWidth="40px"
           valueWidth="35px"
+          marginBottom='0'
         />
 
-        {/* Simplify Points Checkbox */}
-        <ChakraCheckbox
-          id="simplifyPoints"
-          isChecked={smoothBrush.simplifyPoints}
-          onChange={(e) => updateSmoothBrush({ simplifyPoints: e.target.checked })}
-          size="sm"
-          sx={{
-            '& .chakra-checkbox__control': {
-              bg: smoothBrush.simplifyPoints ? 'blue.500' : 'transparent',
-              borderColor: smoothBrush.simplifyPoints ? 'blue.500' : 'gray.400',
-              _checked: {
-                bg: 'blue.500',
-                borderColor: 'blue.500',
-                color: 'white',
-                _hover: {
-                  bg: 'blue.600',
-                  borderColor: 'blue.600',
-                }
-              },
-              _hover: {
-                bg: smoothBrush.simplifyPoints ? 'blue.600' : 'gray.50',
-                borderColor: smoothBrush.simplifyPoints ? 'blue.600' : 'gray.400',
-              }
-            }
-          }}
-          mb={smoothBrush.simplifyPoints ? 2 : 0}
-        >
-          Simplify Points
-        </ChakraCheckbox>
 
         {/* Simplification Tolerance Slider - only show when simplify points is enabled */}
         {smoothBrush.simplifyPoints && (
@@ -203,6 +227,7 @@ export const EditPanel: React.FC<EditPanelProps> = ({
             formatter={(value) => value.toFixed(1)}
             labelWidth="40px"
             valueWidth="30px"
+            marginBottom='0'
           />
         )}
 
@@ -218,50 +243,13 @@ export const EditPanel: React.FC<EditPanelProps> = ({
             formatter={(value) => value.toFixed(1)}
             labelWidth="40px"
             valueWidth="30px"
+            marginBottom='0'
           />
         )}
 
-        {/* Instructions */}
-        {smoothBrush.isActive && (
-          <Text fontSize="12px" color="gray.600" mt={2} lineHeight="tall">
-            {selectedCommands.length > 0
-              ? `Click "Apply Smooth" to smooth ${selectedCommands.length} selected point${selectedCommands.length === 1 ? '' : 's'}.`
-              : 'Click and drag to apply smoothing. Points within the brush radius will be smoothed.'
-            }
-          </Text>
-        )}
       </Box>
 
-      {/* Separator between Smooth Brush and Add Point */}
-      <Divider my={2} />
-
-      {/* Add Point Mode Section */}
-      <Box>
-        <SectionHeader
-          title="Add Point"
-        />
-
-        {/* Add Point Mode Toggle */}
-        <HStack spacing={2}>
-          <Text fontSize="12px" color="gray.600">Add Point Mode:</Text>
-          <Button
-            onClick={() => {
-              if (addPointMode?.isActive) {
-                deactivateAddPointMode?.();
-              } else {
-                activateAddPointMode?.();
-              }
-            }}
-            size="xs"
-            colorScheme={addPointMode?.isActive ? 'brand' : 'gray'}
-            variant={addPointMode?.isActive ? 'solid' : 'outline'}
-          >
-            {addPointMode?.isActive ? 'On' : 'Off'}
-          </Button>
-        </HStack>
-      </Box>
-
-      {/* Separator between Add Point and Path Simplification */}
+      {/* Separator between Smooth Brush and Path Simplification */}
       <Divider my={2} />
 
       {/* Path Simplification Section */}
