@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { VStack, HStack, Text } from '@chakra-ui/react';
-import { Copy, Clipboard, MousePointer2, Eye, EyeOff, Lock, Unlock, Group as GroupIcon } from 'lucide-react';
+import { Copy, Clipboard, Group as GroupIcon } from 'lucide-react';
 import { extractSubpaths } from '../../utils/path';
 import type { PathData } from '../../types';
 import { PathThumbnail } from '../ui/PathThumbnail';
@@ -8,6 +8,8 @@ import { PanelActionButton } from '../ui/PanelActionButton';
 import { useCanvasStore } from '../../store/canvasStore';
 import { haveBoundsChanged, areBboxesEqual } from '../../utils/comparators/bounds';
 import { getItemThumbnailData } from '../../utils/selectPanelHelpers';
+import { VisibilityLockControls } from './VisibilityLockControls';
+import { useSelectPanelActions } from '../../hooks/useSelectPanelActions';
 
 // Import shared type instead of duplicating
 import type { SelectPanelItemData } from './SelectPanel.types';
@@ -37,9 +39,9 @@ const SelectPanelItemComponent: React.FC<SelectPanelItemProps> = ({
 }) => {
   // Only subscribe to the specific actions we need
   const createGroup = useCanvasStore(state => state.createGroupFromSelection);
-  const toggleElementVisibility = useCanvasStore(state => state.toggleElementVisibility);
-  const toggleElementLock = useCanvasStore(state => state.toggleElementLock);
-  const selectElements = useCanvasStore(state => state.selectElements);
+  
+  // Use shared hook for common actions
+  const { toggleElementVisibility, toggleElementLock, selectElement } = useSelectPanelActions();
 
   // Use centralized helper to get thumbnail data and bounds
   const { commands: thumbnailCommands, bbox } = item.element.type === 'path'
@@ -137,29 +139,21 @@ const SelectPanelItemComponent: React.FC<SelectPanelItemProps> = ({
             />
           )}
         </HStack>
-        {/* Fila 2: Lock, View, Select */}
+        {/* Fila 2: Lock, View, Select - using shared component */}
         {item.type === 'element' && (
-          <HStack spacing={1}>
-            <PanelActionButton
-              label={directLocked ? 'Unlock element' : 'Lock element'}
-              icon={directLocked ? Unlock : Lock}
-              height="auto"
-              onClick={() => toggleElementLock(elementId)}
-            />
-            <PanelActionButton
-              label={directHidden ? 'Show element' : 'Hide element'}
-              icon={directHidden ? Eye : EyeOff}
-              height="auto"
-              onClick={() => toggleElementVisibility(elementId)}
-            />
-            <PanelActionButton
-              label="Select element"
-              icon={MousePointer2}
-              height="auto"
-              onClick={() => selectElements([elementId])}
-              isDisabled={isLocked || isHidden}
-            />
-          </HStack>
+          <VisibilityLockControls
+            elementId={elementId}
+            isHidden={directHidden}
+            isLocked={directLocked}
+            onToggleVisibility={toggleElementVisibility}
+            onToggleLock={toggleElementLock}
+            onSelect={selectElement}
+            hideLabel="Hide element"
+            showLabel="Show element"
+            lockLabel="Lock element"
+            unlockLabel="Unlock element"
+            selectLabel="Select element"
+          />
         )}
       </VStack>
     </HStack>

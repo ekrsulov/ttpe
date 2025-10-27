@@ -4,6 +4,7 @@ import { performPathSimplifyPaperJS, performPathRound } from '../../utils/pathOp
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../utils';
 import type { CanvasElement, PathData, Point, Command, SubPath } from '../../types';
 import type { CanvasStore } from '../../store/canvasStore';
+import { buildElementUpdatesMap } from '../../utils/elementUpdateUtils';
 
 // Type for the full store state (needed for get() calls)
 type FullCanvasState = CanvasStore;

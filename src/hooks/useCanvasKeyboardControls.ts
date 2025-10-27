@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
 import { isTextFieldFocused } from '../utils/domHelpers';
 import { useCanvasCurves } from '../plugins/curves/useCanvasCurves';
-import { getDeletionScope, executeDeletion } from '../utils/deletionScopeUtils';
+import { useDeletionActions } from './useDeletionActions';
 
 export const useCanvasKeyboardControls = () => {
   const [isSpacePressed, setIsSpacePressed] = useState(false);
@@ -27,6 +27,17 @@ export const useCanvasKeyboardControls = () => {
 
   // Get curves methods when in curves mode
   const { deleteSelectedPoint } = useCanvasCurves();
+
+  // Use centralized deletion hook with priority-based strategy (for keyboard)
+  const { executeDeletion: performDeletion } = useDeletionActions({
+    selectedCommandsCount: selectedCommands?.length ?? 0,
+    selectedSubpathsCount: selectedSubpaths?.length ?? 0,
+    selectedElementsCount: selectedIds.length,
+    usePluginStrategy: false,
+    deleteSelectedCommands,
+    deleteSelectedSubpaths,
+    deleteSelectedElements,
+  });
 
   // Computed effective shift state (physical OR virtual)
   const isEffectiveShiftPressed = isShiftPressed || isVirtualShiftActive;
@@ -119,18 +130,8 @@ export const useCanvasKeyboardControls = () => {
           moveSelectedElements(roundedDeltaX, roundedDeltaY);
         }
       } else if (e.key === 'Delete' || e.key === 'Backspace') {
-        // Delete selected items using priority-based strategy
-        const scope = getDeletionScope({
-          selectedCommandsCount: selectedCommands?.length ?? 0,
-          selectedSubpathsCount: selectedSubpaths?.length ?? 0,
-          selectedElementsCount: selectedIds.length,
-        }, false);
-        
-        const deleted = executeDeletion(scope, {
-          deleteSelectedCommands,
-          deleteSelectedSubpaths,
-          deleteSelectedElements,
-        });
+        // Delete selected items using centralized deletion logic
+        const deleted = performDeletion();
         
         if (deleted) {
           e.preventDefault();

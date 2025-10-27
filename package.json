@@ -9,7 +9,9 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "echo 'Tests disabled temporarily'",
-    "test:ui": "playwright test --ui"
+    "test:ui": "playwright test --ui",
+    "type-check": "tsc --noEmit",
+    "unused-exports": "ts-unused-exports tsconfig.json"
   },
   "dependencies": {
     "@chakra-ui/react": "^2.10.9",
@@ -39,6 +41,7 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.3.0",
+    "ts-unused-exports": "^11.0.1",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.39.1",
     "vite": "^7.1.2"

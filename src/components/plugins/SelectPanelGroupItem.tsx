@@ -1,10 +1,12 @@
 import React, { memo } from 'react';
 import { Box, HStack, VStack, Text, Editable, EditableInput, EditablePreview } from '@chakra-ui/react';
-import { MousePointer2, Eye, EyeOff, Lock, Unlock, ChevronDown, ChevronRight, Ungroup as UngroupIcon } from 'lucide-react';
+import { ChevronDown, ChevronRight, Ungroup as UngroupIcon, Lock, EyeOff, MousePointer2 } from 'lucide-react';
 import type { GroupElement, PathData, Command, CanvasElement } from '../../types';
 import { useCanvasStore } from '../../store/canvasStore';
 import { PathThumbnail } from '../ui/PathThumbnail';
 import { PanelActionButton } from '../ui/PanelActionButton';
+import { VisibilityLockControls } from './VisibilityLockControls';
+import { useSelectPanelActions } from '../../hooks/useSelectPanelActions';
 
 interface SelectPanelGroupItemProps {
   group: GroupElement;
@@ -23,12 +25,12 @@ const SelectPanelGroupItemComponent: React.FC<SelectPanelGroupItemProps> = ({
   const ungroupGroupById = useCanvasStore(state => state.ungroupGroupById);
   const renameGroup = useCanvasStore(state => state.renameGroup);
   const setGroupExpanded = useCanvasStore(state => state.setGroupExpanded);
-  const toggleGroupVisibility = useCanvasStore(state => state.toggleGroupVisibility);
-  const toggleGroupLock = useCanvasStore(state => state.toggleGroupLock);
   const isElementHidden = useCanvasStore(state => state.isElementHidden);
   const isElementLocked = useCanvasStore(state => state.isElementLocked);
-  const selectElements = useCanvasStore(state => state.selectElements);
   const selectedIds = useCanvasStore(state => state.selectedIds);
+  
+  // Use shared hook for common actions
+  const { toggleGroupVisibility, toggleGroupLock, selectGroup, selectElement } = useSelectPanelActions();
 
   const groupData = group.data;
   const groupHidden = isElementHidden(group.id);
@@ -88,20 +90,18 @@ const SelectPanelGroupItemComponent: React.FC<SelectPanelGroupItemProps> = ({
             onClick={() => ungroupGroupById(group.id)}
             isDisabled={groupLocked}
           />
-          <PanelActionButton
-            label={groupLocked ? 'Unlock group' : 'Lock group'}
-            icon={groupLocked ? Unlock : Lock}
-            onClick={() => toggleGroupLock(group.id)}
-          />
-          <PanelActionButton
-            label={groupHidden ? 'Show group' : 'Hide group'}
-            icon={groupHidden ? Eye : EyeOff}
-            onClick={() => toggleGroupVisibility(group.id)}
-          />
-          <PanelActionButton
-            label="Select group"
-            icon={MousePointer2}
-            onClick={() => selectElements([group.id])}
+          <VisibilityLockControls
+            elementId={group.id}
+            isHidden={groupHidden}
+            isLocked={groupLocked}
+            onToggleVisibility={toggleGroupVisibility}
+            onToggleLock={toggleGroupLock}
+            onSelect={selectGroup}
+            hideLabel="Hide group"
+            showLabel="Show group"
+            lockLabel="Lock group"
+            unlockLabel="Unlock group"
+            selectLabel="Select group"
           />
         </HStack>
       </HStack>
@@ -142,7 +142,7 @@ const SelectPanelGroupItemComponent: React.FC<SelectPanelGroupItemProps> = ({
                   <PanelActionButton
                     label="Select element"
                     icon={MousePointer2}
-                    onClick={() => selectElements([childId])}
+                    onClick={() => selectElement(childId)}
                     isDisabled={childLocked || childHidden}
                   />
                 </HStack>

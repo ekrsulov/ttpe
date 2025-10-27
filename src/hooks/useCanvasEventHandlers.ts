@@ -5,6 +5,7 @@ import { getEffectiveShift } from './useEffectiveShift';
 import type { Point } from '../types';
 import { useCanvasEventBus } from '../canvas/CanvasEventBusContext';
 import { pluginManager } from '../utils/pluginManager';
+import { calculateCommandsBounds, calculateMultiElementBounds } from '../utils/selectionBoundsUtils';
 
 interface EventHandlerDeps {
   svgRef: React.RefObject<SVGSVGElement | null>;
@@ -99,25 +100,16 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
               if (subpathIndex < pathData.subPaths.length) {
                 const subpath = pathData.subPaths[subpathIndex];
 
-                // Calculate bounds for this subpath
-                let minX = Infinity, minY = Infinity;
-                subpath.forEach(cmd => {
-                  if (cmd.type === 'M' || cmd.type === 'L') {
-                    minX = Math.min(minX, cmd.position.x);
-                    minY = Math.min(minY, cmd.position.y);
-                  } else if (cmd.type === 'C') {
-                    minX = Math.min(minX, cmd.position.x, cmd.controlPoint1.x, cmd.controlPoint2.x);
-                    minY = Math.min(minY, cmd.position.y, cmd.controlPoint1.y, cmd.controlPoint2.y);
-                  }
-                });
+                // Calculate bounds using consolidated utility
+                const bounds = calculateCommandsBounds(subpath, pathData.strokeWidth || 0, state.viewport.zoom);
 
-                if (isFinite(minX) && state.snapToGrid) {
+                if (isFinite(bounds.minX) && state.snapToGrid) {
                   // Snap the top-left corner
-                  const snappedTopLeft = state.snapToGrid(minX, minY);
+                  const snappedTopLeft = state.snapToGrid(bounds.minX, bounds.minY);
 
                   // Calculate snap offset
-                  const snapOffsetX = snappedTopLeft.x - minX;
-                  const snapOffsetY = snappedTopLeft.y - minY;
+                  const snapOffsetX = snappedTopLeft.x - bounds.minX;
+                  const snapOffsetY = snappedTopLeft.y - bounds.minY;
 
                   // Apply snap offset to this subpath
                   if (snapOffsetX !== 0 || snapOffsetY !== 0) {
@@ -136,44 +128,20 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
             }
           });
         } else if (activePlugin === 'select' && selectedIds.length > 0) {
-          // Snap selected elements (existing logic)
-          // Calculate the bounding box of all selected elements
-          let overallMinX = Infinity;
-          let overallMinY = Infinity;
-
-          selectedIds.forEach(elementId => {
-            const element = state.elements.find(el => el.id === elementId);
-            if (element && element.type === 'path') {
-              const pathData = element.data as import('../types').PathData;
-
-              // Calculate bounds for this element
-              let minX = Infinity, minY = Infinity;
-              pathData.subPaths.forEach(subPath => {
-                subPath.forEach(cmd => {
-                  if (cmd.type === 'M' || cmd.type === 'L') {
-                    minX = Math.min(minX, cmd.position.x);
-                    minY = Math.min(minY, cmd.position.y);
-                  } else if (cmd.type === 'C') {
-                    minX = Math.min(minX, cmd.position.x, cmd.controlPoint1.x, cmd.controlPoint2.x);
-                    minY = Math.min(minY, cmd.position.y, cmd.controlPoint1.y, cmd.controlPoint2.y);
-                  }
-                });
-              });
-
-              if (isFinite(minX)) {
-                overallMinX = Math.min(overallMinX, minX);
-                overallMinY = Math.min(overallMinY, minY);
-              }
-            }
+          // Snap selected elements using consolidated utility
+          const selectedElements = state.elements.filter(el => selectedIds.includes(el.id));
+          const bounds = calculateMultiElementBounds(selectedElements, { 
+            includeStroke: true, 
+            zoom: state.viewport.zoom 
           });
 
-          if (isFinite(overallMinX)) {
+          if (isFinite(bounds.minX) && state.snapToGrid) {
             // Snap the top-left corner
-            const snappedTopLeft = state.snapToGrid(overallMinX, overallMinY);
+            const snappedTopLeft = state.snapToGrid(bounds.minX, bounds.minY);
 
             // Calculate snap offset
-            const snapOffsetX = snappedTopLeft.x - overallMinX;
-            const snapOffsetY = snappedTopLeft.y - overallMinY;
+            const snapOffsetX = snappedTopLeft.x - bounds.minX;
+            const snapOffsetY = snappedTopLeft.y - bounds.minY;
 
             // Apply snap offset to selected elements
             if (snapOffsetX !== 0 || snapOffsetY !== 0) {
@@ -524,33 +492,17 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
             if (element && element.type === 'path') {
               const pathData = element.data as import('../types').PathData;
               
-              // Calculate current bounds
-              let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-              pathData.subPaths.forEach(subPath => {
-                subPath.forEach(cmd => {
-                  if (cmd.type === 'M' || cmd.type === 'L') {
-                    minX = Math.min(minX, cmd.position.x);
-                    minY = Math.min(minY, cmd.position.y);
-                    maxX = Math.max(maxX, cmd.position.x);
-                    maxY = Math.max(maxY, cmd.position.y);
-                  } else if (cmd.type === 'C') {
-                    minX = Math.min(minX, cmd.position.x, cmd.controlPoint1.x, cmd.controlPoint2.x);
-                    minY = Math.min(minY, cmd.position.y, cmd.controlPoint1.y, cmd.controlPoint2.y);
-                    maxX = Math.max(maxX, cmd.position.x, cmd.controlPoint1.x, cmd.controlPoint2.x);
-                    maxY = Math.max(maxY, cmd.position.y, cmd.controlPoint1.y, cmd.controlPoint2.y);
-                  }
-                });
-              });
+              // Calculate current bounds using consolidated utility
+              const commands = pathData.subPaths.flat();
+              const bounds = calculateCommandsBounds(commands, pathData.strokeWidth || 0, state.viewport.zoom);
               
-              if (isFinite(minX)) {
-                const halfStroke = (pathData.strokeWidth ?? 0) / 2;
-
-                // Apply the delta to get the "would-be" position including stroke width
+              if (isFinite(bounds.minX)) {
+                // Apply the delta to get the "would-be" position
                 const projectedBounds = {
-                  minX: minX + deltaX - halfStroke,
-                  minY: minY + deltaY - halfStroke,
-                  maxX: maxX + deltaX + halfStroke,
-                  maxY: maxY + deltaY + halfStroke,
+                  minX: bounds.minX + deltaX,
+                  minY: bounds.minY + deltaY,
+                  maxX: bounds.maxX + deltaX,
+                  maxY: bounds.maxY + deltaY,
                 };
                 
                 // Find alignment guidelines

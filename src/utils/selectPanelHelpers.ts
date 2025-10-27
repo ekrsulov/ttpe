@@ -2,6 +2,7 @@ import type { Command, PathData } from '../types';
 import { extractSubpaths } from './path';
 import { measureSubpathBounds } from './measurementUtils';
 import { getRoundedBbox } from './comparators/bounds';
+import type { SelectPanelItemData } from '../components/plugins/SelectPanel.types';
 
 /**
  * Interface for thumbnail data used by Select panel items
@@ -54,21 +55,30 @@ export function getItemThumbnailData(
 }
 
 /**
- * Compute stroke-aware bounds for comparison purposes.
- * Used in memo comparison functions to detect meaningful changes.
+ * Get commands for a select panel item.
+ * Consolidates the duplicate command-retrieval logic used in duplicate and clipboard operations.
  * 
- * @param commands - Path commands to measure
- * @param strokeWidth - Stroke width to include in bounds
- * @returns Rounded bbox or null if commands are empty
+ * @param item - Select panel item data
+ * @returns Command array or null if not applicable
  */
-export function computeStrokeAwareBounds(
-  commands: Command[],
-  strokeWidth: number
-): { topLeft: { x: number; y: number }; bottomRight: { x: number; y: number } } | null {
-  if (commands.length === 0) {
-    return null;
+export function getCommandsForPanelItem(item: SelectPanelItemData): Command[] | null {
+  switch (item.type) {
+    case 'element':
+      if (item.element.type === 'path') {
+        return (item.element.data as PathData).subPaths.flat();
+      }
+      return null;
+      
+    case 'subpath':
+      if (item.subpathIndex !== undefined) {
+        const pathData = item.element.data as PathData;
+        const subpathData = extractSubpaths(pathData.subPaths.flat())[item.subpathIndex];
+        return subpathData?.commands ?? null;
+      }
+      return null;
+      
+    default:
+      return null;
   }
-
-  const boundsResult = measureSubpathBounds(commands, strokeWidth, 1);
-  return getRoundedBbox(boundsResult);
 }
+

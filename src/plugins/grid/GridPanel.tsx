@@ -35,10 +35,31 @@ const getParametricWarpDefaults = (grid?: GridPluginSlice['grid']) => ({
   ...(grid?.parametricWarp ?? {}),
 });
 
+/**
+ * Helper to update parametric warp with defaults
+ * Reduces boilerplate by merging defaults and provided partial update
+ */
+const createParametricWarpUpdater = (
+  grid: GridPluginSlice['grid'] | undefined,
+  updateGridState?: (update: Partial<GridPluginSlice['grid']>) => void
+) => {
+  return (partial: Partial<ReturnType<typeof getParametricWarpDefaults>>) => {
+    updateGridState?.({
+      parametricWarp: {
+        ...getParametricWarpDefaults(grid),
+        ...partial,
+      },
+    });
+  };
+};
+
 const GridPanelComponent: React.FC = () => {
   // Only subscribe to grid state
   const grid = useCanvasStore(state => state.grid);
   const updateGridState = useCanvasStore(state => state.updateGridState);
+
+  // Create parametric warp updater helper
+  const updateParametricWarp = createParametricWarpUpdater(grid, updateGridState);
 
   // Use shared hook for toggle handlers
   const { createToggleHandler } = usePanelToggleHandlers(updateGridState ?? (() => {}));
@@ -70,51 +91,26 @@ const GridPanelComponent: React.FC = () => {
     updateGridState?.({ emphasizeEvery: value });
   };
 
-  // Parametric warp handlers
+  // Parametric warp handlers - using the helper to reduce duplication
   const handleWarpKindChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const kind = e.target.value as 'sine2d' | 'perlin2d' | 'radial';
-    updateGridState?.({
-      parametricWarp: {
-        ...getParametricWarpDefaults(grid),
-        kind,
-      },
-    });
+    updateParametricWarp({ kind });
   };
 
   const handleAmpXChange = (value: number) => {
-    updateGridState?.({
-      parametricWarp: {
-        ...getParametricWarpDefaults(grid),
-        ampX: value,
-      },
-    });
+    updateParametricWarp({ ampX: value });
   };
 
   const handleAmpYChange = (value: number) => {
-    updateGridState?.({
-      parametricWarp: {
-        ...getParametricWarpDefaults(grid),
-        ampY: value,
-      },
-    });
+    updateParametricWarp({ ampY: value });
   };
 
   const handleFreqXChange = (value: number) => {
-    updateGridState?.({
-      parametricWarp: {
-        ...getParametricWarpDefaults(grid),
-        freqX: value,
-      },
-    });
+    updateParametricWarp({ freqX: value });
   };
 
   const handleFreqYChange = (value: number) => {
-    updateGridState?.({
-      parametricWarp: {
-        ...getParametricWarpDefaults(grid),
-        freqY: value,
-      },
-    });
+    updateParametricWarp({ freqY: value });
   };
 
   const handleParametricStepYChange = (value: number) => {

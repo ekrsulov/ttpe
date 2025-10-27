@@ -9,12 +9,13 @@ import { SelectPanelItem } from './SelectPanelItem';
 import { SelectPanelGroupItem } from './SelectPanelGroupItem';
 import { usePersistentState } from '../../hooks/usePersistentState';
 import { useDragResize } from '../../hooks/useDragResize';
+import { getCommandsForPanelItem } from '../../utils/selectPanelHelpers';
 
 const DEFAULT_PANEL_HEIGHT = 140;
 const MIN_PANEL_HEIGHT = 96;
 const MAX_PANEL_HEIGHT = 360;
 
-// Helper to extract subpath data from an element
+// Helper to extract subpath data from an element (still needed for duplication translation)
 const getSubpathData = (element: CanvasElement, subpathIndex: number) => {
   if (element.type !== 'path') return null;
   
@@ -217,22 +218,11 @@ const SelectPanelComponent: React.FC = () => {
   };
 
   const copyPathToClipboard = async (item: SelectPanelItemData) => {
-    let pathData = '';
-
-    if (item.type === 'element') {
-      // Copy the entire element's path
-      if (item.element.type === 'path') {
-        pathData = commandsToString((item.element.data as PathData).subPaths.flat());
-      }
-    } else if (item.type === 'subpath' && item.subpathIndex !== undefined) {
-      // Copy the subpath's path
-      const subpathData = getSubpathData(item.element, item.subpathIndex);
-      if (subpathData) {
-        pathData = commandsToString(subpathData.commands);
-      }
-    }
-
-    if (pathData) {
+    // Use centralized command retrieval helper
+    const commands = getCommandsForPanelItem(item);
+    
+    if (commands) {
+      const pathData = commandsToString(commands);
       try {
         await navigator.clipboard.writeText(pathData);
         logger.info('Path copied to clipboard', pathData);

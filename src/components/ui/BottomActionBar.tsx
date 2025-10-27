@@ -13,7 +13,7 @@ import { RenderCountBadgeWrapper } from './RenderCountBadgeWrapper';
 import { FloatingToolbarShell } from './FloatingToolbarShell';
 import { ToolbarIconButton } from './ToolbarIconButton';
 import { pluginManager } from '../../utils/pluginManager';
-import { getDeletionScope, executeDeletion } from '../../utils/deletionScopeUtils';
+import { useDeletionActions } from '../../hooks/useDeletionActions';
 
 // Custom hook to subscribe to temporal state changes
 const useTemporalState = () => {
@@ -60,25 +60,19 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
 
   const zoomFactor = 1.2;
 
-  // Determine deletion scope using plugin-aware strategy
-  const deletionScope = useMemo(() => getDeletionScope({
+  // Use centralized deletion hook with plugin-aware strategy
+  const { scope: deletionScope, canDelete, executeDeletion: handleDelete } = useDeletionActions({
     selectedCommandsCount,
     selectedSubpathsCount,
     selectedElementsCount: selectedCount,
     activePlugin,
-  }, true), [selectedCommandsCount, selectedSubpathsCount, selectedCount, activePlugin]);
+    usePluginStrategy: true,
+    deleteSelectedCommands,
+    deleteSelectedSubpaths,
+    deleteSelectedElements,
+  });
 
   const deleteCount = deletionScope.count;
-  const canDelete = deleteCount > 0;
-
-  // Handle delete action
-  const handleDelete = () => {
-    executeDeletion(deletionScope, {
-      deleteSelectedCommands,
-      deleteSelectedSubpaths,
-      deleteSelectedElements,
-    });
-  };
 
   const pluginBottomActions = pluginManager.getActions('bottom');
 
