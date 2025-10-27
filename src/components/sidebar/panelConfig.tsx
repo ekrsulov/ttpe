@@ -17,7 +17,7 @@ const TextPanel = React.lazy(() => import('../../plugins/text/TextPanel').then(m
 const ShapePanel = React.lazy(() => import('../../plugins/shape/ShapePanel').then(module => ({ default: module.ShapePanel })));
 const FilePanel = React.lazy(() => import('../plugins/FilePanel').then(module => ({ default: module.FilePanel })));
 const SettingsPanel = React.lazy(() => import('../plugins/SettingsPanel').then(module => ({ default: module.SettingsPanel })));
-const PathOperationsPanel = React.lazy(() => import('../../plugins/edit/PathOperationsPanel').then(module => ({ default: module.PathOperationsPanel })));
+const PathOperationsPanel = React.lazy(() => import('../../plugins/path/PathOperationsPanel').then(module => ({ default: module.PathOperationsPanel })));
 const SubPathOperationsPanel = React.lazy(() => import('../../plugins/subpath/SubPathOperationsPanel').then(module => ({ default: module.SubPathOperationsPanel })));
 const GuidelinesPanel = React.lazy(() => import('../../plugins/guidelines/GuidelinesPanel').then(module => ({ default: module.GuidelinesPanel })));
 const GridPanel = React.lazy(() => import('../../plugins/grid/GridPanel').then(module => ({ default: module.default })));

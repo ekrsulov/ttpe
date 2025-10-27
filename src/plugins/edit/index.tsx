@@ -5,7 +5,6 @@ import { createEditPluginSlice } from './slice';
 import type { EditPluginSlice } from './slice';
 import { EditPanel } from './EditPanel';
 import { ControlPointAlignmentPanel } from './ControlPointAlignmentPanel';
-import { PathOperationsPanel } from './PathOperationsPanel';
 import { EditPointsOverlay } from './EditPointsOverlay';
 import { AddPointFeedbackOverlay } from './AddPointFeedbackOverlay';
 import { BlockingOverlay } from '../../components/overlays';
@@ -166,5 +165,5 @@ export const editPlugin: PluginDefinition<CanvasStore> = {
 };
 
 export type { EditPluginSlice };
-export { EditPanel, ControlPointAlignmentPanel, PathOperationsPanel };
+export { EditPanel, ControlPointAlignmentPanel };
 export { EditPointsOverlay } from './EditPointsOverlay';
