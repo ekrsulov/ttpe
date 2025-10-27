@@ -144,7 +144,7 @@ export const useCanvasKeyboardControls = () => {
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [selectedCommands?.length, selectedSubpaths?.length, selectedIds.length, settings.keyboardMovementPrecision, moveSelectedPoints, moveSelectedSubpaths, moveSelectedElements, deleteSelectedCommands, deleteSelectedSubpaths, deleteSelectedElements]);
+  }, [selectedCommands?.length, selectedSubpaths?.length, selectedIds.length, settings.keyboardMovementPrecision, moveSelectedPoints, moveSelectedSubpaths, moveSelectedElements, deleteSelectedCommands, deleteSelectedSubpaths, deleteSelectedElements, performDeletion]);
 
   // Handle curves mode keyboard shortcuts
   useEffect(() => {
