@@ -4,8 +4,6 @@ import { getToolMetadata } from '../toolMetadata';
 import { fillGridCell } from './actions';
 import type { Point } from '../../types';
 
-/* eslint-disable react-refresh/only-export-components */
-
 type GridFillPluginApi = {
   fillGridCell: (point: Point) => string | null;
 };

@@ -1,4 +1,4 @@
-import type { Point } from '../../types';
+import type { Point, PathData } from '../../types';
 import type { CanvasStore } from '../../store/canvasStore';
 import type { GridType } from '../grid/slice';
 import { parsePathD } from '../../utils/pathParserUtils';
@@ -562,7 +562,7 @@ function createPathFromVertices(vertices: Point[], getState: () => CanvasStore):
     );
     
     if (pathElements.length > 0) {
-      selectedPathFillOpacity = (pathElements[0].data as any).fillOpacity ?? selectedPathFillOpacity;
+      selectedPathFillOpacity = (pathElements[0].data as PathData).fillOpacity ?? selectedPathFillOpacity;
     }
   }
   
