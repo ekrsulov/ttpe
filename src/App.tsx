@@ -21,6 +21,9 @@ function App() {
     return elements.filter((el: CanvasElement) => selectedIds.includes(el.id) && el.type === 'path');
   }, [selectedIds]);
   
+  // Detect iOS devices
+  const isIOS = useMemo(() => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1), []);
+  
   // Track sidebar width when pinned (0 when not pinned)
   const [sidebarWidth, setSidebarWidth] = useState(0);
   
@@ -62,6 +65,8 @@ function App() {
 
   // Prevent iOS back swipe from left edge
   useEffect(() => {
+    if (!isIOS) return;
+
     const handleTouchStart = (e: TouchEvent) => {
       const touch = e.touches[0];
       if (touch && touch.clientX < 20) { // 20px from left edge
@@ -74,7 +79,7 @@ function App() {
     return () => {
       document.removeEventListener('touchstart', handleTouchStart);
     };
-  }, []);
+  }, [isIOS]);
 
   return (
     <CurvesControllerProvider>
@@ -104,18 +109,20 @@ function App() {
           <Canvas />
         </div>
         {/* Invisible overlay to prevent iOS back swipe from left edge */}
-        <div
-          style={{
-            position: 'absolute',
-            left: 0,
-            top: 0,
-            width: '20px',
-            height: '100%',
-            zIndex: 9999,
-            touchAction: 'none',
-            backgroundColor: 'transparent',
-          }}
-        />
+        {isIOS && (
+          <div
+            style={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              width: '20px',
+              height: '100%',
+              zIndex: 9999,
+              touchAction: 'none',
+              backgroundColor: 'transparent',
+            }}
+          />
+        )}
         <Sidebar 
           onWidthChange={handleSidebarWidthChange}
           onPinnedChange={handleSidebarPinnedChange}
