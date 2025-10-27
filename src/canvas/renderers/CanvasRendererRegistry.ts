@@ -12,6 +12,7 @@ export interface CanvasElementEventHandlers {
   ) => void;
   onPointerUp?: (elementId: string, event: ReactPointerEvent<Element>) => void;
   onDoubleClick?: (elementId: string, event: ReactMouseEvent<Element>) => void;
+  onTouchEnd?: (elementId: string, event: React.TouchEvent<Element>) => void;
 }
 
 export interface CanvasRenderContext {

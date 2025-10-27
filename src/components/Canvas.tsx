@@ -16,6 +16,7 @@ import {
 } from '../canvas/CanvasEventBusContext';
 import { useCanvasZoom } from '../hooks/useCanvasZoom';
 import { useMobileTouchGestures } from '../hooks/useMobileTouchGestures';
+import { useDoubleTap } from '../hooks/useDoubleTap';
 import { CanvasServicesProvider } from '../canvas/services/CanvasServicesProvider';
 import { useSmoothBrushIntegration } from '../hooks/useSmoothBrushIntegration';
 import { useAddPointNativeListeners } from '../hooks/useAddPointNativeListeners';
@@ -309,6 +310,42 @@ const CanvasContent: React.FC = () => {
     handleCanvasDoubleClick,
   } = useCanvasEventHandlers(eventHandlerDeps);
 
+  // Double-tap detection for iOS devices
+  const { handleTouchEnd: handleCanvasDoubleTap } = useDoubleTap({
+    onDoubleTap: (event: React.TouchEvent) => {
+      // Create a synthetic mouse event for the double-click handler
+      const syntheticEvent = {
+        preventDefault: () => event.preventDefault(),
+        stopPropagation: () => event.stopPropagation(),
+        target: event.target,
+        currentTarget: event.currentTarget,
+        clientX: event.changedTouches[0]?.clientX || 0,
+        clientY: event.changedTouches[0]?.clientY || 0,
+        button: 0,
+        type: 'dblclick',
+      } as React.MouseEvent<SVGSVGElement>;
+      
+      handleCanvasDoubleClick(syntheticEvent);
+    },
+  });
+
+  // Double-tap handler for elements
+  const handleElementDoubleTap = useCallback((elementId: string, event: React.TouchEvent<Element>) => {
+    // Create a synthetic mouse event for the element double-click handler
+    const syntheticEvent = {
+      preventDefault: () => event.preventDefault(),
+      stopPropagation: () => event.stopPropagation(),
+      target: event.target,
+      currentTarget: event.currentTarget,
+      clientX: event.changedTouches[0]?.clientX || 0,
+      clientY: event.changedTouches[0]?.clientY || 0,
+      button: 0,
+      type: 'dblclick',
+    } as React.MouseEvent<Element>;
+    
+    handleElementDoubleClick(elementId, syntheticEvent);
+  }, [handleElementDoubleClick]);
+
   // Use the custom hook for drag interactions
   const { dragPosition } = useCanvasDragInteractions({
     dragState: {
@@ -346,6 +383,7 @@ const CanvasContent: React.FC = () => {
       onPointerUp: handleElementClick,
       onPointerDown: handleElementPointerDown,
       onDoubleClick: handleElementDoubleClick,
+      onTouchEnd: handleElementDoubleTap,
     },
   }), [
     viewport,
@@ -359,6 +397,7 @@ const CanvasContent: React.FC = () => {
     handleElementClick,
     handleElementPointerDown,
     handleElementDoubleClick,
+    handleElementDoubleTap,
   ]);
 
   const renderElement = (element: typeof elements[0]) =>
@@ -451,6 +490,7 @@ const CanvasContent: React.FC = () => {
           handlePointerMove={handlePointerMove}
           handlePointerUp={handlePointerUp}
           handleCanvasDoubleClick={handleCanvasDoubleClick}
+          handleTouchEnd={handleCanvasDoubleTap}
         />
       </>
     </CanvasServicesProvider>

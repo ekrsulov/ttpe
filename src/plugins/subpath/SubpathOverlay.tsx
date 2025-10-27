@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { deriveElementSelectionColors } from '../../utils/canvas';
 import { commandsToString } from '../../utils/path';
 import { mapSvgToCanvas } from '../../utils/geometry';
@@ -41,12 +41,63 @@ export const SubpathOverlay: React.FC<SubpathOverlayProps> = ({
   onSubpathDoubleClick,
   isVisible = true,
 }) => {
+  // Double-tap detection for iOS
+  const lastTapRef = useRef<{
+    time: number;
+    x: number;
+    y: number;
+    subpathIndex: number;
+  } | null>(null);
+
   if (element.type !== 'path') return null;
 
   const pathData = element.data as PathData;
 
   // Use the current path data (which may be updated during dragging) instead of original
   const subpaths = pathData.subPaths;
+
+  const handleTouchEnd = (e: React.TouchEvent<SVGPathElement>) => {
+    const now = Date.now();
+    const touch = e.changedTouches[0];
+    if (!touch) return;
+
+    const rect = (e.currentTarget as SVGElement).getBoundingClientRect();
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+
+    // Get subpath index from data attribute
+    const subpathIndex = parseInt(e.currentTarget.getAttribute('data-subpath-index') || '0');
+
+    const DOUBLE_TAP_THRESHOLD = 300; // ms
+    const DOUBLE_TAP_DISTANCE = 30; // pixels
+
+    if (
+      lastTapRef.current &&
+      now - lastTapRef.current.time < DOUBLE_TAP_THRESHOLD &&
+      Math.abs(x - lastTapRef.current.x) < DOUBLE_TAP_DISTANCE &&
+      Math.abs(y - lastTapRef.current.y) < DOUBLE_TAP_DISTANCE &&
+      subpathIndex === lastTapRef.current.subpathIndex
+    ) {
+      // Double tap detected
+      e.preventDefault();
+      const syntheticEvent = {
+        preventDefault: () => e.preventDefault(),
+        stopPropagation: () => e.stopPropagation(),
+        target: e.target,
+        currentTarget: e.currentTarget,
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+        button: 0,
+        type: 'dblclick',
+      } as React.MouseEvent<SVGPathElement>;
+
+      onSubpathDoubleClick(element.id, subpathIndex, syntheticEvent);
+      lastTapRef.current = null; // Reset
+    } else {
+      // Single tap
+      lastTapRef.current = { time: now, x, y, subpathIndex };
+    }
+  };
 
   // Calculate contrasting colors for the overlay based on element's colors
   const { selectionColor: overlayColor, elementStrokeWidth } = deriveElementSelectionColors(element);
@@ -67,6 +118,7 @@ export const SubpathOverlay: React.FC<SubpathOverlayProps> = ({
         return (
           <path
             key={index}
+            data-subpath-index={index}
             d={commandsToString(subpathData)}
             fill={overlayFill}
             stroke={overlayStroke}
@@ -127,6 +179,7 @@ export const SubpathOverlay: React.FC<SubpathOverlayProps> = ({
               // The overlay just needs to ensure the drag is started correctly
             } : undefined}
             onDoubleClick={(e) => onSubpathDoubleClick(element.id, index, e)}
+            onTouchEnd={handleTouchEnd}
           />
         );
       })}

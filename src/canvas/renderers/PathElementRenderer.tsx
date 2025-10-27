@@ -1,9 +1,11 @@
+import React from 'react';
 import { commandsToString } from '../../utils/path';
 import type { PathElement } from '../../types';
 import type {
   CanvasElementRenderer,
   CanvasRenderContext,
 } from './CanvasRendererRegistry';
+import { useDoubleTap } from '../../hooks/useDoubleTap';
 
 const getEffectiveStrokeColor = (path: PathElement['data']): string => {
   if (path.strokeColor === 'none') {
@@ -35,8 +37,30 @@ export const PathElementRenderer: CanvasElementRenderer<PathElement> = (
   const pointerDownHandler = eventHandlers.onPointerDown;
   const pointerUpHandler = eventHandlers.onPointerUp;
   const doubleClickHandler = eventHandlers.onDoubleClick;
+  const touchEndHandler = eventHandlers.onTouchEnd;
   const isSelected = isElementSelected?.(element.id) ?? false;
   const isLocked = isElementLocked?.(element.id) ?? false;
+
+  // Double-tap handler for this element
+  const { handleTouchEnd: handleElementTouchEnd } = useDoubleTap({
+    onDoubleTap: (event: React.TouchEvent) => {
+      if (doubleClickHandler) {
+        // Create a synthetic mouse event
+        const syntheticEvent = {
+          preventDefault: () => event.preventDefault(),
+          stopPropagation: () => event.stopPropagation(),
+          target: event.target,
+          currentTarget: event.currentTarget,
+          clientX: event.changedTouches[0]?.clientX || 0,
+          clientY: event.changedTouches[0]?.clientY || 0,
+          button: 0,
+          type: 'dblclick',
+        } as React.MouseEvent<Element>;
+        
+        doubleClickHandler(element.id, syntheticEvent);
+      }
+    },
+  });
 
   return (
     <g key={element.id}>
@@ -67,6 +91,17 @@ export const PathElementRenderer: CanvasElementRenderer<PathElement> = (
         onDoubleClick={
           doubleClickHandler
             ? (event) => doubleClickHandler(element.id, event)
+            : undefined
+        }
+        onTouchEnd={
+          touchEndHandler || handleElementTouchEnd
+            ? (event) => {
+                if (touchEndHandler) {
+                  touchEndHandler(element.id, event);
+                } else {
+                  handleElementTouchEnd(event);
+                }
+              }
             : undefined
         }
         style={{
