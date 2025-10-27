@@ -7,12 +7,13 @@ import {
   Grid,
   Collapse,
   useDisclosure,
-  IconButton as ChakraIconButton
+  IconButton as ChakraIconButton,
+  Tooltip
 } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Panel } from '../../components/ui/Panel';
 import { PanelStyledButton } from '../../components/ui/PanelStyledButton';
-import { Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 /**
  * Optical Alignment Panel
@@ -88,7 +89,7 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
   } : null;
 
   return (
-    <Panel icon={<Sparkles size={16} />} title="Optical Alignment">
+    <Panel title="Optical Alignment">
       <VStack align="stretch" spacing={2}>
         {/* Primary Action - Always visible */}
         <PanelStyledButton
@@ -106,29 +107,35 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
             <HStack
               justify="space-between"
               py={1}
-              px={2}
             >
-              <Text fontSize="xs" fontWeight="semibold" color="gray.600">
+              <Text 
+                color="gray.600"
+                cursor="pointer"
+                onClick={onAdvancedToggle}
+                _hover={{ color: "gray.800" }}
+              >
                 Advanced
               </Text>
-              <ChakraIconButton
-                aria-label={isAdvancedOpen ? "Collapse Advanced" : "Expand Advanced"}
-                icon={isAdvancedOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                onClick={onAdvancedToggle}
-                variant="ghost"
-                size="xs"
-                h="20px"
-                minW="20px"
-                flexShrink={0}
-                bg="transparent"
-              />
+              <Tooltip label={isAdvancedOpen ? "Collapse Advanced" : "Expand Advanced"}>
+                <ChakraIconButton
+                  aria-label={isAdvancedOpen ? "Collapse Advanced" : "Expand Advanced"}
+                  icon={isAdvancedOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                  onClick={onAdvancedToggle}
+                  variant="ghost"
+                  size="xs"
+                  h="20px"
+                  minW="20px"
+                  flexShrink={0}
+                  bg="transparent"
+                />
+              </Tooltip>
             </HStack>
 
             <Collapse in={isAdvancedOpen} animateOpacity>
             <VStack spacing={3} align="stretch" mt={2}>
               {/* Visual Center Section */}
               <Box>
-                <Text fontSize="xs" fontWeight="semibold" color="gray.600" px={2} mb={2}>
+                <Text color="gray.600">
                   Visual Center (Optical)
                 </Text>
                 
@@ -153,9 +160,9 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
 
                 {/* Results - Between Visual Center and Mathematical Center */}
                 {opticalAlignmentResult && (
-                  <VStack spacing={2} align="stretch" mt={3}>
-                    <Box fontSize="xs" color="gray.600">
-                      <Text fontWeight="semibold" mb={1}>Offset:</Text>
+                  <VStack spacing={2} align="stretch" mt={1}>
+                    <Box color="gray.600">
+                      <Text>Offset</Text>
                       
                       {/* Current position offset */}
                       <HStack justify="space-between" fontSize="10px">
@@ -192,7 +199,7 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
 
               {/* Mathematical Center Section */}
               <Box>
-                <Text fontSize="xs" fontWeight="semibold" color="gray.600" px={2} mb={2}>
+                <Text color="gray.600">
                   Mathematical Center
                 </Text>
 
@@ -215,7 +222,7 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
 
               {/* Selection Section */}
               <Box>
-                <Text fontSize="xs" fontWeight="semibold" color="gray.600" px={2} mb={2}>
+                <Text color="gray.600">
                   Selection
                 </Text>
 

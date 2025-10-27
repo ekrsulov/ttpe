@@ -1,7 +1,6 @@
 import React from 'react';
 import { VStack } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { Ruler } from 'lucide-react';
 import { Panel } from '../../components/ui/Panel';
 import { PanelToggleGroup } from '../../components/ui/PanelToggleGroup';
 import { PanelToggle } from '../../components/ui/PanelToggle';
@@ -20,7 +19,6 @@ const GuidelinesPanelComponent: React.FC = () => {
 
   return (
     <Panel 
-      icon={<Ruler size={16} />} 
       title="Guidelines"
     >
       <VStack spacing={2} align="stretch">

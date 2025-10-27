@@ -1,7 +1,7 @@
 import React from 'react';
 import { HStack, IconButton as ChakraIconButton, Tooltip } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { Square, Circle, Triangle, Shapes, type LucideIcon } from 'lucide-react';
+import { Square, Circle, Triangle, type LucideIcon } from 'lucide-react';
 import { Panel } from '../../components/ui/Panel';
 import type { ShapeType } from './slice';
 
@@ -26,7 +26,7 @@ export const ShapePanel: React.FC = () => {
   };
 
   return (
-    <Panel icon={<Shapes size={16} />} title="Shape">
+    <Panel title="Shape">
       <HStack spacing={1}>
         {shapes.map((shapeItem) => {
           const IconComponent = shapeItem.icon;

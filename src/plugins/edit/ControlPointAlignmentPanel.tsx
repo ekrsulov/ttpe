@@ -2,7 +2,7 @@ import React, { useMemo, useCallback } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { extractEditablePoints, getControlPointAlignmentInfo } from '../../utils/path';
 import type { Command, Point, ControlPoint } from '../../types';
-import { Tangent, ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import {
   VStack,
   HStack,
@@ -18,7 +18,9 @@ import {
   Td,
   TableContainer,
   Collapse,
-  useDisclosure
+  useDisclosure,
+  Tooltip,
+  Divider
 } from '@chakra-ui/react';
 import { Panel } from '../../components/ui/Panel';
 
@@ -407,14 +409,16 @@ export const ControlPointAlignmentPanel: React.FC = () => {
           </Button>
 
           <Box ml="auto">
-            <ChakraIconButton
-              aria-label={showDetails ? "Hide Details" : "Show Details"}
-              icon={showDetails ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-              onClick={toggleDetails}
-              variant="ghost"
-              size="sm"
-              bg="transparent"
-            />
+            <Tooltip label={showDetails ? "Hide Details" : "Show Details"}>
+              <ChakraIconButton
+                aria-label={showDetails ? "Hide Details" : "Show Details"}
+                icon={showDetails ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                onClick={toggleDetails}
+                variant="ghost"
+                size="sm"
+                bg="transparent"
+              />
+            </Tooltip>
           </Box>
         </HStack>
 
@@ -485,8 +489,10 @@ export const ControlPointAlignmentPanel: React.FC = () => {
   };
 
   return (
-    <Panel icon={<Tangent size={16} />} title="Control Point Alignment" showRenderCount={true}>
-      {renderAlignmentButtons()}
+    <Box pb={0}>
+        <Divider my={2} />
+      <Panel title="Control Point Alignment" showRenderCount={true}>
+        {renderAlignmentButtons()}
       
       {/* Always visible Position and Command info */}
       {singlePointInfo && (
@@ -573,5 +579,6 @@ export const ControlPointAlignmentPanel: React.FC = () => {
         </VStack>
       )}
     </Panel>
+    </Box>
   );
 };

@@ -4,7 +4,7 @@ import type { LucideIcon } from 'lucide-react';
 
 interface SectionHeaderProps {
   /** Icon component from lucide-react */
-  icon: LucideIcon;
+  icon?: LucideIcon;
   /** Section title */
   title: string;
   /** Optional action button text */
@@ -33,7 +33,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
     <Flex 
       align="center" 
       justify="space-between" 
-      mb={2} 
+      mb={0} 
       bg="transparent" 
       py={0} 
       px={0}
@@ -41,7 +41,7 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
       minH="24px"
     >
       <HStack spacing={1.5}>
-        <Icon size={16} color="#666" />
+        {Icon && <Icon size={16} color="#666" />}
         <Heading size="xs" fontWeight="extrabold">{title}</Heading>
       </HStack>
       {showAction && onAction && (

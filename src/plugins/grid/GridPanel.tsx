@@ -1,7 +1,6 @@
 import React from 'react';
 import { VStack, Select, Text } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { Grid3X3 } from 'lucide-react';
 import { Panel } from '../../components/ui/Panel';
 import { PanelToggleGroup } from '../../components/ui/PanelToggleGroup';
 import { SliderControl } from '../../components/ui/SliderControl';
@@ -125,7 +124,7 @@ const GridPanelComponent: React.FC = () => {
   const showParametricSettings = gridType === 'parametric';
 
   return (
-    <Panel icon={<Grid3X3 size={16} />} title="Grid">
+    <Panel title="Grid">
       <VStack spacing={2} align="stretch">
         {/* Grid Type Selector */}
         <VStack spacing={1} align="stretch">

@@ -1,5 +1,5 @@
 import React from 'react';
-import { IconButton as ChakraIconButton } from '@chakra-ui/react';
+import { IconButton as ChakraIconButton, Tooltip } from '@chakra-ui/react';
 import { Minus } from 'lucide-react';
 import { DASH_PRESETS } from '../../utils/dashPresets';
 
@@ -68,18 +68,18 @@ export const DashArrayPresets: React.FC<DashArrayPresetsProps> = ({
       flexWrap: 'nowrap' // Keep all buttons in one line
     }}>
       {commonPresets.map(preset => (
-        <ChakraIconButton
-          key={preset.id}
-          aria-label={`${preset.name}: ${preset.description}`}
-          onPointerUp={() => onChange(preset.dashArray)}
-          colorScheme={value === preset.dashArray ? 'blue' : 'gray'}
-          variant={value === preset.dashArray ? 'solid' : 'outline'}
-          size="xs"
-          minW="20px"
-          h="20px"
-          title={`${preset.name}: ${preset.description}`}
-          icon={<DashPreview dashArray={preset.dashArray} />}
-        />
+        <Tooltip key={preset.id} label={`${preset.name}: ${preset.description}`}>
+          <ChakraIconButton
+            aria-label={`${preset.name}: ${preset.description}`}
+            onPointerUp={() => onChange(preset.dashArray)}
+            colorScheme={value === preset.dashArray ? 'blue' : 'gray'}
+            variant={value === preset.dashArray ? 'solid' : 'outline'}
+            size="xs"
+            minW="20px"
+            h="20px"
+            icon={<DashPreview dashArray={preset.dashArray} />}
+          />
+        </Tooltip>
       ))}
     </div>
   );

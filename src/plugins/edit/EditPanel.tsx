@@ -5,9 +5,9 @@ import {
   Button,
   Checkbox as ChakraCheckbox,
   Text,
-  Box
+  Box,
+  Divider
 } from '@chakra-ui/react';
-import { Route, SplinePointer, SquareRoundCorner, Plus } from 'lucide-react';
 import { SliderControl } from '../../components/ui/SliderControl';
 import { PercentSliderControl } from '../../components/ui/PercentSliderControl';
 import { SectionHeader } from '../../components/ui/SectionHeader';
@@ -94,11 +94,10 @@ export const EditPanel: React.FC<EditPanelProps> = ({
   return (
     <Box position="relative">
       <RenderCountBadgeWrapper componentName="EditPanel" position="top-left" />
-      <VStack spacing={2} align="stretch">
+      <VStack spacing={0} align="stretch">
       {/* Smooth Brush Section */}
       <Box>
         <SectionHeader
-          icon={SplinePointer}
           title="Smooth Brush"
           actionLabel="Apply"
           onAction={applySmoothBrush}
@@ -233,15 +232,17 @@ export const EditPanel: React.FC<EditPanelProps> = ({
         )}
       </Box>
 
+      {/* Separator between Smooth Brush and Add Point */}
+      <Divider my={2} />
+
       {/* Add Point Mode Section */}
       <Box>
         <SectionHeader
-          icon={Plus}
           title="Add Point"
         />
 
         {/* Add Point Mode Toggle */}
-        <HStack spacing={2} mb={2}>
+        <HStack spacing={2}>
           <Text fontSize="12px" color="gray.600">Add Point Mode:</Text>
           <Button
             onClick={() => {
@@ -260,10 +261,12 @@ export const EditPanel: React.FC<EditPanelProps> = ({
         </HStack>
       </Box>
 
+      {/* Separator between Add Point and Path Simplification */}
+      <Divider my={2} />
+
       {/* Path Simplification Section */}
       <Box>
         <SectionHeader
-          icon={Route}
           title={pathSimplificationLabel}
           actionLabel="Apply"
           onAction={applyPathSimplification}
@@ -280,13 +283,16 @@ export const EditPanel: React.FC<EditPanelProps> = ({
           formatter={(value) => value.toFixed(2)}
           labelWidth="50px"
           valueWidth="35px"
+          marginBottom='0'
         />
       </Box>
+
+      {/* Separator between Path Simplification and Round Path */}
+      <Divider my={2} />
 
       {/* Round Path Section */}
       <Box>
         <SectionHeader
-          icon={SquareRoundCorner}
           title={roundPathLabel}
           actionLabel="Apply"
           onAction={applyPathRounding}
@@ -303,6 +309,7 @@ export const EditPanel: React.FC<EditPanelProps> = ({
           formatter={(value) => value.toFixed(1)}
           labelWidth="50px"
           valueWidth="35px"
+          marginBottom='0'
         />
       </Box>
     </VStack>

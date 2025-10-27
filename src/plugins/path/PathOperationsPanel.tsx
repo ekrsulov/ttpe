@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import { Grid } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { Scissors } from 'lucide-react';
 import { Panel } from '../../components/ui/Panel';
 import { PanelStyledButton } from '../../components/ui/PanelStyledButton';
 import type { PathData } from '../../types';
@@ -61,7 +60,7 @@ const PathOperationsPanelComponent: React.FC = () => {
   const { totalSelectedItems, hasPathWithMultipleSubpaths } = selectionInfo;
 
   return (
-    <Panel icon={<Scissors size={16} />} title="Path Operations">
+    <Panel title="Path Operations">
       <Grid templateColumns="repeat(auto-fit, minmax(100px, 1fr))" gap={1}>
         {/* Split subpaths operation - available only if a selected path has multiple subpaths */}
         {hasPathWithMultipleSubpaths && (

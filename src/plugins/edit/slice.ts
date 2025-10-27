@@ -1532,6 +1532,13 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
   activateSmoothBrush: () => {
     set((state) => ({
       smoothBrush: { ...state.smoothBrush, isActive: true },
+      addPointMode: {
+        ...state.addPointMode,
+        isActive: false,
+        hoverPosition: null,
+        targetElement: null,
+        targetSegment: null,
+      },
     }));
   },
 
@@ -2352,6 +2359,7 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
         ...state.addPointMode,
         isActive: true,
       },
+      smoothBrush: { ...state.smoothBrush, isActive: false, affectedPoints: [] },
     }));
   },
 

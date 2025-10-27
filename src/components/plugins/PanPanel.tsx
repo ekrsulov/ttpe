@@ -1,7 +1,7 @@
 import React from 'react';
 import { IconButton as ChakraIconButton, HStack, VStack, Tag as ChakraTag } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { Hand, RotateCcw, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ArrowUpLeft, ArrowUpRight, ArrowDownLeft, ArrowDownRight } from 'lucide-react';
+import { RotateCcw, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ArrowUpLeft, ArrowUpRight, ArrowDownLeft, ArrowDownRight } from 'lucide-react';
 import { Panel } from '../ui/Panel';
 import type { LucideIcon } from 'lucide-react';
 
@@ -45,7 +45,6 @@ export const PanPanel: React.FC = () => {
 
   return (
     <Panel 
-      icon={<Hand size={16} />} 
       title="Pan"
       headerActions={
         <ChakraTag size="sm" colorScheme="gray" fontSize="xs">

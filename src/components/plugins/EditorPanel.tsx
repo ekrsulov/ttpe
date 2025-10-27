@@ -14,7 +14,8 @@ import {
   Box,
   Collapse,
   Input,
-  useBreakpointValue
+  useBreakpointValue,
+  Tooltip
 } from '@chakra-ui/react';
 import { SliderControl } from '../ui/SliderControl';
 import { PercentSliderControl } from '../ui/PercentSliderControl';
@@ -154,20 +155,21 @@ export const EditorPanel: React.FC = () => {
         {/* Color Presets */}
         <HStack minH="24px">
           {/* Style Eyedropper Button */}
-          <ChakraIconButton
-            aria-label={styleEyedropper.isActive ? "Cancel Style Copy" : "Copy Style"}
-            icon={<Pipette size={16} />}
-            onClick={handleStyleEyedropper}
-            variant="ghost"
-            size="xs"
-            h="20px"
-            minW="20px"
-            flexShrink={0}
-            bg="transparent"
-            isDisabled={!styleEyedropper.isActive && selectedPathsCount !== 1}
-            colorScheme={styleEyedropper.isActive ? 'blue' : 'gray'}
-            title={selectedPathsCount !== 1 ? 'Select exactly one path to copy its style' : styleEyedropper.isActive ? 'Click on another path to apply style' : 'Copy style from selected path'}
-          />
+          <Tooltip label={selectedPathsCount !== 1 ? 'Select exactly one path to copy its style' : styleEyedropper.isActive ? 'Click on another path to apply style' : 'Copy style from selected path'}>
+            <ChakraIconButton
+              aria-label={styleEyedropper.isActive ? "Cancel Style Copy" : "Copy Style"}
+              icon={<Pipette size={16} />}
+              onClick={handleStyleEyedropper}
+              variant="ghost"
+              size="xs"
+              h="20px"
+              minW="20px"
+              flexShrink={0}
+              bg="transparent"
+              isDisabled={!styleEyedropper.isActive && selectedPathsCount !== 1}
+              colorScheme={styleEyedropper.isActive ? 'blue' : 'gray'}
+            />
+          </Tooltip>
           <Box
             display="flex"
             justifyContent="center"
@@ -187,17 +189,19 @@ export const EditorPanel: React.FC = () => {
               ))}
             </Box>
           </Box>
-          <ChakraIconButton
-            aria-label={isColorControlsOpen ? "Collapse Color Controls" : "Expand Color Controls"}
-            icon={isColorControlsOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            onClick={onColorControlsToggle}
-            variant="ghost"
-            size="xs"
-            h="20px"
-            minW="20px"
-            flexShrink={0}
-            bg="transparent"
-          />
+          <Tooltip label={isColorControlsOpen ? "Collapse Color Controls" : "Expand Color Controls"}>
+            <ChakraIconButton
+              aria-label={isColorControlsOpen ? "Collapse Color Controls" : "Expand Color Controls"}
+              icon={isColorControlsOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              onClick={onColorControlsToggle}
+              variant="ghost"
+              size="xs"
+              h="20px"
+              minW="20px"
+              flexShrink={0}
+              bg="transparent"
+            />
+          </Tooltip>
         </HStack>
 
         {/* Color Controls */}
@@ -210,31 +214,35 @@ export const EditorPanel: React.FC = () => {
                   Fill
                 </Text>
                 <HStack spacing={1} flexShrink={0}>
-                  <Input
-                    type="color"
-                    value={currentFillColor === 'none' ? '#000000' : currentFillColor}
-                    onChange={(e) => handleFillColorChange(e.target.value)}
-                    w="20px"
-                    h="20px"
-                    minW="20px"
-                    p={0}
-                    border="1px solid"
-                    borderColor="gray.300"
-                    borderRadius="3px"
-                    cursor="pointer"
-                    opacity={currentFillColor === 'none' ? 0.5 : 1}
-                    title="Fill Color"
-                  />
-                  <ChakraIconButton
-                    aria-label="No Fill"
-                    icon={<X size={12} />}
-                    onClick={handleFillNone}
-                    colorScheme={currentFillColor === 'none' ? 'blue' : 'gray'}
-                    variant={currentFillColor === 'none' ? 'solid' : 'outline'}
-                    size="xs"
-                    h="20px"
-                    minW="20px"
-                  />
+                  <Tooltip label="Select fill color">
+                    <Input
+                      type="color"
+                      value={currentFillColor === 'none' ? '#000000' : currentFillColor}
+                      onChange={(e) => handleFillColorChange(e.target.value)}
+                      w="20px"
+                      h="20px"
+                      minW="20px"
+                      p={0}
+                      border="1px solid"
+                      borderColor="gray.300"
+                      borderRadius="3px"
+                      cursor="pointer"
+                      opacity={currentFillColor === 'none' ? 0.5 : 1}
+                      title="Fill Color"
+                    />
+                  </Tooltip>
+                  <Tooltip label="Set fill color to none (transparent)">
+                    <ChakraIconButton
+                      aria-label="No Fill"
+                      icon={<X size={12} />}
+                      onClick={handleFillNone}
+                      colorScheme={currentFillColor === 'none' ? 'blue' : 'gray'}
+                      variant={currentFillColor === 'none' ? 'solid' : 'outline'}
+                      size="xs"
+                      h="20px"
+                      minW="20px"
+                    />
+                  </Tooltip>
                 </HStack>
                 <Box flex={1} minW="120px">
                   <PercentSliderControl
@@ -257,32 +265,35 @@ export const EditorPanel: React.FC = () => {
                   Stroke
                 </Text>
                 <HStack spacing={1} flexShrink={0}>
-                  <Input
-                    type="color"
-                    value={currentStrokeColor === 'none' ? '#000000' : currentStrokeColor}
-                    onChange={(e) => handleStrokeColorChange(e.target.value)}
-                    w="20px"
-                    h="20px"
-                    minW="20px"
-                    p={0}
-                    border="1px solid"
-                    borderColor="gray.300"
-                    borderRadius="3px"
-                    cursor="pointer"
-                    opacity={currentStrokeColor === 'none' ? 0.5 : 1}
-                    title="Stroke Color"
-                  />
-                  <ChakraIconButton
-                    aria-label="No Stroke"
-                    icon={<X size={12} />}
-                    onClick={handleStrokeNone}
-                    isDisabled={currentFillColor === 'none'}
-                    colorScheme={currentStrokeColor === 'none' ? 'blue' : 'gray'}
-                    variant={currentStrokeColor === 'none' ? 'solid' : 'outline'}
-                    size="xs"
-                    h="20px"
-                    minW="20px"
-                  />
+                  <Tooltip label="Select stroke color">
+                    <Input
+                      type="color"
+                      value={currentStrokeColor === 'none' ? '#000000' : currentStrokeColor}
+                      onChange={(e) => handleStrokeColorChange(e.target.value)}
+                      w="20px"
+                      h="20px"
+                      minW="20px"
+                      p={0}
+                      border="1px solid"
+                      borderColor="gray.300"
+                      borderRadius="3px"
+                      cursor="pointer"
+                      opacity={currentStrokeColor === 'none' ? 0.5 : 1}
+                    />
+                  </Tooltip>
+                  <Tooltip label="Set stroke color to none (no outline)">
+                    <ChakraIconButton
+                      aria-label="No Stroke"
+                      icon={<X size={12} />}
+                      onClick={handleStrokeNone}
+                      isDisabled={currentFillColor === 'none'}
+                      colorScheme={currentStrokeColor === 'none' ? 'blue' : 'gray'}
+                      variant={currentStrokeColor === 'none' ? 'solid' : 'outline'}
+                      size="xs"
+                      h="20px"
+                      minW="20px"
+                    />
+                  </Tooltip>
                 </HStack>
                 <Box flex={1} minW="120px">
                   <PercentSliderControl
@@ -314,17 +325,19 @@ export const EditorPanel: React.FC = () => {
                   inline={true}
                 />
               </Box>
-              <ChakraIconButton
-                aria-label={isAdvancedStrokeOpen ? "Collapse Advanced Stroke" : "Expand Advanced Stroke"}
-                icon={isAdvancedStrokeOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                onClick={onAdvancedStrokeToggle}
-                variant="ghost"
-                size="xs"
-                h="20px"
-                minW="20px"
-                flexShrink={0}
-                bg="transparent"
-              />
+              <Tooltip label={isAdvancedStrokeOpen ? "Collapse Advanced Stroke" : "Expand Advanced Stroke"}>
+                <ChakraIconButton
+                  aria-label={isAdvancedStrokeOpen ? "Collapse Advanced Stroke" : "Expand Advanced Stroke"}
+                  icon={isAdvancedStrokeOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                  onClick={onAdvancedStrokeToggle}
+                  variant="ghost"
+                  size="xs"
+                  h="20px"
+                  minW="20px"
+                  flexShrink={0}
+                  bg="transparent"
+                />
+              </Tooltip>
             </HStack>
 
             {/* Advanced Stroke Properties */}

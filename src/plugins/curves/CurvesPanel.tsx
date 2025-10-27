@@ -8,7 +8,6 @@ import {
   useBreakpointValue,
 } from '@chakra-ui/react';
 import { 
-  PenTool, 
   TrendingUp,
 } from 'lucide-react';
 import { Panel } from '../../components/ui/Panel';
@@ -53,7 +52,7 @@ const CurvesPanelComponent: React.FC = () => {
   };
 
   return (
-    <Panel icon={<PenTool size={16} />} title="Curves">
+    <Panel title="Curves">
       <VStack spacing={3} align="stretch">
         {/* Selected Point Section */}
         {hasSelectedPoint && selectedPoint && (

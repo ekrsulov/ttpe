@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Button as ChakraButton, HStack, VStack, Input, InputGroup, InputLeftAddon, useToast, FormControl, FormLabel, Text, Box, Collapse, useDisclosure, IconButton as ChakraIconButton } from '@chakra-ui/react';
+import { Button as ChakraButton, HStack, VStack, Input, InputGroup, InputLeftAddon, useToast, FormControl, FormLabel, Text, Box, Collapse, useDisclosure, IconButton as ChakraIconButton, Tooltip } from '@chakra-ui/react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { logger, importSVGWithDimensions, measurePath, translateCommands, performPathUnion, transformCommands, calculateScaledStrokeWidth, flattenImportedElements } from '../../utils';
@@ -511,22 +511,28 @@ export const FilePanel: React.FC = () => {
           <HStack
             justify="space-between"
             py={1}
-            px={2}
           >
-            <Text fontSize="xs" fontWeight="semibold" color="gray.600">
+            <Text 
+              color="gray.600"
+              cursor="pointer"
+              onClick={onAdvancedToggle}
+              _hover={{ color: "gray.800" }}
+            >
               Advanced
             </Text>
-            <ChakraIconButton
-              aria-label={isAdvancedOpen ? "Collapse Advanced" : "Expand Advanced"}
-              icon={isAdvancedOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-              onClick={onAdvancedToggle}
-              variant="ghost"
-              size="xs"
-              h="20px"
-              minW="20px"
-              flexShrink={0}
-              bg="transparent"
-            />
+            <Tooltip label={isAdvancedOpen ? "Collapse Advanced" : "Expand Advanced"}>
+              <ChakraIconButton
+                aria-label={isAdvancedOpen ? "Collapse Advanced" : "Expand Advanced"}
+                icon={isAdvancedOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                onClick={onAdvancedToggle}
+                variant="ghost"
+                size="xs"
+                h="20px"
+                minW="20px"
+                flexShrink={0}
+                bg="transparent"
+              />
+            </Tooltip>
           </HStack>
 
           <Collapse in={isAdvancedOpen} animateOpacity>

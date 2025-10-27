@@ -1,7 +1,6 @@
 import React from 'react';
 import { VStack, Tag, Text } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { VectorSquare } from 'lucide-react';
 import { Panel } from '../../components/ui/Panel';
 import { PanelToggle } from '../../components/ui/PanelToggle';
 import { usePanelToggleHandlers } from '../../hooks/usePanelToggleHandlers';
@@ -23,7 +22,6 @@ export const TransformationPanel: React.FC = () => {
 
   return (
     <Panel 
-      icon={<VectorSquare size={16} />} 
       title="Transform"
       headerActions={isSubpathMode && (
         <Tag size="sm" colorScheme="purple" fontSize="xs">

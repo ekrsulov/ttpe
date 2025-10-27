@@ -1,7 +1,6 @@
 import React from 'react';
 import { VStack, HStack, Button, Text } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { Pen } from 'lucide-react';
 import { Panel } from '../../components/ui/Panel';
 
 export const PencilPanel: React.FC = () => {
@@ -14,7 +13,7 @@ export const PencilPanel: React.FC = () => {
   };
 
   return (
-    <Panel icon={<Pen size={16} />} title="Pencil">
+    <Panel title="Pencil">
       <VStack spacing={2} align="stretch">
         {/* Path Mode Selection */}
         <HStack spacing={1} justify="space-between">

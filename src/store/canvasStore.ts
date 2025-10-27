@@ -25,7 +25,6 @@ import type { OpticalAlignmentSlice } from '../plugins/opticalAlignment/slice';
 import type { CurvesPluginSlice } from '../plugins/curves/slice';
 import type { GuidelinesPluginSlice } from '../plugins/guidelines/slice';
 import type { GridPluginSlice } from '../plugins/grid/slice';
-import type { GridFillPluginSlice } from '../plugins/gridFill/slice';
 
 // Debounce function to implement cool-off period
 function debounce<T extends (...args: never[]) => void>(
@@ -65,8 +64,7 @@ export type CanvasStore = CoreCanvasStore &
   Partial<OpticalAlignmentSlice> &
   Partial<CurvesPluginSlice> &
   Partial<GuidelinesPluginSlice> &
-  Partial<GridPluginSlice> &
-  Partial<GridFillPluginSlice>;
+  Partial<GridPluginSlice>;
 
 // Create the store with core slices only - plugins will register dynamically
 export const useCanvasStore = create<CanvasStore>()(

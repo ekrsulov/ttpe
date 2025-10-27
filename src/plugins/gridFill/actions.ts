@@ -529,16 +529,7 @@ function calculateDisplacement(
  * Create a path element from vertices
  */
 function createPathFromVertices(vertices: Point[], getState: () => CanvasStore): string {
-  const state = getState() as CanvasStore & { gridFill?: { 
-    fillColor: string;
-    fillOpacity: number;
-  }};
-  const gridFill = state.gridFill;
-  
-  if (!gridFill) {
-    console.error('GridFill state not found');
-    return '';
-  }
+  const state = getState();
 
   // Build SVG path string
   if (vertices.length === 0) return '';
@@ -556,15 +547,32 @@ function createPathFromVertices(vertices: Point[], getState: () => CanvasStore):
   const subPathsData = extractSubpaths(commands);
   const subPaths = subPathsData.map(sp => sp.commands);
   
-  // Get fill color from Editor (pencil state) or use gridFill default
+  // Get fill color from Editor (pencil state) or use default
   const pencilState = state.pencil;
-  let fillColor = gridFill.fillColor; // Default blue
-  let fillOpacity = gridFill.fillOpacity;
+  let fillColor = '#4299e1'; // Default blue
+  let fillOpacity = 0.5; // Default opacity
+  
+  // Get fill opacity from selected path (same logic as EditorPanel)
+  const selectedIds = state.selectedIds;
+  let selectedPathFillOpacity = pencilState?.fillOpacity ?? 1; // fallback
+  
+  if (selectedIds.length > 0) {
+    const pathElements = state.elements.filter(
+      el => selectedIds.includes(el.id) && el.type === 'path'
+    );
+    
+    if (pathElements.length > 0) {
+      selectedPathFillOpacity = (pathElements[0].data as any).fillOpacity ?? selectedPathFillOpacity;
+    }
+  }
+  
+  // Ensure minimum 10% opacity
+  fillOpacity = Math.max(0.1, selectedPathFillOpacity);
   
   // If pencil has a fill configured (not 'none'), use it
   if (pencilState && pencilState.fillColor && pencilState.fillColor !== 'none') {
     fillColor = pencilState.fillColor;
-    fillOpacity = pencilState.fillOpacity ?? fillOpacity;
+    // fillOpacity is already set above from selected path
   }
   
   // Add the element to canvas

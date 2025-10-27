@@ -11,7 +11,7 @@ import {
   NumberDecrementStepper,
 } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { Type, Bold, Italic } from 'lucide-react';
+import { Bold, Italic } from 'lucide-react';
 import { getAvailableFonts } from '../../utils';
 import { FontSelector } from '../../components/ui/FontSelector';
 import { Panel } from '../../components/ui/Panel';
@@ -65,7 +65,7 @@ export const TextPanel: React.FC = () => {
   };
 
   return (
-    <Panel icon={<Type size={16} />} title="Text">
+    <Panel title="Text">
       <VStack spacing={2} align="stretch">
         {/* Text Input */}
         <Input
