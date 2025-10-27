@@ -60,13 +60,6 @@ export const loadTTFFont = async (fontName: string): Promise<Font | null> => {
 };
 
 /**
- * Utility function to round coordinates to configurable decimal places
- */
-const roundToPrecision = (num: number): number => {
-  return formatToPrecision(num, PATH_DECIMAL_PRECISION);
-};
-
-/**
  * Convert a quadratic Bezier curve (Q) to a cubic Bezier curve (C)
  * Quadratic: P0, P1 (control), P2 (end)
  * Cubic: P0, CP1, CP2, P3 (end)
@@ -102,24 +95,24 @@ const opentypePathToSVG = (path: Path): string => {
   for (const cmd of commands) {
     switch (cmd.type) {
       case 'M':
-        pathData += `M ${roundToPrecision(cmd.x)} ${roundToPrecision(cmd.y)} `;
+        pathData += `M ${formatToPrecision(cmd.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cmd.y, PATH_DECIMAL_PRECISION)} `;
         currentX = cmd.x;
         currentY = cmd.y;
         break;
       case 'L':
-        pathData += `L ${roundToPrecision(cmd.x)} ${roundToPrecision(cmd.y)} `;
+        pathData += `L ${formatToPrecision(cmd.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cmd.y, PATH_DECIMAL_PRECISION)} `;
         currentX = cmd.x;
         currentY = cmd.y;
         break;
       case 'C':
-        pathData += `C ${roundToPrecision(cmd.x1)} ${roundToPrecision(cmd.y1)} ${roundToPrecision(cmd.x2)} ${roundToPrecision(cmd.y2)} ${roundToPrecision(cmd.x)} ${roundToPrecision(cmd.y)} `;
+        pathData += `C ${formatToPrecision(cmd.x1, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cmd.y1, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cmd.x2, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cmd.y2, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cmd.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cmd.y, PATH_DECIMAL_PRECISION)} `;
         currentX = cmd.x;
         currentY = cmd.y;
         break;
       case 'Q': {
         // Convert quadratic to cubic
         const cubic = quadraticToCubic(currentX, currentY, cmd.x1, cmd.y1, cmd.x, cmd.y);
-        pathData += `C ${roundToPrecision(cubic.cp1x)} ${roundToPrecision(cubic.cp1y)} ${roundToPrecision(cubic.cp2x)} ${roundToPrecision(cubic.cp2y)} ${roundToPrecision(cmd.x)} ${roundToPrecision(cmd.y)} `;
+        pathData += `C ${formatToPrecision(cubic.cp1x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cubic.cp1y, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cubic.cp2x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cubic.cp2y, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cmd.x, PATH_DECIMAL_PRECISION)} ${formatToPrecision(cmd.y, PATH_DECIMAL_PRECISION)} `;
         currentX = cmd.x;
         currentY = cmd.y;
         break;

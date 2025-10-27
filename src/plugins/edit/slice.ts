@@ -28,6 +28,25 @@ type PathElementContext = {
 type AlignmentStrategy = (points: PathElementContext['editablePoints']) => number;
 type DistributionAxis = 'x' | 'y';
 
+// ===== EXPORTED TYPES =====
+
+export interface SmoothBrush {
+  radius: number;
+  strength: number;
+  isActive: boolean;
+  cursorX: number;
+  cursorY: number;
+  simplifyPoints: boolean;
+  simplificationTolerance: number;
+  minDistance: number;
+  affectedPoints: Array<{
+    commandIndex: number;
+    pointIndex: number;
+    x: number;
+    y: number;
+  }>;
+}
+
 // ===== HELPER FUNCTIONS =====
 
 /**
@@ -323,22 +342,7 @@ export interface EditPluginSlice {
     deltaX?: number;
     deltaY?: number;
   } | null;
-  smoothBrush: {
-    radius: number;
-    strength: number;
-    isActive: boolean;
-    cursorX: number;
-    cursorY: number;
-    simplifyPoints: boolean;
-    simplificationTolerance: number;
-    minDistance: number;
-    affectedPoints: Array<{
-      commandIndex: number;
-      pointIndex: number;
-      x: number;
-      y: number;
-    }>;
-  };
+  smoothBrush: SmoothBrush;
   pathSimplification: {
     tolerance: number;
   };

@@ -18,7 +18,6 @@ interface UseCanvasGeometryParams {
 
 interface UseCanvasGeometryResult {
   getElementBounds: (element: CanvasElement) => Bounds | null;
-  getTransformedBounds: (element: CanvasElement) => Bounds | null;
   getGroupBounds: (group: GroupElement) => Bounds | null;
   selectedGroupBounds: Array<{ id: string; bounds: Bounds }>;
 }
@@ -29,12 +28,8 @@ export const useCanvasGeometry = ({
   selectedIds,
   isElementHidden,
 }: UseCanvasGeometryParams): UseCanvasGeometryResult => {
+  // Get element bounds including transformations (formerly getTransformedBounds)
   const getElementBounds = useCallback(
-    (element: CanvasElement) => serviceGetElementBounds(element, viewport),
-    [viewport]
-  );
-
-  const getTransformedBounds = useCallback(
     (element: CanvasElement) => serviceGetElementBounds(element, viewport),
     [viewport]
   );
@@ -52,10 +47,9 @@ export const useCanvasGeometry = ({
   return useMemo(
     () => ({
       getElementBounds,
-      getTransformedBounds,
       getGroupBounds,
       selectedGroupBounds,
     }),
-    [getElementBounds, getTransformedBounds, getGroupBounds, selectedGroupBounds]
+    [getElementBounds, getGroupBounds, selectedGroupBounds]
   );
 };

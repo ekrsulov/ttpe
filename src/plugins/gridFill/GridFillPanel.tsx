@@ -2,9 +2,8 @@ import React from 'react';
 import { VStack, Text } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Panel } from '../../components/ui/Panel';
-import { SliderControl } from '../../components/ui/SliderControl';
+import { PercentSliderControl } from '../../components/ui/PercentSliderControl';
 import { PaintBucket } from 'lucide-react';
-import { formatPercent } from '../../utils/coreHelpers';
 
 const GridFillPanel: React.FC = () => {
   const gridFill = useCanvasStore(state => state.gridFill);
@@ -26,14 +25,10 @@ const GridFillPanel: React.FC = () => {
         </Text>
 
         {/* Fill Settings */}
-        <SliderControl
+        <PercentSliderControl
           label="Fill Opacity"
           value={gridFill.fillOpacity}
-          min={0}
-          max={1}
-          step={0.1}
           onChange={handleFillOpacityChange}
-          formatter={(value) => formatPercent(value)}
           title="Fill opacity"
         />
         

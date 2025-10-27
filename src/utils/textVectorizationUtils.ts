@@ -18,11 +18,6 @@ const initPotrace = async () => {
   }
 };
 
-// Utility function to round coordinates to configurable decimal places
-const roundToPrecision = (num: number): number => {
-  return formatToPrecision(num, PATH_DECIMAL_PRECISION);
-};
-
 // Function to convert text to SVG path using esm-potrace-wasm
 export const textToPath = async (
   text: string,
@@ -383,8 +378,8 @@ const transformSegmentsWithGlobalBounds = (
       // Restaurar la inversión Y para manejar diferencia de coordenadas Canvas/SVG
       y = offsetY + (globalBounds.maxY - y) * scaleFactor;
 
-      transformedData.push(roundToPrecision(x));
-      transformedData.push(roundToPrecision(y));
+      transformedData.push(formatToPrecision(x, PATH_DECIMAL_PRECISION));
+      transformedData.push(formatToPrecision(y, PATH_DECIMAL_PRECISION));
     }
 
     return { key, data: transformedData };

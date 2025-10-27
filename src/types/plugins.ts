@@ -59,7 +59,6 @@ export interface CanvasLayerContext extends CanvasControllerValue {
   isDragging: boolean;
   transformFeedback: TransformFeedback;
   getElementBounds: (element: CanvasElement) => Bounds | null;
-  getTransformedBounds: (element: CanvasElement) => Bounds | null;
   handleTransformationHandlerPointerDown: (event: PointerEvent, elementId: string, handler: string) => void;
   handleTransformationHandlerPointerUp: (event: PointerEvent) => void;
   handleSubpathDoubleClick: (elementId: string, subpathIndex: number, event: MouseEvent<SVGPathElement>) => void;

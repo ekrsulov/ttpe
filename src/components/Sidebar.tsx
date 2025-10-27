@@ -12,6 +12,7 @@ import { useCanvasStore } from '../store/canvasStore';
 import { SidebarContent } from './sidebar/SidebarContent';
 import { RenderCountBadgeWrapper } from './ui/RenderCountBadgeWrapper';
 import { usePersistentState } from '../hooks/usePersistentState';
+import { safeFunctions } from '../utils/functionHelpers';
 
 interface SidebarProps {
   onPinnedChange?: (isPinned: boolean) => void;
@@ -119,6 +120,33 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const resetSmoothBrush = useCanvasStore((state) => state.resetSmoothBrush);
   const activateAddPointMode = useCanvasStore((state) => state.activateAddPointMode);
   const deactivateAddPointMode = useCanvasStore((state) => state.deactivateAddPointMode);
+  
+  // Create safe function wrappers for all actions
+  const safeActions = useMemo(() => safeFunctions({
+    updateSmoothBrush,
+    updatePathSimplification,
+    updatePathRounding,
+    applySmoothBrush,
+    applyPathSimplification,
+    applyPathRounding,
+    activateSmoothBrush,
+    deactivateSmoothBrush,
+    resetSmoothBrush,
+    activateAddPointMode,
+    deactivateAddPointMode
+  }), [
+    updateSmoothBrush,
+    updatePathSimplification,
+    updatePathRounding,
+    applySmoothBrush,
+    applyPathSimplification,
+    applyPathRounding,
+    activateSmoothBrush,
+    deactivateSmoothBrush,
+    resetSmoothBrush,
+    activateAddPointMode,
+    deactivateAddPointMode
+  ]);
   
   // Reconstruct smoothBrush object for child components (memoized to prevent re-creation)
   // cursorX/cursorY are omitted - they're only needed in Canvas and cause unnecessary re-renders
@@ -241,17 +269,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           pathRounding={pathRounding ?? { radius: 0 }}
           selectedCommands={selectedCommands ?? []}
           selectedSubpaths={selectedSubpaths ?? []}
-          updateSmoothBrush={updateSmoothBrush ?? (() => {})}
-          updatePathSimplification={updatePathSimplification ?? (() => {})}
-          updatePathRounding={updatePathRounding ?? (() => {})}
-          applySmoothBrush={applySmoothBrush ?? (() => {})}
-          applyPathSimplification={applyPathSimplification ?? (() => {})}
-          applyPathRounding={applyPathRounding ?? (() => {})}
-          activateSmoothBrush={activateSmoothBrush ?? (() => {})}
-          deactivateSmoothBrush={deactivateSmoothBrush ?? (() => {})}
-          resetSmoothBrush={resetSmoothBrush ?? (() => {})}
-          activateAddPointMode={activateAddPointMode ?? (() => {})}
-          deactivateAddPointMode={deactivateAddPointMode ?? (() => {})}
+          {...safeActions}
           isArrangeExpanded={isArrangeExpanded}
           setIsArrangeExpanded={setIsArrangeExpanded}
           onResize={handleResize}
@@ -334,17 +352,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               pathRounding={pathRounding ?? { radius: 0 }}
               selectedCommands={selectedCommands ?? []}
               selectedSubpaths={selectedSubpaths ?? []}
-              updateSmoothBrush={updateSmoothBrush ?? (() => {})}
-              updatePathSimplification={updatePathSimplification ?? (() => {})}
-              updatePathRounding={updatePathRounding ?? (() => {})}
-              applySmoothBrush={applySmoothBrush ?? (() => {})}
-              applyPathSimplification={applyPathSimplification ?? (() => {})}
-              applyPathRounding={applyPathRounding ?? (() => {})}
-              activateSmoothBrush={activateSmoothBrush ?? (() => {})}
-              deactivateSmoothBrush={deactivateSmoothBrush ?? (() => {})}
-              resetSmoothBrush={resetSmoothBrush ?? (() => {})}
-              activateAddPointMode={activateAddPointMode ?? (() => {})}
-              deactivateAddPointMode={deactivateAddPointMode ?? (() => {})}
+              {...safeActions}
               isArrangeExpanded={isArrangeExpanded}
               setIsArrangeExpanded={setIsArrangeExpanded}
             />

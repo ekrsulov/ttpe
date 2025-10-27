@@ -5,9 +5,9 @@ import { Grid3X3 } from 'lucide-react';
 import { Panel } from '../../components/ui/Panel';
 import { PanelToggleGroup } from '../../components/ui/PanelToggleGroup';
 import { SliderControl } from '../../components/ui/SliderControl';
+import { PercentSliderControl } from '../../components/ui/PercentSliderControl';
 import { usePanelToggleHandlers } from '../../hooks/usePanelToggleHandlers';
 import type { GridType, GridPluginSlice } from './slice';
-import { formatPercent } from '../../utils/coreHelpers';
 
 const GRID_TYPE_OPTIONS: Array<{ value: GridType; label: string }> = [
   { value: 'square', label: 'Square' },
@@ -63,7 +63,7 @@ const GridPanelComponent: React.FC = () => {
   const updateParametricWarp = createParametricWarpUpdater(grid, updateGridState);
 
   // Use shared hook for toggle handlers
-  const { createToggleHandler } = usePanelToggleHandlers(updateGridState ?? (() => {}));
+  const { createToggleHandler } = usePanelToggleHandlers(updateGridState);
   const handleToggleGrid = createToggleHandler('enabled');
   const handleToggleSnap = createToggleHandler('snapEnabled');
   const handleToggleRulers = createToggleHandler('showRulers');
@@ -215,14 +215,10 @@ const GridPanelComponent: React.FC = () => {
         )}
 
         {/* Opacity Slider */}
-        <SliderControl
+        <PercentSliderControl
           label="Opacity"
           value={grid?.opacity ?? 0.3}
-          min={0.1}
-          max={1}
-          step={0.1}
           onChange={handleOpacityChange}
-          formatter={(value) => formatPercent(value)}
           title="Grid opacity"
         />
 

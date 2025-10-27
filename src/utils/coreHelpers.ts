@@ -9,6 +9,23 @@
 import type { CanvasElement } from '../types';
 
 /**
+ * Clamp a numeric value between a minimum and maximum range.
+ * 
+ * @param value - The value to clamp
+ * @param min - Minimum allowed value
+ * @param max - Maximum allowed value
+ * @returns Clamped value within [min, max]
+ * 
+ * @example
+ * clamp(15, 0, 10) // 10
+ * clamp(-5, 0, 10) // 0
+ * clamp(5, 0, 10) // 5
+ */
+export function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
+}
+
+/**
  * Format a decimal number as a percentage string.
  * 
  * @param value - Decimal value (0.0 to 1.0)

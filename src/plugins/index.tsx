@@ -59,7 +59,7 @@ const selectPlugin: PluginDefinition<CanvasStore> = {
         activePlugin,
         viewport,
         isElementHidden,
-        getTransformedBounds,
+        getElementBounds,
       }) => {
         if (!selectedIds.length) {
           return null;
@@ -86,7 +86,7 @@ const selectPlugin: PluginDefinition<CanvasStore> = {
                   <SelectionOverlay
                     key={`selection-${element.id}`}
                     element={element}
-                    bounds={getTransformedBounds(element)}
+                    bounds={getElementBounds(element)}
                     viewport={viewport}
                     selectedSubpaths={selectedSubpaths}
                     activePlugin={activePlugin}

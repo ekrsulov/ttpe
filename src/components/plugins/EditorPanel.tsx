@@ -17,8 +17,8 @@ import {
   useBreakpointValue
 } from '@chakra-ui/react';
 import { SliderControl } from '../ui/SliderControl';
+import { PercentSliderControl } from '../ui/PercentSliderControl';
 import { PresetButton } from '../ui/FillAndStrokePresetButton';
-import { formatPercent } from '../../utils/coreHelpers';
 import { LinecapSelector } from '../ui/LinecapSelector';
 import { LinejoinSelector } from '../ui/LinejoinSelector';
 import { FillRuleSelector } from '../ui/FillRuleSelector';
@@ -237,13 +237,9 @@ export const EditorPanel: React.FC = () => {
                   />
                 </HStack>
                 <Box flex={1} minW="120px">
-                  <SliderControl
+                  <PercentSliderControl
                     value={currentFillOpacity}
-                    min={0}
-                    max={1}
-                    step={0.1}
                     onChange={handleFillOpacityChange}
-                    formatter={(value) => formatPercent(value)}
                     title="Fill Opacity"
                     minWidth="50px"
                     valueWidth="40px"
@@ -289,13 +285,9 @@ export const EditorPanel: React.FC = () => {
                   />
                 </HStack>
                 <Box flex={1} minW="120px">
-                  <SliderControl
+                  <PercentSliderControl
                     value={currentOpacity}
-                    min={0}
-                    max={1}
-                    step={0.1}
                     onChange={handleOpacityChange}
-                    formatter={(value) => formatPercent(value)}
                     title="Stroke Opacity"
                     minWidth="50px"
                     valueWidth="40px"

@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { clamp } from '../utils/coreHelpers';
 
 export interface UseDragResizeOptions {
   onResize: (newValue: number) => void;
@@ -123,7 +124,7 @@ export function useDragResize({
     }
 
     // Constrain within min/max bounds
-    return Math.min(Math.max(newValue, minValue), maxValue);
+    return clamp(newValue, minValue, maxValue);
   }, [direction, reverseHorizontal, reverseVertical, minValue, maxValue]);
 
   const handleMouseMove = useCallback(

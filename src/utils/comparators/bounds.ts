@@ -8,7 +8,7 @@
  * to prevent unnecessary re-renders when bounds haven't actually changed.
  */
 
-import type { Command, PathData } from '../../types';
+import type { Command } from '../../types';
 import { measureSubpathBounds } from '../geometry';
 
 export interface RoundedBbox {
@@ -93,32 +93,4 @@ export function haveBoundsChanged(
 
   // Compare
   return !areBboxesEqual(prevBbox, nextBbox);
-}
-
-/**
- * Check if bounds have changed for path elements
- * Convenience wrapper that extracts data from PathData
- * 
- * @param prevData - Previous path data
- * @param nextData - Next path data
- * @param zoom - Current zoom level (default: 1)
- * @returns true if bounds changed, false otherwise
- */
-export function havePathBoundsChanged(
-  prevData: PathData,
-  nextData: PathData,
-  zoom: number = 1
-): boolean {
-  const prevStrokeWidth = prevData.strokeWidth ?? 1;
-  const nextStrokeWidth = nextData.strokeWidth ?? 1;
-  const prevCommands = prevData.subPaths.flat();
-  const nextCommands = nextData.subPaths.flat();
-
-  return haveBoundsChanged(
-    prevCommands,
-    nextCommands,
-    prevStrokeWidth,
-    nextStrokeWidth,
-    zoom
-  );
 }

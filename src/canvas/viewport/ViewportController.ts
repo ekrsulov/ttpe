@@ -1,6 +1,7 @@
 import type { Viewport, Point } from '../../types';
 import type { Bounds } from '../../utils/boundsUtils';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../utils';
+import { clamp } from '../../utils/coreHelpers';
 
 export interface ViewportSize {
   width: number;
@@ -34,7 +35,7 @@ export interface FitToSelectionOptions extends ClampOptions {
   padding?: number;
 }
 
-export const DEFAULT_MIN_ZOOM = 0.1;
+const DEFAULT_MIN_ZOOM = 0.1;
 export const DEFAULT_MAX_ZOOM = 5;
 const DEFAULT_PADDING = 32;
 
@@ -42,7 +43,7 @@ const clampNumber = (value: number, min: number, max: number): number => {
   if (!Number.isFinite(value)) {
     return min;
   }
-  return Math.min(Math.max(value, min), max);
+  return clamp(value, min, max);
 };
 
 const normalisePan = (value: number): number => {

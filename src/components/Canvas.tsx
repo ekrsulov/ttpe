@@ -220,7 +220,7 @@ const CanvasContent: React.FC = () => {
   useMobileTouchGestures(svgRef);
 
   //  Helper function to get element bounds considering current transform
-  const { getElementBounds, getTransformedBounds, selectedGroupBounds } = useCanvasGeometry({
+  const { getElementBounds, selectedGroupBounds } = useCanvasGeometry({
     elementMap,
     viewport,
     selectedIds,
@@ -385,7 +385,6 @@ const CanvasContent: React.FC = () => {
       isDragging,
       transformFeedback: feedback,
       getElementBounds,
-      getTransformedBounds,
       handleTransformationHandlerPointerDown,
       handleTransformationHandlerPointerUp,
       handleSubpathDoubleClick,
@@ -411,7 +410,6 @@ const CanvasContent: React.FC = () => {
       isDragging,
       feedback,
       getElementBounds,
-      getTransformedBounds,
       handleTransformationHandlerPointerDown,
       handleTransformationHandlerPointerUp,
       handleSubpathDoubleClick,

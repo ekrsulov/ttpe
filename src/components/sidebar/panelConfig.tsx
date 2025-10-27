@@ -1,4 +1,8 @@
 import React from 'react';
+import type { SmoothBrush } from '../../plugins/edit/slice';
+
+// Re-export SmoothBrush for backward compatibility
+export type { SmoothBrush };
 
 // Lazy load panel components
 const EditorPanel = React.lazy(() => import('../plugins/EditorPanel').then(module => ({ default: module.EditorPanel })));
@@ -18,23 +22,6 @@ const SubPathOperationsPanel = React.lazy(() => import('../../plugins/subpath/Su
 const GuidelinesPanel = React.lazy(() => import('../../plugins/guidelines/GuidelinesPanel').then(module => ({ default: module.GuidelinesPanel })));
 const GridPanel = React.lazy(() => import('../../plugins/grid/GridPanel').then(module => ({ default: module.default })));
 const GridFillPanel = React.lazy(() => import('../../plugins/gridFill/GridFillPanel').then(module => ({ default: module.GridFillPanel })));
-
-export interface SmoothBrush {
-  radius: number;
-  strength: number;
-  isActive: boolean;
-  cursorX: number;
-  cursorY: number;
-  simplifyPoints: boolean;
-  simplificationTolerance: number;
-  minDistance: number;
-  affectedPoints: Array<{
-    commandIndex: number;
-    pointIndex: number;
-    x: number;
-    y: number;
-  }>;
-}
 
 export interface PathSimplification {
   tolerance: number;

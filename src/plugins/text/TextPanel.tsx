@@ -16,11 +16,22 @@ import { getAvailableFonts } from '../../utils';
 import { FontSelector } from '../../components/ui/FontSelector';
 import { Panel } from '../../components/ui/Panel';
 import { logger } from '../../utils';
+import { createPropertyUpdater, createPropertyGetters, preventSpacebarPropagation } from '../../utils/panelHelpers';
 
 export const TextPanel: React.FC = () => {
   // Use individual selectors to prevent re-renders on unrelated changes
   const text = useCanvasStore(state => state.text);
   const updateTextState = useCanvasStore(state => state.updateTextState);
+
+  // Create property updater and current values helper
+  const updateProperty = createPropertyUpdater(updateTextState);
+  const current = createPropertyGetters(text, {
+    fontSize: 16,
+    fontFamily: 'Arial',
+    text: '',
+    fontWeight: 'normal' as 'normal' | 'bold',
+    fontStyle: 'normal' as 'normal' | 'italic'
+  });
 
   // Font detection state
   const [availableFonts, setAvailableFonts] = useState<string[]>([]);
@@ -45,14 +56,6 @@ export const TextPanel: React.FC = () => {
     loadFonts();
   }, []);
 
-  const handleFontSizeChange = (value: number) => {
-    updateTextState?.({ fontSize: value });
-  };
-
-  const handleFontFamilyChange = (value: string) => {
-    updateTextState?.({ fontFamily: value });
-  };
-
   const handleFontWeightChange = (value: 'normal' | 'bold') => {
     updateTextState?.({ fontWeight: value });
   };
@@ -61,51 +64,22 @@ export const TextPanel: React.FC = () => {
     updateTextState?.({ fontStyle: value });
   };
 
-  const handleTextChange = (value: string) => {
-    updateTextState?.({ text: value });
-  };
-
-  // Get current values from plugin defaults
-  const getCurrentFontSize = () => {
-    return text?.fontSize ?? 16;
-  };
-
-  const getCurrentFontFamily = () => {
-    return text?.fontFamily ?? 'Arial';
-  };
-
-  const getCurrentText = () => {
-    return text?.text ?? '';
-  };
-
-  const getCurrentFontWeight = () => {
-    return text?.fontWeight ?? 'normal';
-  };
-
-  const getCurrentFontStyle = () => {
-    return text?.fontStyle ?? 'normal';
-  };
-
   return (
     <Panel icon={<Type size={16} />} title="Text">
       <VStack spacing={2} align="stretch">
         {/* Text Input */}
         <Input
-          value={getCurrentText()}
-          onChange={(e) => handleTextChange(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.code === 'Space') {
-              e.stopPropagation();
-            }
-          }}
+          value={current.text}
+          onChange={(e) => updateProperty('text')(e.target.value)}
+          onKeyDown={preventSpacebarPropagation}
           placeholder="Enter text"
           size="sm"
         />
 
         {/* Font Selector */}
         <FontSelector
-          value={getCurrentFontFamily()}
-          onChange={handleFontFamilyChange}
+          value={current.fontFamily}
+          onChange={updateProperty('fontFamily')}
           fonts={availableFonts}
           disabled={isScanningFonts}
           loading={isScanningFonts}
@@ -114,18 +88,14 @@ export const TextPanel: React.FC = () => {
         {/* Font Size and Style Controls */}
         <HStack spacing={1}>
           <NumberInput
-            value={getCurrentFontSize()}
-            onChange={(_, valueNumber) => handleFontSizeChange(valueNumber || 12)}
+            value={current.fontSize}
+            onChange={(_, valueNumber) => updateProperty('fontSize')(valueNumber || 12)}
             min={4}
             size="sm"
             width="100px"
           >
             <NumberInputField
-              onKeyDown={(e) => {
-                if (e.code === 'Space') {
-                  e.stopPropagation();
-                }
-              }}
+              onKeyDown={preventSpacebarPropagation}
             />
             <NumberInputStepper>
               <NumberIncrementStepper />
@@ -136,18 +106,18 @@ export const TextPanel: React.FC = () => {
           <ChakraIconButton
             aria-label="Bold"
             icon={<Bold size={12} />}
-            onClick={() => handleFontWeightChange(getCurrentFontWeight() === 'bold' ? 'normal' : 'bold')}
+            onClick={() => handleFontWeightChange(current.fontWeight === 'bold' ? 'normal' : 'bold')}
             variant="unstyled"
             size="sm"
-            bg={getCurrentFontWeight() === 'bold' ? 'blue.500' : 'transparent'}
-            color={getCurrentFontWeight() === 'bold' ? 'white' : 'gray.700'}
+            bg={current.fontWeight === 'bold' ? 'blue.500' : 'transparent'}
+            color={current.fontWeight === 'bold' ? 'white' : 'gray.700'}
             border="1px solid"
-            borderColor={getCurrentFontWeight() === 'bold' ? 'blue.500' : 'gray.400'}
+            borderColor={current.fontWeight === 'bold' ? 'blue.500' : 'gray.400'}
             borderRadius="md"
             fontWeight="medium"
             transition="all 0.2s"
             _hover={{
-              bg: getCurrentFontWeight() === 'bold' ? 'blue.600' : 'gray.50'
+              bg: current.fontWeight === 'bold' ? 'blue.600' : 'gray.50'
             }}
             sx={{
               minH: '28px',
@@ -161,18 +131,18 @@ export const TextPanel: React.FC = () => {
           <ChakraIconButton
             aria-label="Italic"
             icon={<Italic size={12} />}
-            onClick={() => handleFontStyleChange(getCurrentFontStyle() === 'italic' ? 'normal' : 'italic')}
+            onClick={() => handleFontStyleChange(current.fontStyle === 'italic' ? 'normal' : 'italic')}
             variant="unstyled"
             size="sm"
-            bg={getCurrentFontStyle() === 'italic' ? 'blue.500' : 'transparent'}
-            color={getCurrentFontStyle() === 'italic' ? 'white' : 'gray.700'}
+            bg={current.fontStyle === 'italic' ? 'blue.500' : 'transparent'}
+            color={current.fontStyle === 'italic' ? 'white' : 'gray.700'}
             border="1px solid"
-            borderColor={getCurrentFontStyle() === 'italic' ? 'blue.500' : 'gray.400'}
+            borderColor={current.fontStyle === 'italic' ? 'blue.500' : 'gray.400'}
             borderRadius="md"
             fontWeight="medium"
             transition="all 0.2s"
             _hover={{
-              bg: getCurrentFontStyle() === 'italic' ? 'blue.600' : 'gray.50'
+              bg: current.fontStyle === 'italic' ? 'blue.600' : 'gray.50'
             }}
             sx={{
               minH: '28px',
