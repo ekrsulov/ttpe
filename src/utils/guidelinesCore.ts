@@ -3,12 +3,11 @@
  * 
  * This module provides the core logic for guidelines calculation:
  * - Distance scanning between elements
- * - Bounds map calculation
  * - Shared utilities to avoid duplication between overlay and slice
  */
 
 import type { Bounds } from './guidelinesHelpers';
-import { rangesOverlap, calculateElementBoundsMap as helperCalculateElementBoundsMap, type ElementBoundsInfo } from './guidelinesHelpers';
+import { rangesOverlap, type ElementBoundsInfo } from './guidelinesHelpers';
 
 export type { Bounds, ElementBoundsInfo } from './guidelinesHelpers';
 
@@ -23,24 +22,6 @@ export interface DistanceScanResult {
   referenceElementIds: [string, string];
   bounds1: Bounds;
   bounds2: Bounds;
-}
-
-/**
- * Calculate element bounds map from elements array
- * Single source of truth for bounds calculation
- * 
- * @param elements - Array of elements to process
- * @param excludeIds - IDs to exclude from calculation
- * @param zoom - The zoom level
- * @returns Map of element IDs to their bounds info
- */
-export function calculateElementBoundsMap(
-  elements: Array<{ id: string; type: string; data: unknown }>,
-  excludeIds: string[],
-  zoom: number
-): Map<string, ElementBoundsInfo> {
-  // Use the helper from guidelinesHelpers
-  return helperCalculateElementBoundsMap(elements, excludeIds, zoom);
 }
 
 /**

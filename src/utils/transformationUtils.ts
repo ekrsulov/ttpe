@@ -1,5 +1,8 @@
-import type { PathData, Command } from '../types';
-import { formatToPrecision, PATH_DECIMAL_PRECISION } from './index';
+import type { Command, PathData } from '../types';
+import { formatToPrecision } from './index';
+import { transformCommands } from './sharedTransformUtils';
+
+export const PATH_DECIMAL_PRECISION = 3;
 // Removed unused imports: extractSubpaths, transformCommands, calculateScaledStrokeWidth, logger
 
 /**
@@ -111,10 +114,10 @@ export const alignmentTargets = {
 } as const;
 
 /**
- * Scales commands relative to a center point (origin).
- * Supports scaling on a single axis (width or height) or both axes.
+ * Scales a collection of commands relative to an origin point.
+ * This now delegates to transformCommands for consistency.
  * 
- * @param commands - Array of path commands to scale
+ * @param commands - Commands to scale
  * @param scaleX - X-axis scale factor (1 = no change)
  * @param scaleY - Y-axis scale factor (1 = no change)
  * @param originX - X coordinate of the scaling origin (center point)
@@ -131,39 +134,52 @@ export function scaleCommands(
   options: { precision?: number } = {}
 ): Command[] {
   const { precision = PATH_DECIMAL_PRECISION } = options;
-  const formatter = (n: number) => formatToPrecision(n, precision);
-
-  return commands.map(cmd => {
-    if (cmd.type === 'M' || cmd.type === 'L') {
-      return {
-        ...cmd,
-        position: {
-          x: formatter(originX + (cmd.position.x - originX) * scaleX),
-          y: formatter(originY + (cmd.position.y - originY) * scaleY)
-        }
-      };
-    } else if (cmd.type === 'C') {
-      return {
-        ...cmd,
-        controlPoint1: {
-          ...cmd.controlPoint1,
-          x: formatter(originX + (cmd.controlPoint1.x - originX) * scaleX),
-          y: formatter(originY + (cmd.controlPoint1.y - originY) * scaleY)
-        },
-        controlPoint2: {
-          ...cmd.controlPoint2,
-          x: formatter(originX + (cmd.controlPoint2.x - originX) * scaleX),
-          y: formatter(originY + (cmd.controlPoint2.y - originY) * scaleY)
-        },
-        position: {
-          x: formatter(originX + (cmd.position.x - originX) * scaleX),
-          y: formatter(originY + (cmd.position.y - originY) * scaleY)
-        }
-      };
-    }
-    // Z commands don't need transformation
-    return cmd;
+  
+  // Delegate to transformCommands (unified scaling/transform logic)
+  const transformed = transformCommands(commands, {
+    scaleX,
+    scaleY,
+    originX,
+    originY,
+    rotation: 0, // No rotation for pure scaling
   });
+
+  // Apply precision formatting if specified
+  if (precision !== undefined) {
+    const formatter = (n: number) => formatToPrecision(n, precision);
+    return transformed.map(cmd => {
+      if (cmd.type === 'M' || cmd.type === 'L') {
+        return {
+          ...cmd,
+          position: {
+            x: formatter(cmd.position.x),
+            y: formatter(cmd.position.y),
+          },
+        };
+      } else if (cmd.type === 'C') {
+        return {
+          ...cmd,
+          controlPoint1: {
+            ...cmd.controlPoint1,
+            x: formatter(cmd.controlPoint1.x),
+            y: formatter(cmd.controlPoint1.y),
+          },
+          controlPoint2: {
+            ...cmd.controlPoint2,
+            x: formatter(cmd.controlPoint2.x),
+            y: formatter(cmd.controlPoint2.y),
+          },
+          position: {
+            x: formatter(cmd.position.x),
+            y: formatter(cmd.position.y),
+          },
+        };
+      }
+      return cmd;
+    });
+  }
+
+  return transformed;
 }
 
 /**

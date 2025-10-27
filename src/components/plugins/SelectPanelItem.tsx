@@ -2,12 +2,12 @@ import React, { memo } from 'react';
 import { VStack, HStack, Text } from '@chakra-ui/react';
 import { Copy, Clipboard, MousePointer2, Eye, EyeOff, Lock, Unlock, Group as GroupIcon } from 'lucide-react';
 import { extractSubpaths } from '../../utils/path';
-import type { PathData, Command } from '../../types';
+import type { PathData } from '../../types';
 import { PathThumbnail } from '../ui/PathThumbnail';
 import { PanelActionButton } from '../ui/PanelActionButton';
 import { useCanvasStore } from '../../store/canvasStore';
-import { measureSubpathBounds } from '../../utils/measurementUtils';
-import { getRoundedBbox, areBboxesEqual } from '../../utils/boundsComparisonUtils';
+import { haveBoundsChanged, areBboxesEqual } from '../../utils/comparators/bounds';
+import { getItemThumbnailData } from '../../utils/selectPanelHelpers';
 
 // Import shared type instead of duplicating
 import type { SelectPanelItemData } from './SelectPanel.types';
@@ -41,26 +41,14 @@ const SelectPanelItemComponent: React.FC<SelectPanelItemProps> = ({
   const toggleElementLock = useCanvasStore(state => state.toggleElementLock);
   const selectElements = useCanvasStore(state => state.selectElements);
 
-  // Get commands for thumbnail and bbox
-  let thumbnailCommands: Command[] = [];
-  let strokeWidth = 1; // Default stroke width
-  
-  if (item.type === 'element' && item.element.type === 'path') {
-    thumbnailCommands = (item.element.data as PathData).subPaths.flat();
-    strokeWidth = (item.element.data as PathData).strokeWidth ?? 1;
-  } else if (item.type === 'subpath' && item.subpathIndex !== undefined) {
-    const subpathData = extractSubpaths((item.element.data as PathData).subPaths.flat())[item.subpathIndex];
-    if (subpathData) {
-      thumbnailCommands = subpathData.commands;
-    }
-    strokeWidth = (item.element.data as PathData).strokeWidth ?? 1;
-  }
-
-  // Use stroke-aware bounds calculation (same as transformation overlay)
-  const boundsResult = thumbnailCommands.length > 0 
-    ? measureSubpathBounds(thumbnailCommands, strokeWidth, 1) 
-    : null;
-  const bbox = getRoundedBbox(boundsResult);
+  // Use centralized helper to get thumbnail data and bounds
+  const { commands: thumbnailCommands, bbox } = item.element.type === 'path'
+    ? getItemThumbnailData(
+        item.type,
+        item.element.data as PathData,
+        item.type === 'subpath' ? item.subpathIndex : undefined
+      )
+    : { commands: [], bbox: null };
 
   const elementId = item.element.id;
   const subpathIndex = item.type === 'subpath' ? item.subpathIndex : undefined;
@@ -212,31 +200,14 @@ const arePropsEqual = (prevProps: SelectPanelItemProps, nextProps: SelectPanelIt
       return false;
     }
     
-    // Check if strokeWidth or bounding box changed (for path elements)
     if (prevEl.type === 'path' && nextEl.type === 'path') {
       const prevStrokeWidth = (prevEl.data as PathData).strokeWidth ?? 1;
       const nextStrokeWidth = (nextEl.data as PathData).strokeWidth ?? 1;
-      
-      // If strokeWidth changed, re-render (affects displayed coordinates)
-      if (prevStrokeWidth !== nextStrokeWidth) {
-        return false;
-      }
-      
       const prevCommands = (prevEl.data as PathData).subPaths.flat();
       const nextCommands = (nextEl.data as PathData).subPaths.flat();
       
-      const prevBoundsResult = prevCommands.length > 0 
-        ? measureSubpathBounds(prevCommands, prevStrokeWidth, 1) 
-        : null;
-      const nextBoundsResult = nextCommands.length > 0 
-        ? measureSubpathBounds(nextCommands, nextStrokeWidth, 1) 
-        : null;
-      
-      const prevBbox = getRoundedBbox(prevBoundsResult);
-      const nextBbox = getRoundedBbox(nextBoundsResult);
-      
-      // Compare bounding boxes using shared utility
-      if (!areBboxesEqual(prevBbox, nextBbox)) {
+      // Use shared bounds comparison utility - checks both strokeWidth and bounds
+      if (haveBoundsChanged(prevCommands, nextCommands, prevStrokeWidth, nextStrokeWidth, 1)) {
         return false;
       }
     }
@@ -272,14 +243,12 @@ const arePropsEqual = (prevProps: SelectPanelItemProps, nextProps: SelectPanelIt
       const nextSubpath = nextSubpaths[nextProps.item.subpathIndex];
       
       if (prevSubpath && nextSubpath) {
-        const prevBoundsResult = measureSubpathBounds(prevSubpath.commands, prevStrokeWidth, 1);
-        const nextBoundsResult = measureSubpathBounds(nextSubpath.commands, nextStrokeWidth, 1);
-        
-        const prevBbox = getRoundedBbox(prevBoundsResult);
-        const nextBbox = getRoundedBbox(nextBoundsResult);
+        // Use centralized helper to compare bounds
+        const prevData = getItemThumbnailData('subpath', prevEl.data as PathData, prevProps.item.subpathIndex);
+        const nextData = getItemThumbnailData('subpath', nextEl.data as PathData, nextProps.item.subpathIndex);
         
         // Compare bounding boxes using shared utility
-        if (!areBboxesEqual(prevBbox, nextBbox)) {
+        if (!areBboxesEqual(prevData.bbox, nextData.bbox)) {
           return false;
         }
       }

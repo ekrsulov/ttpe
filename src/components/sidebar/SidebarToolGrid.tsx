@@ -1,6 +1,7 @@
 import React from 'react';
-import { Box, SimpleGrid, Button } from '@chakra-ui/react';
+import { Box, SimpleGrid } from '@chakra-ui/react';
 import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
+import { SidebarUtilityButton } from '../ui/SidebarUtilityButton';
 
 interface ToolConfig {
   name: string;
@@ -68,63 +69,23 @@ export const SidebarToolGrid: React.FC<SidebarToolGridProps> = ({
     }
     
     return (
-      <Button
+      <SidebarUtilityButton
         key={plugin.name}
-        aria-label={plugin.label}
+        label={plugin.label}
+        isActive={isActive}
         onClick={handleClick}
-        variant="unstyled"
-        size="sm"
-        data-active={isActive}
-        bg={isActive ? 'blue.500' : 'transparent'}
-        color={isActive ? 'white' : 'gray.700'}
-        border="1px solid"
-        borderColor={isActive ? 'blue.500' : 'gray.400'}
-        borderRadius="md"
-        fontWeight="medium"
-        transition="all 0.2s"
-        width={!isDesktop ? "full" : "auto"}
-        _hover={{
-          bg: isActive ? 'blue.600' : 'gray.50'
-        }}
-        sx={{
-          minH: '32px',
-          px: 3,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        {plugin.label}
-      </Button>
+        fullWidth={!isDesktop}
+      />
     );
   };
 
   const renderPinButton = () => (
-    <Button
-      aria-label={isPinned ? "Unpin sidebar" : "Pin sidebar"}
-      onClick={onTogglePin}
-      variant="unstyled"
-      size="sm"
-      bg="transparent"
-      color="gray.700"
-      border="1px solid"
-      borderColor="gray.400"
-      borderRadius="md"
-      fontWeight="medium"
-      transition="all 0.2s"
-      _hover={{
-        bg: 'gray.50'
-      }}
-      sx={{
-        minH: '32px',
-        px: 3,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      {isPinned ? "Unpin" : "Pin"}
-    </Button>
+    <SidebarUtilityButton
+      label={isPinned ? 'Unpin' : 'Pin'}
+      isActive={false}
+      onClick={onTogglePin!}
+      fullWidth={false}
+    />
   );
 
   return (

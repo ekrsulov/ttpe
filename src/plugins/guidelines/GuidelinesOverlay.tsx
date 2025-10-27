@@ -2,10 +2,10 @@ import React, { useMemo } from 'react';
 import type { GuidelineMatch, DistanceGuidelineMatch } from './slice';
 import { 
   calculateElementBoundsMap,
-  guidelineDistanceScan,
+  calculatePerpendicularMidpoint,
   type Bounds
-} from '../../utils/guidelinesCore';
-import { calculatePerpendicularMidpoint } from '../../utils/guidelinesHelpers';
+} from '../../utils/guidelinesHelpers';
+import { guidelineDistanceScan } from '../../utils/guidelinesCore';
 import { GuidelineLine, DistanceLabel } from './GuidelineComponents';
 
 interface GuidelinesOverlayProps {

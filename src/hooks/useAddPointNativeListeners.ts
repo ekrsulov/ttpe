@@ -1,8 +1,6 @@
-import { useEffect } from 'react';
 import type { RefObject } from 'react';
-import { pluginManager } from '../utils/pluginManager';
+import { useCanvasServiceActivation } from './useCanvasServiceActivation';
 import { useCanvasController } from '../canvas/controller/CanvasControllerContext';
-import { useCanvasEventBus } from '../canvas/CanvasEventBusContext';
 import { canvasStoreApi } from '../store/canvasStore';
 import { ADD_POINT_SERVICE_ID, type AddPointServiceState } from '../canvas/listeners/AddPointListener';
 import type { Point } from '../types';
@@ -27,30 +25,11 @@ export const useAddPointNativeListeners = ({
   emitPointerEvent,
 }: UseAddPointNativeListenersParams): void => {
   const controller = useCanvasController();
-  const eventBus = useCanvasEventBus();
 
-  useEffect(() => {
-    const svg = svgRef.current;
-    if (!svg || !eventBus) {
-      return;
-    }
-
-    return pluginManager.activateCanvasService(ADD_POINT_SERVICE_ID, {
-      svg,
-      controller,
-      eventBus,
-      store: canvasStoreApi,
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [eventBus, svgRef]);
-
-  useEffect(() => {
-    const svg = svgRef.current;
-    if (!svg || !eventBus) {
-      return;
-    }
-
-    const state: AddPointServiceState = {
+  useCanvasServiceActivation<AddPointServiceState>({
+    serviceId: ADD_POINT_SERVICE_ID,
+    svgRef,
+    selectState: () => ({
       activePlugin,
       isAddPointModeActive,
       elements: controller.elements,
@@ -67,17 +46,12 @@ export const useAddPointNativeListeners = ({
         const addPointMode = canvasStoreApi.getState().addPointMode;
         return addPointMode?.hoverPosition !== null && addPointMode?.hoverPosition !== undefined;
       },
-    };
-
-    pluginManager.updateCanvasServiceState(ADD_POINT_SERVICE_ID, state);
-  }, [
-    activePlugin,
-    controller.elements,
-    controller.selectedIds,
-    emitPointerEvent,
-    eventBus,
-    isAddPointModeActive,
-    screenToCanvas,
-    svgRef,
-  ]);
+    }),
+    // Only include dependencies that should trigger state update
+    // Don't include controller.elements or controller.selectedIds as they change too frequently
+    stateDeps: [
+      activePlugin,
+      isAddPointModeActive,
+    ],
+  });
 };

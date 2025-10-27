@@ -1,5 +1,6 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React from 'react';
 import { Box } from '@chakra-ui/react';
+import { useDragResize } from '../../hooks/useDragResize';
 
 interface SidebarResizerProps {
   onResize: (width: number) => void;
@@ -10,6 +11,7 @@ interface SidebarResizerProps {
 
 /**
  * Resizer component for sidebar - drag handle to adjust sidebar width
+ * Uses the shared useDragResize hook for drag-to-resize logic
  */
 export const SidebarResizer: React.FC<SidebarResizerProps> = ({
   onResize,
@@ -17,59 +19,14 @@ export const SidebarResizer: React.FC<SidebarResizerProps> = ({
   minWidth = 200,
   maxWidth = 600,
 }) => {
-  const [isDragging, setIsDragging] = useState(false);
-
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  }, []);
-
-  const handleDoubleClick = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    onReset?.(); // Reset al ancho inicial
-  }, [onReset]);
-
-  const handleMouseMove = useCallback(
-    (e: MouseEvent) => {
-      if (!isDragging) return;
-
-      // Calculate new width based on mouse position from right edge
-      const newWidth = window.innerWidth - e.clientX;
-
-      // Constrain within min/max bounds
-      const constrainedWidth = Math.min(Math.max(newWidth, minWidth), maxWidth);
-
-      onResize(constrainedWidth);
-    },
-    [isDragging, minWidth, maxWidth, onResize]
-  );
-
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
-  }, []);
-
-  // Add/remove global mouse listeners
-  useEffect(() => {
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      // Prevent text selection during drag
-      document.body.style.userSelect = 'none';
-      document.body.style.cursor = 'ew-resize';
-    } else {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.body.style.userSelect = '';
-      document.body.style.cursor = '';
-    }
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.body.style.userSelect = '';
-      document.body.style.cursor = '';
-    };
-  }, [isDragging, handleMouseMove, handleMouseUp]);
+  const { isDragging, handleMouseDown, handleDoubleClick } = useDragResize({
+    onResize,
+    onReset,
+    minValue: minWidth,
+    maxValue: maxWidth,
+    direction: 'horizontal',
+    reverseHorizontal: true, // Sidebar resizes from right edge
+  });
 
   return (
     <Box

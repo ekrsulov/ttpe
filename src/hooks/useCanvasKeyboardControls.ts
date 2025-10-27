@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
 import { isTextFieldFocused } from '../utils/domHelpers';
 import { useCanvasCurves } from '../plugins/curves/useCanvasCurves';
+import { getDeletionScope, executeDeletion } from '../utils/deletionScopeUtils';
 
 export const useCanvasKeyboardControls = () => {
   const [isSpacePressed, setIsSpacePressed] = useState(false);
@@ -118,16 +119,20 @@ export const useCanvasKeyboardControls = () => {
           moveSelectedElements(roundedDeltaX, roundedDeltaY);
         }
       } else if (e.key === 'Delete' || e.key === 'Backspace') {
-        // Delete selected items
-        // Priority: points > subpaths > paths
-        if ((selectedCommands?.length ?? 0) > 0 && deleteSelectedCommands) {
-          deleteSelectedCommands();
-          e.preventDefault();
-        } else if ((selectedSubpaths?.length ?? 0) > 0 && deleteSelectedSubpaths) {
-          deleteSelectedSubpaths();
-          e.preventDefault();
-        } else if (selectedIds.length > 0) {
-          deleteSelectedElements();
+        // Delete selected items using priority-based strategy
+        const scope = getDeletionScope({
+          selectedCommandsCount: selectedCommands?.length ?? 0,
+          selectedSubpathsCount: selectedSubpaths?.length ?? 0,
+          selectedElementsCount: selectedIds.length,
+        }, false);
+        
+        const deleted = executeDeletion(scope, {
+          deleteSelectedCommands,
+          deleteSelectedSubpaths,
+          deleteSelectedElements,
+        });
+        
+        if (deleted) {
           e.preventDefault();
         }
       }

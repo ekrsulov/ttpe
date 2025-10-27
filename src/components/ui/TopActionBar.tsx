@@ -1,8 +1,9 @@
 import React from 'react';
-import { HStack, IconButton } from '@chakra-ui/react';
+import { HStack } from '@chakra-ui/react';
 import { Menu } from 'lucide-react';
 import { RenderCountBadgeWrapper } from './RenderCountBadgeWrapper';
 import { FloatingToolbarShell } from './FloatingToolbarShell';
+import { ToolbarIconButton } from './ToolbarIconButton';
 import type { CanvasElement } from '../../types';
 import { TOOL_DEFINITIONS } from '../../config/toolDefinitions';
 import type { ToolMode } from '../../config/toolDefinitions';
@@ -106,38 +107,32 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
             return false;
           })();
           return (
-            <IconButton
+            <ToolbarIconButton
               key={id}
-              aria-label={label}
-              icon={<Icon size={14} />}
+              icon={Icon}
+              label={label}
               onClick={() => onModeChange(id)}
-              size="xs"
               variant={activeMode === id ? 'solid' : 'ghost'}
               colorScheme={activeMode === id ? 'blue' : 'gray'}
-              title={label}
+              tooltip={label}
               isDisabled={isDisabled}
-              sx={{
-                minHeight: '28px',
-                minWidth: '28px',
-              }}
+              showTooltip={true}
+              title={label}
             />
           );
         })}
         
         {/* Hamburger menu button - al final */}
         {showMenuButton && (
-          <IconButton
-            aria-label="Toggle sidebar"
-            icon={<Menu size={14} />}
+          <ToolbarIconButton
+            icon={Menu}
+            label="Toggle sidebar"
             onClick={onMenuClick}
-            size="xs"
             variant={isSidebarOpen ? 'solid' : 'ghost'}
             colorScheme={isSidebarOpen ? 'blue' : 'gray'}
+            tooltip="Toggle Menu"
+            showTooltip={true}
             title="Toggle Menu"
-            sx={{
-              minHeight: '28px',
-              minWidth: '28px',
-            }}
           />
         )}
       </HStack>

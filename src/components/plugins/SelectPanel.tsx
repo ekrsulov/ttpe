@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { VStack, Box } from '@chakra-ui/react';
 import { extractEditablePoints, extractSubpaths, commandsToString, translateCommands } from '../../utils/path';
@@ -8,6 +8,7 @@ import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
 import { SelectPanelItem } from './SelectPanelItem';
 import { SelectPanelGroupItem } from './SelectPanelGroupItem';
 import { usePersistentState } from '../../hooks/usePersistentState';
+import { useDragResize } from '../../hooks/useDragResize';
 
 const DEFAULT_PANEL_HEIGHT = 140;
 const MIN_PANEL_HEIGHT = 96;
@@ -83,54 +84,16 @@ const SelectPanelComponent: React.FC = () => {
   }, [selectedSubpaths]);
 
   const [panelHeight, setPanelHeight] = usePersistentState('select-panel-height', DEFAULT_PANEL_HEIGHT);
-  const [isResizing, setIsResizing] = useState(false);
-  const resizeStartYRef = useRef(0);
-  const resizeStartHeightRef = useRef(DEFAULT_PANEL_HEIGHT);
-
-  const handleResizeStart = useCallback((event: React.PointerEvent) => {
-    event.preventDefault();
-    resizeStartYRef.current = event.clientY;
-    resizeStartHeightRef.current = panelHeight;
-    setIsResizing(true);
-  }, [panelHeight]);
-
-  const handleResetHeight = useCallback(() => {
-    setPanelHeight(DEFAULT_PANEL_HEIGHT);
-  }, [setPanelHeight]);
-
-  useEffect(() => {
-    if (!isResizing) {
-      return () => {
-        document.body.style.userSelect = '';
-        document.body.style.cursor = '';
-      };
-    }
-
-    const handleMouseMove = (event: PointerEvent) => {
-      const deltaY = resizeStartYRef.current - event.clientY;
-      const newHeight = Math.min(
-        Math.max(resizeStartHeightRef.current + deltaY, MIN_PANEL_HEIGHT),
-        MAX_PANEL_HEIGHT,
-      );
-      setPanelHeight(newHeight);
-    };
-
-    const handleMouseUp = () => {
-      setIsResizing(false);
-    };
-
-    document.addEventListener('pointermove', handleMouseMove);
-    document.addEventListener('pointerup', handleMouseUp);
-    document.body.style.userSelect = 'none';
-    document.body.style.cursor = 'ns-resize';
-
-    return () => {
-      document.removeEventListener('pointermove', handleMouseMove);
-      document.removeEventListener('pointerup', handleMouseUp);
-      document.body.style.userSelect = '';
-      document.body.style.cursor = '';
-    };
-  }, [isResizing, setPanelHeight]);
+  
+  const { isDragging: isResizing, handleMouseDown: handleResizeStart, handleDoubleClick: handleResetHeight } = useDragResize({
+    onResize: setPanelHeight,
+    onReset: () => setPanelHeight(DEFAULT_PANEL_HEIGHT),
+    minValue: MIN_PANEL_HEIGHT,
+    maxValue: MAX_PANEL_HEIGHT,
+    direction: 'vertical',
+    reverseVertical: true, // Drag up increases height
+    initialValue: panelHeight,
+  });
 
   // Note: Footer height CSS variable is managed by SidebarFooter component using useSidebarFooterHeight hook
   // No need for manual fallback - ResizeObserver is widely supported

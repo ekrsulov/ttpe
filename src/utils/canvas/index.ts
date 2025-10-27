@@ -14,4 +14,3 @@ export * from '../fontDetectionUtils';
 
 // Re-export plugin and tool management
 export * from '../pluginManager';
-export * from '../toolRegistry';

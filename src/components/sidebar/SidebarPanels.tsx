@@ -1,12 +1,9 @@
 import React, { Suspense, useMemo } from 'react';
 import { Box } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
+import { useEditPanelContext } from '../../contexts/EditPanelContext';
 import {
   PANEL_CONFIGS,
-  type SmoothBrush,
-  type PathSimplification,
-  type PathRounding,
-  type SelectedCommand,
   type PanelComponentProps
 } from './panelConfig';
 import type { PluginUIContribution } from '../../types/plugins';
@@ -15,56 +12,23 @@ export interface SidebarPanelsProps {
   activePlugin: string | null;
   showFilePanel: boolean;
   showSettingsPanel: boolean;
-  // EditPanel props
-  smoothBrush: SmoothBrush;
-  addPointMode?: {
-    isActive: boolean;
-  };
-  pathSimplification: PathSimplification;
-  pathRounding: PathRounding;
-  selectedCommands: SelectedCommand[];
-  selectedSubpaths: Array<{ elementId: string; subpathIndex: number }>;
-  updateSmoothBrush: (config: Partial<SmoothBrush>) => void;
-  updatePathSimplification: (config: Partial<PathSimplification>) => void;
-  updatePathRounding: (config: Partial<PathRounding>) => void;
-  applySmoothBrush: () => void;
-  applyPathSimplification: () => void;
-  applyPathRounding: () => void;
-  activateSmoothBrush: () => void;
-  deactivateSmoothBrush: () => void;
-  resetSmoothBrush: () => void;
-  activateAddPointMode?: () => void;
-  deactivateAddPointMode?: () => void;
   panelContributions?: PluginUIContribution[];
 }
 
 /**
  * Main panels section of the sidebar with conditional rendering
- * Uses a data-driven approach to render panels based on configuration
+ * Uses a data-driven approach to render panels based on configuration.
+ * EditPanel props are now accessed via EditPanelContext instead of prop drilling.
  */
 export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
   activePlugin,
   showFilePanel,
   showSettingsPanel,
-  smoothBrush,
-  addPointMode,
-  pathSimplification,
-  pathRounding,
-  selectedCommands,
-  selectedSubpaths,
-  updateSmoothBrush,
-  updatePathSimplification,
-  updatePathRounding,
-  applySmoothBrush,
-  applyPathSimplification,
-  applyPathRounding,
-  activateSmoothBrush,
-  deactivateSmoothBrush,
-  resetSmoothBrush,
-  activateAddPointMode,
-  deactivateAddPointMode,
   panelContributions = [],
 }) => {
+  // Get EditPanel context for panels that need it
+  const editPanelContext = useEditPanelContext();
+  
   // Check if we're in special panel mode (file or settings)
   const isInSpecialPanelMode = showFilePanel || showSettingsPanel;
   
@@ -83,42 +47,10 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
   // Prepare all props for panels that might need them
   const allPanelProps: PanelComponentProps = useMemo(() => ({
     activePlugin,
-    smoothBrush,
-    addPointMode,
-    pathSimplification,
-    pathRounding,
-    selectedCommands,
-    selectedSubpaths,
-    updateSmoothBrush,
-    updatePathSimplification,
-    updatePathRounding,
-    applySmoothBrush,
-    applyPathSimplification,
-    applyPathRounding,
-    activateSmoothBrush,
-    deactivateSmoothBrush,
-    resetSmoothBrush,
-    activateAddPointMode,
-    deactivateAddPointMode,
+    ...editPanelContext,
   }), [
     activePlugin,
-    smoothBrush,
-    addPointMode,
-    pathSimplification,
-    pathRounding,
-    selectedCommands,
-    selectedSubpaths,
-    updateSmoothBrush,
-    updatePathSimplification,
-    updatePathRounding,
-    applySmoothBrush,
-    applyPathSimplification,
-    applyPathRounding,
-    activateSmoothBrush,
-    deactivateSmoothBrush,
-    resetSmoothBrush,
-    activateAddPointMode,
-    deactivateAddPointMode,
+    editPanelContext,
   ]);
 
   return (

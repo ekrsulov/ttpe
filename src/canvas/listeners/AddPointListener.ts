@@ -155,10 +155,9 @@ class AddPointListenerService implements CanvasService<AddPointServiceState> {
           attachListeners();
         } else {
           detachListeners();
-          // Clear hover state when deactivating
-          if (currentState) {
-            currentState.updateAddPointHover(null, null, null);
-          }
+          // Note: Don't call updateAddPointHover here as it triggers setState,
+          // causing infinite loops. The hover state will be cleared naturally
+          // when the mode changes through normal event flow.
         }
       },
       dispose: () => {

@@ -1,107 +1,17 @@
 /**
  * Bounds Comparison Utilities
  * 
+ * @deprecated This module is now a re-export wrapper.
+ * Import directly from './comparators/bounds' instead.
+ * 
  * Centralized utilities for comparing bounding boxes to support
  * memoization and change detection across the application.
  */
 
-import type { Command, PathData } from '../types';
-import { measureSubpathBounds } from './geometry';
-
-export interface RoundedBbox {
-  topLeft: { x: number; y: number };
-  bottomRight: { x: number; y: number };
-}
-
-/**
- * Get rounded bounding box from bounds result
- */
-export function getRoundedBbox(
-  bounds: { minX: number; minY: number; maxX: number; maxY: number } | null
-): RoundedBbox | null {
-  if (!bounds) return null;
-  
-  return {
-    topLeft: {
-      x: Math.round(bounds.minX),
-      y: Math.round(bounds.minY),
-    },
-    bottomRight: {
-      x: Math.round(bounds.maxX),
-      y: Math.round(bounds.maxY),
-    },
-  };
-}
-
-/**
- * Compare two rounded bounding boxes for equality
- */
-export function areBboxesEqual(
-  prev: RoundedBbox | null,
-  next: RoundedBbox | null
-): boolean {
-  if (prev === null && next === null) return true;
-  if (prev === null || next === null) return false;
-  
-  return (
-    prev.topLeft.x === next.topLeft.x &&
-    prev.topLeft.y === next.topLeft.y &&
-    prev.bottomRight.x === next.bottomRight.x &&
-    prev.bottomRight.y === next.bottomRight.y
-  );
-}
-
-/**
- * Check if bounds have changed for an element (complete path)
- * Returns true if bounds are the same, false if they changed
- */
-export function haveBoundsChanged(
-  prevCommands: Command[],
-  nextCommands: Command[],
-  prevStrokeWidth: number,
-  nextStrokeWidth: number,
-  zoom: number = 1
-): boolean {
-  // If strokeWidth changed, bounds definitely changed
-  if (prevStrokeWidth !== nextStrokeWidth) {
-    return true;
-  }
-
-  // Measure bounds
-  const prevBoundsResult = prevCommands.length > 0 
-    ? measureSubpathBounds(prevCommands, prevStrokeWidth, zoom) 
-    : null;
-  const nextBoundsResult = nextCommands.length > 0 
-    ? measureSubpathBounds(nextCommands, nextStrokeWidth, zoom) 
-    : null;
-
-  // Get rounded bboxes
-  const prevBbox = getRoundedBbox(prevBoundsResult);
-  const nextBbox = getRoundedBbox(nextBoundsResult);
-
-  // Compare
-  return !areBboxesEqual(prevBbox, nextBbox);
-}
-
-/**
- * Check if bounds have changed for path elements
- * Convenience wrapper that extracts data from PathData
- */
-export function havePathBoundsChanged(
-  prevData: PathData,
-  nextData: PathData,
-  zoom: number = 1
-): boolean {
-  const prevStrokeWidth = prevData.strokeWidth ?? 1;
-  const nextStrokeWidth = nextData.strokeWidth ?? 1;
-  const prevCommands = prevData.subPaths.flat();
-  const nextCommands = nextData.subPaths.flat();
-
-  return haveBoundsChanged(
-    prevCommands,
-    nextCommands,
-    prevStrokeWidth,
-    nextStrokeWidth,
-    zoom
-  );
-}
+export type { RoundedBbox } from './comparators/bounds';
+export {
+  getRoundedBbox,
+  areBboxesEqual,
+  haveBoundsChanged,
+  havePathBoundsChanged
+} from './comparators/bounds';

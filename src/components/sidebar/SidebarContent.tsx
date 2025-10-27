@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Box } from '@chakra-ui/react';
 import { SidebarToolGrid } from './SidebarToolGrid';
 import { SidebarPanelHost } from './SidebarPanelHost';
 import { SidebarFooter } from './SidebarFooter';
 import { SidebarResizer } from './SidebarResizer';
 import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
+import { EditPanelContext } from '../../contexts/EditPanelContext';
 import type { 
   SmoothBrush, 
   PathSimplification, 
@@ -80,8 +81,50 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
   onResize,
   onReset,
 }) => {
+  // Memoize EditPanel context value to prevent unnecessary re-renders
+  const editPanelContextValue = useMemo(
+    () => ({
+      smoothBrush,
+      addPointMode,
+      pathSimplification,
+      pathRounding,
+      selectedCommands,
+      selectedSubpaths,
+      updateSmoothBrush,
+      updatePathSimplification,
+      updatePathRounding,
+      applySmoothBrush,
+      applyPathSimplification,
+      applyPathRounding,
+      activateSmoothBrush,
+      deactivateSmoothBrush,
+      resetSmoothBrush,
+      activateAddPointMode,
+      deactivateAddPointMode,
+    }),
+    [
+      smoothBrush,
+      addPointMode,
+      pathSimplification,
+      pathRounding,
+      selectedCommands,
+      selectedSubpaths,
+      updateSmoothBrush,
+      updatePathSimplification,
+      updatePathRounding,
+      applySmoothBrush,
+      applyPathSimplification,
+      applyPathRounding,
+      activateSmoothBrush,
+      deactivateSmoothBrush,
+      resetSmoothBrush,
+      activateAddPointMode,
+      deactivateAddPointMode,
+    ]
+  );
+
   return (
-    <>
+    <EditPanelContext.Provider value={editPanelContextValue}>
       {/* Resizer handle - only for pinned variant */}
       {variant === 'pinned' && onResize && onReset && (
         <SidebarResizer
@@ -115,23 +158,6 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
           activePlugin={activePlugin}
           showFilePanel={showFilePanel}
           showSettingsPanel={showSettingsPanel}
-          smoothBrush={smoothBrush}
-          addPointMode={addPointMode}
-          pathSimplification={pathSimplification}
-          pathRounding={pathRounding}
-          selectedCommands={selectedCommands}
-          selectedSubpaths={selectedSubpaths}
-          updateSmoothBrush={updateSmoothBrush}
-          updatePathSimplification={updatePathSimplification}
-          updatePathRounding={updatePathRounding}
-          applySmoothBrush={applySmoothBrush}
-          applyPathSimplification={applyPathSimplification}
-          applyPathRounding={applyPathRounding}
-          activateSmoothBrush={activateSmoothBrush}
-          deactivateSmoothBrush={deactivateSmoothBrush}
-          resetSmoothBrush={resetSmoothBrush}
-          activateAddPointMode={activateAddPointMode}
-          deactivateAddPointMode={deactivateAddPointMode}
         />
 
         {/* Footer with ArrangePanel and SelectPanel - Fixed at bottom */}
@@ -143,6 +169,6 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
           />
         )}
       </Box>
-    </>
+    </EditPanelContext.Provider>
   );
 };

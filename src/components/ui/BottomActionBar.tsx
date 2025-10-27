@@ -1,5 +1,5 @@
 import React, { useMemo, useEffect, useState } from 'react';
-import { Box, HStack, IconButton, Tooltip } from '@chakra-ui/react';
+import { HStack } from '@chakra-ui/react';
 import {
   Undo2,
   Redo2,
@@ -11,7 +11,9 @@ import {
 import { useCanvasStore } from '../../store/canvasStore';
 import { RenderCountBadgeWrapper } from './RenderCountBadgeWrapper';
 import { FloatingToolbarShell } from './FloatingToolbarShell';
+import { ToolbarIconButton } from './ToolbarIconButton';
 import { pluginManager } from '../../utils/pluginManager';
+import { getDeletionScope, executeDeletion } from '../../utils/deletionScopeUtils';
 
 // Custom hook to subscribe to temporal state changes
 const useTemporalState = () => {
@@ -58,26 +60,25 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
 
   const zoomFactor = 1.2;
 
-  // Handle delete action based on active plugin
-  const handleDelete = () => {
-    if (activePlugin === 'edit' && selectedCommandsCount > 0) {
-      deleteSelectedCommands?.();
-    } else if (activePlugin === 'subpath' && selectedSubpathsCount > 0) {
-      deleteSelectedSubpaths?.();
-    } else if (activePlugin === 'select' && selectedCount > 0) {
-      deleteSelectedElements();
-    }
-  };
+  // Determine deletion scope using plugin-aware strategy
+  const deletionScope = useMemo(() => getDeletionScope({
+    selectedCommandsCount,
+    selectedSubpathsCount,
+    selectedElementsCount: selectedCount,
+    activePlugin,
+  }, true), [selectedCommandsCount, selectedSubpathsCount, selectedCount, activePlugin]);
 
-  // Determine if delete button should be enabled and count
-  const deleteCount = useMemo(() => {
-    if (activePlugin === 'edit') return selectedCommandsCount;
-    if (activePlugin === 'subpath') return selectedSubpathsCount;
-    if (activePlugin === 'select') return selectedCount;
-    return 0;
-  }, [activePlugin, selectedCommandsCount, selectedSubpathsCount, selectedCount]);
-
+  const deleteCount = deletionScope.count;
   const canDelete = deleteCount > 0;
+
+  // Handle delete action
+  const handleDelete = () => {
+    executeDeletion(deletionScope, {
+      deleteSelectedCommands,
+      deleteSelectedSubpaths,
+      deleteSelectedElements,
+    });
+  };
 
   const pluginBottomActions = pluginManager.getActions('bottom');
 
@@ -99,195 +100,57 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
           <>
             {/* Undo/Redo Group */}
             <HStack spacing={0.5}>
-              <Tooltip label="Undo" placement="top">
-                <Box position="relative">
-                  <IconButton
-                    aria-label="Undo"
-                    icon={<Undo2 size={14} />}
-                    onClick={() => undo()}
-                    isDisabled={!canUndo || activePlugin === 'curves'}
-                    colorScheme="gray"
-                    variant="ghost"
-                    size="xs"
-                    sx={{
-                      minHeight: '28px',
-                      minWidth: '28px',
-                    }}
-                  />
-                  {pastStates.length > 0 && (
-                    <Box
-                      position="absolute"
-                      bottom="-4px"
-                      left="50%"
-                      transform="translateX(-50%)"
-                      bg="gray.50"
-                      color="gray.600"
-                      borderRadius="full"
-                      minW="16px"
-                      h="11px"
-                      display="flex"
-                      alignItems="center"
-                      justifyContent="center"
-                      fontSize="9px"
-                      fontWeight="bold"
-                      px="3px"
-                    >
-                      {pastStates.length}
-                    </Box>
-                  )}
-                </Box>
-              </Tooltip>
+              <ToolbarIconButton
+                icon={Undo2}
+                label="Undo"
+                onClick={() => undo()}
+                isDisabled={!canUndo || activePlugin === 'curves'}
+                counter={pastStates.length}
+              />
 
-              <Tooltip label="Redo" placement="top">
-                <Box position="relative">
-                  <IconButton
-                    aria-label="Redo"
-                    icon={<Redo2 size={14} />}
-                    onClick={() => redo()}
-                    isDisabled={!canRedo || activePlugin === 'curves'}
-                    colorScheme="gray"
-                    variant="ghost"
-                    size="xs"
-                    sx={{
-                      minHeight: '28px',
-                      minWidth: '28px',
-                    }}
-                  />
-                  {futureStates.length > 0 && (
-                    <Box
-                      position="absolute"
-                      bottom="-4px"
-                      left="50%"
-                      transform="translateX(-50%)"
-                      bg="gray.50"
-                      color="gray.600"
-                      borderRadius="full"
-                      minW="16px"
-                      h="11px"
-                      display="flex"
-                      alignItems="center"
-                      justifyContent="center"
-                      fontSize="9px"
-                      fontWeight="bold"
-                      px="3px"
-                    >
-                      {futureStates.length}
-                    </Box>
-                  )}
-                </Box>
-              </Tooltip>
+              <ToolbarIconButton
+                icon={Redo2}
+                label="Redo"
+                onClick={() => redo()}
+                isDisabled={!canRedo || activePlugin === 'curves'}
+                counter={futureStates.length}
+              />
             </HStack>
 
             {/* Zoom Group */}
             <HStack spacing={0.5}>
-              <Tooltip label="Zoom Out" placement="top">
-                <IconButton
-                  aria-label="Zoom Out"
-                  icon={<ZoomOut size={14} />}
-                  onClick={() => zoom(1 / zoomFactor)}
-                  colorScheme="gray"
-                  variant="ghost"
-                  size="xs"
-                  sx={{
-                    minHeight: '28px',
-                    minWidth: '28px',
-                  }}
-                />
-              </Tooltip>
+              <ToolbarIconButton
+                icon={ZoomOut}
+                label="Zoom Out"
+                onClick={() => zoom(1 / zoomFactor)}
+              />
 
-              <Tooltip label="Reset Zoom" placement="top">
-                <Box position="relative">
-                  <IconButton
-                    aria-label="Reset Zoom"
-                    icon={<Maximize2 size={14} />}
-                    onClick={() => resetZoom()}
-                    colorScheme="gray"
-                    variant="ghost"
-                    size="xs"
-                    sx={{
-                      minHeight: '28px',
-                      minWidth: '28px',
-                    }}
-                  />
-                  {isZoomDifferent && (
-                    <Box
-                      position="absolute"
-                      bottom="-4px"
-                      left="50%"
-                      transform="translateX(-50%)"
-                      bg="gray.50"
-                      color="gray.600"
-                      borderRadius="full"
-                      minW="28px"
-                      h="11px"
-                      display="flex"
-                      alignItems="center"
-                      justifyContent="center"
-                      fontSize="9px"
-                      fontWeight="bold"
-                      px="3px"
-                    >
-                      {currentZoom}%
-                    </Box>
-                  )}
-                </Box>
-              </Tooltip>
+              <ToolbarIconButton
+                icon={Maximize2}
+                label="Reset Zoom"
+                onClick={() => resetZoom()}
+                counter={isZoomDifferent ? currentZoom : undefined}
+              />
 
-              <Tooltip label="Zoom In" placement="top">
-                <IconButton
-                  aria-label="Zoom In"
-                  icon={<ZoomIn size={14} />}
-                  onClick={() => zoom(zoomFactor)}
-                  colorScheme="gray"
-                  variant="ghost"
-                  size="xs"
-                  sx={{
-                    minHeight: '28px',
-                    minWidth: '28px',
-                  }}
-                />
-              </Tooltip>
+              <ToolbarIconButton
+                icon={ZoomIn}
+                label="Zoom In"
+                onClick={() => zoom(zoomFactor)}
+              />
             </HStack>
 
             {/* Delete Button */}
-            <Tooltip label="Delete" placement="top">
-              <Box position="relative">
-                <IconButton
-                  aria-label="Delete"
-                  icon={<Trash2 size={14} />}
-                  onClick={handleDelete}
-                  isDisabled={!canDelete}
-                  variant="ghost"
-                  size="xs"
-                  sx={{
-                    minHeight: '28px',
-                    minWidth: '28px',
-                    color: canDelete ? 'red.500' : 'gray.400',
-                  }}
-                />
-                {deleteCount > 0 && (
-                  <Box
-                    position="absolute"
-                    bottom="-4px"
-                    left="50%"
-                    transform="translateX(-50%)"
-                    bg="red.50"
-                    color="red.500"
-                    borderRadius="full"
-                    minW="16px"
-                    h="11px"
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
-                    fontSize="9px"
-                    fontWeight="bold"
-                    px="3px"
-                  >
-                    {deleteCount}
-                  </Box>
-                )}
-              </Box>
-            </Tooltip>
+            <ToolbarIconButton
+              icon={Trash2}
+              label="Delete"
+              onClick={handleDelete}
+              isDisabled={!canDelete}
+              counter={deleteCount}
+              counterColor="red"
+              sx={{
+                color: canDelete ? 'red.500' : 'gray.400',
+              }}
+            />
           </>
         )}
       </HStack>

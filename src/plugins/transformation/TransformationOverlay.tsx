@@ -1,6 +1,5 @@
 import React from 'react';
-import { deriveElementSelectionColors, SUBPATH_SELECTION_COLOR } from '../../utils/canvas';
-import { computeAdjustedBounds, measureSelectedSubpaths } from '../../utils/overlayHelpers';
+import { useSelectionBounds } from '../../hooks/useSelectionBounds';
 import { TransformationHandlers } from './TransformationHandlers';
 import { CenterMarker } from './CenterMarker';
 import { CornerCoordinateLabels } from './CornerCoordinateLabels';
@@ -51,24 +50,26 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
     ? activePlugin === 'transformation'
     : activePlugin === 'transformation' && selectedSubpaths.length === 1;
 
-  if (!bounds || !shouldShowHandlers) return null;
+  // Use shared hook to compute selection bounds
+  const {
+    selectionColor,
+    strokeWidth,
+    adjustedElementBounds,
+    subpathBoundsResults,
+    subpathSelectionColor,
+  } = useSelectionBounds({
+    element,
+    bounds,
+    viewport,
+    selectedSubpaths,
+    skipSubpathMeasurements: !isWorkingWithSubpaths,
+  });
 
-  // Extract element colors and calculate selection color
-  const { selectionColor } = deriveElementSelectionColors(element);
+  if (!adjustedElementBounds || !shouldShowHandlers) return null;
 
-  const strokeWidth = 1 / viewport.zoom;
-  
-  // Calculate adjusted bounds for the element
-  const adjustedBounds = computeAdjustedBounds(bounds, viewport.zoom);
-  const adjustedWidth = adjustedBounds.maxX - adjustedBounds.minX;
-  const adjustedHeight = adjustedBounds.maxY - adjustedBounds.minY;
-
+  const adjustedWidth = adjustedElementBounds.maxX - adjustedElementBounds.minX;
+  const adjustedHeight = adjustedElementBounds.maxY - adjustedElementBounds.minY;
   const handlerSize = 10 / viewport.zoom;
-
-  // Measure selected subpaths using shared helper
-  const subpathBoundsResults = isWorkingWithSubpaths
-    ? measureSelectedSubpaths(element, selectedSubpaths, viewport.zoom)
-    : [];
 
   // Build selection rectangles for subpaths when not transforming exactly one
   const shouldShowSubpathSelectionRect = isWorkingWithSubpaths && 
@@ -76,8 +77,8 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
   
   const selectionRects = shouldShowSubpathSelectionRect && adjustedWidth > 0 && adjustedHeight > 0
     ? [{
-        x: adjustedBounds.minX,
-        y: adjustedBounds.minY,
+        x: adjustedElementBounds.minX,
+        y: adjustedElementBounds.minY,
         width: adjustedWidth,
         height: adjustedHeight,
         key: `element-${element.id}`,
@@ -97,7 +98,7 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
       {!isWorkingWithSubpaths ? (
         // For complete paths
         <TransformationHandlers
-          bounds={adjustedBounds}
+          bounds={adjustedElementBounds}
           elementId={element.id}
           handlerSize={handlerSize}
           selectionColor={selectionColor}
@@ -114,7 +115,7 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
               elementId={element.id}
               subpathIndex={result.subpathIndex}
               handlerSize={handlerSize}
-              selectionColor={SUBPATH_SELECTION_COLOR}
+              selectionColor={subpathSelectionColor}
               viewport={viewport}
               onPointerDown={onTransformationHandlerPointerDown}
               onPointerUp={onTransformationHandlerPointerUp}
@@ -124,7 +125,7 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
             <CenterMarker
               centerX={result.centerX}
               centerY={result.centerY}
-              color={SUBPATH_SELECTION_COLOR}
+              color={subpathSelectionColor}
               zoom={viewport.zoom}
               showCoordinates={transformation?.showCoordinates}
             />
@@ -153,15 +154,15 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
         <>
           {/* Center marker */}
           <CenterMarker
-            centerX={adjustedBounds.minX + (adjustedBounds.maxX - adjustedBounds.minX) / 2}
-            centerY={adjustedBounds.minY + (adjustedBounds.maxY - adjustedBounds.minY) / 2}
+            centerX={adjustedElementBounds.minX + (adjustedElementBounds.maxX - adjustedElementBounds.minX) / 2}
+            centerY={adjustedElementBounds.minY + (adjustedElementBounds.maxY - adjustedElementBounds.minY) / 2}
             color={selectionColor}
             zoom={viewport.zoom}
             showCoordinates={transformation?.showCoordinates}
           />
 
           {/* Corner coordinates */}
-          {transformation?.showCoordinates && (
+          {transformation?.showCoordinates && bounds && (
             <CornerCoordinateLabels
               bounds={bounds}
               zoom={viewport.zoom}
@@ -169,7 +170,7 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
           )}
 
           {/* Measurement rulers */}
-          {transformation?.showRulers && (
+          {transformation?.showRulers && bounds && (
             <MeasurementRulers
               bounds={bounds}
               zoom={viewport.zoom}
