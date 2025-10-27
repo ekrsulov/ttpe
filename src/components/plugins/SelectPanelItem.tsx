@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
-import { VStack, HStack, Text } from '@chakra-ui/react';
-import { Copy, Clipboard, Group as GroupIcon } from 'lucide-react';
+import { VStack, HStack, Text, Icon } from '@chakra-ui/react';
+import { Copy, Clipboard, Group as GroupIcon, RulerDimensionLine, MoveUpLeft, MoveDownRight } from 'lucide-react';
 import { extractSubpaths } from '../../utils/path';
 import type { PathData } from '../../types';
 import { PathThumbnail } from '../ui/PathThumbnail';
@@ -66,6 +66,7 @@ const SelectPanelItemComponent: React.FC<SelectPanelItemProps> = ({
   // Separar las coordenadas para mostrar en líneas diferentes
   const coord1 = bbox ? `${bbox.topLeft.x} , ${bbox.topLeft.y}` : null;
   const coord2 = bbox ? `${bbox.bottomRight.x} , ${bbox.bottomRight.y}` : null;
+  const dimensions = bbox ? `${bbox.bottomRight.x - bbox.topLeft.x} ✕ ${bbox.bottomRight.y - bbox.topLeft.y}` : null;
 
   return (
     <HStack
@@ -93,22 +94,39 @@ const SelectPanelItemComponent: React.FC<SelectPanelItemProps> = ({
         >
           {primaryLabel}
         </Text>
-        {/* Línea 2: Primera coordenada */}
-        <Text
-          fontSize="9px"
-          color={isHidden ? 'gray.400' : 'gray.600'}
-          lineHeight="1.4"
-        >
-          {coord1 ?? '—'}
-        </Text>
-        {/* Línea 3: Segunda coordenada */}
-        <Text
-          fontSize="9px"
-          color={isHidden ? 'gray.400' : 'gray.600'}
-          lineHeight="1.4"
-        >
-          {coord2 ?? '—'}
-        </Text>
+        {/* Línea 2: Dimensiones */}
+        <HStack spacing={1} align="center">
+          <Icon as={RulerDimensionLine} boxSize={3} color={isHidden ? 'gray.400' : 'gray.500'} />
+          <Text
+            fontSize="9px"
+            color={isHidden ? 'gray.400' : 'gray.600'}
+            lineHeight="1.4"
+          >
+            {dimensions ?? '—'}
+          </Text>
+        </HStack>
+        {/* Línea 3: Primera coordenada */}
+        <HStack spacing={1} align="center">
+          <Icon as={MoveUpLeft} boxSize={3} color={isHidden ? 'gray.400' : 'gray.500'} />
+          <Text
+            fontSize="9px"
+            color={isHidden ? 'gray.400' : 'gray.600'}
+            lineHeight="1.4"
+          >
+            {coord1 ?? '—'}
+          </Text>
+        </HStack>
+        {/* Línea 4: Segunda coordenada */}
+        <HStack spacing={1} align="center">
+          <Icon as={MoveDownRight} boxSize={3} color={isHidden ? 'gray.400' : 'gray.500'} />
+          <Text
+            fontSize="9px"
+            color={isHidden ? 'gray.400' : 'gray.600'}
+            lineHeight="1.4"
+          >
+            {coord2 ?? '—'}
+          </Text>
+        </HStack>
       </VStack>
       <VStack spacing={1} align="flex-end">
         {/* Fila 1: Group (si aplica), Duplicate, Clipboard */}
