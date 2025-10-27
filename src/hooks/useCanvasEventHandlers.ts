@@ -212,6 +212,11 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     e.stopPropagation();
     e.preventDefault();
 
+    // Skip on touch devices to avoid conflicts with custom double-tap detection
+    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+      return;
+    }
+
     const state = useCanvasStore.getState();
     const element = state.elements.find(el => el.id === elementId);
 
@@ -256,6 +261,11 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
   const handleSubpathDoubleClick = useCallback((elementId: string, subpathIndex: number, e: React.MouseEvent<SVGPathElement>) => {
     e.stopPropagation();
     e.preventDefault();
+
+    // Skip on touch devices to avoid conflicts with custom double-tap detection
+    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+      return;
+    }
 
     const state = useCanvasStore.getState();
 
@@ -715,6 +725,11 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
 
   // Handle double click on empty canvas to return to select mode
   const handleCanvasDoubleClick = useCallback((e: React.MouseEvent) => {
+    // Skip handling on touch devices to avoid conflicts with custom double-tap detection
+    if (typeof window !== 'undefined' && 'ontouchstart' in window) {
+      return;
+    }
+
     // Only handle double click if we're in specific modes and clicked on empty space
     const target = e.target as Element;
     const isEmptySpace = target.tagName === 'svg' || target.classList.contains('canvas-background');
