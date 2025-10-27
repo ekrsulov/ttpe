@@ -15,7 +15,8 @@ export type LogLevel = typeof LogLevel[keyof typeof LogLevel];
 interface LoggerConfig {
   level: LogLevel;
   enableConsole: boolean;
-  enableRemote?: boolean;
+  // Note: enableRemote removed until remote logging is actually implemented
+  // When adding remote logging, expose via environment variable or Settings panel
   showCallerInfo?: boolean;
 }
 
@@ -209,10 +210,9 @@ class Logger {
         this.formatMessage('ERROR', message, error, ...args);
       }
 
-      // En producción, aquí se podría enviar a un servicio de monitoreo
-      if (this.config.enableRemote && process.env.NODE_ENV === 'production') {
-        // TODO: Integrate with error tracking service (Sentry, etc.)
-      }
+      // TODO: When implementing remote error tracking (Sentry, etc.),
+      // add enableRemote config flag and check:
+      // if (this.config.enableRemote && process.env.NODE_ENV === 'production') { ... }
     }
   }
 

@@ -197,47 +197,6 @@ export function scalePathData(
 }
 
 /**
- * Unused export - removed to clean up public API
- * This function is not called anywhere in the codebase
- * If transformation is needed, use transformCommands from sharedTransformUtils
+ * Note: Legacy transformPathData function removed.
+ * Use transformCommands from sharedTransformUtils for all transformations.
  */
-/*
-export function transformPathData(
-  pathData: PathData,
-  scaleX: number,
-  scaleY: number,
-  originX: number,
-  originY: number,
-  rotation: number = 0
-): PathData {
-  // Transform all subpaths directly using shared utility
-  try {
-    const commands = pathData.subPaths.flat();
-
-    // Transform each command using the shared utility
-    const transformedCommands = transformCommands(commands, {
-      scaleX,
-      scaleY,
-      originX,
-      originY,
-      rotation
-    });
-
-    // Rebuild subpaths directly from transformed commands without serialization
-    const newSubPaths = extractSubpaths(transformedCommands).map(sp => sp.commands);
-
-    return {
-      ...pathData,
-      subPaths: newSubPaths,
-      // Scale stroke width proportionally using shared utility
-      strokeWidth: calculateScaledStrokeWidth(pathData.strokeWidth, scaleX, scaleY),
-      // Remove transform since we've applied it directly
-      transform: undefined
-    };
-
-  } catch (error) {
-    logger.warn('Path transformation failed', error);
-    return pathData; // Return original if transformation fails
-  }
-}
-*/

@@ -1,15 +1,17 @@
-import type { PluginDefinition } from '../types/plugins';
-import type { CanvasStore } from '../store/canvasStore';
+/**
+ * @deprecated This module contained unused wrapper functions.
+ * Use pluginManager directly from './pluginManager' instead.
+ * 
+ * This file is kept for backward compatibility but will be removed in a future version.
+ * 
+ * Migration:
+ * - pluginManager.register() instead of registerToolPlugin()
+ * - pluginManager.unregister() instead of unregisterToolPlugin()
+ * - pluginManager.getPlugin() instead of getRegisteredTool()
+ * - pluginManager.getAll() instead of listRegisteredTools()
+ */
+
 import { pluginManager } from './pluginManager';
 
-export const registerToolPlugin = (definition: PluginDefinition<CanvasStore>): void => {
-  pluginManager.register(definition);
-};
-
-export const unregisterToolPlugin = (pluginId: string): void => {
-  pluginManager.unregister(pluginId);
-};
-
-export const getRegisteredTool = (pluginId: string) => pluginManager.getPlugin(pluginId);
-
-export const listRegisteredTools = () => pluginManager.getAll();
+// Re-export pluginManager for convenience
+export { pluginManager };

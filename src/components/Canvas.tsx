@@ -69,8 +69,8 @@ const CanvasContent: React.FC = () => {
   const {
     isActive: isSmoothBrushActive,
     smoothBrush,
-    applyBrush,
-    updateCursorPosition
+    applyBrush: _applyBrush,
+    updateCursorPosition: _updateCursorPosition
   } = useCanvasSmoothBrush();
 
   const controller = useCanvasController();
@@ -275,8 +275,6 @@ const CanvasContent: React.FC = () => {
     shapeStart,
     transformStateIsTransforming: transformState.isTransforming,
     updateTransformation,
-    applyBrush,
-    updateCursorPosition,
     beginSelectionRectangle,
     startShapeCreation,
     isSmoothBrushActive,

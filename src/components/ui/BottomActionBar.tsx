@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { RenderCountBadgeWrapper } from './RenderCountBadgeWrapper';
+import { FloatingToolbarShell } from './FloatingToolbarShell';
 import { pluginManager } from '../../utils/pluginManager';
 
 // Custom hook to subscribe to temporal state changes
@@ -78,28 +79,12 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
 
   const canDelete = deleteCount > 0;
 
-  const isSidebarPinned = sidebarWidth > 0;
-
   const pluginBottomActions = pluginManager.getActions('bottom');
 
   return (
-    <Box
-      position="fixed"
-      bottom={{ base: 2, md: 5 }}
-      left={isSidebarPinned ? "0" : "50%"}
-      right={isSidebarPinned ? `${sidebarWidth}px` : "auto"}
-      transform={isSidebarPinned ? "none" : "translateX(-50%)"}
-      marginLeft={isSidebarPinned ? "auto" : 0}
-      marginRight={isSidebarPinned ? "auto" : 0}
-      width="fit-content"
-      zIndex={1000}
-      bg="white"
-      px={1}
-      py={1}
-      borderRadius="xl"
-      boxShadow="lg"
-      backdropFilter="blur(10px)"
-      backgroundColor="rgba(255, 255, 255, 0.95)"
+    <FloatingToolbarShell
+      toolbarPosition="bottom"
+      sidebarWidth={sidebarWidth}
       sx={{
         transition: 'left 0.3s ease-in-out, right 0.3s ease-in-out, transform 0.3s ease-in-out',
       }}
@@ -307,6 +292,6 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
         )}
       </HStack>
       <RenderCountBadgeWrapper componentName="BottomActionBar" position="bottom-right" />
-    </Box>
+    </FloatingToolbarShell>
   );
 };

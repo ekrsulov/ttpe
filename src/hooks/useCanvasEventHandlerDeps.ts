@@ -15,8 +15,7 @@ export interface CanvasEventHandlerDepsInput {
   shapeStart: Point | null;
   transformStateIsTransforming: boolean;
   updateTransformation: (point: Point, isShiftPressed: boolean) => void;
-  applyBrush: (point: Point) => void;
-  updateCursorPosition: (point: Point) => void;
+  // Note: applyBrush and updateCursorPosition removed as they were not propagated
   beginSelectionRectangle: (point: Point, shiftKey?: boolean, subpathMode?: boolean) => void;
   startShapeCreation: (point: Point) => void;
   isSmoothBrushActive: boolean;

@@ -6,7 +6,7 @@ import { Panel } from '../../components/ui/Panel';
 import { PanelToggleGroup } from '../../components/ui/PanelToggleGroup';
 import { SliderControl } from '../../components/ui/SliderControl';
 import { usePanelToggleHandlers } from '../../hooks/usePanelToggleHandlers';
-import type { GridType } from './slice';
+import type { GridType, GridPluginSlice } from './slice';
 
 const GRID_TYPE_OPTIONS: Array<{ value: GridType; label: string }> = [
   { value: 'square', label: 'Square' },
@@ -18,6 +18,22 @@ const GRID_TYPE_OPTIONS: Array<{ value: GridType; label: string }> = [
   { value: 'diagonal', label: 'Diagonal' },
   { value: 'parametric', label: 'Parametric Lattice' },
 ];
+
+/**
+ * Returns default parametric warp configuration
+ * Centralizes default values to avoid duplication across handlers
+ */
+const getParametricWarpDefaults = (grid?: GridPluginSlice['grid']) => ({
+  kind: 'sine2d' as const,
+  ampX: 18,
+  ampY: 18,
+  freqX: 3,
+  freqY: 2,
+  phaseX: 0,
+  phaseY: 1.047,
+  seed: 0,
+  ...(grid?.parametricWarp ?? {}),
+});
 
 const GridPanelComponent: React.FC = () => {
   // Only subscribe to grid state
@@ -59,7 +75,7 @@ const GridPanelComponent: React.FC = () => {
     const kind = e.target.value as 'sine2d' | 'perlin2d' | 'radial';
     updateGridState?.({
       parametricWarp: {
-        ...(grid?.parametricWarp ?? { ampX: 18, ampY: 18, freqX: 3, freqY: 2, phaseX: 0, phaseY: 1.047, seed: 0 }),
+        ...getParametricWarpDefaults(grid),
         kind,
       },
     });
@@ -68,7 +84,7 @@ const GridPanelComponent: React.FC = () => {
   const handleAmpXChange = (value: number) => {
     updateGridState?.({
       parametricWarp: {
-        ...(grid?.parametricWarp ?? { kind: 'sine2d', ampY: 18, freqX: 3, freqY: 2, phaseX: 0, phaseY: 1.047, seed: 0 }),
+        ...getParametricWarpDefaults(grid),
         ampX: value,
       },
     });
@@ -77,7 +93,7 @@ const GridPanelComponent: React.FC = () => {
   const handleAmpYChange = (value: number) => {
     updateGridState?.({
       parametricWarp: {
-        ...(grid?.parametricWarp ?? { kind: 'sine2d', ampX: 18, freqX: 3, freqY: 2, phaseX: 0, phaseY: 1.047, seed: 0 }),
+        ...getParametricWarpDefaults(grid),
         ampY: value,
       },
     });
@@ -86,7 +102,7 @@ const GridPanelComponent: React.FC = () => {
   const handleFreqXChange = (value: number) => {
     updateGridState?.({
       parametricWarp: {
-        ...(grid?.parametricWarp ?? { kind: 'sine2d', ampX: 18, ampY: 18, freqY: 2, phaseX: 0, phaseY: 1.047, seed: 0 }),
+        ...getParametricWarpDefaults(grid),
         freqX: value,
       },
     });
@@ -95,7 +111,7 @@ const GridPanelComponent: React.FC = () => {
   const handleFreqYChange = (value: number) => {
     updateGridState?.({
       parametricWarp: {
-        ...(grid?.parametricWarp ?? { kind: 'sine2d', ampX: 18, ampY: 18, freqX: 3, phaseX: 0, phaseY: 1.047, seed: 0 }),
+        ...getParametricWarpDefaults(grid),
         freqY: value,
       },
     });

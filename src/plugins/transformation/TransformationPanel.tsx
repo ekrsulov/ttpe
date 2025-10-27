@@ -4,6 +4,7 @@ import { useCanvasStore } from '../../store/canvasStore';
 import { VectorSquare } from 'lucide-react';
 import { Panel } from '../../components/ui/Panel';
 import { PanelToggle } from '../../components/ui/PanelToggle';
+import { usePanelToggleHandlers } from '../../hooks/usePanelToggleHandlers';
 
 export const TransformationPanel: React.FC = () => {
   // Use individual selectors to prevent re-renders on unrelated changes
@@ -12,6 +13,8 @@ export const TransformationPanel: React.FC = () => {
   const transformation = useCanvasStore(state => state.transformation);
   const updateTransformationState = useCanvasStore(state => state.updateTransformationState);
   const isWorkingWithSubpaths = useCanvasStore(state => state.isWorkingWithSubpaths);
+  
+  const { createToggleHandler } = usePanelToggleHandlers(updateTransformationState ?? (() => {}));
   
   const { showCoordinates, showRulers } = transformation ?? { showCoordinates: false, showRulers: false };
 
@@ -38,14 +41,14 @@ export const TransformationPanel: React.FC = () => {
         <VStack spacing={2} align="stretch">
           <PanelToggle
             isChecked={showCoordinates}
-            onChange={(e) => updateTransformationState?.({ showCoordinates: e.target.checked })}
+            onChange={createToggleHandler('showCoordinates')}
           >
             Coordinates
           </PanelToggle>
 
           <PanelToggle
             isChecked={showRulers}
-            onChange={(e) => updateTransformationState?.({ showRulers: e.target.checked })}
+            onChange={createToggleHandler('showRulers')}
           >
             Rulers
           </PanelToggle>

@@ -11,7 +11,7 @@ import {
 } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Panel } from '../../components/ui/Panel';
-import { AlignmentActionButton } from '../../components/ui/AlignmentActionButton';
+import { PanelStyledButton } from '../../components/ui/PanelStyledButton';
 import { Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 
 /**
@@ -91,14 +91,14 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
     <Panel icon={<Sparkles size={16} />} title="Optical Alignment">
       <VStack align="stretch" spacing={2}>
         {/* Primary Action - Always visible */}
-        <AlignmentActionButton
+        <PanelStyledButton
           onClick={handleApplyDirectly}
           isDisabled={!canAlign || isCalculatingAlignment}
           isLoading={isCalculatingAlignment}
           loadingText="Applying..."
         >
           Apply Visual Center
-        </AlignmentActionButton>
+        </PanelStyledButton>
 
         {/* Advanced Section - Collapsible (Development Only) */}
         {isDevelopment && (
@@ -133,22 +133,22 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
                 </Text>
                 
                 <Grid templateColumns="1fr 1fr" gap={2}>
-                  <AlignmentActionButton
+                  <PanelStyledButton
                     onClick={handleCalculate}
                     isDisabled={!canAlign || isCalculatingAlignment}
                     isLoading={isCalculatingAlignment}
                     loadingText="Calculating..."
                   >
                     Calculate
-                  </AlignmentActionButton>
+                  </PanelStyledButton>
 
-                  <AlignmentActionButton
+                  <PanelStyledButton
                     onClick={handleApplyToAll}
                     isDisabled={isCalculatingAlignment}
                     isLoading={isCalculatingAlignment}
                   >
                     Apply All
-                  </AlignmentActionButton>
+                  </PanelStyledButton>
                 </Grid>
 
                 {/* Results - Between Visual Center and Mathematical Center */}
@@ -179,12 +179,12 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
                     </Box>
 
                     <Grid templateColumns="1fr 1fr" gap={2}>
-                      <AlignmentActionButton onClick={handleApply}>
+                      <PanelStyledButton onClick={handleApply}>
                         Apply
-                      </AlignmentActionButton>
-                      <AlignmentActionButton onClick={handleClear}>
+                      </PanelStyledButton>
+                      <PanelStyledButton onClick={handleClear}>
                         Cancel
-                      </AlignmentActionButton>
+                      </PanelStyledButton>
                     </Grid>
                   </VStack>
                 )}
@@ -197,19 +197,19 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
                 </Text>
 
                 <Grid templateColumns="1fr 1fr" gap={2}>
-                  <AlignmentActionButton
+                  <PanelStyledButton
                     onClick={handleMathematicalAlign}
                     isDisabled={!canAlign || isCalculatingAlignment}
                   >
                     Apply
-                  </AlignmentActionButton>
+                  </PanelStyledButton>
 
-                  <AlignmentActionButton
+                  <PanelStyledButton
                     onClick={handleMathematicalAlignAll}
                     isDisabled={isCalculatingAlignment}
                   >
                     Apply All
-                  </AlignmentActionButton>
+                  </PanelStyledButton>
                 </Grid>
               </Box>
 
@@ -220,13 +220,13 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
                 </Text>
 
                 <Grid templateColumns="1fr 1fr" gap={2}>
-                  <AlignmentActionButton onClick={selectAllContainers}>
+                  <PanelStyledButton onClick={selectAllContainers}>
                     Containers
-                  </AlignmentActionButton>
+                  </PanelStyledButton>
 
-                  <AlignmentActionButton onClick={selectAllContents}>
+                  <PanelStyledButton onClick={selectAllContents}>
                     Contents
-                  </AlignmentActionButton>
+                  </PanelStyledButton>
                 </Grid>
               </Box>
             </VStack>

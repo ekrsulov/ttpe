@@ -3,7 +3,7 @@ import { Grid } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Scissors } from 'lucide-react';
 import { Panel } from '../../components/ui/Panel';
-import { OperationButton } from '../../components/ui/OperationButton';
+import { PanelStyledButton } from '../../components/ui/PanelStyledButton';
 import type { PathData } from '../../types';
 import { pluginManager } from '../../utils/pluginManager';
 
@@ -65,60 +65,60 @@ const PathOperationsPanelComponent: React.FC = () => {
       <Grid templateColumns="repeat(auto-fit, minmax(100px, 1fr))" gap={1}>
         {/* Split subpaths operation - available only if a selected path has multiple subpaths */}
         {hasPathWithMultipleSubpaths && (
-          <OperationButton
+          <PanelStyledButton
             aria-label="Split subpaths"
             onClick={performPathSimplify}
           >
             Subpath Split
-          </OperationButton>
+          </PanelStyledButton>
         )}
 
         {/* Boolean operations - require 2+ items */}
         {totalSelectedItems >= 2 && (
           <>
-            <OperationButton
+            <PanelStyledButton
               aria-label="Union (Simple)"
               onClick={performPathUnion}
             >
               Union
-            </OperationButton>
+            </PanelStyledButton>
             
-            <OperationButton
+            <PanelStyledButton
               aria-label="Union (Paper.js)"
               onClick={performPathUnionPaperJS}
             >
               Union PaperJs
-            </OperationButton>
+            </PanelStyledButton>
             
             {totalSelectedItems === 2 && (
               <>
-                <OperationButton
+                <PanelStyledButton
                   aria-label="Subtract"
                   onClick={performPathSubtraction}
                 >
                   Subtract
-                </OperationButton>
+                </PanelStyledButton>
                 
-                <OperationButton
+                <PanelStyledButton
                   aria-label="Intersect"
                   onClick={performPathIntersect}
                 >
                   Intersect
-                </OperationButton>
+                </PanelStyledButton>
                 
-                <OperationButton
+                <PanelStyledButton
                   aria-label="Exclude"
                   onClick={performPathExclude}
                 >
                   Exclude
-                </OperationButton>
+                </PanelStyledButton>
                 
-                <OperationButton
+                <PanelStyledButton
                   aria-label="Divide"
                   onClick={performPathDivide}
                 >
                   Divide
-                </OperationButton>
+                </PanelStyledButton>
               </>
             )}
           </>

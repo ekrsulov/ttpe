@@ -4,7 +4,9 @@ import { Button, type ButtonProps } from '@chakra-ui/react';
 /**
  * Standardized button for panel actions (operations, alignment, etc.)
  * Provides consistent styling across all panel components
- * Consolidates the styling from OperationButton and AlignmentActionButton
+ * 
+ * This component replaces the deprecated OperationButton and AlignmentActionButton,
+ * which have been removed from the codebase.
  */
 export const PanelStyledButton: React.FC<ButtonProps> = (props) => {
   return (

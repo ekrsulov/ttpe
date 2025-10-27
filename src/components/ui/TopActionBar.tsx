@@ -1,7 +1,8 @@
 import React from 'react';
-import { Box, HStack, IconButton } from '@chakra-ui/react';
+import { HStack, IconButton } from '@chakra-ui/react';
 import { Menu } from 'lucide-react';
 import { RenderCountBadgeWrapper } from './RenderCountBadgeWrapper';
+import { FloatingToolbarShell } from './FloatingToolbarShell';
 import type { CanvasElement } from '../../types';
 import { TOOL_DEFINITIONS } from '../../config/toolDefinitions';
 import type { ToolMode } from '../../config/toolDefinitions';
@@ -34,15 +35,9 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
   showGridRulers = false,
 }) => {
   const showMenuButton = !isSidebarPinned;
-  const isPositionedForSidebar = sidebarWidth > 0;
   
   // Get grid state to conditionally show gridFill tool
   const gridEnabled = useCanvasStore(state => state.grid?.enabled ?? false);
-  
-  // Calculate top position - move down when grid rulers are shown
-  const baseTop = { base: 2, md: 6 };
-  const topWithRulers = { base: 6, md: 10 };
-  const topPosition = showGridRulers ? topWithRulers : baseTop;
 
   const registeredTools = pluginManager
     .getRegisteredTools()
@@ -79,26 +74,11 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
         }));
 
   return (
-    <Box
-      position="fixed"
-      top={topPosition}
-      left={isPositionedForSidebar ? "0" : "50%"}
-      right={isPositionedForSidebar ? `${sidebarWidth}px` : "auto"}
-      transform={isPositionedForSidebar ? "none" : "translateX(-50%)"}
-      marginLeft={isPositionedForSidebar ? "auto" : 0}
-      marginRight={isPositionedForSidebar ? "auto" : 0}
-      width="fit-content"
-      bg="white"
-      borderRadius="xl"
-      boxShadow="lg"
-      px={1}
-      py={1}
-      zIndex={999}
+    <FloatingToolbarShell
+      toolbarPosition="top"
+      sidebarWidth={sidebarWidth}
+      showGridRulers={showGridRulers}
       sx={{
-        userSelect: 'none',
-        WebkitUserSelect: 'none',
-        backdropFilter: 'blur(10px)',
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
         transition: 'top 0.2s ease-in-out, left 0.3s ease-in-out, right 0.3s ease-in-out, transform 0.3s ease-in-out',
       }}
     >
@@ -162,6 +142,6 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
         )}
       </HStack>
       <RenderCountBadgeWrapper componentName="TopActionBar" position="top-right" />
-    </Box>
+    </FloatingToolbarShell>
   );
 };

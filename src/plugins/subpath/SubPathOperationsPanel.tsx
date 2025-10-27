@@ -2,7 +2,7 @@ import React from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { RotateCcw } from 'lucide-react';
 import { Panel } from '../../components/ui/Panel';
-import { OperationButton } from '../../components/ui/OperationButton';
+import { PanelStyledButton } from '../../components/ui/PanelStyledButton';
 import { pluginManager } from '../../utils/pluginManager';
 
 const SubPathOperationsPanelComponent: React.FC = () => {
@@ -22,13 +22,13 @@ const SubPathOperationsPanelComponent: React.FC = () => {
 
   return (
     <Panel icon={<RotateCcw size={16} />} title="SubPath Operations">
-      <OperationButton
+      <PanelStyledButton
         aria-label="Reverse subpath direction"
         onClick={performReverse}
         w="full"
       >
         Reverse
-      </OperationButton>
+      </PanelStyledButton>
     </Panel>
   );
 };
