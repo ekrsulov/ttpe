@@ -64,8 +64,8 @@ const SelectPanelItemComponent: React.FC<SelectPanelItemProps> = ({
     : `${item.element.id}-${item.type}`;
 
   // Separar las coordenadas para mostrar en líneas diferentes
-  const coord1 = bbox ? `${bbox.topLeft.x}, ${bbox.topLeft.y}` : null;
-  const coord2 = bbox ? `${bbox.bottomRight.x}, ${bbox.bottomRight.y}` : null;
+  const coord1 = bbox ? `${bbox.topLeft.x} , ${bbox.topLeft.y}` : null;
+  const coord2 = bbox ? `${bbox.bottomRight.x} , ${bbox.bottomRight.y}` : null;
 
   return (
     <HStack

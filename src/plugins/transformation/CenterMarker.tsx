@@ -24,7 +24,7 @@ export const CenterMarker: React.FC<CenterMarkerProps> = ({
   const padding = 4 / zoom;
   const borderRadius = 6 / zoom;
   const centerOffset = 15 / zoom;
-  const centerText = `${Math.round(centerX)}, ${Math.round(centerY)}`;
+  const centerText = `${Math.round(centerX)} , ${Math.round(centerY)}`;
   const textWidth = centerText.length * fontSize * 0.6;
 
   return (

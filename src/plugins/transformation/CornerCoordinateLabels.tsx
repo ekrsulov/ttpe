@@ -28,7 +28,7 @@ export const CornerCoordinateLabels: React.FC<CornerCoordinateLabelsProps> = ({
       {/* Top-left corner coordinates */}
       <g>
         {(() => {
-          const topLeftText = `${Math.round(bounds.minX)}, ${Math.round(bounds.minY)}`;
+          const topLeftText = `${Math.round(bounds.minX)} , ${Math.round(bounds.minY)}`;
           const rectWidth = topLeftText.length * fontSize * 0.6 + padding * 2;
           const rectX = bounds.minX - coordinateOffset - padding * 6;
           return (
@@ -64,7 +64,7 @@ export const CornerCoordinateLabels: React.FC<CornerCoordinateLabelsProps> = ({
       {/* Bottom-right corner coordinates */}
       <g>
         {(() => {
-          const bottomRightText = `${Math.round(bounds.maxX)}, ${Math.round(bounds.maxY)}`;
+          const bottomRightText = `${Math.round(bounds.maxX)} , ${Math.round(bounds.maxY)}`;
           const rectWidth = bottomRightText.length * fontSize * 0.6 + padding * 2;
           const rectX = bounds.maxX + coordinateOffset;
           return (
