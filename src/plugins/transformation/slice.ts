@@ -1,6 +1,7 @@
 import type { StateCreator } from 'zustand';
 import type { CanvasStore } from '../../store/canvasStore';
 import { accumulateBounds } from '../../utils/measurementUtils';
+import { transformCommands, calculateScaledStrokeWidth } from '../../utils/sharedTransformUtils';
 
 export interface TransformationPluginSlice {
   // State
@@ -9,12 +10,15 @@ export interface TransformationPluginSlice {
     activeHandler: string | null;
     showCoordinates: boolean;
     showRulers: boolean;
+    maintainAspectRatio: boolean;
   };
 
   // Actions
   updateTransformationState: (state: Partial<TransformationPluginSlice['transformation']>) => void;
   getTransformationBounds: () => { minX: number; minY: number; maxX: number; maxY: number } | null;
   isWorkingWithSubpaths: () => boolean;
+  applyResizeTransform: (width: number, height: number) => void;
+  applyRotationTransform: (degrees: number) => void;
 }
 
 export const createTransformationPluginSlice: StateCreator<
@@ -30,6 +34,7 @@ export const createTransformationPluginSlice: StateCreator<
       activeHandler: null,
       showCoordinates: false,
       showRulers: false,
+      maintainAspectRatio: true,
     },
 
     // Actions
@@ -88,6 +93,151 @@ export const createTransformationPluginSlice: StateCreator<
         if (elementCommandsToMeasure.length === 0) return null;
 
         return accumulateBounds(elementCommandsToMeasure, commonStrokeWidth, state.viewport.zoom);
+      }
+    },
+
+    // Apply resize transformation to selected elements or subpaths
+    applyResizeTransform: (width: number, height: number) => {
+      const state = get() as CanvasStore;
+      const isSubpathMode = (get() as CanvasStore).isWorkingWithSubpaths?.() ?? false;
+      const bounds = (get() as CanvasStore).getTransformationBounds?.();
+      
+      if (!bounds) return;
+
+      const currentWidth = bounds.maxX - bounds.minX;
+      const currentHeight = bounds.maxY - bounds.minY;
+      
+      if (currentWidth === 0 || currentHeight === 0) return;
+
+      const scaleX = width / currentWidth;
+      const scaleY = height / currentHeight;
+      
+      const originX = (bounds.minX + bounds.maxX) / 2;
+      const originY = (bounds.minY + bounds.maxY) / 2;
+
+      if (isSubpathMode && (state.selectedSubpaths?.length ?? 0) > 0) {
+        // Apply transformation to selected subpaths
+        (state.selectedSubpaths ?? []).forEach(({ elementId, subpathIndex }) => {
+          const element = state.elements.find((el) => el.id === elementId);
+          if (element && element.type === 'path') {
+            const pathData = element.data as import('../../types').PathData;
+            const newSubPaths = [...pathData.subPaths];
+            
+            newSubPaths[subpathIndex] = transformCommands(newSubPaths[subpathIndex], {
+              scaleX,
+              scaleY,
+              originX,
+              originY,
+              rotation: 0,
+              rotationCenterX: originX,
+              rotationCenterY: originY
+            });
+
+            state.updateElement(elementId, {
+              data: {
+                ...pathData,
+                subPaths: newSubPaths
+              }
+            });
+          }
+        });
+      } else {
+        // Apply transformation to selected elements
+        state.selectedIds.forEach((id) => {
+          const element = state.elements.find((el) => el.id === id);
+          if (element && element.type === 'path') {
+            const pathData = element.data as import('../../types').PathData;
+            
+            const newSubPaths = pathData.subPaths.map((subPath) =>
+              transformCommands(subPath, {
+                scaleX,
+                scaleY,
+                originX,
+                originY,
+                rotation: 0,
+                rotationCenterX: originX,
+                rotationCenterY: originY
+              })
+            );
+
+            const newStrokeWidth = calculateScaledStrokeWidth(pathData.strokeWidth, scaleX, scaleY);
+
+            state.updateElement(id, {
+              data: {
+                ...pathData,
+                subPaths: newSubPaths,
+                strokeWidth: newStrokeWidth
+              }
+            });
+          }
+        });
+      }
+    },
+
+    // Apply rotation transformation to selected elements or subpaths
+    applyRotationTransform: (degrees: number) => {
+      const state = get() as CanvasStore;
+      const isSubpathMode = (get() as CanvasStore).isWorkingWithSubpaths?.() ?? false;
+      const bounds = (get() as CanvasStore).getTransformationBounds?.();
+      
+      if (!bounds) return;
+
+      const centerX = (bounds.minX + bounds.maxX) / 2;
+      const centerY = (bounds.minY + bounds.maxY) / 2;
+
+      if (isSubpathMode && (state.selectedSubpaths?.length ?? 0) > 0) {
+        // Apply rotation to selected subpaths
+        (state.selectedSubpaths ?? []).forEach(({ elementId, subpathIndex }) => {
+          const element = state.elements.find((el) => el.id === elementId);
+          if (element && element.type === 'path') {
+            const pathData = element.data as import('../../types').PathData;
+            const newSubPaths = [...pathData.subPaths];
+            
+            newSubPaths[subpathIndex] = transformCommands(newSubPaths[subpathIndex], {
+              scaleX: 1,
+              scaleY: 1,
+              originX: centerX,
+              originY: centerY,
+              rotation: degrees,
+              rotationCenterX: centerX,
+              rotationCenterY: centerY
+            });
+
+            state.updateElement(elementId, {
+              data: {
+                ...pathData,
+                subPaths: newSubPaths
+              }
+            });
+          }
+        });
+      } else {
+        // Apply rotation to selected elements
+        state.selectedIds.forEach((id) => {
+          const element = state.elements.find((el) => el.id === id);
+          if (element && element.type === 'path') {
+            const pathData = element.data as import('../../types').PathData;
+            
+            const newSubPaths = pathData.subPaths.map((subPath) =>
+              transformCommands(subPath, {
+                scaleX: 1,
+                scaleY: 1,
+                originX: centerX,
+                originY: centerY,
+                rotation: degrees,
+                rotationCenterX: centerX,
+                rotationCenterY: centerY
+              })
+            );
+
+            state.updateElement(id, {
+              data: {
+                ...pathData,
+                subPaths: newSubPaths
+              }
+            });
+          }
+        });
       }
     }
   };
