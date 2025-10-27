@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { VStack, HStack, Tag, Text, Box } from '@chakra-ui/react';
+import { VStack, HStack, Tag, Text, Box, Tooltip } from '@chakra-ui/react';
 import { Lock, LockOpen } from 'lucide-react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Panel } from '../../components/ui/Panel';
@@ -198,31 +198,35 @@ export const TransformationPanel: React.FC = () => {
                   />
                   
                   {/* Lock button */}
-                  <Box
-                    as="button"
-                    onClick={() => updateTransformationState?.({ maintainAspectRatio: !maintainAspectRatio })}
-                    p={0.5}
-                    borderRadius="3px"
-                    bg="white"
-                    color={maintainAspectRatio ? 'gray.600' : 'gray.400'}
-                    border="1px solid"
-                    borderColor={maintainAspectRatio ? 'gray.600' : 'gray.300'}
-                    _hover={{ 
-                      bg: 'rgb(247, 250, 252)',
-                      borderColor: maintainAspectRatio ? 'gray.700' : 'gray.400'
-                    }}
-                    transition="all 0.2s"
-                    title={maintainAspectRatio ? 'Locked - Proportional resize' : 'Unlocked - Free resize'}
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
-                    minW="20px"
-                    h="20px"
-                    position="relative"
-                    zIndex={1}
+                  <Tooltip
+                    label={maintainAspectRatio ? 'Locked - Proportional resize' : 'Unlocked - Free resize'}
+                    placement="top"
                   >
-                    {maintainAspectRatio ? <Lock size={11} strokeWidth={3} /> : <LockOpen size={11} strokeWidth={3} />}
-                  </Box>
+                    <Box
+                      as="button"
+                      onClick={() => updateTransformationState?.({ maintainAspectRatio: !maintainAspectRatio })}
+                      p={0.5}
+                      borderRadius="3px"
+                      bg="white"
+                      color={maintainAspectRatio ? 'gray.600' : 'gray.400'}
+                      border="1px solid"
+                      borderColor={maintainAspectRatio ? 'gray.600' : 'gray.300'}
+                      _hover={{ 
+                        bg: 'rgb(247, 250, 252)',
+                        borderColor: maintainAspectRatio ? 'gray.700' : 'gray.400'
+                      }}
+                      transition="all 0.2s"
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
+                      minW="20px"
+                      h="20px"
+                      position="relative"
+                      zIndex={1}
+                    >
+                      {maintainAspectRatio ? <Lock size={11} strokeWidth={3} /> : <LockOpen size={11} strokeWidth={3} />}
+                    </Box>
+                  </Tooltip>
                 </Box>
               </HStack>
             </Box>
