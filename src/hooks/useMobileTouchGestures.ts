@@ -184,52 +184,19 @@ export const useMobileTouchGestures = (svgRef: RefObject<SVGSVGElement | null>):
       gestureStateRef.current.isGestureActive = false;
     };
 
-    // Prevent pointer events when gesture is active
-    const handlePointerDown = (event: PointerEvent) => {
-      if (gestureStateRef.current.isGestureActive) {
-        event.preventDefault();
-        event.stopPropagation();
-        event.stopImmediatePropagation();
-      }
-    };
-
-    const handlePointerMove = (event: PointerEvent) => {
-      if (gestureStateRef.current.isGestureActive) {
-        event.preventDefault();
-        event.stopPropagation();
-        event.stopImmediatePropagation();
-      }
-    };
-
-    const handlePointerUp = (event: PointerEvent) => {
-      if (gestureStateRef.current.isGestureActive) {
-        event.preventDefault();
-        event.stopPropagation();
-        event.stopImmediatePropagation();
-      }
-    };
-
     // Add event listeners
     // Use passive: false to allow preventDefault for multi-touch gestures
-    // Touch events
+    // Touch events handle pinch-to-zoom and two-finger pan
     svg.addEventListener('touchstart', handleTouchStart, { passive: false });
     svg.addEventListener('touchmove', handleTouchMove, { passive: false });
     svg.addEventListener('touchend', handleTouchEnd, { passive: false });
     svg.addEventListener('touchcancel', handleTouchCancel, { passive: false });
-    
-    // Pointer events - capture phase to prevent selection
-    svg.addEventListener('pointerdown', handlePointerDown, { passive: false, capture: true });
-    svg.addEventListener('pointermove', handlePointerMove, { passive: false, capture: true });
-    svg.addEventListener('pointerup', handlePointerUp, { passive: false, capture: true });
 
     return () => {
       svg.removeEventListener('touchstart', handleTouchStart);
       svg.removeEventListener('touchmove', handleTouchMove);
       svg.removeEventListener('touchend', handleTouchEnd);
       svg.removeEventListener('touchcancel', handleTouchCancel);
-      svg.removeEventListener('pointerdown', handlePointerDown, true);
-      svg.removeEventListener('pointermove', handlePointerMove, true);
-      svg.removeEventListener('pointerup', handlePointerUp, true);
     };
   }, [svgRef]);
 };

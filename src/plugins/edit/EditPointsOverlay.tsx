@@ -145,7 +145,10 @@ export const EditPointsOverlay: React.FC<EditPointsOverlayProps> = ({
               r={hitAreaSize}
               fill="transparent"
               stroke="none"
-              style={{ cursor: 'pointer' }}
+              style={{ 
+                cursor: 'pointer',
+                WebkitTapHighlightColor: 'transparent',
+              }}
               onPointerDown={(e) => handlePointPointerDown(e, point, element, selectedCommands, smoothBrush, viewport, onStartDraggingPoint, onSelectCommand)}
             />
             {/* Visible point */}

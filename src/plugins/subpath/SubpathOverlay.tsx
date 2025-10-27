@@ -76,7 +76,8 @@ export const SubpathOverlay: React.FC<SubpathOverlayProps> = ({
             fillRule={pathData.fillRule || "nonzero"}
             strokeDasharray={pathData.strokeDasharray && pathData.strokeDasharray !== 'none' ? pathData.strokeDasharray : undefined}
             style={{
-              cursor: 'pointer'
+              cursor: 'pointer',
+              WebkitTapHighlightColor: 'transparent',
               // Removed the transform - the overlay should follow the updated path data
             }}
             onPointerDown={isVisible ? (e) => {
