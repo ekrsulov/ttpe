@@ -154,7 +154,7 @@ export const TransformationPanel: React.FC = () => {
                       transform="translateY(-50%)"
                       w="40px"
                       h="1px"
-                      bg={maintainAspectRatio ? 'rgb(49, 130, 206)' : 'gray.300'}
+                      bg={maintainAspectRatio ? 'gray.600' : 'gray.300'}
                       transition="background 0.2s"
                     />
                   </HStack>
@@ -178,7 +178,7 @@ export const TransformationPanel: React.FC = () => {
                       transform="translateY(-50%)"
                       w="40px"
                       h="1px"
-                      bg={maintainAspectRatio ? 'rgb(49, 130, 206)' : 'gray.300'}
+                      bg={maintainAspectRatio ? 'gray.600' : 'gray.300'}
                       transition="background 0.2s"
                     />
                   </HStack>
@@ -193,7 +193,7 @@ export const TransformationPanel: React.FC = () => {
                     top="3"
                     bottom="3"
                     w="1px" 
-                    bg={maintainAspectRatio ? 'rgb(49, 130, 206)' : 'gray.300'}
+                    bg={maintainAspectRatio ? 'gray.600' : 'gray.300'}
                     transition="background 0.2s"
                   />
                   
@@ -203,13 +203,13 @@ export const TransformationPanel: React.FC = () => {
                     onClick={() => updateTransformationState?.({ maintainAspectRatio: !maintainAspectRatio })}
                     p={0.5}
                     borderRadius="3px"
-                    bg={maintainAspectRatio ? 'rgb(219, 234, 254)' : 'white'}
-                    color={maintainAspectRatio ? 'rgb(49, 130, 206)' : 'gray.400'}
+                    bg="white"
+                    color={maintainAspectRatio ? 'gray.600' : 'gray.400'}
                     border="1px solid"
-                    borderColor={maintainAspectRatio ? 'rgb(49, 130, 206)' : 'gray.300'}
+                    borderColor={maintainAspectRatio ? 'gray.600' : 'gray.300'}
                     _hover={{ 
-                      bg: maintainAspectRatio ? 'rgb(191, 219, 254)' : 'rgb(247, 250, 252)',
-                      borderColor: maintainAspectRatio ? 'rgb(66, 153, 225)' : 'gray.400'
+                      bg: 'rgb(247, 250, 252)',
+                      borderColor: maintainAspectRatio ? 'gray.700' : 'gray.400'
                     }}
                     transition="all 0.2s"
                     title={maintainAspectRatio ? 'Locked - Proportional resize' : 'Unlocked - Free resize'}
@@ -221,7 +221,7 @@ export const TransformationPanel: React.FC = () => {
                     position="relative"
                     zIndex={1}
                   >
-                    {maintainAspectRatio ? <Lock size={11} /> : <LockOpen size={11} />}
+                    {maintainAspectRatio ? <Lock size={11} strokeWidth={3} /> : <LockOpen size={11} strokeWidth={3} />}
                   </Box>
                 </Box>
               </HStack>
