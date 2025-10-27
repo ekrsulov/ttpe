@@ -7,6 +7,7 @@ import { PathThumbnail } from '../ui/PathThumbnail';
 import { PanelActionButton } from '../ui/PanelActionButton';
 import { VisibilityLockControls } from './VisibilityLockControls';
 import { useSelectPanelActions } from '../../hooks/useSelectPanelActions';
+import { makeShallowComparator } from '../../utils/coreHelpers';
 
 interface SelectPanelGroupItemProps {
   group: GroupElement;
@@ -155,13 +156,16 @@ const SelectPanelGroupItemComponent: React.FC<SelectPanelGroupItemProps> = ({
   );
 };
 
+// Create a shallow comparator for basic props
+const compareBasicProps = makeShallowComparator<SelectPanelGroupItemProps & Record<string, unknown>>([
+  'isSelected',
+  'hasSelectedDescendant'
+]);
+
 // Custom comparison function - only re-render if these specific props change
 const arePropsEqual = (prevProps: SelectPanelGroupItemProps, nextProps: SelectPanelGroupItemProps): boolean => {
-  // Check if basic flags changed
-  if (
-    prevProps.isSelected !== nextProps.isSelected ||
-    prevProps.hasSelectedDescendant !== nextProps.hasSelectedDescendant
-  ) {
+  // Check if basic flags changed using shallow comparator
+  if (!compareBasicProps(prevProps as SelectPanelGroupItemProps & Record<string, unknown>, nextProps as SelectPanelGroupItemProps & Record<string, unknown>)) {
     return false;
   }
 

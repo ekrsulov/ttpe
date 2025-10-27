@@ -10,6 +10,7 @@ import { haveBoundsChanged, areBboxesEqual } from '../../utils/comparators/bound
 import { getItemThumbnailData } from '../../utils/selectPanelHelpers';
 import { VisibilityLockControls } from './VisibilityLockControls';
 import { useSelectPanelActions } from '../../hooks/useSelectPanelActions';
+import { makeShallowComparator } from '../../utils/coreHelpers';
 
 // Import shared type instead of duplicating
 import type { SelectPanelItemData } from './SelectPanel.types';
@@ -158,16 +159,19 @@ const SelectPanelItemComponent: React.FC<SelectPanelItemProps> = ({
   );
 };
 
+// Create a shallow comparator for basic props (type assertion needed due to interface)
+const compareBasicProps = makeShallowComparator<SelectPanelItemProps & Record<string, unknown>>([
+  'isSelected',
+  'isHidden',
+  'directHidden',
+  'directLocked',
+  'canGroup'
+]);
+
 // Custom comparison function - only re-render if these specific props change
 const arePropsEqual = (prevProps: SelectPanelItemProps, nextProps: SelectPanelItemProps): boolean => {
-  // Check if basic flags changed
-  if (
-    prevProps.isSelected !== nextProps.isSelected ||
-    prevProps.isHidden !== nextProps.isHidden ||
-    prevProps.directHidden !== nextProps.directHidden ||
-    prevProps.directLocked !== nextProps.directLocked ||
-    prevProps.canGroup !== nextProps.canGroup
-  ) {
+  // Check if basic flags changed using shallow comparator
+  if (!compareBasicProps(prevProps as SelectPanelItemProps & Record<string, unknown>, nextProps as SelectPanelItemProps & Record<string, unknown>)) {
     return false;
   }
 

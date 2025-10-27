@@ -3,6 +3,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import type { CanvasElement, Point } from '../../types';
 import { pluginManager } from '../../utils/pluginManager';
+import { buildElementMap } from '../../utils/coreHelpers';
 
 export interface CanvasControllerValue
   extends Pick<
@@ -96,13 +97,7 @@ export const useCanvasControllerSource = (): CanvasControllerValue => {
     return [...state.elements].sort((a, b) => a.zIndex - b.zIndex);
   }, [state.elements]);
 
-  const elementMap = useMemo(() => {
-    const map = new Map<string, CanvasElement>();
-    state.elements.forEach((el) => {
-      map.set(el.id, el);
-    });
-    return map;
-  }, [state.elements]);
+  const elementMap = useMemo(() => buildElementMap(state.elements), [state.elements]);
 
   // Compatibility functions that delegate to plugin APIs
   const startPath = useMemo(() => (point: Point) => {

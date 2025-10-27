@@ -10,6 +10,7 @@ import { SelectPanelGroupItem } from './SelectPanelGroupItem';
 import { usePersistentState } from '../../hooks/usePersistentState';
 import { useDragResize } from '../../hooks/useDragResize';
 import { getCommandsForPanelItem } from '../../utils/selectPanelHelpers';
+import { buildElementMap } from '../../utils/coreHelpers';
 
 const DEFAULT_PANEL_HEIGHT = 140;
 const MIN_PANEL_HEIGHT = 96;
@@ -60,13 +61,7 @@ const SelectPanelComponent: React.FC = () => {
     [elements]
   );
 
-  const elementMap = useMemo(() => {
-    const map = new Map<string, CanvasElement>();
-    elements.forEach((el) => {
-      map.set(el.id, el);
-    });
-    return map;
-  }, [elements]);
+  const elementMap = useMemo(() => buildElementMap(elements), [elements]);
 
   const selectedIdSet = useMemo(() => new Set(selectedIds), [selectedIds]);
   const hiddenIdSet = useMemo(() => new Set(hiddenElementIds), [hiddenElementIds]);

@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
 import { SelectionController, type SelectionCallbacks } from '../canvas/interactions/SelectionController';
 import type { Point } from '../types';
+import { mergeUniqueByKey } from '../utils/coreHelpers';
 
 export const useCanvasPointerSelection = (isShiftPressed: boolean = false) => {
   const [isSelecting, setIsSelecting] = useState(false);
@@ -19,13 +20,10 @@ export const useCanvasPointerSelection = (isShiftPressed: boolean = false) => {
     selectCommands: (commands, isShift) => {
       if (isShift) {
         useCanvasStore.setState(state => {
-          const combined = [...(state.selectedCommands ?? []), ...commands];
-          const unique = combined.filter((command, index, self) =>
-            index === self.findIndex(c =>
-              c.elementId === command.elementId &&
-              c.commandIndex === command.commandIndex &&
-              c.pointIndex === command.pointIndex
-            )
+          const unique = mergeUniqueByKey(
+            state.selectedCommands ?? [],
+            commands,
+            (c) => `${c.elementId}-${c.commandIndex}-${c.pointIndex}`
           );
           return { selectedCommands: unique };
         });
@@ -36,12 +34,10 @@ export const useCanvasPointerSelection = (isShiftPressed: boolean = false) => {
     selectSubpaths: (subpaths, isShift) => {
       if (isShift) {
         useCanvasStore.setState(state => {
-          const combined = [...(state.selectedSubpaths ?? []), ...subpaths];
-          const unique = combined.filter((subpath, index, self) =>
-            index === self.findIndex(s =>
-              s.elementId === subpath.elementId &&
-              s.subpathIndex === subpath.subpathIndex
-            )
+          const unique = mergeUniqueByKey(
+            state.selectedSubpaths ?? [],
+            subpaths,
+            (s) => `${s.elementId}-${s.subpathIndex}`
           );
           return { selectedSubpaths: unique };
         });

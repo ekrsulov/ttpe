@@ -6,6 +6,7 @@
 import type { CanvasElement, PathData, PathElement, GroupElement } from '../types';
 import { commandsToString } from './path';
 import { accumulateBounds } from './measurementUtils';
+import { buildElementMap } from './coreHelpers';
 
 export interface ExportOptions {
   selectedOnly: boolean;
@@ -116,8 +117,7 @@ function buildExportTree(
   selectedIds: string[],
   selectedOnly: boolean
 ): ExportNode[] {
-  const elementMap = new Map<string, CanvasElement>();
-  elements.forEach(el => elementMap.set(el.id, el));
+  const elementMap = buildElementMap(elements);
 
   const selectedSet = new Set(selectedIds);
 
