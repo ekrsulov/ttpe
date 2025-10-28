@@ -11,16 +11,16 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
-  workers: 1,
+  workers: 4,
   
   /* Global test timeout */
-  timeout: 60000,
+  timeout: 30000,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: 'line',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: 'http://localhost:5173',
+    baseURL: 'http://localhost:5174',
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
@@ -32,7 +32,7 @@ export default defineConfig({
     video: 'on',
 
     /* Slow down actions by increasing timeout */
-    actionTimeout: 30000,
+    actionTimeout: 10000,
 
     /* Browser launch options to force cursor visibility */
     launchOptions: {
@@ -44,11 +44,11 @@ export default defineConfig({
   },
 
   /* Run your local dev server before starting the tests */
-  // webServer: {
-  //   command: 'npm run dev',
-  //   port: 5174,
-  //   reuseExistingServer: !process.env.CI,
-  // },
+  webServer: {
+    command: 'npm run dev',
+    port: 5174,
+    reuseExistingServer: !process.env.CI,
+  },
 
   /* Configure projects for major browsers */
   projects: [
