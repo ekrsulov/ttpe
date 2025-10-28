@@ -854,7 +854,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       // Handle regular element double tap
       handleElementDoubleClick(elementId, syntheticEvent);
     }
-  }, [activePlugin]);
+  }, [handleElementDoubleClick, handleSubpathDoubleClick]);
 
   return {
     handleElementClick,
