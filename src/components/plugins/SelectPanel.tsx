@@ -82,8 +82,7 @@ const SelectPanelComponent: React.FC = () => {
   
   const { 
     isDragging: isResizing, 
-    handleMouseDown: handleResizeStart, 
-    handleTouchStart: handleResizeTouchStart,
+    handlePointerDown: handleResizeStart, 
     handleDoubleClick: handleResetHeight 
   } = useDragResize({
     onResize: setPanelHeight,
@@ -240,8 +239,7 @@ const SelectPanelComponent: React.FC = () => {
       <Box
         height="6px"
         cursor="ns-resize"
-        onMouseDown={handleResizeStart}
-        onTouchStart={handleResizeTouchStart}
+        onPointerDown={handleResizeStart}
         onDoubleClick={handleResetHeight}
         bg={isResizing ? 'blue.400' : 'gray.200'}
         borderRadius="full"

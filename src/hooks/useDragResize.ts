@@ -18,19 +18,18 @@ export interface UseDragResizeOptions {
 
 export interface UseDragResizeResult {
   isDragging: boolean;
-  handleMouseDown: (e: React.MouseEvent) => void;
-  handleTouchStart: (e: React.TouchEvent) => void;
+  handlePointerDown: (e: React.PointerEvent) => void;
   handleDoubleClick: (e: React.MouseEvent) => void;
 }
 
 /**
  * Hook for implementing drag-to-resize functionality.
  * Consolidates resize logic used in SidebarResizer and SelectPanel.
- * Supports both mouse and touch events for mobile compatibility.
+ * Uses pointer events for unified mouse and touch support.
  * 
  * @example
  * ```tsx
- * const { isDragging, handleMouseDown, handleTouchStart, handleDoubleClick } = useDragResize({
+ * const { isDragging, handlePointerDown, handleDoubleClick } = useDragResize({
  *   onResize: (width) => setSidebarWidth(width),
  *   onReset: () => setSidebarWidth(DEFAULT_WIDTH),
  *   minValue: 260,
@@ -41,8 +40,7 @@ export interface UseDragResizeResult {
  * 
  * return (
  *   <div 
- *     onMouseDown={handleMouseDown}
- *     onTouchStart={handleTouchStart}
+ *     onPointerDown={handlePointerDown}
  *     onDoubleClick={handleDoubleClick}
  *     style={{ cursor: isDragging ? 'ew-resize' : 'auto' }}
  *   />
@@ -78,17 +76,9 @@ export function useDragResize({
     }
   }, [direction, initialValue]);
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
     e.preventDefault();
     startDrag(e.clientX, e.clientY);
-  }, [startDrag]);
-
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    e.preventDefault();
-    const touch = e.touches[0];
-    if (touch) {
-      startDrag(touch.clientX, touch.clientY);
-    }
   }, [startDrag]);
 
   const handleDoubleClick = useCallback(
@@ -127,8 +117,8 @@ export function useDragResize({
     return clamp(newValue, minValue, maxValue);
   }, [direction, reverseHorizontal, reverseVertical, minValue, maxValue]);
 
-  const handleMouseMove = useCallback(
-    (e: MouseEvent) => {
+  const handlePointerMove = useCallback(
+    (e: PointerEvent) => {
       if (!isDragging) return;
       const newValue = calculateNewValue(e.clientX, e.clientY);
       onResize(newValue);
@@ -136,62 +126,39 @@ export function useDragResize({
     [isDragging, calculateNewValue, onResize]
   );
 
-  const handleTouchMove = useCallback(
-    (e: TouchEvent) => {
-      if (!isDragging) return;
-      const touch = e.touches[0];
-      if (touch) {
-        const newValue = calculateNewValue(touch.clientX, touch.clientY);
-        onResize(newValue);
-      }
-    },
-    [isDragging, calculateNewValue, onResize]
-  );
-
-  const handleMouseUp = useCallback(() => {
+  const handlePointerUp = useCallback(() => {
     setIsDragging(false);
   }, []);
 
-  const handleTouchEnd = useCallback(() => {
-    setIsDragging(false);
-  }, []);
-
-  // Add/remove global mouse and touch listeners and prevent text selection during drag
+  // Add/remove global pointer listeners and prevent text selection during drag
   useEffect(() => {
     if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      document.addEventListener('touchmove', handleTouchMove);
-      document.addEventListener('touchend', handleTouchEnd);
-      document.addEventListener('touchcancel', handleTouchEnd);
+      document.addEventListener('pointermove', handlePointerMove);
+      document.addEventListener('pointerup', handlePointerUp);
+      document.addEventListener('pointercancel', handlePointerUp);
       // Prevent text selection during drag
       document.body.style.userSelect = 'none';
       document.body.style.cursor = direction === 'horizontal' ? 'ew-resize' : 'ns-resize';
     } else {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.removeEventListener('touchmove', handleTouchMove);
-      document.removeEventListener('touchend', handleTouchEnd);
-      document.removeEventListener('touchcancel', handleTouchEnd);
+      document.removeEventListener('pointermove', handlePointerMove);
+      document.removeEventListener('pointerup', handlePointerUp);
+      document.removeEventListener('pointercancel', handlePointerUp);
       document.body.style.userSelect = '';
       document.body.style.cursor = '';
     }
 
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.removeEventListener('touchmove', handleTouchMove);
-      document.removeEventListener('touchend', handleTouchEnd);
-      document.removeEventListener('touchcancel', handleTouchEnd);
+      document.removeEventListener('pointermove', handlePointerMove);
+      document.removeEventListener('pointerup', handlePointerUp);
+      document.removeEventListener('pointercancel', handlePointerUp);
       document.body.style.userSelect = '';
       document.body.style.cursor = '';
     };
-  }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd, direction]);
+  }, [isDragging, handlePointerMove, handlePointerUp, direction]);
 
   return {
     isDragging,
-    handleMouseDown,
-    handleTouchStart,
+    handlePointerDown,
     handleDoubleClick,
   };
 }

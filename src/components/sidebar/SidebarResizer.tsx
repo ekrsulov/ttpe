@@ -19,7 +19,7 @@ export const SidebarResizer: React.FC<SidebarResizerProps> = ({
   minWidth = 200,
   maxWidth = 600,
 }) => {
-  const { isDragging, handleMouseDown, handleTouchStart, handleDoubleClick } = useDragResize({
+  const { isDragging, handlePointerDown, handleDoubleClick } = useDragResize({
     onResize,
     onReset,
     minValue: minWidth,
@@ -36,8 +36,7 @@ export const SidebarResizer: React.FC<SidebarResizerProps> = ({
       bottom={0}
       width="6px"
       cursor="ew-resize"
-      onMouseDown={handleMouseDown}
-      onTouchStart={handleTouchStart}
+      onPointerDown={handlePointerDown}
       onDoubleClick={handleDoubleClick}
       bg={isDragging ? 'blue.400' : 'transparent'}
       _hover={{
