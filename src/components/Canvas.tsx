@@ -16,6 +16,7 @@ import {
 } from '../canvas/CanvasEventBusContext';
 import { useCanvasZoom } from '../hooks/useCanvasZoom';
 import { useMobileTouchGestures } from '../hooks/useMobileTouchGestures';
+import { useElementDoubleTap } from '../hooks/useElementDoubleTap';
 import { CanvasServicesProvider } from '../canvas/services/CanvasServicesProvider';
 import { useSmoothBrushIntegration } from '../hooks/useSmoothBrushIntegration';
 import { useAddPointNativeListeners } from '../hooks/useAddPointNativeListeners';
@@ -300,6 +301,7 @@ const CanvasContent: React.FC = () => {
     handleElementClick,
     handleElementDoubleClick,
     handleSubpathDoubleClick,
+    handleElementDoubleTap,
     handleElementPointerDown,
     handleTransformationHandlerPointerDown,
     handleTransformationHandlerPointerUp,
@@ -307,7 +309,16 @@ const CanvasContent: React.FC = () => {
     handlePointerMove,
     handlePointerUp,
     handleCanvasDoubleClick,
+    handleElementTouchEnd,
+    handleSubpathTouchEnd,
+    handleCanvasTouchEnd,
   } = useCanvasEventHandlers(eventHandlerDeps);
+
+  // Handle double tap on elements using native DOM events
+  useElementDoubleTap({
+    svgRef,
+    onElementDoubleTap: handleElementDoubleTap,
+  });
 
   // Use the custom hook for drag interactions
   const { dragPosition } = useCanvasDragInteractions({
@@ -346,6 +357,7 @@ const CanvasContent: React.FC = () => {
       onPointerUp: handleElementClick,
       onPointerDown: handleElementPointerDown,
       onDoubleClick: handleElementDoubleClick,
+      onTouchEnd: handleElementTouchEnd,
     },
   }), [
     viewport,
@@ -359,6 +371,7 @@ const CanvasContent: React.FC = () => {
     handleElementClick,
     handleElementPointerDown,
     handleElementDoubleClick,
+    handleElementTouchEnd,
   ]);
 
   const renderElement = (element: typeof elements[0]) =>
@@ -388,6 +401,7 @@ const CanvasContent: React.FC = () => {
       handleTransformationHandlerPointerDown,
       handleTransformationHandlerPointerUp,
       handleSubpathDoubleClick,
+      handleSubpathTouchEnd,
       setDragStart: setDragStartForLayers,
     }),
     [
@@ -413,6 +427,7 @@ const CanvasContent: React.FC = () => {
       handleTransformationHandlerPointerDown,
       handleTransformationHandlerPointerUp,
       handleSubpathDoubleClick,
+      handleSubpathTouchEnd,
       setDragStartForLayers,
     ]
   );
@@ -451,6 +466,7 @@ const CanvasContent: React.FC = () => {
           handlePointerMove={handlePointerMove}
           handlePointerUp={handlePointerUp}
           {...(typeof window !== 'undefined' && !('ontouchstart' in window) && { handleCanvasDoubleClick })}
+          {...(typeof window !== 'undefined' && 'ontouchstart' in window && { handleCanvasTouchEnd })}
         />
       </>
     </CanvasServicesProvider>

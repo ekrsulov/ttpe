@@ -41,6 +41,7 @@ export const subpathPlugin: PluginDefinition<CanvasStore> = {
         selectSubpath,
         setDragStart,
         handleSubpathDoubleClick,
+        handleSubpathTouchEnd,
         isElementHidden,
         viewport,
       }) => {
@@ -68,6 +69,7 @@ export const subpathPlugin: PluginDefinition<CanvasStore> = {
                   onSelectSubpath={selectSubpath ?? (() => {})}
                   onSetDragStart={setDragStart}
                   onSubpathDoubleClick={handleSubpathDoubleClick}
+                  onSubpathTouchEnd={handleSubpathTouchEnd}
                   isVisible={activePlugin === 'subpath'}
                 />
               ))}

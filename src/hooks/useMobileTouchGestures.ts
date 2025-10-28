@@ -168,7 +168,8 @@ export const useMobileTouchGestures = (svgRef: RefObject<SVGSVGElement | null>):
         gestureStateRef.current.initialMidpoint = null;
         gestureStateRef.current.isGestureActive = false;
         
-        // If a gesture was active, prevent any pointer events from triggering
+        // IMPORTANT: Only prevent default if a multi-touch gesture was active
+        // This allows single-tap events (including double-tap detection) to work normally
         if (wasGestureActive) {
           event.preventDefault();
           event.stopPropagation();

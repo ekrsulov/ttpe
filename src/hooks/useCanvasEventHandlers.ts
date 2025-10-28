@@ -6,6 +6,7 @@ import type { Point } from '../types';
 import { useCanvasEventBus } from '../canvas/CanvasEventBusContext';
 import { pluginManager } from '../utils/pluginManager';
 import { calculateCommandsBounds, calculateMultiElementBounds } from '../utils/selectionBoundsUtils';
+import { useDoubleTap } from './useDoubleTap';
 
 interface EventHandlerDeps {
   svgRef: React.RefObject<SVGSVGElement | null>;
@@ -82,6 +83,13 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
   } = deps;
 
   const eventBus = useCanvasEventBus();
+
+  // Double tap detection hook
+  const { 
+    handleElementTouchEnd: detectElementDoubleTap, 
+    handleSubpathTouchEnd: detectSubpathDoubleTap,
+    handleCanvasTouchEnd: detectCanvasDoubleTap 
+  } = useDoubleTap();
 
   // Apply snap to dragged elements or subpaths
   const applySnapToDraggedElements = useCallback(() => {
@@ -212,11 +220,6 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     e.stopPropagation();
     e.preventDefault();
 
-    // Skip on touch devices to avoid conflicts with custom double-tap detection
-    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-      return;
-    }
-
     const state = useCanvasStore.getState();
     const element = state.elements.find(el => el.id === elementId);
 
@@ -258,14 +261,9 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
   }, [activePlugin]);
 
   // Handle subpath double click
-  const handleSubpathDoubleClick = useCallback((elementId: string, subpathIndex: number, e: React.MouseEvent<SVGPathElement>) => {
+  const handleSubpathDoubleClick = useCallback((elementId: string, subpathIndex: number, e: React.MouseEvent<Element>) => {
     e.stopPropagation();
     e.preventDefault();
-
-    // Skip on touch devices to avoid conflicts with custom double-tap detection
-    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-      return;
-    }
 
     const state = useCanvasStore.getState();
 
@@ -297,7 +295,94 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       }
       // If same subpath, do nothing
     }
-  }, [activePlugin]);  // Handle element pointer down for drag
+  }, [activePlugin]);
+
+  // Handle element touch end for double tap detection
+  const handleElementTouchEnd = useCallback((elementId: string, e: React.TouchEvent<Element>) => {
+    // Detect if this is a double tap
+    const isDoubleTap = detectElementDoubleTap(elementId, e);
+    
+    if (!isDoubleTap) {
+      // Single tap - do nothing special
+      return;
+    }
+
+    // Double tap detected - prevent default and create synthetic mouse event
+    e.preventDefault();
+    e.stopPropagation();
+
+    const touch = e.changedTouches[0];
+    if (!touch) return;
+
+    const syntheticEvent = {
+      preventDefault: () => e.preventDefault(),
+      stopPropagation: () => e.stopPropagation(),
+      target: e.target,
+      currentTarget: e.currentTarget,
+      clientX: touch.clientX,
+      clientY: touch.clientY,
+      button: 0,
+      type: 'dblclick',
+    } as React.MouseEvent<Element>;
+
+    // Call the double click handler
+    handleElementDoubleClick(elementId, syntheticEvent);
+  }, [detectElementDoubleTap, handleElementDoubleClick]);
+
+  // Handle canvas touch end for double tap on empty space
+  const handleCanvasTouchEnd = useCallback((e: React.TouchEvent<SVGSVGElement>) => {
+    // Detect if this is a double tap on empty space
+    const isDoubleTap = detectCanvasDoubleTap(e);
+    
+    if (!isDoubleTap) {
+      // Single tap - do nothing special
+      return;
+    }
+
+    // Double tap detected on empty space
+    const target = e.target as Element;
+    const isEmptySpace = target.tagName === 'svg' || target.classList.contains('canvas-background');
+    
+    if (isEmptySpace && (activePlugin === 'subpath' || activePlugin === 'transformation' || activePlugin === 'edit')) {
+      e.preventDefault();
+      e.stopPropagation();
+      setMode('select');
+    }
+  }, [detectCanvasDoubleTap, activePlugin, setMode]);
+
+  // Handle subpath touch end for double tap detection
+  const handleSubpathTouchEnd = useCallback((elementId: string, subpathIndex: number, e: React.TouchEvent<SVGPathElement>) => {
+    // Detect if this is a double tap on a subpath
+    const isDoubleTap = detectSubpathDoubleTap(elementId, subpathIndex, e);
+    
+    if (!isDoubleTap) {
+      // Single tap - do nothing special
+      return;
+    }
+
+    // Double tap detected - prevent default and create synthetic mouse event
+    e.preventDefault();
+    e.stopPropagation();
+
+    const touch = e.changedTouches[0];
+    if (!touch) return;
+
+    const syntheticEvent = {
+      preventDefault: () => e.preventDefault(),
+      stopPropagation: () => e.stopPropagation(),
+      target: e.target,
+      currentTarget: e.currentTarget,
+      clientX: touch.clientX,
+      clientY: touch.clientY,
+      button: 0,
+      type: 'dblclick',
+    } as React.MouseEvent<SVGPathElement>;
+
+    // Call the subpath double click handler
+    handleSubpathDoubleClick(elementId, subpathIndex, syntheticEvent);
+  }, [detectSubpathDoubleTap, handleSubpathDoubleClick]);
+
+  // Handle element pointer down for drag
   const handleElementPointerDown = useCallback((elementId: string, e: React.PointerEvent) => {
     if (activePlugin === 'select') {
       const state = useCanvasStore.getState();
@@ -741,10 +826,41 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     }
   }, [activePlugin, setMode]);
 
+  // Handle element double tap (combines element and subpath double tap logic)
+  const handleElementDoubleTap = useCallback((elementId: string) => {
+
+    // Create a synthetic mouse event
+    const syntheticEvent = {
+      preventDefault: () => {},
+      stopPropagation: () => {},
+      target: null,
+      currentTarget: null,
+      clientX: 0,
+      clientY: 0,
+      button: 0,
+      type: 'dblclick',
+    } as unknown as React.MouseEvent<Element>;
+
+    // Check if we need to handle subpath double tap
+    const state = useCanvasStore.getState();
+    const hasSelectedSubpaths = state.selectedSubpaths && state.selectedSubpaths.length > 0;
+    const isSubpathMode = state.activePlugin === 'subpath';
+
+    if (hasSelectedSubpaths && isSubpathMode && state.selectedSubpaths?.[0].elementId === elementId) {
+      // Handle subpath double tap
+      const subpathIndex = state.selectedSubpaths[0].subpathIndex;
+      handleSubpathDoubleClick(elementId, subpathIndex, syntheticEvent);
+    } else {
+      // Handle regular element double tap
+      handleElementDoubleClick(elementId, syntheticEvent);
+    }
+  }, [activePlugin]);
+
   return {
     handleElementClick,
     handleElementDoubleClick,
     handleSubpathDoubleClick,
+    handleElementDoubleTap,
     handleElementPointerDown,
     handleTransformationHandlerPointerDown,
     handleTransformationHandlerPointerUp,
@@ -753,5 +869,8 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     handlePointerUp,
     handleWheel,
     handleCanvasDoubleClick,
+    handleElementTouchEnd,
+    handleSubpathTouchEnd,
+    handleCanvasTouchEnd,
   };
 };

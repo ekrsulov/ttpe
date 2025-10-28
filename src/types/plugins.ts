@@ -1,4 +1,4 @@
-import type { ComponentType, PointerEvent, MouseEvent, ReactNode } from 'react';
+import type { ComponentType, PointerEvent, MouseEvent, TouchEvent, ReactNode } from 'react';
 import type { StoreApi } from 'zustand';
 import type { Point, CanvasElement } from '.';
 import type { CanvasControllerValue } from '../canvas/controller/CanvasControllerContext';
@@ -62,6 +62,7 @@ export interface CanvasLayerContext extends CanvasControllerValue {
   handleTransformationHandlerPointerDown: (event: PointerEvent, elementId: string, handler: string) => void;
   handleTransformationHandlerPointerUp: (event: PointerEvent) => void;
   handleSubpathDoubleClick: (elementId: string, subpathIndex: number, event: MouseEvent<SVGPathElement>) => void;
+  handleSubpathTouchEnd: (elementId: string, subpathIndex: number, event: TouchEvent<SVGPathElement>) => void;
   setDragStart: (point: Point | null) => void;
 }
 
