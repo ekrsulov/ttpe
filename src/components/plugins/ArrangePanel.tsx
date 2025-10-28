@@ -16,7 +16,8 @@ import {
   ArrowLeftRight,
   ArrowUpDown
 } from 'lucide-react';
-import { VStack, HStack, IconButton as ChakraIconButton, Box, Tooltip } from '@chakra-ui/react';
+import { VStack, HStack, IconButton as ChakraIconButton, Box } from '@chakra-ui/react';
+import ConditionalTooltip from '../ui/ConditionalTooltip';
 import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
 
 interface ButtonConfig {
@@ -76,7 +77,7 @@ const ArrangePanelComponent: React.FC = () => {
   const renderButtonRow = (buttons: ButtonConfig[]) => (
     <HStack spacing={0.5} w="full">
       {buttons.map((button, index) => (
-        <Tooltip key={index} label={button.title}>
+        <ConditionalTooltip key={index} label={button.title}>
           <ChakraIconButton
             aria-label={button.title}
             icon={button.icon}
@@ -87,7 +88,7 @@ const ArrangePanelComponent: React.FC = () => {
             variant="ghost"
             bg="transparent"
           />
-        </Tooltip>
+        </ConditionalTooltip>
       ))}
     </HStack>
   );

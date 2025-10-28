@@ -7,9 +7,9 @@ import {
   Grid,
   Collapse,
   useDisclosure,
-  IconButton as ChakraIconButton,
-  Tooltip
+  IconButton as ChakraIconButton
 } from '@chakra-ui/react';
+import ConditionalTooltip from '../../components/ui/ConditionalTooltip';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Panel } from '../../components/ui/Panel';
 import { PanelStyledButton } from '../../components/ui/PanelStyledButton';
@@ -116,7 +116,7 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
               >
                 Advanced
               </Text>
-              <Tooltip label={isAdvancedOpen ? "Collapse Advanced" : "Expand Advanced"}>
+              <ConditionalTooltip label={isAdvancedOpen ? "Collapse Advanced" : "Expand Advanced"}>
                 <ChakraIconButton
                   aria-label={isAdvancedOpen ? "Collapse Advanced" : "Expand Advanced"}
                   icon={isAdvancedOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -128,7 +128,7 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
                   flexShrink={0}
                   bg="transparent"
                 />
-              </Tooltip>
+              </ConditionalTooltip>
             </HStack>
 
             <Collapse in={isAdvancedOpen} animateOpacity>

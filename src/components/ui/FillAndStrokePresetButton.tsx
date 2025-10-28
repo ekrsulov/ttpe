@@ -1,5 +1,6 @@
 import React from 'react';
-import { Button, Tooltip } from '@chakra-ui/react';
+import { Button } from '@chakra-ui/react';
+import ConditionalTooltip from './ConditionalTooltip';
 import type { Preset } from '../../utils/fillAndStrokePresets';
 
 interface PresetButtonProps {
@@ -14,7 +15,7 @@ export const PresetButton: React.FC<PresetButtonProps> = ({ preset, onClick, isA
   };
 
   return (
-    <Tooltip label={preset.name}>
+    <ConditionalTooltip label={preset.name}>
       <Button
         onClick={handleClick}
         w="20px"
@@ -57,6 +58,6 @@ export const PresetButton: React.FC<PresetButtonProps> = ({ preset, onClick, isA
           )}
         </svg>
       </Button>
-    </Tooltip>
+    </ConditionalTooltip>
   );
 };

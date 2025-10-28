@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Button as ChakraButton, HStack, VStack, Input, InputGroup, InputLeftAddon, useToast, FormControl, FormLabel, Text, Box, Collapse, useDisclosure, IconButton as ChakraIconButton, Tooltip } from '@chakra-ui/react';
+import { Button as ChakraButton, HStack, VStack, Input, InputGroup, InputLeftAddon, useToast, FormControl, FormLabel, Text, Box, Collapse, useDisclosure, IconButton as ChakraIconButton } from '@chakra-ui/react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import ConditionalTooltip from '../ui/ConditionalTooltip';
 import { useCanvasStore } from '../../store/canvasStore';
 import { logger, importSVGWithDimensions, measurePath, translateCommands, performPathUnion, transformCommands, calculateScaledStrokeWidth, flattenImportedElements } from '../../utils';
 import { Panel } from '../ui/Panel';
@@ -520,7 +521,7 @@ export const FilePanel: React.FC = () => {
             >
               Advanced
             </Text>
-            <Tooltip label={isAdvancedOpen ? "Collapse Advanced" : "Expand Advanced"}>
+            <ConditionalTooltip label={isAdvancedOpen ? "Collapse Advanced" : "Expand Advanced"}>
               <ChakraIconButton
                 aria-label={isAdvancedOpen ? "Collapse Advanced" : "Expand Advanced"}
                 icon={isAdvancedOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -532,7 +533,7 @@ export const FilePanel: React.FC = () => {
                 flexShrink={0}
                 bg="transparent"
               />
-            </Tooltip>
+            </ConditionalTooltip>
           </HStack>
 
           <Collapse in={isAdvancedOpen} animateOpacity>

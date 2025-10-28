@@ -11,6 +11,7 @@ import { getItemThumbnailData } from '../../utils/selectPanelHelpers';
 import { VisibilityLockControls } from './VisibilityLockControls';
 import { useSelectPanelActions } from '../../hooks/useSelectPanelActions';
 import { makeShallowComparator } from '../../utils/coreHelpers';
+import ConditionalTooltip from '../ui/ConditionalTooltip';
 
 // Import shared type instead of duplicating
 import type { SelectPanelItemData } from './SelectPanel.types';
@@ -53,9 +54,6 @@ const SelectPanelItemComponent: React.FC<SelectPanelItemProps> = ({
 
   const elementId = item.element.id;
   const subpathIndex = item.type === 'subpath' ? item.subpathIndex : undefined;
-  const primaryLabel = item.type === 'element'
-    ? `path (${item.pointCount}) z: ${item.element.zIndex}`
-    : `subpath-${subpathIndex ?? 0} (${item.pointCount})`;
   const canCopyPath = item.type === 'element' && item.element.type === 'path';
   const containerBg = isSelected ? 'blue.50' : 'gray.50';
 
@@ -86,47 +84,77 @@ const SelectPanelItemComponent: React.FC<SelectPanelItemProps> = ({
       )}
       <VStack spacing={0} align="stretch" flex={1} justifyContent="center">
         {/* Línea 1: Info principal */}
-        <Text
-          fontWeight="500"
-          fontSize="10px"
-          color={isHidden ? 'gray.400' : isSelected ? 'blue.700' : 'gray.800'}
-          lineHeight="1.4"
-        >
-          {primaryLabel}
-        </Text>
+        <HStack spacing={0} align="center">
+          <Text
+            fontWeight="500"
+            fontSize="10px"
+            color={isHidden ? 'gray.400' : isSelected ? 'blue.700' : 'gray.800'}
+            lineHeight="1.4"
+          >
+            {item.type === 'element' ? 'path' : `subpath-${subpathIndex ?? 0}`}
+          </Text>
+          <ConditionalTooltip label={`${item.pointCount} points`}>
+            <Text
+              fontWeight="500"
+              fontSize="10px"
+              color={isHidden ? 'gray.400' : isSelected ? 'blue.700' : 'gray.800'}
+              lineHeight="1.4"
+            >
+              {` (${item.pointCount})`}
+            </Text>
+          </ConditionalTooltip>
+          {item.type === 'element' && (
+            <ConditionalTooltip label={`Z-index: ${item.element.zIndex}`}>
+              <Text
+                fontWeight="500"
+                fontSize="10px"
+                color={isHidden ? 'gray.400' : isSelected ? 'blue.700' : 'gray.800'}
+                lineHeight="1.4"
+              >
+                {` z: ${item.element.zIndex}`}
+              </Text>
+            </ConditionalTooltip>
+          )}
+        </HStack>
         {/* Línea 2: Dimensiones */}
-        <HStack spacing={1} align="center">
-          <Icon as={RulerDimensionLine} boxSize={3} color={isHidden ? 'gray.400' : 'gray.500'} />
-          <Text
-            fontSize="9px"
-            color={isHidden ? 'gray.400' : 'gray.600'}
-            lineHeight="1.4"
-          >
-            {dimensions ?? '—'}
-          </Text>
-        </HStack>
+        <ConditionalTooltip label={`Dimensions: ${dimensions ?? '—'}`}>
+          <HStack spacing={1} align="center">
+            <Icon as={RulerDimensionLine} boxSize={3} color={isHidden ? 'gray.400' : 'gray.500'} />
+            <Text
+              fontSize="9px"
+              color={isHidden ? 'gray.400' : 'gray.600'}
+              lineHeight="1.4"
+            >
+              {dimensions ?? '—'}
+            </Text>
+          </HStack>
+        </ConditionalTooltip>
         {/* Línea 3: Primera coordenada */}
-        <HStack spacing={1} align="center">
-          <Icon as={MoveUpLeft} boxSize={3} color={isHidden ? 'gray.400' : 'gray.500'} />
-          <Text
-            fontSize="9px"
-            color={isHidden ? 'gray.400' : 'gray.600'}
-            lineHeight="1.4"
-          >
-            {coord1 ?? '—'}
-          </Text>
-        </HStack>
+        <ConditionalTooltip label={`Top-left corner: ${coord1 ?? '—'}`}>
+          <HStack spacing={1} align="center">
+            <Icon as={MoveUpLeft} boxSize={3} color={isHidden ? 'gray.400' : 'gray.500'} />
+            <Text
+              fontSize="9px"
+              color={isHidden ? 'gray.400' : 'gray.600'}
+              lineHeight="1.4"
+            >
+              {coord1 ?? '—'}
+            </Text>
+          </HStack>
+        </ConditionalTooltip>
         {/* Línea 4: Segunda coordenada */}
-        <HStack spacing={1} align="center">
-          <Icon as={MoveDownRight} boxSize={3} color={isHidden ? 'gray.400' : 'gray.500'} />
-          <Text
-            fontSize="9px"
-            color={isHidden ? 'gray.400' : 'gray.600'}
-            lineHeight="1.4"
-          >
-            {coord2 ?? '—'}
-          </Text>
-        </HStack>
+        <ConditionalTooltip label={`Bottom-right corner: ${coord2 ?? '—'}`}>
+          <HStack spacing={1} align="center">
+            <Icon as={MoveDownRight} boxSize={3} color={isHidden ? 'gray.400' : 'gray.500'} />
+            <Text
+              fontSize="9px"
+              color={isHidden ? 'gray.400' : 'gray.600'}
+              lineHeight="1.4"
+            >
+              {coord2 ?? '—'}
+            </Text>
+          </HStack>
+        </ConditionalTooltip>
       </VStack>
       <VStack spacing={1} align="flex-end">
         {/* Fila 1: Group (si aplica), Duplicate, Clipboard */}

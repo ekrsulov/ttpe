@@ -1,5 +1,6 @@
 import React from 'react';
-import { HStack, IconButton as ChakraIconButton, Tooltip } from '@chakra-ui/react';
+import { HStack, IconButton as ChakraIconButton } from '@chakra-ui/react';
+import ConditionalTooltip from '../../components/ui/ConditionalTooltip';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Square, Circle, Triangle, type LucideIcon } from 'lucide-react';
 import { Panel } from '../../components/ui/Panel';
@@ -35,7 +36,7 @@ export const ShapePanel: React.FC = () => {
           const shouldHighlight = isShapeModeActive && isShapeSelected;
 
           return (
-            <Tooltip key={shapeItem.type} label={`${shapeItem.label} - Click and drag to create`} fontSize="xs">
+            <ConditionalTooltip key={shapeItem.type} label={`${shapeItem.label} - Click and drag to create`} fontSize="xs">
               <ChakraIconButton
                 aria-label={shapeItem.label}
                 icon={<IconComponent size={14} />}
@@ -60,7 +61,7 @@ export const ShapePanel: React.FC = () => {
                   justifyContent: 'center',
                 }}
               />
-            </Tooltip>
+            </ConditionalTooltip>
           );
         })}
       </HStack>

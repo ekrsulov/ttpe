@@ -1,6 +1,7 @@
 import React from 'react';
-import { Box, IconButton, Tooltip, type IconButtonProps } from '@chakra-ui/react';
+import { Box, IconButton, type IconButtonProps } from '@chakra-ui/react';
 import type { LucideIcon } from 'lucide-react';
+import ConditionalTooltip from './ConditionalTooltip';
 
 interface ToolbarIconButtonProps extends Omit<IconButtonProps, 'icon' | 'aria-label'> {
   icon: LucideIcon | React.ComponentType<{ size?: number }>;
@@ -70,9 +71,9 @@ export const ToolbarIconButton: React.FC<ToolbarIconButtonProps> = ({
 
   if (showTooltip && (tooltip || label)) {
     return (
-      <Tooltip label={tooltip ?? label} placement="top">
+      <ConditionalTooltip label={tooltip ?? label} placement="top">
         {button}
-      </Tooltip>
+      </ConditionalTooltip>
     );
   }
 

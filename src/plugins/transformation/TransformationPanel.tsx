@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { VStack, HStack, Tag, Text, Box, Tooltip } from '@chakra-ui/react';
+import { VStack, HStack, Tag, Text, Box } from '@chakra-ui/react';
+import ConditionalTooltip from '../../components/ui/ConditionalTooltip';
 import { Lock, LockOpen } from 'lucide-react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Panel } from '../../components/ui/Panel';
@@ -198,7 +199,7 @@ export const TransformationPanel: React.FC = () => {
                   />
                   
                   {/* Lock button */}
-                  <Tooltip
+                  <ConditionalTooltip
                     label={maintainAspectRatio ? 'Locked - Proportional resize' : 'Unlocked - Free resize'}
                     placement="top"
                   >
@@ -226,7 +227,7 @@ export const TransformationPanel: React.FC = () => {
                     >
                       {maintainAspectRatio ? <Lock size={14} strokeWidth={2} /> : <LockOpen size={14} strokeWidth={2} />}
                     </Box>
-                  </Tooltip>
+                  </ConditionalTooltip>
                 </Box>
               </HStack>
             </Box>

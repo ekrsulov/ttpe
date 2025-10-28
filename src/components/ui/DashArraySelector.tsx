@@ -1,6 +1,7 @@
 import React from 'react';
-import { IconButton as ChakraIconButton, Tooltip } from '@chakra-ui/react';
+import { IconButton as ChakraIconButton } from '@chakra-ui/react';
 import { Minus } from 'lucide-react';
+import ConditionalTooltip from './ConditionalTooltip';
 import { DASH_PRESETS } from '../../utils/dashPresets';
 
 interface DashArraySelectorProps {
@@ -68,7 +69,7 @@ export const DashArrayPresets: React.FC<DashArrayPresetsProps> = ({
       flexWrap: 'nowrap' // Keep all buttons in one line
     }}>
       {commonPresets.map(preset => (
-        <Tooltip key={preset.id} label={`${preset.name}: ${preset.description}`}>
+        <ConditionalTooltip key={preset.id} label={`${preset.name}: ${preset.description}`}>
           <ChakraIconButton
             aria-label={`${preset.name}: ${preset.description}`}
             onPointerUp={() => onChange(preset.dashArray)}
@@ -79,7 +80,7 @@ export const DashArrayPresets: React.FC<DashArrayPresetsProps> = ({
             h="20px"
             icon={<DashPreview dashArray={preset.dashArray} />}
           />
-        </Tooltip>
+        </ConditionalTooltip>
       ))}
     </div>
   );

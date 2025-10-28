@@ -19,9 +19,9 @@ import {
   TableContainer,
   Collapse,
   useDisclosure,
-  Tooltip,
   Divider
 } from '@chakra-ui/react';
+import ConditionalTooltip from '../../components/ui/ConditionalTooltip';
 import { Panel } from '../../components/ui/Panel';
 
 export const ControlPointAlignmentPanel: React.FC = () => {
@@ -409,7 +409,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
           </Button>
 
           <Box ml="auto">
-            <Tooltip label={showDetails ? "Hide Details" : "Show Details"}>
+            <ConditionalTooltip label={showDetails ? "Hide Details" : "Show Details"}>
               <ChakraIconButton
                 aria-label={showDetails ? "Hide Details" : "Show Details"}
                 icon={showDetails ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -418,7 +418,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
                 size="xs"
                 bg="transparent"
               />
-            </Tooltip>
+            </ConditionalTooltip>
           </Box>
         </HStack>
 

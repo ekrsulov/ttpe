@@ -8,6 +8,7 @@ import { PanelActionButton } from '../ui/PanelActionButton';
 import { VisibilityLockControls } from './VisibilityLockControls';
 import { useSelectPanelActions } from '../../hooks/useSelectPanelActions';
 import { makeShallowComparator } from '../../utils/coreHelpers';
+import ConditionalTooltip from '../ui/ConditionalTooltip';
 
 interface SelectPanelGroupItemProps {
   group: GroupElement;
@@ -81,9 +82,11 @@ const SelectPanelGroupItemComponent: React.FC<SelectPanelGroupItemProps> = ({
           <EditablePreview color={groupHidden ? 'gray.400' : 'gray.800'} />
           <EditableInput />
         </Editable>
-        <Text fontSize="10px" color="gray.600">
-          ({groupData.childIds.length})
-        </Text>
+        <ConditionalTooltip label={`${groupData.childIds.length} elements in group`}>
+          <Text fontSize="10px" color="gray.600">
+            ({groupData.childIds.length})
+          </Text>
+        </ConditionalTooltip>
         <HStack spacing={1} ml="auto">
           <PanelActionButton
             label="Ungroup"

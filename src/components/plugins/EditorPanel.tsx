@@ -14,9 +14,9 @@ import {
   Box,
   Collapse,
   Input,
-  useBreakpointValue,
-  Tooltip
+  useBreakpointValue
 } from '@chakra-ui/react';
+import ConditionalTooltip from '../ui/ConditionalTooltip';
 import { SliderControl } from '../ui/SliderControl';
 import { PercentSliderControl } from '../ui/PercentSliderControl';
 import { PresetButton } from '../ui/FillAndStrokePresetButton';
@@ -155,7 +155,7 @@ export const EditorPanel: React.FC = () => {
         {/* Color Presets */}
         <HStack minH="24px">
           {/* Style Eyedropper Button */}
-          <Tooltip label={selectedPathsCount !== 1 ? 'Select exactly one path to copy its style' : styleEyedropper.isActive ? 'Click on another path to apply style' : 'Copy style from selected path'}>
+          <ConditionalTooltip label={selectedPathsCount !== 1 ? 'Select exactly one path to copy its style' : styleEyedropper.isActive ? 'Click on another path to apply style' : 'Copy style from selected path'}>
             <ChakraIconButton
               aria-label={styleEyedropper.isActive ? "Cancel Style Copy" : "Copy Style"}
               icon={<Pipette size={16} />}
@@ -169,7 +169,7 @@ export const EditorPanel: React.FC = () => {
               isDisabled={!styleEyedropper.isActive && selectedPathsCount !== 1}
               colorScheme={styleEyedropper.isActive ? 'blue' : 'gray'}
             />
-          </Tooltip>
+          </ConditionalTooltip>
           <Box
             display="flex"
             justifyContent="center"
@@ -189,7 +189,7 @@ export const EditorPanel: React.FC = () => {
               ))}
             </Box>
           </Box>
-          <Tooltip label={isColorControlsOpen ? "Collapse Color Controls" : "Expand Color Controls"}>
+          <ConditionalTooltip label={isColorControlsOpen ? "Collapse Color Controls" : "Expand Color Controls"}>
             <ChakraIconButton
               aria-label={isColorControlsOpen ? "Collapse Color Controls" : "Expand Color Controls"}
               icon={isColorControlsOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -201,7 +201,7 @@ export const EditorPanel: React.FC = () => {
               flexShrink={0}
               bg="transparent"
             />
-          </Tooltip>
+          </ConditionalTooltip>
         </HStack>
 
         {/* Color Controls */}
@@ -214,7 +214,7 @@ export const EditorPanel: React.FC = () => {
                   Fill
                 </Text>
                 <HStack spacing={1} flexShrink={0}>
-                  <Tooltip label="Select fill color">
+                  <ConditionalTooltip label="Select fill color">
                     <Input
                       type="color"
                       value={currentFillColor === 'none' ? '#000000' : currentFillColor}
@@ -230,8 +230,8 @@ export const EditorPanel: React.FC = () => {
                       opacity={currentFillColor === 'none' ? 0.5 : 1}
                       title="Fill Color"
                     />
-                  </Tooltip>
-                  <Tooltip label="Set fill color to none (transparent)">
+                  </ConditionalTooltip>
+                  <ConditionalTooltip label="Set fill color to none (transparent)">
                     <ChakraIconButton
                       aria-label="No Fill"
                       icon={<X size={12} />}
@@ -242,7 +242,7 @@ export const EditorPanel: React.FC = () => {
                       h="20px"
                       minW="20px"
                     />
-                  </Tooltip>
+                  </ConditionalTooltip>
                 </HStack>
                 <Box flex={1} minW="120px">
                   <PercentSliderControl
@@ -265,7 +265,7 @@ export const EditorPanel: React.FC = () => {
                   Stroke
                 </Text>
                 <HStack spacing={1} flexShrink={0}>
-                  <Tooltip label="Select stroke color">
+                  <ConditionalTooltip label="Select stroke color">
                     <Input
                       type="color"
                       value={currentStrokeColor === 'none' ? '#000000' : currentStrokeColor}
@@ -280,8 +280,8 @@ export const EditorPanel: React.FC = () => {
                       cursor="pointer"
                       opacity={currentStrokeColor === 'none' ? 0.5 : 1}
                     />
-                  </Tooltip>
-                  <Tooltip label="Set stroke color to none (no outline)">
+                  </ConditionalTooltip>
+                  <ConditionalTooltip label="Set stroke color to none (no outline)">
                     <ChakraIconButton
                       aria-label="No Stroke"
                       icon={<X size={12} />}
@@ -293,7 +293,7 @@ export const EditorPanel: React.FC = () => {
                       h="20px"
                       minW="20px"
                     />
-                  </Tooltip>
+                  </ConditionalTooltip>
                 </HStack>
                 <Box flex={1} minW="120px">
                   <PercentSliderControl
@@ -325,7 +325,7 @@ export const EditorPanel: React.FC = () => {
                   inline={true}
                 />
               </Box>
-              <Tooltip label={isAdvancedStrokeOpen ? "Collapse Advanced Stroke" : "Expand Advanced Stroke"}>
+              <ConditionalTooltip label={isAdvancedStrokeOpen ? "Collapse Advanced Stroke" : "Expand Advanced Stroke"}>
                 <ChakraIconButton
                   aria-label={isAdvancedStrokeOpen ? "Collapse Advanced Stroke" : "Expand Advanced Stroke"}
                   icon={isAdvancedStrokeOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -337,7 +337,7 @@ export const EditorPanel: React.FC = () => {
                   flexShrink={0}
                   bg="transparent"
                 />
-              </Tooltip>
+              </ConditionalTooltip>
             </HStack>
 
             {/* Advanced Stroke Properties */}

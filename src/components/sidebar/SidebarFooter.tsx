@@ -1,5 +1,6 @@
 import React from 'react';
-import { Box, Flex, IconButton, Divider, Tooltip } from '@chakra-ui/react';
+import { Box, Flex, IconButton, Divider } from '@chakra-ui/react';
+import ConditionalTooltip from '../ui/ConditionalTooltip';
 import { ArrangePanel } from '../plugins/ArrangePanel';
 import { SelectPanel } from '../plugins/SelectPanel';
 import { ChevronUp, ChevronDown } from 'lucide-react';
@@ -45,7 +46,7 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
       {hasSelection && (
         <Flex position="relative" my={1} align="center">
           <Divider />
-          <Tooltip label={isArrangeExpanded ? "Collapse Arrange" : "Expand Arrange"}>
+          <ConditionalTooltip label={isArrangeExpanded ? "Collapse Arrange" : "Expand Arrange"}>
             <IconButton
               aria-label={isArrangeExpanded ? "Collapse Arrange" : "Expand Arrange"}
               icon={isArrangeExpanded ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
@@ -60,7 +61,7 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
               minW="24px"
               h="24px"
             />
-          </Tooltip>
+          </ConditionalTooltip>
         </Flex>
       )}
 

@@ -1,6 +1,7 @@
 import React from 'react';
-import { IconButton as ChakraIconButton, Tooltip } from '@chakra-ui/react';
+import { IconButton as ChakraIconButton } from '@chakra-ui/react';
 import type { LucideIcon } from 'lucide-react';
+import ConditionalTooltip from './ConditionalTooltip';
 
 interface PanelActionButtonProps {
   label: string;
@@ -24,7 +25,7 @@ export const PanelActionButton: React.FC<PanelActionButtonProps> = ({
   tooltipDelay = 200,
 }) => {
   return (
-    <Tooltip label={label} openDelay={tooltipDelay}>
+    <ConditionalTooltip label={label} openDelay={tooltipDelay}>
       <ChakraIconButton
         aria-label={label}
         icon={<Icon size={iconSize} />}
@@ -39,6 +40,6 @@ export const PanelActionButton: React.FC<PanelActionButtonProps> = ({
         _hover={{ bg: 'gray.50' }}
         _active={{ bg: 'gray.100' }}
       />
-    </Tooltip>
+    </ConditionalTooltip>
   );
 };
