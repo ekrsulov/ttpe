@@ -41,6 +41,7 @@ export interface BaseSlice {
     keyboardMovementPrecision: number; // Number of decimal places for keyboard movement (0 = integers)
     showRenderCountBadges: boolean; // Show debug render count badges
     showMinimap: boolean; // Show minimap overlay
+    showTooltips: boolean; // Show tooltips on desktop
   };
 
   // Actions
@@ -193,6 +194,7 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => {
     keyboardMovementPrecision: 2, // Default to 0 (integers only)
     showRenderCountBadges: false, // Show badges in development by default
     showMinimap: false, // Show minimap by default
+    showTooltips: true, // Show tooltips by default
   },
 
   // Actions

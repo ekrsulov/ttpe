@@ -135,6 +135,16 @@ export const SettingsPanel: React.FC = () => {
           onChange={handleKeyboardPrecisionChange}
           title="Number of decimal places for keyboard movement (0 = integers only)"
         />
+
+        {/* Show Tooltips - Only on desktop */}
+        {!isMobile && (
+          <PanelToggle
+            isChecked={settings.showTooltips}
+            onChange={(e) => updateSettings({ showTooltips: e.target.checked })}
+          >
+            Show tooltips
+          </PanelToggle>
+        )}
       </VStack>
     </Panel>
   );
