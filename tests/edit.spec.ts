@@ -88,13 +88,17 @@ test.describe('Edit Functionality', () => {
     // Check that edit panel is visible
     await expect(page.getByRole('heading', { name: 'Smooth Brush' })).toBeVisible();
 
-    // Test toggling brush mode - find the brush mode button
-    const brushModeButton = page.locator('text=Brush Mode:').locator('xpath=following-sibling::button').first();
-    await expect(brushModeButton).toBeVisible();
-    await expect(brushModeButton).toHaveText('Off');
+    // Test toggling brush mode - find the smooth brush switch
+    const smoothBrushSection = page.locator('text=Smooth Brush').locator('xpath=ancestor::div[1]');
+    const brushModeSwitch = smoothBrushSection.locator('.chakra-switch').first();
+    await expect(brushModeSwitch).toBeVisible();
+    const checkbox = brushModeSwitch.locator('input[type="checkbox"]');
+    const isChecked = await checkbox.isChecked();
+    expect(isChecked).toBe(false);
 
-    await brushModeButton.click();
-    await expect(brushModeButton).toHaveText('On');
+    await brushModeSwitch.click();
+    const isCheckedAfter = await checkbox.isChecked();
+    expect(isCheckedAfter).toBe(true);
 
     // Test that radius slider appears when brush is active (use first occurrence for Smooth Brush)
     await expect(page.locator('text=Radius:').first()).toBeVisible();
@@ -142,10 +146,14 @@ test.describe('Edit Functionality', () => {
     await editButton.click();
 
     // Activate brush mode
-    const brushModeButton = page.locator('text=Brush Mode:').locator('xpath=following-sibling::button').first();
-    await expect(brushModeButton).toHaveText('Off');
-    await brushModeButton.click();
-    await expect(brushModeButton).toHaveText('On');
+    const smoothBrushSection = page.locator('text=Smooth Brush').locator('xpath=ancestor::div[1]');
+    const brushModeSwitch = smoothBrushSection.locator('.chakra-switch').first();
+    const checkbox = brushModeSwitch.locator('input[type="checkbox"]');
+    const isCheckedInitially = await checkbox.isChecked();
+    expect(isCheckedInitially).toBe(false);
+    await brushModeSwitch.click();
+    const isCheckedAfter = await checkbox.isChecked();
+    expect(isCheckedAfter).toBe(true);
 
     // Test strength slider - check for the label
     const strengthLabel = page.locator('text=Strength:');
