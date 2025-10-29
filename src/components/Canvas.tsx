@@ -19,8 +19,9 @@ import { useCanvasZoom } from '../hooks/useCanvasZoom';
 import { useMobileTouchGestures } from '../hooks/useMobileTouchGestures';
 import { useElementDoubleTap } from '../hooks/useElementDoubleTap';
 import { CanvasServicesProvider } from '../canvas/services/CanvasServicesProvider';
-import { useSmoothBrushIntegration } from '../hooks/useSmoothBrushIntegration';
-import { useAddPointNativeListeners } from '../hooks/useAddPointNativeListeners';
+import { useEditSmoothBrush } from '../hooks/useEditSmoothBrush';
+import { usePencilDrawing } from '../hooks/usePencilDrawing';
+import { useEditAddPoint } from '../hooks/useEditAddPoint';
 import '../canvas/listeners/AddPointListener';
 import { useDynamicCanvasSize } from '../hooks/useDynamicCanvasSize';
 import { useCanvasSideEffects } from '../hooks/useCanvasSideEffects';
@@ -229,8 +230,17 @@ const CanvasContent: React.FC = () => {
     isElementHidden,
   });
 
-  // Use smooth brush integration hook
-  const {  smoothBrushCursor, canvasServicesValue } = useSmoothBrushIntegration({
+  // Use edit smooth brush hook
+  const { smoothBrushCursor } = useEditSmoothBrush({
+    svgRef,
+    currentMode,
+    screenToCanvas,
+    emitPointerEvent,
+    isSmoothBrushActive,
+  });
+
+  // Use pencil drawing hook
+  const { pencilDrawingService, registerPencilDrawingService, resetPencilDrawingService } = usePencilDrawing({
     svgRef,
     currentMode,
     pencil: pencil ?? {
@@ -250,11 +260,17 @@ const CanvasContent: React.FC = () => {
     emitPointerEvent,
     startPath,
     addPointToPath,
-    isSmoothBrushActive,
   });
 
-  // Use add point native listeners
-  useAddPointNativeListeners({
+  // Create canvas services value for provider
+  const canvasServicesValue = {
+    pencilDrawingService,
+    registerPencilDrawingService,
+    resetPencilDrawingService,
+  };
+
+  // Use edit add point
+  useEditAddPoint({
     svgRef,
     activePlugin: currentMode,
     isAddPointModeActive: addPointMode?.isActive ?? false,

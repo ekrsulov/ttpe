@@ -16,7 +16,7 @@ export interface AttachSmoothBrushListenersOptions {
   addPointToPath: (point: Point) => void;
 }
 
-export class SmoothBrushNativeService {
+export class PencilDrawingService {
   private detachHandlers: (() => void) | null = null;
 
   constructor() {}

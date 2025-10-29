@@ -1,10 +1,10 @@
 import { createContext, type ReactNode } from 'react';
-import { SmoothBrushNativeService } from './SmoothBrushNativeService';
+import { PencilDrawingService } from './PencilDrawingService';
 
 export interface CanvasServicesContextValue {
-  smoothBrushService: SmoothBrushNativeService;
-  registerSmoothBrushService: (service: SmoothBrushNativeService) => void;
-  resetSmoothBrushService: () => void;
+  pencilDrawingService: PencilDrawingService;
+  registerPencilDrawingService: (service: PencilDrawingService) => void;
+  resetPencilDrawingService: () => void;
 }
 
 const CanvasServicesContext = createContext<CanvasServicesContextValue | null>(null);

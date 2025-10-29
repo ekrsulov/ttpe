@@ -5,7 +5,7 @@ import { canvasStoreApi } from '../store/canvasStore';
 import { ADD_POINT_SERVICE_ID, type AddPointServiceState } from '../canvas/listeners/AddPointListener';
 import type { Point } from '../types';
 
-interface UseAddPointNativeListenersParams {
+interface UseEditAddPointParams {
   svgRef: RefObject<SVGSVGElement | null>;
   activePlugin: string | null;
   isAddPointModeActive: boolean;
@@ -17,13 +17,13 @@ interface UseAddPointNativeListenersParams {
   ) => void;
 }
 
-export const useAddPointNativeListeners = ({
+export const useEditAddPoint = ({
   svgRef,
   activePlugin,
   isAddPointModeActive,
   screenToCanvas,
   emitPointerEvent,
-}: UseAddPointNativeListenersParams): void => {
+}: UseEditAddPointParams): void => {
   const controller = useCanvasController();
 
   useCanvasServiceActivation<AddPointServiceState>({
