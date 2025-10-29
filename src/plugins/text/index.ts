@@ -21,7 +21,7 @@ const textSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
 export const textPlugin: PluginDefinition<CanvasStore> = {
   id: 'text',
   metadata: getToolMetadata('text'),
-  handler: (_event, point, _target, _isSmoothBrushActive, _beginSelectionRectangle, _startShapeCreation, context) => {
+  handler: (_event, point, _target, context) => {
     const state = context.store.getState();
     const api = context.api as TextPluginApi;
     void api.addText(point.x, point.y, state.text?.text ?? '');

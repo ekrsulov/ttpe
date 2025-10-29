@@ -24,7 +24,7 @@ const pencilSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
 export const pencilPlugin: PluginDefinition<CanvasStore> = {
   id: 'pencil',
   metadata: getToolMetadata('pencil'),
-  handler: (_event, point, _target, _isSmoothBrushActive, _beginSelectionRectangle, _startShapeCreation, context) => {
+  handler: (_event, point, _target, context) => {
     const api = context.api as PencilPluginApi;
     api.startPath(point);
   },

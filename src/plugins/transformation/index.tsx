@@ -24,9 +24,6 @@ export const transformationPlugin: PluginDefinition<CanvasStore> = {
     _event,
     _point,
     _target,
-    _isSmoothBrushActive,
-    _beginSelectionRectangle,
-    _startShapeCreation,
     _context
   ) => {
     // Transformation tool relies on pointer event listeners elsewhere

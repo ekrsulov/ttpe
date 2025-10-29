@@ -24,12 +24,9 @@ export const shapePlugin: PluginDefinition<CanvasStore> = {
     _event,
     point,
     _target,
-    _isSmoothBrushActive,
-    _beginSelectionRectangle,
-    startShapeCreation,
-    _context
+    context
   ) => {
-    startShapeCreation(point);
+    context.helpers.startShapeCreation?.(point);
   },
   keyboardShortcuts: {
     Escape: () => {

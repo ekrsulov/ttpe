@@ -11,7 +11,7 @@ type GridFillPluginApi = {
 export const gridFillPlugin: PluginDefinition<CanvasStore> = {
   id: 'gridFill',
   metadata: getToolMetadata('gridFill'),
-  handler: (_event, point, _target, _isSmoothBrushActive, _beginSelectionRectangle, _startShapeCreation, context) => {
+  handler: (_event, point, _target, context) => {
     const api = context.api as GridFillPluginApi;
     api.fillGridCell(point);
   },

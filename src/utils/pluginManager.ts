@@ -404,9 +404,7 @@ export class PluginManager {
     event: React.PointerEvent,
     point: import('../types').Point,
     target: Element,
-    isSmoothBrushActive: boolean,
-    beginSelectionRectangle: (point: import('../types').Point, shiftKey?: boolean, subpathMode?: boolean) => void,
-    startShapeCreation: (point: import('../types').Point) => void
+    helpers: { isSmoothBrushActive: boolean; beginSelectionRectangle: (point: import('../types').Point, shiftKey?: boolean, subpathMode?: boolean) => void; startShapeCreation: (point: import('../types').Point) => void }
   ): void {
     const tool = this.registry.get(toolName);
     if (tool?.handler) {
@@ -414,14 +412,12 @@ export class PluginManager {
       const context: PluginHandlerContext<CanvasStore> = {
         ...this.createPluginApiContext(),
         api,
+        helpers,
       };
       tool.handler(
         event,
         point,
         target,
-        isSmoothBrushActive,
-        beginSelectionRectangle,
-        startShapeCreation,
         context
       );
     }
@@ -513,23 +509,17 @@ export class PluginManager {
           return;
         }
 
-        const beginSelectionRectangle = payload.helpers.beginSelectionRectangle ?? (() => {});
-        const startShapeCreation = payload.helpers.startShapeCreation ?? (() => {});
-        const isSmoothBrushActive = Boolean(payload.helpers.isSmoothBrushActive);
-
         const api = this.pluginApis.get(plugin.id) ?? {};
         const context: PluginHandlerContext<CanvasStore> = {
           ...this.createPluginApiContext(),
           api,
+          helpers: payload.helpers,
         };
 
         handler(
           payload.event as React.PointerEvent,
           payload.point,
           target,
-          isSmoothBrushActive,
-          beginSelectionRectangle,
-          startShapeCreation,
           context
         );
       });

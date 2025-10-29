@@ -24,9 +24,6 @@ const selectPlugin: PluginDefinition<CanvasStore> = {
     event,
     point,
     target,
-    _isSmoothBrushActive,
-    beginSelectionRectangle,
-    _startShapeCreation,
     context
   ) => {
     if (target.tagName === 'svg') {
@@ -34,7 +31,7 @@ const selectPlugin: PluginDefinition<CanvasStore> = {
         const state = context.store.getState();
         state.clearSelection?.();
       }
-      beginSelectionRectangle(point);
+      context.helpers.beginSelectionRectangle?.(point);
     }
   },
   keyboardShortcuts: {
@@ -173,9 +170,6 @@ const panPlugin: PluginDefinition<CanvasStore> = {
     _event,
     _point,
     _target,
-    _isSmoothBrushActive,
-    _beginSelectionRectangle,
-    _startShapeCreation,
     _context
   ) => {
     // Pan tool relies on pointer event listeners elsewhere

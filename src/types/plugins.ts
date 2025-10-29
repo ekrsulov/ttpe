@@ -84,8 +84,15 @@ export interface PluginApiContext<TStore extends object> {
   store: PluginStoreApi<TStore>;
 }
 
+export interface PluginHandlerHelpers {
+  isSmoothBrushActive?: boolean;
+  beginSelectionRectangle?: (point: Point, shiftKey?: boolean, subpathMode?: boolean) => void;
+  startShapeCreation?: (point: Point) => void;
+}
+
 export interface PluginHandlerContext<TStore extends object> extends PluginApiContext<TStore> {
   api: Record<string, (...args: never[]) => unknown>;
+  helpers: PluginHandlerHelpers;
 }
 
  
@@ -117,9 +124,6 @@ export interface PluginDefinition<TStore extends object = object> {
     event: PointerEvent,
     point: Point,
     target: Element,
-    isSmoothBrushActive: boolean,
-    beginSelectionRectangle: (point: Point, shiftKey?: boolean, subpathMode?: boolean) => void,
-    startShapeCreation: (point: Point) => void,
     context: PluginHandlerContext<TStore>
   ) => void;
   keyboardShortcuts?: CanvasShortcutMap;

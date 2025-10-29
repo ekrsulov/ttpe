@@ -19,9 +19,9 @@ const subpathSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => 
 export const subpathPlugin: PluginDefinition<CanvasStore> = {
   id: 'subpath',
   metadata: getToolMetadata('subpath'),
-  handler: (event, point, target, _isSmoothBrushActive, beginSelectionRectangle, _startShapeCreation, _context) => {
+  handler: (event, point, target, context) => {
     if (target.tagName === 'svg') {
-      beginSelectionRectangle(point, false, !event.shiftKey);
+      context.helpers.beginSelectionRectangle?.(point, false, !event.shiftKey);
     }
   },
   keyboardShortcuts: {
