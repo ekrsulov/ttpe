@@ -11,7 +11,6 @@ import {
 import { useCanvasStore } from '../store/canvasStore';
 import { SidebarContent } from './sidebar/SidebarContent';
 import { RenderCountBadgeWrapper } from './ui/RenderCountBadgeWrapper';
-import { usePersistentState } from '../hooks/usePersistentState';
 import { safeFunctions } from '../utils/functionHelpers';
 
 interface SidebarProps {
@@ -49,7 +48,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [isPinned, setIsPinned] = useState(isDesktop ?? true);
   
   // Sidebar width state (only for pinned mode)
-  const [sidebarWidth, setSidebarWidth] = usePersistentState('sidebar-width', 250);
+  const sidebarWidth = useCanvasStore((state) => state.sidebarWidth);
+  const setSidebarWidth = useCanvasStore((state) => state.setSidebarWidth);
   const initialWidth = 250; // Ancho inicial para reset
   
   // Sync isPinned with desktop/mobile changes
@@ -181,7 +181,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const setShowSettingsPanel = useCanvasStore((state) => state.setShowSettingsPanel);
   
   // Local state for arrange panel expansion
-  const [isArrangeExpanded, setIsArrangeExpanded] = usePersistentState('arrange-panel-expanded', import.meta.env.DEV);
+  const isArrangeExpanded = useCanvasStore((state) => state.arrangePanelExpanded);
+  const setIsArrangeExpanded = useCanvasStore((state) => state.setArrangePanelExpanded);
 
   // Close special panels when switching to tool modes
   useEffect(() => {

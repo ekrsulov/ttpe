@@ -619,8 +619,10 @@ export const FilePanel: React.FC = () => {
         {/* Reset Application */}
         <Box pt={3}>
           <ChakraButton
-            onClick={() => {
-              localStorage.removeItem('canvas-app-state');
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              useCanvasStore.persist.clearStorage();
               window.location.reload();
             }}
             colorScheme="gray"

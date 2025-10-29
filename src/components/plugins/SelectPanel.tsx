@@ -7,7 +7,6 @@ import { logger } from '../../utils';
 import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
 import { SelectPanelItem } from './SelectPanelItem';
 import { SelectPanelGroupItem } from './SelectPanelGroupItem';
-import { usePersistentState } from '../../hooks/usePersistentState';
 import { useDragResize } from '../../hooks/useDragResize';
 import { getCommandsForPanelItem } from '../../utils/selectPanelHelpers';
 import { buildElementMap } from '../../utils/coreHelpers';
@@ -78,7 +77,8 @@ const SelectPanelComponent: React.FC = () => {
     return map;
   }, [selectedSubpaths]);
 
-  const [panelHeight, setPanelHeight] = usePersistentState('select-panel-height', DEFAULT_PANEL_HEIGHT);
+  const panelHeight = useCanvasStore((state) => state.selectPanelHeight);
+  const setPanelHeight = useCanvasStore((state) => state.setSelectPanelHeight);
   
   const { 
     isDragging: isResizing, 

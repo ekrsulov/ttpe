@@ -1,7 +1,4 @@
-/**
- * Centralized logging system for the application
- * Provides different log levels and environment-aware logging
- */
+import { canvasStoreApi } from '../store/canvasStore';
 
 export const LogLevel = {
   DEBUG: 0,
@@ -43,9 +40,9 @@ class Logger {
         }
       }
 
-      const savedCallerInfo = localStorage.getItem('ttpe-show-caller-info');
+      const savedCallerInfo = canvasStoreApi.getState().showCallerInfo;
       if (savedCallerInfo !== null) {
-        savedShowCallerInfo = savedCallerInfo === 'true';
+        savedShowCallerInfo = savedCallerInfo;
       }
     } catch (_error) {
       // Ignore localStorage errors
@@ -162,7 +159,7 @@ class Logger {
       console.debug('DEBUG formatMessage:', {
         showCallerInfo,
         callerInfo,
-        savedValue: localStorage.getItem('ttpe-show-caller-info')
+        savedValue: canvasStoreApi.getState().showCallerInfo
       });
     }
     
@@ -234,11 +231,11 @@ class Logger {
   setShowCallerInfo(showCallerInfo: boolean): void {
     this.config.showCallerInfo = showCallerInfo;
     
-    // Persist showCallerInfo to localStorage
+    // Persist showCallerInfo to store
     try {
-      localStorage.setItem('ttpe-show-caller-info', showCallerInfo.toString());
+      canvasStoreApi.getState().setShowCallerInfo(showCallerInfo);
     } catch (_error) {
-      // Ignore localStorage errors in case it's not available
+      // Ignore errors
     }
   }
 

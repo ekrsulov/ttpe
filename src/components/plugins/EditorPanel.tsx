@@ -27,7 +27,6 @@ import { DashArrayCustomInput, DashArrayPresets } from '../ui/DashArraySelector'
 import { PRESETS, type Preset } from '../../utils/fillAndStrokePresets';
 import { useSelectedPathProperty } from '../../utils/pathPropertyUtils';
 import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
-import { usePersistentState } from '../../hooks/usePersistentState';
 
 export const EditorPanel: React.FC = () => {
   // Use specific selectors instead of destructuring the entire store
@@ -138,8 +137,10 @@ export const EditorPanel: React.FC = () => {
   const currentFillRule = useSelectedPathProperty('fillRule', pencil?.fillRule ?? 'nonzero');
   const currentStrokeDasharray = useSelectedPathProperty('strokeDasharray', pencil?.strokeDasharray ?? 'none');
 
-  const [isColorControlsOpen, setIsColorControlsOpen] = usePersistentState('editor-color-controls-open', import.meta.env.DEV);
-  const [isAdvancedStrokeOpen, setIsAdvancedStrokeOpen] = usePersistentState('editor-advanced-stroke-open', false);
+  const isColorControlsOpen = useCanvasStore((state) => state.editorColorControlsOpen);
+  const setIsColorControlsOpen = useCanvasStore((state) => state.setEditorColorControlsOpen);
+  const isAdvancedStrokeOpen = useCanvasStore((state) => state.editorAdvancedStrokeOpen);
+  const setIsAdvancedStrokeOpen = useCanvasStore((state) => state.setEditorAdvancedStrokeOpen);
 
   const onColorControlsToggle = () => setIsColorControlsOpen(!isColorControlsOpen);
   const onAdvancedStrokeToggle = () => setIsAdvancedStrokeOpen(!isAdvancedStrokeOpen);

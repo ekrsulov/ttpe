@@ -12,6 +12,7 @@ import { createSelectionSlice, type SelectionSlice } from './slices/features/sel
 import { createGroupSlice, type GroupSlice } from './slices/features/groupSlice';
 import { createOrderSlice, type OrderSlice } from './slices/features/orderSlice';
 import { createArrangeSlice, type ArrangeSlice } from './slices/features/arrangeSlice';
+import { createUiSlice, type UiSlice } from './slices/uiSlice';
 
 // Plugin slices are now registered dynamically through PluginManager
 // Import plugin types for backwards compatibility
@@ -50,7 +51,8 @@ export type CoreCanvasStore = BaseSlice &
   SelectionSlice &
   GroupSlice &
   OrderSlice &
-  ArrangeSlice;
+  ArrangeSlice &
+  UiSlice;
 
 // Extended Canvas Store - includes plugin slices for type safety
 // Plugins will extend this dynamically at runtime
@@ -78,6 +80,7 @@ export const useCanvasStore = create<CanvasStore>()(
         ...createGroupSlice(set, get, api),
         ...createOrderSlice(set, get, api),
         ...createArrangeSlice(set, get, api),
+        ...createUiSlice(set, get, api),
 
         // Plugin slices are now registered dynamically through registerPluginSlices
         // Cross-slice actions have been moved to their respective plugins
