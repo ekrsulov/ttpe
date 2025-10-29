@@ -14,18 +14,16 @@ const ConditionalTooltip: React.FC<TooltipProps> = ({ children, ...props }) => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  const content = <span style={{ whiteSpace: 'pre' }}>{children}</span>;
-
-  // If tooltips are disabled in settings, just return the content
+  // If tooltips are disabled in settings, just return the children directly
   if (!showTooltips) {
-    return content;
+    return <>{children}</>;
   }
 
   if (isMobile) {
-    return content;
+    return <>{children}</>;
   }
 
-  return <Tooltip {...props}>{content}</Tooltip>;
+  return <Tooltip {...props}>{children}</Tooltip>;
 };
 
 export default ConditionalTooltip;
