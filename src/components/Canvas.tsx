@@ -32,7 +32,7 @@ import {
   canvasRendererRegistry,
   type CanvasRenderContext,
 } from '../canvas/renderers';
-import { usePointerStateController } from '../canvas/interactions/usePointerStateController';
+import { usePointerStateController } from '../hooks/usePointerStateController';
 import { useCanvasGeometry } from '../hooks/useCanvasGeometry';
 import { useViewportController } from '../hooks/useViewportController';
 import { useCanvasShortcuts } from '../hooks/useCanvasShortcuts';
