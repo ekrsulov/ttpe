@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { getCanvas, getCanvasPaths, waitForLoad, getToolButton } from './helpers';
+import { getCanvas as _getCanvas, getCanvasPaths as _getCanvasPaths, waitForLoad, getToolButton as _getToolButton } from './helpers';
 
 test.describe('Grid Fill Tool Tests', () => {
   test('should activate grid fill mode and display panel', async ({ page }) => {

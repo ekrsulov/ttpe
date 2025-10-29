@@ -128,10 +128,10 @@ export const editPlugin: PluginDefinition<CanvasStore> = {
 
         return (
           <ellipse
-            cx={smoothBrushCursor.x}
-            cy={smoothBrushCursor.y}
-            rx={smoothBrush.radius}
-            ry={smoothBrush.radius}
+            cx={smoothBrushCursor?.x}
+            cy={smoothBrushCursor?.y}
+            rx={smoothBrush?.radius}
+            ry={smoothBrush?.radius}
             fill="none"
             stroke="#38bdf8"
             strokeWidth="1.2"

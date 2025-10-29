@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { getCanvas, getCanvasPaths, waitForLoad, getToolButton } from './helpers';
+import { getCanvas, getCanvasPaths as _getCanvasPaths, waitForLoad, getToolButton } from './helpers';
 
 test.describe('Subpath Management Tests', () => {
   test('should enable subpath mode when path with multiple subpaths is selected', async ({ page }) => {

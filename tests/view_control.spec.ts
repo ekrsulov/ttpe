@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { getCanvas, getCanvasPaths, waitForLoad, getToolButton } from './helpers';
+import { getCanvas, getCanvasPaths as _getCanvasPaths, waitForLoad, getToolButton } from './helpers';
 
 test.describe('View Control & Gestures Tests', () => {
   test('should zoom in and out', async ({ page }) => {

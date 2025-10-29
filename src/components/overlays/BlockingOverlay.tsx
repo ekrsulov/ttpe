@@ -10,7 +10,7 @@ interface BlockingOverlayProps {
     width: number;
     height: number;
   };
-  isActive: boolean;
+  isActive?: boolean;
   onPointerUp?: (e: React.PointerEvent) => void;
 }
 
@@ -25,7 +25,7 @@ export const BlockingOverlay: React.FC<BlockingOverlayProps> = ({
   isActive,
   onPointerUp,
 }) => {
-  if (!isActive) {
+  if (!(isActive ?? false)) {
     return null;
   }
 
@@ -34,10 +34,6 @@ export const BlockingOverlay: React.FC<BlockingOverlayProps> = ({
       onPointerUp(e);
     }
   };
-
-  if (!isActive) {
-    return null;
-  }
 
   return (
     <>

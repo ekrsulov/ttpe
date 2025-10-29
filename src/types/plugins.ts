@@ -1,11 +1,8 @@
-import type { ComponentType, PointerEvent, MouseEvent, TouchEvent, ReactNode } from 'react';
+import type { ComponentType, PointerEvent, ReactNode } from 'react';
 import type { StoreApi } from 'zustand';
 import type { Point, CanvasElement } from '.';
 import type { CanvasControllerValue } from '../canvas/controller/CanvasControllerContext';
-import type { ShapeCreationState } from '../hooks/useCanvasShapeCreation';
-import type { TransformFeedback } from '../canvas/interactions/TransformController';
 import type { Bounds } from '../utils/boundsUtils';
-import type { EditPluginSlice } from '../plugins/edit/slice';
 import type { CanvasEventBus } from '../canvas/CanvasEventBusContext';
 
 export type CanvasShortcutStoreApi = Pick<StoreApi<object>, 'getState' | 'subscribe'>;
@@ -41,28 +38,15 @@ export interface PluginUIContribution<TProps = Record<string, unknown>> {
 
 export type CanvasLayerPlacement = 'background' | 'midground' | 'foreground';
 
-export interface CanvasLayerContext extends CanvasControllerValue {
+export interface CanvasLayerContext extends CanvasControllerValue, Record<string, any> { // eslint-disable-line @typescript-eslint/no-explicit-any
   canvasSize: { width: number; height: number };
   isSelecting: boolean;
   selectionStart: Point | null;
   selectionEnd: Point | null;
   selectedGroupBounds: Array<{ id: string; bounds: Bounds }>;
-  isCreatingShape: boolean;
-  shapeStart: Point | null;
-  shapeEnd: Point | null;
-  shapeFeedback: ShapeCreationState['feedback'];
-  isSmoothBrushActive: boolean;
-  smoothBrush: EditPluginSlice['smoothBrush'];
-  smoothBrushCursor: Point;
-  addPointMode?: EditPluginSlice['addPointMode'];
   dragPosition: Point | null;
   isDragging: boolean;
-  transformFeedback: TransformFeedback;
   getElementBounds: (element: CanvasElement) => Bounds | null;
-  handleTransformationHandlerPointerDown: (event: PointerEvent, elementId: string, handler: string) => void;
-  handleTransformationHandlerPointerUp: (event: PointerEvent) => void;
-  handleSubpathDoubleClick: (elementId: string, subpathIndex: number, event: MouseEvent<SVGPathElement>) => void;
-  handleSubpathTouchEnd: (elementId: string, subpathIndex: number, event: TouchEvent<SVGPathElement>) => void;
   setDragStart: (point: Point | null) => void;
 }
 
@@ -84,11 +68,7 @@ export interface PluginApiContext<TStore extends object> {
   store: PluginStoreApi<TStore>;
 }
 
-export interface PluginHandlerHelpers {
-  isSmoothBrushActive?: boolean;
-  beginSelectionRectangle?: (point: Point, shiftKey?: boolean, subpathMode?: boolean) => void;
-  startShapeCreation?: (point: Point) => void;
-}
+export type PluginHandlerHelpers = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
 export interface PluginHandlerContext<TStore extends object> extends PluginApiContext<TStore> {
   api: Record<string, (...args: never[]) => unknown>;

@@ -22,7 +22,7 @@ interface SubpathOverlayProps {
     panX: number;
     panY: number;
   };
-  smoothBrush: {
+  smoothBrush?: {
     isActive: boolean;
   };
   onSelectSubpath: (elementId: string, subpathIndex: number, multiSelect?: boolean) => void;
@@ -88,7 +88,7 @@ export const SubpathOverlay: React.FC<SubpathOverlayProps> = ({
               // Don't stop propagation - let Canvas handlePointerDown also run to set dragStart
 
               // Disable subpath interaction when smooth brush is active
-              if (smoothBrush.isActive) {
+              if (smoothBrush?.isActive) {
                 return;
               }
 

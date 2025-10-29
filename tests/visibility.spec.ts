@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { getCanvas, getCanvasPaths, waitForLoad, getToolButton } from './helpers';
+import { getCanvas, getCanvasPaths as _getCanvasPaths, waitForLoad, getToolButton } from './helpers';
 
 test.describe('Visibility & Locking Tests', () => {
   test('should show element controls in select panel', async ({ page }) => {

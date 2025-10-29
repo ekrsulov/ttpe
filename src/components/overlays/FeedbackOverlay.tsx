@@ -10,27 +10,27 @@ interface FeedbackOverlayProps {
     width: number;
     height: number;
   };
-  rotationFeedback: {
+  rotationFeedback?: {
     degrees: number;
     visible: boolean;
     isShiftPressed: boolean;
     isMultipleOf15: boolean;
   };
-  resizeFeedback: {
+  resizeFeedback?: {
     deltaX: number;
     deltaY: number;
     visible: boolean;
     isShiftPressed: boolean;
     isMultipleOf10: boolean;
   };
-  shapeFeedback: {
+  shapeFeedback?: {
     width: number;
     height: number;
     visible: boolean;
     isShiftPressed: boolean;
     isMultipleOf10: boolean;
   };
-  pointPositionFeedback: {
+  pointPositionFeedback?: {
     x: number;
     y: number;
     visible: boolean;
@@ -101,7 +101,7 @@ export const FeedbackOverlay: React.FC<FeedbackOverlayProps> = ({
   return (
     <>
       {/* Rotation Feedback */}
-      {rotationFeedback.visible && (
+      {rotationFeedback?.visible && (
         <FeedbackBlock
           viewport={viewport}
           canvasSize={canvasSize}
@@ -112,7 +112,7 @@ export const FeedbackOverlay: React.FC<FeedbackOverlayProps> = ({
       )}
 
       {/* Resize Feedback */}
-      {resizeFeedback.visible && (
+      {resizeFeedback?.visible && (
         <FeedbackBlock
           viewport={viewport}
           canvasSize={canvasSize}
@@ -123,7 +123,7 @@ export const FeedbackOverlay: React.FC<FeedbackOverlayProps> = ({
       )}
 
       {/* Shape Creation Feedback */}
-      {shapeFeedback.visible && (
+      {shapeFeedback?.visible && (
         <FeedbackBlock
           viewport={viewport}
           canvasSize={canvasSize}
@@ -134,12 +134,12 @@ export const FeedbackOverlay: React.FC<FeedbackOverlayProps> = ({
       )}
 
       {/* Point Position Feedback */}
-      {pointPositionFeedback.visible && (
+      {pointPositionFeedback?.visible && (
         <FeedbackBlock
           viewport={viewport}
           canvasSize={canvasSize}
           width={75}
-          content={`${pointPositionFeedback.x}, ${pointPositionFeedback.y}`}
+          content={`${pointPositionFeedback?.x}, ${pointPositionFeedback?.y}`}
         />
       )}
     </>

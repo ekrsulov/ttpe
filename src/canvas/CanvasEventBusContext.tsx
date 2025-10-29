@@ -5,7 +5,7 @@ import type { Point } from '../types';
 export type CanvasPointerEvent = ReactPointerEvent | globalThis.PointerEvent;
 export type CanvasWheelEvent = ReactWheelEvent | globalThis.WheelEvent;
 
-export interface CanvasPointerEventHelpers {
+export interface CanvasPointerEventHelpers extends Record<string, any> { // eslint-disable-line @typescript-eslint/no-explicit-any
   beginSelectionRectangle?: (point: Point, shiftKey?: boolean, subpathMode?: boolean) => void;
   updateSelectionRectangle?: (point: Point) => void;
   completeSelectionRectangle?: () => void;

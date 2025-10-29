@@ -99,7 +99,7 @@ test.describe('Style Eyedropper Tests', () => {
 
     // Verify first circle has red stroke
     let paths = await getCanvasPaths(page);
-    let firstPath = paths.first();
+    const firstPath = paths.first();
     let stroke = await firstPath.getAttribute('stroke');
     expect(stroke).toBe('#ff0000');
 

@@ -43,18 +43,13 @@ interface EditPointsOverlayProps {
     panX: number;
     panY: number;
   };
-  smoothBrush: {
+  smoothBrush?: {
     radius: number;
     strength: number;
     isActive: boolean;
     cursorX: number;
     cursorY: number;
-    affectedPoints: Array<{
-      commandIndex: number;
-      pointIndex: number;
-      x: number;
-      y: number;
-    }>;
+    affectedPoints: { commandIndex: number; pointIndex: number; x: number; y: number; }[];
   };
   getFilteredEditablePoints: (elementId: string) => Array<{
     commandIndex: number;
@@ -130,7 +125,7 @@ export const EditPointsOverlay: React.FC<EditPointsOverlayProps> = ({
           }
         }
 
-        const pointStyle = getPointStyle(point, selectedCommands, element, smoothBrush, commands, pathData);
+        const pointStyle = getPointStyle(point, selectedCommands, element, commands, pathData, smoothBrush);
         
         // Calculate larger hit area for better touch/mouse interaction
         // Use a minimum size in screen pixels (12px) regardless of zoom
@@ -149,7 +144,7 @@ export const EditPointsOverlay: React.FC<EditPointsOverlayProps> = ({
                 cursor: 'pointer',
                 WebkitTapHighlightColor: 'transparent',
               }}
-              onPointerDown={(e) => handlePointPointerDown(e, point, element, selectedCommands, smoothBrush, viewport, onStartDraggingPoint, onSelectCommand)}
+              onPointerDown={(e) => handlePointPointerDown(e, point, element, selectedCommands, viewport, onStartDraggingPoint, onSelectCommand, smoothBrush)}
             />
             {/* Visible point */}
             <circle
@@ -196,7 +191,9 @@ const getPointStyle = (
     type: string;
     data: unknown;
   },
-  smoothBrush: {
+  commands: Command[],
+  pathData: PathData,
+  smoothBrush?: {
     isActive: boolean;
     affectedPoints: Array<{
       commandIndex: number;
@@ -204,9 +201,7 @@ const getPointStyle = (
       x: number;
       y: number;
     }>;
-  },
-  commands: Command[],
-  pathData: PathData
+  }
 ) => {
   let color = 'black';
   let size = 4;
@@ -221,7 +216,7 @@ const getPointStyle = (
   );
 
   // Check if this point is affected by smooth brush
-  const isAffectedByBrush = smoothBrush.isActive && smoothBrush.affectedPoints.some(
+  const isAffectedByBrush = smoothBrush?.isActive && smoothBrush.affectedPoints.some(
     (affected) => affected.commandIndex === point.commandIndex &&
       affected.pointIndex === point.pointIndex
   );
@@ -293,21 +288,21 @@ const handlePointPointerDown = (
     commandIndex: number;
     pointIndex: number;
   }>,
-  smoothBrush: {
-    isActive: boolean;
-  },
   viewport: {
     zoom: number;
     panX: number;
     panY: number;
   },
   onStartDraggingPoint: (elementId: string, commandIndex: number, pointIndex: number, offsetX: number, offsetY: number) => void,
-  onSelectCommand: (command: { elementId: string; commandIndex: number; pointIndex: number }, multiSelect?: boolean) => void
+  onSelectCommand: (command: { elementId: string; commandIndex: number; pointIndex: number }, multiSelect?: boolean) => void,
+  smoothBrush?: {
+    isActive: boolean;
+  }
 ) => {
   e.stopPropagation();
 
   // Disable point interaction when smooth brush is active
-  if (smoothBrush.isActive) return;
+  if (smoothBrush?.isActive) return;
 
   // Get virtual shift state
   const isVirtualShiftActive = useCanvasStore.getState().isVirtualShiftActive;

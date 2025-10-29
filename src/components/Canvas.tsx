@@ -8,6 +8,7 @@ import { useCanvasSmoothBrush } from '../hooks/useCanvasSmoothBrush';
 import { useCanvasEventHandlers } from '../hooks/useCanvasEventHandlers';
 import { RenderCountBadgeWrapper } from './ui/RenderCountBadgeWrapper';
 import type { Point, CanvasElement } from '../types';
+import type { CanvasLayerContext } from '../types/plugins';
 import { useCanvasController } from '../canvas/controller/CanvasControllerContext';
 import { CanvasControllerProvider } from '../canvas/controller/CanvasControllerProvider';
 import {
@@ -377,8 +378,8 @@ const CanvasContent: React.FC = () => {
   const renderElement = (element: typeof elements[0]) =>
     canvasRendererRegistry.render(element, renderContext);
 
-  const canvasLayerContext = useMemo(
-    () => ({
+  const canvasLayerContext = useMemo(() => {
+    const baseContext = {
       ...controller,
       activePlugin: currentMode,
       canvasSize,
@@ -386,24 +387,34 @@ const CanvasContent: React.FC = () => {
       selectionStart,
       selectionEnd,
       selectedGroupBounds,
-      isCreatingShape,
-      shapeStart,
-      shapeEnd,
-      shapeFeedback,
-      isSmoothBrushActive,
-      smoothBrush,
-      smoothBrushCursor,
-      addPointMode,
       dragPosition,
       isDragging,
-      transformFeedback: feedback,
       getElementBounds,
       handleTransformationHandlerPointerDown,
       handleTransformationHandlerPointerUp,
       handleSubpathDoubleClick,
       handleSubpathTouchEnd,
       setDragStart: setDragStartForLayers,
-    }),
+    };
+
+    // Conditionally add plugin-specific context
+    const pluginSpecific: Partial<CanvasLayerContext> = {};
+    if (currentMode === 'edit') {
+      pluginSpecific.isSmoothBrushActive = isSmoothBrushActive;
+      pluginSpecific.smoothBrush = smoothBrush;
+      pluginSpecific.smoothBrushCursor = smoothBrushCursor;
+      pluginSpecific.addPointMode = addPointMode;
+    } else if (currentMode === 'shape') {
+      pluginSpecific.isCreatingShape = isCreatingShape;
+      pluginSpecific.shapeStart = shapeStart;
+      pluginSpecific.shapeEnd = shapeEnd;
+      pluginSpecific.shapeFeedback = shapeFeedback;
+    } else if (currentMode === 'transformation') {
+      pluginSpecific.transformFeedback = feedback;
+    }
+
+    return { ...baseContext, ...pluginSpecific };
+  },
     [
       controller,
       currentMode,
@@ -412,6 +423,15 @@ const CanvasContent: React.FC = () => {
       selectionStart,
       selectionEnd,
       selectedGroupBounds,
+      dragPosition,
+      isDragging,
+      getElementBounds,
+      handleTransformationHandlerPointerDown,
+      handleTransformationHandlerPointerUp,
+      handleSubpathDoubleClick,
+      handleSubpathTouchEnd,
+      setDragStartForLayers,
+      // Plugin-specific dependencies
       isCreatingShape,
       shapeStart,
       shapeEnd,
@@ -420,15 +440,7 @@ const CanvasContent: React.FC = () => {
       smoothBrush,
       smoothBrushCursor,
       addPointMode,
-      dragPosition,
-      isDragging,
       feedback,
-      getElementBounds,
-      handleTransformationHandlerPointerDown,
-      handleTransformationHandlerPointerUp,
-      handleSubpathDoubleClick,
-      handleSubpathTouchEnd,
-      setDragStartForLayers,
     ]
   );
 

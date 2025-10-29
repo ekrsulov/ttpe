@@ -48,7 +48,12 @@ export const shapePlugin: PluginDefinition<CanvasStore> = {
     {
       id: 'shape-preview',
       placement: 'midground',
-      render: ({ isCreatingShape, shapeStart, shapeEnd, shape, viewport }) => {
+      render: (context) => {
+        const isCreatingShape = context.isCreatingShape as boolean | undefined;
+        const shapeStart = context.shapeStart as Point | undefined;
+        const shapeEnd = context.shapeEnd as Point | undefined;
+        const shape = context.shape as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+        const viewport = context.viewport as any; // eslint-disable-line @typescript-eslint/no-explicit-any
         if (!isCreatingShape || !shapeStart || !shapeEnd) {
           return null;
         }
