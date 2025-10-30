@@ -67,7 +67,7 @@ export function usePencilDrawing(
 
   // Attach pencil drawing listeners to the service
   useEffect(() => {
-    return activePencilDrawingService.attachSmoothBrushListeners(svgRef, {
+    return activePencilDrawingService.attachPencilDrawingListeners(svgRef, {
       activePlugin: currentMode,
       pencil,
       viewportZoom,

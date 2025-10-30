@@ -7,7 +7,7 @@ type PencilSettings = PencilPluginSlice['pencil'];
 
 type PointerEventType = 'pointermove' | 'pointerup';
 
-export interface AttachSmoothBrushListenersOptions {
+export interface AttachPencilDrawingListenersOptions {
   activePlugin: string | null;
   pencil: PencilSettings;
   viewportZoom: number;
@@ -23,9 +23,9 @@ export class PencilDrawingService {
 
   constructor() {}
 
-  attachSmoothBrushListeners(
+  attachPencilDrawingListeners(
     svgRef: RefObject<SVGSVGElement | null>,
-    options: AttachSmoothBrushListenersOptions
+    options: AttachPencilDrawingListenersOptions
   ): () => void {
     const svgElement = svgRef.current;
 
