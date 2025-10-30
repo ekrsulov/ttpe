@@ -328,6 +328,7 @@ const CanvasContent: React.FC = () => {
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
+    handleWheel,
     handleCanvasDoubleClick,
     handleElementTouchEnd,
     handleSubpathTouchEnd,
@@ -498,6 +499,7 @@ const CanvasContent: React.FC = () => {
           handlePointerUp={handlePointerUp}
           {...(typeof window !== 'undefined' && !('ontouchstart' in window) && { handleCanvasDoubleClick })}
           {...(typeof window !== 'undefined' && 'ontouchstart' in window && { handleCanvasTouchEnd })}
+          handleWheel={handleWheel}
         />
       </>
     </CanvasServicesProvider>

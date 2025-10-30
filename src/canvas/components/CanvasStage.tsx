@@ -19,6 +19,7 @@ export interface CanvasStageProps {
   handlePointerUp: (event: React.PointerEvent<SVGSVGElement>) => void;
   handleCanvasDoubleClick?: (event: React.MouseEvent<SVGSVGElement>) => void;
   handleCanvasTouchEnd?: (event: React.TouchEvent<SVGSVGElement>) => void;
+  handleWheel?: (event: React.WheelEvent<SVGSVGElement>) => void;
 }
 
 /**
@@ -39,6 +40,7 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
   handlePointerUp,
   handleCanvasDoubleClick,
   handleCanvasTouchEnd,
+  handleWheel,
 }) => {
   return (
     <svg
@@ -58,6 +60,7 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
       onPointerUp={handlePointerUp}
       {...(handleCanvasDoubleClick && { onDoubleClick: handleCanvasDoubleClick })}
       {...(handleCanvasTouchEnd && { onTouchEnd: handleCanvasTouchEnd })}
+      {...(handleWheel && { onWheel: handleWheel })}
     >
       {/* Sort elements by zIndex */}
       {sortedElements.map(renderElement)}
