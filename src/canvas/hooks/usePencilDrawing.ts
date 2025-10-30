@@ -1,8 +1,8 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import type React from 'react';
-import { PencilDrawingService } from '../canvas/services/PencilDrawingService';
-import type { Point } from '../types';
-import type { PencilPluginSlice } from '../plugins/pencil/slice';
+import { PencilDrawingService } from '../services/PencilDrawingService';
+import type { Point } from '../../types';
+import type { PencilPluginSlice } from '../../plugins/pencil/slice';
 
 export interface UsePencilDrawingParams {
   svgRef: React.RefObject<SVGSVGElement | null>;

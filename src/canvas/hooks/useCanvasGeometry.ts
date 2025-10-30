@@ -1,13 +1,13 @@
 import { useCallback, useMemo } from 'react';
-import type { CanvasElement, GroupElement, Viewport } from '../types';
-import type { Bounds } from '../utils/boundsUtils';
+import type { CanvasElement, GroupElement, Viewport } from '../../types';
+import type { Bounds } from '../../utils/boundsUtils';
 import {
   getElementBounds as serviceGetElementBounds,
   getGroupBounds as serviceGetGroupBounds,
   measureSelectionBounds as serviceMeasureSelectionBounds,
   type ElementMap,
   type ElementVisibilityChecker,
-} from '../canvas/geometry/CanvasGeometryService';
+} from '../geometry/CanvasGeometryService';
 
 interface UseCanvasGeometryParams {
   elementMap: ElementMap;

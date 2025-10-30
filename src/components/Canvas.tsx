@@ -1,11 +1,11 @@
 import React, { useRef, useCallback, useEffect, useMemo } from 'react';
-import { useCanvasDragInteractions } from '../hooks/useCanvasDragInteractions';
-import { useCanvasKeyboardControls } from '../hooks/useCanvasKeyboardControls';
-import { useSelectionController } from '../hooks/useSelectionController';
+import { useCanvasDragInteractions } from '../canvas/hooks/useCanvasDragInteractions';
+import { useCanvasKeyboardControls } from '../canvas/hooks/useCanvasKeyboardControls';
+import { useSelectionController } from '../canvas/hooks/useSelectionController';
 import { useCanvasTransformControls } from '../plugins/transformation/useCanvasTransformControls';
-import { useCanvasShapeCreation } from '../hooks/useCanvasShapeCreation';
-import { useCanvasSmoothBrush } from '../hooks/useCanvasSmoothBrush';
-import { useCanvasEventHandlers } from '../hooks/useCanvasEventHandlers';
+import { useCanvasShapeCreation } from '../canvas/hooks/useCanvasShapeCreation';
+import { useCanvasSmoothBrush } from '../canvas/hooks/useCanvasSmoothBrush';
+import { useCanvasEventHandlers } from '../canvas/hooks/useCanvasEventHandlers';
 import { RenderCountBadgeWrapper } from './ui/RenderCountBadgeWrapper';
 import type { Point, CanvasElement } from '../types';
 import type { CanvasLayerContext } from '../types/plugins';
@@ -15,29 +15,29 @@ import {
   CanvasEventBusProvider,
   useCanvasEventBus,
 } from '../canvas/CanvasEventBusContext';
-import { useCanvasZoom } from '../hooks/useCanvasZoom';
-import { useMobileTouchGestures } from '../hooks/useMobileTouchGestures';
-import { useElementDoubleTap } from '../hooks/useElementDoubleTap';
+import { useCanvasZoom } from '../canvas/hooks/useCanvasZoom';
+import { useMobileTouchGestures } from '../canvas/hooks/useMobileTouchGestures';
+import { useElementDoubleTap } from '../canvas/hooks/useElementDoubleTap';
 import { CanvasServicesProvider } from '../canvas/services/CanvasServicesProvider';
-import { useEditSmoothBrush } from '../hooks/useEditSmoothBrush';
-import { usePencilDrawing } from '../hooks/usePencilDrawing';
-import { useEditAddPoint } from '../hooks/useEditAddPoint';
+import { useEditSmoothBrush } from '../canvas/hooks/useEditSmoothBrush';
+import { usePencilDrawing } from '../canvas/hooks/usePencilDrawing';
+import { useEditAddPoint } from '../canvas/hooks/useEditAddPoint';
 import '../canvas/listeners/AddPointListener';
-import { useDynamicCanvasSize } from '../hooks/useDynamicCanvasSize';
-import { useCanvasSideEffects } from '../hooks/useCanvasSideEffects';
-import { useCanvasEventHandlerDeps } from '../hooks/useCanvasEventHandlerDeps';
-import { CanvasStage } from './CanvasStage';
-import { useCanvasEventBusManager } from '../hooks/useCanvasEventBusManager';
+import { useDynamicCanvasSize } from '../canvas/hooks/useDynamicCanvasSize';
+import { useCanvasSideEffects } from '../canvas/hooks/useCanvasSideEffects';
+import { useCanvasEventHandlerDeps } from '../canvas/hooks/useCanvasEventHandlerDeps';
+import { CanvasStage } from '../canvas/components/CanvasStage';
+import { useCanvasEventBusManager } from '../canvas/hooks/useCanvasEventBusManager';
 import {
   canvasRendererRegistry,
   type CanvasRenderContext,
 } from '../canvas/renderers';
-import { usePointerStateController } from '../hooks/usePointerStateController';
-import { useCanvasGeometry } from '../hooks/useCanvasGeometry';
-import { useViewportController } from '../hooks/useViewportController';
-import { useCanvasShortcuts } from '../hooks/useCanvasShortcuts';
+import { usePointerStateController } from '../canvas/hooks/usePointerStateController';
+import { useCanvasGeometry } from '../canvas/hooks/useCanvasGeometry';
+import { useViewportController } from '../canvas/hooks/useViewportController';
+import { useCanvasShortcuts } from '../canvas/hooks/useCanvasShortcuts';
 import { canvasShortcutRegistry } from '../canvas/shortcuts';
-import { useCanvasModeMachine } from '../hooks/useCanvasModeMachine';
+import { useCanvasModeMachine } from '../canvas/hooks/useCanvasModeMachine';
 import type { CanvasMode } from '../canvas/modes/CanvasModeMachine';
 
 const CanvasContent: React.FC = () => {

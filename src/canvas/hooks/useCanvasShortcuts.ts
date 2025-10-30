@@ -1,10 +1,10 @@
 import { useEffect, useMemo } from 'react';
 import type { RefObject } from 'react';
-import { useCanvasEventBus } from '../canvas/CanvasEventBusContext';
-import { useCanvasController } from '../canvas/controller/CanvasControllerContext';
-import type { ShortcutRegistry } from '../canvas/shortcuts';
-import { useCanvasStore, type CanvasStore } from '../store/canvasStore';
-import { getGlobalCurvesController } from '../plugins/curves';
+import { useCanvasEventBus } from '../CanvasEventBusContext';
+import { useCanvasController } from '../controller/CanvasControllerContext';
+import type { ShortcutRegistry } from '../shortcuts';
+import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
+import { getGlobalCurvesController } from '../../plugins/curves';
 
 const CORE_SHORTCUT_SOURCE = 'canvas:core';
 

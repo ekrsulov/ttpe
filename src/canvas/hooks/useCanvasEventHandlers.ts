@@ -1,11 +1,11 @@
 import { useCallback } from 'react';
-import { useCanvasStore } from '../store/canvasStore';
-import { useCanvasCurves } from '../plugins/curves/useCanvasCurves';
-import { getEffectiveShift } from './useEffectiveShift';
-import type { Point } from '../types';
-import { useCanvasEventBus } from '../canvas/CanvasEventBusContext';
-import { pluginManager } from '../utils/pluginManager';
-import { calculateCommandsBounds, calculateMultiElementBounds } from '../utils/selectionBoundsUtils';
+import { useCanvasStore } from '../../store/canvasStore';
+import { useCanvasCurves } from '../../plugins/curves/useCanvasCurves';
+import { getEffectiveShift } from '../../utils/effectiveShift';
+import type { Point } from '../../types';
+import { useCanvasEventBus } from '../CanvasEventBusContext';
+import { pluginManager } from '../../utils/pluginManager';
+import { calculateCommandsBounds, calculateMultiElementBounds } from '../../utils/selectionBoundsUtils';
 import { useDoubleTap } from './useDoubleTap';
 
 interface EventHandlerDeps {
@@ -104,7 +104,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
           selectedSubpaths.forEach(({ elementId, subpathIndex }) => {
             const element = state.elements.find(el => el.id === elementId);
             if (element && element.type === 'path') {
-              const pathData = element.data as import('../types').PathData;
+              const pathData = element.data as import('../../types').PathData;
               if (subpathIndex < pathData.subPaths.length) {
                 const subpath = pathData.subPaths[subpathIndex];
 
@@ -225,7 +225,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
 
     if (!element || element.type !== 'path') return;
 
-    const pathData = element.data as import('../types').PathData;
+    const pathData = element.data as import('../../types').PathData;
 
     // Check if this element was already the only selected element
     const wasAlreadySelected = state.selectedIds.length === 1 && state.selectedIds[0] === elementId;
@@ -585,7 +585,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
             const element = state.elements.find(el => el.id === firstElementId);
             
             if (element && element.type === 'path') {
-              const pathData = element.data as import('../types').PathData;
+              const pathData = element.data as import('../../types').PathData;
               
               // Calculate current bounds using consolidated utility
               const commands = pathData.subPaths.flat();

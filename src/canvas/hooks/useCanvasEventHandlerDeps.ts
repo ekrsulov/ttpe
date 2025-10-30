@@ -1,5 +1,5 @@
 import { useMemo, type RefObject } from 'react';
-import type { Point } from '../types';
+import type { Point } from '../../types';
 
 export interface CanvasEventHandlerDepsInput {
   svgRef: RefObject<SVGSVGElement | null>;

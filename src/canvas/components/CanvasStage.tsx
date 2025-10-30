@@ -1,9 +1,9 @@
 import React, { type RefObject } from 'react';
 import { CanvasLayers } from './CanvasLayers';
-import { pluginManager } from '../utils/pluginManager';
+import { pluginManager } from '../../utils/pluginManager';
 import type { CanvasSize } from '../hooks/useDynamicCanvasSize';
-import type { CanvasElement } from '../types';
-import type { CanvasLayerContext } from '../types/plugins';
+import type { CanvasElement } from '../../types';
+import type { CanvasLayerContext } from '../../types/plugins';
 
 export interface CanvasStageProps {
   svgRef: RefObject<SVGSVGElement | null>;

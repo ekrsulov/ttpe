@@ -15,9 +15,9 @@ import { safeFunctions } from '../utils/functionHelpers';
 
 interface SidebarProps {
   onPinnedChange?: (isPinned: boolean) => void;
-  onWidthChange?: (width: number) => void; // Para informar el ancho al ActionBar
-  onToggleOpen?: (isOpen: boolean) => void; // Para informar si el drawer está abierto
-  onRegisterOpenHandler?: (openHandler: () => void) => void; // Para registrar la función de abrir
+  onWidthChange?: (width: number) => void; // To inform the width to the ActionBar
+  onToggleOpen?: (isOpen: boolean) => void; // To inform if the drawer is open
+  onRegisterOpenHandler?: (openHandler: () => void) => void; // To register the open function
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
@@ -50,7 +50,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   // Sidebar width state (only for pinned mode)
   const sidebarWidth = useCanvasStore((state) => state.sidebarWidth);
   const setSidebarWidth = useCanvasStore((state) => state.setSidebarWidth);
-  const initialWidth = 250; // Ancho inicial para reset
+  const initialWidth = 250; // Initial width for reset
   
   // Sync isPinned with desktop/mobile changes
   useEffect(() => {

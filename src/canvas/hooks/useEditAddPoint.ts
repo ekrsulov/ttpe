@@ -1,9 +1,9 @@
 import type { RefObject } from 'react';
 import { useCanvasServiceActivation } from './useCanvasServiceActivation';
-import { useCanvasController } from '../canvas/controller/CanvasControllerContext';
-import { canvasStoreApi } from '../store/canvasStore';
-import { ADD_POINT_SERVICE_ID, type AddPointServiceState } from '../canvas/listeners/AddPointListener';
-import type { Point } from '../types';
+import { useCanvasController } from '../controller/CanvasControllerContext';
+import { canvasStoreApi } from '../../store/canvasStore';
+import { ADD_POINT_SERVICE_ID, type AddPointServiceState } from '../listeners/AddPointListener';
+import type { Point } from '../../types';
 
 interface UseEditAddPointParams {
   svgRef: RefObject<SVGSVGElement | null>;

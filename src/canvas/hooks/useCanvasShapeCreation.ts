@@ -1,8 +1,8 @@
 import { useCallback, useState, useMemo } from 'react';
-import { useCanvasStore } from '../store/canvasStore';
-import { ShapeCreationController } from '../canvas/interactions/ShapeCreationController';
-import type { Point } from '../types';
-import { pluginManager } from '../utils/pluginManager';
+import { useCanvasStore } from '../../store/canvasStore';
+import { ShapeCreationController } from '../interactions/ShapeCreationController';
+import type { Point } from '../../types';
+import { pluginManager } from '../../utils/pluginManager';
 
 export interface ShapeFeedback {
   width: number;

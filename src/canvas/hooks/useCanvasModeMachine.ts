@@ -1,9 +1,9 @@
 import { useCallback, useMemo } from 'react';
 import type { ComponentType } from 'react';
-import { useCanvasStore } from '../store/canvasStore';
-import { pluginManager } from '../utils/pluginManager';
-import type { PluginDefinition } from '../types/plugins';
-import type { CanvasStore } from '../store/canvasStore';
+import { useCanvasStore } from '../../store/canvasStore';
+import { pluginManager } from '../../utils/pluginManager';
+import type { PluginDefinition } from '../../types/plugins';
+import type { CanvasStore } from '../../store/canvasStore';
 import {
   CANVAS_MODE_MACHINE,
   getCanvasModeDefinition,
@@ -12,7 +12,7 @@ import {
   type CanvasMode,
   type CanvasModeStateConfig,
   type CanvasModeTransitionResult,
-} from '../canvas/modes/CanvasModeMachine';
+} from '../modes/CanvasModeMachine';
 
 export type CanvasModeTransitionExecutor = (mode: CanvasMode) => CanvasModeTransitionResult;
 

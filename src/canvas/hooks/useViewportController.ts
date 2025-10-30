@@ -1,8 +1,8 @@
 import { useCallback, useMemo } from 'react';
-import { useCanvasStore } from '../store/canvasStore';
-import type { Bounds } from '../utils/boundsUtils';
-import { mapPointerToCanvas } from '../utils/geometry';
-import type { Point, Viewport } from '../types';
+import { useCanvasStore } from '../../store/canvasStore';
+import type { Bounds } from '../../utils/boundsUtils';
+import { mapPointerToCanvas } from '../../utils/geometry';
+import type { Point, Viewport } from '../../types';
 import {
   clampViewport as clampViewportState,
   fitToSelection as fitViewportToSelection,
@@ -14,7 +14,7 @@ import {
   type SetPanOptions,
   type SetZoomOptions,
   type ViewportSize,
-} from '../canvas/viewport/ViewportController';
+} from '../viewport/ViewportController';
 
 export interface ViewportControllerHook {
   viewport: Viewport;
@@ -112,4 +112,4 @@ export const useViewportController = (): ViewportControllerHook => {
   ]);
 };
 
-export type { ViewportSize } from '../canvas/viewport/ViewportController';
+export type { ViewportSize } from '../viewport/ViewportController';

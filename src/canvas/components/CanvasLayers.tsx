@@ -1,6 +1,6 @@
 import React from 'react';
-import type { CanvasLayerContext } from '../types/plugins';
-import { pluginManager } from '../utils/pluginManager';
+import type { CanvasLayerContext } from '../../types/plugins';
+import { pluginManager } from '../../utils/pluginManager';
 
 interface CanvasLayersProps {
   context: CanvasLayerContext;

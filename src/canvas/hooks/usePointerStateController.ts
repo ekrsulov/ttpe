@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
-import type { Point } from '../types';
+import type { Point } from '../../types';
 
 type BeginSelectionRectangle = (
   point: Point,

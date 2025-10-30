@@ -1,8 +1,8 @@
 import React from 'react';
-import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../utils';
-import { extractEditablePoints, updateCommands, extractSubpaths, getControlPointAlignmentInfo } from '../utils/path';
-import { mapSvgToCanvas } from '../utils/geometry';
-import type { CanvasElement, SubPath, Point, ControlPointInfo, Command, PathData } from '../types';
+import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../utils';
+import { extractEditablePoints, updateCommands, extractSubpaths, getControlPointAlignmentInfo } from '../../utils/pathParserUtils';
+import { mapSvgToCanvas } from '../../utils/geometry';
+import type { CanvasElement, SubPath, Point, ControlPointInfo, Command, PathData } from '../../types';
 
 interface DragCallbacks {
   onStopDraggingPoint: () => void;

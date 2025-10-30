@@ -3,7 +3,7 @@ import { deriveElementSelectionColors } from '../../utils/canvas';
 import { commandsToString } from '../../utils/path';
 import { mapSvgToCanvas } from '../../utils/geometry';
 import { useCanvasStore } from '../../store/canvasStore';
-import { getEffectiveShift } from '../../hooks/useEffectiveShift';
+import { getEffectiveShift } from '../../utils/effectiveShift';
 import type { PathData, SubPath, Point } from '../../types';
 
 interface SubpathOverlayProps {

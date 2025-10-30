@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { SelectionController, type SelectionControllerState } from '../canvas/selection/SelectionController';
-import { useCanvasEventBus } from '../canvas/CanvasEventBusContext';
-import { useCanvasStore } from '../store/canvasStore';
+import { SelectionController, type SelectionControllerState } from '../selection/SelectionController';
+import { useCanvasEventBus } from '../CanvasEventBusContext';
+import { useCanvasStore } from '../../store/canvasStore';
 import { useCanvasPointerSelection } from './useCanvasPointerSelection';
 
 export interface UseSelectionControllerResult {

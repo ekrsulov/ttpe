@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react';
-import { CanvasEventBus } from '../canvas/CanvasEventBusContext';
-import { pluginManager } from '../utils/pluginManager';
+import { CanvasEventBus } from '../CanvasEventBusContext';
+import { pluginManager } from '../../utils/pluginManager';
 
 /**
  * Hook that initializes and manages the canvas event bus lifecycle.

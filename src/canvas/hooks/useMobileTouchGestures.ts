@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { RefObject } from 'react';
-import { useCanvasStore } from '../store/canvasStore';
-import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../utils';
+import { useCanvasStore } from '../../store/canvasStore';
+import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../utils';
 
 interface TouchInfo {
   id: number;

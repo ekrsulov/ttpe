@@ -2,7 +2,7 @@ import React from 'react';
 import { getCommandStartPoint } from '../../utils/path';
 import { mapSvgToCanvas } from '../../utils/geometry';
 import { useCanvasStore } from '../../store/canvasStore';
-import { getEffectiveShift } from '../../hooks/useEffectiveShift';
+import { getEffectiveShift } from '../../utils/effectiveShift';
 import type { Point, PathData, Command } from '../../types';
 
 interface EditPointsOverlayProps {

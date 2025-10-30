@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useCanvasStore } from '../store/canvasStore';
-import { isTextFieldFocused } from '../utils/domHelpers';
-import { useCanvasCurves } from '../plugins/curves/useCanvasCurves';
-import { useDeletionActions } from './useDeletionActions';
+import { useCanvasStore } from '../../store/canvasStore';
+import { isTextFieldFocused } from '../../utils/domHelpers';
+import { useCanvasCurves } from '../../plugins/curves/useCanvasCurves';
+import { useDeletionActions } from '../../hooks/useDeletionActions';
 
 export const useCanvasKeyboardControls = () => {
   const [isSpacePressed, setIsSpacePressed] = useState(false);

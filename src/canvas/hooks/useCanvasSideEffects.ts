@@ -1,7 +1,7 @@
 import { useEffect, type RefObject } from 'react';
-import { extractEditablePoints } from '../utils/path';
-import { logger } from '../utils';
-import type { CanvasElement, PathData } from '../types';
+import { extractEditablePoints } from '../../utils/pathParserUtils';
+import { logger } from '../../utils';
+import type { CanvasElement, PathData } from '../../types';
 
 export interface SelectedCommand {
   elementId: string;

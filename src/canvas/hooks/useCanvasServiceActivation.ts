@@ -1,9 +1,9 @@
 import { useEffect, useRef, type RefObject } from 'react';
-import type { CanvasControllerValue } from '../canvas/controller/CanvasControllerContext';
-import { pluginManager } from '../utils/pluginManager';
-import { useCanvasController } from '../canvas/controller/CanvasControllerContext';
-import { useCanvasEventBus } from '../canvas/CanvasEventBusContext';
-import { canvasStoreApi } from '../store/canvasStore';
+import type { CanvasControllerValue } from '../controller/CanvasControllerContext';
+import { pluginManager } from '../../utils/pluginManager';
+import { useCanvasController } from '../controller/CanvasControllerContext';
+import { useCanvasEventBus } from '../CanvasEventBusContext';
+import { canvasStoreApi } from '../../store/canvasStore';
 
 /**
  * Configuration for canvas service activation
