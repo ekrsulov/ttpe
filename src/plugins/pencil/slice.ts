@@ -14,6 +14,7 @@ export interface PencilPluginSlice {
     fillRule: 'nonzero' | 'evenodd';
     strokeDasharray: string;
     reusePath: boolean;
+    simplificationTolerance: number;
   };
 
   // Actions
@@ -34,5 +35,6 @@ export const createPencilPluginSlice: StateCreator<PencilPluginSlice, [], [], Pe
       fillRule: 'nonzero',
       strokeDasharray: 'none',
       reusePath: false,
+      simplificationTolerance: 0,
     }
   );

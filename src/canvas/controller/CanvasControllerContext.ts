@@ -49,6 +49,7 @@ export interface CanvasControllerValue
   // Compatibility functions that delegate to plugin APIs
   startPath: (point: Point) => void;
   addPointToPath: (point: Point) => void;
+  finalizePath: (points: Point[]) => void;
 }
 
 export const CanvasControllerContext = createContext<CanvasControllerValue | null>(null);
@@ -108,6 +109,10 @@ export const useCanvasControllerSource = (): CanvasControllerValue => {
     pluginManager.callPluginApi('pencil', 'addPointToPath', point);
   }, []);
 
+  const finalizePath = useMemo(() => (points: Point[]) => {
+    pluginManager.callPluginApi('pencil', 'finalizePath', points);
+  }, []);
+
   return useMemo(
     () => ({
       ...state,
@@ -115,8 +120,9 @@ export const useCanvasControllerSource = (): CanvasControllerValue => {
       elementMap,
       startPath,
       addPointToPath,
+      finalizePath,
     }),
-    [state, sortedElements, elementMap, startPath, addPointToPath]
+    [state, sortedElements, elementMap, startPath, addPointToPath, finalizePath]
   );
 };
 

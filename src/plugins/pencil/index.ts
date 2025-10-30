@@ -4,12 +4,13 @@ import { getToolMetadata } from '../toolMetadata';
 import { createPencilPluginSlice } from './slice';
 import type { PencilPluginSlice } from './slice';
 import { PencilPanel } from './PencilPanel';
-import { startPath, addPointToPath } from './actions';
+import { startPath, addPointToPath, finalizePath } from './actions';
 import type { Point } from '../../types';
 
 type PencilPluginApi = {
   startPath: (point: Point) => void;
   addPointToPath: (point: Point) => void;
+  finalizePath: (points: Point[]) => void;
 };
 
 const pencilSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
@@ -41,6 +42,9 @@ export const pencilPlugin: PluginDefinition<CanvasStore> = {
     },
     addPointToPath: (point: Point) => {
       addPointToPath(point, store.getState);
+    },
+    finalizePath: (points: Point[]) => {
+      finalizePath(points, store.getState);
     },
   }),
 };

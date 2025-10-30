@@ -8,6 +8,7 @@
 import type { Point, PathData } from '../../types';
 import type { StoreApi } from 'zustand';
 import type { CanvasStore } from '../../store/canvasStore';
+import { simplifyPathFromPoints } from './utils';
 
 type PencilStore = CanvasStore & Required<Pick<CanvasStore, 'pencil'>>;
 
@@ -114,4 +115,46 @@ export function addPointToPath(
       },
     });
   }
+}
+
+export function finalizePath(
+  points: Point[],
+  getState: StoreApi<CanvasStore>['getState']
+): void {
+  const state = getState() as PencilStore;
+  if (!state.pencil) return;
+
+  const tolerance = state.pencil.simplificationTolerance ?? 0;
+  if (tolerance <= 0) {
+    return;
+  }
+
+  const pencilPathElement = [...state.elements].reverse().find(
+    el => el.type === 'path' && (el.data as PathData).isPencilPath === true
+  );
+
+  if (!pencilPathElement) {
+    return;
+  }
+
+  const pathData = pencilPathElement.data as PathData;
+  if (pathData.subPaths.length === 0 || points.length < 2) {
+    return;
+  }
+
+  const simplifiedPath = simplifyPathFromPoints(points, pathData, tolerance);
+  if (!simplifiedPath.subPaths.length) {
+    return;
+  }
+
+  const updatedSubPaths = [...pathData.subPaths];
+  updatedSubPaths[updatedSubPaths.length - 1] = simplifiedPath.subPaths[0];
+
+  state.updateElement(pencilPathElement.id, {
+    data: {
+      ...pathData,
+      subPaths: updatedSubPaths,
+      isPencilPath: true,
+    },
+  });
 }
