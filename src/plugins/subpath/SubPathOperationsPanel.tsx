@@ -1,7 +1,7 @@
 import React from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { Panel } from '../../components/ui/Panel';
-import { PanelStyledButton } from '../../components/ui/PanelStyledButton';
+import { Panel } from '../../ui/Panel';
+import { PanelStyledButton } from '../../ui/PanelStyledButton';
 import { pluginManager } from '../../utils/pluginManager';
 
 const SubPathOperationsPanelComponent: React.FC = () => {

@@ -8,9 +8,9 @@ import {
 } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { logger, LogLevel } from '../../utils';
-import { Panel } from '../../components/ui/Panel';
-import { PanelToggle } from '../../components/ui/PanelToggle';
-import { SliderControl } from '../../components/ui/SliderControl';
+import { Panel } from '../../ui/Panel';
+import { PanelToggle } from '../../ui/PanelToggle';
+import { SliderControl } from '../../ui/SliderControl';
 
 export const SettingsPanel: React.FC = () => {
   // Use individual selectors to prevent re-renders on unrelated changes

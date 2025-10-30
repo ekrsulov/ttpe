@@ -1,6 +1,6 @@
 import React from 'react';
 import { SliderControl } from './SliderControl';
-import { formatPercent } from '../../utils/coreHelpers';
+import { formatPercent } from '../utils/coreHelpers';
 
 interface PercentSliderControlProps {
   icon?: React.ReactNode;

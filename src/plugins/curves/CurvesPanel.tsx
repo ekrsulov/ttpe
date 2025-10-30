@@ -10,7 +10,7 @@ import {
 import { 
   TrendingUp,
 } from 'lucide-react';
-import { Panel } from '../../components/ui/Panel';
+import { Panel } from '../../ui/Panel';
 import { useCanvasStore } from '../../store/canvasStore';
 import { useCanvasCurves } from './useCanvasCurves';
 

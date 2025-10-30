@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Flex, IconButton, Divider } from '@chakra-ui/react';
-import ConditionalTooltip from '../../components/ui/ConditionalTooltip';
+import ConditionalTooltip from '../../ui/ConditionalTooltip';
 import { ArrangePanel } from '../panels/ArrangePanel';
 import { SelectPanel } from '../panels/SelectPanel';
 import { ChevronUp, ChevronDown } from 'lucide-react';

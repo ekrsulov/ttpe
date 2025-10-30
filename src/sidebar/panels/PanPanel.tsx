@@ -2,7 +2,7 @@ import React from 'react';
 import { IconButton as ChakraIconButton, HStack, VStack, Tag as ChakraTag } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { RotateCcw, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ArrowUpLeft, ArrowUpRight, ArrowDownLeft, ArrowDownRight } from 'lucide-react';
-import { Panel } from '../../components/ui/Panel';
+import { Panel } from '../../ui/Panel';
 import type { LucideIcon } from 'lucide-react';
 
 // Pan button configuration to reduce duplication

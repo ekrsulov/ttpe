@@ -2,7 +2,7 @@ import React from 'react';
 import { IconButton as ChakraIconButton } from '@chakra-ui/react';
 import { Minus } from 'lucide-react';
 import ConditionalTooltip from './ConditionalTooltip';
-import { DASH_PRESETS } from '../../utils/dashPresets';
+import { DASH_PRESETS } from '../utils/dashPresets';
 
 interface DashArraySelectorProps {
   value: string;

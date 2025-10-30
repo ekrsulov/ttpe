@@ -1,9 +1,9 @@
 import React from 'react';
 import { HStack, IconButton as ChakraIconButton } from '@chakra-ui/react';
-import ConditionalTooltip from '../../components/ui/ConditionalTooltip';
+import ConditionalTooltip from '../../ui/ConditionalTooltip';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Square, Circle, Triangle, type LucideIcon } from 'lucide-react';
-import { Panel } from '../../components/ui/Panel';
+import { Panel } from '../../ui/Panel';
 import type { ShapeType } from './slice';
 
 export const ShapePanel: React.FC = () => {

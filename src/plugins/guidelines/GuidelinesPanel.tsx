@@ -1,9 +1,9 @@
 import React from 'react';
 import { VStack } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { Panel } from '../../components/ui/Panel';
-import { PanelToggleGroup } from '../../components/ui/PanelToggleGroup';
-import { PanelToggle } from '../../components/ui/PanelToggle';
+import { Panel } from '../../ui/Panel';
+import { PanelToggleGroup } from '../../ui/PanelToggleGroup';
+import { PanelToggle } from '../../ui/PanelToggle';
 import { usePanelToggleHandlers } from '../../hooks/usePanelToggleHandlers';
 
 const GuidelinesPanelComponent: React.FC = () => {

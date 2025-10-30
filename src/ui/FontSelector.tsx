@@ -13,7 +13,7 @@ import {
   Badge
 } from '@chakra-ui/react';
 import { ChevronDown } from 'lucide-react';
-import { isTTFFont } from '../../utils/ttfFontUtils';
+import { isTTFFont } from '../utils/ttfFontUtils';
 
 interface FontSelectorProps {
   value: string;

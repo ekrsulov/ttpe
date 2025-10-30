@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Tooltip } from '@chakra-ui/react';
 import type { TooltipProps } from '@chakra-ui/react';
-import { useCanvasStore } from '../../store/canvasStore';
+import { useCanvasStore } from '../store/canvasStore';
 
 const ConditionalTooltip: React.FC<TooltipProps> = ({ children, ...props }) => {
   const [isMobile, setIsMobile] = useState(false);

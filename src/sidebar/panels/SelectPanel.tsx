@@ -4,7 +4,7 @@ import { VStack, Box } from '@chakra-ui/react';
 import { extractEditablePoints, extractSubpaths, commandsToString, translateCommands } from '../../utils/path';
 import type { CanvasElement, PathData, GroupElement } from '../../types';
 import { logger } from '../../utils';
-import { RenderCountBadgeWrapper } from '../../components/ui/RenderCountBadgeWrapper';
+import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
 import { SelectPanelItem } from './SelectPanelItem';
 import { SelectPanelGroupItem } from './SelectPanelGroupItem';
 import { useDragResize } from '../../hooks/useDragResize';

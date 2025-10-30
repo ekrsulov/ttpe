@@ -3,15 +3,15 @@ import { VStack, HStack, Text, Icon } from '@chakra-ui/react';
 import { Copy, Clipboard, Group as GroupIcon, RulerDimensionLine, MoveUpLeft, MoveDownRight } from 'lucide-react';
 import { extractSubpaths } from '../../utils/path';
 import type { PathData } from '../../types';
-import { PathThumbnail } from '../../components/ui/PathThumbnail';
-import { PanelActionButton } from '../../components/ui/PanelActionButton';
+import { PathThumbnail } from '../../ui/PathThumbnail';
+import { PanelActionButton } from '../../ui/PanelActionButton';
 import { useCanvasStore } from '../../store/canvasStore';
 import { haveBoundsChanged, areBboxesEqual } from '../../utils/comparators/bounds';
 import { getItemThumbnailData } from '../../utils/selectPanelHelpers';
 import { VisibilityLockControls } from './VisibilityLockControls';
 import { useSelectPanelActions } from '../../hooks/useSelectPanelActions';
 import { makeShallowComparator } from '../../utils/coreHelpers';
-import ConditionalTooltip from '../../components/ui/ConditionalTooltip';
+import ConditionalTooltip from '../../ui/ConditionalTooltip';
 
 // Import shared type instead of duplicating
 import type { SelectPanelItemData } from './SelectPanel.types';

@@ -8,12 +8,12 @@ import {
   Trash2,
   Maximize2
 } from 'lucide-react';
-import { useCanvasStore } from '../../store/canvasStore';
+import { useCanvasStore } from '../store/canvasStore';
 import { RenderCountBadgeWrapper } from './RenderCountBadgeWrapper';
 import { FloatingToolbarShell } from './FloatingToolbarShell';
 import { ToolbarIconButton } from './ToolbarIconButton';
-import { pluginManager } from '../../utils/pluginManager';
-import { useDeletionActions } from '../../hooks/useDeletionActions';
+import { pluginManager } from '../utils/pluginManager';
+import { useDeletionActions } from '../hooks/useDeletionActions';
 
 // Custom hook to subscribe to temporal state changes
 const useTemporalState = () => {

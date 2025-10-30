@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { VStack, HStack, Tag, Text, Box } from '@chakra-ui/react';
-import ConditionalTooltip from '../../components/ui/ConditionalTooltip';
+import ConditionalTooltip from '../../ui/ConditionalTooltip';
 import { Lock, LockOpen } from 'lucide-react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { Panel } from '../../components/ui/Panel';
-import { PanelToggle } from '../../components/ui/PanelToggle';
-import { NumberInput } from '../../components/ui/NumberInput';
+import { Panel } from '../../ui/Panel';
+import { PanelToggle } from '../../ui/PanelToggle';
+import { NumberInput } from '../../ui/NumberInput';
 import { usePanelToggleHandlers } from '../../hooks/usePanelToggleHandlers';
 
 export const TransformationPanel: React.FC = () => {

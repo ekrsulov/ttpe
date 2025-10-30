@@ -1,8 +1,8 @@
 import React from 'react';
 import { Box } from '@chakra-ui/react';
-import type { Command } from '../../types';
-import { commandsToString } from '../../utils/path';
-import { measureCommandsBounds } from '../../utils/measurementUtils';
+import type { Command } from '../types';
+import { commandsToString } from '../utils/path';
+import { measureCommandsBounds } from '../utils/measurementUtils';
 
 interface PathThumbnailProps {
   commands: Command[];

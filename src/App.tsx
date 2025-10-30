@@ -1,8 +1,8 @@
 import { Canvas } from './canvas/Canvas';
 import { Sidebar } from './sidebar/Sidebar';
-import { TopActionBar } from './components/ui/TopActionBar';
-import { BottomActionBar } from './components/ui/BottomActionBar';
-import { VirtualShiftButton } from './components/ui/VirtualShiftButton';
+import { TopActionBar } from './ui/TopActionBar';
+import { BottomActionBar } from './ui/BottomActionBar';
+import { VirtualShiftButton } from './ui/VirtualShiftButton';
 import { MinimapPanel } from './plugins/minimap/MinimapPanel';
 import { useCanvasStore } from './store/canvasStore';
 import './App.css';

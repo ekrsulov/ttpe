@@ -1,10 +1,10 @@
 import React from 'react';
 import { VStack, Select, Text } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { Panel } from '../../components/ui/Panel';
-import { PanelToggleGroup } from '../../components/ui/PanelToggleGroup';
-import { SliderControl } from '../../components/ui/SliderControl';
-import { PercentSliderControl } from '../../components/ui/PercentSliderControl';
+import { Panel } from '../../ui/Panel';
+import { PanelToggleGroup } from '../../ui/PanelToggleGroup';
+import { SliderControl } from '../../ui/SliderControl';
+import { PercentSliderControl } from '../../ui/PercentSliderControl';
 import { usePanelToggleHandlers } from '../../hooks/usePanelToggleHandlers';
 import type { GridType, GridPluginSlice } from './slice';
 

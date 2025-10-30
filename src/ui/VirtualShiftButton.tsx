@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, IconButton, useBreakpointValue } from '@chakra-ui/react';
 import { ArrowBigUp } from 'lucide-react';
-import { useCanvasStore } from '../../store/canvasStore';
+import { useCanvasStore } from '../store/canvasStore';
 import { RenderCountBadgeWrapper } from './RenderCountBadgeWrapper';
 
 interface VirtualShiftButtonProps {

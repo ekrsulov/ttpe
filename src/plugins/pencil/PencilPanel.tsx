@@ -1,7 +1,7 @@
 import React from 'react';
 import { VStack, HStack, Button, Text } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { Panel } from '../../components/ui/Panel';
+import { Panel } from '../../ui/Panel';
 
 export const PencilPanel: React.FC = () => {
   // Use individual selectors to prevent re-renders on unrelated changes

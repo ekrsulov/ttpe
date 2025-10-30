@@ -1,7 +1,7 @@
 import React from 'react';
 import { RenderCountBadge } from './RenderCountBadge';
-import { useRenderCount } from '../../hooks/useRenderCount';
-import { useCanvasStore } from '../../store/canvasStore';
+import { useRenderCount } from '../hooks/useRenderCount';
+import { useCanvasStore } from '../store/canvasStore';
 
 interface RenderCountBadgeWrapperProps {
   componentName: string;

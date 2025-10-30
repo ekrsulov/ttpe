@@ -9,10 +9,10 @@ import {
   useDisclosure,
   IconButton as ChakraIconButton
 } from '@chakra-ui/react';
-import ConditionalTooltip from '../../components/ui/ConditionalTooltip';
+import ConditionalTooltip from '../../ui/ConditionalTooltip';
 import { useCanvasStore } from '../../store/canvasStore';
-import { Panel } from '../../components/ui/Panel';
-import { PanelStyledButton } from '../../components/ui/PanelStyledButton';
+import { Panel } from '../../ui/Panel';
+import { PanelStyledButton } from '../../ui/PanelStyledButton';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
 /**

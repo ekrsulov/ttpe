@@ -6,7 +6,7 @@ import { useCanvasTransformControls } from './hooks/useCanvasTransformControls';
 import { useCanvasShapeCreation } from './hooks/useCanvasShapeCreation';
 import { useCanvasSmoothBrush } from './hooks/useCanvasSmoothBrush';
 import { useCanvasEventHandlers } from './hooks/useCanvasEventHandlers';
-import { RenderCountBadgeWrapper } from '../components/ui/RenderCountBadgeWrapper';
+import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
 import type { Point, CanvasElement } from '../types';
 import type { CanvasLayerContext } from '../types/plugins';
 import { useCanvasController } from './controller/CanvasControllerContext';

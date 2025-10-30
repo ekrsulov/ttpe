@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@chakra-ui/react';
 import ConditionalTooltip from './ConditionalTooltip';
-import type { Preset } from '../../utils/fillAndStrokePresets';
+import type { Preset } from '../utils/fillAndStrokePresets';
 
 interface PresetButtonProps {
   preset: Preset;

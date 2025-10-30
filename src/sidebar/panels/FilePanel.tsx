@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Button as ChakraButton, HStack, VStack, Input, InputGroup, InputLeftAddon, useToast, FormControl, FormLabel, Text, Box, Collapse, useDisclosure, IconButton as ChakraIconButton } from '@chakra-ui/react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import ConditionalTooltip from '../../components/ui/ConditionalTooltip';
+import ConditionalTooltip from '../../ui/ConditionalTooltip';
 import { useCanvasStore } from '../../store/canvasStore';
 import { logger, importSVGWithDimensions, measurePath, translateCommands, performPathUnion, transformCommands, calculateScaledStrokeWidth, flattenImportedElements } from '../../utils';
-import { Panel } from '../../components/ui/Panel';
-import { PanelToggle } from '../../components/ui/PanelToggle';
+import { Panel } from '../../ui/Panel';
+import { PanelToggle } from '../../ui/PanelToggle';
 import type { PathData, CanvasElement } from '../../types';
 import type { ImportedElement } from '../../utils';
 

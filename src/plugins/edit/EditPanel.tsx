@@ -10,10 +10,10 @@ import {
   Flex,
   Heading
 } from '@chakra-ui/react';
-import { SliderControl } from '../../components/ui/SliderControl';
-import { PercentSliderControl } from '../../components/ui/PercentSliderControl';
-import { SectionHeader } from '../../components/ui/SectionHeader';
-import { RenderCountBadgeWrapper } from '../../components/ui/RenderCountBadgeWrapper';
+import { SliderControl } from '../../ui/SliderControl';
+import { PercentSliderControl } from '../../ui/PercentSliderControl';
+import { SectionHeader } from '../../ui/SectionHeader';
+import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
 
 interface EditPanelProps {
   activePlugin: string | null;

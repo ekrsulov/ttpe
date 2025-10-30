@@ -4,11 +4,11 @@ import { Menu } from 'lucide-react';
 import { RenderCountBadgeWrapper } from './RenderCountBadgeWrapper';
 import { FloatingToolbarShell } from './FloatingToolbarShell';
 import { ToolbarIconButton } from './ToolbarIconButton';
-import type { CanvasElement } from '../../types';
-import { TOOL_DEFINITIONS } from '../../config/toolDefinitions';
-import type { ToolMode } from '../../config/toolDefinitions';
-import { pluginManager } from '../../utils/pluginManager';
-import { useCanvasStore } from '../../store/canvasStore';
+import type { CanvasElement } from '../types';
+import { TOOL_DEFINITIONS } from '../config/toolDefinitions';
+import type { ToolMode } from '../config/toolDefinitions';
+import { pluginManager } from '../utils/pluginManager';
+import { useCanvasStore } from '../store/canvasStore';
 
 const TOOL_DEFINITION_MAP = new Map(
   TOOL_DEFINITIONS.map((definition) => [definition.mode, definition])
@@ -101,7 +101,7 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
               if (!element || element.type !== 'path') {
                 return true;
               }
-              const pathData = element.data as import('../../types').PathData;
+              const pathData = element.data as import('../types').PathData;
               return pathData.subPaths.length <= 1;
             }
             return false;

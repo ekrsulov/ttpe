@@ -13,8 +13,8 @@ import {
 import { useCanvasStore } from '../../store/canvasStore';
 import { Bold, Italic } from 'lucide-react';
 import { getAvailableFonts } from '../../utils';
-import { FontSelector } from '../../components/ui/FontSelector';
-import { Panel } from '../../components/ui/Panel';
+import { FontSelector } from '../../ui/FontSelector';
+import { Panel } from '../../ui/Panel';
 import { logger } from '../../utils';
 import { createPropertyUpdater, createPropertyGetters, preventSpacebarPropagation } from '../../utils/panelHelpers';
 

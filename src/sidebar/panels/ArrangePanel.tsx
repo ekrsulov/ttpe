@@ -17,8 +17,8 @@ import {
   ArrowUpDown
 } from 'lucide-react';
 import { VStack, HStack, IconButton as ChakraIconButton, Box } from '@chakra-ui/react';
-import ConditionalTooltip from '../../components/ui/ConditionalTooltip';
-import { RenderCountBadgeWrapper } from '../../components/ui/RenderCountBadgeWrapper';
+import ConditionalTooltip from '../../ui/ConditionalTooltip';
+import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
 
 interface ButtonConfig {
   handler: () => void;

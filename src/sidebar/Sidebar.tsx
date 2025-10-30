@@ -10,7 +10,7 @@ import {
 } from '@chakra-ui/react';
 import { useCanvasStore } from '../store/canvasStore';
 import { SidebarContent } from './components/SidebarContent';
-import { RenderCountBadgeWrapper } from '../components/ui/RenderCountBadgeWrapper';
+import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
 import { safeFunctions } from '../utils/functionHelpers';
 
 interface SidebarProps {

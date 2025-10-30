@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { Grid } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { Panel } from '../../components/ui/Panel';
-import { PanelStyledButton } from '../../components/ui/PanelStyledButton';
+import { Panel } from '../../ui/Panel';
+import { PanelStyledButton } from '../../ui/PanelStyledButton';
 import type { PathData } from '../../types';
 import { pluginManager } from '../../utils/pluginManager';
 

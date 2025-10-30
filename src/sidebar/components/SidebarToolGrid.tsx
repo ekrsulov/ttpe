@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, SimpleGrid } from '@chakra-ui/react';
-import { RenderCountBadgeWrapper } from '../../components/ui/RenderCountBadgeWrapper';
-import { SidebarUtilityButton } from '../../components/ui/SidebarUtilityButton';
+import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
+import { SidebarUtilityButton } from '../../ui/SidebarUtilityButton';
 
 interface ToolConfig {
   name: string;

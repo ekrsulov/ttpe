@@ -4,7 +4,7 @@ import type { Bounds } from '../../utils/boundsUtils';
 import { calculateBounds } from '../../utils/boundsUtils';
 import type { PathElement } from '../../types';
 import { useCanvasStore } from '../../store/canvasStore';
-import { RenderCountBadgeWrapper } from '../../components/ui/RenderCountBadgeWrapper';
+import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
 
 interface MinimapPanelProps {
   sidebarWidth?: number;

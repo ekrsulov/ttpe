@@ -21,8 +21,8 @@ import {
   useDisclosure,
   Divider
 } from '@chakra-ui/react';
-import ConditionalTooltip from '../../components/ui/ConditionalTooltip';
-import { Panel } from '../../components/ui/Panel';
+import ConditionalTooltip from '../../ui/ConditionalTooltip';
+import { Panel } from '../../ui/Panel';
 
 export const ControlPointAlignmentPanel: React.FC = () => {
   // ALL HOOKS FIRST - must be called unconditionally
