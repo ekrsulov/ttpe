@@ -1,5 +1,5 @@
 import React from 'react';
-import { Checkbox as ChakraCheckbox } from '@chakra-ui/react';
+import { Checkbox as ChakraCheckbox, useColorModeValue } from '@chakra-ui/react';
 
 export interface PanelToggleProps {
   isChecked: boolean;
@@ -22,6 +22,8 @@ export const PanelToggle: React.FC<PanelToggleProps> = ({
 }) => {
   const baseColor = `${accentColor}.500`;
   const hoverColor = `${accentColor}.600`;
+  const borderColor = useColorModeValue('gray.400', 'whiteAlpha.500');
+  const hoverBackground = useColorModeValue('gray.50', 'whiteAlpha.100');
 
   return (
     <ChakraCheckbox
@@ -32,7 +34,7 @@ export const PanelToggle: React.FC<PanelToggleProps> = ({
       sx={{
         '& .chakra-checkbox__control': {
           bg: isChecked ? baseColor : 'transparent',
-          borderColor: isChecked ? baseColor : 'gray.400',
+          borderColor: isChecked ? baseColor : borderColor,
           _checked: {
             bg: baseColor,
             borderColor: baseColor,
@@ -43,8 +45,8 @@ export const PanelToggle: React.FC<PanelToggleProps> = ({
             }
           },
           _hover: {
-            bg: isChecked ? hoverColor : 'gray.50',
-            borderColor: isChecked ? hoverColor : 'gray.400',
+            bg: isChecked ? hoverColor : hoverBackground,
+            borderColor: isChecked ? hoverColor : borderColor,
           },
           _disabled: {
             opacity: 0.4,

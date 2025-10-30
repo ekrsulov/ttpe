@@ -4,6 +4,7 @@
  */
 
 import { extendTheme, type ThemeConfig } from '@chakra-ui/react'
+import { mode, type StyleFunctionProps } from '@chakra-ui/theme-tools'
 import { colors } from './colors'
 import { components } from './components'
 import { typography, textStyles } from './typography'
@@ -35,10 +36,10 @@ export const theme = extendTheme({
   
   // Global styles
   styles: {
-    global: {
+    global: (props: StyleFunctionProps) => ({
       body: {
-        bg: 'gray.50',
-        color: 'gray.800',
+        bg: mode('gray.50', 'gray.900')(props),
+        color: mode('gray.800', 'gray.100')(props),
         fontFamily: 'body',
         fontSize: 'sm',
         lineHeight: 'normal',
@@ -52,16 +53,16 @@ export const theme = extendTheme({
         width: '8px',
       },
       '*::-webkit-scrollbar-track': {
-        bg: 'gray.100',
+        bg: mode('gray.100', 'whiteAlpha.200')(props),
       },
       '*::-webkit-scrollbar-thumb': {
-        bg: 'gray.300',
+        bg: mode('gray.300', 'whiteAlpha.400')(props),
         borderRadius: 'md',
       },
       '*::-webkit-scrollbar-thumb:hover': {
-        bg: 'gray.400',
+        bg: mode('gray.400', 'whiteAlpha.500')(props),
       },
-    },
+    }),
   },
   
   // Breakpoints for responsive design
