@@ -5,18 +5,18 @@ import type { SmoothBrush } from '../../plugins/edit/slice';
 export type { SmoothBrush };
 
 // Lazy load panel components
-const EditorPanel = React.lazy(() => import('../plugins/EditorPanel').then(module => ({ default: module.EditorPanel })));
+const EditorPanel = React.lazy(() => import('../panels/EditorPanel').then(module => ({ default: module.EditorPanel })));
 const EditPanel = React.lazy(() => import('../../plugins/edit/EditPanel').then(module => ({ default: module.EditPanel })));
 const ControlPointAlignmentPanel = React.lazy(() => import('../../plugins/edit/ControlPointAlignmentPanel').then(module => ({ default: module.ControlPointAlignmentPanel })));
 const OpticalAlignmentPanel = React.lazy(() => import('../../plugins/opticalAlignment/OpticalAlignmentPanel').then(module => ({ default: module.OpticalAlignmentPanel })));
-const PanPanel = React.lazy(() => import('../plugins/PanPanel').then(module => ({ default: module.PanPanel })));
+const PanPanel = React.lazy(() => import('../panels/PanPanel').then(module => ({ default: module.PanPanel })));
 const PencilPanel = React.lazy(() => import('../../plugins/pencil/PencilPanel').then(module => ({ default: module.PencilPanel })));
 const CurvesPanel = React.lazy(() => import('../../plugins/curves/CurvesPanel').then(module => ({ default: module.CurvesPanel })));
 const TransformationPanel = React.lazy(() => import('../../plugins/transformation/TransformationPanel').then(module => ({ default: module.TransformationPanel })));
 const TextPanel = React.lazy(() => import('../../plugins/text/TextPanel').then(module => ({ default: module.TextPanel })));
 const ShapePanel = React.lazy(() => import('../../plugins/shape/ShapePanel').then(module => ({ default: module.ShapePanel })));
-const FilePanel = React.lazy(() => import('../plugins/FilePanel').then(module => ({ default: module.FilePanel })));
-const SettingsPanel = React.lazy(() => import('../plugins/SettingsPanel').then(module => ({ default: module.SettingsPanel })));
+const FilePanel = React.lazy(() => import('../panels/FilePanel').then(module => ({ default: module.FilePanel })));
+const SettingsPanel = React.lazy(() => import('../panels/SettingsPanel').then(module => ({ default: module.SettingsPanel })));
 const PathOperationsPanel = React.lazy(() => import('../../plugins/path/PathOperationsPanel').then(module => ({ default: module.PathOperationsPanel })));
 const SubPathOperationsPanel = React.lazy(() => import('../../plugins/subpath/SubPathOperationsPanel').then(module => ({ default: module.SubPathOperationsPanel })));
 const GuidelinesPanel = React.lazy(() => import('../../plugins/guidelines/GuidelinesPanel').then(module => ({ default: module.GuidelinesPanel })));

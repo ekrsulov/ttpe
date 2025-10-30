@@ -4,7 +4,7 @@ import { TransformationHandlers } from './TransformationHandlers';
 import { CenterMarker } from './CenterMarker';
 import { CornerCoordinateLabels } from './CornerCoordinateLabels';
 import { MeasurementRulers } from './MeasurementRulers';
-import { SelectionRects } from '../../components/overlays/SelectionRects';
+import { SelectionRects } from '../../overlays/SelectionRects';
 
 interface TransformationOverlayProps {
   element: {

@@ -2,7 +2,7 @@ import type { Command, PathData } from '../types';
 import { extractSubpaths } from './path';
 import { measureSubpathBounds } from './measurementUtils';
 import { getRoundedBbox } from './comparators/bounds';
-import type { SelectPanelItemData } from '../components/plugins/SelectPanel.types';
+import type { SelectPanelItemData } from '../sidebar/panels/SelectPanel.types';
 
 /**
  * Interface for thumbnail data used by Select panel items

@@ -5,7 +5,7 @@ import { createTransformationPluginSlice } from './slice';
 import type { TransformationPluginSlice } from './slice';
 import { TransformationPanel } from './TransformationPanel';
 import { TransformationOverlay } from './TransformationOverlay';
-import { FeedbackOverlay, BlockingOverlay } from '../../components/overlays';
+import { FeedbackOverlay, BlockingOverlay } from '../../overlays';
 import { measureSubpathBounds } from '../../utils/geometry';
 import type { PathData } from '../../types';
 
@@ -124,4 +124,4 @@ export const transformationPlugin: PluginDefinition<CanvasStore> = {
 export type { TransformationPluginSlice };
 export { TransformationPanel };
 export { TransformationOverlay } from './TransformationOverlay';
-export { useCanvasTransformControls } from './useCanvasTransformControls';
+export { useCanvasTransformControls } from '../../canvas/hooks/useCanvasTransformControls';

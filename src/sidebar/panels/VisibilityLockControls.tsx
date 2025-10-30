@@ -1,7 +1,7 @@
 import React from 'react';
 import { HStack } from '@chakra-ui/react';
 import { MousePointer2, Eye, EyeOff, Lock, Unlock } from 'lucide-react';
-import { PanelActionButton } from '../ui/PanelActionButton';
+import { PanelActionButton } from '../../components/ui/PanelActionButton';
 
 interface VisibilityLockControlsProps {
   elementId: string;

@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { TransformController, type TransformState, type TransformFeedback } from '../../canvas/interactions/TransformController';
+import { TransformController, type TransformState, type TransformFeedback } from '../interactions/TransformController';
 import { measurePath, measureSubpathBounds } from '../../utils/geometry';
 import type { Point, PathData } from '../../types';
 

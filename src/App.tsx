@@ -1,5 +1,5 @@
-import { Canvas } from './components/Canvas';
-import { Sidebar } from './components/Sidebar';
+import { Canvas } from './canvas/Canvas';
+import { Sidebar } from './sidebar/Sidebar';
 import { TopActionBar } from './components/ui/TopActionBar';
 import { BottomActionBar } from './components/ui/BottomActionBar';
 import { VirtualShiftButton } from './components/ui/VirtualShiftButton';

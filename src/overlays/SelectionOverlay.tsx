@@ -1,5 +1,5 @@
 import React from 'react';
-import { useSelectionBounds } from '../../hooks/useSelectionBounds';
+import { useSelectionBounds } from '../hooks/useSelectionBounds';
 import { SelectionRects } from './SelectionRects';
 
 interface SelectionOverlayProps {

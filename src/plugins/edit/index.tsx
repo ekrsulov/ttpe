@@ -7,7 +7,7 @@ import { EditPanel } from './EditPanel';
 import { ControlPointAlignmentPanel } from './ControlPointAlignmentPanel';
 import { EditPointsOverlay } from './EditPointsOverlay';
 import { AddPointFeedbackOverlay } from './AddPointFeedbackOverlay';
-import { BlockingOverlay } from '../../components/overlays';
+import { BlockingOverlay } from '../../overlays';
 
 const editSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

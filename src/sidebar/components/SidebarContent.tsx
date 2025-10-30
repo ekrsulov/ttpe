@@ -4,7 +4,7 @@ import { SidebarToolGrid } from './SidebarToolGrid';
 import { SidebarPanelHost } from './SidebarPanelHost';
 import { SidebarFooter } from './SidebarFooter';
 import { SidebarResizer } from './SidebarResizer';
-import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
+import { RenderCountBadgeWrapper } from '../../components/ui/RenderCountBadgeWrapper';
 import { EditPanelContext } from '../../contexts/EditPanelContext';
 import type { 
   SmoothBrush, 

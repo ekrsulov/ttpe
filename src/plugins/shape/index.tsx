@@ -5,7 +5,7 @@ import { createShapePluginSlice } from './slice';
 import type { ShapePluginSlice } from './slice';
 import { ShapePanel } from './ShapePanel';
 import { ShapePreview } from './ShapePreview';
-import { BlockingOverlay } from '../../components/overlays';
+import { BlockingOverlay } from '../../overlays';
 import { createShape } from './actions';
 import type { Point } from '../../types';
 

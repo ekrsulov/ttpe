@@ -4,7 +4,7 @@ import type {
   PathSimplification, 
   PathRounding, 
   SelectedCommand 
-} from '../components/sidebar/panelConfig';
+} from '../sidebar/components/panelConfig';
 
 /**
  * Context for EditPanel-related state and actions.

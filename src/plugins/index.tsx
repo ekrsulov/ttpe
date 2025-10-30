@@ -14,7 +14,7 @@ import { guidelinesPlugin } from './guidelines';
 import { gridPlugin } from './grid';
 import { minimapPlugin } from './minimap';
 import { gridFillPlugin } from './gridFill';
-import { SelectionOverlay, BlockingOverlay } from '../components/overlays';
+import { SelectionOverlay, BlockingOverlay } from '../overlays';
 
 
 const selectPlugin: PluginDefinition<CanvasStore> = {

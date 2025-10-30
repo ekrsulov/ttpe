@@ -16,17 +16,17 @@ import {
   Input,
   useBreakpointValue
 } from '@chakra-ui/react';
-import ConditionalTooltip from '../ui/ConditionalTooltip';
-import { SliderControl } from '../ui/SliderControl';
-import { PercentSliderControl } from '../ui/PercentSliderControl';
-import { PresetButton } from '../ui/FillAndStrokePresetButton';
-import { LinecapSelector } from '../ui/LinecapSelector';
-import { LinejoinSelector } from '../ui/LinejoinSelector';
-import { FillRuleSelector } from '../ui/FillRuleSelector';
-import { DashArrayCustomInput, DashArrayPresets } from '../ui/DashArraySelector';
+import ConditionalTooltip from '../../components/ui/ConditionalTooltip';
+import { SliderControl } from '../../components/ui/SliderControl';
+import { PercentSliderControl } from '../../components/ui/PercentSliderControl';
+import { PresetButton } from '../../components/ui/FillAndStrokePresetButton';
+import { LinecapSelector } from '../../components/ui/LinecapSelector';
+import { LinejoinSelector } from '../../components/ui/LinejoinSelector';
+import { FillRuleSelector } from '../../components/ui/FillRuleSelector';
+import { DashArrayCustomInput, DashArrayPresets } from '../../components/ui/DashArraySelector';
 import { PRESETS, type Preset } from '../../utils/fillAndStrokePresets';
 import { useSelectedPathProperty } from '../../utils/pathPropertyUtils';
-import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
+import { RenderCountBadgeWrapper } from '../../components/ui/RenderCountBadgeWrapper';
 
 export const EditorPanel: React.FC = () => {
   // Use specific selectors instead of destructuring the entire store

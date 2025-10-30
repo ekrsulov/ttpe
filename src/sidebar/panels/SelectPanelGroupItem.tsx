@@ -3,12 +3,12 @@ import { Box, HStack, VStack, Text, Editable, EditableInput, EditablePreview } f
 import { ChevronDown, ChevronRight, Ungroup as UngroupIcon, Lock, EyeOff, MousePointer2 } from 'lucide-react';
 import type { GroupElement, PathData, Command, CanvasElement } from '../../types';
 import { useCanvasStore } from '../../store/canvasStore';
-import { PathThumbnail } from '../ui/PathThumbnail';
-import { PanelActionButton } from '../ui/PanelActionButton';
+import { PathThumbnail } from '../../components/ui/PathThumbnail';
+import { PanelActionButton } from '../../components/ui/PanelActionButton';
 import { VisibilityLockControls } from './VisibilityLockControls';
 import { useSelectPanelActions } from '../../hooks/useSelectPanelActions';
 import { makeShallowComparator } from '../../utils/coreHelpers';
-import ConditionalTooltip from '../ui/ConditionalTooltip';
+import ConditionalTooltip from '../../components/ui/ConditionalTooltip';
 
 interface SelectPanelGroupItemProps {
   group: GroupElement;
