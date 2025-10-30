@@ -111,6 +111,7 @@ const CanvasContent: React.FC = () => {
     moveSelectedSubpaths,
     startPath,
     addPointToPath,
+    finalizePath,
   } = controller;
 
   const moveSelectedElementsRef = useRef(moveSelectedElements);
@@ -254,12 +255,14 @@ const CanvasContent: React.FC = () => {
       fillRule: 'nonzero' as const,
       strokeDasharray: 'none',
       reusePath: false,
+      simplificationTolerance: 0,
     },
     viewportZoom: viewport.zoom,
     screenToCanvas,
     emitPointerEvent,
     startPath,
     addPointToPath,
+    finalizePath,
   });
 
   // Create canvas services value for provider

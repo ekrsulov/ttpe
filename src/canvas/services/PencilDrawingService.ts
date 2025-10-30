@@ -1,6 +1,7 @@
 import type { RefObject } from 'react';
 import type { Point } from '../../types';
 import type { PencilPluginSlice } from '../../plugins/pencil/slice';
+import { createPathDataFromPoints, getPencilPathStyle, simplifyPathFromPoints, subPathsToPathString, type PathStyleLike } from '../../plugins/pencil/utils';
 
 type PencilSettings = PencilPluginSlice['pencil'];
 
@@ -14,6 +15,7 @@ export interface AttachSmoothBrushListenersOptions {
   emitPointerEvent: (type: PointerEventType, event: PointerEvent, point: Point) => void;
   startPath: (point: Point) => void;
   addPointToPath: (point: Point) => void;
+  finalizePath: (points: Point[]) => void;
 }
 
 export class PencilDrawingService {
@@ -42,6 +44,7 @@ export class PencilDrawingService {
     let isDrawing = false;
     let tempPath: SVGPathElement | null = null;
     let allPoints: Point[] = [];
+    let currentStyle: PathStyleLike | null = null;
 
     const cleanupTempPath = () => {
       if (tempPath && tempPath.parentNode) {
@@ -56,6 +59,7 @@ export class PencilDrawingService {
 
       isDrawing = true;
       allPoints = [point];
+      currentStyle = getPencilPathStyle(options.pencil);
 
       tempPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       const { strokeWidth, strokeColor, strokeOpacity } = options.pencil;
@@ -86,10 +90,16 @@ export class PencilDrawingService {
       event.stopPropagation();
       allPoints.push(point);
 
-      const pathD = allPoints
-        .map((p, index) => (index === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`))
-        .join(' ');
+      if (!currentStyle) {
+        currentStyle = getPencilPathStyle(options.pencil);
+      }
 
+      const tolerance = options.pencil.simplificationTolerance ?? 0;
+      const previewPathData = tolerance > 0
+        ? simplifyPathFromPoints(allPoints, currentStyle, tolerance)
+        : createPathDataFromPoints(allPoints, currentStyle);
+
+      const pathD = subPathsToPathString(previewPathData.subPaths);
       tempPath.setAttribute('d', pathD);
     };
 
@@ -105,6 +115,7 @@ export class PencilDrawingService {
       isDrawing = false;
       const pointsToAdd = [...allPoints];
       allPoints = [];
+      currentStyle = null;
 
       cleanupTempPath();
 
@@ -112,6 +123,10 @@ export class PencilDrawingService {
         options.startPath(pointsToAdd[0]);
         for (let index = 1; index < pointsToAdd.length; index++) {
           options.addPointToPath(pointsToAdd[index]);
+        }
+
+        if ((options.pencil.simplificationTolerance ?? 0) > 0) {
+          options.finalizePath(pointsToAdd);
         }
       }
     };
@@ -124,6 +139,7 @@ export class PencilDrawingService {
       event.stopPropagation();
       isDrawing = false;
       allPoints = [];
+      currentStyle = null;
       cleanupTempPath();
     };
 

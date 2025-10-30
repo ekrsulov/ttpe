@@ -17,6 +17,7 @@ export interface UsePencilDrawingParams {
   ) => void;
   startPath: (point: Point) => void;
   addPointToPath: (point: Point) => void;
+  finalizePath: (points: Point[]) => void;
 }
 
 export interface UsePencilDrawingReturn {
@@ -41,6 +42,7 @@ export function usePencilDrawing(
     emitPointerEvent,
     startPath,
     addPointToPath,
+    finalizePath,
   } = params;
 
   // Service management
@@ -73,6 +75,7 @@ export function usePencilDrawing(
       emitPointerEvent,
       startPath,
       addPointToPath,
+      finalizePath,
     });
   }, [
     activePencilDrawingService,
@@ -84,6 +87,7 @@ export function usePencilDrawing(
     emitPointerEvent,
     startPath,
     addPointToPath,
+    finalizePath,
   ]);
 
   return {

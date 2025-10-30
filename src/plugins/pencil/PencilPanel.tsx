@@ -2,6 +2,7 @@ import React from 'react';
 import { VStack, HStack, Button, Text } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Panel } from '../../ui/Panel';
+import { SliderControl } from '../../ui/SliderControl';
 
 export const PencilPanel: React.FC = () => {
   // Use individual selectors to prevent re-renders on unrelated changes
@@ -73,6 +74,19 @@ export const PencilPanel: React.FC = () => {
             </Button>
           </HStack>
         </HStack>
+
+        <SliderControl
+          label="Tolerance:"
+          value={pencil?.simplificationTolerance ?? 0}
+          min={0}
+          max={10}
+          step={0.1}
+          onChange={(value) => updatePencilState?.({ simplificationTolerance: value })}
+          formatter={(value) => value.toFixed(1)}
+          labelWidth="60px"
+          valueWidth="35px"
+          marginBottom='0'
+        />
       </VStack>
     </Panel>
   );
