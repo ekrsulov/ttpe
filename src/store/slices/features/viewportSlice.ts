@@ -2,6 +2,9 @@ import type { StateCreator } from 'zustand';
 import type { Viewport } from '../../../types';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../../utils';
 
+const MIN_ZOOM = 0.01; // 1%
+const MAX_ZOOM = 100; // 10000%
+
 export interface ViewportSlice {
   // State
   viewport: Viewport;
@@ -45,7 +48,7 @@ export const createViewportSlice: StateCreator<ViewportSlice> = (set, _get, _api
 
   zoom: (factor, centerX = 0, centerY = 0) => {
     set((state) => {
-      const newZoom = Math.max(0.1, Math.min(5, state.viewport.zoom * factor));
+      const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, state.viewport.zoom * factor));
       const zoomRatio = newZoom / state.viewport.zoom;
 
       return {
