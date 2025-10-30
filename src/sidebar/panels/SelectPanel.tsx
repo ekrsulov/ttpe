@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { VStack, Box } from '@chakra-ui/react';
+import { VStack, Box, useColorModeValue } from '@chakra-ui/react';
 import { extractEditablePoints, extractSubpaths, commandsToString, translateCommands } from '../../utils/path';
 import type { CanvasElement, PathData, GroupElement } from '../../types';
 import { logger } from '../../utils';
@@ -233,21 +233,26 @@ const SelectPanelComponent: React.FC = () => {
   const canGroup = selectedElements.length >= 2;
   const hasSelection = selectedElements.length > 0;
 
+  const panelBg = useColorModeValue('surface.panel', 'surface.panel');
+  const resizeHandleBg = useColorModeValue('gray.200', 'whiteAlpha.300');
+  const resizeHandleHover = useColorModeValue('blue.200', 'whiteAlpha.500');
+  const messageColor = useColorModeValue('gray.600', 'gray.300');
+
   return (
-    <Box bg="white" px={2} position="relative">
+    <Box bg={panelBg} px={2} position="relative">
       <RenderCountBadgeWrapper componentName="SelectPanel" position="top-right" />
       <Box
         height="6px"
         cursor="ns-resize"
         onPointerDown={handleResizeStart}
         onDoubleClick={handleResetHeight}
-        bg={isResizing ? 'blue.400' : 'gray.200'}
+        bg={isResizing ? 'blue.400' : resizeHandleBg}
         borderRadius="full"
         mx="auto"
         my={1}
         w="40px"
         title="Arrastra para redimensionar, doble clic para resetear"
-        _hover={{ bg: isResizing ? 'blue.400' : 'blue.200' }}
+        _hover={{ bg: isResizing ? 'blue.400' : resizeHandleHover }}
       />
       <Box h={`${panelHeight}px`} overflowY="auto">
         <VStack spacing={2} align="stretch">
@@ -295,7 +300,7 @@ const SelectPanelComponent: React.FC = () => {
           ) : (
             <Box
               fontSize="11px"
-              color="gray.600"
+              color={messageColor}
               textAlign="center"
               p={2}
               h="full"

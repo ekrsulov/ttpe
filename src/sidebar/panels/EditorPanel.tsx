@@ -15,7 +15,8 @@ import {
   Collapse,
   Input,
   useBreakpointValue,
-  useColorMode
+  useColorMode,
+  useColorModeValue
 } from '@chakra-ui/react';
 import ConditionalTooltip from '../../ui/ConditionalTooltip';
 import { SliderControl } from '../../ui/SliderControl';
@@ -40,6 +41,10 @@ export const EditorPanel: React.FC = () => {
   const defaultStrokeColor = useCanvasStore(state => state.settings.defaultStrokeColor);
   const { colorMode } = useColorMode();
   const presets = React.useMemo(() => getFillAndStrokePresets(colorMode), [colorMode]);
+  const panelBg = useColorModeValue('surface.panel', 'surface.panel');
+  const labelColor = useColorModeValue('gray.600', 'gray.300');
+  const inputBorderColor = useColorModeValue('gray.300', 'whiteAlpha.300');
+  const inputBg = useColorModeValue('white', 'whiteAlpha.100');
   
   // Calculate selected paths count - only re-renders if the count changes (not when positions change)
   const selectedPathsCount = useCanvasStore(state => {
@@ -153,7 +158,7 @@ export const EditorPanel: React.FC = () => {
   const presetColumns = Math.min(presets.length, useBreakpointValue({ base: 8, md: 10 }) || 10);
 
   return (
-    <Box bg="white" pb={1} mt={1} position="relative">
+    <Box bg={panelBg} pb={1} mt={1} position="relative">
       <RenderCountBadgeWrapper componentName="EditorPanel" position="top-right" />
       {/* Pencil Properties Section */}
       <VStack spacing={1} align="stretch">
@@ -215,7 +220,7 @@ export const EditorPanel: React.FC = () => {
             {/* Fill Color & Opacity */}
             <VStack spacing={1} align="stretch">
               <HStack justify="flex-start" minH="24px" spacing={1.5}>
-                <Text fontSize="11px" fontWeight="600" color="gray.600" minW="40px" h="24px" display="flex" alignItems="center">
+                <Text fontSize="11px" fontWeight="600" color={labelColor} minW="40px" h="24px" display="flex" alignItems="center">
                   Fill
                 </Text>
                 <HStack spacing={1} flexShrink={0}>
@@ -229,7 +234,8 @@ export const EditorPanel: React.FC = () => {
                       minW="20px"
                       p={0}
                       border="1px solid"
-                      borderColor="gray.300"
+                      borderColor={inputBorderColor}
+                      bg={inputBg}
                       borderRadius="3px"
                       cursor="pointer"
                       opacity={currentFillColor === 'none' ? 0.5 : 1}
@@ -266,7 +272,7 @@ export const EditorPanel: React.FC = () => {
             {/* Stroke Color & Opacity */}
             <VStack spacing={1} align="stretch">
               <HStack justify="flex-start" minH="24px" spacing={1.5}>
-                <Text fontSize="11px" fontWeight="600" color="gray.600" minW="40px" h="24px" display="flex" alignItems="center">
+                <Text fontSize="11px" fontWeight="600" color={labelColor} minW="40px" h="24px" display="flex" alignItems="center">
                   Stroke
                 </Text>
                 <HStack spacing={1} flexShrink={0}>
@@ -280,7 +286,8 @@ export const EditorPanel: React.FC = () => {
                       minW="20px"
                       p={0}
                       border="1px solid"
-                      borderColor="gray.300"
+                      borderColor={inputBorderColor}
+                      bg={inputBg}
                       borderRadius="3px"
                       cursor="pointer"
                       opacity={currentStrokeColor === 'none' ? 0.5 : 1}
@@ -316,7 +323,7 @@ export const EditorPanel: React.FC = () => {
 
             {/* Stroke Width */}
             <HStack minH="24px" justify="flex-start" spacing={1.5}>
-              <Text fontSize="11px" fontWeight="600" color="gray.600" minW="40px" h="24px" display="flex" alignItems="center">
+              <Text fontSize="11px" fontWeight="600" color={labelColor} minW="40px" h="24px" display="flex" alignItems="center">
                 Width
               </Text>
               <Box flex={1}>
@@ -358,7 +365,7 @@ export const EditorPanel: React.FC = () => {
 
                 {/* Custom Dash Array */}
                 <HStack justify="flex-start" minH="24px" spacing={1}>
-                  <Text fontSize="11px" fontWeight="600" color="gray.600" minW="80px" h="24px" display="flex" alignItems="center" title="Custom Dash Array">
+                  <Text fontSize="11px" fontWeight="600" color={labelColor} minW="80px" h="24px" display="flex" alignItems="center" title="Custom Dash Array">
                     Dash Array
                   </Text>
                   <Box flex={1}>
@@ -372,7 +379,7 @@ export const EditorPanel: React.FC = () => {
 
                 {/* Linecap */}
                 <HStack justify="flex-start" minH="24px" spacing={1}>
-                  <Text fontSize="11px" fontWeight="600" color="gray.600" minW="80px" h="24px" display="flex" alignItems="center" title="Stroke Linecap">
+                  <Text fontSize="11px" fontWeight="600" color={labelColor} minW="80px" h="24px" display="flex" alignItems="center" title="Stroke Linecap">
                     Line Cap
                   </Text>
                   <LinecapSelector
@@ -384,7 +391,7 @@ export const EditorPanel: React.FC = () => {
 
                 {/* Linejoin */}
                 <HStack justify="flex-start" minH="24px" spacing={1}>
-                  <Text fontSize="11px" fontWeight="600" color="gray.600" minW="80px" h="24px" display="flex" alignItems="center" title="Stroke Linejoin">
+                  <Text fontSize="11px" fontWeight="600" color={labelColor} minW="80px" h="24px" display="flex" alignItems="center" title="Stroke Linejoin">
                     Line Join
                   </Text>
                   <LinejoinSelector
@@ -396,7 +403,7 @@ export const EditorPanel: React.FC = () => {
 
                 {/* Fill Rule */}
                 <HStack justify="flex-start" minH="24px" spacing={1}>
-                  <Text fontSize="11px" fontWeight="600" color="gray.600" minW="80px" h="24px" display="flex" alignItems="center" title="Fill Rule">
+                  <Text fontSize="11px" fontWeight="600" color={labelColor} minW="80px" h="24px" display="flex" alignItems="center" title="Fill Rule">
                     Fill Rule
                   </Text>
                   <FillRuleSelector

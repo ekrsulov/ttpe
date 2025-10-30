@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Box, HStack, VStack, Text, Editable, EditableInput, EditablePreview } from '@chakra-ui/react';
+import { Box, HStack, VStack, Text, Editable, EditableInput, EditablePreview, useColorModeValue } from '@chakra-ui/react';
 import { ChevronDown, ChevronRight, Ungroup as UngroupIcon, Lock, EyeOff, MousePointer2 } from 'lucide-react';
 import type { GroupElement, PathData, Command, CanvasElement } from '../../types';
 import { useCanvasStore } from '../../store/canvasStore';
@@ -48,11 +48,19 @@ const SelectPanelGroupItemComponent: React.FC<SelectPanelGroupItemProps> = ({
     }
   });
 
+  const selectedBg = useColorModeValue('blue.100', 'whiteAlpha.200');
+  const descendantBg = useColorModeValue('rgba(59, 130, 246, 0.12)', 'whiteAlpha.150');
+  const defaultBg = useColorModeValue('gray.50', 'whiteAlpha.100');
+  const baseTextColor = useColorModeValue('gray.800', 'gray.100');
+  const mutedTextColor = useColorModeValue('gray.600', 'gray.300');
+  const hiddenTextColor = useColorModeValue('gray.400', 'whiteAlpha.500');
+  const selectedTextColor = useColorModeValue('blue.600', 'blue.200');
+  const statusIconColor = useColorModeValue('gray.500', 'gray.400');
   const backgroundColor = isSelected
-    ? 'blue.50'
+    ? selectedBg
     : hasSelectedDescendant
-      ? 'rgba(59, 130, 246, 0.08)'
-      : 'gray.50';
+      ? descendantBg
+      : defaultBg;
 
   const selectedIdSet = new Set(selectedIds);
 
@@ -79,11 +87,11 @@ const SelectPanelGroupItemComponent: React.FC<SelectPanelGroupItemProps> = ({
           isPreviewFocusable
           selectAllOnFocus
         >
-          <EditablePreview color={groupHidden ? 'gray.400' : 'gray.800'} />
+          <EditablePreview color={groupHidden ? hiddenTextColor : baseTextColor} />
           <EditableInput />
         </Editable>
         <ConditionalTooltip label={`${groupData.childIds.length} elements in group`}>
-          <Text fontSize="10px" color="gray.600">
+          <Text fontSize="10px" color={mutedTextColor}>
             ({groupData.childIds.length})
           </Text>
         </ConditionalTooltip>
@@ -129,19 +137,24 @@ const SelectPanelGroupItemComponent: React.FC<SelectPanelGroupItemProps> = ({
                 ? child.data.name
                 : `${child.type}-${child.id.slice(-4)}`;
               const childIsSelected = selectedIdSet.has(child.id);
+              const childColor = childHidden
+                ? hiddenTextColor
+                : childIsSelected
+                  ? selectedTextColor
+                  : baseTextColor;
 
               return (
                 <HStack
                   key={childId}
                   spacing={2}
                   justify="space-between"
-                  color={childHidden ? 'gray.400' : childIsSelected ? 'blue.600' : 'gray.700'}
+                  color={childColor}
                   fontWeight={childIsSelected ? '600' : 'normal'}
                 >
                   <HStack spacing={1} align="center">
                     <Text>{childLabel}</Text>
-                    {childLocked && <Lock size={10} color="#6b7280" />}
-                    {childHidden && <EyeOff size={10} color="#6b7280" />}
+                    {childLocked && <Lock size={10} color={statusIconColor} />}
+                    {childHidden && <EyeOff size={10} color={statusIconColor} />}
                   </HStack>
                   <PanelActionButton
                     label="Select element"
