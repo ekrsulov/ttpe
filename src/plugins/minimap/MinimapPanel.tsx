@@ -1,5 +1,5 @@
 import { useCallback, useId, useMemo, useRef, useState } from 'react';
-import { Box } from '@chakra-ui/react';
+import { Box, useColorModeValue } from '@chakra-ui/react';
 import type { Bounds } from '../../utils/boundsUtils';
 import { calculateBounds } from '../../utils/boundsUtils';
 import type { PathElement } from '../../types';
@@ -103,7 +103,14 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) 
   const svgRef = useRef<SVGSVGElement | null>(null);
   const clipPathId = useId();
   const lastClickRef = useRef<{ elementId: string; time: number } | null>(null);
-  
+  const containerBg = useColorModeValue('surface.toolbar', 'surface.toolbar');
+  const containerShadow = useColorModeValue('0 4px 20px rgba(0, 0, 0, 0.1)', '0 8px 24px rgba(0, 0, 0, 0.45)');
+  const canvasFill = useColorModeValue('rgba(248, 250, 252, 0.95)', 'rgba(15, 23, 42, 0.8)');
+  const elementFill = useColorModeValue('rgba(59, 130, 246, 0.2)', 'rgba(96, 165, 250, 0.35)');
+  const elementStroke = useColorModeValue('rgba(59, 130, 246, 0.6)', 'rgba(147, 197, 253, 0.7)');
+  const viewportFill = useColorModeValue('rgba(59, 130, 246, 0.1)', 'rgba(147, 197, 254, 0.15)');
+  const viewportStroke = useColorModeValue('rgba(59, 130, 246, 1)', 'rgba(191, 219, 254, 0.85)');
+
   const [dragState, setDragState] = useState<DragState>({
     isActive: false,
     pointerId: null,
@@ -353,9 +360,9 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) 
       width={`${MINIMAP_WIDTH}px`}
       height={`${MINIMAP_HEIGHT}px`}
       borderRadius="xl"
-      boxShadow="0 4px 20px rgba(0, 0, 0, 0.1)"
+      boxShadow={containerShadow}
       backdropFilter="blur(12px)"
-      bg="rgba(255, 255, 255, 0.95)"
+      bg={containerBg}
       overflow="hidden"
       zIndex={100}
       transition="right 0.2s ease"
@@ -378,7 +385,7 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) 
             <rect x="0" y="0" width={MINIMAP_WIDTH} height={MINIMAP_HEIGHT} rx="14" ry="14" />
           </clipPath>
         </defs>
-        <rect x="0" y="0" width={MINIMAP_WIDTH} height={MINIMAP_HEIGHT} fill="rgba(248, 250, 252, 0.95)" />
+        <rect x="0" y="0" width={MINIMAP_WIDTH} height={MINIMAP_HEIGHT} fill={canvasFill} />
         <g clipPath={`url(#${clipPathId})`}>
           {visiblePaths.map((element) => {
             const bounds = getElementBounds(element);
@@ -396,8 +403,8 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) 
                 y={y}
                 width={width}
                 height={height}
-                fill="rgba(59, 130, 246, 0.2)"
-                stroke="rgba(59, 130, 246, 0.6)"
+                fill={elementFill}
+                stroke={elementStroke}
                 strokeWidth={0.5}
                 vectorEffect="non-scaling-stroke"
                 rx={1}
@@ -423,7 +430,7 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) 
             y={viewportRect.y}
             width={Math.max(16, viewportRect.width)}
             height={Math.max(16, viewportRect.height)}
-            fill="rgba(59, 130, 246, 0.1)"
+            fill={viewportFill}
             stroke="none"
             rx={4}
             ry={4}
@@ -450,7 +457,7 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) 
             width={Math.max(16, viewportRect.width)}
             height={Math.max(16, viewportRect.height)}
             fill="none"
-            stroke="rgba(59, 130, 246, 1)"
+            stroke={viewportStroke}
             strokeWidth={2}
             rx={4}
             ry={4}

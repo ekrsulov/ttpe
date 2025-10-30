@@ -1,5 +1,6 @@
 import type { StateCreator } from 'zustand';
 import { createSimplePluginSlice } from '../../store/utils/pluginSliceHelpers';
+import { DEFAULT_STROKE_COLOR_LIGHT } from '../../utils/defaultColors';
 
 export interface PencilPluginSlice {
   // State
@@ -26,7 +27,7 @@ export const createPencilPluginSlice: StateCreator<PencilPluginSlice, [], [], Pe
     'pencil',
     {
       strokeWidth: 4,
-      strokeColor: '#000000',
+      strokeColor: DEFAULT_STROKE_COLOR_LIGHT,
       strokeOpacity: 1,
       fillColor: 'none',
       fillOpacity: 1,

@@ -4,7 +4,7 @@
  */
 
 import React from 'react'
-import { Box, Collapse, useDisclosure } from '@chakra-ui/react'
+import { Box, Collapse, useColorModeValue, useDisclosure } from '@chakra-ui/react'
 import { PanelHeader } from './PanelHeader'
 import { RenderCountBadgeWrapper } from './RenderCountBadgeWrapper'
 
@@ -35,9 +35,18 @@ export const Panel: React.FC<PanelProps> = ({
   showRenderCount = import.meta.env.DEV,
 }) => {
   const { isOpen, onToggle } = useDisclosure({ defaultIsOpen: defaultOpen })
+  const panelBg = useColorModeValue('surface.panel', 'surface.panel')
+  const panelBorder = useColorModeValue('border.panel', 'border.panel')
 
   return (
-    <Box bg="white" mb={0.5} position="relative">
+    <Box
+      bg={panelBg}
+      borderWidth="1px"
+      borderColor={panelBorder}
+      mb={0.5}
+      position="relative"
+      borderRadius="lg"
+    >
       {showRenderCount && (
         <RenderCountBadgeWrapper componentName={`Panel: ${title || 'Untitled'}`} position="top-left" />
       )}

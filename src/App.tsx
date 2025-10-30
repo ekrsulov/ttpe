@@ -8,14 +8,17 @@ import { useCanvasStore } from './store/canvasStore';
 import './App.css';
 import type { CSSProperties } from 'react';
 import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useColorMode } from '@chakra-ui/react';
 import type { CanvasElement } from './types';
 import { CurvesControllerProvider } from './plugins/curves/CurvesControllerContext';
+import { DEFAULT_STROKE_COLOR_DARK, DEFAULT_STROKE_COLOR_LIGHT } from './utils/defaultColors';
 
 function App() {
   const activePlugin = useCanvasStore(state => state.activePlugin);
   const setMode = useCanvasStore(state => state.setMode);
   const selectedIds = useCanvasStore(state => state.selectedIds);
   const grid = useCanvasStore(state => state.grid);
+  const { colorMode } = useColorMode();
   const selectedPaths = useMemo(() => {
     const elements = useCanvasStore.getState().elements;
     return elements.filter((el: CanvasElement) => selectedIds.includes(el.id) && el.type === 'path');
@@ -80,6 +83,24 @@ function App() {
       document.removeEventListener('touchstart', handleTouchStart);
     };
   }, [isIOS]);
+
+  useEffect(() => {
+    const targetStrokeColor = colorMode === 'dark'
+      ? DEFAULT_STROKE_COLOR_DARK
+      : DEFAULT_STROKE_COLOR_LIGHT;
+    const state = useCanvasStore.getState();
+    const currentDefault = state.settings.defaultStrokeColor;
+
+    if (currentDefault === targetStrokeColor) {
+      return;
+    }
+
+    state.updateSettings?.({ defaultStrokeColor: targetStrokeColor });
+
+    if (state.pencil && state.updatePencilState && state.pencil.strokeColor === currentDefault) {
+      state.updatePencilState({ strokeColor: targetStrokeColor });
+    }
+  }, [colorMode]);
 
   return (
     <CurvesControllerProvider>

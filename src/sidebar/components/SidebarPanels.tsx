@@ -1,5 +1,5 @@
 import React, { Suspense, useMemo } from 'react';
-import { Box } from '@chakra-ui/react';
+import { Box, useColorModeValue } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { useEditPanelContext } from '../../contexts/EditPanelContext';
 import {
@@ -26,6 +26,10 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
   showSettingsPanel,
   panelContributions = [],
 }) => {
+  const panelBg = useColorModeValue('surface.panelSecondary', 'surface.panelSecondary');
+  const scrollbarTrack = useColorModeValue('#f1f1f1', 'rgba(255, 255, 255, 0.06)');
+  const scrollbarThumb = useColorModeValue('#888', 'rgba(255, 255, 255, 0.3)');
+  const scrollbarThumbHover = useColorModeValue('#555', 'rgba(255, 255, 255, 0.45)');
   // Get EditPanel context for panels that need it
   const editPanelContext = useEditPanelContext();
   
@@ -64,21 +68,21 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
       display="flex"
       flexDirection="column"
       gap={0.5}
-      bg="white"
+      bg={panelBg}
       minH={0} // Important: allows flex item to shrink below content size
       css={{
         '&::-webkit-scrollbar': {
           width: '8px',
         },
         '&::-webkit-scrollbar-track': {
-          background: '#f1f1f1',
+          background: scrollbarTrack,
         },
         '&::-webkit-scrollbar-thumb': {
-          background: '#888',
+          background: scrollbarThumb,
           borderRadius: '4px',
         },
         '&::-webkit-scrollbar-thumb:hover': {
-          background: '#555',
+          background: scrollbarThumbHover,
         },
       }}
     >

@@ -2,6 +2,7 @@ import type { Point, PathData, SubPath } from '../../types';
 import { commandsToString, formatToPrecision, PATH_DECIMAL_PRECISION } from '../../utils';
 import { performPathSimplifyPaperJS } from '../../utils/pathOperationsUtils';
 import type { PencilPluginSlice } from './slice';
+import { getDefaultStrokeColorFromSettings } from '../../utils/defaultColors';
 
 export type PathStyleLike = Pick<
   PathData,
@@ -19,7 +20,8 @@ export type PathStyleLike = Pick<
 >;
 
 export function getPencilPathStyle(settings: PencilPluginSlice['pencil']): PathStyleLike {
-  const effectiveStrokeColor = settings.strokeColor === 'none' ? '#000000' : settings.strokeColor;
+  const defaultStrokeColor = getDefaultStrokeColorFromSettings();
+  const effectiveStrokeColor = settings.strokeColor === 'none' ? defaultStrokeColor : settings.strokeColor;
 
   return {
     strokeWidth: settings.strokeWidth,

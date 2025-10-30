@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Flex, IconButton, Divider } from '@chakra-ui/react';
+import { Box, Flex, IconButton, Divider, useColorModeValue } from '@chakra-ui/react';
 import ConditionalTooltip from '../../ui/ConditionalTooltip';
 import { ArrangePanel } from '../panels/ArrangePanel';
 import { SelectPanel } from '../panels/SelectPanel';
@@ -19,6 +19,9 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
   isArrangeExpanded,
   setIsArrangeExpanded,
 }) => {
+  const footerBg = useColorModeValue('surface.panel', 'surface.panel');
+  const dividerColor = useColorModeValue('gray.200', 'whiteAlpha.300');
+  const toggleBg = useColorModeValue('white', 'whiteAlpha.100');
   // Use shared hook for managing footer height CSS variable
   const footerRef = useSidebarFooterHeight();
 
@@ -36,7 +39,7 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
       bottom={0}
       left={0}
       right={0}
-      bg="white"
+      bg={footerBg}
       zIndex={1001}
       display="flex"
       flexDirection="column"
@@ -45,7 +48,7 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
 
       {hasSelection && (
         <Flex position="relative" my={1} align="center">
-          <Divider />
+          <Divider borderColor={dividerColor} />
           <ConditionalTooltip label={isArrangeExpanded ? "Collapse Arrange" : "Expand Arrange"}>
             <IconButton
               aria-label={isArrangeExpanded ? "Collapse Arrange" : "Expand Arrange"}
@@ -54,7 +57,7 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
               size="xs"
               variant="outline"
               borderRadius="full"
-              bg="white"
+              bg={toggleBg}
               position="absolute"
               left="50%"
               transform="translateX(-50%)"

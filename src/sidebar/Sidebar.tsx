@@ -6,7 +6,8 @@ import {
   DrawerContent,
   useDisclosure,
   Box,
-  useBreakpointValue
+  useBreakpointValue,
+  useColorModeValue
 } from '@chakra-ui/react';
 import { useCanvasStore } from '../store/canvasStore';
 import { SidebarContent } from './components/SidebarContent';
@@ -28,6 +29,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   // Detect if desktop (md breakpoint = 768px)
   const isDesktop = useBreakpointValue({ base: false, md: true }, { ssr: false });
+  const sidebarBg = useColorModeValue('surface.sidebar', 'surface.sidebar');
+  const sidebarBorder = useColorModeValue('border.sidebar', 'border.sidebar');
+  const overlayBg = useColorModeValue('blackAlpha.600', 'blackAlpha.700');
   
   // Desktop: open by default, Mobile: closed by default
   const { isOpen, onOpen, onClose } = useDisclosure({ 
@@ -232,14 +236,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
         position="fixed"
         right={0}
         top={0}
-        bottom={0} // Full height - ActionBar is now floating
-        width={`${sidebarWidth}px`} // Dynamic width controlled by resizer
-        maxW="100vw"
-        h="100dvh" // Full dynamic viewport height
-        maxH="100dvh"
-        bg="white"
-        borderLeft="1px solid"
-        borderColor="gray.200"
+      bottom={0} // Full height - ActionBar is now floating
+      width={`${sidebarWidth}px`} // Dynamic width controlled by resizer
+      maxW="100vw"
+      h="100dvh" // Full dynamic viewport height
+      maxH="100dvh"
+      bg={sidebarBg}
+      borderLeft="1px solid"
+      borderColor={sidebarBorder}
         boxShadow="lg"
         display="flex"
         flexDirection="column"
@@ -304,8 +308,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         blockScrollOnMount={true}
         preserveScrollBarGap={false}
       >
-        <DrawerOverlay 
-          bg="blackAlpha.600"
+        <DrawerOverlay
+          bg={overlayBg}
           sx={{
             // Prevent iOS bounce/overscroll on overlay
             WebkitOverflowScrolling: 'touch',
@@ -316,9 +320,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
           w="260px"
           h="100dvh" // Full height - ActionBar is now floating
           maxH="100dvh"
-          bg="white"
+          bg={sidebarBg}
           borderLeft="1px solid"
-          borderColor="gray.200"
+          borderColor={sidebarBorder}
           boxShadow="lg"
           display="flex"
           flexDirection="column"

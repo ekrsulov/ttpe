@@ -3,6 +3,7 @@ import { Button as ChakraButton, HStack, VStack, Input, InputGroup, InputLeftAdd
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import ConditionalTooltip from '../../ui/ConditionalTooltip';
 import { useCanvasStore } from '../../store/canvasStore';
+import { getDefaultStrokeColorFromSettings } from '../../utils/defaultColors';
 import { logger, importSVGWithDimensions, measurePath, translateCommands, performPathUnion, transformCommands, calculateScaledStrokeWidth, flattenImportedElements } from '../../utils';
 import { Panel } from '../../ui/Panel';
 import { PanelToggle } from '../../ui/PanelToggle';
@@ -175,6 +176,7 @@ export const FilePanel: React.FC = () => {
 
   // Helper function to create a frame rectangle
   const createFrame = (width: number, height: number): PathData => {
+    const defaultStrokeColor = getDefaultStrokeColorFromSettings();
     return {
       subPaths: [[
         { type: 'M', position: { x: 0, y: 0 } },
@@ -184,7 +186,7 @@ export const FilePanel: React.FC = () => {
         { type: 'Z' }
       ]],
       strokeWidth: 1,
-      strokeColor: '#000000',
+      strokeColor: defaultStrokeColor,
       strokeOpacity: 1,
       fillColor: 'none',
       fillOpacity: 1,

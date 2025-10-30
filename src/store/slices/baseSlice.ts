@@ -42,6 +42,7 @@ export interface BaseSlice {
     showRenderCountBadges: boolean; // Show debug render count badges
     showMinimap: boolean; // Show minimap overlay
     showTooltips: boolean; // Show tooltips on desktop
+    defaultStrokeColor: string; // Default stroke color for new drawing operations
   };
 
   // Actions
@@ -195,6 +196,7 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => {
     showRenderCountBadges: false, // Show badges in development by default
     showMinimap: false, // Show minimap by default
     showTooltips: true, // Show tooltips by default
+    defaultStrokeColor: '#000000',
   },
 
   // Actions

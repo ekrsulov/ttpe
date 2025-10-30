@@ -1,4 +1,5 @@
 import React from 'react';
+import { useColorModeValue } from '@chakra-ui/react';
 import type { GridType, WarpParams } from './slice';
 
 interface GridOverlayProps {
@@ -761,13 +762,20 @@ export const GridOverlay: React.FC<GridOverlayProps> = React.memo(({
   viewport,
   canvasSize,
 }) => {
+  const defaultGridColor = useColorModeValue('#000000', 'rgba(255, 255, 255, 0.55)');
+  const rulerBackground = useColorModeValue('rgba(255, 255, 255, 0.95)', 'rgba(15, 23, 42, 0.8)');
+  const rulerBorder = useColorModeValue('#d0d0d0', 'rgba(148, 163, 184, 0.45)');
+  const rulerTextColor = useColorModeValue('#444', '#e2e8f0');
+  const rulerTickColor = useColorModeValue('#666', '#cbd5f5');
+  const rulerMinorTickColor = useColorModeValue('#999', 'rgba(203, 213, 225, 0.7)');
+
   if (!grid.enabled) {
     return null;
   }
 
   const spacing = grid.spacing;
   const opacity = grid.opacity ?? 0.3;
-  const color = grid.color ?? '#000000';
+  const color = grid.color ?? defaultGridColor;
   const emphasizeEvery = grid.emphasizeEvery ?? 0;
 
   // ViewBox coordinates
@@ -804,8 +812,8 @@ export const GridOverlay: React.FC<GridOverlayProps> = React.memo(({
         y={viewBoxTop}
         width={canvasSize.width / viewport.zoom}
         height={rulerHeight}
-        fill="rgba(255, 255, 255, 0.95)"
-        stroke="#d0d0d0"
+        fill={rulerBackground}
+        stroke={rulerBorder}
         strokeWidth={0.5 / viewport.zoom}
         pointerEvents="none"
       />,
@@ -815,8 +823,8 @@ export const GridOverlay: React.FC<GridOverlayProps> = React.memo(({
         y={viewBoxTop}
         width={rulerWidth}
         height={canvasSize.height / viewport.zoom}
-        fill="rgba(255, 255, 255, 0.95)"
-        stroke="#d0d0d0"
+        fill={rulerBackground}
+        stroke={rulerBorder}
         strokeWidth={0.5 / viewport.zoom}
         pointerEvents="none"
       />,
@@ -826,8 +834,8 @@ export const GridOverlay: React.FC<GridOverlayProps> = React.memo(({
         y={viewBoxTop}
         width={rulerWidth}
         height={rulerHeight}
-        fill="rgba(255, 255, 255, 0.95)"
-        stroke="#d0d0d0"
+        fill={rulerBackground}
+        stroke={rulerBorder}
         strokeWidth={0.5 / viewport.zoom}
         pointerEvents="none"
       />
@@ -850,7 +858,7 @@ export const GridOverlay: React.FC<GridOverlayProps> = React.memo(({
             y1={viewBoxTop + rulerHeight}
             x2={x}
             y2={viewBoxTop + rulerHeight - tickHeight}
-            stroke="#666"
+            stroke={rulerTickColor}
             strokeWidth={0.8 / viewport.zoom}
             pointerEvents="none"
           />,
@@ -859,7 +867,7 @@ export const GridOverlay: React.FC<GridOverlayProps> = React.memo(({
             x={x}
             y={viewBoxTop + rulerHeight - tickHeight - labelOffset}
             fontSize={fontSize}
-            fill="#444"
+          fill={rulerTextColor}
             fontWeight="500"
             textAnchor="middle"
             dominantBaseline="auto"
@@ -877,7 +885,7 @@ export const GridOverlay: React.FC<GridOverlayProps> = React.memo(({
             y1={viewBoxTop + rulerHeight}
             x2={x}
             y2={viewBoxTop + rulerHeight - minorTickHeight}
-            stroke="#999"
+            stroke={rulerMinorTickColor}
             strokeWidth={0.5 / viewport.zoom}
             pointerEvents="none"
           />
@@ -902,7 +910,7 @@ export const GridOverlay: React.FC<GridOverlayProps> = React.memo(({
             y1={y}
             x2={viewBoxLeft + rulerWidth - tickHeight}
             y2={y}
-            stroke="#666"
+            stroke={rulerTickColor}
             strokeWidth={0.8 / viewport.zoom}
             pointerEvents="none"
           />,
@@ -911,7 +919,7 @@ export const GridOverlay: React.FC<GridOverlayProps> = React.memo(({
             x={viewBoxLeft + rulerWidth - tickHeight - labelOffset}
             y={y}
             fontSize={fontSize}
-            fill="#444"
+          fill={rulerTextColor}
             fontWeight="500"
             textAnchor="end"
             dominantBaseline="middle"
@@ -929,7 +937,7 @@ export const GridOverlay: React.FC<GridOverlayProps> = React.memo(({
             y1={y}
             x2={viewBoxLeft + rulerWidth - minorTickHeight}
             y2={y}
-            stroke="#999"
+            stroke={rulerMinorTickColor}
             strokeWidth={0.5 / viewport.zoom}
             pointerEvents="none"
           />

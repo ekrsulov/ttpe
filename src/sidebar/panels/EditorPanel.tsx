@@ -14,7 +14,8 @@ import {
   Box,
   Collapse,
   Input,
-  useBreakpointValue
+  useBreakpointValue,
+  useColorMode
 } from '@chakra-ui/react';
 import ConditionalTooltip from '../../ui/ConditionalTooltip';
 import { SliderControl } from '../../ui/SliderControl';
@@ -24,7 +25,7 @@ import { LinecapSelector } from '../../ui/LinecapSelector';
 import { LinejoinSelector } from '../../ui/LinejoinSelector';
 import { FillRuleSelector } from '../../ui/FillRuleSelector';
 import { DashArrayCustomInput, DashArrayPresets } from '../../ui/DashArraySelector';
-import { PRESETS, type Preset } from '../../utils/fillAndStrokePresets';
+import { getFillAndStrokePresets, type Preset } from '../../utils/fillAndStrokePresets';
 import { useSelectedPathProperty } from '../../utils/pathPropertyUtils';
 import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
 
@@ -36,6 +37,9 @@ export const EditorPanel: React.FC = () => {
   const styleEyedropper = useCanvasStore(state => state.styleEyedropper);
   const activateStyleEyedropper = useCanvasStore(state => state.activateStyleEyedropper);
   const deactivateStyleEyedropper = useCanvasStore(state => state.deactivateStyleEyedropper);
+  const defaultStrokeColor = useCanvasStore(state => state.settings.defaultStrokeColor);
+  const { colorMode } = useColorMode();
+  const presets = React.useMemo(() => getFillAndStrokePresets(colorMode), [colorMode]);
   
   // Calculate selected paths count - only re-renders if the count changes (not when positions change)
   const selectedPathsCount = useCanvasStore(state => {
@@ -128,7 +132,7 @@ export const EditorPanel: React.FC = () => {
 
   // Get current values from selected elements or plugin defaults
   const currentStrokeWidth = useSelectedPathProperty('strokeWidth', pencil?.strokeWidth ?? 4);
-  const currentStrokeColor = useSelectedPathProperty('strokeColor', pencil?.strokeColor ?? '#000000');
+  const currentStrokeColor = useSelectedPathProperty('strokeColor', pencil?.strokeColor ?? defaultStrokeColor);
   const currentOpacity = useSelectedPathProperty('strokeOpacity', pencil?.strokeOpacity ?? 1);
   const currentFillColor = useSelectedPathProperty('fillColor', pencil?.fillColor ?? 'none');
   const currentFillOpacity = useSelectedPathProperty('fillOpacity', pencil?.fillOpacity ?? 1);
@@ -146,7 +150,7 @@ export const EditorPanel: React.FC = () => {
   const onAdvancedStrokeToggle = () => setIsAdvancedStrokeOpen(!isAdvancedStrokeOpen);
 
   // Responsive columns for preset grid
-  const presetColumns = Math.min(PRESETS.length, useBreakpointValue({ base: 8, md: 10 }) || 10);
+  const presetColumns = Math.min(presets.length, useBreakpointValue({ base: 8, md: 10 }) || 10);
 
   return (
     <Box bg="white" pb={1} mt={1} position="relative">
@@ -181,7 +185,7 @@ export const EditorPanel: React.FC = () => {
               gridTemplateColumns={`repeat(${presetColumns}, 1fr)`}
               gap={1}
             >
-              {PRESETS.map((preset) => (
+              {presets.map((preset) => (
                 <PresetButton
                   key={preset.id}
                   preset={preset}
@@ -218,7 +222,7 @@ export const EditorPanel: React.FC = () => {
                   <ConditionalTooltip label="Select fill color">
                     <Input
                       type="color"
-                      value={currentFillColor === 'none' ? '#000000' : currentFillColor}
+                      value={currentFillColor === 'none' ? defaultStrokeColor : currentFillColor}
                       onChange={(e) => handleFillColorChange(e.target.value)}
                       w="20px"
                       h="20px"
@@ -269,7 +273,7 @@ export const EditorPanel: React.FC = () => {
                   <ConditionalTooltip label="Select stroke color">
                     <Input
                       type="color"
-                      value={currentStrokeColor === 'none' ? '#000000' : currentStrokeColor}
+                      value={currentStrokeColor === 'none' ? defaultStrokeColor : currentStrokeColor}
                       onChange={(e) => handleStrokeColorChange(e.target.value)}
                       w="20px"
                       h="20px"

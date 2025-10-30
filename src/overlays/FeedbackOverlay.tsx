@@ -1,4 +1,5 @@
 import React from 'react';
+import { useColorModeValue } from '@chakra-ui/react';
 
 interface FeedbackOverlayProps {
   viewport: {
@@ -60,7 +61,12 @@ const FeedbackBlock: React.FC<FeedbackBlockProps> = ({
   content,
 }) => {
   const transform = `translate(${-viewport.panX / viewport.zoom + 5 / viewport.zoom} ${-viewport.panY / viewport.zoom + canvasSize.height / viewport.zoom - 33 / viewport.zoom}) scale(${1 / viewport.zoom})`;
-  
+  const baseFill = useColorModeValue('#1f2937', '#f1f5f9');
+  const baseStroke = useColorModeValue('#374151', '#94a3b8');
+  const highlightFill = useColorModeValue('#059669', '#047857');
+  const highlightStroke = useColorModeValue('#10b981', '#34d399');
+  const textColor = useColorModeValue('#ffffff', '#0f172a');
+
   return (
     <g transform={transform}>
       <rect
@@ -68,11 +74,11 @@ const FeedbackBlock: React.FC<FeedbackBlockProps> = ({
         y="0"
         width={width}
         height="24"
-        fill={isHighlighted ? "#059669" : "#1f2937"}
+        fill={isHighlighted ? highlightFill : baseFill}
         fillOpacity="0.9"
         rx="4"
         ry="4"
-        stroke={isHighlighted ? "#10b981" : "#374151"}
+        stroke={isHighlighted ? highlightStroke : baseStroke}
         strokeWidth="1"
       />
       <text
@@ -81,7 +87,7 @@ const FeedbackBlock: React.FC<FeedbackBlockProps> = ({
         textAnchor="middle"
         fontSize="12"
         fontFamily="system-ui, -apple-system, sans-serif"
-        fill="#ffffff"
+        fill={textColor}
         fontWeight="500"
       >
         {content}
