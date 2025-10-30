@@ -277,6 +277,7 @@ const CanvasContent: React.FC = () => {
     svgRef,
     activePlugin: currentMode,
     isAddPointModeActive: addPointMode?.isActive ?? false,
+    zoom: viewport.zoom,
     screenToCanvas,
     emitPointerEvent,
   });

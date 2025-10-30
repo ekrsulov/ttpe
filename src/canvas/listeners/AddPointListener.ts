@@ -8,12 +8,15 @@ import type { Point, PathData, CanvasElement } from '../../types';
 import { findClosestPathSegment } from '../../utils/pathProximityUtils';
 
 export const ADD_POINT_SERVICE_ID = 'add-point-listener';
+const BASE_POINT_THRESHOLD = 10;
+const SEGMENT_THRESHOLD = 15;
 
 export interface AddPointServiceState {
   activePlugin: string | null;
   isAddPointModeActive: boolean;
   elements: CanvasElement[];
   selectedIds: string[];
+  zoom: number;
   screenToCanvas: (x: number, y: number) => Point;
   emitPointerEvent: (
     type: 'pointerdown' | 'pointermove' | 'pointerup',
@@ -79,7 +82,9 @@ class AddPointListenerService implements CanvasService<AddPointServiceState> {
         const pathData = element.data as PathData;
         const commands = pathData.subPaths.flat();
 
-        const result = findClosestPathSegment(point, commands, 15, 10);
+        const dynamicThreshold = BASE_POINT_THRESHOLD / state.zoom; // Make threshold dynamic based on zoom
+        const dynamicSegmentThreshold = SEGMENT_THRESHOLD / state.zoom; // Make segment threshold dynamic based on zoom
+        const result = findClosestPathSegment(point, commands, dynamicSegmentThreshold, dynamicThreshold);
         if (result && result.distance < minDistance) {
           minDistance = result.distance;
           closestMatch = { element, result };

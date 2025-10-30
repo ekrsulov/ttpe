@@ -9,6 +9,7 @@ interface UseEditAddPointParams {
   svgRef: RefObject<SVGSVGElement | null>;
   activePlugin: string | null;
   isAddPointModeActive: boolean;
+  zoom: number;
   screenToCanvas: (screenX: number, screenY: number) => Point;
   emitPointerEvent: (
     type: 'pointerdown' | 'pointermove' | 'pointerup',
@@ -21,6 +22,7 @@ export const useEditAddPoint = ({
   svgRef,
   activePlugin,
   isAddPointModeActive,
+  zoom,
   screenToCanvas,
   emitPointerEvent,
 }: UseEditAddPointParams): void => {
@@ -34,6 +36,7 @@ export const useEditAddPoint = ({
       isAddPointModeActive,
       elements: controller.elements,
       selectedIds: controller.selectedIds,
+      zoom,
       screenToCanvas,
       emitPointerEvent,
       updateAddPointHover: (position, elementId, segmentInfo) => {
@@ -52,6 +55,7 @@ export const useEditAddPoint = ({
     stateDeps: [
       activePlugin,
       isAddPointModeActive,
+      zoom,
     ],
   });
 };
