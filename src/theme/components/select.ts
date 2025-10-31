@@ -1,20 +1,14 @@
 /**
- * Input component theme for TTPE
- * Used in form controls throughout panels
+ * Select component theme for TTPE
+ * Used for dropdown selects throughout panels
  */
 
-export const Input = {
+export const Select = {
   baseStyle: {
     field: {
       borderRadius: 'md',
       fontSize: 'sm',
       transition: 'all 0.2s ease',
-      _placeholder: {
-        color: 'gray.500',
-        _dark: {
-          color: 'gray.400',
-        },
-      },
       _focusVisible: {
         borderColor: 'brand.500',
         boxShadow: '0 0 0 1px var(--chakra-colors-brand-500)',

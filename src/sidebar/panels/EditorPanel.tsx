@@ -14,7 +14,9 @@ import {
   Box,
   Collapse,
   Input,
-  useBreakpointValue
+  useBreakpointValue,
+  useColorMode,
+  useColorModeValue
 } from '@chakra-ui/react';
 import ConditionalTooltip from '../../ui/ConditionalTooltip';
 import { SliderControl } from '../../ui/SliderControl';
@@ -24,7 +26,7 @@ import { LinecapSelector } from '../../ui/LinecapSelector';
 import { LinejoinSelector } from '../../ui/LinejoinSelector';
 import { FillRuleSelector } from '../../ui/FillRuleSelector';
 import { DashArrayCustomInput, DashArrayPresets } from '../../ui/DashArraySelector';
-import { PRESETS, type Preset } from '../../utils/fillAndStrokePresets';
+import { getFillAndStrokePresets, type Preset } from '../../utils/fillAndStrokePresets';
 import { useSelectedPathProperty } from '../../utils/pathPropertyUtils';
 import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
 
@@ -36,6 +38,12 @@ export const EditorPanel: React.FC = () => {
   const styleEyedropper = useCanvasStore(state => state.styleEyedropper);
   const activateStyleEyedropper = useCanvasStore(state => state.activateStyleEyedropper);
   const deactivateStyleEyedropper = useCanvasStore(state => state.deactivateStyleEyedropper);
+  const defaultStrokeColor = useCanvasStore(state => state.settings.defaultStrokeColor);
+  const { colorMode } = useColorMode();
+  const presets = React.useMemo(() => getFillAndStrokePresets(colorMode), [colorMode]);
+  const labelColor = useColorModeValue('gray.600', 'gray.300');
+  const inputBorderColor = useColorModeValue('gray.300', 'whiteAlpha.300');
+  const inputBg = useColorModeValue('white', 'whiteAlpha.100');
   
   // Calculate selected paths count - only re-renders if the count changes (not when positions change)
   const selectedPathsCount = useCanvasStore(state => {
@@ -128,7 +136,7 @@ export const EditorPanel: React.FC = () => {
 
   // Get current values from selected elements or plugin defaults
   const currentStrokeWidth = useSelectedPathProperty('strokeWidth', pencil?.strokeWidth ?? 4);
-  const currentStrokeColor = useSelectedPathProperty('strokeColor', pencil?.strokeColor ?? '#000000');
+  const currentStrokeColor = useSelectedPathProperty('strokeColor', pencil?.strokeColor ?? defaultStrokeColor);
   const currentOpacity = useSelectedPathProperty('strokeOpacity', pencil?.strokeOpacity ?? 1);
   const currentFillColor = useSelectedPathProperty('fillColor', pencil?.fillColor ?? 'none');
   const currentFillOpacity = useSelectedPathProperty('fillOpacity', pencil?.fillOpacity ?? 1);
@@ -146,10 +154,10 @@ export const EditorPanel: React.FC = () => {
   const onAdvancedStrokeToggle = () => setIsAdvancedStrokeOpen(!isAdvancedStrokeOpen);
 
   // Responsive columns for preset grid
-  const presetColumns = Math.min(PRESETS.length, useBreakpointValue({ base: 8, md: 10 }) || 10);
+  const presetColumns = Math.min(presets.length, useBreakpointValue({ base: 8, md: 10 }) || 10);
 
   return (
-    <Box bg="white" pb={1} mt={1} position="relative">
+    <Box pb={1} mt={1} position="relative">
       <RenderCountBadgeWrapper componentName="EditorPanel" position="top-right" />
       {/* Pencil Properties Section */}
       <VStack spacing={1} align="stretch">
@@ -181,7 +189,7 @@ export const EditorPanel: React.FC = () => {
               gridTemplateColumns={`repeat(${presetColumns}, 1fr)`}
               gap={1}
             >
-              {PRESETS.map((preset) => (
+              {presets.map((preset) => (
                 <PresetButton
                   key={preset.id}
                   preset={preset}
@@ -211,21 +219,22 @@ export const EditorPanel: React.FC = () => {
             {/* Fill Color & Opacity */}
             <VStack spacing={1} align="stretch">
               <HStack justify="flex-start" minH="24px" spacing={1.5}>
-                <Text fontSize="11px" fontWeight="600" color="gray.600" minW="40px" h="24px" display="flex" alignItems="center">
+                <Text fontSize="11px" fontWeight="600" color={labelColor} minW="40px" h="24px" display="flex" alignItems="center">
                   Fill
                 </Text>
                 <HStack spacing={1} flexShrink={0}>
                   <ConditionalTooltip label="Select fill color">
                     <Input
                       type="color"
-                      value={currentFillColor === 'none' ? '#000000' : currentFillColor}
+                      value={currentFillColor === 'none' ? defaultStrokeColor : currentFillColor}
                       onChange={(e) => handleFillColorChange(e.target.value)}
                       w="20px"
                       h="20px"
                       minW="20px"
                       p={0}
                       border="1px solid"
-                      borderColor="gray.300"
+                      borderColor={inputBorderColor}
+                      bg={inputBg}
                       borderRadius="3px"
                       cursor="pointer"
                       opacity={currentFillColor === 'none' ? 0.5 : 1}
@@ -262,21 +271,22 @@ export const EditorPanel: React.FC = () => {
             {/* Stroke Color & Opacity */}
             <VStack spacing={1} align="stretch">
               <HStack justify="flex-start" minH="24px" spacing={1.5}>
-                <Text fontSize="11px" fontWeight="600" color="gray.600" minW="40px" h="24px" display="flex" alignItems="center">
+                <Text fontSize="11px" fontWeight="600" color={labelColor} minW="40px" h="24px" display="flex" alignItems="center">
                   Stroke
                 </Text>
                 <HStack spacing={1} flexShrink={0}>
                   <ConditionalTooltip label="Select stroke color">
                     <Input
                       type="color"
-                      value={currentStrokeColor === 'none' ? '#000000' : currentStrokeColor}
+                      value={currentStrokeColor === 'none' ? defaultStrokeColor : currentStrokeColor}
                       onChange={(e) => handleStrokeColorChange(e.target.value)}
                       w="20px"
                       h="20px"
                       minW="20px"
                       p={0}
                       border="1px solid"
-                      borderColor="gray.300"
+                      borderColor={inputBorderColor}
+                      bg={inputBg}
                       borderRadius="3px"
                       cursor="pointer"
                       opacity={currentStrokeColor === 'none' ? 0.5 : 1}
@@ -312,7 +322,7 @@ export const EditorPanel: React.FC = () => {
 
             {/* Stroke Width */}
             <HStack minH="24px" justify="flex-start" spacing={1.5}>
-              <Text fontSize="11px" fontWeight="600" color="gray.600" minW="40px" h="24px" display="flex" alignItems="center">
+              <Text fontSize="11px" fontWeight="600" color={labelColor} minW="40px" h="24px" display="flex" alignItems="center">
                 Width
               </Text>
               <Box flex={1}>
@@ -354,7 +364,7 @@ export const EditorPanel: React.FC = () => {
 
                 {/* Custom Dash Array */}
                 <HStack justify="flex-start" minH="24px" spacing={1}>
-                  <Text fontSize="11px" fontWeight="600" color="gray.600" minW="80px" h="24px" display="flex" alignItems="center" title="Custom Dash Array">
+                  <Text fontSize="11px" fontWeight="600" color={labelColor} minW="80px" h="24px" display="flex" alignItems="center" title="Custom Dash Array">
                     Dash Array
                   </Text>
                   <Box flex={1}>
@@ -368,7 +378,7 @@ export const EditorPanel: React.FC = () => {
 
                 {/* Linecap */}
                 <HStack justify="flex-start" minH="24px" spacing={1}>
-                  <Text fontSize="11px" fontWeight="600" color="gray.600" minW="80px" h="24px" display="flex" alignItems="center" title="Stroke Linecap">
+                  <Text fontSize="11px" fontWeight="600" color={labelColor} minW="80px" h="24px" display="flex" alignItems="center" title="Stroke Linecap">
                     Line Cap
                   </Text>
                   <LinecapSelector
@@ -380,7 +390,7 @@ export const EditorPanel: React.FC = () => {
 
                 {/* Linejoin */}
                 <HStack justify="flex-start" minH="24px" spacing={1}>
-                  <Text fontSize="11px" fontWeight="600" color="gray.600" minW="80px" h="24px" display="flex" alignItems="center" title="Stroke Linejoin">
+                  <Text fontSize="11px" fontWeight="600" color={labelColor} minW="80px" h="24px" display="flex" alignItems="center" title="Stroke Linejoin">
                     Line Join
                   </Text>
                   <LinejoinSelector
@@ -392,7 +402,7 @@ export const EditorPanel: React.FC = () => {
 
                 {/* Fill Rule */}
                 <HStack justify="flex-start" minH="24px" spacing={1}>
-                  <Text fontSize="11px" fontWeight="600" color="gray.600" minW="80px" h="24px" display="flex" alignItems="center" title="Fill Rule">
+                  <Text fontSize="11px" fontWeight="600" color={labelColor} minW="80px" h="24px" display="flex" alignItems="center" title="Fill Rule">
                     Fill Rule
                   </Text>
                   <FillRuleSelector

@@ -333,15 +333,15 @@ export const ControlPointAlignmentPanel: React.FC = () => {
             variant="unstyled"
             size="xs"
             bg={(singlePointInfo.info?.type || 'independent') === 'independent' ? 'blue.500' : 'transparent'}
-            color={(singlePointInfo.info?.type || 'independent') === 'independent' ? 'white' : 'gray.700'}
+            color={(singlePointInfo.info?.type || 'independent') === 'independent' ? 'white' : 'text.primary'}
             border="1px solid"
-            borderColor={(singlePointInfo.info?.type || 'independent') === 'independent' ? 'blue.500' : 'gray.400'}
+            borderColor={(singlePointInfo.info?.type || 'independent') === 'independent' ? 'blue.500' : 'border.panel'}
             borderRadius="md"
             fontWeight="medium"
             fontSize="10px"
             transition="all 0.2s"
             _hover={{
-              bg: (singlePointInfo.info?.type || 'independent') === 'independent' ? 'blue.600' : 'gray.50'
+              bg: (singlePointInfo.info?.type || 'independent') === 'independent' ? 'blue.600' : 'surface.panelSecondary'
             }}
             sx={{
               minH: '20px',
@@ -360,15 +360,15 @@ export const ControlPointAlignmentPanel: React.FC = () => {
             variant="unstyled"
             size="xs"
             bg={(singlePointInfo.info?.type || 'independent') === 'aligned' ? 'blue.500' : 'transparent'}
-            color={(singlePointInfo.info?.type || 'independent') === 'aligned' ? 'white' : 'gray.700'}
+            color={(singlePointInfo.info?.type || 'independent') === 'aligned' ? 'white' : 'text.primary'}
             border="1px solid"
-            borderColor={(singlePointInfo.info?.type || 'independent') === 'aligned' ? 'blue.500' : 'gray.400'}
+            borderColor={(singlePointInfo.info?.type || 'independent') === 'aligned' ? 'blue.500' : 'border.panel'}
             borderRadius="md"
             fontWeight="medium"
             fontSize="10px"
             transition="all 0.2s"
             _hover={{
-              bg: (singlePointInfo.info?.type || 'independent') === 'aligned' ? 'blue.600' : 'gray.50'
+              bg: (singlePointInfo.info?.type || 'independent') === 'aligned' ? 'blue.600' : 'surface.panelSecondary'
             }}
             sx={{
               minH: '20px',
@@ -387,15 +387,15 @@ export const ControlPointAlignmentPanel: React.FC = () => {
             variant="unstyled"
             size="xs"
             bg={(singlePointInfo.info?.type || 'independent') === 'mirrored' ? 'blue.500' : 'transparent'}
-            color={(singlePointInfo.info?.type || 'independent') === 'mirrored' ? 'white' : 'gray.700'}
+            color={(singlePointInfo.info?.type || 'independent') === 'mirrored' ? 'white' : 'text.primary'}
             border="1px solid"
-            borderColor={(singlePointInfo.info?.type || 'independent') === 'mirrored' ? 'blue.500' : 'gray.400'}
+            borderColor={(singlePointInfo.info?.type || 'independent') === 'mirrored' ? 'blue.500' : 'border.panel'}
             borderRadius="md"
             fontWeight="medium"
             fontSize="10px"
             transition="all 0.2s"
             _hover={{
-              bg: (singlePointInfo.info?.type || 'independent') === 'mirrored' ? 'blue.600' : 'gray.50'
+              bg: (singlePointInfo.info?.type || 'independent') === 'mirrored' ? 'blue.600' : 'surface.panelSecondary'
             }}
             sx={{
               minH: '20px',
@@ -417,13 +417,14 @@ export const ControlPointAlignmentPanel: React.FC = () => {
                 variant="ghost"
                 size="xs"
                 bg="transparent"
+                _hover={{ bg: 'surface.panelSecondary' }}
               />
             </ConditionalTooltip>
           </Box>
         </HStack>
 
         {/* Etiqueta descriptiva siempre visible */}
-        <Text fontSize="12px" color="gray.600">
+        <Text fontSize="12px" color="text.muted">
           {(singlePointInfo.info?.type || 'independent') === 'independent' && 'Points move independently'}
           {(singlePointInfo.info?.type || 'independent') === 'aligned' && 'Points maintain opposite directions'}
           {(singlePointInfo.info?.type || 'independent') === 'mirrored' && 'Points are mirrored across anchor'}
@@ -438,12 +439,12 @@ export const ControlPointAlignmentPanel: React.FC = () => {
     if (singlePointInfo.pairedPoint) {
       return (
         <Collapse in={showDetails} animateOpacity>
-          <VStack spacing={2} align="stretch" fontSize="12px" color="gray.600" lineHeight="1.4">
-            <Text><Text as="strong" color="gray.700">Point Index:</Text> {singlePointInfo.point.pointIndex}</Text>
-            <Text><Text as="strong" color="gray.700">Anchor:</Text> ({singlePointInfo.anchor1?.x.toFixed(2) || '0'}, {singlePointInfo.anchor1?.y.toFixed(2) || '0'})</Text>
-            <Text><Text as="strong" color="gray.700">Direction:</Text> {singlePointInfo.angle1?.toFixed(1) || '0'}°</Text>
-            <Text><Text as="strong" color="gray.700">Size:</Text> {singlePointInfo.mag1?.toFixed(2) || '0'}</Text>
-            <Text><Text as="strong" color="gray.700">Alignment:</Text> {singlePointInfo.info?.type || 'independent'}</Text>
+          <VStack spacing={2} align="stretch" fontSize="12px" color="text.muted" lineHeight="1.4">
+            <Text><Text as="strong" color="text.primary">Point Index:</Text> {singlePointInfo.point.pointIndex}</Text>
+            <Text><Text as="strong" color="text.primary">Anchor:</Text> ({singlePointInfo.anchor1?.x.toFixed(2) || '0'}, {singlePointInfo.anchor1?.y.toFixed(2) || '0'})</Text>
+            <Text><Text as="strong" color="text.primary">Direction:</Text> {singlePointInfo.angle1?.toFixed(1) || '0'}°</Text>
+            <Text><Text as="strong" color="text.primary">Size:</Text> {singlePointInfo.mag1?.toFixed(2) || '0'}</Text>
+            <Text><Text as="strong" color="text.primary">Alignment:</Text> {singlePointInfo.info?.type || 'independent'}</Text>
             {singlePointInfo.pairedPoint && (
               <>
                 <Text><Text as="strong" color="gray.700">Paired Point:</Text> ({singlePointInfo.pairedPoint.x.toFixed(2)}, {singlePointInfo.pairedPoint.y.toFixed(2)}) at command {singlePointInfo.pairedInfo?.commandIndex}, point {singlePointInfo.pairedInfo?.pointIndex}</Text>
@@ -452,21 +453,21 @@ export const ControlPointAlignmentPanel: React.FC = () => {
                   <Table size="sm" fontSize="12px" mt={2}>
                     <Thead>
                       <Tr>
-                        <Th fontSize="12px" p={1} bg="gray.100" borderColor="gray.300" textTransform="none">Property</Th>
-                        <Th fontSize="12px" p={1} bg="gray.100" borderColor="gray.300" textTransform="none">Current</Th>
-                        <Th fontSize="12px" p={1} bg="gray.100" borderColor="gray.300" textTransform="none">Paired</Th>
+                        <Th fontSize="12px" p={1} bg="surface.panelSecondary" borderColor="border.panel" textTransform="none">Property</Th>
+                        <Th fontSize="12px" p={1} bg="surface.panelSecondary" borderColor="border.panel" textTransform="none">Current</Th>
+                        <Th fontSize="12px" p={1} bg="surface.panelSecondary" borderColor="border.panel" textTransform="none">Paired</Th>
                       </Tr>
                     </Thead>
                     <Tbody>
                       <Tr>
-                        <Td fontSize="12px" p={1} borderColor="gray.300">Direction</Td>
-                        <Td fontSize="12px" p={1} borderColor="gray.300">{singlePointInfo.angle1?.toFixed(1) || '0'}°</Td>
-                        <Td fontSize="12px" p={1} borderColor="gray.300">{singlePointInfo.angle2?.toFixed(1) || '0'}°</Td>
+                        <Td fontSize="12px" p={1} borderColor="border.panel">Direction</Td>
+                        <Td fontSize="12px" p={1} borderColor="border.panel">{singlePointInfo.angle1?.toFixed(1) || '0'}°</Td>
+                        <Td fontSize="12px" p={1} borderColor="border.panel">{singlePointInfo.angle2?.toFixed(1) || '0'}°</Td>
                       </Tr>
                       <Tr>
-                        <Td fontSize="12px" p={1} borderColor="gray.300">Size</Td>
-                        <Td fontSize="12px" p={1} borderColor="gray.300">{singlePointInfo.mag1?.toFixed(2) || '0'}</Td>
-                        <Td fontSize="12px" p={1} borderColor="gray.300">{singlePointInfo.mag2?.toFixed(2)}</Td>
+                        <Td fontSize="12px" p={1} borderColor="border.panel">Size</Td>
+                        <Td fontSize="12px" p={1} borderColor="border.panel">{singlePointInfo.mag1?.toFixed(2) || '0'}</Td>
+                        <Td fontSize="12px" p={1} borderColor="border.panel">{singlePointInfo.mag2?.toFixed(2)}</Td>
                       </Tr>
                     </Tbody>
                   </Table>
@@ -480,9 +481,9 @@ export const ControlPointAlignmentPanel: React.FC = () => {
 
     return (
       <Collapse in={showDetails} animateOpacity>
-        <VStack spacing={1} align="stretch" fontSize="12px" color="gray.600" lineHeight="1.4">
-          <Text><Text as="strong" color="gray.700">Point Index:</Text> {singlePointInfo.point.pointIndex}</Text>
-          <Text><Text as="strong" color="gray.700">Alignment:</Text> {singlePointInfo.info?.type || 'independent'}</Text>
+        <VStack spacing={1} align="stretch" fontSize="12px" color="text.muted" lineHeight="1.4">
+          <Text><Text as="strong" color="text.primary">Point Index:</Text> {singlePointInfo.point.pointIndex}</Text>
+          <Text><Text as="strong" color="text.primary">Alignment:</Text> {singlePointInfo.info?.type || 'independent'}</Text>
         </VStack>
       </Collapse>
     );
@@ -496,9 +497,9 @@ export const ControlPointAlignmentPanel: React.FC = () => {
       
       {/* Always visible Position and Command info */}
       {singlePointInfo && (
-        <VStack spacing={1} align="stretch" fontSize="12px" color="gray.600" lineHeight="1.4" mb={2}>
-          <Text><Text as="strong" color="gray.700">Position:</Text> ({singlePointInfo.point.x.toFixed(2)}, {singlePointInfo.point.y.toFixed(2)})</Text>
-          <Text><Text as="strong" color="gray.700">Command:</Text> {singlePointInfo.command.type} at index {singlePointInfo.point.commandIndex}</Text>
+        <VStack spacing={1} align="stretch" fontSize="12px" color="text.muted" lineHeight="1.4" mb={2}>
+          <Text><Text as="strong" color="text.primary">Position:</Text> ({singlePointInfo.point.x.toFixed(2)}, {singlePointInfo.point.y.toFixed(2)})</Text>
+          <Text><Text as="strong" color="text.primary">Command:</Text> {singlePointInfo.command.type} at index {singlePointInfo.point.commandIndex}</Text>
         </VStack>
       )}
       
@@ -506,8 +507,8 @@ export const ControlPointAlignmentPanel: React.FC = () => {
 
       {/* Always visible anchor-specific actions */}
       {singlePointInfo && singlePointInfo.isAnchor && (
-        <VStack spacing={2} align="stretch" fontSize="11px" color="gray.600" lineHeight="1.4">
-          <Text><Text as="strong" color="gray.700">Location:</Text> {singlePointInfo.location}</Text>
+        <VStack spacing={2} align="stretch" fontSize="11px" color="text.muted" lineHeight="1.4">
+          <Text><Text as="strong" color="text.primary">Location:</Text> {singlePointInfo.location}</Text>
           {hasClosingZCommand(selectedCmd.elementId, selectedCmd.commandIndex) && (
             <>
               <Button

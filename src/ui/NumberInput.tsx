@@ -87,13 +87,14 @@ export const NumberInput: React.FC<NumberInputProps> = ({
   return (
     <HStack spacing={2} w="100%">
       {icon && (
-        <Box color="gray.600" flexShrink={0}>
+        <Box color="gray.600" _dark={{ color: 'gray.400' }} flexShrink={0}>
           {icon}
         </Box>
       )}
       <Text
         fontSize="12px"
         color="gray.600"
+        _dark={{ color: 'gray.400' }}
         minW={labelWidth}
         flexShrink={0}
       >
@@ -111,6 +112,11 @@ export const NumberInput: React.FC<NumberInputProps> = ({
         px={2}
         borderRadius="4px"
         borderColor="gray.300"
+        bg="white"
+        _dark={{
+          borderColor: 'whiteAlpha.300',
+          bg: 'gray.800'
+        }}
         _focus={{
           borderColor: 'blue.500',
           boxShadow: '0 0 0 1px var(--chakra-colors-blue-500)'
@@ -120,6 +126,7 @@ export const NumberInput: React.FC<NumberInputProps> = ({
         <Text
           fontSize="12px"
           color="gray.600"
+          _dark={{ color: 'gray.400' }}
           flexShrink={0}
         >
           {suffix}

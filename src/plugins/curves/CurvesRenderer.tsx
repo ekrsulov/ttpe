@@ -1,4 +1,5 @@
 import React from 'react';
+import { useColorModeValue } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { useCanvasCurves } from './useCanvasCurves';
 import type { CurvePoint } from '../../types';
@@ -6,6 +7,11 @@ import type { CurvePoint } from '../../types';
 export const CurvesRenderer: React.FC = () => {
   const viewport = useCanvasStore(state => state.viewport);
   const { curveState } = useCanvasCurves();
+
+  // Color values that adapt to dark mode
+  const previewColor = '#007bff'; // Using the brand color value directly for SVG
+  const pointFill = useColorModeValue('#fff', '#fff');
+  const handleFill = useColorModeValue('#fff', '#fff');
 
   // Don't render if not active
   if (!curveState.isActive) {
@@ -23,7 +29,7 @@ export const CurvesRenderer: React.FC = () => {
       <path
         key="preview-path"
         d={previewPath}
-        stroke="#007bff"
+        stroke={previewColor}
         strokeWidth={2 / viewport.zoom}
         fill="none"
         strokeDasharray={`${5 / viewport.zoom} ${5 / viewport.zoom}`}
@@ -43,8 +49,8 @@ export const CurvesRenderer: React.FC = () => {
         cx={point.x}
         cy={point.y}
         r={8 / viewport.zoom}
-        fill={isSelected ? "#007bff" : "#fff"}
-        stroke="#007bff"
+        fill={isSelected ? previewColor : pointFill}
+        stroke={previewColor}
         strokeWidth={2 / viewport.zoom}
         style={{ cursor: 'pointer' }}
       />
@@ -56,7 +62,7 @@ export const CurvesRenderer: React.FC = () => {
         key={`point-label-${point.id}`}
         x={point.x + 12 / viewport.zoom}
         y={point.y - 8 / viewport.zoom}
-        fill="#007bff"
+        fill={previewColor}
         fontSize={12 / viewport.zoom}
         fontWeight="bold"
         style={{ pointerEvents: 'none', userSelect: 'none' }}
@@ -75,7 +81,7 @@ export const CurvesRenderer: React.FC = () => {
           y1={point.y}
           x2={point.handleIn.x}
           y2={point.handleIn.y}
-          stroke="#007bff"
+          stroke={previewColor}
           strokeWidth={1 / viewport.zoom}
           opacity={0.5}
         />
@@ -88,8 +94,8 @@ export const CurvesRenderer: React.FC = () => {
           cx={point.handleIn.x}
           cy={point.handleIn.y}
           r={4 / viewport.zoom}
-          fill="#fff"
-          stroke="#007bff"
+          fill={handleFill}
+          stroke={previewColor}
           strokeWidth={1 / viewport.zoom}
           style={{ cursor: 'pointer' }}
         />
@@ -105,7 +111,7 @@ export const CurvesRenderer: React.FC = () => {
           y1={point.y}
           x2={point.handleOut.x}
           y2={point.handleOut.y}
-          stroke="#007bff"
+          stroke={previewColor}
           strokeWidth={1 / viewport.zoom}
           opacity={0.5}
         />
@@ -118,8 +124,8 @@ export const CurvesRenderer: React.FC = () => {
           cx={point.handleOut.x}
           cy={point.handleOut.y}
           r={4 / viewport.zoom}
-          fill="#fff"
-          stroke="#007bff"
+          fill={handleFill}
+          stroke={previewColor}
           strokeWidth={1 / viewport.zoom}
           style={{ cursor: 'pointer' }}
         />
@@ -136,7 +142,7 @@ export const CurvesRenderer: React.FC = () => {
         cy={curveState.previewPoint.y}
         r={6 / viewport.zoom}
         fill="none"
-        stroke="#007bff"
+        stroke={previewColor}
         strokeWidth={2 / viewport.zoom}
         strokeDasharray={`${2 / viewport.zoom} ${2 / viewport.zoom}`}
         opacity={0.5}

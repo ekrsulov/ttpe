@@ -1,4 +1,5 @@
 import React from 'react';
+import { useColorModeValue } from '@chakra-ui/react';
 
 interface BlockingOverlayProps {
   viewport: {
@@ -25,6 +26,7 @@ export const BlockingOverlay: React.FC<BlockingOverlayProps> = ({
   isActive,
   onPointerUp,
 }) => {
+  const overlayFill = useColorModeValue('#ffffff01', '#0f172a33');
   if (!(isActive ?? false)) {
     return null;
   }
@@ -49,7 +51,7 @@ export const BlockingOverlay: React.FC<BlockingOverlayProps> = ({
           y={-viewport.panY / viewport.zoom}
           width={canvasSize.width / viewport.zoom}
           height={canvasSize.height / viewport.zoom}
-          fill="#ffffff01"
+          fill={overlayFill}
           style={{
             cursor: 'inherit',
           }}

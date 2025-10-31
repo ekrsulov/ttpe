@@ -39,6 +39,7 @@ import { useCanvasShortcuts } from './hooks/useCanvasShortcuts';
 import { canvasShortcutRegistry } from './shortcuts';
 import { useCanvasModeMachine } from './hooks/useCanvasModeMachine';
 import type { CanvasMode } from './modes/CanvasModeMachine';
+import { useCanvasStore } from '../store/canvasStore';
 
 const CanvasContent: React.FC = () => {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -77,6 +78,7 @@ const CanvasContent: React.FC = () => {
   } = useCanvasSmoothBrush();
 
   const controller = useCanvasController();
+  const defaultStrokeColor = useCanvasStore(state => state.settings.defaultStrokeColor);
   const {
     currentMode,
     transition: transitionCanvasMode,
@@ -246,7 +248,7 @@ const CanvasContent: React.FC = () => {
     currentMode,
     pencil: pencil ?? {
       strokeWidth: 4,
-      strokeColor: '#000000',
+      strokeColor: defaultStrokeColor,
       strokeOpacity: 1,
       fillColor: 'none',
       fillOpacity: 1,
@@ -424,6 +426,7 @@ const CanvasContent: React.FC = () => {
       pluginSpecific.smoothBrush = smoothBrush;
       pluginSpecific.smoothBrushCursor = smoothBrushCursor;
       pluginSpecific.addPointMode = addPointMode;
+      pluginSpecific.pointPositionFeedback = shapeFeedback.pointPosition;
     } else if (currentMode === 'shape') {
       pluginSpecific.isCreatingShape = isCreatingShape;
       pluginSpecific.shapeStart = shapeStart;

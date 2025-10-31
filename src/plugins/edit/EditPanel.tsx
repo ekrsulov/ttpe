@@ -159,6 +159,9 @@ export const EditPanel: React.FC<EditPanelProps> = ({
               '& .chakra-checkbox__control': {
                 bg: smoothBrush.simplifyPoints ? 'blue.500' : 'transparent',
                 borderColor: smoothBrush.simplifyPoints ? 'blue.500' : 'gray.400',
+                _dark: {
+                  borderColor: smoothBrush.simplifyPoints ? 'blue.500' : 'whiteAlpha.500'
+                },
                 _checked: {
                   bg: 'blue.500',
                   borderColor: 'blue.500',
@@ -171,7 +174,17 @@ export const EditPanel: React.FC<EditPanelProps> = ({
                 _hover: {
                   bg: smoothBrush.simplifyPoints ? 'blue.600' : 'gray.50',
                   borderColor: smoothBrush.simplifyPoints ? 'blue.600' : 'gray.400',
+                  _dark: {
+                    bg: smoothBrush.simplifyPoints ? 'blue.600' : 'whiteAlpha.100',
+                    borderColor: smoothBrush.simplifyPoints ? 'blue.600' : 'whiteAlpha.500'
+                  }
                 }
+              },
+              '& .chakra-checkbox__label': {
+                color: 'gray.700',
+                _dark: {
+                  color: 'gray.200',
+                },
               }
             }}
           >

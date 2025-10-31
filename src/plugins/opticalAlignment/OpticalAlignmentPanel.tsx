@@ -110,9 +110,10 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
             >
               <Text 
                 color="gray.600"
+                _dark={{ color: 'gray.400' }}
                 cursor="pointer"
                 onClick={onAdvancedToggle}
-                _hover={{ color: "gray.800" }}
+                _hover={{ color: "gray.800", _dark: { color: 'gray.200' } }}
               >
                 Advanced
               </Text>
@@ -135,7 +136,7 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
             <VStack spacing={3} align="stretch" mt={2}>
               {/* Visual Center Section */}
               <Box>
-                <Text color="gray.600">
+                <Text color="gray.600" _dark={{ color: 'gray.400' }}>
                   Visual Center (Optical)
                 </Text>
                 
@@ -161,12 +162,12 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
                 {/* Results - Between Visual Center and Mathematical Center */}
                 {opticalAlignmentResult && (
                   <VStack spacing={2} align="stretch" mt={1}>
-                    <Box color="gray.600">
+                    <Box color="gray.600" _dark={{ color: 'gray.400' }}>
                       <Text>Offset</Text>
                       
                       {/* Current position offset */}
                       <HStack justify="space-between" fontSize="10px">
-                        <Text>Current:</Text>
+                        <Text color="gray.600" _dark={{ color: 'gray.400' }}>Current:</Text>
                         <Text fontFamily="mono">
                           dx: {opticalAlignmentResult.offset.x.toFixed(2)}, 
                           dy: {opticalAlignmentResult.offset.y.toFixed(2)}
@@ -176,7 +177,7 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
                       {/* Offset from mathematical center */}
                       {offsetFromMathCenter && (
                         <HStack justify="space-between" fontSize="10px">
-                          <Text>From math center:</Text>
+                          <Text color="gray.600" _dark={{ color: 'gray.400' }}>From math center:</Text>
                           <Text fontFamily="mono">
                             dx: {offsetFromMathCenter.dx.toFixed(2)}, 
                             dy: {offsetFromMathCenter.dy.toFixed(2)}
@@ -199,7 +200,7 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
 
               {/* Mathematical Center Section */}
               <Box>
-                <Text color="gray.600">
+                <Text color="gray.600" _dark={{ color: 'gray.400' }}>
                   Mathematical Center
                 </Text>
 
@@ -222,7 +223,7 @@ const OpticalAlignmentPanelComponent: React.FC = () => {
 
               {/* Selection Section */}
               <Box>
-                <Text color="gray.600">
+                <Text color="gray.600" _dark={{ color: 'gray.400' }}>
                   Selection
                 </Text>
 

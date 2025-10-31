@@ -2,6 +2,7 @@ import type { RefObject } from 'react';
 import type { Point } from '../../types';
 import type { PencilPluginSlice } from '../../plugins/pencil/slice';
 import { createPathDataFromPoints, getPencilPathStyle, simplifyPathFromPoints, subPathsToPathString, type PathStyleLike } from '../../plugins/pencil/utils';
+import { getDefaultStrokeColorFromSettings } from '../../utils/defaultColors';
 
 type PencilSettings = PencilPluginSlice['pencil'];
 
@@ -63,7 +64,8 @@ export class PencilDrawingService {
 
       tempPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       const { strokeWidth, strokeColor, strokeOpacity } = options.pencil;
-      const effectiveStrokeColor = strokeColor === 'none' ? '#000000' : strokeColor;
+      const defaultStrokeColor = getDefaultStrokeColorFromSettings();
+      const effectiveStrokeColor = strokeColor === 'none' ? defaultStrokeColor : strokeColor;
       const strokeWidthForZoom = strokeWidth / options.viewportZoom;
 
       tempPath.setAttribute('fill', 'none');

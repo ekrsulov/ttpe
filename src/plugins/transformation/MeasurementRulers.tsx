@@ -8,6 +8,8 @@ interface MeasurementRulersProps {
     maxY: number;
   };
   zoom: number;
+  rulerColor?: string;
+  textColor?: string;
 }
 
 /**
@@ -17,6 +19,8 @@ interface MeasurementRulersProps {
 export const MeasurementRulers: React.FC<MeasurementRulersProps> = ({
   bounds,
   zoom,
+  rulerColor = "#666",
+  textColor = "#666",
 }) => {
   const width = bounds.maxX - bounds.minX;
   const height = bounds.maxY - bounds.minY;
@@ -34,7 +38,7 @@ export const MeasurementRulers: React.FC<MeasurementRulersProps> = ({
           y1={bounds.maxY + rulerOffset}
           x2={bounds.maxX}
           y2={bounds.maxY + rulerOffset}
-          stroke="#666"
+          stroke={rulerColor}
           strokeWidth={1 / zoom}
           pointerEvents="none"
         />
@@ -44,7 +48,7 @@ export const MeasurementRulers: React.FC<MeasurementRulersProps> = ({
           y1={bounds.maxY + rulerOffset - tickSize}
           x2={bounds.minX}
           y2={bounds.maxY + rulerOffset + tickSize}
-          stroke="#666"
+          stroke={rulerColor}
           strokeWidth={1 / zoom}
           pointerEvents="none"
         />
@@ -54,7 +58,7 @@ export const MeasurementRulers: React.FC<MeasurementRulersProps> = ({
           y1={bounds.maxY + rulerOffset - tickSize}
           x2={bounds.maxX}
           y2={bounds.maxY + rulerOffset + tickSize}
-          stroke="#666"
+          stroke={rulerColor}
           strokeWidth={1 / zoom}
           pointerEvents="none"
         />
@@ -64,7 +68,7 @@ export const MeasurementRulers: React.FC<MeasurementRulersProps> = ({
           y={bounds.maxY + rulerOffset + 12 / zoom}
           textAnchor="middle"
           fontSize={fontSize}
-          fill="#666"
+          fill={textColor}
           pointerEvents="none"
           style={{ userSelect: 'none' }}
         >
@@ -80,7 +84,7 @@ export const MeasurementRulers: React.FC<MeasurementRulersProps> = ({
           y1={bounds.minY}
           x2={bounds.maxX + rulerOffset}
           y2={bounds.maxY}
-          stroke="#666"
+          stroke={rulerColor}
           strokeWidth={1 / zoom}
           pointerEvents="none"
         />
@@ -90,7 +94,7 @@ export const MeasurementRulers: React.FC<MeasurementRulersProps> = ({
           y1={bounds.minY}
           x2={bounds.maxX + rulerOffset + tickSize}
           y2={bounds.minY}
-          stroke="#666"
+          stroke={rulerColor}
           strokeWidth={1 / zoom}
           pointerEvents="none"
         />
@@ -100,7 +104,7 @@ export const MeasurementRulers: React.FC<MeasurementRulersProps> = ({
           y1={bounds.maxY}
           x2={bounds.maxX + rulerOffset + tickSize}
           y2={bounds.maxY}
-          stroke="#666"
+          stroke={rulerColor}
           strokeWidth={1 / zoom}
           pointerEvents="none"
         />
@@ -110,7 +114,7 @@ export const MeasurementRulers: React.FC<MeasurementRulersProps> = ({
           y={bounds.minY + height / 2}
           textAnchor="middle"
           fontSize={fontSize}
-          fill="#666"
+          fill={textColor}
           pointerEvents="none"
           transform={`rotate(90 ${bounds.maxX + rulerOffset + 12 / zoom} ${bounds.minY + height / 2})`}
           style={{ userSelect: 'none' }}

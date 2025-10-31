@@ -4,7 +4,7 @@
  */
 
 import React from 'react'
-import { Flex, Heading, Box, Spacer, IconButton } from '@chakra-ui/react'
+import { Flex, Heading, Box, Spacer, IconButton, useColorModeValue } from '@chakra-ui/react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 
 export interface PanelHeaderProps {
@@ -30,6 +30,10 @@ export const PanelHeader: React.FC<PanelHeaderProps> = ({
   isOpen = true,
   onToggle,
 }) => {
+  const hoverBg = useColorModeValue('gray.200', 'whiteAlpha.200')
+  const iconColor = useColorModeValue('gray.600', 'gray.300')
+  const titleColor = useColorModeValue('text.primary', 'text.primary')
+
   return (
     <Flex
       align="center"
@@ -41,15 +45,15 @@ export const PanelHeader: React.FC<PanelHeaderProps> = ({
       minH="24px"
       cursor={isCollapsible ? 'pointer' : 'default'}
       onClick={isCollapsible ? onToggle : undefined}
-      _hover={isCollapsible ? { bg: 'gray.200' } : undefined}
+      _hover={isCollapsible ? { bg: hoverBg } : undefined}
       transition="background 0.2s ease"
     >
       {/* Icon */}
       {icon && (
-        <Box 
-          as="span" 
-          mr={1.5} 
-          color="gray.600"
+        <Box
+          as="span"
+          mr={1.5}
+          color={iconColor}
           display="flex"
           alignItems="center"
         >
@@ -59,11 +63,11 @@ export const PanelHeader: React.FC<PanelHeaderProps> = ({
 
       {/* Title */}
       {title && (
-        <Heading 
-          as="h3" 
-          size="xs" 
-          fontWeight="extrabold" 
-          color="gray.700"
+        <Heading
+          as="h3"
+          size="xs"
+          fontWeight="extrabold"
+          color={titleColor}
           fontSize="sm"
         >
           {title}

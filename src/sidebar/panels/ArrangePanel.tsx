@@ -16,7 +16,7 @@ import {
   ArrowLeftRight,
   ArrowUpDown
 } from 'lucide-react';
-import { VStack, HStack, IconButton as ChakraIconButton, Box } from '@chakra-ui/react';
+import { VStack, HStack, IconButton as ChakraIconButton, Box, useColorModeValue } from '@chakra-ui/react';
 import ConditionalTooltip from '../../ui/ConditionalTooltip';
 import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
 
@@ -74,6 +74,11 @@ const ArrangePanelComponent: React.FC = () => {
     { handler: currentHandlers.alignBottom, icon: <AlignVerticalJustifyEnd size={12} />, title: "Align Bottom", disabled: !canAlign }
   ];
 
+  const buttonColor = useColorModeValue('gray.700', 'gray.100');
+  const buttonHoverBg = useColorModeValue('gray.100', 'whiteAlpha.200');
+  const buttonActiveBg = useColorModeValue('gray.200', 'whiteAlpha.300');
+  const panelBg = useColorModeValue('surface.panel', 'surface.panel');
+  const borderColor = useColorModeValue('gray.200', 'whiteAlpha.300');
   const renderButtonRow = (buttons: ButtonConfig[]) => (
     <HStack spacing={0.5} w="full">
       {buttons.map((button, index) => (
@@ -87,6 +92,9 @@ const ArrangePanelComponent: React.FC = () => {
             flex={1}
             variant="ghost"
             bg="transparent"
+            color={buttonColor}
+            _hover={{ bg: buttonHoverBg }}
+            _active={{ bg: buttonActiveBg }}
           />
         </ConditionalTooltip>
       ))}
@@ -94,7 +102,15 @@ const ArrangePanelComponent: React.FC = () => {
   );
 
   return (
-    <Box bg="white" px={2} pt={2} borderTop="1px solid" borderColor="gray.300" w="full" position="relative">
+    <Box
+      bg={panelBg}
+      px={2}
+      pt={2}
+      borderTop="1px solid"
+      borderColor={borderColor}
+      w="full"
+      position="relative"
+    >
       <RenderCountBadgeWrapper componentName="ArrangePanel" position="top-right" />
       <VStack spacing={1} align="stretch">
         {/* Row 2: Align buttons and Match Height button (hide match button in edit mode) */}

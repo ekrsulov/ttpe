@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from '@chakra-ui/react';
+import { Button, useColorModeValue } from '@chakra-ui/react';
 
 interface SidebarUtilityButtonProps {
   label: string;
@@ -18,6 +18,11 @@ export const SidebarUtilityButton: React.FC<SidebarUtilityButtonProps> = ({
   onClick,
   fullWidth = false,
 }) => {
+  const inactiveColor = useColorModeValue('gray.700', 'gray.200');
+  const inactiveBorder = useColorModeValue('gray.400', 'whiteAlpha.300');
+  const inactiveHoverBg = useColorModeValue('gray.50', 'whiteAlpha.100');
+  const activeBg = useColorModeValue('blue.500', 'blue.300');
+  const activeHoverBg = useColorModeValue('blue.600', 'blue.400');
   return (
     <Button
       aria-label={label}
@@ -25,16 +30,16 @@ export const SidebarUtilityButton: React.FC<SidebarUtilityButtonProps> = ({
       variant="unstyled"
       size="sm"
       data-active={isActive}
-      bg={isActive ? 'blue.500' : 'transparent'}
-      color={isActive ? 'white' : 'gray.700'}
+      bg={isActive ? activeBg : 'transparent'}
+      color={isActive ? 'white' : inactiveColor}
       border="1px solid"
-      borderColor={isActive ? 'blue.500' : 'gray.400'}
+      borderColor={isActive ? activeBg : inactiveBorder}
       borderRadius="md"
       fontWeight="medium"
       transition="all 0.2s"
       width={fullWidth ? 'full' : 'auto'}
       _hover={{
-        bg: isActive ? 'blue.600' : 'gray.50',
+        bg: isActive ? activeHoverBg : inactiveHoverBg,
       }}
       sx={{
         minH: '32px',

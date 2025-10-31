@@ -1,5 +1,5 @@
 import React, { useMemo, useEffect, useState } from 'react';
-import { HStack } from '@chakra-ui/react';
+import { HStack, useColorModeValue } from '@chakra-ui/react';
 import {
   Undo2,
   Redo2,
@@ -34,6 +34,8 @@ interface BottomActionBarProps {
 export const BottomActionBar: React.FC<BottomActionBarProps> = ({
   sidebarWidth = 0,
 }) => {
+  const deleteColor = useColorModeValue('red.500', 'red.300');
+  const disabledDeleteColor = useColorModeValue('gray.400', 'gray.500');
   const zoom = useCanvasStore(state => state.zoom);
   const resetZoom = useCanvasStore(state => state.resetZoom);
   const viewport = useCanvasStore(state => state.viewport);
@@ -142,7 +144,7 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
               counter={deleteCount}
               counterColor="red"
               sx={{
-                color: canDelete ? 'red.500' : 'gray.400',
+                color: canDelete ? deleteColor : disabledDeleteColor,
               }}
             />
           </>

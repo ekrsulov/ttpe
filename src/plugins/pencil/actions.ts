@@ -9,6 +9,7 @@ import type { Point, PathData } from '../../types';
 import type { StoreApi } from 'zustand';
 import type { CanvasStore } from '../../store/canvasStore';
 import { simplifyPathFromPoints } from './utils';
+import { getDefaultStrokeColorFromSettings } from '../../utils/defaultColors';
 
 type PencilStore = CanvasStore & Required<Pick<CanvasStore, 'pencil'>>;
 
@@ -23,9 +24,10 @@ export function startPath(
   if (!state.pencil) return;
   
   const { strokeWidth, strokeColor, strokeOpacity, reusePath } = state.pencil;
-  
-  // For pencil paths, if strokeColor is 'none', use black instead
-  const effectiveStrokeColor = strokeColor === 'none' ? '#000000' : strokeColor;
+  const defaultStrokeColor = getDefaultStrokeColorFromSettings();
+
+  // For pencil paths, if strokeColor is 'none', use the default stroke color instead
+  const effectiveStrokeColor = strokeColor === 'none' ? defaultStrokeColor : strokeColor;
 
   // Check if we should reuse an existing pencil path
   const lastElement = state.elements[state.elements.length - 1];

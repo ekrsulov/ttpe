@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { VStack, HStack, Text, Icon } from '@chakra-ui/react';
+import { VStack, HStack, Text, Icon, useColorModeValue } from '@chakra-ui/react';
 import { Copy, Clipboard, Group as GroupIcon, RulerDimensionLine, MoveUpLeft, MoveDownRight } from 'lucide-react';
 import { extractSubpaths } from '../../utils/path';
 import type { PathData } from '../../types';
@@ -55,7 +55,17 @@ const SelectPanelItemComponent: React.FC<SelectPanelItemProps> = ({
   const elementId = item.element.id;
   const subpathIndex = item.type === 'subpath' ? item.subpathIndex : undefined;
   const canCopyPath = item.type === 'element' && item.element.type === 'path';
-  const containerBg = isSelected ? 'blue.50' : 'gray.50';
+  const selectedBg = useColorModeValue('blue.50', 'whiteAlpha.200');
+  const defaultBg = useColorModeValue('gray.50', 'whiteAlpha.100');
+  const baseTextColor = useColorModeValue('gray.800', 'gray.100');
+  const selectedTextColor = useColorModeValue('blue.700', 'blue.200');
+  const hiddenTextColor = useColorModeValue('gray.400', 'whiteAlpha.500');
+  const mutedTextColor = useColorModeValue('gray.600', 'gray.300');
+  const iconMutedColor = useColorModeValue('gray.500', 'gray.400');
+  const containerBg = isSelected ? selectedBg : defaultBg;
+  const primaryTextColor = isHidden ? hiddenTextColor : isSelected ? selectedTextColor : baseTextColor;
+  const secondaryTextColor = isHidden ? hiddenTextColor : mutedTextColor;
+  const iconColor = isHidden ? hiddenTextColor : iconMutedColor;
 
   const itemKey = subpathIndex !== undefined
     ? `${item.element.id}-${item.type}-${subpathIndex}`
@@ -84,75 +94,75 @@ const SelectPanelItemComponent: React.FC<SelectPanelItemProps> = ({
       )}
       <VStack spacing={0} align="stretch" flex={1} justifyContent="center">
         {/* Línea 1: Info principal */}
-        <HStack spacing={0} align="center">
+      <HStack spacing={0} align="center">
+        <Text
+          fontWeight="500"
+          fontSize="10px"
+          color={primaryTextColor}
+          lineHeight="1.4"
+        >
+          {item.type === 'element' ? 'path' : `subpath-${subpathIndex ?? 0}`}
+        </Text>
+        <ConditionalTooltip label={`${item.pointCount} points`}>
           <Text
             fontWeight="500"
             fontSize="10px"
-            color={isHidden ? 'gray.400' : isSelected ? 'blue.700' : 'gray.800'}
+            color={primaryTextColor}
             lineHeight="1.4"
           >
-            {item.type === 'element' ? 'path' : `subpath-${subpathIndex ?? 0}`}
+            {` (${item.pointCount})`}
           </Text>
-          <ConditionalTooltip label={`${item.pointCount} points`}>
+        </ConditionalTooltip>
+        {item.type === 'element' && (
+          <ConditionalTooltip label={`Z-index: ${item.element.zIndex}`}>
             <Text
               fontWeight="500"
               fontSize="10px"
-              color={isHidden ? 'gray.400' : isSelected ? 'blue.700' : 'gray.800'}
+              color={primaryTextColor}
               lineHeight="1.4"
             >
-              {` (${item.pointCount})`}
+              {` z: ${item.element.zIndex}`}
             </Text>
           </ConditionalTooltip>
-          {item.type === 'element' && (
-            <ConditionalTooltip label={`Z-index: ${item.element.zIndex}`}>
-              <Text
-                fontWeight="500"
-                fontSize="10px"
-                color={isHidden ? 'gray.400' : isSelected ? 'blue.700' : 'gray.800'}
-                lineHeight="1.4"
-              >
-                {` z: ${item.element.zIndex}`}
-              </Text>
-            </ConditionalTooltip>
-          )}
+        )}
+      </HStack>
+      {/* Línea 2: Dimensiones */}
+      <ConditionalTooltip label={`Dimensions: ${dimensions ?? '—'}`}>
+        <HStack spacing={1} align="center">
+          <Icon as={RulerDimensionLine} boxSize={3} color={iconColor} />
+          <Text
+            fontSize="9px"
+            color={secondaryTextColor}
+            lineHeight="1.4"
+          >
+            {dimensions ?? '—'}
+          </Text>
         </HStack>
-        {/* Línea 2: Dimensiones */}
-        <ConditionalTooltip label={`Dimensions: ${dimensions ?? '—'}`}>
-          <HStack spacing={1} align="center">
-            <Icon as={RulerDimensionLine} boxSize={3} color={isHidden ? 'gray.400' : 'gray.500'} />
-            <Text
-              fontSize="9px"
-              color={isHidden ? 'gray.400' : 'gray.600'}
-              lineHeight="1.4"
-            >
-              {dimensions ?? '—'}
-            </Text>
-          </HStack>
-        </ConditionalTooltip>
-        {/* Línea 3: Primera coordenada */}
-        <ConditionalTooltip label={`Top-left corner: ${coord1 ?? '—'}`}>
-          <HStack spacing={1} align="center">
-            <Icon as={MoveUpLeft} boxSize={3} color={isHidden ? 'gray.400' : 'gray.500'} />
-            <Text
-              fontSize="9px"
-              color={isHidden ? 'gray.400' : 'gray.600'}
-              lineHeight="1.4"
-            >
-              {coord1 ?? '—'}
-            </Text>
-          </HStack>
-        </ConditionalTooltip>
-        {/* Línea 4: Segunda coordenada */}
-        <ConditionalTooltip label={`Bottom-right corner: ${coord2 ?? '—'}`}>
-          <HStack spacing={1} align="center">
-            <Icon as={MoveDownRight} boxSize={3} color={isHidden ? 'gray.400' : 'gray.500'} />
-            <Text
-              fontSize="9px"
-              color={isHidden ? 'gray.400' : 'gray.600'}
-              lineHeight="1.4"
-            >
-              {coord2 ?? '—'}
-            </Text>
+      </ConditionalTooltip>
+      {/* Línea 3: Primera coordenada */}
+      <ConditionalTooltip label={`Top-left corner: ${coord1 ?? '—'}`}>
+        <HStack spacing={1} align="center">
+          <Icon as={MoveUpLeft} boxSize={3} color={iconColor} />
+          <Text
+            fontSize="9px"
+            color={secondaryTextColor}
+            lineHeight="1.4"
+          >
+            {coord1 ?? '—'}
+          </Text>
+        </HStack>
+      </ConditionalTooltip>
+      {/* Línea 4: Segunda coordenada */}
+      <ConditionalTooltip label={`Bottom-right corner: ${coord2 ?? '—'}`}>
+        <HStack spacing={1} align="center">
+          <Icon as={MoveDownRight} boxSize={3} color={iconColor} />
+          <Text
+            fontSize="9px"
+            color={secondaryTextColor}
+            lineHeight="1.4"
+          >
+            {coord2 ?? '—'}
+          </Text>
           </HStack>
         </ConditionalTooltip>
       </VStack>

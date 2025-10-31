@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box } from '@chakra-ui/react';
+import { Box, useColorModeValue } from '@chakra-ui/react';
 import type { Command } from '../types';
 import { commandsToString } from '../utils/path';
 import { measureCommandsBounds } from '../utils/measurementUtils';
@@ -14,6 +14,9 @@ interface PathThumbnailProps {
 export const PathThumbnail: React.FC<PathThumbnailProps> = ({ 
   commands
 }) => {
+  // Use white stroke in dark mode, black in light mode
+  const strokeColor = useColorModeValue('#000000', '#ffffff');
+
   if (commands.length === 0) {
     return (
       <Box 
@@ -49,10 +52,10 @@ export const PathThumbnail: React.FC<PathThumbnailProps> = ({
 
   const pathString = commandsToString(commands);
 
-  // Always use black stroke and no fill for thumbnails
+  // Always use no fill for thumbnails
   const fill = 'none';
   const fillOpacity = 1;
-  const stroke = '#000000';
+  const stroke = strokeColor;
 
   // Use fixed stroke width for thumbnail
   const thumbnailStrokeWidth = 1;

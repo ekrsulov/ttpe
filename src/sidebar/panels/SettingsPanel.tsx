@@ -4,7 +4,8 @@ import {
   FormControl,
   FormLabel,
   Select,
-  useBreakpointValue
+  useBreakpointValue,
+  useColorMode
 } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { logger, LogLevel } from '../../utils';
@@ -16,6 +17,7 @@ export const SettingsPanel: React.FC = () => {
   // Use individual selectors to prevent re-renders on unrelated changes
   const settings = useCanvasStore(state => state.settings);
   const updateSettings = useCanvasStore(state => state.updateSettings);
+  const { colorMode, toggleColorMode } = useColorMode();
   
   // Detect if we're on mobile (base breakpoint)
   const isMobile = useBreakpointValue({ base: true, md: false }) ?? false;
@@ -76,10 +78,17 @@ export const SettingsPanel: React.FC = () => {
   return (
     <Panel>
       <VStack spacing={3} align="stretch" pt={2}>
+        <PanelToggle
+          isChecked={colorMode === 'dark'}
+          onChange={() => toggleColorMode()}
+        >
+          Enable dark mode
+        </PanelToggle>
+
         {/* Log Level Selector - Only in development */}
         {import.meta.env.DEV && (
           <FormControl>
-            <FormLabel fontSize="12px" fontWeight="medium" color="gray.600" mb={1}>
+            <FormLabel fontSize="12px" fontWeight="medium" color="gray.600" _dark={{ color: 'gray.400' }} mb={1}>
               Log Level
             </FormLabel>
             <Select

@@ -4,6 +4,7 @@ import type { Point, CanvasElement } from '.';
 import type { CanvasControllerValue } from '../canvas/controller/CanvasControllerContext';
 import type { Bounds } from '../utils/boundsUtils';
 import type { CanvasEventBus } from '../canvas/CanvasEventBusContext';
+import type { PointPositionFeedback } from '../canvas/hooks/useCanvasShapeCreation';
 
 export type CanvasShortcutStoreApi = Pick<StoreApi<object>, 'getState' | 'subscribe'>;
 
@@ -48,6 +49,7 @@ export interface CanvasLayerContext extends CanvasControllerValue, Record<string
   isDragging: boolean;
   getElementBounds: (element: CanvasElement) => Bounds | null;
   setDragStart: (point: Point | null) => void;
+  pointPositionFeedback?: PointPositionFeedback;
 }
 
 export interface CanvasLayerContribution {

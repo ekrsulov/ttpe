@@ -7,6 +7,7 @@ import { Button } from './button'
 import { IconButton } from './iconButton'
 import { Accordion } from './accordion'
 import { Input } from './input'
+import { Select } from './select'
 import { Checkbox } from './checkbox'
 import { Drawer } from './drawer'
 
@@ -15,6 +16,7 @@ export const components = {
   IconButton,
   Accordion,
   Input,
+  Select,
   Checkbox,
   Drawer,
 }

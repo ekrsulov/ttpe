@@ -7,6 +7,7 @@ import { EditPanel } from './EditPanel';
 import { ControlPointAlignmentPanel } from './ControlPointAlignmentPanel';
 import { EditPointsOverlay } from './EditPointsOverlay';
 import { AddPointFeedbackOverlay } from './AddPointFeedbackOverlay';
+import { FeedbackOverlay } from '../../overlays';
 import { BlockingOverlay } from '../../overlays';
 
 const editSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
@@ -153,6 +154,23 @@ export const editPlugin: PluginDefinition<CanvasStore> = {
             hoverPosition={addPointMode.hoverPosition}
             isActive={addPointMode.isActive}
             viewport={viewport}
+          />
+        );
+      },
+    },
+    {
+      id: 'point-position-feedback',
+      placement: 'foreground',
+      render: ({ activePlugin, pointPositionFeedback, viewport, canvasSize }) => {
+        if (activePlugin !== 'edit' || !pointPositionFeedback?.visible) {
+          return null;
+        }
+
+        return (
+          <FeedbackOverlay
+            viewport={viewport}
+            canvasSize={canvasSize}
+            pointPositionFeedback={pointPositionFeedback}
           />
         );
       },

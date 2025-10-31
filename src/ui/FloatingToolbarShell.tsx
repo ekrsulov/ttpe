@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, type BoxProps } from '@chakra-ui/react';
+import { Box, type BoxProps, useColorModeValue } from '@chakra-ui/react';
 
 export interface FloatingToolbarShellProps extends Omit<BoxProps, 'position'> {
   /**
@@ -32,6 +32,10 @@ export const FloatingToolbarShell: React.FC<FloatingToolbarShellProps> = ({
   ...boxProps
 }) => {
   const isSidebarPinned = sidebarWidth > 0;
+  const toolbarBg = useColorModeValue('surface.toolbar', 'surface.toolbar');
+  const toolbarColor = useColorModeValue('gray.700', 'gray.100');
+  const borderColor = useColorModeValue('border.toolbar', 'border.toolbar');
+  const toolbarShadow = useColorModeValue('lg', 'dark-lg');
 
   // Calculate position based on toolbar type
   const positionProps = toolbarPosition === 'top'
@@ -54,9 +58,12 @@ export const FloatingToolbarShell: React.FC<FloatingToolbarShellProps> = ({
       marginLeft={isSidebarPinned ? 'auto' : 0}
       marginRight={isSidebarPinned ? 'auto' : 0}
       width="fit-content"
-      bg="white"
+      bg={toolbarBg}
+      color={toolbarColor}
       borderRadius="xl"
-      boxShadow="lg"
+      borderWidth="1px"
+      borderColor={borderColor}
+      boxShadow={toolbarShadow}
       px={1}
       py={1}
       zIndex={toolbarPosition === 'bottom' ? 1000 : 999}
@@ -64,7 +71,6 @@ export const FloatingToolbarShell: React.FC<FloatingToolbarShellProps> = ({
         userSelect: 'none',
         WebkitUserSelect: 'none',
         backdropFilter: 'blur(10px)',
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
         ...boxProps.sx,
       }}
       {...boxProps}

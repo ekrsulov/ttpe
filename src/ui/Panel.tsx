@@ -37,7 +37,10 @@ export const Panel: React.FC<PanelProps> = ({
   const { isOpen, onToggle } = useDisclosure({ defaultIsOpen: defaultOpen })
 
   return (
-    <Box bg="white" mb={0.5} position="relative">
+    <Box
+      mb={0.5}
+      position="relative"
+    >
       {showRenderCount && (
         <RenderCountBadgeWrapper componentName={`Panel: ${title || 'Untitled'}`} position="top-left" />
       )}

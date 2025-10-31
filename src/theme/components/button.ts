@@ -53,8 +53,22 @@ export const Button = {
           bg: 'gray.100',
         },
       },
+      _dark: {
+        bg: 'gray.700',
+        color: 'gray.200',
+        borderColor: 'whiteAlpha.300',
+        _hover: {
+          bg: 'gray.600',
+          _disabled: {
+            bg: 'gray.700',
+          },
+        },
+      },
       _active: {
         bg: 'gray.300',
+        _dark: {
+          bg: 'gray.500',
+        },
       },
       _disabled: {
         opacity: 0.6,
@@ -90,8 +104,17 @@ export const Button = {
       _hover: {
         bg: 'gray.100',
       },
+      _dark: {
+        color: 'gray.200',
+        _hover: {
+          bg: 'whiteAlpha.200',
+        },
+      },
       _active: {
         bg: 'gray.200',
+        _dark: {
+          bg: 'whiteAlpha.300',
+        },
       },
     },
 
@@ -104,8 +127,18 @@ export const Button = {
       _hover: {
         bg: 'gray.50',
       },
+      _dark: {
+        borderColor: 'whiteAlpha.300',
+        color: 'gray.200',
+        _hover: {
+          bg: 'whiteAlpha.100',
+        },
+      },
       _active: {
         bg: 'gray.100',
+        _dark: {
+          bg: 'whiteAlpha.200',
+        },
       },
     },
   },
