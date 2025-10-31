@@ -20,8 +20,9 @@ export const VirtualShiftButton: React.FC<VirtualShiftButtonProps> = ({
   // Colors that adapt to dark mode
   const inactiveBg = useColorModeValue('rgba(255, 255, 255, 0.95)', 'rgba(26, 32, 44, 0.95)');
   const inactiveHoverBg = useColorModeValue('gray.100', 'whiteAlpha.200');
-  const activeBg = useColorModeValue('blue.500', 'blue.200');
-  const activeHoverBg = useColorModeValue('blue.600', 'blue.400');
+  const activeBg = useColorModeValue('gray.800', 'gray.200');
+  const activeColor = useColorModeValue('white', 'gray.900');
+  const activeHoverBg = useColorModeValue('gray.800', 'gray.200');
 
   // Only show on mobile devices
   if (!isMobile) {
@@ -39,7 +40,9 @@ export const VirtualShiftButton: React.FC<VirtualShiftButtonProps> = ({
         aria-label="Toggle Virtual Shift"
         icon={<ArrowBigUp size={16} />}
         onClick={toggleVirtualShift}
-        colorScheme={isVirtualShiftActive ? 'blue' : 'gray'}
+        bg={isVirtualShiftActive ? activeBg : inactiveBg}
+        color={isVirtualShiftActive ? activeColor : undefined}
+        _hover={{ bg: isVirtualShiftActive ? activeHoverBg : inactiveHoverBg }}
         variant="solid"
         size="sm"
         borderRadius="md"

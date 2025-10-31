@@ -234,7 +234,7 @@ const SelectPanelComponent: React.FC = () => {
   const hasSelection = selectedElements.length > 0;
 
   const panelBg = useColorModeValue('surface.panel', 'surface.panel');
-  const resizeColor = useColorModeValue('blue.500', 'blue.200');
+  const resizeColor = useColorModeValue('gray.600', 'gray.400');
   const resizeInactiveColor = useColorModeValue('gray.200', 'gray.700');
   const messageColor = useColorModeValue('gray.600', 'gray.300');
 

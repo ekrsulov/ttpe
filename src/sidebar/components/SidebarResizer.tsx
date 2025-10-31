@@ -28,8 +28,8 @@ export const SidebarResizer: React.FC<SidebarResizerProps> = ({
     reverseHorizontal: true, // Sidebar resizes from right edge
   });
 
-  const resizeBg = useColorModeValue('blue.500', 'blue.200');
-  const indicatorBg = useColorModeValue('blue.500', 'blue.200');
+  const resizeBg = useColorModeValue('gray.600', 'gray.400');
+  const indicatorBg = useColorModeValue('gray.600', 'gray.400');
 
   return (
     <Box

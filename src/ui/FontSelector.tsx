@@ -108,7 +108,7 @@ export const FontSelector: React.FC<FontSelectorProps> = ({
             }}
             borderColor="gray.300"
             _hover={{ borderColor: 'gray.400' }}
-            _focus={{ borderColor: 'blue.500', boxShadow: '0 0 0 1px var(--chakra-colors-blue-500)' }}
+            _focus={{ borderColor: 'gray.600', boxShadow: '0 0 0 1px var(--chakra-colors-gray-600)' }}
           />
           <InputRightElement h="full">
             <Box color="gray.600" _dark={{ color: 'gray.400' }}>
@@ -146,9 +146,9 @@ export const FontSelector: React.FC<FontSelectorProps> = ({
               onClick={() => handleFontSelect(font)}
               fontSize="sm"
               fontFamily={font}
-              bg={font === value ? 'blue.50' : 'transparent'}
+              bg={font === value ? 'gray.200' : 'transparent'}
               _dark={{
-                bg: font === value ? 'blue.900' : 'transparent'
+                bg: font === value ? 'gray.700' : 'transparent'
               }}
               _hover={{ bg: 'gray.50', _dark: { bg: 'whiteAlpha.100' } }}
               minH="32px"
@@ -177,7 +177,7 @@ export const FontSelector: React.FC<FontSelectorProps> = ({
               )}
               {font === value && (
                 <Text
-                  color="blue.500"
+                  color="gray.600"
                   fontSize="xs"
                   fontWeight="bold"
                   ml={2}

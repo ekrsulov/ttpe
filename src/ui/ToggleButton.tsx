@@ -32,23 +32,23 @@ export const ToggleButton: React.FC<ToggleButtonProps> = ({
     variant: 'unstyled' as const,
     size,
     isDisabled,
-    bg: isActive ? 'blue.500' : 'transparent',
+    bg: isActive ? 'gray.600' : 'transparent',
     color: isActive ? 'white' : 'gray.700',
     border: '1px solid',
-    borderColor: isActive ? 'blue.500' : 'gray.400',
+    borderColor: isActive ? 'gray.600' : 'gray.400',
     borderRadius: 'md',
     fontSize: size === 'sm' ? '10px' : size === 'md' ? '11px' : '12px',
     fontWeight: 'medium' as const,
     transition: 'all 0.2s',
     _hover: {
-      bg: isActive ? 'blue.600' : 'gray.50'
+      bg: isActive ? 'gray.700' : 'gray.50'
     },
     _dark: {
-      bg: isActive ? 'blue.200' : 'transparent',
+      bg: isActive ? 'gray.400' : 'transparent',
       color: isActive ? 'gray.800' : 'gray.400',
-      borderColor: isActive ? 'blue.200' : 'whiteAlpha.200',
+      borderColor: isActive ? 'gray.400' : 'whiteAlpha.200',
       _hover: {
-        bg: isActive ? 'blue.300' : 'whiteAlpha.100'
+        bg: isActive ? 'gray.500' : 'whiteAlpha.100'
       }
     },
     sx: {

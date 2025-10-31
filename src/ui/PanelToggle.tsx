@@ -21,10 +21,10 @@ export const PanelToggle: React.FC<PanelToggleProps> = ({
   const borderColor = useColorModeValue('gray.400', 'whiteAlpha.500');
   const hoverBackground = useColorModeValue('gray.50', 'whiteAlpha.100');
   const textColor = useColorModeValue('gray.700', 'gray.200');
-  const checkedBg = useColorModeValue('blue.500', 'blue.200');
-  const checkedBorder = useColorModeValue('blue.500', 'blue.200');
-  const checkedHoverBg = useColorModeValue('blue.600', 'blue.300');
-  const checkedHoverBorder = useColorModeValue('blue.600', 'blue.300');
+  const checkedBg = useColorModeValue('gray.600', 'gray.400');
+  const checkedBorder = useColorModeValue('gray.600', 'gray.400');
+  const checkedHoverBg = useColorModeValue('gray.700', 'gray.500');
+  const checkedHoverBorder = useColorModeValue('gray.700', 'gray.500');
   const checkedColor = useColorModeValue('white', 'gray.800');
 
   return (
@@ -50,8 +50,8 @@ export const PanelToggle: React.FC<PanelToggleProps> = ({
             bg: isChecked ? checkedHoverBg : hoverBackground,
             borderColor: isChecked ? checkedHoverBorder : borderColor,
             _dark: {
-              bg: isChecked ? 'blue.300' : 'whiteAlpha.100',
-              borderColor: isChecked ? 'blue.300' : 'whiteAlpha.500',
+              bg: isChecked ? 'gray.500' : 'whiteAlpha.100',
+              borderColor: isChecked ? 'gray.500' : 'whiteAlpha.500',
             },
           },
           _disabled: {
@@ -59,7 +59,7 @@ export const PanelToggle: React.FC<PanelToggleProps> = ({
             cursor: 'not-allowed',
           },
           _dark: {
-            borderColor: isChecked ? 'blue.200' : 'whiteAlpha.500',
+            borderColor: isChecked ? 'gray.400' : 'whiteAlpha.500',
           },
         },
         '& .chakra-checkbox__label': {

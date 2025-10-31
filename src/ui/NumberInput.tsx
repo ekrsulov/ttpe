@@ -118,8 +118,8 @@ export const NumberInput: React.FC<NumberInputProps> = ({
           bg: 'gray.800'
         }}
         _focus={{
-          borderColor: 'blue.500',
-          boxShadow: '0 0 0 1px var(--chakra-colors-blue-500)'
+          borderColor: 'gray.600',
+          boxShadow: '0 0 0 1px var(--chakra-colors-gray-600)'
         }}
       />
       {suffix && (

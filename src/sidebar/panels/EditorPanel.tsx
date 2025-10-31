@@ -46,6 +46,11 @@ export const EditorPanel: React.FC = () => {
   const inputBorderColor = useColorModeValue('gray.300', 'whiteAlpha.300');
   const inputBg = useColorModeValue('white', 'whiteAlpha.100');
   
+  // Colors for active style eyedropper button
+  const activeButtonBg = useColorModeValue('gray.800', 'gray.200');
+  const activeButtonColor = useColorModeValue('white', 'gray.900');
+  const activeButtonHoverBg = useColorModeValue('gray.800', 'gray.200');
+  
   // Calculate selected paths count - only re-renders if the count changes (not when positions change)
   const selectedPathsCount = useCanvasStore(state => {
     return state.elements.filter(el => state.selectedIds.includes(el.id) && el.type === 'path').length;
@@ -166,7 +171,7 @@ export const EditorPanel: React.FC = () => {
         <HStack minH="24px">
           {/* Style Eyedropper Button */}
           <ConditionalTooltip label={selectedPathsCount !== 1 ? 'Select exactly one path to copy its style' : styleEyedropper.isActive ? 'Click on another path to apply style' : 'Copy style from selected path'}>
-            <ChakraIconButton
+                        <ChakraIconButton
               aria-label={styleEyedropper.isActive ? "Cancel Style Copy" : "Copy Style"}
               icon={<Pipette size={16} />}
               onClick={handleStyleEyedropper}
@@ -175,9 +180,10 @@ export const EditorPanel: React.FC = () => {
               h="20px"
               minW="20px"
               flexShrink={0}
-              bg="transparent"
+              bg={styleEyedropper.isActive ? activeButtonBg : "transparent"}
+              color={styleEyedropper.isActive ? activeButtonColor : undefined}
+              _hover={styleEyedropper.isActive ? { bg: activeButtonHoverBg } : undefined}
               isDisabled={!styleEyedropper.isActive && selectedPathsCount !== 1}
-              colorScheme={styleEyedropper.isActive ? 'blue' : 'gray'}
             />
           </ConditionalTooltip>
           <Box

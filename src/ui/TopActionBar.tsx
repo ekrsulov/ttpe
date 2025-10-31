@@ -1,5 +1,5 @@
 import React from 'react';
-import { HStack } from '@chakra-ui/react';
+import { HStack, useColorModeValue } from '@chakra-ui/react';
 import { Menu } from 'lucide-react';
 import { RenderCountBadgeWrapper } from './RenderCountBadgeWrapper';
 import { FloatingToolbarShell } from './FloatingToolbarShell';
@@ -36,6 +36,11 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
   showGridRulers = false,
 }) => {
   const showMenuButton = !isSidebarPinned;
+  
+  // Colors for active buttons
+  const activeBg = useColorModeValue('gray.800', 'gray.200');
+  const activeColor = useColorModeValue('white', 'gray.900');
+  const activeHoverBg = useColorModeValue('gray.800', 'gray.200');
   
   // Get grid state to conditionally show gridFill tool
   const gridEnabled = useCanvasStore(state => state.grid?.enabled ?? false);
@@ -113,7 +118,10 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
               label={label}
               onClick={() => onModeChange(id)}
               variant={activeMode === id ? 'solid' : 'ghost'}
-              colorScheme={activeMode === id ? 'blue' : 'gray'}
+              colorScheme={activeMode === id ? 'blackAlpha' : 'gray'}
+              bg={activeMode === id ? activeBg : undefined}
+              color={activeMode === id ? activeColor : undefined}
+              _hover={activeMode === id ? { bg: activeHoverBg } : undefined}
               tooltip={label}
               isDisabled={isDisabled}
               showTooltip={true}
@@ -129,7 +137,10 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
             label="Toggle sidebar"
             onClick={onMenuClick}
             variant={isSidebarOpen ? 'solid' : 'ghost'}
-            colorScheme={isSidebarOpen ? 'blue' : 'gray'}
+            colorScheme={isSidebarOpen ? 'blackAlpha' : 'gray'}
+            bg={isSidebarOpen ? activeBg : undefined}
+            color={isSidebarOpen ? activeColor : undefined}
+            _hover={isSidebarOpen ? { bg: activeHoverBg } : undefined}
             tooltip="Toggle Menu"
             showTooltip={true}
             title="Toggle Menu"

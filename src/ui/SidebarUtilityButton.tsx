@@ -21,8 +21,9 @@ export const SidebarUtilityButton: React.FC<SidebarUtilityButtonProps> = ({
   const inactiveColor = useColorModeValue('gray.700', 'gray.200');
   const inactiveBorder = useColorModeValue('gray.400', 'whiteAlpha.300');
   const inactiveHoverBg = useColorModeValue('gray.50', 'whiteAlpha.100');
-  const activeBg = useColorModeValue('blue.500', 'blue.300');
-  const activeHoverBg = useColorModeValue('blue.600', 'blue.400');
+  const activeBg = useColorModeValue('gray.800', 'gray.200');
+  const activeColor = useColorModeValue('white', 'gray.900');
+  const activeHoverBg = useColorModeValue('gray.800', 'gray.200');
   return (
     <Button
       aria-label={label}
@@ -31,7 +32,7 @@ export const SidebarUtilityButton: React.FC<SidebarUtilityButtonProps> = ({
       size="sm"
       data-active={isActive}
       bg={isActive ? activeBg : 'transparent'}
-      color={isActive ? 'white' : inactiveColor}
+      color={isActive ? activeColor : inactiveColor}
       border="1px solid"
       borderColor={isActive ? activeBg : inactiveBorder}
       borderRadius="md"

@@ -83,7 +83,7 @@ export const SliderControl: React.FC<SliderControlProps> = ({
         title={title}
       >
         <SliderTrack h="4px" borderRadius="2px" bg="gray.300" _dark={{ bg: 'gray.600' }}>
-          <SliderFilledTrack bg="blue.500" _dark={{ bg: 'blue.200' }} />
+          <SliderFilledTrack bg="gray.600" _dark={{ bg: 'gray.400' }} />
         </SliderTrack>
         <SliderThumb boxSize="12px" />
       </Slider>

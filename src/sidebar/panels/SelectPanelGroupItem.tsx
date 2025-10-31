@@ -54,7 +54,7 @@ const SelectPanelGroupItemComponent: React.FC<SelectPanelGroupItemProps> = ({
   const baseTextColor = useColorModeValue('gray.800', 'gray.100');
   const mutedTextColor = useColorModeValue('gray.600', 'gray.300');
   const hiddenTextColor = useColorModeValue('gray.400', 'whiteAlpha.500');
-  const selectedTextColor = useColorModeValue('blue.600', 'blue.200');
+  const selectedTextColor = useColorModeValue('gray.800', 'gray.200');
   const statusIconColor = useColorModeValue('gray.500', 'gray.400');
   const backgroundColor = isSelected
     ? selectedBg
