@@ -68,14 +68,14 @@ const adjustStrokeForDarkMode = (color: string): string => {
   return hslToHex(h, boostedSaturation, boostedLightness);
 };
 
-const createComplementaryFill = (strokeColor: string, fallback: string): string => {
-  if (fallback === 'none') {
-    return 'none';
-  }
-
-  const { h } = hexToHsl(strokeColor);
-  const complementaryHue = (h + 180) % 360;
-  return hslToHex(complementaryHue, 0.55, 0.35);
+const createSameHueFill = (strokeColor: string): string => {
+  const { h, s, l } = hexToHsl(strokeColor);
+  const normalizedS = s / 100;
+  const normalizedL = l / 100;
+  // Softer: lower saturation and lower lightness for dark mode
+  const softerS = clamp(normalizedS * 0.5, 0.1, 0.6);
+  const softerL = clamp(normalizedL - 0.25, 0.1, 0.4);
+  return hslToHex(h, softerS, softerL);
 };
 
 const BASE_PRESETS: Preset[] = [
@@ -176,7 +176,7 @@ const DARK_MODE_PRESETS: Preset[] = sortPresets(
     return {
       ...preset,
       strokeColor: adjustedStroke,
-      fillColor: createComplementaryFill(adjustedStroke, preset.fillColor),
+      fillColor: createSameHueFill(adjustedStroke),
     };
   })
 );
