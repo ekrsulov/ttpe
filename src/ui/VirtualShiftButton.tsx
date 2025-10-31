@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, IconButton, useBreakpointValue } from '@chakra-ui/react';
+import { Box, IconButton, useBreakpointValue, useColorModeValue } from '@chakra-ui/react';
 import { ArrowBigUp } from 'lucide-react';
 import { useCanvasStore } from '../store/canvasStore';
 import { RenderCountBadgeWrapper } from './RenderCountBadgeWrapper';
@@ -16,6 +16,12 @@ export const VirtualShiftButton: React.FC<VirtualShiftButtonProps> = ({
 
   const isSidebarPinned = sidebarWidth > 0;
   const isMobile = useBreakpointValue({ base: true, md: false }, { fallback: 'md' });
+
+  // Colors that adapt to dark mode
+  const inactiveBg = useColorModeValue('rgba(255, 255, 255, 0.95)', 'rgba(26, 32, 44, 0.95)');
+  const inactiveHoverBg = useColorModeValue('gray.100', 'whiteAlpha.200');
+  const activeBg = useColorModeValue('blue.500', 'blue.200');
+  const activeHoverBg = useColorModeValue('blue.600', 'blue.400');
 
   // Only show on mobile devices
   if (!isMobile) {
@@ -44,10 +50,10 @@ export const VirtualShiftButton: React.FC<VirtualShiftButtonProps> = ({
           minWidth: '36px',
           minHeight: '36px',
           backdropFilter: 'blur(10px)',
-          backgroundColor: isVirtualShiftActive ? 'blue.500' : 'rgba(255, 255, 255, 0.95)',
+          backgroundColor: isVirtualShiftActive ? activeBg : inactiveBg,
           border: 'none',
           _hover: {
-            backgroundColor: isVirtualShiftActive ? 'blue.600' : 'gray.100',
+            backgroundColor: isVirtualShiftActive ? activeHoverBg : inactiveHoverBg,
             transform: 'translateY(-1px)',
           },
           _active: {
