@@ -195,7 +195,7 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => {
     keyboardMovementPrecision: 2, // Default to 0 (integers only)
     showRenderCountBadges: false, // Show badges in development by default
     showMinimap: false, // Show minimap by default
-    showTooltips: true, // Show tooltips by default
+    showTooltips: false, // Show tooltips by default
     defaultStrokeColor: '#000000',
   },
 
