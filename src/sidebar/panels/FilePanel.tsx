@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Button as ChakraButton, HStack, VStack, Input, InputGroup, InputLeftAddon, useToast, FormControl, FormLabel, Text, Box, Collapse, useDisclosure, IconButton as ChakraIconButton } from '@chakra-ui/react';
+import { HStack, VStack, Input, InputGroup, InputLeftAddon, useToast, FormControl, FormLabel, Text, Box, Collapse, useDisclosure, IconButton as ChakraIconButton } from '@chakra-ui/react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import ConditionalTooltip from '../../ui/ConditionalTooltip';
 import { useCanvasStore } from '../../store/canvasStore';
@@ -7,6 +7,7 @@ import { getDefaultStrokeColorFromSettings } from '../../utils/defaultColors';
 import { logger, importSVGWithDimensions, measurePath, translateCommands, performPathUnion, transformCommands, calculateScaledStrokeWidth, flattenImportedElements } from '../../utils';
 import { Panel } from '../../ui/Panel';
 import { PanelToggle } from '../../ui/PanelToggle';
+import { PanelStyledButton } from '../../ui/PanelStyledButton';
 import type { PathData, CanvasElement } from '../../types';
 import type { ImportedElement } from '../../utils';
 
@@ -450,57 +451,47 @@ export const FilePanel: React.FC = () => {
         </FormControl>
 
         <HStack spacing={1}>
-          <ChakraButton
+          <PanelStyledButton
             onClick={handleSave}
-            variant="outline"
-            colorScheme="gray"
             flex={1}
             size="sm"
           >
             Save
-          </ChakraButton>
+          </PanelStyledButton>
 
-          <ChakraButton
+          <PanelStyledButton
             onClick={handleSaveAsSvg}
-            variant="outline"
-            colorScheme="gray"
             flex={1}
             size="sm"
           >
             Svg
-          </ChakraButton>
+          </PanelStyledButton>
 
-          <ChakraButton
+          <PanelStyledButton
             onClick={handleSaveAsPng}
-            variant="outline"
-            colorScheme="gray"
             flex={1}
             size="sm"
           >
             Png
-          </ChakraButton>
+          </PanelStyledButton>
         </HStack>
 
         <HStack spacing={1}>
-          <ChakraButton
+          <PanelStyledButton
             onClick={handleLoad}
-            variant="outline"
-            colorScheme="gray"
             flex={1}
             size="sm"
           >
             Load
-          </ChakraButton>
+          </PanelStyledButton>
 
-          <ChakraButton
+          <PanelStyledButton
             onClick={handleImportSVG}
-            variant="outline"
-            colorScheme="gray"
             flex={1}
             size="sm"
           >
             Import SVG
-          </ChakraButton>
+          </PanelStyledButton>
         </HStack>
 
         {/* Hidden file input for SVG import */}
@@ -556,7 +547,6 @@ export const FilePanel: React.FC = () => {
         <PanelToggle
           isChecked={pngSelectedOnly}
           onChange={(e) => setPngSelectedOnly(e.target.checked)}
-          accentColor="green"
         >
           Save selected elements only (PNG)
         </PanelToggle>
@@ -571,7 +561,6 @@ export const FilePanel: React.FC = () => {
         <PanelToggle
           isChecked={addFrame}
           onChange={(e) => setAddFrame(e.target.checked)}
-          accentColor="green"
         >
           Add frame to imported SVG
         </PanelToggle>
@@ -579,7 +568,6 @@ export const FilePanel: React.FC = () => {
         <PanelToggle
           isChecked={applyUnion}
           onChange={(e) => setApplyUnion(e.target.checked)}
-          accentColor="purple"
         >
           Apply union to imported paths
         </PanelToggle>
@@ -587,7 +575,6 @@ export const FilePanel: React.FC = () => {
         <PanelToggle
           isChecked={resizeImport}
           onChange={(e) => setResizeImport(e.target.checked)}
-          accentColor="orange"
         >
           Resize imported SVG
         </PanelToggle>
@@ -625,21 +612,19 @@ export const FilePanel: React.FC = () => {
 
         {/* Reset Application */}
         <Box pt={3}>
-          <ChakraButton
+          <PanelStyledButton
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
               useCanvasStore.persist.clearStorage();
               window.location.reload();
             }}
-            colorScheme="gray"
             size="sm"
             width="full"
-            variant="outline"
             title="Reset Application - This will clear all data and reload the page"
           >
             Reset App
-          </ChakraButton>
+          </PanelStyledButton>
         </Box>
       </VStack>
     </Panel>

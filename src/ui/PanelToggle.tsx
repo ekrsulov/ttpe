@@ -5,7 +5,6 @@ export interface PanelToggleProps {
   isChecked: boolean;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   isDisabled?: boolean;
-  accentColor?: string;
   children: React.ReactNode;
 }
 
@@ -17,14 +16,16 @@ export const PanelToggle: React.FC<PanelToggleProps> = ({
   isChecked,
   onChange,
   isDisabled = false,
-  accentColor = 'blue',
   children
 }) => {
-  const baseColor = `${accentColor}.500`;
-  const hoverColor = `${accentColor}.600`;
   const borderColor = useColorModeValue('gray.400', 'whiteAlpha.500');
   const hoverBackground = useColorModeValue('gray.50', 'whiteAlpha.100');
   const textColor = useColorModeValue('gray.700', 'gray.200');
+  const checkedBg = useColorModeValue('blue.500', 'blue.200');
+  const checkedBorder = useColorModeValue('blue.500', 'blue.200');
+  const checkedHoverBg = useColorModeValue('blue.600', 'blue.300');
+  const checkedHoverBorder = useColorModeValue('blue.600', 'blue.300');
+  const checkedColor = useColorModeValue('white', 'gray.800');
 
   return (
     <ChakraCheckbox
@@ -34,23 +35,23 @@ export const PanelToggle: React.FC<PanelToggleProps> = ({
       size="sm"
       sx={{
         '& .chakra-checkbox__control': {
-          bg: isChecked ? baseColor : 'transparent',
-          borderColor: isChecked ? baseColor : borderColor,
+          bg: isChecked ? checkedBg : 'transparent',
+          borderColor: isChecked ? checkedBorder : borderColor,
           _checked: {
-            bg: baseColor,
-            borderColor: baseColor,
-            color: 'white',
+            bg: checkedBg,
+            borderColor: checkedBorder,
+            color: checkedColor,
             _hover: {
-              bg: hoverColor,
-              borderColor: hoverColor,
+              bg: checkedHoverBg,
+              borderColor: checkedHoverBorder,
             }
           },
           _hover: {
-            bg: isChecked ? hoverColor : hoverBackground,
-            borderColor: isChecked ? hoverColor : borderColor,
+            bg: isChecked ? checkedHoverBg : hoverBackground,
+            borderColor: isChecked ? checkedHoverBorder : borderColor,
             _dark: {
-              bg: isChecked ? hoverColor : 'whiteAlpha.100',
-              borderColor: isChecked ? hoverColor : 'whiteAlpha.500',
+              bg: isChecked ? 'blue.300' : 'whiteAlpha.100',
+              borderColor: isChecked ? 'blue.300' : 'whiteAlpha.500',
             },
           },
           _disabled: {
@@ -58,7 +59,7 @@ export const PanelToggle: React.FC<PanelToggleProps> = ({
             cursor: 'not-allowed',
           },
           _dark: {
-            borderColor: isChecked ? baseColor : 'whiteAlpha.500',
+            borderColor: isChecked ? 'blue.200' : 'whiteAlpha.500',
           },
         },
         '& .chakra-checkbox__label': {

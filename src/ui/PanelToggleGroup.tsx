@@ -7,7 +7,6 @@ export interface ToggleConfig {
   isChecked: boolean;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   isDisabled?: boolean;
-  accentColor?: string;
 }
 
 interface PanelToggleGroupProps {
@@ -46,7 +45,6 @@ export const PanelToggleGroup: React.FC<PanelToggleGroupProps> = ({
           isChecked={toggle.isChecked}
           onChange={toggle.onChange}
           isDisabled={toggle.isDisabled}
-          accentColor={toggle.accentColor}
         >
           {toggle.label}
         </PanelToggle>

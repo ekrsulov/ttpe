@@ -27,6 +27,12 @@ export const PresetButton: React.FC<PresetButtonProps> = ({ preset, onClick, isA
         border="none"
         boxShadow={isActive ? '0 0 0 1px var(--chakra-colors-blue-500)' : 'none'}
         _hover={{ transform: 'scale(1.05)' }}
+        _dark={{
+          bg: 'transparent',
+          _hover: {
+            bg: 'transparent'
+          }
+        }}
         transition="all 0.2s ease"
       >
         <svg

@@ -45,7 +45,6 @@ const GuidelinesPanelComponent: React.FC = () => {
             isChecked={guidelines?.debugMode ?? false}
             onChange={handleToggleDebugMode}
             isDisabled={!(guidelines?.enabled ?? false)}
-            accentColor="orange"
           >
             Debug (show all)
           </PanelToggle>

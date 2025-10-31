@@ -26,7 +26,6 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
   showSettingsPanel,
   panelContributions = [],
 }) => {
-  const panelBg = useColorModeValue('surface.panelSecondary', 'surface.panelSecondary');
   const scrollbarTrack = useColorModeValue('#f1f1f1', 'rgba(255, 255, 255, 0.06)');
   const scrollbarThumb = useColorModeValue('#888', 'rgba(255, 255, 255, 0.3)');
   const scrollbarThumbHover = useColorModeValue('#555', 'rgba(255, 255, 255, 0.45)');
@@ -68,7 +67,7 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
       display="flex"
       flexDirection="column"
       gap={0.5}
-      bg={panelBg}
+      bg="surface.panel"
       minH={0} // Important: allows flex item to shrink below content size
       css={{
         '&::-webkit-scrollbar': {

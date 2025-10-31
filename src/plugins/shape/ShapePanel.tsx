@@ -1,6 +1,7 @@
 import React from 'react';
-import { HStack, IconButton as ChakraIconButton, Checkbox, VStack, Text } from '@chakra-ui/react';
-import ConditionalTooltip from '../../ui/ConditionalTooltip';
+import { HStack, VStack } from '@chakra-ui/react';
+import { PanelToggle } from '../../ui/PanelToggle';
+import { ToggleButton } from '../../ui/ToggleButton';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Square, Circle, Triangle, type LucideIcon } from 'lucide-react';
 import { Panel } from '../../ui/Panel';
@@ -37,50 +38,25 @@ export const ShapePanel: React.FC = () => {
             const shouldHighlight = isShapeModeActive && isShapeSelected;
 
             return (
-              <ConditionalTooltip key={shapeItem.type} label={`${shapeItem.label} - Click and drag to create`} fontSize="xs">
-                <ChakraIconButton
-                  aria-label={shapeItem.label}
-                  icon={<IconComponent size={14} />}
-                  onClick={() => handleShapeSelect(shapeItem.type)}
-                  variant="unstyled"
-                  size="sm"
-                  bg={shouldHighlight ? 'blue.500' : 'transparent'}
-                  color={shouldHighlight ? 'white' : 'gray.700'}
-                  border="1px solid"
-                  borderColor={shouldHighlight ? 'blue.500' : 'gray.400'}
-                  borderRadius="md"
-                  fontWeight="medium"
-                  transition="all 0.2s"
-                  _hover={{
-                    bg: shouldHighlight ? 'blue.600' : 'gray.50'
-                  }}
-                  _dark={{
-                    color: shouldHighlight ? 'white' : 'gray.300',
-                    borderColor: shouldHighlight ? 'blue.500' : 'whiteAlpha.400',
-                    _hover: {
-                      bg: shouldHighlight ? 'blue.600' : 'whiteAlpha.100'
-                    }
-                  }}
-                  sx={{
-                    minH: '28px',
-                    px: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                />
-              </ConditionalTooltip>
+              <ToggleButton
+                key={shapeItem.type}
+                isActive={shouldHighlight}
+                onClick={() => handleShapeSelect(shapeItem.type)}
+                icon={<IconComponent size={14} />}
+                aria-label={`${shapeItem.label} - Click and drag to create`}
+                title={`${shapeItem.label} - Click and drag to create`}
+                size="lg"
+              />
             );
           })}
         </HStack>
         
-        <Checkbox
-          size="sm"
+        <PanelToggle
           isChecked={shape?.keepShapeMode || false}
           onChange={(e) => updateShapeState?.({ keepShapeMode: e.target.checked })}
         >
-          <Text fontSize="xs">Keep creating shapes</Text>
-        </Checkbox>
+          Keep creating shapes
+        </PanelToggle>
       </VStack>
     </Panel>
   );

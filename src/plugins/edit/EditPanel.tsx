@@ -2,8 +2,6 @@ import React from 'react';
 import {
   VStack,
   HStack,
-  Button,
-  Checkbox as ChakraCheckbox,
   Box,
   Divider,
   Switch,
@@ -13,6 +11,8 @@ import {
 import { SliderControl } from '../../ui/SliderControl';
 import { PercentSliderControl } from '../../ui/PercentSliderControl';
 import { SectionHeader } from '../../ui/SectionHeader';
+import { PanelToggle } from '../../ui/PanelToggle';
+import { PanelStyledButton } from '../../ui/PanelStyledButton';
 import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
 
 interface EditPanelProps {
@@ -123,17 +123,16 @@ export const EditPanel: React.FC<EditPanelProps> = ({
           <Heading size="xs" fontWeight="extrabold">Smooth Brush</Heading>
           <HStack spacing={2}>
             {!smoothBrush.isActive && (
-              <Button
+              <PanelStyledButton
                 onClick={applySmoothBrush}
                 size="xs"
-                variant="outline"
                 title={smoothBrush.isActive && selectedCommands.length > 0
                   ? `Apply Smooth to ${selectedCommands.length} Selected Point${selectedCommands.length === 1 ? '' : 's'}`
                   : 'Apply Smooth Brush'
                 }
               >
                 Apply
-              </Button>
+              </PanelStyledButton>
             )}
             <Switch
               isChecked={smoothBrush.isActive}
@@ -150,55 +149,19 @@ export const EditPanel: React.FC<EditPanelProps> = ({
 
         {/* Simplify Points Checkbox */}
         <HStack justify="space-between" align="center">
-          <ChakraCheckbox
-            id="simplifyPoints"
+          <PanelToggle
             isChecked={smoothBrush.simplifyPoints}
             onChange={(e) => updateSmoothBrush({ simplifyPoints: e.target.checked })}
-            size="sm"
-            sx={{
-              '& .chakra-checkbox__control': {
-                bg: smoothBrush.simplifyPoints ? 'blue.500' : 'transparent',
-                borderColor: smoothBrush.simplifyPoints ? 'blue.500' : 'gray.400',
-                _dark: {
-                  borderColor: smoothBrush.simplifyPoints ? 'blue.500' : 'whiteAlpha.500'
-                },
-                _checked: {
-                  bg: 'blue.500',
-                  borderColor: 'blue.500',
-                  color: 'white',
-                  _hover: {
-                    bg: 'blue.600',
-                    borderColor: 'blue.600',
-                  }
-                },
-                _hover: {
-                  bg: smoothBrush.simplifyPoints ? 'blue.600' : 'gray.50',
-                  borderColor: smoothBrush.simplifyPoints ? 'blue.600' : 'gray.400',
-                  _dark: {
-                    bg: smoothBrush.simplifyPoints ? 'blue.600' : 'whiteAlpha.100',
-                    borderColor: smoothBrush.simplifyPoints ? 'blue.600' : 'whiteAlpha.500'
-                  }
-                }
-              },
-              '& .chakra-checkbox__label': {
-                color: 'gray.700',
-                _dark: {
-                  color: 'gray.200',
-                },
-              }
-            }}
           >
             Simplify Points
-          </ChakraCheckbox>
-          <Button
+          </PanelToggle>
+          <PanelStyledButton
             onClick={resetSmoothBrush}
             size="xs"
-            variant="outline"
-            colorScheme="gray"
             title="Reset all smooth brush settings to defaults"
           >
             Reset
-          </Button>
+          </PanelStyledButton>
         </HStack>
 
         {/* Radius Slider - only show when brush mode is active */}

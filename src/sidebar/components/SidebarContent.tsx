@@ -123,6 +123,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
     ]
   );
 
+  
   return (
     <EditPanelContext.Provider value={editPanelContextValue}>
       {/* Resizer handle - only for pinned variant */}
@@ -136,7 +137,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
       )}
       
       {/* Body container with relative positioning for absolute footer */}
-      <Box p={0} display="flex" flexDirection="column" flex="1" overflow="hidden" position="relative">
+      <Box bg="surface.panel" p={0} display="flex" flexDirection="column" flex="1" overflow="hidden" position="relative">
         {variant === 'pinned' && (
           <RenderCountBadgeWrapper componentName="Sidebar" position="top-right" />
         )}

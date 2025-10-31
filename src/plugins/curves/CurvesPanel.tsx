@@ -2,7 +2,6 @@ import React from 'react';
 import {
   VStack,
   HStack,
-  Button,
   Text,
   Box,
   useBreakpointValue,
@@ -11,6 +10,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { Panel } from '../../ui/Panel';
+import { PanelStyledButton } from '../../ui/PanelStyledButton';
 import { useCanvasStore } from '../../store/canvasStore';
 import { useCanvasCurves } from './useCanvasCurves';
 
@@ -105,26 +105,22 @@ const CurvesPanelComponent: React.FC = () => {
 
             {/* Point Actions */}
             <HStack spacing={2} mt={2}>
-              <Button
+              <PanelStyledButton
                 onClick={handleDeleteSelectedPoint}
                 size="sm"
-                variant="outline"
-                colorScheme="gray"
                 flex={1}
                 fontSize="12px"
               >
                 Delete
-              </Button>
-              <Button
+              </PanelStyledButton>
+              <PanelStyledButton
                 onClick={handleDeselectPoint}
                 size="sm"
-                variant="outline"
-                colorScheme="gray"
                 flex={1}
                 fontSize="12px"
               >
                 Deselect
-              </Button>
+              </PanelStyledButton>
             </HStack>
           </Box>
         )}
@@ -192,27 +188,23 @@ const CurvesPanelComponent: React.FC = () => {
         {/* Finish and Cancel Buttons */}
         {hasPoints && (
           <HStack spacing={2}>
-            <Button
+            <PanelStyledButton
               onClick={handleFinishCurve}
               size="sm"
-              variant="outline"
-              colorScheme="gray"
               isDisabled={!canFinishCurve}
               flex={1}
               fontSize="12px"
             >
               Finish
-            </Button>
-            <Button
+            </PanelStyledButton>
+            <PanelStyledButton
               onClick={handleCancelCurve}
               size="sm"
-              variant="outline"
-              colorScheme="gray"
               flex={1}
               fontSize="12px"
             >
               Cancel
-            </Button>
+            </PanelStyledButton>
           </HStack>
         )}
       </VStack>

@@ -1,6 +1,7 @@
 import React from 'react';
-import { Flex, HStack, Heading, Button } from '@chakra-ui/react';
+import { Flex, HStack, Heading } from '@chakra-ui/react';
 import type { LucideIcon } from 'lucide-react';
+import { PanelStyledButton } from './PanelStyledButton';
 
 interface SectionHeaderProps {
   /** Icon component from lucide-react */
@@ -45,14 +46,13 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
         <Heading size="xs" fontWeight="extrabold">{title}</Heading>
       </HStack>
       {showAction && onAction && (
-        <Button
+        <PanelStyledButton
           onClick={onAction}
           size="xs"
-          variant="outline"
           title={actionTitle || title}
         >
           {actionLabel}
-        </Button>
+        </PanelStyledButton>
       )}
     </Flex>
   );

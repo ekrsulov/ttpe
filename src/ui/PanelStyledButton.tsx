@@ -9,10 +9,12 @@ import { Button, type ButtonProps } from '@chakra-ui/react';
  * which have been removed from the codebase.
  */
 export const PanelStyledButton: React.FC<ButtonProps> = (props) => {
+  const { size = 'sm', ...restProps } = props;
+  
   return (
     <Button
       variant="unstyled"
-      size="sm"
+      size={size}
       bg="transparent"
       color="gray.700"
       border="1px solid"
@@ -32,13 +34,13 @@ export const PanelStyledButton: React.FC<ButtonProps> = (props) => {
         }
       }}
       sx={{
-        minH: '28px',
+        h: size === 'xs' ? '20px' : '28px',
         px: 2,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
       }}
-      {...props}
+      {...restProps}
     />
   );
 };

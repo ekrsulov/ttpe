@@ -9,7 +9,6 @@ import {
   Box,
   Text,
   IconButton as ChakraIconButton,
-  Button,
   Table,
   Thead,
   Tbody,
@@ -23,6 +22,8 @@ import {
 } from '@chakra-ui/react';
 import ConditionalTooltip from '../../ui/ConditionalTooltip';
 import { Panel } from '../../ui/Panel';
+import { ToggleButton } from '../../ui/ToggleButton';
+import { PanelStyledButton } from '../../ui/PanelStyledButton';
 
 export const ControlPointAlignmentPanel: React.FC = () => {
   // ALL HOOKS FIRST - must be called unconditionally
@@ -327,86 +328,32 @@ export const ControlPointAlignmentPanel: React.FC = () => {
     return (
       <VStack spacing={2} align="stretch" mb={2}>
         <HStack spacing={1}>
-          <Button
-            aria-label="Independent - Control points move freely"
+          <ToggleButton
+            isActive={(singlePointInfo.info?.type || 'independent') === 'independent'}
             onClick={() => handleAlignmentChange('independent')}
-            variant="unstyled"
-            size="xs"
-            bg={(singlePointInfo.info?.type || 'independent') === 'independent' ? 'blue.500' : 'transparent'}
-            color={(singlePointInfo.info?.type || 'independent') === 'independent' ? 'white' : 'text.primary'}
-            border="1px solid"
-            borderColor={(singlePointInfo.info?.type || 'independent') === 'independent' ? 'blue.500' : 'border.panel'}
-            borderRadius="md"
-            fontWeight="medium"
-            fontSize="10px"
-            transition="all 0.2s"
-            _hover={{
-              bg: (singlePointInfo.info?.type || 'independent') === 'independent' ? 'blue.600' : 'surface.panelSecondary'
-            }}
-            sx={{
-              minH: '20px',
-              px: 2,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+            aria-label="Independent - Control points move freely"
+            variant="text"
           >
             Independent
-          </Button>
+          </ToggleButton>
 
-          <Button
-            aria-label="Aligned - Control points maintain opposite directions"
+          <ToggleButton
+            isActive={(singlePointInfo.info?.type || 'independent') === 'aligned'}
             onClick={() => handleAlignmentChange('aligned')}
-            variant="unstyled"
-            size="xs"
-            bg={(singlePointInfo.info?.type || 'independent') === 'aligned' ? 'blue.500' : 'transparent'}
-            color={(singlePointInfo.info?.type || 'independent') === 'aligned' ? 'white' : 'text.primary'}
-            border="1px solid"
-            borderColor={(singlePointInfo.info?.type || 'independent') === 'aligned' ? 'blue.500' : 'border.panel'}
-            borderRadius="md"
-            fontWeight="medium"
-            fontSize="10px"
-            transition="all 0.2s"
-            _hover={{
-              bg: (singlePointInfo.info?.type || 'independent') === 'aligned' ? 'blue.600' : 'surface.panelSecondary'
-            }}
-            sx={{
-              minH: '20px',
-              px: 2,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+            aria-label="Aligned - Control points maintain opposite directions"
+            variant="text"
           >
             Aligned
-          </Button>
+          </ToggleButton>
 
-          <Button
-            aria-label="Mirrored - Control points are perfectly mirrored"
+          <ToggleButton
+            isActive={(singlePointInfo.info?.type || 'independent') === 'mirrored'}
             onClick={() => handleAlignmentChange('mirrored')}
-            variant="unstyled"
-            size="xs"
-            bg={(singlePointInfo.info?.type || 'independent') === 'mirrored' ? 'blue.500' : 'transparent'}
-            color={(singlePointInfo.info?.type || 'independent') === 'mirrored' ? 'white' : 'text.primary'}
-            border="1px solid"
-            borderColor={(singlePointInfo.info?.type || 'independent') === 'mirrored' ? 'blue.500' : 'border.panel'}
-            borderRadius="md"
-            fontWeight="medium"
-            fontSize="10px"
-            transition="all 0.2s"
-            _hover={{
-              bg: (singlePointInfo.info?.type || 'independent') === 'mirrored' ? 'blue.600' : 'surface.panelSecondary'
-            }}
-            sx={{
-              minH: '20px',
-              px: 2,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+            aria-label="Mirrored - Control points are perfectly mirrored"
+            variant="text"
           >
             Mirrored
-          </Button>
+          </ToggleButton>
 
           <Box ml="auto">
             <ConditionalTooltip label={showDetails ? "Hide Details" : "Show Details"}>
@@ -447,8 +394,8 @@ export const ControlPointAlignmentPanel: React.FC = () => {
             <Text><Text as="strong" color="text.primary">Alignment:</Text> {singlePointInfo.info?.type || 'independent'}</Text>
             {singlePointInfo.pairedPoint && (
               <>
-                <Text><Text as="strong" color="gray.700">Paired Point:</Text> ({singlePointInfo.pairedPoint.x.toFixed(2)}, {singlePointInfo.pairedPoint.y.toFixed(2)}) at command {singlePointInfo.pairedInfo?.commandIndex}, point {singlePointInfo.pairedInfo?.pointIndex}</Text>
-                <Text><Text as="strong" color="gray.700">Paired Anchor:</Text> ({singlePointInfo.anchor2?.x.toFixed(2)}, {singlePointInfo.anchor2?.y.toFixed(2)})</Text>
+                <Text><Text as="strong" color="text.primary">Paired Point:</Text> ({singlePointInfo.pairedPoint.x.toFixed(2)}, {singlePointInfo.pairedPoint.y.toFixed(2)}) at command {singlePointInfo.pairedInfo?.commandIndex}, point {singlePointInfo.pairedInfo?.pointIndex}</Text>
+                <Text><Text as="strong" color="text.primary">Paired Anchor:</Text> ({singlePointInfo.anchor2?.x.toFixed(2)}, {singlePointInfo.anchor2?.y.toFixed(2)})</Text>
                 <TableContainer>
                   <Table size="sm" fontSize="12px" mt={2}>
                     <Thead>
@@ -511,71 +458,61 @@ export const ControlPointAlignmentPanel: React.FC = () => {
           <Text><Text as="strong" color="text.primary">Location:</Text> {singlePointInfo.location}</Text>
           {hasClosingZCommand(selectedCmd.elementId, selectedCmd.commandIndex) && (
             <>
-              <Button
+              <PanelStyledButton
                 onClick={() => deleteZCommandForMPoint?.(selectedCmd.elementId, selectedCmd.commandIndex)}
-                colorScheme="gray"
                 size="xs"
                 fontSize="12px"
                 w="full"
-                variant="outline"
                 title="Delete the Z command that closes this path"
               >
                 Delete Z Command
-              </Button>
-              <Button
+              </PanelStyledButton>
+              <PanelStyledButton
                 onClick={() => convertZToLineForMPoint?.(selectedCmd.elementId, selectedCmd.commandIndex)}
-                colorScheme="gray"
                 size="xs"
                 fontSize="12px"
                 w="full"
-                variant="outline"
                 title="Convert the Z command to a line command"
               >
                 Convert Z to Line
-              </Button>
+              </PanelStyledButton>
             </>
           )}
           {(singlePointInfo.command.type === 'L' || singlePointInfo.command.type === 'C') &&
             isLastPointOfSubpath(selectedCmd.elementId, selectedCmd.commandIndex, selectedCmd.pointIndex) &&
             !isAtMPosition(selectedCmd.elementId, selectedCmd.commandIndex, selectedCmd.pointIndex) && (
-              <Button
+              <PanelStyledButton
                 onClick={() => moveToM?.(selectedCmd.elementId, selectedCmd.commandIndex, selectedCmd.pointIndex)}
-                colorScheme="gray"
                 size="xs"
                 fontSize="12px"
                 w="full"
-                variant="outline"
                 title="Move this point to start a new subpath"
               >
                 Move to M
-              </Button>
+              </PanelStyledButton>
             )}
           {(singlePointInfo.command.type === 'L' || singlePointInfo.command.type === 'C') && (
-            <Button
+            <PanelStyledButton
               onClick={() => convertCommandType?.(selectedCmd.elementId, selectedCmd.commandIndex)}
-              colorScheme="gray"
               size="xs"
               fontSize="12px"
               w="full"
-              variant="outline"
               title={`Change to ${singlePointInfo.command.type === 'L' ? 'Curve' : 'Line'}`}
             >
               Change to {singlePointInfo.command.type === 'L' ? 'Curve' : 'Line'}
-            </Button>
+            </PanelStyledButton>
           )}
           {(singlePointInfo.command.type === 'L' || singlePointInfo.command.type === 'C') &&
             canCutSubpathAtPoint(selectedCmd.elementId, selectedCmd.commandIndex, selectedCmd.pointIndex) && (
-              <Button
+              <PanelStyledButton
                 onClick={() => cutSubpathAtPoint?.(selectedCmd.elementId, selectedCmd.commandIndex, selectedCmd.pointIndex)}
-                colorScheme="gray"
                 size="xs"
                 fontSize="12px"
                 w="full"
-                variant="outline"
                 title="Cut the subpath at this point, creating two separate subpaths"
               >
                 Cut Subpath
-              </Button>
+              </PanelStyledButton>
             )}
         </VStack>
       )}

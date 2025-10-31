@@ -3,7 +3,6 @@ import {
   VStack,
   HStack,
   Input,
-  IconButton as ChakraIconButton,
   NumberInput,
   NumberInputField,
   NumberInputStepper,
@@ -14,6 +13,7 @@ import { useCanvasStore } from '../../store/canvasStore';
 import { Bold, Italic } from 'lucide-react';
 import { getAvailableFonts } from '../../utils';
 import { FontSelector } from '../../ui/FontSelector';
+import { ToggleButton } from '../../ui/ToggleButton';
 import { Panel } from '../../ui/Panel';
 import { logger } from '../../utils';
 import { createPropertyUpdater, createPropertyGetters, preventSpacebarPropagation } from '../../utils/panelHelpers';
@@ -103,68 +103,20 @@ export const TextPanel: React.FC = () => {
             </NumberInputStepper>
           </NumberInput>
           
-          <ChakraIconButton
-            aria-label="Bold"
-            icon={<Bold size={12} />}
+          <ToggleButton
+            isActive={current.fontWeight === 'bold'}
             onClick={() => handleFontWeightChange(current.fontWeight === 'bold' ? 'normal' : 'bold')}
-            variant="unstyled"
-            size="sm"
-            bg={current.fontWeight === 'bold' ? 'blue.500' : 'transparent'}
-            color={current.fontWeight === 'bold' ? 'white' : 'gray.700'}
-            border="1px solid"
-            borderColor={current.fontWeight === 'bold' ? 'blue.500' : 'gray.400'}
-            borderRadius="md"
-            fontWeight="medium"
-            transition="all 0.2s"
-            _hover={{
-              bg: current.fontWeight === 'bold' ? 'blue.600' : 'gray.50'
-            }}
-            _dark={{
-              color: current.fontWeight === 'bold' ? 'white' : 'gray.300',
-              borderColor: current.fontWeight === 'bold' ? 'blue.500' : 'whiteAlpha.400',
-              _hover: {
-                bg: current.fontWeight === 'bold' ? 'blue.600' : 'whiteAlpha.100'
-              }
-            }}
-            sx={{
-              minH: '28px',
-              px: 2,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+            icon={<Bold size={12} />}
+            aria-label="Bold"
+            size="lg"
           />
           
-          <ChakraIconButton
-            aria-label="Italic"
-            icon={<Italic size={12} />}
+          <ToggleButton
+            isActive={current.fontStyle === 'italic'}
             onClick={() => handleFontStyleChange(current.fontStyle === 'italic' ? 'normal' : 'italic')}
-            variant="unstyled"
-            size="sm"
-            bg={current.fontStyle === 'italic' ? 'blue.500' : 'transparent'}
-            color={current.fontStyle === 'italic' ? 'white' : 'gray.700'}
-            border="1px solid"
-            borderColor={current.fontStyle === 'italic' ? 'blue.500' : 'gray.400'}
-            borderRadius="md"
-            fontWeight="medium"
-            transition="all 0.2s"
-            _hover={{
-              bg: current.fontStyle === 'italic' ? 'blue.600' : 'gray.50'
-            }}
-            _dark={{
-              color: current.fontStyle === 'italic' ? 'white' : 'gray.300',
-              borderColor: current.fontStyle === 'italic' ? 'blue.500' : 'whiteAlpha.400',
-              _hover: {
-                bg: current.fontStyle === 'italic' ? 'blue.600' : 'whiteAlpha.100'
-              }
-            }}
-            sx={{
-              minH: '28px',
-              px: 2,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+            icon={<Italic size={12} />}
+            aria-label="Italic"
+            size="lg"
           />
         </HStack>
       </VStack>

@@ -1,7 +1,7 @@
 import React from 'react';
-import { IconButton as ChakraIconButton, Input, useColorModeValue } from '@chakra-ui/react';
+import { Input, useColorModeValue } from '@chakra-ui/react';
 import { Minus } from 'lucide-react';
-import ConditionalTooltip from './ConditionalTooltip';
+import { ToggleButton } from './ToggleButton';
 import { DASH_PRESETS } from '../utils/dashPresets';
 
 interface DashArraySelectorProps {
@@ -72,18 +72,14 @@ export const DashArrayPresets: React.FC<DashArrayPresetsProps> = ({
       flexWrap: 'nowrap' // Keep all buttons in one line
     }}>
       {commonPresets.map(preset => (
-        <ConditionalTooltip key={preset.id} label={`${preset.name}: ${preset.description}`}>
-          <ChakraIconButton
-            aria-label={`${preset.name}: ${preset.description}`}
-            onPointerUp={() => onChange(preset.dashArray)}
-            colorScheme={value === preset.dashArray ? 'blue' : 'gray'}
-            variant={value === preset.dashArray ? 'solid' : 'outline'}
-            size="xs"
-            minW="20px"
-            h="20px"
-            icon={<DashPreview dashArray={preset.dashArray} />}
-          />
-        </ConditionalTooltip>
+        <ToggleButton
+          key={preset.id}
+          isActive={value === preset.dashArray}
+          onClick={() => onChange(preset.dashArray)}
+          aria-label={`${preset.name}: ${preset.description}`}
+          variant="icon"
+          icon={<DashPreview dashArray={preset.dashArray} />}
+        />
       ))}
     </div>
   );
@@ -112,16 +108,12 @@ export const DashArraySelector: React.FC<DashArraySelectorProps> = ({
         marginBottom: '6px'
       }}>
         {DASH_PRESETS.slice(0, 8).map(preset => (
-          <ChakraIconButton
+          <ToggleButton
             key={preset.id}
+            isActive={value === preset.dashArray}
+            onClick={() => onChange(preset.dashArray)}
             aria-label={`${preset.name}: ${preset.description}`}
-            onPointerUp={() => onChange(preset.dashArray)}
-            colorScheme={value === preset.dashArray ? 'blue' : 'gray'}
-            variant={value === preset.dashArray ? 'solid' : 'outline'}
-            size="xs"
-            minW="20px"
-            h="20px"
-            title={`${preset.name}: ${preset.description}`}
+            variant="icon"
             icon={<DashPreview dashArray={preset.dashArray} />}
           />
         ))}

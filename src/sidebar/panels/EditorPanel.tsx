@@ -26,6 +26,7 @@ import { LinecapSelector } from '../../ui/LinecapSelector';
 import { LinejoinSelector } from '../../ui/LinejoinSelector';
 import { FillRuleSelector } from '../../ui/FillRuleSelector';
 import { DashArrayCustomInput, DashArrayPresets } from '../../ui/DashArraySelector';
+import { ToggleButton } from '../../ui/ToggleButton';
 import { getFillAndStrokePresets, type Preset } from '../../utils/fillAndStrokePresets';
 import { useSelectedPathProperty } from '../../utils/pathPropertyUtils';
 import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
@@ -241,18 +242,13 @@ export const EditorPanel: React.FC = () => {
                       title="Fill Color"
                     />
                   </ConditionalTooltip>
-                  <ConditionalTooltip label="Set fill color to none (transparent)">
-                    <ChakraIconButton
-                      aria-label="No Fill"
-                      icon={<X size={12} />}
-                      onClick={handleFillNone}
-                      colorScheme={currentFillColor === 'none' ? 'blue' : 'gray'}
-                      variant={currentFillColor === 'none' ? 'solid' : 'outline'}
-                      size="xs"
-                      h="20px"
-                      minW="20px"
-                    />
-                  </ConditionalTooltip>
+                  <ToggleButton
+                    isActive={currentFillColor === 'none'}
+                    onClick={handleFillNone}
+                    aria-label="Set fill color to none (transparent)"
+                    variant="icon"
+                    icon={<X size={12} />}
+                  />
                 </HStack>
                 <Box flex={1} minW="120px">
                   <PercentSliderControl
@@ -292,19 +288,14 @@ export const EditorPanel: React.FC = () => {
                       opacity={currentStrokeColor === 'none' ? 0.5 : 1}
                     />
                   </ConditionalTooltip>
-                  <ConditionalTooltip label="Set stroke color to none (no outline)">
-                    <ChakraIconButton
-                      aria-label="No Stroke"
-                      icon={<X size={12} />}
-                      onClick={handleStrokeNone}
-                      isDisabled={currentFillColor === 'none'}
-                      colorScheme={currentStrokeColor === 'none' ? 'blue' : 'gray'}
-                      variant={currentStrokeColor === 'none' ? 'solid' : 'outline'}
-                      size="xs"
-                      h="20px"
-                      minW="20px"
-                    />
-                  </ConditionalTooltip>
+                  <ToggleButton
+                    isActive={currentStrokeColor === 'none'}
+                    onClick={handleStrokeNone}
+                    aria-label="Set stroke color to none (no outline)"
+                    variant="icon"
+                    icon={<X size={12} />}
+                    isDisabled={currentFillColor === 'none'}
+                  />
                 </HStack>
                 <Box flex={1} minW="120px">
                   <PercentSliderControl
