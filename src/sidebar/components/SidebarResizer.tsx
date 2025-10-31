@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box } from '@chakra-ui/react';
+import { Box, useColorModeValue } from '@chakra-ui/react';
 import { useDragResize } from '../../hooks/useDragResize';
 
 interface SidebarResizerProps {
@@ -28,6 +28,9 @@ export const SidebarResizer: React.FC<SidebarResizerProps> = ({
     reverseHorizontal: true, // Sidebar resizes from right edge
   });
 
+  const resizeBg = useColorModeValue('blue.500', 'blue.200');
+  const indicatorBg = useColorModeValue('blue.500', 'blue.200');
+
   return (
     <Box
       position="absolute"
@@ -38,9 +41,9 @@ export const SidebarResizer: React.FC<SidebarResizerProps> = ({
       cursor="ew-resize"
       onPointerDown={handlePointerDown}
       onDoubleClick={handleDoubleClick}
-      bg={isDragging ? 'blue.400' : 'transparent'}
+      bg={isDragging ? resizeBg : 'transparent'}
       _hover={{
-        bg: 'blue.200',
+        bg: resizeBg,
       }}
       title="Drag to resize, double-click to reset" // Tooltip informativo
       sx={{
@@ -56,7 +59,7 @@ export const SidebarResizer: React.FC<SidebarResizerProps> = ({
           width: '2px',
           height: '40px',
           borderRadius: '1px',
-          bg: isDragging ? 'white' : 'gray.400',
+          bg: isDragging ? 'white' : indicatorBg,
           opacity: isDragging ? 1 : 0,
           transition: 'opacity 0.2s',
         },

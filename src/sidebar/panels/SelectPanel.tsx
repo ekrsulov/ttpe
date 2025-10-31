@@ -234,8 +234,7 @@ const SelectPanelComponent: React.FC = () => {
   const hasSelection = selectedElements.length > 0;
 
   const panelBg = useColorModeValue('surface.panel', 'surface.panel');
-  const resizeHandleBg = useColorModeValue('gray.200', 'whiteAlpha.300');
-  const resizeHandleHover = useColorModeValue('blue.200', 'whiteAlpha.500');
+  const resizeColor = useColorModeValue('blue.500', 'blue.200');
   const messageColor = useColorModeValue('gray.600', 'gray.300');
 
   return (
@@ -246,13 +245,13 @@ const SelectPanelComponent: React.FC = () => {
         cursor="ns-resize"
         onPointerDown={handleResizeStart}
         onDoubleClick={handleResetHeight}
-        bg={isResizing ? 'blue.400' : resizeHandleBg}
+        bg={isResizing ? resizeColor : 'transparent'}
         borderRadius="full"
         mx="auto"
         my={1}
         w="40px"
         title="Arrastra para redimensionar, doble clic para resetear"
-        _hover={{ bg: isResizing ? 'blue.400' : resizeHandleHover }}
+        _hover={{ bg: resizeColor }}
       />
       <Box h={`${panelHeight}px`} overflowY="auto">
         <VStack spacing={2} align="stretch">
