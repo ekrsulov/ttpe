@@ -1,5 +1,5 @@
 import React from 'react';
-import { IconButton as ChakraIconButton } from '@chakra-ui/react';
+import { IconButton as ChakraIconButton, Input, useColorModeValue } from '@chakra-ui/react';
 import { Minus } from 'lucide-react';
 import ConditionalTooltip from './ConditionalTooltip';
 import { DASH_PRESETS } from '../utils/dashPresets';
@@ -21,21 +21,24 @@ export const DashArrayCustomInput: React.FC<DashArrayCustomInputProps> = ({
   onChange,
   title = "Custom dash array"
 }) => {
+  // Colors that adapt to dark mode
+  const inputBg = useColorModeValue('white', 'whiteAlpha.100');
+  const inputBorder = useColorModeValue('gray.300', 'whiteAlpha.300');
+  const inputColor = useColorModeValue('gray.800', 'gray.100');
+  const placeholderColor = useColorModeValue('gray.500', 'gray.400');
+
   return (
-    <input
+    <Input
       type="text"
       value={value === 'none' ? '' : value}
       onChange={(e) => onChange(e.target.value || 'none')}
       placeholder="5,3,2,3"
-      style={{
-        width: '100%',
-        padding: '4px 6px',
-        border: '1px solid #ccc',
-        borderRadius: '3px',
-        fontSize: '11px',
-        color: '#333',
-        backgroundColor: '#fff'
-      }}
+      size="xs"
+      fontSize="11px"
+      bg={inputBg}
+      borderColor={inputBorder}
+      color={inputColor}
+      _placeholder={{ color: placeholderColor }}
       title={title}
     />
   );

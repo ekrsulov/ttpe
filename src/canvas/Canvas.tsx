@@ -426,6 +426,7 @@ const CanvasContent: React.FC = () => {
       pluginSpecific.smoothBrush = smoothBrush;
       pluginSpecific.smoothBrushCursor = smoothBrushCursor;
       pluginSpecific.addPointMode = addPointMode;
+      pluginSpecific.pointPositionFeedback = shapeFeedback.pointPosition;
     } else if (currentMode === 'shape') {
       pluginSpecific.isCreatingShape = isCreatingShape;
       pluginSpecific.shapeStart = shapeStart;

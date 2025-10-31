@@ -18,7 +18,7 @@ export const PencilPanel: React.FC = () => {
       <VStack spacing={2} align="stretch">
         {/* Path Mode Selection */}
         <HStack spacing={1} justify="space-between">
-          <Text fontSize="12px" color="gray.600">Path Mode:</Text>
+          <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>Path Mode:</Text>
           <HStack spacing={1}>
             <Button
               aria-label="New Path"
@@ -35,6 +35,13 @@ export const PencilPanel: React.FC = () => {
               transition="all 0.2s"
               _hover={{
                 bg: !(pencil?.reusePath ?? false) ? 'blue.600' : 'gray.50'
+              }}
+              _dark={{
+                color: !(pencil?.reusePath ?? false) ? 'white' : 'gray.300',
+                borderColor: !(pencil?.reusePath ?? false) ? 'blue.500' : 'whiteAlpha.400',
+                _hover: {
+                  bg: !(pencil?.reusePath ?? false) ? 'blue.600' : 'whiteAlpha.100'
+                }
               }}
               sx={{
                 h: '24px',
@@ -61,6 +68,13 @@ export const PencilPanel: React.FC = () => {
               transition="all 0.2s"
               _hover={{
                 bg: (pencil?.reusePath ?? false) ? 'blue.600' : 'gray.50'
+              }}
+              _dark={{
+                color: (pencil?.reusePath ?? false) ? 'white' : 'gray.300',
+                borderColor: (pencil?.reusePath ?? false) ? 'blue.500' : 'whiteAlpha.400',
+                _hover: {
+                  bg: (pencil?.reusePath ?? false) ? 'blue.600' : 'whiteAlpha.100'
+                }
               }}
               sx={{
                 h: '24px',

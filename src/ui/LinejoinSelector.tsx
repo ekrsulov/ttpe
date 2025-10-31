@@ -48,6 +48,13 @@ export const LinejoinSelector: React.FC<LinejoinSelectorProps> = ({
           _hover={{
             bg: value === option.value ? 'blue.600' : 'gray.50'
           }}
+          _dark={{
+            color: value === option.value ? 'white' : 'gray.300',
+            borderColor: value === option.value ? 'blue.500' : 'whiteAlpha.400',
+            _hover: {
+              bg: value === option.value ? 'blue.600' : 'whiteAlpha.100'
+            }
+          }}
         >
           {option.label}
         </Button>

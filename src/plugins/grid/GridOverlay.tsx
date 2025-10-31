@@ -28,8 +28,30 @@ interface GridOverlayProps {
 }
 
 /**
- * Calculate optimal ruler interval based on zoom level and grid spacing
+ * Extract RGB values from a color string (hex or rgba)
  */
+function extractRGB(color: string): { r: number; g: number; b: number } {
+  if (color.startsWith('#')) {
+    // Hex color
+    return {
+      r: parseInt(color.slice(1, 3), 16),
+      g: parseInt(color.slice(3, 5), 16),
+      b: parseInt(color.slice(5, 7), 16),
+    };
+  } else if (color.startsWith('rgba(')) {
+    // RGBA color
+    const match = color.match(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*[\d.]+\)/);
+    if (match) {
+      return {
+        r: parseInt(match[1], 10),
+        g: parseInt(match[2], 10),
+        b: parseInt(match[3], 10),
+      };
+    }
+  }
+  // Fallback to black
+  return { r: 0, g: 0, b: 0 };
+}
 function calculateRulerInterval(spacing: number, zoom: number): number {
   const baseSpacing = spacing;
   const minScreenSpacing = 50;
@@ -116,9 +138,10 @@ function renderSquareGrid(
     }
   }
 
-  const minorColor = `rgba(${parseInt(color.slice(1, 3), 16)}, ${parseInt(color.slice(3, 5), 16)}, ${parseInt(color.slice(5, 7), 16)}, ${opacity * 0.3})`;
-  const majorColor = `rgba(${parseInt(color.slice(1, 3), 16)}, ${parseInt(color.slice(3, 5), 16)}, ${parseInt(color.slice(5, 7), 16)}, ${opacity * 0.5})`;
-  const emphasizedColor = `rgba(${parseInt(color.slice(1, 3), 16)}, ${parseInt(color.slice(3, 5), 16)}, ${parseInt(color.slice(5, 7), 16)}, ${opacity * 0.8})`;
+  const { r, g, b } = extractRGB(color);
+  const minorColor = `rgba(${r}, ${g}, ${b}, ${opacity * 0.3})`;
+  const majorColor = `rgba(${r}, ${g}, ${b}, ${opacity * 0.5})`;
+  const emphasizedColor = `rgba(${r}, ${g}, ${b}, ${opacity * 0.8})`;
 
   return (
     <g>
@@ -173,7 +196,8 @@ function renderDotGrid(
   const startY = Math.floor(top / spacing) * spacing;
   const endY = Math.ceil(bottom / spacing) * spacing;
 
-  const dotColor = `rgba(${parseInt(color.slice(1, 3), 16)}, ${parseInt(color.slice(3, 5), 16)}, ${parseInt(color.slice(5, 7), 16)}, ${opacity})`;
+  const { r, g, b } = extractRGB(color);
+  const dotColor = `rgba(${r}, ${g}, ${b}, ${opacity})`;
   const dotRadius = 1 / zoom;
 
   let index = 0;
@@ -213,7 +237,8 @@ function renderIsometricGrid(
   const cos30 = Math.cos(Math.PI / 6);
   const tan30 = Math.tan(Math.PI / 6);
   
-  const gridColor = `rgba(${parseInt(color.slice(1, 3), 16)}, ${parseInt(color.slice(3, 5), 16)}, ${parseInt(color.slice(5, 7), 16)}, ${opacity})`;
+  const { r, g, b } = extractRGB(color);
+  const gridColor = `rgba(${r}, ${g}, ${b}, ${opacity})`;
   const extension = Math.max(right - left, bottom - top) * 2;
 
   // Vertical lines at x = n * spacing
@@ -311,7 +336,8 @@ function renderTriangularGrid(
   
   const height = spacing * Math.sqrt(3) / 2;
   const tan60 = Math.sqrt(3); // tan(60°) = sqrt(3)
-  const gridColor = `rgba(${parseInt(color.slice(1, 3), 16)}, ${parseInt(color.slice(3, 5), 16)}, ${parseInt(color.slice(5, 7), 16)}, ${opacity})`;
+  const { r, g, b } = extractRGB(color);
+  const gridColor = `rgba(${r}, ${g}, ${b}, ${opacity})`;
   const extension = Math.max(right - left, bottom - top) * 2;
 
   // Horizontal lines at y = n * height
@@ -406,7 +432,8 @@ function renderHexagonalGrid(
   zoom: number
 ): React.ReactElement {
   const hexagons: React.ReactElement[] = [];
-  const gridColor = `rgba(${parseInt(color.slice(1, 3), 16)}, ${parseInt(color.slice(3, 5), 16)}, ${parseInt(color.slice(5, 7), 16)}, ${opacity})`;
+  const { r, g, b } = extractRGB(color);
+  const gridColor = `rgba(${r}, ${g}, ${b}, ${opacity})`;
 
   if (orientation === 'pointy') {
     const width = spacing * Math.sqrt(3);
@@ -504,7 +531,8 @@ function renderPolarGrid(
   color: string,
   zoom: number
 ): React.ReactElement {
-  const gridColor = `rgba(${parseInt(color.slice(1, 3), 16)}, ${parseInt(color.slice(3, 5), 16)}, ${parseInt(color.slice(5, 7), 16)}, ${opacity})`;
+  const { r, g, b } = extractRGB(color);
+  const gridColor = `rgba(${r}, ${g}, ${b}, ${opacity})`;
   const elements: React.ReactElement[] = [];
 
   // Use origin (0, 0) as center for polar grid
@@ -578,7 +606,8 @@ function renderDiagonalGrid(
 ): React.ReactElement {
   let pathData = '';
   
-  const gridColor = `rgba(${parseInt(color.slice(1, 3), 16)}, ${parseInt(color.slice(3, 5), 16)}, ${parseInt(color.slice(5, 7), 16)}, ${opacity})`;
+  const { r, g, b } = extractRGB(color);
+  const gridColor = `rgba(${r}, ${g}, ${b}, ${opacity})`;
   const extension = Math.max(right - left, bottom - top) * 2;
 
   // 45° lines pass through points where y - x = n*spacing (for integer n)
@@ -645,7 +674,8 @@ function renderParametricGrid(
   color: string,
   zoom: number
 ): React.ReactElement {
-  const gridColor = `rgba(${parseInt(color.slice(1, 3), 16)}, ${parseInt(color.slice(3, 5), 16)}, ${parseInt(color.slice(5, 7), 16)}, ${opacity})`;
+  const { r, g, b } = extractRGB(color);
+  const gridColor = `rgba(${r}, ${g}, ${b}, ${opacity})`;
   
   // Helper: calculate displacement
   const calculateDisplacement = (x: number, y: number): { dx: number; dy: number } => {
@@ -762,7 +792,7 @@ export const GridOverlay: React.FC<GridOverlayProps> = React.memo(({
   viewport,
   canvasSize,
 }) => {
-  const defaultGridColor = useColorModeValue('#000000', 'rgba(255, 255, 255, 0.55)');
+  const defaultGridColor = useColorModeValue('#000000', 'rgba(255, 255, 255, 0.7)');
   const rulerBackground = useColorModeValue('rgba(255, 255, 255, 0.95)', 'rgba(15, 23, 42, 0.8)');
   const rulerBorder = useColorModeValue('#d0d0d0', 'rgba(148, 163, 184, 0.45)');
   const rulerTextColor = useColorModeValue('#444', '#e2e8f0');
@@ -775,7 +805,7 @@ export const GridOverlay: React.FC<GridOverlayProps> = React.memo(({
 
   const spacing = grid.spacing;
   const opacity = grid.opacity ?? 0.3;
-  const color = grid.color ?? defaultGridColor;
+  const color = grid.color === '#000000' ? defaultGridColor : (grid.color ?? defaultGridColor);
   const emphasizeEvery = grid.emphasizeEvery ?? 0;
 
   // ViewBox coordinates

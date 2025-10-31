@@ -97,6 +97,8 @@ export function createShape(
     },
   });
 
-  // Auto-switch to select mode after creating shape
-  state.setActivePlugin('select');
+  // Auto-switch to select mode after creating shape (unless keepShapeMode is enabled)
+  if (!shapeState.keepShapeMode) {
+    state.setActivePlugin('select');
+  }
 }

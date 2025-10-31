@@ -1,4 +1,5 @@
 import React from 'react';
+import { useColorModeValue } from '@chakra-ui/react';
 import { useSelectionBounds } from '../../hooks/useSelectionBounds';
 import { TransformationHandlers } from './TransformationHandlers';
 import { CenterMarker } from './CenterMarker';
@@ -44,6 +45,12 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
   onTransformationHandlerPointerDown,
   onTransformationHandlerPointerUp,
 }) => {
+  // Colors that adapt to dark mode
+  const coordinateBackgroundColor = useColorModeValue('#6b7280', '#4b5563');
+  const coordinateTextColor = useColorModeValue('white', '#f9fafb');
+  const rulerColor = useColorModeValue('#666', '#d1d5db');
+  const rulerTextColor = useColorModeValue('#666', '#d1d5db');
+
   // Show handlers for complete elements when in transformation mode
   // Show handlers for subpaths only when in transformation mode AND exactly one subpath is selected
   const shouldShowHandlers = !isWorkingWithSubpaths
@@ -135,6 +142,8 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
               <CornerCoordinateLabels
                 bounds={result.rawBounds}
                 zoom={viewport.zoom}
+                backgroundColor={coordinateBackgroundColor}
+                textColor={coordinateTextColor}
               />
             )}
 
@@ -143,6 +152,8 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
               <MeasurementRulers
                 bounds={result.rawBounds}
                 zoom={viewport.zoom}
+                rulerColor={rulerColor}
+                textColor={rulerTextColor}
               />
             )}
           </g>
@@ -166,6 +177,8 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
             <CornerCoordinateLabels
               bounds={bounds}
               zoom={viewport.zoom}
+              backgroundColor={coordinateBackgroundColor}
+              textColor={coordinateTextColor}
             />
           )}
 
@@ -174,6 +187,8 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
             <MeasurementRulers
               bounds={bounds}
               zoom={viewport.zoom}
+              rulerColor={rulerColor}
+              textColor={rulerTextColor}
             />
           )}
         </>

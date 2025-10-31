@@ -41,7 +41,6 @@ export const EditorPanel: React.FC = () => {
   const defaultStrokeColor = useCanvasStore(state => state.settings.defaultStrokeColor);
   const { colorMode } = useColorMode();
   const presets = React.useMemo(() => getFillAndStrokePresets(colorMode), [colorMode]);
-  const panelBg = useColorModeValue('surface.panel', 'surface.panel');
   const labelColor = useColorModeValue('gray.600', 'gray.300');
   const inputBorderColor = useColorModeValue('gray.300', 'whiteAlpha.300');
   const inputBg = useColorModeValue('white', 'whiteAlpha.100');
@@ -158,7 +157,7 @@ export const EditorPanel: React.FC = () => {
   const presetColumns = Math.min(presets.length, useBreakpointValue({ base: 8, md: 10 }) || 10);
 
   return (
-    <Box bg={panelBg} pb={1} mt={1} position="relative">
+    <Box pb={1} mt={1} position="relative">
       <RenderCountBadgeWrapper componentName="EditorPanel" position="top-right" />
       {/* Pencil Properties Section */}
       <VStack spacing={1} align="stretch">

@@ -23,6 +23,7 @@ export const PresetButton: React.FC<PresetButtonProps> = ({ preset, onClick, isA
         minW="20px"
         p="1px"
         bg="white"
+        _dark={{ bg: 'gray.700' }}
         borderRadius="md"
         border="none"
         boxShadow={isActive ? '0 0 0 1px var(--chakra-colors-blue-500)' : 'none'}

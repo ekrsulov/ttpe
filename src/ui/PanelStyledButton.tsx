@@ -24,6 +24,13 @@ export const PanelStyledButton: React.FC<ButtonProps> = (props) => {
       _hover={{
         bg: 'gray.50'
       }}
+      _dark={{
+        color: 'gray.300',
+        borderColor: 'whiteAlpha.400',
+        _hover: {
+          bg: 'whiteAlpha.100'
+        }
+      }}
       sx={{
         minH: '28px',
         px: 2,

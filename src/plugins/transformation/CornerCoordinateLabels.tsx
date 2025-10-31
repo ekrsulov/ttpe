@@ -8,6 +8,8 @@ interface CornerCoordinateLabelsProps {
     maxY: number;
   };
   zoom: number;
+  backgroundColor?: string;
+  textColor?: string;
 }
 
 /**
@@ -17,6 +19,8 @@ interface CornerCoordinateLabelsProps {
 export const CornerCoordinateLabels: React.FC<CornerCoordinateLabelsProps> = ({
   bounds,
   zoom,
+  backgroundColor = "#6b7280",
+  textColor = "white",
 }) => {
   const coordinateOffset = 15 / zoom;
   const fontSize = 10 / zoom;
@@ -38,7 +42,7 @@ export const CornerCoordinateLabels: React.FC<CornerCoordinateLabelsProps> = ({
                 y={bounds.minY - coordinateOffset - fontSize - padding}
                 width={rectWidth}
                 height={fontSize + padding * 2}
-                fill="#6b7280"
+                fill={backgroundColor}
                 rx={borderRadius}
                 ry={borderRadius}
                 pointerEvents="none"
@@ -49,7 +53,7 @@ export const CornerCoordinateLabels: React.FC<CornerCoordinateLabelsProps> = ({
                 textAnchor="middle"
                 dominantBaseline="middle"
                 fontSize={fontSize}
-                fill="white"
+                fill={textColor}
                 fontFamily="Arial, sans-serif"
                 pointerEvents="none"
                 style={{ fontWeight: 'normal', userSelect: 'none' }}
@@ -74,7 +78,7 @@ export const CornerCoordinateLabels: React.FC<CornerCoordinateLabelsProps> = ({
                 y={bounds.maxY + coordinateOffset}
                 width={rectWidth}
                 height={fontSize + padding * 2}
-                fill="#6b7280"
+                fill={backgroundColor}
                 rx={borderRadius}
                 ry={borderRadius}
                 pointerEvents="none"
@@ -85,7 +89,7 @@ export const CornerCoordinateLabels: React.FC<CornerCoordinateLabelsProps> = ({
                 textAnchor="middle"
                 dominantBaseline="middle"
                 fontSize={fontSize}
-                fill="white"
+                fill={textColor}
                 fontFamily="Arial, sans-serif"
                 pointerEvents="none"
                 style={{ fontWeight: 'normal', userSelect: 'none' }}

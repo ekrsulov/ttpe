@@ -7,6 +7,7 @@ export interface ShapePluginSlice {
   // State
   shape: {
     selectedShape: ShapeType;
+    keepShapeMode: boolean;
   };
 
   // Actions
@@ -18,5 +19,6 @@ export const createShapePluginSlice: StateCreator<ShapePluginSlice, [], [], Shap
     'shape',
     {
       selectedShape: 'square',
+      keepShapeMode: false,
     }
   );

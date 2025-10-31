@@ -128,7 +128,7 @@ const GridPanelComponent: React.FC = () => {
       <VStack spacing={2} align="stretch">
         {/* Grid Type Selector */}
         <VStack spacing={1} align="stretch">
-          <Text fontSize="12px" color="gray.600" fontWeight="500">
+          <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }} fontWeight="500">
             Type
           </Text>
           <Select
@@ -198,7 +198,7 @@ const GridPanelComponent: React.FC = () => {
         {/* Hexagonal-specific settings */}
         {showHexSettings && (
           <VStack spacing={1} align="stretch">
-            <Text fontSize="12px" color="gray.600" fontWeight="500">
+            <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }} fontWeight="500">
               Orientation
             </Text>
             <Select
@@ -239,7 +239,7 @@ const GridPanelComponent: React.FC = () => {
         {showParametricSettings && (
           <>
             <VStack spacing={1} align="stretch">
-              <Text fontSize="12px" color="gray.600" fontWeight="500">
+              <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }} fontWeight="500">
                 Warp Type
               </Text>
               <Select

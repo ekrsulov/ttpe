@@ -1,5 +1,6 @@
 import type { PluginDefinition } from '../types/plugins';
 import type { CanvasStore } from '../store/canvasStore';
+import type { Point } from '../types';
 import { getToolMetadata } from './toolMetadata';
 
 import { pencilPlugin } from './pencil';
@@ -15,6 +16,44 @@ import { gridPlugin } from './grid';
 import { minimapPlugin } from './minimap';
 import { gridFillPlugin } from './gridFill';
 import { SelectionOverlay, BlockingOverlay } from '../overlays';
+import { useColorMode } from '@chakra-ui/react';
+
+// Component for selection rectangle that can use hooks
+const SelectionRectangleComponent: React.FC<{
+  isSelecting: boolean;
+  selectionStart: Point | null;
+  selectionEnd: Point | null;
+  viewport: { zoom: number };
+}> = ({ isSelecting, selectionStart, selectionEnd, viewport }) => {
+  const { colorMode } = useColorMode();
+
+  if (!isSelecting || !selectionStart || !selectionEnd) {
+    return null;
+  }
+
+  const x = Math.min(selectionStart.x, selectionEnd.x);
+  const y = Math.min(selectionStart.y, selectionEnd.y);
+  const width = Math.abs(selectionEnd.x - selectionStart.x);
+  const height = Math.abs(selectionEnd.y - selectionStart.y);
+
+  // Use direct color values for SVG compatibility
+  // Same blue as active buttons, switches, checkboxes, etc.
+  const strokeColor = colorMode === 'dark' ? '#63b3ed' : '#007bff'; // blue.300 : brand.500
+  const fillColor = colorMode === 'dark' ? 'rgba(99, 179, 237, 0.1)' : 'rgba(0, 123, 255, 0.1)';
+
+  return (
+    <rect
+      x={x}
+      y={y}
+      width={width}
+      height={height}
+      fill={fillColor}
+      stroke={strokeColor}
+      strokeWidth={1 / viewport.zoom}
+      strokeDasharray={`${2 / viewport.zoom} ${2 / viewport.zoom}`}
+    />
+  );
+};
 
 
 const selectPlugin: PluginDefinition<CanvasStore> = {
@@ -125,29 +164,7 @@ const selectPlugin: PluginDefinition<CanvasStore> = {
     {
       id: 'selection-rectangle',
       placement: 'midground',
-      render: ({ isSelecting, selectionStart, selectionEnd, viewport }) => {
-        if (!isSelecting || !selectionStart || !selectionEnd) {
-          return null;
-        }
-
-        const x = Math.min(selectionStart.x, selectionEnd.x);
-        const y = Math.min(selectionStart.y, selectionEnd.y);
-        const width = Math.abs(selectionEnd.x - selectionStart.x);
-        const height = Math.abs(selectionEnd.y - selectionStart.y);
-
-        return (
-          <rect
-            x={x}
-            y={y}
-            width={width}
-            height={height}
-            fill="rgba(0, 123, 255, 0.1)"
-            stroke="#007bff"
-            strokeWidth={1 / viewport.zoom}
-            strokeDasharray={`${2 / viewport.zoom} ${2 / viewport.zoom}`}
-          />
-        );
-      },
+      render: (props) => <SelectionRectangleComponent {...props} />,
     },
     {
       id: 'selection-blocking-overlay',

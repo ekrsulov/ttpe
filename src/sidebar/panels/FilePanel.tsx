@@ -420,7 +420,7 @@ export const FilePanel: React.FC = () => {
       <VStack spacing={2} align="stretch" pt={2}>
         {/* Document Name */}
         <FormControl position="relative">
-          <FormLabel fontSize="12px" fontWeight="medium" color="gray.600" mb={1}>
+          <FormLabel fontSize="12px" fontWeight="medium" color="gray.600" _dark={{ color: 'gray.400' }} mb={1}>
             Document Name
           </FormLabel>
           <Input
@@ -437,6 +437,10 @@ export const FilePanel: React.FC = () => {
               fontSize="12px"
               color="gray.500"
               bg="white"
+              _dark={{
+                color: 'gray.400',
+                bg: 'gray.700'
+              }}
               px={1}
               pointerEvents="none"
             >
@@ -517,9 +521,10 @@ export const FilePanel: React.FC = () => {
           >
             <Text 
               color="gray.600"
+              _dark={{ color: 'gray.400' }}
               cursor="pointer"
               onClick={onAdvancedToggle}
-              _hover={{ color: "gray.800" }}
+              _hover={{ color: "gray.800", _dark: { color: 'gray.200' } }}
             >
               Advanced
             </Text>
@@ -590,7 +595,7 @@ export const FilePanel: React.FC = () => {
         {resizeImport && (
           <HStack spacing={2}>
             <InputGroup size="sm">
-              <InputLeftAddon>W</InputLeftAddon>
+              <InputLeftAddon _dark={{ bg: 'gray.600', color: 'gray.200' }}>W</InputLeftAddon>
               <Input
                 type="number"
                 value={resizeWidth}
@@ -601,7 +606,7 @@ export const FilePanel: React.FC = () => {
               />
             </InputGroup>
             <InputGroup size="sm">
-              <InputLeftAddon>H</InputLeftAddon>
+              <InputLeftAddon _dark={{ bg: 'gray.600', color: 'gray.200' }}>H</InputLeftAddon>
               <Input
                 type="number"
                 value={resizeHeight}

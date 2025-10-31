@@ -125,7 +125,7 @@ export const TransformationPanel: React.FC = () => {
         </HStack>
 
         {selectedCount === 0 && (
-          <Text fontSize="xs" color="gray.500">
+          <Text fontSize="xs" color="gray.500" _dark={{ color: 'gray.400' }}>
             {`Select ${isSubpathMode ? 'a subpath' : 'an element'} to transform`}
           </Text>
         )}
@@ -156,6 +156,9 @@ export const TransformationPanel: React.FC = () => {
                       w="40px"
                       h="1px"
                       bg={maintainAspectRatio ? 'gray.500' : 'gray.300'}
+                      _dark={{
+                        bg: maintainAspectRatio ? 'gray.400' : 'gray.500'
+                      }}
                       transition="background 0.2s"
                     />
                   </HStack>
@@ -180,6 +183,9 @@ export const TransformationPanel: React.FC = () => {
                       w="40px"
                       h="1px"
                       bg={maintainAspectRatio ? 'gray.500' : 'gray.300'}
+                      _dark={{
+                        bg: maintainAspectRatio ? 'gray.400' : 'gray.500'
+                      }}
                       transition="background 0.2s"
                     />
                   </HStack>
@@ -195,6 +201,9 @@ export const TransformationPanel: React.FC = () => {
                     bottom="3"
                     w="1px" 
                     bg={maintainAspectRatio ? 'gray.500' : 'gray.300'}
+                    _dark={{
+                      bg: maintainAspectRatio ? 'gray.400' : 'gray.500'
+                    }}
                     transition="background 0.2s"
                   />
                   
@@ -212,9 +221,18 @@ export const TransformationPanel: React.FC = () => {
                       color={maintainAspectRatio ? 'gray.500' : 'gray.400'}
                       border="1px solid"
                       borderColor={maintainAspectRatio ? 'gray.500' : 'gray.300'}
+                      _dark={{
+                        bg: 'gray.700',
+                        color: maintainAspectRatio ? 'gray.400' : 'gray.500',
+                        borderColor: maintainAspectRatio ? 'gray.400' : 'gray.500'
+                      }}
                       _hover={{ 
                         bg: 'rgb(247, 250, 252)',
-                        borderColor: maintainAspectRatio ? 'gray.600' : 'gray.400'
+                        borderColor: maintainAspectRatio ? 'gray.600' : 'gray.400',
+                        _dark: {
+                          bg: 'gray.600',
+                          borderColor: maintainAspectRatio ? 'gray.300' : 'gray.400'
+                        }
                       }}
                       transition="all 0.2s"
                       display="flex"

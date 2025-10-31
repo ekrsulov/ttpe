@@ -57,7 +57,7 @@ export const SliderControl: React.FC<SliderControlProps> = ({
       w={inline ? '100%' : undefined}
     >
       {icon && (
-        <Box color="gray.600" flexShrink={0}>
+        <Box color="gray.600" _dark={{ color: 'gray.400' }} flexShrink={0}>
           {icon}
         </Box>
       )}
@@ -65,6 +65,7 @@ export const SliderControl: React.FC<SliderControlProps> = ({
         <Text
           fontSize="12px"
           color="gray.600"
+          _dark={{ color: 'gray.400' }}
           minW={labelWidth}
           flexShrink={0}
         >
@@ -81,14 +82,15 @@ export const SliderControl: React.FC<SliderControlProps> = ({
         minW={minWidth}
         title={title}
       >
-        <SliderTrack h="4px" borderRadius="2px" bg="gray.300">
-          <SliderFilledTrack bg="blue.500" />
+        <SliderTrack h="4px" borderRadius="2px" bg="gray.300" _dark={{ bg: 'gray.600' }}>
+          <SliderFilledTrack bg="blue.500" _dark={{ bg: 'blue.400' }} />
         </SliderTrack>
         <SliderThumb boxSize="12px" />
       </Slider>
       <Text
         fontSize="12px"
         color="gray.600"
+        _dark={{ color: 'gray.400' }}
         w={valueWidth}
         textAlign="right"
         flexShrink={0}

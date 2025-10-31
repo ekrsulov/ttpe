@@ -88,7 +88,7 @@ export const SettingsPanel: React.FC = () => {
         {/* Log Level Selector - Only in development */}
         {import.meta.env.DEV && (
           <FormControl>
-            <FormLabel fontSize="12px" fontWeight="medium" color="gray.600" mb={1}>
+            <FormLabel fontSize="12px" fontWeight="medium" color="gray.600" _dark={{ color: 'gray.400' }} mb={1}>
               Log Level
             </FormLabel>
             <Select

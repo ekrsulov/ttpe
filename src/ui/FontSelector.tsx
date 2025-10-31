@@ -101,19 +101,25 @@ export const FontSelector: React.FC<FontSelectorProps> = ({
             isDisabled={disabled}
             fontSize="xs"
             bg={disabled ? 'gray.50' : 'white'}
+            _dark={{
+              bg: disabled ? 'gray.900' : 'gray.800',
+              borderColor: 'whiteAlpha.300',
+              _hover: { borderColor: 'whiteAlpha.400' }
+            }}
             borderColor="gray.300"
             _hover={{ borderColor: 'gray.400' }}
             _focus={{ borderColor: 'blue.500', boxShadow: '0 0 0 1px var(--chakra-colors-blue-500)' }}
           />
           <InputRightElement h="full">
-            <ChevronDown
-              size={14}
-              style={{
-                color: '#666',
-                transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                transition: 'transform 0.2s'
-              }}
-            />
+            <Box color="gray.600" _dark={{ color: 'gray.400' }}>
+              <ChevronDown
+                size={14}
+                style={{
+                  transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.2s'
+                }}
+              />
+            </Box>
           </InputRightElement>
         </InputGroup>
       </MenuButton>
@@ -127,7 +133,7 @@ export const FontSelector: React.FC<FontSelectorProps> = ({
       >
         {filteredFonts.length === 0 ? (
           <Box p={2} textAlign="center">
-            <Text fontSize="xs" color="gray.600">
+            <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>
               No fonts found
             </Text>
           </Box>
@@ -141,7 +147,10 @@ export const FontSelector: React.FC<FontSelectorProps> = ({
               fontSize="sm"
               fontFamily={font}
               bg={font === value ? 'blue.50' : 'transparent'}
-              _hover={{ bg: 'gray.50' }}
+              _dark={{
+                bg: font === value ? 'blue.900' : 'transparent'
+              }}
+              _hover={{ bg: 'gray.50', _dark: { bg: 'whiteAlpha.100' } }}
               minH="32px"
               title={font}
             >

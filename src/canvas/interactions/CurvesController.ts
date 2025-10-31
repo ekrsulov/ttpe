@@ -2,6 +2,7 @@ import type { Point, CurvePoint, CurveState, CurvePointType, CanvasElement } fro
 import { parsePathD, extractSubpaths } from '../../utils/path';
 import { logger } from '../../utils';
 import { applyGridSnap } from '../../utils/gridSnapUtils';
+import { getDefaultStrokeColorFromSettings } from '../../utils/defaultColors';
 
 export interface CurvesCallbacks {
   addElement: (element: CanvasElement) => string;
@@ -551,7 +552,7 @@ export class CurvesController {
       data: {
         subPaths,
         strokeWidth: 2,
-        strokeColor: '#000000',
+        strokeColor: getDefaultStrokeColorFromSettings(),
         strokeOpacity: 1,
         fillColor: 'none',
         fillOpacity: 0,

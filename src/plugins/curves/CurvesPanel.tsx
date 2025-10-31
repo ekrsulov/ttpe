@@ -57,7 +57,7 @@ const CurvesPanelComponent: React.FC = () => {
         {/* Selected Point Section */}
         {hasSelectedPoint && selectedPoint && (
           <Box>
-            <Text fontSize="12px" fontWeight="semibold" color="gray.900">
+            <Text fontSize="12px" fontWeight="semibold" color="gray.900" _dark={{ color: 'gray.100' }}>
               Selected Point
             </Text>
 
@@ -69,11 +69,11 @@ const CurvesPanelComponent: React.FC = () => {
             >
               <HStack spacing={4} justify="space-between">
                 <HStack spacing={1}>
-                  <Text color="gray.600" fontWeight="medium">X:</Text>
+                  <Text color="gray.600" _dark={{ color: 'gray.400' }} fontWeight="medium">X:</Text>
                   <Text fontFamily="mono">{selectedPoint.x.toFixed(2)}</Text>
                 </HStack>
                 <HStack spacing={1}>
-                  <Text color="gray.600" fontWeight="medium">Y:</Text>
+                  <Text color="gray.600" _dark={{ color: 'gray.400' }} fontWeight="medium">Y:</Text>
                   <Text fontFamily="mono">{selectedPoint.y.toFixed(2)}</Text>
                 </HStack>
               </HStack>
@@ -81,8 +81,10 @@ const CurvesPanelComponent: React.FC = () => {
               {/* Show handle info if point has handles */}
               {selectedPoint.handleIn && (
                 <HStack spacing={1} mt={1}>
-                  <TrendingUp size={10} color="#666" />
-                  <Text color="gray.600" fontWeight="medium">In:</Text>
+                  <Box color="gray.600" _dark={{ color: 'gray.400' }}>
+                    <TrendingUp size={10} />
+                  </Box>
+                  <Text color="gray.600" _dark={{ color: 'gray.400' }} fontWeight="medium">In:</Text>
                   <Text fontFamily="mono">
                     ({selectedPoint.handleIn.x.toFixed(1)}, {selectedPoint.handleIn.y.toFixed(1)})
                   </Text>
@@ -90,8 +92,10 @@ const CurvesPanelComponent: React.FC = () => {
               )}
               {selectedPoint.handleOut && (
                 <HStack spacing={1} mt={1}>
-                  <TrendingUp size={10} color="#666" style={{ transform: 'rotate(180deg)' }} />
-                  <Text color="gray.600" fontWeight="medium">Out:</Text>
+                  <Box color="gray.600" _dark={{ color: 'gray.400' }}>
+                    <TrendingUp size={10} style={{ transform: 'rotate(180deg)' }} />
+                  </Box>
+                  <Text color="gray.600" _dark={{ color: 'gray.400' }} fontWeight="medium">Out:</Text>
                   <Text fontFamily="mono">
                     ({selectedPoint.handleOut.x.toFixed(1)}, {selectedPoint.handleOut.y.toFixed(1)})
                   </Text>

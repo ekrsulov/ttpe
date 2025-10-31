@@ -9,6 +9,9 @@ export const Checkbox = {
       borderRadius: 'sm',
       border: '1px solid',
       borderColor: 'gray.300',
+      _dark: {
+        borderColor: 'whiteAlpha.500',
+      },
       transition: 'all 0.2s ease',
       _checked: {
         bg: 'brand.500',
@@ -30,6 +33,9 @@ export const Checkbox = {
     label: {
       fontSize: 'sm',
       color: 'gray.700',
+      _dark: {
+        color: 'gray.200',
+      },
       ml: 2,
       _disabled: {
         opacity: 0.6,

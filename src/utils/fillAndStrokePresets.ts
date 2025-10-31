@@ -166,6 +166,7 @@ const DARK_MODE_PRESETS: Preset[] = sortPresets(
     if (preset.id === 'black') {
       return {
         ...preset,
+        name: 'White',
         strokeColor: DEFAULT_STROKE_COLOR_DARK,
         fillColor: 'none',
       };

@@ -119,6 +119,13 @@ export const TextPanel: React.FC = () => {
             _hover={{
               bg: current.fontWeight === 'bold' ? 'blue.600' : 'gray.50'
             }}
+            _dark={{
+              color: current.fontWeight === 'bold' ? 'white' : 'gray.300',
+              borderColor: current.fontWeight === 'bold' ? 'blue.500' : 'whiteAlpha.400',
+              _hover: {
+                bg: current.fontWeight === 'bold' ? 'blue.600' : 'whiteAlpha.100'
+              }
+            }}
             sx={{
               minH: '28px',
               px: 2,
@@ -143,6 +150,13 @@ export const TextPanel: React.FC = () => {
             transition="all 0.2s"
             _hover={{
               bg: current.fontStyle === 'italic' ? 'blue.600' : 'gray.50'
+            }}
+            _dark={{
+              color: current.fontStyle === 'italic' ? 'white' : 'gray.300',
+              borderColor: current.fontStyle === 'italic' ? 'blue.500' : 'whiteAlpha.400',
+              _hover: {
+                bg: current.fontStyle === 'italic' ? 'blue.600' : 'whiteAlpha.100'
+              }
             }}
             sx={{
               minH: '28px',

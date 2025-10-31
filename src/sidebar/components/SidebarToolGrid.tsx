@@ -34,7 +34,7 @@ export const SidebarToolGrid: React.FC<SidebarToolGridProps> = ({
   onTogglePin,
   isDesktop = false
 }) => {
-  const gridBg = useColorModeValue('surface.sidebarHeader', 'surface.sidebarHeader');
+  const gridBg = useColorModeValue('surface.panelSecondary', 'surface.panelSecondary');
   // Plugin configuration - only utility/settings tools
   // Main action tools moved to ActionBar
   const pluginRows: ToolConfig[][] = [
@@ -90,7 +90,7 @@ export const SidebarToolGrid: React.FC<SidebarToolGridProps> = ({
   );
 
   return (
-    <Box pt={2} pr={2} pl={2} bg={gridBg} position="relative" borderBottomWidth="1px" borderColor="border.sidebar">
+    <Box pt={2} pr={2} pl={2} bg={gridBg} position="relative">
       <RenderCountBadgeWrapper componentName="SidebarToolGrid" position="top-left" />
       <SimpleGrid columns={isDesktop ? 3 : 2} spacing={1}>
         {pluginRows[0].map(renderPluginButton)}

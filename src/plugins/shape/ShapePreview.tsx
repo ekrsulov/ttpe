@@ -1,4 +1,5 @@
 import React from 'react';
+import { useColorMode } from '@chakra-ui/react';
 import type { Point } from '../../types';
 
 interface ShapePreviewProps {
@@ -16,6 +17,12 @@ export const ShapePreview: React.FC<ShapePreviewProps> = ({
   shapeEnd,
   viewport,
 }) => {
+  const { colorMode } = useColorMode();
+  
+  // Use direct color values for SVG compatibility
+  // Same blue as active buttons, switches, checkboxes, etc.
+  const previewColor = colorMode === 'dark' ? '#63b3ed' : '#007bff'; // blue.300 : brand.500
+
   const width = Math.abs(shapeEnd.x - shapeStart.x);
   const height = Math.abs(shapeEnd.y - shapeStart.y);
   const centerX = (shapeStart.x + shapeEnd.x) / 2;
@@ -48,7 +55,7 @@ export const ShapePreview: React.FC<ShapePreviewProps> = ({
   return (
     <path
       d={pathData}
-      stroke="#007bff"
+      stroke={previewColor}
       strokeWidth={1 / viewport.zoom}
       fill="none"
       strokeOpacity={0.7}
