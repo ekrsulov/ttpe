@@ -164,6 +164,17 @@ export const EditPanel: React.FC<EditPanelProps> = ({
           </PanelStyledButton>
         </HStack>
 
+        {/* Strength Slider */}
+        <PercentSliderControl
+          label="Strength:"
+          value={smoothBrush.strength}
+          step={0.01}
+          onChange={(value) => updateSmoothBrush({ strength: value })}
+          labelWidth="40px"
+          valueWidth="35px"
+          marginBottom='0'
+        />
+
         {/* Radius Slider - only show when brush mode is active */}
         {smoothBrush.isActive && (
           <SliderControl
@@ -178,17 +189,6 @@ export const EditPanel: React.FC<EditPanelProps> = ({
             marginBottom='0'
           />
         )}
-
-        {/* Strength Slider */}
-        <PercentSliderControl
-          label="Strength:"
-          value={smoothBrush.strength}
-          step={0.01}
-          onChange={(value) => updateSmoothBrush({ strength: value })}
-          labelWidth="40px"
-          valueWidth="35px"
-          marginBottom='0'
-        />
 
 
         {/* Simplification Tolerance Slider - only show when simplify points is enabled */}
