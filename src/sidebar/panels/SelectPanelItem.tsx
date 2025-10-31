@@ -55,7 +55,7 @@ const SelectPanelItemComponent: React.FC<SelectPanelItemProps> = ({
   const elementId = item.element.id;
   const subpathIndex = item.type === 'subpath' ? item.subpathIndex : undefined;
   const canCopyPath = item.type === 'element' && item.element.type === 'path';
-  const selectedBg = useColorModeValue('blue.50', 'whiteAlpha.200');
+  const selectedBg = useColorModeValue('gray.200', 'gray.600');
   const defaultBg = useColorModeValue('gray.50', 'whiteAlpha.100');
   const baseTextColor = useColorModeValue('gray.800', 'gray.100');
   const selectedTextColor = useColorModeValue('blue.700', 'blue.200');
@@ -83,7 +83,7 @@ const SelectPanelItemComponent: React.FC<SelectPanelItemProps> = ({
       px={1}
       py={1}
       bg={containerBg}
-      borderRadius="sm"
+      borderRadius="xl"
       fontSize="10px"
       align="center"
     >

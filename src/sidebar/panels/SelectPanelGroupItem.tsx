@@ -48,8 +48,8 @@ const SelectPanelGroupItemComponent: React.FC<SelectPanelGroupItemProps> = ({
     }
   });
 
-  const selectedBg = useColorModeValue('blue.100', 'whiteAlpha.200');
-  const descendantBg = useColorModeValue('rgba(59, 130, 246, 0.12)', 'whiteAlpha.150');
+  const selectedBg = useColorModeValue('gray.200', 'gray.600');
+  const descendantBg = useColorModeValue('gray.200', 'gray.600');
   const defaultBg = useColorModeValue('gray.50', 'whiteAlpha.100');
   const baseTextColor = useColorModeValue('gray.800', 'gray.100');
   const mutedTextColor = useColorModeValue('gray.600', 'gray.300');
@@ -70,7 +70,7 @@ const SelectPanelGroupItemComponent: React.FC<SelectPanelGroupItemProps> = ({
       px={1}
       py={1}
       bg={backgroundColor}
-      borderRadius="sm"
+      borderRadius="xl"
       transition="background-color 0.2s ease"
     >
       <HStack spacing={2} align="center">
