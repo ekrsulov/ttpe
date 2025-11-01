@@ -371,7 +371,7 @@ export const EditorPanel: React.FC = () => {
                   gap="4px"
                 />
               </Box>
-              <Box w="24px" />
+              <Box w="20px" />
               <ConditionalTooltip label={isAdvancedStrokeOpen ? "Collapse Advanced Stroke" : "Expand Advanced Stroke"}>
                 <ChakraIconButton
                   aria-label={isAdvancedStrokeOpen ? "Collapse Advanced Stroke" : "Expand Advanced Stroke"}
