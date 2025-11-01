@@ -44,6 +44,7 @@ export const ToolbarIconButton: React.FC<ToolbarIconButtonProps> = ({
         sx={{
           minHeight: '28px',
           minWidth: '28px',
+          borderRadius: 'full',
           ...sx,
         }}
         {...iconButtonProps}
@@ -52,7 +53,7 @@ export const ToolbarIconButton: React.FC<ToolbarIconButtonProps> = ({
       {counter !== undefined && counter > 0 && (
         <Box
           position="absolute"
-          bottom="-4px"
+          bottom="-3px"
           left="50%"
           transform="translateX(-50%)"
           bg={counterColor === 'red' ? dangerCounterBg : neutralCounterBg}
