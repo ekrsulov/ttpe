@@ -23,8 +23,8 @@ export const JoinedButtonGroup = <T extends string>({
           borderRadius: 0,
           borderRightWidth: !isLast ? 0 : undefined,
           borderLeftWidth: !isFirst && options.length === 2 ? 0 : undefined,
-          ...(isFirst && { borderTopLeftRadius: 'md', borderBottomLeftRadius: 'md' }),
-          ...(isLast && { borderTopRightRadius: 'md', borderBottomRightRadius: 'md' }),
+          ...(isFirst && { borderTopLeftRadius: 'full', borderBottomLeftRadius: 'full' }),
+          ...(isLast && { borderTopRightRadius: 'full', borderBottomRightRadius: 'full' }),
         };
         return (
           <ToggleButton

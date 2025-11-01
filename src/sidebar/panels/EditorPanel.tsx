@@ -169,14 +169,15 @@ export const EditorPanel: React.FC = () => {
         <HStack minH="24px">
           {/* Style Eyedropper Button */}
           <ConditionalTooltip label={selectedPathsCount !== 1 ? 'Select exactly one path to copy its style' : styleEyedropper.isActive ? 'Click on another path to apply style' : 'Copy style from selected path'}>
-                        <ChakraIconButton
+            <ChakraIconButton
               aria-label={styleEyedropper.isActive ? "Cancel Style Copy" : "Copy Style"}
-              icon={<Pipette size={16} />}
+              icon={<Pipette size={12} />}
               onClick={handleStyleEyedropper}
               variant="ghost"
               size="xs"
               h="20px"
               minW="20px"
+              borderRadius="full"
               flexShrink={0}
               bg={styleEyedropper.isActive ? activeButtonBg : "transparent"}
               color={styleEyedropper.isActive ? activeButtonColor : undefined}
@@ -212,6 +213,7 @@ export const EditorPanel: React.FC = () => {
               size="xs"
               h="20px"
               minW="20px"
+              borderRadius="full"
               flexShrink={0}
               bg="transparent"
             />
@@ -340,6 +342,7 @@ export const EditorPanel: React.FC = () => {
                   size="xs"
                   h="20px"
                   minW="20px"
+                  borderRadius="full"
                   flexShrink={0}
                   bg="transparent"
                 />

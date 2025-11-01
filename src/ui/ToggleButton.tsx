@@ -39,7 +39,7 @@ export const ToggleButton: React.FC<ToggleButtonProps> = ({
     color: isActive ? 'white' : 'gray.700',
     border: '1px solid',
     borderColor: isActive ? 'gray.600' : 'gray.400',
-    borderRadius: 'md',
+    borderRadius: 'full',
     fontSize: size === 'sm' ? '10px' : size === 'md' ? '11px' : '12px',
     fontWeight: 'medium' as const,
     transition: 'all 0.2s',

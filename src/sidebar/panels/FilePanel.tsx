@@ -528,6 +528,7 @@ export const FilePanel: React.FC = () => {
                 size="xs"
                 h="20px"
                 minW="20px"
+                borderRadius="full"
                 flexShrink={0}
                 bg="transparent"
               />

@@ -35,6 +35,7 @@ export const PanelToggle: React.FC<PanelToggleProps> = ({
       size="sm"
       sx={{
         '& .chakra-checkbox__control': {
+          borderRadius: 'full',
           bg: isChecked ? checkedBg : 'transparent',
           borderColor: isChecked ? checkedBorder : borderColor,
           _checked: {

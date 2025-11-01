@@ -24,8 +24,8 @@ export const PanelActionButton: React.FC<PanelActionButtonProps> = ({
   variant = 'ghost',
   tooltipDelay = 200,
 }) => {
-  const hoverBg = useColorModeValue('gray.50', 'whiteAlpha.100');
-  const activeBg = useColorModeValue('gray.100', 'whiteAlpha.200');
+  const hoverBg = useColorModeValue('gray.300', 'whiteAlpha.400');
+  const activeBg = useColorModeValue('gray.400', 'whiteAlpha.500');
   const iconColor = useColorModeValue('gray.600', 'gray.200');
   return (
     <ConditionalTooltip label={label} openDelay={tooltipDelay}>
@@ -37,6 +37,7 @@ export const PanelActionButton: React.FC<PanelActionButtonProps> = ({
         minW="auto"
         h={height}
         p={1}
+        borderRadius="full"
         onClick={onClick}
         isDisabled={isDisabled}
         border="none"

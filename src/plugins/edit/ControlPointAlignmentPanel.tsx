@@ -348,6 +348,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
                 onClick={toggleDetails}
                 variant="ghost"
                 size="xs"
+                borderRadius="full"
                 bg="transparent"
                 _hover={{ bg: 'surface.panelSecondary' }}
               />

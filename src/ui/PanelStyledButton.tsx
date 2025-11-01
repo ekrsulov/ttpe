@@ -19,7 +19,7 @@ export const PanelStyledButton: React.FC<ButtonProps> = (props) => {
       color="gray.700"
       border="1px solid"
       borderColor="gray.400"
-      borderRadius="md"
+      borderRadius="full"
       fontWeight="medium"
       fontSize="10px"
       transition="all 0.2s"

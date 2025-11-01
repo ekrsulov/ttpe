@@ -92,6 +92,7 @@ const ArrangePanelComponent: React.FC = () => {
             flex={1}
             variant="ghost"
             bg="transparent"
+            borderRadius="full"
             color={buttonColor}
             _hover={{ bg: buttonHoverBg }}
             _active={{ bg: buttonActiveBg }}
