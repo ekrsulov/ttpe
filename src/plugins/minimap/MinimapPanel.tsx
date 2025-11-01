@@ -105,11 +105,12 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) 
   const lastClickRef = useRef<{ elementId: string; time: number } | null>(null);
   const containerBg = useColorModeValue('surface.toolbar', 'surface.toolbar');
   const containerShadow = useColorModeValue('0 4px 20px rgba(0, 0, 0, 0.1)', '0 8px 24px rgba(0, 0, 0, 0.45)');
-  const canvasFill = useColorModeValue('rgba(248, 250, 252, 0.95)', 'rgba(15, 23, 42, 0.8)');
-  const elementFill = useColorModeValue('rgba(59, 130, 246, 0.2)', 'rgba(96, 165, 250, 0.35)');
-  const elementStroke = useColorModeValue('rgba(59, 130, 246, 0.6)', 'rgba(147, 197, 253, 0.7)');
-  const viewportFill = useColorModeValue('rgba(59, 130, 246, 0.1)', 'rgba(147, 197, 254, 0.15)');
-  const viewportStroke = useColorModeValue('rgba(59, 130, 246, 1)', 'rgba(191, 219, 254, 0.85)');
+  const canvasFill = useColorModeValue('rgba(248, 250, 252, 0.95)', 'rgba(26, 32, 44, 0.85)');
+  const borderColor = useColorModeValue('border.toolbar', 'border.toolbar');
+  const elementFill = useColorModeValue('rgba(113, 128, 150, 0.2)', 'rgba(160, 174, 192, 0.35)');
+  const elementStroke = useColorModeValue('rgba(113, 128, 150, 0.6)', 'rgba(203, 213, 224, 0.7)');
+  const viewportFill = useColorModeValue('rgba(113, 128, 150, 0.1)', 'rgba(203, 213, 224, 0.15)');
+  const viewportStroke = useColorModeValue('rgba(113, 128, 150, 1)', 'rgba(237, 242, 247, 0.85)');
 
   const [dragState, setDragState] = useState<DragState>({
     isActive: false,
@@ -360,6 +361,8 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) 
       width={`${MINIMAP_WIDTH}px`}
       height={`${MINIMAP_HEIGHT}px`}
       borderRadius="xl"
+      borderWidth="1px"
+      borderColor={borderColor}
       boxShadow={containerShadow}
       backdropFilter="blur(12px)"
       bg={containerBg}

@@ -549,7 +549,17 @@ function createPathFromVertices(vertices: Point[], getState: () => CanvasStore):
   
   // Get fill color from Editor (pencil state) or use default
   const pencilState = state.pencil;
-  let fillColor = '#4299e1'; // Default blue
+  
+  // Get current color mode from localStorage (Chakra UI default)
+  const colorMode = (() => {
+    try {
+      return localStorage.getItem('chakra-ui-color-mode') || 'light';
+    } catch {
+      return 'light';
+    }
+  })();
+  
+  let fillColor = colorMode === 'dark' ? '#ffffff' : '#000000'; // White in dark mode, black in light mode
   let fillOpacity = 0.5; // Default opacity
   
   // Get fill opacity from selected path (same logic as EditorPanel)

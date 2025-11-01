@@ -105,14 +105,30 @@ function App() {
 
     // Update all existing path elements that have the old default color
     const oldDefaultColor = colorMode === 'dark' ? DEFAULT_STROKE_COLOR_LIGHT : DEFAULT_STROKE_COLOR_DARK;
+    const oldDefaultFillColor = colorMode === 'dark' ? '#000000' : '#ffffff';
+    const newDefaultFillColor = colorMode === 'dark' ? '#ffffff' : '#000000';
+    
     state.elements.forEach(element => {
       if (element.type === 'path') {
         const pathData = element.data as PathData;
+        const updates: Partial<PathData> = {};
+        
+        // Update stroke color if it matches the old default
         if (pathData.strokeColor === oldDefaultColor) {
+          updates.strokeColor = targetStrokeColor;
+        }
+        
+        // Update fill color if it's black/white (from grid fill defaults)
+        if (pathData.fillColor === oldDefaultFillColor) {
+          updates.fillColor = newDefaultFillColor;
+        }
+        
+        // Apply updates if any
+        if (Object.keys(updates).length > 0) {
           state.updateElement(element.id, {
             data: {
               ...pathData,
-              strokeColor: targetStrokeColor
+              ...updates
             }
           });
         }
