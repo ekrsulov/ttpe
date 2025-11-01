@@ -103,10 +103,20 @@ function App() {
       state.updatePencilState({ strokeColor: targetStrokeColor });
     }
 
-    // Update all existing path elements that have the old default color
+    // Update all existing path elements that have white/black colors
     const oldDefaultColor = colorMode === 'dark' ? DEFAULT_STROKE_COLOR_LIGHT : DEFAULT_STROKE_COLOR_DARK;
-    const oldDefaultFillColor = colorMode === 'dark' ? '#000000' : '#ffffff';
-    const newDefaultFillColor = colorMode === 'dark' ? '#ffffff' : '#000000';
+    const transformColor = (color: string): string => {
+      if (colorMode === 'dark') {
+        // From light to dark: white becomes black, black becomes white
+        if (color === '#ffffff') return '#000000';
+        if (color === '#000000') return '#ffffff';
+      } else {
+        // From dark to light: black becomes white, white becomes black
+        if (color === '#000000') return '#ffffff';
+        if (color === '#ffffff') return '#000000';
+      }
+      return color;
+    };
     
     state.elements.forEach(element => {
       if (element.type === 'path') {
@@ -116,11 +126,14 @@ function App() {
         // Update stroke color if it matches the old default
         if (pathData.strokeColor === oldDefaultColor) {
           updates.strokeColor = targetStrokeColor;
+        } else if (pathData.strokeColor === '#ffffff' || pathData.strokeColor === '#000000') {
+          // Transform white/black strokes
+          updates.strokeColor = transformColor(pathData.strokeColor);
         }
         
-        // Update fill color if it's black/white (from grid fill defaults)
-        if (pathData.fillColor === oldDefaultFillColor) {
-          updates.fillColor = newDefaultFillColor;
+        // Update fill color if it's black/white
+        if (pathData.fillColor === '#000000' || pathData.fillColor === '#ffffff') {
+          updates.fillColor = transformColor(pathData.fillColor);
         }
         
         // Apply updates if any
