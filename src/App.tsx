@@ -9,7 +9,7 @@ import './App.css';
 import type { CSSProperties } from 'react';
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useColorMode } from '@chakra-ui/react';
-import type { CanvasElement } from './types';
+import type { CanvasElement, PathData } from './types';
 import { CurvesControllerProvider } from './plugins/curves/CurvesControllerContext';
 import { DEFAULT_STROKE_COLOR_DARK, DEFAULT_STROKE_COLOR_LIGHT } from './utils/defaultColors';
 
@@ -107,7 +107,7 @@ function App() {
     const oldDefaultColor = colorMode === 'dark' ? DEFAULT_STROKE_COLOR_LIGHT : DEFAULT_STROKE_COLOR_DARK;
     state.elements.forEach(element => {
       if (element.type === 'path') {
-        const pathData = element.data as any;
+        const pathData = element.data as PathData;
         if (pathData.strokeColor === oldDefaultColor) {
           state.updateElement(element.id, {
             data: {
