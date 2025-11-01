@@ -189,8 +189,6 @@ function renderDotGrid(
   color: string,
   zoom: number
 ): React.ReactElement {
-  const dots: React.ReactElement[] = [];
-  
   const startX = Math.floor(left / spacing) * spacing;
   const endX = Math.ceil(right / spacing) * spacing;
   const startY = Math.floor(top / spacing) * spacing;
@@ -200,23 +198,24 @@ function renderDotGrid(
   const dotColor = `rgba(${r}, ${g}, ${b}, ${opacity})`;
   const dotRadius = 1 / zoom;
 
-  let index = 0;
+  // Use a single path with circle commands for better performance
+  let pathData = '';
+  
   for (let x = startX; x <= endX; x += spacing) {
     for (let y = startY; y <= endY; y += spacing) {
-      dots.push(
-        <circle
-          key={`dot-${index++}`}
-          cx={x}
-          cy={y}
-          r={dotRadius}
-          fill={dotColor}
-          pointerEvents="none"
-        />
-      );
+      // Create a circle using arc commands: Move to center, then draw a full circle
+      // M cx cy m -r 0 a r r 0 1 0 (r*2) 0 a r r 0 1 0 -(r*2) 0
+      pathData += `M ${x} ${y} m -${dotRadius} 0 a ${dotRadius} ${dotRadius} 0 1 0 ${dotRadius * 2} 0 a ${dotRadius} ${dotRadius} 0 1 0 -${dotRadius * 2} 0 `;
     }
   }
 
-  return <g>{dots}</g>;
+  return (
+    <path
+      d={pathData}
+      fill={dotColor}
+      pointerEvents="none"
+    />
+  );
 }
 
 /**
