@@ -1,5 +1,5 @@
-import React from 'react';
-import { HStack, useColorModeValue } from '@chakra-ui/react';
+import React, { useRef, useEffect, useState } from 'react';
+import { HStack, Box, useColorModeValue } from '@chakra-ui/react';
 import { Menu } from 'lucide-react';
 import { RenderCountBadgeWrapper } from './RenderCountBadgeWrapper';
 import { FloatingToolbarShell } from './FloatingToolbarShell';
@@ -40,10 +40,37 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
   // Colors for active buttons
   const activeBg = useColorModeValue('gray.800', 'gray.200');
   const activeColor = useColorModeValue('white', 'gray.900');
-  const activeHoverBg = useColorModeValue('gray.800', 'gray.200');
   
   // Get grid state to conditionally show gridFill tool
   const gridEnabled = useCanvasStore(state => state.grid?.enabled ?? false);
+
+  // State and refs for animated background
+  const buttonRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const [backgroundStyle, setBackgroundStyle] = useState<{
+    left: number;
+    width: number;
+    opacity: number;
+  }>({ left: 0, width: 0, opacity: 0 });
+
+  // Update background position when active mode changes
+  useEffect(() => {
+    if (activeMode && buttonRefs.current.has(activeMode)) {
+      const buttonElement = buttonRefs.current.get(activeMode);
+      if (buttonElement) {
+        const rect = buttonElement.getBoundingClientRect();
+        const parentRect = buttonElement.parentElement?.getBoundingClientRect();
+        if (parentRect) {
+          setBackgroundStyle({
+            left: rect.left - parentRect.left,
+            width: rect.width,
+            opacity: 1,
+          });
+        }
+      }
+    } else {
+      setBackgroundStyle(prev => ({ ...prev, opacity: 0 }));
+    }
+  }, [activeMode]);
 
   const registeredTools = pluginManager
     .getRegisteredTools()
@@ -91,7 +118,24 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
       <HStack 
         spacing={{ base: 0, md: 0 }}
         justify="center"
+        position="relative"
       >
+        {/* Animated background */}
+        <Box
+          position="absolute"
+          top="50%"
+          transform="translateY(-50%)"
+          left={`${backgroundStyle.left}px`}
+          width={`${backgroundStyle.width}px`}
+          height="28px"
+          bg={activeBg}
+          borderRadius="full"
+          opacity={backgroundStyle.opacity}
+          transition="left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-in-out"
+          pointerEvents="none"
+          zIndex={0}
+        />
+        
         {/* Tool buttons */}
         {toolsToRender.map(({ id, icon: Icon, label }) => {
           const isDisabled = (() => {
@@ -112,39 +156,63 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
             return false;
           })();
           return (
-            <ToolbarIconButton
+            <Box
               key={id}
-              icon={Icon}
-              label={label}
-              onClick={() => onModeChange(id)}
-              variant={activeMode === id ? 'solid' : 'ghost'}
-              colorScheme={activeMode === id ? 'blackAlpha' : 'gray'}
-              bg={activeMode === id ? activeBg : undefined}
-              color={activeMode === id ? activeColor : undefined}
-              _hover={activeMode === id ? { bg: activeHoverBg } : undefined}
-              tooltip={label}
-              isDisabled={isDisabled}
-              showTooltip={true}
-              title={label}
-            />
+              ref={(el) => {
+                if (el) {
+                  buttonRefs.current.set(id, el);
+                } else {
+                  buttonRefs.current.delete(id);
+                }
+              }}
+              position="relative"
+              zIndex={1}
+            >
+              <ToolbarIconButton
+                icon={Icon}
+                label={label}
+                onClick={() => onModeChange(id)}
+                variant="ghost"
+                colorScheme="gray"
+                bg={activeMode === id ? 'transparent' : undefined}
+                color={activeMode === id ? activeColor : undefined}
+                _hover={activeMode === id ? { bg: 'transparent' } : undefined}
+                tooltip={label}
+                isDisabled={isDisabled}
+                showTooltip={true}
+                title={label}
+              />
+            </Box>
           );
         })}
         
         {/* Hamburger menu button - al final */}
         {showMenuButton && (
-          <ToolbarIconButton
-            icon={Menu}
-            label="Toggle sidebar"
-            onClick={onMenuClick}
-            variant={isSidebarOpen ? 'solid' : 'ghost'}
-            colorScheme={isSidebarOpen ? 'blackAlpha' : 'gray'}
-            bg={isSidebarOpen ? activeBg : undefined}
-            color={isSidebarOpen ? activeColor : undefined}
-            _hover={isSidebarOpen ? { bg: activeHoverBg } : undefined}
-            tooltip="Toggle Menu"
-            showTooltip={true}
-            title="Toggle Menu"
-          />
+          <Box
+            ref={(el) => {
+              if (el) {
+                buttonRefs.current.set('menu', el);
+              } else {
+                buttonRefs.current.delete('menu');
+              }
+            }}
+            position="relative"
+            zIndex={1}
+          >
+            <ToolbarIconButton
+              icon={Menu}
+              label="Toggle sidebar"
+              onClick={onMenuClick}
+              variant="ghost"
+              colorScheme="gray"
+              bg={isSidebarOpen ? 'transparent' : undefined}
+              color={isSidebarOpen ? activeColor : undefined}
+              _hover={isSidebarOpen ? { bg: 'transparent' } : undefined}
+              tooltip="Toggle Menu"
+              showTooltip={true}
+              title="Toggle Menu"
+            />
+          </Box>
         )}
       </HStack>
       <RenderCountBadgeWrapper componentName="TopActionBar" position="top-right" />
