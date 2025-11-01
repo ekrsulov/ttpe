@@ -170,7 +170,7 @@ export const EditPanel: React.FC<EditPanelProps> = ({
           value={smoothBrush.strength}
           step={0.01}
           onChange={(value) => updateSmoothBrush({ strength: value })}
-          labelWidth="40px"
+          labelWidth="60px"
           valueWidth="35px"
           marginBottom='0'
         />
@@ -184,8 +184,8 @@ export const EditPanel: React.FC<EditPanelProps> = ({
             max={60}
             step={1}
             onChange={(value) => updateSmoothBrush({ radius: value })}
-            labelWidth="40px"
-            valueWidth="25px"
+            labelWidth="60px"
+            valueWidth="35px"
             marginBottom='0'
           />
         )}
@@ -201,8 +201,8 @@ export const EditPanel: React.FC<EditPanelProps> = ({
             step={0.1}
             onChange={(value) => updateSmoothBrush({ simplificationTolerance: value })}
             formatter={(value) => value.toFixed(1)}
-            labelWidth="40px"
-            valueWidth="30px"
+            labelWidth="60px"
+            valueWidth="35px"
             marginBottom='0'
           />
         )}
@@ -217,8 +217,8 @@ export const EditPanel: React.FC<EditPanelProps> = ({
             step={0.1}
             onChange={(value) => updateSmoothBrush({ minDistance: value })}
             formatter={(value) => value.toFixed(1)}
-            labelWidth="40px"
-            valueWidth="30px"
+            labelWidth="60px"
+            valueWidth="35px"
             marginBottom='0'
           />
         )}
@@ -245,7 +245,7 @@ export const EditPanel: React.FC<EditPanelProps> = ({
           step={0.01}
           onChange={(value) => updatePathSimplification({ tolerance: value })}
           formatter={(value) => value.toFixed(2)}
-          labelWidth="50px"
+          labelWidth="60px"
           valueWidth="35px"
           marginBottom='0'
         />
@@ -271,7 +271,7 @@ export const EditPanel: React.FC<EditPanelProps> = ({
           step={0.1}
           onChange={(value) => updatePathRounding({ radius: value })}
           formatter={(value) => value.toFixed(1)}
-          labelWidth="50px"
+          labelWidth="60px"
           valueWidth="35px"
           marginBottom='0'
         />
