@@ -43,8 +43,6 @@ export const EditorPanel: React.FC = () => {
   const { colorMode } = useColorMode();
   const presets = React.useMemo(() => getFillAndStrokePresets(colorMode), [colorMode]);
   const labelColor = useColorModeValue('gray.600', 'gray.300');
-  const inputBorderColor = useColorModeValue('gray.300', 'whiteAlpha.300');
-  const inputBg = useColorModeValue('white', 'whiteAlpha.100');
   
   // Colors for active style eyedropper button
   const activeButtonBg = useColorModeValue('gray.800', 'gray.200');
@@ -235,14 +233,13 @@ export const EditorPanel: React.FC = () => {
                       type="color"
                       value={currentFillColor === 'none' ? defaultStrokeColor : currentFillColor}
                       onChange={(e) => handleFillColorChange(e.target.value)}
-                      w="20px"
-                      h="20px"
-                      minW="20px"
+                      w="24px"
+                      h="24px"
+                      minW="24px"
                       p={0}
-                      border="1px solid"
-                      borderColor={inputBorderColor}
-                      bg={inputBg}
-                      borderRadius="3px"
+                      border="none"
+                      bg="transparent"
+                      borderRadius="full"
                       cursor="pointer"
                       opacity={currentFillColor === 'none' ? 0.5 : 1}
                       title="Fill Color"
@@ -254,6 +251,7 @@ export const EditorPanel: React.FC = () => {
                     aria-label="Set fill color to none (transparent)"
                     variant="icon"
                     icon={<X size={12} />}
+                    sx={{ borderRadius: 'full' }}
                   />
                 </HStack>
                 <Box flex={1} minW="120px">
@@ -282,14 +280,13 @@ export const EditorPanel: React.FC = () => {
                       type="color"
                       value={currentStrokeColor === 'none' ? defaultStrokeColor : currentStrokeColor}
                       onChange={(e) => handleStrokeColorChange(e.target.value)}
-                      w="20px"
-                      h="20px"
-                      minW="20px"
+                      w="24px"
+                      h="24px"
+                      minW="24px"
                       p={0}
-                      border="1px solid"
-                      borderColor={inputBorderColor}
-                      bg={inputBg}
-                      borderRadius="3px"
+                      border="none"
+                      bg="transparent"
+                      borderRadius="full"
                       cursor="pointer"
                       opacity={currentStrokeColor === 'none' ? 0.5 : 1}
                     />
@@ -301,6 +298,7 @@ export const EditorPanel: React.FC = () => {
                     variant="icon"
                     icon={<X size={12} />}
                     isDisabled={currentFillColor === 'none'}
+                    sx={{ borderRadius: 'full' }}
                   />
                 </HStack>
                 <Box flex={1} minW="120px">

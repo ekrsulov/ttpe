@@ -79,6 +79,7 @@ export const DashArrayPresets: React.FC<DashArrayPresetsProps> = ({
           aria-label={`${preset.name}: ${preset.description}`}
           variant="icon"
           icon={<DashPreview dashArray={preset.dashArray} />}
+          sx={{ borderRadius: 'full' }}
         />
       ))}
     </div>
@@ -115,6 +116,7 @@ export const DashArraySelector: React.FC<DashArraySelectorProps> = ({
             aria-label={`${preset.name}: ${preset.description}`}
             variant="icon"
             icon={<DashPreview dashArray={preset.dashArray} />}
+            sx={{ borderRadius: 'full' }}
           />
         ))}
       </div>
