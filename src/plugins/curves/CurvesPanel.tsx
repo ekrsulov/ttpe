@@ -128,26 +128,26 @@ const CurvesPanelComponent: React.FC = () => {
         {/* Instructions Section */}
         {!hasPoints && (
           <Box 
-            bg="yellow.50"
+            bg="surface.panelSecondary"
             p={2} 
             borderRadius="md"
             border="1px solid"
-            borderColor="yellow.300"
+            borderColor="border.panel"
           >
-            <Text fontSize="11px" color="gray.700" fontWeight="medium" mb={1}>
+            <Text fontSize="11px" color="text.primary" fontWeight="medium" mb={1}>
               How to use:
             </Text>
             <VStack align="stretch" spacing={0.5}>
-              <Text fontSize="10px" color="gray.600">
+              <Text fontSize="10px" color="text.muted">
                 • Click to add points
               </Text>
-              <Text fontSize="10px" color="gray.600">
+              <Text fontSize="10px" color="text.muted">
                 • Drag handles to adjust curves
               </Text>
-              <Text fontSize="10px" color="gray.600">
+              <Text fontSize="10px" color="text.muted">
                 • Click first point to close path
               </Text>
-              <Text fontSize="10px" color="gray.600">
+              <Text fontSize="10px" color="text.muted">
                 • Press Enter or Finish when done
               </Text>
             </VStack>
@@ -157,28 +157,28 @@ const CurvesPanelComponent: React.FC = () => {
         {/* Keyboard Shortcuts */}
         {hasPoints && !isMobile && (
           <Box 
-            bg="yellow.50"
+            bg="surface.panelSecondary"
             p={2} 
             borderRadius="md"
             border="1px solid"
-            borderColor="yellow.300"
+            borderColor="border.panel"
           >
-            <Text fontSize="11px" color="gray.700" fontWeight="medium" mb={1}>
+            <Text fontSize="11px" color="text.primary" fontWeight="medium" mb={1}>
               Keyboard Shortcuts:
             </Text>
             <VStack align="stretch" spacing={0.5}>
               <HStack justify="space-between">
-                <Text fontSize="10px" color="gray.600">Enter</Text>
-                <Text fontSize="10px" color="gray.700">Finish curve</Text>
+                <Text fontSize="10px" color="text.muted">Enter</Text>
+                <Text fontSize="10px" color="text.primary">Finish curve</Text>
               </HStack>
               <HStack justify="space-between">
-                <Text fontSize="10px" color="gray.600">Escape</Text>
-                <Text fontSize="10px" color="gray.700">Cancel curve</Text>
+                <Text fontSize="10px" color="text.muted">Escape</Text>
+                <Text fontSize="10px" color="text.primary">Cancel curve</Text>
               </HStack>
               {hasSelectedPoint && (
                 <HStack justify="space-between">
-                  <Text fontSize="10px" color="gray.600">Delete</Text>
-                  <Text fontSize="10px" color="gray.700">Delete point</Text>
+                  <Text fontSize="10px" color="text.muted">Delete</Text>
+                  <Text fontSize="10px" color="text.primary">Delete point</Text>
                 </HStack>
               )}
             </VStack>
