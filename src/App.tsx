@@ -95,11 +95,29 @@ function App() {
       return;
     }
 
+    // Update default stroke color
     state.updateSettings?.({ defaultStrokeColor: targetStrokeColor });
 
+    // Update pencil state if it matches the old default
     if (state.pencil && state.updatePencilState && state.pencil.strokeColor === currentDefault) {
       state.updatePencilState({ strokeColor: targetStrokeColor });
     }
+
+    // Update all existing path elements that have the old default color
+    const oldDefaultColor = colorMode === 'dark' ? DEFAULT_STROKE_COLOR_LIGHT : DEFAULT_STROKE_COLOR_DARK;
+    state.elements.forEach(element => {
+      if (element.type === 'path') {
+        const pathData = element.data as any;
+        if (pathData.strokeColor === oldDefaultColor) {
+          state.updateElement(element.id, {
+            data: {
+              ...pathData,
+              strokeColor: targetStrokeColor
+            }
+          });
+        }
+      }
+    });
   }, [colorMode]);
 
   return (
