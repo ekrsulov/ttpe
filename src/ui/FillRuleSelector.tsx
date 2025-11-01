@@ -16,8 +16,8 @@ export const FillRuleSelector: React.FC<FillRuleSelectorProps> = ({
     label: string;
     description: string;
   }> = [
-    { value: 'nonzero', label: 'Non-Zero', description: 'Non-Zero Winding Rule' },
-    { value: 'evenodd', label: 'Even-Odd', description: 'Even-Odd Rule' }
+    { value: 'evenodd', label: 'Even-Odd', description: 'Even-Odd Rule' },
+    { value: 'nonzero', label: 'Non-Zero', description: 'Non-Zero Winding Rule' }
   ];
 
   return (

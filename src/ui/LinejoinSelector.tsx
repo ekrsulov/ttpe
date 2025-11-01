@@ -17,8 +17,8 @@ export const LinejoinSelector: React.FC<LinejoinSelectorProps> = ({
     description: string;
   }> = [
     { value: 'miter', label: 'Miter', description: 'Miter Join - Sharp corner with pointed edge' },
-    { value: 'round', label: 'Round', description: 'Round Join - Rounded corner' },
-    { value: 'bevel', label: 'Bevel', description: 'Bevel Join - Flattened corner' }
+    { value: 'bevel', label: 'Bevel', description: 'Bevel Join - Flattened corner' },
+    { value: 'round', label: 'Round', description: 'Round Join - Rounded corner' }
   ];
 
   return (

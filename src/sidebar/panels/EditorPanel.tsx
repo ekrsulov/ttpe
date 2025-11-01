@@ -351,28 +351,6 @@ export const EditorPanel: React.FC = () => {
             {/* Advanced Stroke Properties */}
             <Collapse in={isAdvancedStrokeOpen} animateOpacity>
               <VStack spacing={1} align="stretch">
-                {/* Dash Array Presets */}
-                <HStack justify="flex-start" minH="24px" spacing={1}>
-                  <DashArrayPresets
-                    value={currentStrokeDasharray || 'none'}
-                    onChange={handleStrokeDasharrayChange}
-                  />
-                </HStack>
-
-                {/* Custom Dash Array */}
-                <HStack justify="flex-start" minH="24px" spacing={1}>
-                  <Text fontSize="11px" fontWeight="600" color={labelColor} minW="80px" h="24px" display="flex" alignItems="center" title="Custom Dash Array">
-                    Dash Array
-                  </Text>
-                  <Box flex={1}>
-                    <DashArrayCustomInput
-                      value={currentStrokeDasharray || 'none'}
-                      onChange={handleStrokeDasharrayChange}
-                      title="Custom dash array (e.g., 5,3,2,3)"
-                    />
-                  </Box>
-                </HStack>
-
                 {/* Linecap */}
                 <HStack justify="flex-start" minH="24px" spacing={1} width="100%">
                   <Text fontSize="11px" fontWeight="600" color={labelColor} minW="80px" h="24px" display="flex" alignItems="center" title="Stroke Linecap">
@@ -406,6 +384,24 @@ export const EditorPanel: React.FC = () => {
                     value={currentFillRule || 'nonzero'}
                     onChange={handleFillRuleChange}
                     title="Fill Rule"
+                  />
+                </HStack>
+
+                {/* Custom Dash Array */}
+                <HStack justify="flex-start" minH="24px" spacing={1}>
+                  <Text fontSize="11px" fontWeight="600" color={labelColor} minW="80px" h="24px" display="flex" alignItems="center" title="Custom Dash Array">
+                    Dash Array
+                  </Text>
+                  <Box flex={1}>
+                    <DashArrayCustomInput
+                      value={currentStrokeDasharray || 'none'}
+                      onChange={handleStrokeDasharrayChange}
+                      title="Custom dash array (e.g., 5,3,2,3)"
+                    />
+                  </Box>
+                  <DashArrayPresets
+                    value={currentStrokeDasharray || 'none'}
+                    onChange={handleStrokeDasharrayChange}
                   />
                 </HStack>
               </VStack>

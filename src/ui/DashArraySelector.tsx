@@ -25,7 +25,7 @@ export const DashArrayCustomInput: React.FC<DashArrayCustomInputProps> = ({
   const inputBg = useColorModeValue('white', 'whiteAlpha.100');
   const inputBorder = useColorModeValue('gray.300', 'whiteAlpha.300');
   const inputColor = useColorModeValue('gray.800', 'gray.100');
-  const placeholderColor = useColorModeValue('gray.500', 'gray.400');
+  const placeholderColor = useColorModeValue('gray.500', 'gray.500');
 
   return (
     <Input
@@ -35,6 +35,8 @@ export const DashArrayCustomInput: React.FC<DashArrayCustomInputProps> = ({
       placeholder="5,3,2,3"
       size="xs"
       fontSize="11px"
+      minWidth="90px"
+      h="20px"
       bg={inputBg}
       borderColor={inputBorder}
       color={inputColor}
@@ -53,22 +55,17 @@ export const DashArrayPresets: React.FC<DashArrayPresetsProps> = ({
   value,
   onChange
 }) => {
-  // Select 7 most useful dash presets (increased from 5)
+  // Select only 2 most useful dash presets: Solid and Dashed
   const commonPresets = [
     DASH_PRESETS[0],  // Solid
     DASH_PRESETS[1],  // Dashed
-    DASH_PRESETS[2],  // Dotted
-    DASH_PRESETS[3],  // Dash-Dot
-    DASH_PRESETS[12], // Dense Dots
-    DASH_PRESETS[13], // Zigzag (new)
-    DASH_PRESETS[14], // Micro Dash (new)
   ];
 
   return (
     <div style={{ 
       display: 'flex',
       justifyContent: 'space-between',
-      width: '100%',
+      width: '44px',
       flexWrap: 'nowrap' // Keep all buttons in one line
     }}>
       {commonPresets.map(preset => (
