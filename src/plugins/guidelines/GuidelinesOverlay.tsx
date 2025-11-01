@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useColorModeValue } from '@chakra-ui/react';
 import type { GuidelineMatch, DistanceGuidelineMatch } from './slice';
 import { 
   calculateElementBoundsMap,
@@ -35,6 +36,9 @@ export const GuidelinesOverlay: React.FC<GuidelinesOverlayProps> = ({
   elements,
   selectedIds,
 }) => {
+  const labelBackgroundColor = useColorModeValue('rgba(255, 255, 255, 0.5)', 'rgba(26, 32, 44, 0.5)');
+  const distanceTextColor = useColorModeValue('black', '#CCCCCC'); // Black for light mode, light gray for dark mode
+  
   // In debug mode, calculate all possible guidelines for all elements
   // useMemo must be called before any early returns
   const { debugGuidelines, debugDistances } = useMemo(() => {
@@ -86,8 +90,8 @@ export const GuidelinesOverlay: React.FC<GuidelinesOverlayProps> = ({
   const activeGuidelineStrokeWidth = 2 / viewport.zoom; // Thicker for active guidelines
   const guidelineColor = '#FF0000'; // Red for active alignment guidelines
   const debugGuidelineColor = 'rgba(255, 0, 255, 0.15)'; // Very transparent magenta for debug
-  const distanceColor = '#0066CC'; // Blue for distance guidelines (both reference and current)
-  const referenceDistanceColor = '#0066CC'; // Same blue for reference distance guidelines
+  const distanceColor = '#666666'; // Gray for distance guidelines (both reference and current)
+  const referenceDistanceColor = '#666666'; // Same gray for reference distance guidelines
 
   // Calculate canvas bounds for infinite lines
   const canvasWidth = 10000;
@@ -227,6 +231,8 @@ export const GuidelinesOverlay: React.FC<GuidelinesOverlayProps> = ({
                 zoom={viewport.zoom}
                 opacity={1}
                 withBackground={true}
+                backgroundColor={labelBackgroundColor}
+                textColor={distanceTextColor}
               />
             );
           } else {
@@ -245,6 +251,8 @@ export const GuidelinesOverlay: React.FC<GuidelinesOverlayProps> = ({
                   zoom={viewport.zoom}
                   opacity={1}
                   withBackground={true}
+                  backgroundColor={labelBackgroundColor}
+                  textColor={distanceTextColor}
                 />
                 <DistanceLabel
                   key={`distance-current-${index}`}
@@ -258,6 +266,8 @@ export const GuidelinesOverlay: React.FC<GuidelinesOverlayProps> = ({
                   zoom={viewport.zoom}
                   opacity={1}
                   withBackground={true}
+                  backgroundColor={labelBackgroundColor}
+                  textColor={distanceTextColor}
                 />
               </React.Fragment>
             );

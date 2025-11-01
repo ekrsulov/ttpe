@@ -51,6 +51,8 @@ interface DistanceLabelProps {
   zoom: number;
   opacity?: number;
   withBackground?: boolean;
+  backgroundColor?: string;
+  textColor?: string;
 }
 
 /**
@@ -67,7 +69,9 @@ export const DistanceLabel: React.FC<DistanceLabelProps> = ({
   color,
   zoom,
   opacity = 1,
-  withBackground = true
+  withBackground = true,
+  backgroundColor = 'white',
+  textColor
 }) => {
   const isHorizontal = axis === 'horizontal';
   const arrowSize = 5 / zoom;
@@ -140,16 +144,16 @@ export const DistanceLabel: React.FC<DistanceLabelProps> = ({
             y={isHorizontal ? otherAxisPosition - labelPadding : mid - labelHeight / 2}
             width={labelPadding * 2}
             height={labelHeight}
-            fill="white"
+            fill={backgroundColor}
             rx={3 / zoom}
             ry={3 / zoom}
             pointerEvents="none"
           />
         )}
         <text
-          x={isHorizontal ? mid : otherAxisPosition + labelOffset + labelPadding}
-          y={isHorizontal ? otherAxisPosition - labelOffset / 2 : mid + fontSize / 4}
-          fill={color}
+          x={isHorizontal ? mid : otherAxisPosition + labelOffset / 2 + labelPadding}
+          y={isHorizontal ? otherAxisPosition - labelPadding + labelHeight / 2 + fontSize * 0.1 : mid + fontSize * 0.1}
+          fill={textColor || color}
           fontSize={fontSize}
           fontFamily="sans-serif"
           textAnchor="middle"
