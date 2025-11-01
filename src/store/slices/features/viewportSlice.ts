@@ -2,8 +2,8 @@ import type { StateCreator } from 'zustand';
 import type { Viewport } from '../../../types';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../../utils';
 
-const MIN_ZOOM = 0.01; // 1%
-const MAX_ZOOM = 100; // 10000%
+export const MIN_ZOOM = 0.01; // 1%
+export const MAX_ZOOM = 100; // 10000%
 
 export interface ViewportSlice {
   // State

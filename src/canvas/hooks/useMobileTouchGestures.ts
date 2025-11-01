@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import type { RefObject } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../utils';
+import { MIN_ZOOM, MAX_ZOOM } from '../../store/slices/features/viewportSlice';
 
 interface TouchInfo {
   id: number;
@@ -119,7 +120,7 @@ export const useMobileTouchGestures = (svgRef: RefObject<SVGSVGElement | null>):
       let newZoom = state.initialZoom * zoomFactor;
 
       // Apply zoom limits
-      newZoom = Math.max(0.1, Math.min(5, newZoom));
+      newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newZoom));
 
       // Calculate pan based on finger movement
       // We want to keep the content under the midpoint stable
