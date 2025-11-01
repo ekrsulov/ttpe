@@ -89,7 +89,7 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
       }}
     >
       <HStack 
-        spacing={{ base: 0.5, md: 1 }}
+        spacing={{ base: 0, md: 0 }}
         justify="center"
       >
         {/* Tool buttons */}

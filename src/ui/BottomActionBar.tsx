@@ -86,7 +86,7 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
         transition: 'left 0.3s ease-in-out, right 0.3s ease-in-out, transform 0.3s ease-in-out',
       }}
     >
-      <HStack spacing={1.5}>
+      <HStack spacing={0}>
         {pluginBottomActions.length > 0 ? (
           pluginBottomActions.map((action) => {
             const ActionComponent = action.component as React.ComponentType<Record<string, unknown>>;
@@ -95,7 +95,7 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
         ) : (
           <>
             {/* Undo/Redo Group */}
-            <HStack spacing={0.5}>
+            <HStack spacing={0}>
               <ToolbarIconButton
                 icon={Undo2}
                 label="Undo"
@@ -114,7 +114,7 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
             </HStack>
 
             {/* Zoom Group */}
-            <HStack spacing={0.5}>
+            <HStack spacing={0}>
               <ToolbarIconButton
                 icon={ZoomOut}
                 label="Zoom Out"
