@@ -1,5 +1,6 @@
 import React from 'react';
 import { IconButton as ChakraIconButton, Button } from '@chakra-ui/react';
+import type { SystemStyleObject } from '@chakra-ui/react';
 import ConditionalTooltip from './ConditionalTooltip';
 
 interface ToggleButtonProps {
@@ -12,7 +13,7 @@ interface ToggleButtonProps {
   size?: 'sm' | 'md' | 'lg';
   variant?: 'icon' | 'text';
   isDisabled?: boolean;
-  sx?: any;
+  sx?: SystemStyleObject;
 }
 
 export const ToggleButton: React.FC<ToggleButtonProps> = ({
