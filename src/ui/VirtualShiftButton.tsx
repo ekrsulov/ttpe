@@ -46,7 +46,7 @@ export const VirtualShiftButton: React.FC<VirtualShiftButtonProps> = ({
         _hover={{ bg: isVirtualShiftActive ? activeHoverBg : inactiveHoverBg }}
         variant="solid"
         size="sm"
-        borderRadius="xl"
+        borderRadius="full"
         boxShadow="lg"
         sx={{
           width: '36px',
