@@ -63,9 +63,9 @@ const FeedbackBlock: React.FC<FeedbackBlockProps> = ({
   const transform = `translate(${-viewport.panX / viewport.zoom + 5 / viewport.zoom} ${-viewport.panY / viewport.zoom + canvasSize.height / viewport.zoom - 33 / viewport.zoom}) scale(${1 / viewport.zoom})`;
   const baseFill = useColorModeValue('#1f2937', '#f1f5f9');
   const baseStroke = useColorModeValue('#374151', '#94a3b8');
-  const highlightFill = useColorModeValue('#059669', '#047857');
-  const highlightStroke = useColorModeValue('#10b981', '#34d399');
-  const textColor = useColorModeValue('#ffffff', '#0f172a');
+  const highlightFill = useColorModeValue('#6b7280', '#4b5563');
+  const highlightStroke = useColorModeValue('#9ca3af', '#6b7280');
+  const textColor = useColorModeValue('#ffffff', isHighlighted ? '#ffffff' : '#0f172a');
 
   return (
     <g transform={transform}>
