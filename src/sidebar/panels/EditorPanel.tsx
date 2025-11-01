@@ -327,7 +327,7 @@ export const EditorPanel: React.FC = () => {
                   title="Stroke Width"
                   inline={true}
                   minWidth="50px"
-                  valueWidth="36px"
+                  valueWidth="40px"
                   gap="4px"
                 />
               </Box>
