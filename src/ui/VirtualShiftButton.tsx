@@ -24,6 +24,8 @@ export const VirtualShiftButton: React.FC<VirtualShiftButtonProps> = ({
   const activeColor = useColorModeValue('white', 'gray.900');
   const activeHoverBg = useColorModeValue('gray.800', 'gray.200');
   const borderColor = useColorModeValue('border.toolbar', 'border.toolbar');
+  const boxShadow = useColorModeValue('lg', 'none');
+  const borderWidth = useColorModeValue('0px', '1px');
 
   // Only show on mobile devices
   if (!isMobile) {
@@ -47,7 +49,7 @@ export const VirtualShiftButton: React.FC<VirtualShiftButtonProps> = ({
         variant="solid"
         size="sm"
         borderRadius="full"
-        boxShadow="lg"
+        boxShadow={boxShadow}
         sx={{
           width: '36px',
           height: '36px',
@@ -55,7 +57,7 @@ export const VirtualShiftButton: React.FC<VirtualShiftButtonProps> = ({
           minHeight: '36px',
           backdropFilter: 'blur(10px)',
           backgroundColor: isVirtualShiftActive ? activeBg : inactiveBg,
-          borderWidth: '1px',
+          borderWidth: borderWidth,
           borderColor: borderColor,
           _hover: {
             backgroundColor: isVirtualShiftActive ? activeHoverBg : inactiveHoverBg,

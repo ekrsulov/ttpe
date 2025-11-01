@@ -35,7 +35,8 @@ export const FloatingToolbarShell: React.FC<FloatingToolbarShellProps> = ({
   const toolbarBg = useColorModeValue('surface.toolbar', 'surface.toolbar');
   const toolbarColor = useColorModeValue('gray.700', 'gray.100');
   const borderColor = useColorModeValue('border.toolbar', 'border.toolbar');
-  const toolbarShadow = useColorModeValue('lg', 'dark-lg');
+  const borderWidth = useColorModeValue('0px', '1px');
+  const toolbarShadow = useColorModeValue('lg', 'none');
 
   // Calculate position based on toolbar type
   const positionProps = toolbarPosition === 'top'
@@ -61,7 +62,7 @@ export const FloatingToolbarShell: React.FC<FloatingToolbarShellProps> = ({
       bg={toolbarBg}
       color={toolbarColor}
       borderRadius="full"
-      borderWidth="1px"
+      borderWidth={borderWidth}
       borderColor={borderColor}
       boxShadow={toolbarShadow}
       px={1}
