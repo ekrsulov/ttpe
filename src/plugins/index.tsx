@@ -36,10 +36,9 @@ const SelectionRectangleComponent: React.FC<{
   const width = Math.abs(selectionEnd.x - selectionStart.x);
   const height = Math.abs(selectionEnd.y - selectionStart.y);
 
-  // Use direct color values for SVG compatibility
-  // Same blue as active buttons, switches, checkboxes, etc.
-  const strokeColor = colorMode === 'dark' ? '#63b3ed' : '#007bff'; // blue.300 : brand.500
-  const fillColor = colorMode === 'dark' ? 'rgba(99, 179, 237, 0.1)' : 'rgba(0, 123, 255, 0.1)';
+  // Use gray tones for selection rectangle
+  const strokeColor = colorMode === 'dark' ? '#dee2e6' : '#6b7280'; // gray.300 : gray.500
+  const fillColor = colorMode === 'dark' ? 'rgba(222, 226, 230, 0.1)' : 'rgba(107, 114, 128, 0.1)';
 
   return (
     <rect
@@ -151,7 +150,7 @@ const selectPlugin: PluginDefinition<CanvasStore> = {
                 width={bounds.maxX - bounds.minX}
                 height={bounds.maxY - bounds.minY}
                 fill="none"
-                stroke="#2563eb"
+                stroke="#6b7280"
                 strokeWidth={1 / viewport.zoom}
                 strokeDasharray={`${6 / viewport.zoom} ${4 / viewport.zoom}`}
                 pointerEvents="none"

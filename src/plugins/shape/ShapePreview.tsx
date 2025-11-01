@@ -19,9 +19,8 @@ export const ShapePreview: React.FC<ShapePreviewProps> = ({
 }) => {
   const { colorMode } = useColorMode();
   
-  // Use direct color values for SVG compatibility
-  // Same blue as active buttons, switches, checkboxes, etc.
-  const previewColor = colorMode === 'dark' ? '#63b3ed' : '#007bff'; // blue.300 : brand.500
+  // Use gray tones for shape preview
+  const previewColor = colorMode === 'dark' ? '#dee2e6' : '#6b7280'; // gray.300 : gray.500
 
   const width = Math.abs(shapeEnd.x - shapeStart.x);
   const height = Math.abs(shapeEnd.y - shapeStart.y);

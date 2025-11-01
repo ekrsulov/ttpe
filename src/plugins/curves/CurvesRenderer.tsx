@@ -1,17 +1,18 @@
 import React from 'react';
-import { useColorModeValue } from '@chakra-ui/react';
+import { useColorMode } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { useCanvasCurves } from './useCanvasCurves';
 import type { CurvePoint } from '../../types';
 
 export const CurvesRenderer: React.FC = () => {
+  const { colorMode } = useColorMode();
   const viewport = useCanvasStore(state => state.viewport);
   const { curveState } = useCanvasCurves();
 
-  // Color values that adapt to dark mode
-  const previewColor = '#007bff'; // Using the brand color value directly for SVG
-  const pointFill = useColorModeValue('#fff', '#fff');
-  const handleFill = useColorModeValue('#fff', '#fff');
+  // Use gray tones for curve preview
+  const previewColor = colorMode === 'dark' ? '#dee2e6' : '#6b7280'; // gray.300 : gray.500
+  const pointFill = colorMode === 'dark' ? '#374151' : '#fff'; // gray.700 : white
+  const handleFill = colorMode === 'dark' ? '#374151' : '#fff'; // gray.700 : white
 
   // Don't render if not active
   if (!curveState.isActive) {
