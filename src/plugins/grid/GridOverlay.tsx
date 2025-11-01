@@ -196,25 +196,41 @@ function renderDotGrid(
 
   const { r, g, b } = extractRGB(color);
   const dotColor = `rgba(${r}, ${g}, ${b}, ${opacity})`;
-  const dotRadius = 1 / zoom;
-
-  // Use a single path with circle commands for better performance
-  let pathData = '';
   
-  for (let x = startX; x <= endX; x += spacing) {
-    for (let y = startY; y <= endY; y += spacing) {
-      // Create a circle using arc commands: Move to center, then draw a full circle
-      // M cx cy m -r 0 a r r 0 1 0 (r*2) 0 a r r 0 1 0 -(r*2) 0
-      pathData += `M ${x} ${y} m -${dotRadius} 0 a ${dotRadius} ${dotRadius} 0 1 0 ${dotRadius * 2} 0 a ${dotRadius} ${dotRadius} 0 1 0 -${dotRadius * 2} 0 `;
-    }
-  }
-
+  // Calculate dot radius based on zoom - minimum 1.5px, maximum 3px on screen
+  const dotRadius = Math.max(1.5 / zoom, Math.min(3 / zoom, 2 / zoom));
+  
+  // Generate a unique pattern ID to avoid conflicts
+  const patternId = `dot-grid-pattern-${Math.random().toString(36).substr(2, 9)}`;
+  
+  // Use SVG pattern for optimal performance with repeated elements
   return (
-    <path
-      d={pathData}
-      fill={dotColor}
-      pointerEvents="none"
-    />
+    <g pointerEvents="none">
+      <defs>
+        <pattern
+          id={patternId}
+          x="0"
+          y="0"
+          width={spacing}
+          height={spacing}
+          patternUnits="userSpaceOnUse"
+        >
+          <circle
+            cx={0}
+            cy={0}
+            r={dotRadius}
+            fill={dotColor}
+          />
+        </pattern>
+      </defs>
+      <rect
+        x={startX}
+        y={startY}
+        width={endX - startX}
+        height={endY - startY}
+        fill={`url(#${patternId})`}
+      />
+    </g>
   );
 }
 
