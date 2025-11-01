@@ -24,7 +24,7 @@ export const VirtualShiftButton: React.FC<VirtualShiftButtonProps> = ({
   const activeColor = useColorModeValue('white', 'gray.900');
   const activeHoverBg = useColorModeValue('gray.800', 'gray.200');
   const borderColor = useColorModeValue('border.toolbar', 'border.toolbar');
-  const boxShadow = useColorModeValue('0px -4px 6px -1px rgba(0, 0, 0, 0.1)', 'none');
+  const boxShadow = useColorModeValue('0px 0px 10px 2px rgba(0, 0, 0, 0.1)', 'none');
   const borderWidth = useColorModeValue('0px', '1px');
 
   // Only show on mobile devices
