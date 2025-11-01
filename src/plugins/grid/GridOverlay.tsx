@@ -793,7 +793,7 @@ export const GridOverlay: React.FC<GridOverlayProps> = React.memo(({
   canvasSize,
 }) => {
   const defaultGridColor = useColorModeValue('#000000', 'rgba(255, 255, 255, 0.7)');
-  const rulerBackground = useColorModeValue('surface.toolbar', 'surface.toolbar');
+  const rulerBackground = useColorModeValue('rgba(255, 255, 255, 0.5)', 'rgba(26, 32, 44, 0.5)');
   const rulerBorder = useColorModeValue('#d0d0d0', 'rgba(148, 163, 184, 0.45)');
   const rulerTextColor = useColorModeValue('#444', '#e2e8f0');
   const rulerTickColor = useColorModeValue('#666', '#cbd5f5');
