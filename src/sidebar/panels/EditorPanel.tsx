@@ -229,33 +229,6 @@ export const EditorPanel: React.FC = () => {
                 <Text fontSize="11px" fontWeight="600" color={labelColor} minW="40px" h="24px" display="flex" alignItems="center">
                   Fill
                 </Text>
-                <HStack spacing={1} flexShrink={0}>
-                  <ConditionalTooltip label="Select fill color">
-                    <Input
-                      type="color"
-                      value={currentFillColor === 'none' ? defaultStrokeColor : currentFillColor}
-                      onChange={(e) => handleFillColorChange(e.target.value)}
-                      w="24px"
-                      h="24px"
-                      minW="24px"
-                      p={0}
-                      border="none"
-                      bg="transparent"
-                      borderRadius="full"
-                      cursor="pointer"
-                      opacity={currentFillColor === 'none' ? 0.5 : 1}
-                      title="Fill Color"
-                    />
-                  </ConditionalTooltip>
-                  <ToggleButton
-                    isActive={currentFillColor === 'none'}
-                    onClick={handleFillNone}
-                    aria-label="Set fill color to none (transparent)"
-                    variant="icon"
-                    icon={<X size={12} />}
-                    sx={{ borderRadius: 'full' }}
-                  />
-                </HStack>
                 <Box flex={1} minW="120px">
                   <PercentSliderControl
                     value={currentFillOpacity}
@@ -267,6 +240,31 @@ export const EditorPanel: React.FC = () => {
                     gap="4px"
                   />
                 </Box>
+                <ToggleButton
+                  isActive={currentFillColor === 'none'}
+                  onClick={handleFillNone}
+                  aria-label="Set fill color to none (transparent)"
+                  variant="icon"
+                  icon={<X size={12} />}
+                  sx={{ borderRadius: 'full' }}
+                />
+                <ConditionalTooltip label="Select fill color">
+                  <Input
+                    type="color"
+                    value={currentFillColor === 'none' ? defaultStrokeColor : currentFillColor}
+                    onChange={(e) => handleFillColorChange(e.target.value)}
+                    w="24px"
+                    h="24px"
+                    minW="24px"
+                    p={0}
+                    border="none"
+                    bg="transparent"
+                    borderRadius="full"
+                    cursor="pointer"
+                    opacity={currentFillColor === 'none' ? 0.5 : 1}
+                    title="Fill Color"
+                  />
+                </ConditionalTooltip>
               </HStack>
             </VStack>
 
@@ -276,33 +274,6 @@ export const EditorPanel: React.FC = () => {
                 <Text fontSize="11px" fontWeight="600" color={labelColor} minW="40px" h="24px" display="flex" alignItems="center">
                   Stroke
                 </Text>
-                <HStack spacing={1} flexShrink={0}>
-                  <ConditionalTooltip label="Select stroke color">
-                    <Input
-                      type="color"
-                      value={currentStrokeColor === 'none' ? defaultStrokeColor : currentStrokeColor}
-                      onChange={(e) => handleStrokeColorChange(e.target.value)}
-                      w="24px"
-                      h="24px"
-                      minW="24px"
-                      p={0}
-                      border="none"
-                      bg="transparent"
-                      borderRadius="full"
-                      cursor="pointer"
-                      opacity={currentStrokeColor === 'none' ? 0.5 : 1}
-                    />
-                  </ConditionalTooltip>
-                  <ToggleButton
-                    isActive={currentStrokeColor === 'none'}
-                    onClick={handleStrokeNone}
-                    aria-label="Set stroke color to none (no outline)"
-                    variant="icon"
-                    icon={<X size={12} />}
-                    isDisabled={currentFillColor === 'none'}
-                    sx={{ borderRadius: 'full' }}
-                  />
-                </HStack>
                 <Box flex={1} minW="120px">
                   <PercentSliderControl
                     value={currentOpacity}
@@ -314,6 +285,30 @@ export const EditorPanel: React.FC = () => {
                     gap="4px"
                   />
                 </Box>
+                <ToggleButton
+                  isActive={currentStrokeColor === 'none'}
+                  onClick={handleStrokeNone}
+                  aria-label="Set stroke color to none (no outline)"
+                  variant="icon"
+                  icon={<X size={12} />}
+                  sx={{ borderRadius: 'full' }}
+                />
+                <ConditionalTooltip label="Select stroke color">
+                  <Input
+                    type="color"
+                    value={currentStrokeColor === 'none' ? defaultStrokeColor : currentStrokeColor}
+                    onChange={(e) => handleStrokeColorChange(e.target.value)}
+                    w="24px"
+                    h="24px"
+                    minW="24px"
+                    p={0}
+                    border="none"
+                    bg="transparent"
+                    borderRadius="full"
+                    cursor="pointer"
+                    opacity={currentStrokeColor === 'none' ? 0.5 : 1}
+                  />
+                </ConditionalTooltip>
               </HStack>
             </VStack>
 
@@ -322,7 +317,7 @@ export const EditorPanel: React.FC = () => {
               <Text fontSize="11px" fontWeight="600" color={labelColor} minW="40px" h="24px" display="flex" alignItems="center">
                 Width
               </Text>
-              <Box flex={1}>
+              <Box flex={1} minW="120px">
                 <SliderControl
                   value={currentStrokeWidth}
                   min={0}
@@ -331,8 +326,12 @@ export const EditorPanel: React.FC = () => {
                   formatter={(value) => `${value}px`}
                   title="Stroke Width"
                   inline={true}
+                  minWidth="50px"
+                  valueWidth="36px"
+                  gap="4px"
                 />
               </Box>
+              <Box w="24px" />
               <ConditionalTooltip label={isAdvancedStrokeOpen ? "Collapse Advanced Stroke" : "Expand Advanced Stroke"}>
                 <ChakraIconButton
                   aria-label={isAdvancedStrokeOpen ? "Collapse Advanced Stroke" : "Expand Advanced Stroke"}
