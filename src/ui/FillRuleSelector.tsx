@@ -1,5 +1,4 @@
-import React from 'react';
-import { ToggleButton } from './ToggleButton';
+import { JoinedButtonGroup } from './JoinedButtonGroup';
 
 interface FillRuleSelectorProps {
   value: 'nonzero' | 'evenodd';
@@ -22,19 +21,11 @@ export const FillRuleSelector: React.FC<FillRuleSelectorProps> = ({
   ];
 
   return (
-    <div style={{ display: 'flex', gap: '2px', flex: 1 }}>
-      {fillRuleOptions.map(option => (
-        <ToggleButton
-          key={option.value}
-          isActive={value === option.value}
-          onClick={() => onChange(option.value)}
-          aria-label={`${title}: ${option.description}`}
-          title={`${title}: ${option.description}`}
-          variant="text"
-        >
-          {option.label}
-        </ToggleButton>
-      ))}
-    </div>
+    <JoinedButtonGroup
+      options={fillRuleOptions}
+      value={value}
+      onChange={onChange}
+      title={title}
+    />
   );
 };

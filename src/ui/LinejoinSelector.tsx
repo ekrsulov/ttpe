@@ -1,5 +1,4 @@
-import React from 'react';
-import { ToggleButton } from './ToggleButton';
+import { JoinedButtonGroup } from './JoinedButtonGroup';
 
 interface LinejoinSelectorProps {
   value: 'miter' | 'round' | 'bevel';
@@ -23,19 +22,11 @@ export const LinejoinSelector: React.FC<LinejoinSelectorProps> = ({
   ];
 
   return (
-    <div style={{ display: 'flex', gap: '2px', flex: 1 }}>
-      {linejoinOptions.map(option => (
-        <ToggleButton
-          key={option.value}
-          isActive={value === option.value}
-          onClick={() => onChange(option.value)}
-          aria-label={`${title}: ${option.description}`}
-          title={`${title}: ${option.description}`}
-          variant="text"
-        >
-          {option.label}
-        </ToggleButton>
-      ))}
-    </div>
+    <JoinedButtonGroup
+      options={linejoinOptions}
+      value={value}
+      onChange={onChange}
+      title={title}
+    />
   );
 };

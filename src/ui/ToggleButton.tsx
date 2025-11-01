@@ -12,6 +12,7 @@ interface ToggleButtonProps {
   size?: 'sm' | 'md' | 'lg';
   variant?: 'icon' | 'text';
   isDisabled?: boolean;
+  sx?: any;
 }
 
 export const ToggleButton: React.FC<ToggleButtonProps> = ({
@@ -23,7 +24,8 @@ export const ToggleButton: React.FC<ToggleButtonProps> = ({
   title,
   size = 'sm',
   variant = 'icon',
-  isDisabled = false
+  isDisabled = false,
+  sx
 }) => {
   const commonProps = {
     onClick,
@@ -62,7 +64,8 @@ export const ToggleButton: React.FC<ToggleButtonProps> = ({
       ...(variant === 'icon' && {
         w: size === 'sm' ? '20px' : size === 'md' ? '24px' : '28px',
         minW: size === 'sm' ? '20px' : size === 'md' ? '24px' : '28px',
-      })
+      }),
+      ...sx
     }
   };
 

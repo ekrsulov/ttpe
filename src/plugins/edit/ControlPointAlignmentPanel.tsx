@@ -22,7 +22,7 @@ import {
 } from '@chakra-ui/react';
 import ConditionalTooltip from '../../ui/ConditionalTooltip';
 import { Panel } from '../../ui/Panel';
-import { ToggleButton } from '../../ui/ToggleButton';
+import { JoinedButtonGroup } from '../../ui/JoinedButtonGroup';
 import { PanelStyledButton } from '../../ui/PanelStyledButton';
 
 export const ControlPointAlignmentPanel: React.FC = () => {
@@ -328,32 +328,17 @@ export const ControlPointAlignmentPanel: React.FC = () => {
     return (
       <VStack spacing={2} align="stretch" mb={2}>
         <HStack spacing={1}>
-          <ToggleButton
-            isActive={(singlePointInfo.info?.type || 'independent') === 'independent'}
-            onClick={() => handleAlignmentChange('independent')}
-            aria-label="Independent - Control points move freely"
-            variant="text"
-          >
-            Independent
-          </ToggleButton>
-
-          <ToggleButton
-            isActive={(singlePointInfo.info?.type || 'independent') === 'aligned'}
-            onClick={() => handleAlignmentChange('aligned')}
-            aria-label="Aligned - Control points maintain opposite directions"
-            variant="text"
-          >
-            Aligned
-          </ToggleButton>
-
-          <ToggleButton
-            isActive={(singlePointInfo.info?.type || 'independent') === 'mirrored'}
-            onClick={() => handleAlignmentChange('mirrored')}
-            aria-label="Mirrored - Control points are perfectly mirrored"
-            variant="text"
-          >
-            Mirrored
-          </ToggleButton>
+          <Box flex={1}>
+            <JoinedButtonGroup
+              options={[
+                { value: 'independent', label: 'Independent', description: 'Control points move freely' },
+                { value: 'aligned', label: 'Aligned', description: 'Control points maintain opposite directions' },
+                { value: 'mirrored', label: 'Mirrored', description: 'Control points are perfectly mirrored' }
+              ]}
+              value={singlePointInfo.info?.type || 'independent'}
+              onChange={handleAlignmentChange}
+            />
+          </Box>
 
           <Box ml="auto">
             <ConditionalTooltip label={showDetails ? "Hide Details" : "Show Details"}>

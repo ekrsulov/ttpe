@@ -374,7 +374,7 @@ export const EditorPanel: React.FC = () => {
                 </HStack>
 
                 {/* Linecap */}
-                <HStack justify="flex-start" minH="24px" spacing={1}>
+                <HStack justify="flex-start" minH="24px" spacing={1} width="100%">
                   <Text fontSize="11px" fontWeight="600" color={labelColor} minW="80px" h="24px" display="flex" alignItems="center" title="Stroke Linecap">
                     Line Cap
                   </Text>
@@ -386,7 +386,7 @@ export const EditorPanel: React.FC = () => {
                 </HStack>
 
                 {/* Linejoin */}
-                <HStack justify="flex-start" minH="24px" spacing={1}>
+                <HStack justify="flex-start" minH="24px" spacing={1} width="100%">
                   <Text fontSize="11px" fontWeight="600" color={labelColor} minW="80px" h="24px" display="flex" alignItems="center" title="Stroke Linejoin">
                     Line Join
                   </Text>
@@ -398,7 +398,7 @@ export const EditorPanel: React.FC = () => {
                 </HStack>
 
                 {/* Fill Rule */}
-                <HStack justify="flex-start" minH="24px" spacing={1}>
+                <HStack justify="flex-start" minH="24px" spacing={1} width="100%">
                   <Text fontSize="11px" fontWeight="600" color={labelColor} minW="80px" h="24px" display="flex" alignItems="center" title="Fill Rule">
                     Fill Rule
                   </Text>

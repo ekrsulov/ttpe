@@ -91,7 +91,7 @@ export const SidebarToolGrid: React.FC<SidebarToolGridProps> = ({
   return (
     <Box pt={2} pr={2} pl={2} bg="surface.panel" position="relative">
       <RenderCountBadgeWrapper componentName="SidebarToolGrid" position="top-left" />
-      <SimpleGrid columns={isDesktop ? 3 : 2} spacing={1}>
+      <SimpleGrid columns={isDesktop ? 3 : 2} spacing={2}>
         {pluginRows[0].map(renderPluginButton)}
         {isDesktop && renderPinButton()}
       </SimpleGrid>

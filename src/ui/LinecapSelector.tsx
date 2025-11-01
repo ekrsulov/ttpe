@@ -1,5 +1,5 @@
 import React from 'react';
-import { ToggleButton } from './ToggleButton';
+import { JoinedButtonGroup } from './JoinedButtonGroup';
 
 interface LinecapSelectorProps {
   value: 'butt' | 'round' | 'square';
@@ -23,19 +23,11 @@ export const LinecapSelector: React.FC<LinecapSelectorProps> = ({
   ];
 
   return (
-    <div style={{ display: 'flex', gap: '2px', flex: 1 }}>
-      {linecapOptions.map(option => (
-        <ToggleButton
-          key={option.value}
-          isActive={value === option.value}
-          onClick={() => onChange(option.value)}
-          aria-label={`${option.label}: ${option.description}`}
-          title={`${option.label}: ${option.description}`}
-          variant="text"
-        >
-          {option.label}
-        </ToggleButton>
-      ))}
-    </div>
+    <JoinedButtonGroup
+      options={linecapOptions}
+      value={value}
+      onChange={onChange}
+      title={_title}
+    />
   );
 };
