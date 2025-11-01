@@ -106,8 +106,8 @@ test.describe('TTPE Application', () => {
 
     // Check that select mode is active (Select button should be active)
     const selectButton = getToolButton(page, 'Select');
-    // Check that the button has the blue colorScheme (Chakra UI blue.500 is rgb(49, 130, 206))
-    await expect(selectButton).toHaveCSS('background-color', 'rgb(49, 130, 206)');
+    // Check that the button has the active color (Chakra UI white text for active buttons in light mode)
+    await expect(selectButton).toHaveCSS('color', 'rgb(255, 255, 255)');
   });
 
   test('should clear selections with Escape key before changing modes', async ({ page }) => {
@@ -163,6 +163,6 @@ test.describe('TTPE Application', () => {
 
     // Check that select mode is active
     const selectButton = getToolButton(page, 'Select');
-    await expect(selectButton).toHaveCSS('background-color', 'rgb(49, 130, 206)');
+    await expect(selectButton).toHaveCSS('color', 'rgb(255, 255, 255)');
   });
 });

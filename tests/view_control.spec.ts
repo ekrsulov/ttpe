@@ -58,24 +58,27 @@ test.describe('View Control & Gestures Tests', () => {
     await waitForLoad(page);
 
     // Create an element so minimap has something to show
-    await getToolButton(page, 'Shape').click();
-    await page.locator('[aria-label="Circle"]').click();
+    await getToolButton(page, 'Pencil').click();
 
     const canvas = getCanvas(page);
     const canvasBox = await canvas.boundingBox();
     if (!canvasBox) throw new Error('SVG canvas not found');
 
-    // Draw circle
+    // Draw a simple path
     await page.mouse.move(
       canvasBox.x + canvasBox.width * 0.2,
       canvasBox.y + canvasBox.height * 0.2
     );
     await page.mouse.down();
     await page.mouse.move(
-      canvasBox.x + canvasBox.width * 0.25,
-      canvasBox.y + canvasBox.height * 0.25
+      canvasBox.x + canvasBox.width * 0.3,
+      canvasBox.y + canvasBox.height * 0.3,
+      { steps: 5 }
     );
     await page.mouse.up();
+
+    // Wait for path creation
+    await page.waitForTimeout(200);
 
     // Switch to select mode
     await getToolButton(page, 'Select').click();
@@ -91,7 +94,7 @@ test.describe('View Control & Gestures Tests', () => {
     await expect(minimapText).toBeVisible();
 
     // Find the checkbox input that controls the minimap
-    const minimapToggle = page.locator('input[type="checkbox"]').nth(2); // Third checkbox in the settings panel
+    const minimapToggle = page.locator('label').filter({ hasText: 'Show minimap' }).locator('input[type="checkbox"]');
     await expect(minimapToggle).toBeVisible();
 
     // Check if minimap is initially enabled or disabled

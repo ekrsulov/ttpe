@@ -54,14 +54,10 @@ export const ShapePreview: React.FC<ShapePreviewProps> = ({
       break;
     }
     case 'diamond': {
-      const halfWidth = width / 2;
-      const halfHeight = height / 2;
-      pathData = `M ${centerX} ${centerY - halfHeight} L ${centerX + halfWidth} ${centerY} L ${centerX} ${centerY + halfHeight} L ${centerX - halfWidth} ${centerY} Z`;
+      pathData = `M ${centerX} ${centerY - height / 2} L ${centerX + width / 2} ${centerY} L ${centerX} ${centerY + height / 2} L ${centerX - width / 2} ${centerY} Z`;
       break;
     }
     case 'heart': {
-      const halfWidth = width / 2;
-      const halfHeight = height / 2;
       // Heart shape based on provided path, scaled to fit the rectangle
       // Original path center: (105, 105), dimensions: 200x200
       const scaleX = width / 200;

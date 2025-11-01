@@ -162,7 +162,8 @@ test.describe('Edit Functionality', () => {
     // Test simplify points checkbox - click the label instead
     const simplifyLabel = page.locator('text=Simplify Points');
     await simplifyLabel.click();
-    const simplifyCheckbox = page.locator('#simplifyPoints');
+    // Find the checkbox input within the smooth brush section that should now be checked
+    const simplifyCheckbox = smoothBrushSection.locator('input[type="checkbox"]').first(); // First checkbox in smooth brush section (simplify points)
     await expect(simplifyCheckbox).toBeChecked();
 
     // Test tolerance slider - should appear after checking simplify

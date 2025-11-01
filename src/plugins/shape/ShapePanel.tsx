@@ -33,7 +33,7 @@ export const ShapePanel: React.FC = () => {
   return (
     <Panel title="Shape">
       <VStack spacing={3} align="stretch">
-        <HStack spacing={1}>
+        <HStack spacing={1} justify="space-between" w="full">
           {shapes.map((shapeItem) => {
             const IconComponent = shapeItem.icon;
             const isShapeSelected = shape?.selectedShape === shapeItem.type;
