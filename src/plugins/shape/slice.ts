@@ -1,7 +1,7 @@
 import type { StateCreator } from 'zustand';
 import { createSimplePluginSlice } from '../../store/utils/pluginSliceHelpers';
 
-export type ShapeType = 'square' | 'circle' | 'triangle' | 'rectangle';
+export type ShapeType = 'square' | 'circle' | 'triangle' | 'rectangle' | 'line' | 'diamond' | 'heart';
 
 export interface ShapePluginSlice {
   // State
@@ -18,7 +18,7 @@ export const createShapePluginSlice: StateCreator<ShapePluginSlice, [], [], Shap
   createSimplePluginSlice<'shape', ShapePluginSlice['shape'], ShapePluginSlice>(
     'shape',
     {
-      selectedShape: 'square',
+      selectedShape: 'line',
       keepShapeMode: false,
     }
   );

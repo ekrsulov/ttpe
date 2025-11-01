@@ -93,7 +93,13 @@ export const useCanvasShapeCreation = (): UseCanvasShapeCreationReturn => {
 
     // Snap to grid if enabled
     const storeState = useCanvasStore.getState();
-    const snappedEndPoint = storeState.grid?.snapEnabled ? storeState.snapToGrid?.(endPoint.x, endPoint.y) || endPoint : endPoint;
+    let snappedEndPoint = storeState.grid?.snapEnabled ? storeState.snapToGrid?.(endPoint.x, endPoint.y) || endPoint : endPoint;
+
+    // Apply line constraints when shift is pressed and drawing a line
+    const selectedShape = storeState.shape?.selectedShape;
+    if (selectedShape === 'line' && shiftPressed) {
+      snappedEndPoint = controller.calculateConstrainedLineEnd(shapeStart, snappedEndPoint);
+    }
 
     setShapeEnd(snappedEndPoint);
 

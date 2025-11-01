@@ -15,6 +15,9 @@ import {
   createRectangleCommands, 
   createCircleCommands, 
   createTriangleCommands,
+  createLineCommands,
+  createDiamondCommands,
+  createHeartCommands,
   extractSubpaths
 } from '../../utils/path';
 
@@ -67,6 +70,26 @@ export function createShape(
     case 'triangle': {
       // Create a triangle using path commands
       commands = createTriangleCommands(centerX, startPoint.y, endPoint.x, endPoint.y, startPoint.x);
+      break;
+    }
+
+    case 'line': {
+      // Create a line using path commands
+      commands = createLineCommands(startPoint.x, startPoint.y, endPoint.x, endPoint.y);
+      break;
+    }
+
+    case 'diamond': {
+      // Create a diamond using path commands
+      const halfWidth = width / 2;
+      const halfHeight = height / 2;
+      commands = createDiamondCommands(centerX, centerY, halfWidth, halfHeight);
+      break;
+    }
+
+    case 'heart': {
+      // Create a heart using Bézier curves
+      commands = createHeartCommands(centerX, centerY, width, height);
       break;
     }
 

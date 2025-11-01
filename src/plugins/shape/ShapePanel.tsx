@@ -3,7 +3,7 @@ import { HStack, VStack } from '@chakra-ui/react';
 import { PanelToggle } from '../../ui/PanelToggle';
 import { ToggleButton } from '../../ui/ToggleButton';
 import { useCanvasStore } from '../../store/canvasStore';
-import { Square, Circle, Triangle, type LucideIcon } from 'lucide-react';
+import { Square, Circle, Triangle, Minus, RectangleHorizontal, Diamond, Heart, type LucideIcon } from 'lucide-react';
 import { Panel } from '../../ui/Panel';
 import type { ShapeType } from './slice';
 
@@ -15,10 +15,13 @@ export const ShapePanel: React.FC = () => {
   const activePlugin = useCanvasStore(state => state.activePlugin);
 
   const shapes: { type: ShapeType; label: string; icon: LucideIcon }[] = [
-    { type: 'square', label: 'Square', icon: Square },
+    { type: 'line', label: 'Line', icon: Minus },
     { type: 'circle', label: 'Circle', icon: Circle },
+    { type: 'square', label: 'Square', icon: Square },
     { type: 'triangle', label: 'Triangle', icon: Triangle },
-    { type: 'rectangle', label: 'Rectangle', icon: Square },
+    { type: 'rectangle', label: 'Rectangle', icon: RectangleHorizontal },
+    { type: 'diamond', label: 'Diamond', icon: Diamond },
+    { type: 'heart', label: 'Heart', icon: Heart },
   ];
 
   const handleShapeSelect = (shapeType: ShapeType) => {
@@ -43,8 +46,8 @@ export const ShapePanel: React.FC = () => {
                 isActive={shouldHighlight}
                 onClick={() => handleShapeSelect(shapeItem.type)}
                 icon={<IconComponent size={14} />}
-                aria-label={`${shapeItem.label} - Click and drag to create`}
-                title={`${shapeItem.label} - Click and drag to create`}
+                aria-label={`${shapeItem.label}`}
+                title={`${shapeItem.label}`}
                 size="lg"
               />
             );

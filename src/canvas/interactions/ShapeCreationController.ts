@@ -27,6 +27,39 @@ export class ShapeCreationController {
   }
 
   /**
+   * Calculate constrained endpoint for line when shift is pressed
+   * Snaps to horizontal, vertical, or 45-degree diagonal lines
+   */
+  calculateConstrainedLineEnd(shapeStart: Point, shapeEnd: Point): Point {
+    const dx = shapeEnd.x - shapeStart.x;
+    const dy = shapeEnd.y - shapeStart.y;
+    const absDx = Math.abs(dx);
+    const absDy = Math.abs(dy);
+
+    // Determine which constraint to apply based on angle
+    // If more horizontal than diagonal (absDx > absDy * 1.5), snap to horizontal
+    // If more vertical than diagonal (absDy > absDx * 1.5), snap to vertical
+    // Otherwise, snap to 45-degree diagonal
+    
+    if (absDx > absDy * 1.5) {
+      // Snap to horizontal
+      return { x: shapeEnd.x, y: shapeStart.y };
+    } else if (absDy > absDx * 1.5) {
+      // Snap to vertical
+      return { x: shapeStart.x, y: shapeEnd.y };
+    } else {
+      // Snap to 45-degree diagonal
+      const distance = Math.max(absDx, absDy);
+      const signX = dx >= 0 ? 1 : -1;
+      const signY = dy >= 0 ? 1 : -1;
+      return {
+        x: shapeStart.x + distance * signX,
+        y: shapeStart.y + distance * signY,
+      };
+    }
+  }
+
+  /**
    * Calculate shape feedback based on start and end points
    */
   calculateShapeFeedback(
