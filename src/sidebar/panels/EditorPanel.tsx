@@ -253,13 +253,33 @@ export const EditorPanel: React.FC = () => {
                     type="color"
                     value={currentFillColor === 'none' ? defaultStrokeColor : currentFillColor}
                     onChange={(e) => handleFillColorChange(e.target.value)}
-                    w="24px"
-                    h="24px"
-                    minW="24px"
+                    w="20px"
+                    h="20px"
+                    minW="20px"
                     p={0}
                     border="none"
                     bg="transparent"
-                    borderRadius="full"
+                    sx={{
+                      borderRadius: '50%',
+                      WebkitAppearance: 'none',
+                      appearance: 'none',
+                      border: 'none',
+                      outline: 'none',
+                      cursor: 'pointer',
+                      '&::-webkit-color-swatch': {
+                        borderRadius: '50%',
+                        border: 'none',
+                      },
+                      '&::-webkit-color-swatch-wrapper': {
+                        borderRadius: '50%',
+                        border: 'none',
+                        padding: 0,
+                      },
+                      '&::-moz-color-swatch': {
+                        borderRadius: '50%',
+                        border: 'none',
+                      }
+                    }}
                     cursor="pointer"
                     opacity={currentFillColor === 'none' ? 0.5 : 1}
                     title="Fill Color"
@@ -298,13 +318,33 @@ export const EditorPanel: React.FC = () => {
                     type="color"
                     value={currentStrokeColor === 'none' ? defaultStrokeColor : currentStrokeColor}
                     onChange={(e) => handleStrokeColorChange(e.target.value)}
-                    w="24px"
-                    h="24px"
-                    minW="24px"
+                    w="20px"
+                    h="20px"
+                    minW="20px"
                     p={0}
                     border="none"
                     bg="transparent"
-                    borderRadius="full"
+                    sx={{
+                      borderRadius: '50%',
+                      WebkitAppearance: 'none',
+                      appearance: 'none',
+                      border: 'none',
+                      outline: 'none',
+                      cursor: 'pointer',
+                      '&::-webkit-color-swatch': {
+                        borderRadius: '50%',
+                        border: 'none',
+                      },
+                      '&::-webkit-color-swatch-wrapper': {
+                        borderRadius: '50%',
+                        border: 'none',
+                        padding: 0,
+                      },
+                      '&::-moz-color-swatch': {
+                        borderRadius: '50%',
+                        border: 'none',
+                      }
+                    }}
                     cursor="pointer"
                     opacity={currentStrokeColor === 'none' ? 0.5 : 1}
                   />

@@ -57,8 +57,8 @@ export const DashArrayPresets: React.FC<DashArrayPresetsProps> = ({
 }) => {
   // Select only 2 most useful dash presets: Solid and Dashed
   const commonPresets = [
-    DASH_PRESETS[0],  // Solid
     DASH_PRESETS[1],  // Dashed
+    DASH_PRESETS[0],  // Solid
   ];
 
   return (
