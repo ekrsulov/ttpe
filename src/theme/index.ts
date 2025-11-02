@@ -13,7 +13,7 @@ import { spacing, radii, shadows, zIndices } from './spacing'
 // Color mode configuration
 const config: ThemeConfig = {
   initialColorMode: 'light',
-  useSystemColorMode: false,
+  useSystemColorMode: true,
 }
 
 // Extend Chakra's base theme

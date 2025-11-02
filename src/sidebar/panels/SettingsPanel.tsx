@@ -12,24 +12,29 @@ import { logger, LogLevel } from '../../utils';
 import { Panel } from '../../ui/Panel';
 import { PanelToggle } from '../../ui/PanelToggle';
 import { SliderControl } from '../../ui/SliderControl';
+import { JoinedButtonGroup } from '../../ui/JoinedButtonGroup';
 
 export const SettingsPanel: React.FC = () => {
   // Use individual selectors to prevent re-renders on unrelated changes
   const settings = useCanvasStore(state => state.settings);
   const updateSettings = useCanvasStore(state => state.updateSettings);
-  const { colorMode, toggleColorMode } = useColorMode();
+  const { colorMode, setColorMode } = useColorMode();
   
   // Detect if we're on mobile (base breakpoint)
   const isMobile = useBreakpointValue({ base: true, md: false }) ?? false;
   
+  const [selectedTheme, setSelectedTheme] = useState<'light' | 'dark' | 'system'>(() => {
+    const stored = localStorage.getItem('chakra-ui-color-mode');
+    return (stored === 'light' || stored === 'dark' || stored === 'system') ? stored : colorMode;
+  });
   const [logLevel, setLogLevel] = useState<LogLevel>(LogLevel.WARN); // Default log level
   const [showCallerInfo, setShowCallerInfo] = useState(false);
   const [keyboardPrecision, setKeyboardPrecision] = useState(settings.keyboardMovementPrecision);
 
-  // Sync keyboard precision with settings
+  // Sync selected theme with Chakra color mode
   useEffect(() => {
-    setKeyboardPrecision(settings.keyboardMovementPrecision);
-  }, [settings.keyboardMovementPrecision]);
+    setColorMode(selectedTheme);
+  }, [selectedTheme, setColorMode]);
 
   // Initialize log level and caller info from current logger config
   useEffect(() => {
@@ -78,12 +83,20 @@ export const SettingsPanel: React.FC = () => {
   return (
     <Panel>
       <VStack spacing={3} align="stretch" pt={2}>
-        <PanelToggle
-          isChecked={colorMode === 'dark'}
-          onChange={() => toggleColorMode()}
-        >
-          Enable dark mode
-        </PanelToggle>
+        <FormControl>
+          <FormLabel fontSize="12px" fontWeight="medium" color="gray.600" _dark={{ color: 'gray.400' }} mb={1}>
+            Theme
+          </FormLabel>
+          <JoinedButtonGroup
+            options={[
+              { value: 'light', label: 'Light' },
+              { value: 'dark', label: 'Dark' },
+              { value: 'system', label: 'System' },
+            ]}
+            value={selectedTheme}
+            onChange={setSelectedTheme}
+          />
+        </FormControl>
 
         {/* Log Level Selector - Only in development */}
         {import.meta.env.DEV && (
