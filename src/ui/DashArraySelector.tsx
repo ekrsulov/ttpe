@@ -32,7 +32,6 @@ export const DashArrayCustomInput: React.FC<DashArrayCustomInputProps> = ({
       type="text"
       value={value === 'none' ? '' : value}
       onChange={(e) => onChange(e.target.value || 'none')}
-      placeholder="5,3,2,3"
       size="xs"
       fontSize="11px"
       minWidth="90px"

@@ -1,5 +1,5 @@
-import React, { memo } from 'react';
-import { Box, HStack, VStack, Text, Editable, EditableInput, EditablePreview, useColorModeValue } from '@chakra-ui/react';
+import React, { memo, useState, useEffect } from 'react';
+import { Box, HStack, VStack, Text, useColorModeValue } from '@chakra-ui/react';
 import { ChevronDown, ChevronRight, Ungroup as UngroupIcon, Lock, EyeOff, MousePointer2 } from 'lucide-react';
 import type { GroupElement, PathData, Command, CanvasElement } from '../../types';
 import { useCanvasStore } from '../../store/canvasStore';
@@ -16,6 +16,12 @@ interface SelectPanelGroupItemProps {
   hasSelectedDescendant: boolean;
   elements: CanvasElement[];
 }
+
+// Utility function to truncate group names
+const truncateGroupName = (name: string): string => {
+  if (name.length <= 10) return name;
+  return name.slice(0, 2) + '...' + name.slice(-4);
+};
 
 const SelectPanelGroupItemComponent: React.FC<SelectPanelGroupItemProps> = ({
   group,
@@ -37,6 +43,15 @@ const SelectPanelGroupItemComponent: React.FC<SelectPanelGroupItemProps> = ({
   const groupData = group.data;
   const groupHidden = isElementHidden(group.id);
   const groupLocked = isElementLocked(group.id);
+
+  // State for editing the group name
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(groupData.name);
+
+  // Update editValue when groupData.name changes
+  useEffect(() => {
+    setEditValue(groupData.name);
+  }, [groupData.name]);
 
   // Create thumbnail commands from all paths in the group
   const groupThumbnailCommands: Command[] = [];
@@ -79,17 +94,47 @@ const SelectPanelGroupItemComponent: React.FC<SelectPanelGroupItemProps> = ({
           icon={groupData.isExpanded ? ChevronDown : ChevronRight}
           onClick={() => setGroupExpanded(group.id, !groupData.isExpanded)}
         />
-        <Editable
-          defaultValue={groupData.name}
-          fontSize="11px"
-          fontWeight="600"
-          onSubmit={(value) => renameGroup(group.id, value)}
-          isPreviewFocusable
-          selectAllOnFocus
-        >
-          <EditablePreview color={groupHidden ? hiddenTextColor : baseTextColor} />
-          <EditableInput />
-        </Editable>
+        {isEditing ? (
+          <input
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            onBlur={() => {
+              renameGroup(group.id, editValue);
+              setIsEditing(false);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                renameGroup(group.id, editValue);
+                setIsEditing(false);
+              } else if (e.key === 'Escape') {
+                setEditValue(groupData.name);
+                setIsEditing(false);
+              }
+            }}
+            style={{
+              fontSize: '11px',
+              fontWeight: '600',
+              border: 'none',
+              outline: 'none',
+              background: 'transparent',
+              color: groupHidden ? hiddenTextColor : baseTextColor,
+              width: 'auto',
+              minWidth: '50px'
+            }}
+            autoFocus
+            onFocus={(e) => e.target.select()}
+          />
+        ) : (
+          <Text
+            fontSize="11px"
+            fontWeight="600"
+            color={groupHidden ? hiddenTextColor : baseTextColor}
+            cursor="text"
+            onClick={() => setIsEditing(true)}
+          >
+            {truncateGroupName(groupData.name)}
+          </Text>
+        )}
         <ConditionalTooltip label={`${groupData.childIds.length} elements in group`}>
           <Text fontSize="10px" color={mutedTextColor}>
             ({groupData.childIds.length})

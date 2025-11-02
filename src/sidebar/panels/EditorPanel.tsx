@@ -49,6 +49,9 @@ export const EditorPanel: React.FC = () => {
   const activeButtonColor = useColorModeValue('white', 'gray.900');
   const activeButtonHoverBg = useColorModeValue('gray.800', 'gray.200');
   
+  // Border colors for color picker buttons
+  const colorButtonBorder = useColorModeValue('gray.300', 'whiteAlpha.300');
+  
   // Calculate selected paths count - only re-renders if the count changes (not when positions change)
   const selectedPathsCount = useCanvasStore(state => {
     return state.elements.filter(el => state.selectedIds.includes(el.id) && el.type === 'path').length;
@@ -257,13 +260,13 @@ export const EditorPanel: React.FC = () => {
                     h="20px"
                     minW="20px"
                     p={0}
-                    border="none"
+                    border={`1px solid`}
+                    borderColor={colorButtonBorder}
                     bg="transparent"
                     sx={{
                       borderRadius: '50%',
                       WebkitAppearance: 'none',
                       appearance: 'none',
-                      border: 'none',
                       outline: 'none',
                       cursor: 'pointer',
                       '&::-webkit-color-swatch': {
@@ -322,13 +325,13 @@ export const EditorPanel: React.FC = () => {
                     h="20px"
                     minW="20px"
                     p={0}
-                    border="none"
+                    border={`1px solid`}
+                    borderColor={colorButtonBorder}
                     bg="transparent"
                     sx={{
                       borderRadius: '50%',
                       WebkitAppearance: 'none',
                       appearance: 'none',
-                      border: 'none',
                       outline: 'none',
                       cursor: 'pointer',
                       '&::-webkit-color-swatch': {
