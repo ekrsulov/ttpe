@@ -104,7 +104,8 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) 
   const clipPathId = useId();
   const lastClickRef = useRef<{ elementId: string; time: number } | null>(null);
   const containerBg = useColorModeValue('surface.toolbar', 'surface.toolbar');
-  const containerShadow = useColorModeValue('0 4px 20px rgba(0, 0, 0, 0.1)', '0 8px 24px rgba(0, 0, 0, 0.45)');
+  const containerShadow = useColorModeValue('0px 0px 10px 2px rgba(0, 0, 0, 0.1)', 'none');
+  const borderWidth = useColorModeValue('0px', '1px');
   const canvasFill = useColorModeValue('rgba(248, 250, 252, 0.95)', 'rgba(26, 32, 44, 0.85)');
   const borderColor = useColorModeValue('border.toolbar', 'border.toolbar');
   const elementFill = useColorModeValue('rgba(113, 128, 150, 0.2)', 'rgba(160, 174, 192, 0.35)');
@@ -361,10 +362,10 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) 
       width={`${MINIMAP_WIDTH}px`}
       height={`${MINIMAP_HEIGHT}px`}
       borderRadius="xl"
-      borderWidth="1px"
+      borderWidth={borderWidth}
       borderColor={borderColor}
       boxShadow={containerShadow}
-      backdropFilter="blur(12px)"
+      backdropFilter="blur(10px)"
       bg={containerBg}
       overflow="hidden"
       zIndex={100}
