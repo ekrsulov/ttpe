@@ -66,6 +66,32 @@ interface PluginDefinition<TStore> {
 }
 ```
 
+### UI Contribution Types
+
+```typescript
+// Panels and Overlays
+interface PluginUIContribution<TProps = Record<string, unknown>> {
+  id: string;                         // Required: Unique identifier
+  component: ComponentType<TProps>;   // Required: React component
+  placement?: 'tool' | 'global';      // Optional: When to show
+}
+
+// Actions (Toolbar buttons)
+interface PluginActionContribution<TProps = Record<string, unknown>> {
+  id: string;                         // Required: Unique identifier
+  component: ComponentType<TProps>;   // Required: React component
+  placement: 'top' | 'bottom';        // Required: Toolbar position
+}
+
+// Canvas Layers
+interface CanvasLayerContribution {
+  id: string;                         // Required: Unique identifier
+  placement?: 'background' | 'midground' | 'foreground';
+  render: (context: CanvasLayerContext) => ReactNode;
+}
+```
+```
+
 ## Minimal Plugin Example
 
 ```typescript
@@ -141,6 +167,7 @@ export const advancedToolPlugin: PluginDefinition<CanvasStore> = {
   
   overlays: [
     {
+      id: 'advanced-tool-overlay',
       placement: 'tool', // Only shows when this tool is active
       component: AdvancedOverlay,
     },
@@ -148,6 +175,7 @@ export const advancedToolPlugin: PluginDefinition<CanvasStore> = {
   
   panels: [
     {
+      id: 'advanced-tool-panel',
       placement: 'tool',
       component: AdvancedPanel,
     },
@@ -171,12 +199,17 @@ export const advancedToolPlugin: PluginDefinition<CanvasStore> = {
   actions: [
     {
       id: 'advanced-action',
-      placement: 'bottom-toolbar',
-      label: 'Advanced Action',
-      icon: AdvancedIcon,
-      onClick: (context) => {
-        context.store.getState().advancedTool?.performAction();
-      },
+      placement: 'bottom',  // 'top' or 'bottom' only
+      component: () => (
+        <ToolbarIconButton
+          icon={AdvancedIcon}
+          label="Advanced Action"
+          onClick={() => {
+            const state = useCanvasStore.getState();
+            state.advancedTool?.performAction();
+          }}
+        />
+      ),
     },
   ],
   

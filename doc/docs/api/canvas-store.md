@@ -6,7 +6,127 @@ sidebar_label: Canvas Store
 
 # Canvas Store API
 
-The Zustand store manages all application state using a slice-based architecture. The store provides centralized state management for canvas elements, viewport, selection, and plugin-specific data.
+The **Canvas Store** is TTPE's centralized state management system built on Zustand. It serves as the single source of truth for all application state, including canvas elements, viewport settings, selection, UI state, and plugin-specific data.
+
+## Why Zustand?
+
+TTPE uses Zustand instead of Redux or Context API because it provides:
+
+1. **Minimal Boilerplate**: No actions, reducers, or complex setup
+2. **Performance**: Fine-grained subscriptions prevent unnecessary re-renders
+3. **Developer Experience**: Simple API with full TypeScript support
+4. **Middleware Support**: Built-in persist and temporal (undo/redo) middleware
+5. **Flexibility**: Easy to integrate with React and non-React code
+
+## Architecture Overview
+
+```mermaid
+graph TB
+    subgraph "Canvas Store"
+        Store[Zustand Store]
+        
+        subgraph "Core Slices"
+            Base[Base Slice<br/>Elements, Settings]
+            Viewport[Viewport Slice<br/>Zoom, Pan]
+            Selection[Selection Slice<br/>selectedIds]
+            UI[UI Slice<br/>Panel State]
+        end
+        
+        subgraph "Plugin Slices"
+            Pencil[Pencil Slice]
+            Edit[Edit Slice]
+            Shape[Shape Slice]
+            PluginN[... More Plugins]
+        end
+        
+        subgraph "Middleware"
+            Persist[Persist<br/>localStorage]
+            Temporal[Temporal<br/>Undo/Redo]
+        end
+    end
+    
+    subgraph "Consumers"
+        Components[React Components]
+        Plugins[Plugin Code]
+        EventHandlers[Event Handlers]
+        APIs[Plugin APIs]
+    end
+    
+    Store --> Base
+    Store --> Viewport
+    Store --> Selection
+    Store --> UI
+    Store --> Pencil
+    Store --> Edit
+    Store --> Shape
+    Store --> PluginN
+    
+    Store --> Persist
+    Store --> Temporal
+    
+    Components -->|useCanvasStore| Store
+    Plugins -->|getState| Store
+    EventHandlers -->|getState| Store
+    APIs -->|getState| Store
+```
+
+## Store Structure
+
+The Canvas Store is composed of multiple **slices**, each responsible for a specific domain:
+
+```typescript
+interface CanvasStore extends 
+  BaseSlice,
+  ViewportSlice,
+  SelectionSlice,
+  UISlice,
+  // Dynamic plugin slices
+  PencilPluginSlice,
+  EditPluginSlice,
+  ShapePluginSlice,
+  // ... more plugin slices
+{
+  // All slice methods and state combined
+}
+```
+
+### Slice-Based Design
+
+```mermaid
+graph LR
+    A[Canvas Store] --> B[Base Slice]
+    A --> C[Viewport Slice]
+    A --> D[Selection Slice]
+    A --> E[UI Slice]
+    A --> F[Plugin Slices]
+    
+    B --> B1[Elements]
+    B --> B2[Settings]
+    B --> B3[Core Actions]
+    
+    C --> C1[zoom]
+    C --> C2[panX/panY]
+    C --> C3[Viewport Actions]
+    
+    D --> D1[selectedIds]
+    D --> D2[Selection Actions]
+    
+    E --> E1[Panel State]
+    E --> E2[UI Actions]
+    
+    F --> F1[Pencil State]
+    F --> F2[Edit State]
+    F --> F3[... More Plugins]
+    
+    style A fill:#e1f5ff
+    style B fill:#fff4e1
+    style C fill:#c8e6c9
+    style D fill:#b3e5fc
+    style E fill:#f8bbd0
+    style F fill:#d1c4e9
+```
+
+Each slice is self-contained and can be developed independently, making the codebase modular and maintainable.
 
 ## Core Architecture
 
@@ -16,6 +136,75 @@ TTPE uses Zustand for state management with the following key principles:
 - **Immutable updates**: All state changes create new state objects
 - **Plugin integration**: Plugins can contribute their own slices to the store
 - **Type-safe**: Full TypeScript support with proper type definitions
+- **Middleware**: Persistence (localStorage) and temporal (undo/redo) support
+
+### State Access Patterns
+
+#### React Components (Hooks)
+
+```typescript
+import { useCanvasStore } from '@/store/canvasStore';
+
+function MyComponent() {
+  // Subscribe to specific state
+  const zoom = useCanvasStore(state => state.viewport.zoom);
+  const selectedIds = useCanvasStore(state => state.selectedIds);
+  
+  // Subscribe to actions
+  const addElement = useCanvasStore(state => state.addElement);
+  
+  return <div>Zoom: {zoom}x</div>;
+}
+```
+
+#### Non-React Code (Direct Access)
+
+```typescript
+import { useCanvasStore } from '@/store/canvasStore';
+
+// Get current state snapshot
+const state = useCanvasStore.getState();
+
+// Read state
+console.log(state.elements);
+
+// Call actions
+state.addElement({ type: 'path', d: 'M 0 0 L 100 100' });
+state.setViewport({ zoom: 2.0 });
+```
+
+#### Subscribing to Changes (Outside React)
+
+```typescript
+// Subscribe to store changes
+const unsubscribe = useCanvasStore.subscribe((state) => {
+  console.log('Store updated:', state);
+});
+
+// Cleanup
+unsubscribe();
+```
+
+### State Update Flow
+
+```mermaid
+sequenceDiagram
+    participant Component as React Component
+    participant Store as Canvas Store
+    participant Slice as Slice Action
+    participant Middleware as Middleware
+    participant Subscribers as Subscribers
+    
+    Component->>Store: Call action (e.g., addElement)
+    Store->>Slice: Execute slice logic
+    Slice->>Slice: Create new state
+    Slice->>Middleware: Apply middleware
+    Middleware->>Middleware: Persist to localStorage
+    Middleware->>Middleware: Add to undo history
+    Middleware-->>Store: Return new state
+    Store->>Subscribers: Notify subscribers
+    Subscribers->>Component: Re-render if subscribed
+```
 
 ## Core Slices
 

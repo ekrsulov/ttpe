@@ -34,71 +34,62 @@ sequenceDiagram
     Store->>PM: Plugin mode changed
     PM->>PP: activate()
     PP->>Store: Initialize pencil slice
-    PP->>Store: Set default brush settings
-    PP->>EB: Publish 'plugin:activated'
-    EB->>Canvas: Set cursor to crosshair
+    PP->>Store: Set default settings
+    Canvas->>Canvas: Set cursor to crosshair
     
     Note over User,Canvas: 2. Start Drawing
     User->>Canvas: Press pointer down
-    Canvas->>PP: handlePointerDown(event)
-    PP->>Store: Create temp path state
-    PP->>Store: Set isDrawing = true
-    PP->>Store: Add first point [x, y]
-    PP->>Store: Get brush settings (color, width, opacity)
+    Canvas->>PP: handler(event, point)
+    PP->>PP: startPath(point)
+    PP->>PP: Create PencilDrawingService
+    PP->>PP: Start point collection
     
     Note over User,Canvas: 3. Drawing Motion
     User->>Canvas: Move pointer (drawing)
-    Canvas->>PP: handlePointerMove(event)
-    PP->>PP: Check if isDrawing
+    Canvas->>PP: Service handles pointermove
+    PP->>PP: Check drawing state
     PP->>PP: Calculate distance from last point
     
     alt Distance > minDistance threshold
         PP->>PP: Filter point (noise reduction)
-        PP->>Store: Add point to temp path
-        PP->>Canvas: Draw line segment
+        PP->>PP: Add point to local array
+        Canvas->>Canvas: Draw line segment (DOM)
     else Distance too small
         PP->>PP: Skip point (reduce noise)
     end
     
     loop While Drawing
-        Canvas->>PP: handlePointerMove
-        PP->>Store: Accumulate points
-        PP->>Canvas: Update preview path
+        Canvas->>PP: Service captures points
+        PP->>PP: Accumulate in local state
+        Canvas->>Canvas: Update preview path
     end
     
     Note over User,Canvas: 4. Finish Drawing
     User->>Canvas: Release pointer
-    Canvas->>PP: handlePointerUp(event)
-    PP->>Store: Set isDrawing = false
-    PP->>PP: Process accumulated points
+    Canvas->>PP: Service handles pointerup
+    PP->>PP: finalizePath(points)
     PP->>PP: Apply smoothing algorithm
     PP->>PP: Convert points to SVG path data
-    PP->>Store: Create CanvasElement
-    PP->>Store: Mark as "freehand" type
     PP->>Store: addElement(pathElement)
-    Store->>EB: Publish 'element:created'
-    EB->>Canvas: Render final path
-    EB->>Store: Add to undo stack
+    Store->>Store: Add to undo stack
+    Canvas->>Canvas: Render final path
     
-    Note over User,Canvas: 5. Brush Settings Change
-    User->>UI: Adjust brush width slider
-    UI->>PP: setBrushWidth(newWidth)
-    PP->>Store: Update pencil.brushWidth
+    Note over User,Canvas: 5. Settings Change
+    User->>UI: Adjust tolerance slider
+    UI->>Store: updatePencilState({ simplificationTolerance })
     Store->>UI: Update slider value
     
-    User->>UI: Change brush color
-    UI->>PP: setBrushColor(newColor)
-    PP->>Store: Update pencil.brushColor
-    Store->>UI: Update color picker
+    User->>UI: Toggle path mode
+    UI->>Store: updatePencilState({ reusePath })
+    Store->>UI: Update toggle state
     
     Note over User,Canvas: 6. Plugin Deactivation
     User->>UI: Select different tool
     UI->>Store: setMode('select')
     Store->>PM: Plugin mode changed
     PM->>PP: deactivate()
-    PP->>PP: Clear temp drawing state
-    PP->>EB: Publish 'plugin:deactivated'
-    EB->>Canvas: Reset cursor
+    PP->>PP: Clear drawing service
+    Canvas->>Canvas: Reset cursor
 ```
 
 ## Drawing Process Diagram
@@ -149,28 +140,21 @@ flowchart TD
 
 ## State Management
 
+The Pencil plugin manages drawing state through **PencilDrawingService**, which handles point collection and path creation internally using local state and DOM manipulation, not through the Zustand store.
+
 ```mermaid
 graph TB
-    subgraph "Pencil Plugin Slice"
+    subgraph "Pencil Plugin Slice (Store)"
         PS[Pencil State]
-        PS --> BC[brushColor: string]
-        PS --> BW[brushWidth: number]
-        PS --> BO[brushOpacity: number]
-        PS --> ID[isDrawing: boolean]
-        PS --> TP[tempPoints: Point array]
-        PS --> MD[minDistance: number]
+        PS --> RP[reusePath: boolean]
+        PS --> ST[simplificationTolerance: number]
     end
     
-    subgraph "Drawing State Machine"
-        SM[State Machine]
-        SM --> IDLE[Idle]
-        SM --> DRAW[Drawing]
-        SM --> PROC[Processing]
-        
-        IDLE -->|pointerdown| DRAW
-        DRAW -->|pointermove| DRAW
-        DRAW -->|pointerup| PROC
-        PROC -->|complete| IDLE
+    subgraph "PencilDrawingService (Local State)"
+        DS[Drawing Service]
+        DS --> DRAW[isDrawing: boolean]
+        DS --> PTS[points: Point array]
+        DS --> DOM[DOM manipulation]
     end
     
     subgraph "Point Processing Pipeline"
@@ -181,24 +165,32 @@ graph TB
         SMTH --> SVG[SVG Path Data]
     end
     
-    PS --> SM
-    SM --> PP
-    PP --> PS
+    PS -.settings.-> DS
+    DS --> PP
+    PP -.final path.-> Store[Canvas Store]
 ```
+
+**Note**: The drawing state (`isDrawing`, temporary points) is NOT stored in Zustand. It's managed locally by PencilDrawingService for performance reasons.
 
 ## Handler
 
-Captures pointer movements and creates SVG paths
+Captures pointer events and delegates to PencilDrawingService for path creation.
 
 ## Keyboard Shortcuts
 
-No plugin-specific shortcuts.
+- **Delete**: Delete selected elements
 
 ## UI Contributions
 
 ### Panels
 
-- Stroke color, width, and opacity controls
+**Pencil Panel** provides:
+- **Path Mode Toggle**: Switch between "New Path" and "Add Subpath" modes
+- **Tolerance Slider**: Adjust path simplification (0-10, step 0.1)
+
+:::note
+The panel does NOT provide color, width, or opacity controls. These are managed through the global style system.
+:::
 
 ### Overlays
 
@@ -210,7 +202,23 @@ No canvas layers.
 
 ## Public APIs
 
-No public APIs exposed.
+The Pencil plugin exposes the following public APIs:
+
+```typescript
+interface PencilPluginAPI {
+  startPath: (point: Point) => void;
+  addPointToPath: (point: Point) => void;
+  finalizePath: (points: Point[]) => void;
+}
+```
+
+**Usage**:
+```typescript
+const api = pluginManager.getPluginApi<PencilPluginAPI>('pencil');
+api?.startPath({ x: 0, y: 0 });
+api?.addPointToPath({ x: 10, y: 10 });
+api?.finalizePath(collectedPoints);
+```
 
 ## Usage Examples
 
