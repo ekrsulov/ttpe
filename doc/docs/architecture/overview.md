@@ -516,7 +516,7 @@ function migrateState(state: any): CanvasStore {
 1. **Browser-Only**: No server-side rendering or Node.js runtime
 2. **Single Canvas**: Multiple canvases not supported (could be added)
 3. **SVG Output**: Raster export requires additional libraries
-4. **No Collaborative Editing**: Yet (architecture supports it)
+4. **No Collaborative Editing**: No remote sync infrastructure (WebSocket, CRDT, etc.)
 
 ### Trade-offs
 

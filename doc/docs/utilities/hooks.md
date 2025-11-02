@@ -661,6 +661,175 @@ useEffect(() => {
 
 ---
 
+### useArrangeHandlers
+
+**Purpose**: Provides context-aware handlers for alignment, distribution, size matching, and ordering operations based on the active plugin mode.
+
+**Location**: `/src/hooks/useArrangeHandlers.ts`
+
+**Use Cases**:
+- ArrangePanel buttons in sidebar footer
+- Alignment operations across different editing modes
+- Distribution and ordering of elements, points, or subpaths
+
+**Interface**:
+
+```typescript
+interface ArrangeHandlers {
+  // Alignment
+  alignLeft: () => void;
+  alignCenter: () => void;
+  alignRight: () => void;
+  alignTop: () => void;
+  alignMiddle: () => void;
+  alignBottom: () => void;
+  
+  // Distribution
+  distributeHorizontally: () => void;
+  distributeVertically: () => void;
+  
+  // Size matching
+  matchWidthToLargest: () => void;
+  matchHeightToLargest: () => void;
+  
+  // Ordering (z-index)
+  bringToFront: () => void;
+  sendForward: () => void;
+  sendBackward: () => void;
+  sendToBack: () => void;
+}
+```
+
+**Usage**:
+
+```tsx
+import { useArrangeHandlers } from '@/hooks/useArrangeHandlers';
+
+const ArrangePanel: React.FC = () => {
+  const handlers = useArrangeHandlers();
+  
+  return (
+    <HStack>
+      <IconButton onClick={handlers.alignLeft} icon={<AlignLeft />} />
+      <IconButton onClick={handlers.alignCenter} icon={<AlignCenter />} />
+      <IconButton onClick={handlers.distributeHorizontally} icon={<ArrowLeftRight />} />
+    </HStack>
+  );
+};
+```
+
+**Context-Aware Behavior**:
+
+The hook automatically selects the appropriate handlers based on `activePlugin`:
+
+1. **Default mode** (select, pencil, shape, etc.):
+   - Operations target selected canvas **elements**
+   - Uses: `alignLeft()`, `distributeHorizontally()`, `bringToFront()`, etc.
+
+2. **Edit mode** (`activePlugin === 'edit'`):
+   - Operations target selected **control points** (commands)
+   - Uses: `alignLeftCommands()`, `distributeHorizontallyCommands()`, etc.
+   - Ordering operations are disabled (no-op functions)
+
+3. **Subpath mode** (`activePlugin === 'subpath'`):
+   - Operations target selected **subpaths**
+   - Uses: `alignLeftSubpaths()`, `distributeHorizontallySubpaths()`, `bringSubpathToFront()`, etc.
+
+**Implementation Details**:
+
+```typescript
+export const useArrangeHandlers = () => {
+  const activePlugin = useCanvasStore(state => state.activePlugin);
+  const store = useCanvasStore.getState();
+
+  const handlers = useMemo(() => {
+    const handlerMaps = {
+      select: {
+        alignLeft: store.alignLeft,
+        // ... standard element operations
+        bringToFront: store.bringToFront,
+      },
+      edit: {
+        alignLeft: store.alignLeftCommands,
+        // ... command operations
+        bringToFront: () => {}, // Disabled in edit mode
+      },
+      subpath: {
+        alignLeft: store.alignLeftSubpaths,
+        // ... subpath operations
+        bringToFront: store.bringSubpathToFront,
+      }
+    };
+
+    return handlerMaps[activePlugin] || handlerMaps.select;
+  }, [activePlugin, store]);
+
+  return handlers;
+};
+```
+
+**Store Methods**:
+
+The hook maps to these Canvas Store methods:
+
+| Operation | Elements | Commands (Edit) | Subpaths |
+|-----------|----------|-----------------|----------|
+| Align Left | `alignLeft()` | `alignLeftCommands()` | `alignLeftSubpaths()` |
+| Align Center | `alignCenter()` | `alignCenterCommands()` | `alignCenterSubpaths()` |
+| Align Right | `alignRight()` | `alignRightCommands()` | `alignRightSubpaths()` |
+| Align Top | `alignTop()` | `alignTopCommands()` | `alignTopSubpaths()` |
+| Align Middle | `alignMiddle()` | `alignMiddleCommands()` | `alignMiddleSubpaths()` |
+| Align Bottom | `alignBottom()` | `alignBottomCommands()` | `alignBottomSubpaths()` |
+| Distribute H | `distributeHorizontally()` | `distributeHorizontallyCommands()` | `distributeHorizontallySubpaths()` |
+| Distribute V | `distributeVertically()` | `distributeVerticallyCommands()` | `distributeVerticallySubpaths()` |
+| Match Width | `matchWidthToLargest()` | `matchWidthToLargestCommands()` | `matchWidthToLargestSubpaths()` |
+| Match Height | `matchHeightToLargest()` | `matchHeightToLargestCommands()` | `matchHeightToLargestSubpaths()` |
+| Bring to Front | `bringToFront()` | *(disabled)* | `bringSubpathToFront()` |
+| Send Forward | `sendForward()` | *(disabled)* | `sendSubpathForward()` |
+| Send Backward | `sendBackward()` | *(disabled)* | `sendSubpathBackward()` |
+| Send to Back | `sendToBack()` | *(disabled)* | `sendSubpathToBack()` |
+
+**Performance**:
+
+- Handlers are memoized with `useMemo` to prevent recreation on every render
+- Only subscribes to `activePlugin` changes, not the entire store
+- Returns stable function references for optimal re-render behavior
+
+**Example - ArrangePanel Integration**:
+
+```tsx
+const ArrangePanelComponent: React.FC = () => {
+  const currentHandlers = useArrangeHandlers();
+  const selectedCount = useCanvasStore(state => state.selectedIds.length);
+  const selectedCommandsCount = useCanvasStore(state => state.selectedCommands?.length ?? 0);
+  const activePlugin = useCanvasStore.getState().activePlugin;
+
+  const canAlign = selectedCount >= 2 || 
+    (activePlugin === 'edit' && selectedCommandsCount >= 2);
+
+  const alignmentButtons = [
+    { handler: currentHandlers.alignLeft, icon: <AlignLeft />, disabled: !canAlign },
+    { handler: currentHandlers.alignCenter, icon: <AlignCenter />, disabled: !canAlign },
+    { handler: currentHandlers.alignRight, icon: <AlignRight />, disabled: !canAlign },
+  ];
+
+  return (
+    <HStack>
+      {alignmentButtons.map(({ handler, icon, disabled }) => (
+        <IconButton onClick={handler} icon={icon} isDisabled={disabled} />
+      ))}
+    </HStack>
+  );
+};
+```
+
+**Related Components**:
+
+- `ArrangePanel` (`src/sidebar/panels/ArrangePanel.tsx`) - UI that consumes this hook
+- Canvas Store alignment/distribution slices - Actual implementation of operations
+
+---
+
 ## Best Practices
 
 ### For Hook Consumers

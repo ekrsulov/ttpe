@@ -15,7 +15,7 @@ TTPE is a full-featured SVG vector graphics editor that runs entirely in the bro
 
 - **Advanced Path Editing**: Precise manipulation of Bézier curves and path segments
 - **Plugin Architecture**: Extensible tool system with hot-swappable plugins
-- **Real-time Collaboration Ready**: Event-driven architecture supporting multi-user scenarios
+- **Event-Driven Architecture**: Flexible pub/sub system for loose component coupling
 - **Modern Stack**: React 19, TypeScript, Zustand state management, Chakra UI
 - **Comprehensive Testing**: E2E tests with Playwright ensuring reliability
 

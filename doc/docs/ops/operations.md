@@ -28,8 +28,11 @@ Runs Vite dev server on port 5173.
 
 ```bash
 npm run test:ui     # Playwright UI mode
-npm run test        # Run all tests
 ```
+
+:::note
+The `npm run test` command is currently disabled. Use `npm run test:ui` for interactive test execution, or run Playwright directly with `npx playwright test`.
+:::
 
 ## Type Checking
 

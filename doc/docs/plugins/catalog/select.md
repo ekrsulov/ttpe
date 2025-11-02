@@ -10,13 +10,17 @@ sidebar_label: Select
 
 ## Overview
 
-- Single and multi-select
-- Shift-click to add/remove
-- Rectangle selection
-- Alignment (left, center, right, top, middle, bottom)
-- Distribution (horizontal, vertical)
-- Ordering (bring to front, send to back)
+Selection functionality in TTPE includes:
+
+- Single and multi-select with Shift-click to add/remove
+- Rectangle selection (drag on empty area)
+- Moving selected elements
+- Deleting selected elements
 - Grouping and ungrouping
+
+:::note
+**Alignment, distribution, and ordering** (bring to front, send to back) are provided by the [`useArrangeHandlers`](/docs/utilities/hooks#usearrangehandlers) hook and displayed in the **ArrangePanel** in the sidebar footer when elements are selected. These features are not part of the select plugin itself.
+:::
 
 ## Plugin Interaction Flow
 
@@ -67,17 +71,8 @@ sequenceDiagram
     Store->>EB: Publish 'selection:changed'
     EB->>Canvas: Update selection overlay
     
-    Note over User,Canvas: 4. Element Manipulation
-    User->>UI: Click Align Left button
-    UI->>SP: alignLeft()
-    SP->>Store: Get selected elements
-    SP->>Store: Calculate alignment positions
-    SP->>Store: updateElements(alignedElements)
-    Store->>EB: Publish 'elements:updated'
-    EB->>Canvas: Re-render elements
-    
-    Note over User,Canvas: 5. Multi-selection Actions
-    User->>UI: Click Delete key
+    Note over User,Canvas: 4. Element Deletion
+    User->>UI: Press Delete key
     UI->>SP: handleKeyDown('Delete')
     SP->>Store: deleteSelectedElements()
     Store->>Store: Remove from elements array
@@ -85,7 +80,7 @@ sequenceDiagram
     Store->>EB: Publish 'elements:deleted'
     EB->>Canvas: Re-render canvas
     
-    Note over User,Canvas: 6. Plugin Deactivation
+    Note over User,Canvas: 5. Plugin Deactivation
     User->>UI: Select different tool
     UI->>Store: setMode('pencil')
     Store->>PM: Plugin mode changed
@@ -164,17 +159,18 @@ Handles clicks on elements and canvas for selection
 
 ## Public APIs
 
-### `addToSelection`
+No public APIs exposed.
 
-Add element IDs to selection
-
-### `removeFromSelection`
-
-Remove from selection
-
-### `clearSelection`
-
-Clear all selected elements
+:::note
+Selection functionality is part of the core Canvas Store (SelectionSlice), not a plugin API. Use the store methods directly:
+```typescript
+const state = useCanvasStore.getState();
+state.selectElement(elementId);
+state.selectElements([id1, id2]);
+state.clearSelection();
+```
+See the [Selection documentation](/docs/features/selection) for more details.
+:::
 
 ## Usage Examples
 

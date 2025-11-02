@@ -70,7 +70,20 @@ No overlays.
 
 ## Public APIs
 
-No public APIs exposed.
+The Grid Fill plugin exposes the following public API:
+
+### `fillGridCell(point: Point)`
+
+Fills a grid cell at the specified point with the current drawing tool.
+
+**Parameters**:
+- `point`: A `Point` object with `x` and `y` coordinates
+
+**Usage**:
+```typescript
+const api = useCanvasStore.getState().getPluginApi('gridFill');
+api.fillGridCell({ x: 100, y: 100 });
+```
 
 ## Usage Examples
 

@@ -72,7 +72,27 @@ No plugin-specific shortcuts.
 
 ## Public APIs
 
-No public APIs exposed.
+The Subpath plugin exposes the following public APIs:
+
+### `performPathSimplify()`
+
+Simplifies the current path by reducing the number of points while maintaining the shape.
+
+**Usage**:
+```typescript
+const api = useCanvasStore.getState().getPluginApi('subpath');
+api.performPathSimplify();
+```
+
+### `performSubPathReverse()`
+
+Reverses the direction of the current subpath.
+
+**Usage**:
+```typescript
+const api = useCanvasStore.getState().getPluginApi('subpath');
+api.performSubPathReverse();
+```
 
 ## Usage Examples
 

@@ -66,9 +66,7 @@ No canvas layers.
 
 ## Public APIs
 
-### `applyOpticalAlignment`
-
-Apply optical alignment to selection
+No public APIs exposed.
 
 ## Usage Examples
 

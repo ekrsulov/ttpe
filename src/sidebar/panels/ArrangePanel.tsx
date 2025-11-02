@@ -1,6 +1,6 @@
 import React from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { useArrangeHandlers } from '../../plugins/arrange/useArrangeHandlers';
+import { useArrangeHandlers } from '../../hooks/useArrangeHandlers';
 import {
   Triangle,
   ChevronUp,

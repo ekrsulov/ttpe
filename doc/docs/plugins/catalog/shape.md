@@ -253,7 +253,24 @@ No overlays.
 
 ## Public APIs
 
-No public APIs exposed.
+The Shape plugin exposes the following public API:
+
+### `createShape(startPoint: Point, endPoint: Point)`
+
+Creates a shape between two points.
+
+**Parameters**:
+- `startPoint`: A `Point` object with `x` and `y` coordinates for the start position
+- `endPoint`: A `Point` object with `x` and `y` coordinates for the end position
+
+**Usage**:
+```typescript
+const api = useCanvasStore.getState().getPluginApi('shape');
+api.createShape(
+  { x: 50, y: 50 },
+  { x: 150, y: 150 }
+);
+```
 
 ## Usage Examples
 
