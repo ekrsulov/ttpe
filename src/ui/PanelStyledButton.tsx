@@ -34,7 +34,7 @@ export const PanelStyledButton: React.FC<ButtonProps> = (props) => {
         }
       }}
       sx={{
-        h: size === 'xs' ? '20px' : '28px',
+        h: size === 'xs' ? '20px' : '20px',
         px: 2,
         display: 'flex',
         alignItems: 'center',

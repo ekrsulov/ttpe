@@ -25,25 +25,26 @@ export const SidebarUtilityButton: React.FC<SidebarUtilityButtonProps> = ({
   const activeColor = useColorModeValue('white', 'gray.900');
   const activeHoverBg = useColorModeValue('gray.800', 'gray.200');
   return (
-    <Button
+        <Button
       aria-label={label}
       onClick={onClick}
       variant="unstyled"
-      size="sm"
+      size="xs"
+      fontSize="sm"
       data-active={isActive}
       bg={isActive ? activeBg : 'transparent'}
       color={isActive ? activeColor : inactiveColor}
       border="1px solid"
       borderColor={isActive ? activeBg : inactiveBorder}
       borderRadius="full"
-      fontWeight="medium"
+      fontWeight="bold"
       transition="all 0.2s"
       width={fullWidth ? 'full' : 'auto'}
       _hover={{
         bg: isActive ? activeHoverBg : inactiveHoverBg,
       }}
       sx={{
-        minH: '32px',
+        minH: '28px',
         px: 3,
         display: 'flex',
         alignItems: 'center',

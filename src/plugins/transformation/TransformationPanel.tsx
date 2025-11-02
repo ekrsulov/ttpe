@@ -153,8 +153,8 @@ export const TransformationPanel: React.FC = () => {
                       right="-18px"
                       top="50%"
                       transform="translateY(-50%)"
-                      w="40px"
-                      h="1px"
+                      w="25px"
+                      h="2px"
                       bg={maintainAspectRatio ? 'gray.500' : 'gray.300'}
                       _dark={{
                         bg: maintainAspectRatio ? 'gray.400' : 'gray.600'
@@ -180,8 +180,8 @@ export const TransformationPanel: React.FC = () => {
                       right="-18px"
                       top="50%"
                       transform="translateY(-50%)"
-                      w="40px"
-                      h="1px"
+                      w="25px"
+                      h="2px"
                       bg={maintainAspectRatio ? 'gray.500' : 'gray.300'}
                       _dark={{
                         bg: maintainAspectRatio ? 'gray.400' : 'gray.600'
@@ -197,9 +197,9 @@ export const TransformationPanel: React.FC = () => {
                   <Box 
                     position="absolute"
                     left="2"
-                    top="3"
-                    bottom="3"
-                    w="1px" 
+                    top="9px"
+                    bottom="9px"
+                    w="2px" 
                     bg={maintainAspectRatio ? 'gray.500' : 'gray.300'}
                     _dark={{
                       bg: maintainAspectRatio ? 'gray.400' : 'gray.600'
@@ -215,11 +215,11 @@ export const TransformationPanel: React.FC = () => {
                     <Box
                       as="button"
                       onClick={() => updateTransformationState?.({ maintainAspectRatio: !maintainAspectRatio })}
-                      p={0.5}
+                      p={0.25}
                       borderRadius="full"
                       bg="white"
                       color={maintainAspectRatio ? 'gray.500' : 'gray.400'}
-                      border="1px solid"
+                      border="2px solid"
                       borderColor={maintainAspectRatio ? 'gray.500' : 'gray.300'}
                       _dark={{
                         bg: 'gray.700',
@@ -238,12 +238,12 @@ export const TransformationPanel: React.FC = () => {
                       display="flex"
                       alignItems="center"
                       justifyContent="center"
-                      minW="20px"
-                      h="20px"
+                      minW="18px"
+                      h="18px"
                       position="relative"
                       zIndex={1}
                     >
-                      {maintainAspectRatio ? <Lock size={14} strokeWidth={2} /> : <LockOpen size={14} strokeWidth={2} />}
+                      {maintainAspectRatio ? <Lock size={10} strokeWidth={4} /> : <LockOpen size={10} strokeWidth={4} />}
                     </Box>
                   </ConditionalTooltip>
                 </Box>

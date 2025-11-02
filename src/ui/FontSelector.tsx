@@ -68,11 +68,10 @@ export const FontSelector: React.FC<FontSelectorProps> = ({
     return (
       <Box
         flex={1}
-        maxW="200px"
         p="4px 8px"
         border="1px solid"
         borderColor="gray.300"
-        borderRadius="md"
+        borderRadius="full"
         fontSize="xs"
         bg="gray.50"
         color="gray.600"
@@ -88,11 +87,10 @@ export const FontSelector: React.FC<FontSelectorProps> = ({
         as={Box}
         position="relative"
         flex={1}
-        maxW="200px"
         onClick={disabled ? undefined : onOpen}
         cursor={disabled ? 'not-allowed' : 'pointer'}
       >
-        <InputGroup size="sm">
+        <InputGroup size="sm" borderRadius="full" overflow="hidden">
           <Input
             value={isOpen ? searchTerm : value}
             onChange={handleInputChange}
@@ -107,6 +105,7 @@ export const FontSelector: React.FC<FontSelectorProps> = ({
               _hover: { borderColor: 'whiteAlpha.400' }
             }}
             borderColor="gray.300"
+            borderRadius="full"
             _hover={{ borderColor: 'gray.400' }}
             _focus={{ borderColor: 'gray.600', boxShadow: '0 0 0 1px var(--chakra-colors-gray-600)' }}
           />

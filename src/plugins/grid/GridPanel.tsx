@@ -1,5 +1,5 @@
 import React from 'react';
-import { VStack, Select, Text } from '@chakra-ui/react';
+import { VStack, Text } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Panel } from '../../ui/Panel';
 import { PanelToggleGroup } from '../../ui/PanelToggleGroup';
@@ -7,6 +7,7 @@ import { SliderControl } from '../../ui/SliderControl';
 import { PercentSliderControl } from '../../ui/PercentSliderControl';
 import { usePanelToggleHandlers } from '../../hooks/usePanelToggleHandlers';
 import type { GridType, GridPluginSlice } from './slice';
+import { CustomSelect } from '../../ui/CustomSelect';
 
 const GRID_TYPE_OPTIONS: Array<{ value: GridType; label: string }> = [
   { value: 'square', label: 'Square' },
@@ -71,16 +72,8 @@ const GridPanelComponent: React.FC = () => {
     updateGridState?.({ spacing: value });
   };
 
-  const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    updateGridState?.({ type: e.target.value as GridType });
-  };
-
   const handlePolarDivisionsChange = (value: number) => {
     updateGridState?.({ polarDivisions: value });
-  };
-
-  const handleHexOrientationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    updateGridState?.({ hexOrientation: e.target.value as 'pointy' | 'flat' });
   };
 
   const handleOpacityChange = (value: number) => {
@@ -92,8 +85,8 @@ const GridPanelComponent: React.FC = () => {
   };
 
   // Parametric warp handlers - using the helper to reduce duplication
-  const handleWarpKindChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const kind = e.target.value as 'sine2d' | 'perlin2d' | 'radial';
+  const handleWarpKindChange = (value: string) => {
+    const kind = value as 'sine2d' | 'perlin2d' | 'radial';
     updateParametricWarp({ kind });
   };
 
@@ -131,19 +124,13 @@ const GridPanelComponent: React.FC = () => {
           <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }} fontWeight="500">
             Type
           </Text>
-          <Select
+          <CustomSelect
             value={gridType}
-            onChange={handleTypeChange}
+            onChange={(value) => updateGridState?.({ type: value as GridType })}
+            options={GRID_TYPE_OPTIONS}
             size="sm"
-            fontSize="12px"
             isDisabled={!(grid?.enabled ?? false)}
-          >
-            {GRID_TYPE_OPTIONS.map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </Select>
+          />
         </VStack>
 
         {/* Grid toggles */}
@@ -201,15 +188,15 @@ const GridPanelComponent: React.FC = () => {
             <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }} fontWeight="500">
               Orientation
             </Text>
-            <Select
+            <CustomSelect
               value={grid?.hexOrientation ?? 'pointy'}
-              onChange={handleHexOrientationChange}
+              onChange={(value) => updateGridState?.({ hexOrientation: value as 'pointy' | 'flat' })}
+              options={[
+                { value: 'pointy', label: 'Pointy Top' },
+                { value: 'flat', label: 'Flat Top' },
+              ]}
               size="sm"
-              fontSize="12px"
-            >
-              <option value="pointy">Pointy Top</option>
-              <option value="flat">Flat Top</option>
-            </Select>
+            />
           </VStack>
         )}
 
@@ -242,16 +229,16 @@ const GridPanelComponent: React.FC = () => {
               <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }} fontWeight="500">
                 Warp Type
               </Text>
-              <Select
+              <CustomSelect
                 value={grid?.parametricWarp?.kind ?? 'sine2d'}
                 onChange={handleWarpKindChange}
+                options={[
+                  { value: 'sine2d', label: 'Sine Wave 2D' },
+                  { value: 'radial', label: 'Radial / Swirl' },
+                  { value: 'perlin2d', label: 'Perlin Noise' },
+                ]}
                 size="sm"
-                fontSize="12px"
-              >
-                <option value="sine2d">Sine Wave 2D</option>
-                <option value="radial">Radial / Swirl</option>
-                <option value="perlin2d">Perlin Noise</option>
-              </Select>
+              />
             </VStack>
 
             <SliderControl

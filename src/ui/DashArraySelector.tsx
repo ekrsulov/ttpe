@@ -38,8 +38,13 @@ export const DashArrayCustomInput: React.FC<DashArrayCustomInputProps> = ({
       h="20px"
       bg={inputBg}
       borderColor={inputBorder}
+      borderRadius="0"
       color={inputColor}
       _placeholder={{ color: placeholderColor }}
+      _focus={{
+        borderColor: 'gray.600',
+        boxShadow: '0 0 0 1px var(--chakra-colors-gray-600)'
+      }}
       title={title}
     />
   );

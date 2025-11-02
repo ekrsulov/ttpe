@@ -1,19 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import {
-  VStack,
   HStack,
+  VStack,
   Input,
-  NumberInput,
-  NumberInputField,
-  NumberInputStepper,
-  NumberIncrementStepper,
-  NumberDecrementStepper,
 } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Bold, Italic } from 'lucide-react';
 import { getAvailableFonts } from '../../utils';
 import { FontSelector } from '../../ui/FontSelector';
 import { ToggleButton } from '../../ui/ToggleButton';
+import { NumberInput } from '../../ui/NumberInput';
 import { Panel } from '../../ui/Panel';
 import { logger } from '../../utils';
 import { createPropertyUpdater, createPropertyGetters, preventSpacebarPropagation } from '../../utils/panelHelpers';
@@ -74,6 +70,12 @@ export const TextPanel: React.FC = () => {
           onKeyDown={preventSpacebarPropagation}
           placeholder="Enter text"
           size="sm"
+          h="20px"
+          borderRadius="0"
+          _focus={{
+            borderColor: 'gray.600',
+            boxShadow: '0 0 0 1px var(--chakra-colors-gray-600)'
+          }}
         />
 
         {/* Font Selector */}
@@ -88,20 +90,13 @@ export const TextPanel: React.FC = () => {
         {/* Font Size and Style Controls */}
         <HStack spacing={1}>
           <NumberInput
+            label="Size"
             value={current.fontSize}
-            onChange={(_, valueNumber) => updateProperty('fontSize')(valueNumber || 12)}
+            onChange={updateProperty('fontSize')}
             min={4}
-            size="sm"
-            width="100px"
-          >
-            <NumberInputField
-              onKeyDown={preventSpacebarPropagation}
-            />
-            <NumberInputStepper>
-              <NumberIncrementStepper />
-              <NumberDecrementStepper />
-            </NumberInputStepper>
-          </NumberInput>
+            max={200}
+            inputWidth="50px"
+          />
           
           <ToggleButton
             isActive={current.fontWeight === 'bold'}

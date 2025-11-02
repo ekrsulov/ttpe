@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { HStack, VStack, Input, InputGroup, InputLeftAddon, useToast, FormControl, FormLabel, Text, Box, Collapse, useDisclosure, IconButton as ChakraIconButton } from '@chakra-ui/react';
+import { HStack, VStack, Input, useToast, FormControl, FormLabel, Text, Box, Collapse, useDisclosure, IconButton as ChakraIconButton } from '@chakra-ui/react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import ConditionalTooltip from '../../ui/ConditionalTooltip';
 import { useCanvasStore } from '../../store/canvasStore';
@@ -8,6 +8,7 @@ import { logger, importSVGWithDimensions, measurePath, translateCommands, perfor
 import { Panel } from '../../ui/Panel';
 import { PanelToggle } from '../../ui/PanelToggle';
 import { PanelStyledButton } from '../../ui/PanelStyledButton';
+import { NumberInput } from '../../ui/NumberInput';
 import type { PathData, CanvasElement } from '../../types';
 import type { ImportedElement } from '../../utils';
 
@@ -429,6 +430,12 @@ export const FilePanel: React.FC = () => {
             onChange={handleDocumentNameChange}
             placeholder="Enter document name"
             size="sm"
+            h="20px"
+            borderRadius="0"
+            _focus={{
+              borderColor: 'gray.600',
+              boxShadow: '0 0 0 1px var(--chakra-colors-gray-600)'
+            }}
           />
           {isSaving && (
             <Text
@@ -581,30 +588,24 @@ export const FilePanel: React.FC = () => {
         </PanelToggle>
 
         {resizeImport && (
-          <HStack spacing={2}>
-            <InputGroup size="sm">
-              <InputLeftAddon _dark={{ bg: 'gray.600', color: 'gray.200' }}>W</InputLeftAddon>
-              <Input
-                type="number"
-                value={resizeWidth}
-                onChange={(e) => setResizeWidth(parseInt(e.target.value) || 64)}
-                min={1}
-                max={1000}
-                placeholder="64"
-              />
-            </InputGroup>
-            <InputGroup size="sm">
-              <InputLeftAddon _dark={{ bg: 'gray.600', color: 'gray.200' }}>H</InputLeftAddon>
-              <Input
-                type="number"
-                value={resizeHeight}
-                onChange={(e) => setResizeHeight(parseInt(e.target.value) || 64)}
-                min={1}
-                max={1000}
-                placeholder="64"
-              />
-            </InputGroup>
-          </HStack>
+          <VStack spacing={1} align="stretch">
+            <NumberInput
+              label="W"
+              value={resizeWidth}
+              onChange={setResizeWidth}
+              min={1}
+              max={1000}
+              inputWidth="50px"
+            />
+            <NumberInput
+              label="H"
+              value={resizeHeight}
+              onChange={setResizeHeight}
+              min={1}
+              max={1000}
+              inputWidth="50px"
+            />
+          </VStack>
         )}
 
             </VStack>

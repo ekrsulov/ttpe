@@ -3,7 +3,6 @@ import {
   VStack,
   FormControl,
   FormLabel,
-  Select,
   useBreakpointValue,
   useColorMode
 } from '@chakra-ui/react';
@@ -13,6 +12,7 @@ import { Panel } from '../../ui/Panel';
 import { PanelToggle } from '../../ui/PanelToggle';
 import { SliderControl } from '../../ui/SliderControl';
 import { JoinedButtonGroup } from '../../ui/JoinedButtonGroup';
+import { CustomSelect } from '../../ui/CustomSelect';
 
 export const SettingsPanel: React.FC = () => {
   // Use individual selectors to prevent re-renders on unrelated changes
@@ -81,6 +81,13 @@ export const SettingsPanel: React.FC = () => {
     }
   };
 
+  const logLevelOptions = [
+    { value: LogLevel.DEBUG.toString(), label: 'DEBUG' },
+    { value: LogLevel.INFO.toString(), label: 'INFO' },
+    { value: LogLevel.WARN.toString(), label: 'WARN' },
+    { value: LogLevel.ERROR.toString(), label: 'ERROR' },
+  ];
+
   return (
     <Panel>
       <VStack spacing={3} align="stretch" pt={2}>
@@ -106,16 +113,12 @@ export const SettingsPanel: React.FC = () => {
             <FormLabel fontSize="12px" fontWeight="medium" color="gray.600" _dark={{ color: 'gray.400' }} mb={1}>
               Log Level
             </FormLabel>
-            <Select
-              value={logLevel}
-              onChange={(e) => handleLogLevelChange(parseInt(e.target.value) as LogLevel)}
+            <CustomSelect
+              value={logLevel.toString()}
+              onChange={(value) => handleLogLevelChange(parseInt(value) as LogLevel)}
+              options={logLevelOptions}
               size="sm"
-            >
-              <option value={LogLevel.DEBUG}>DEBUG</option>
-              <option value={LogLevel.INFO}>INFO</option>
-              <option value={LogLevel.WARN}>WARN</option>
-              <option value={LogLevel.ERROR}>ERROR</option>
-            </Select>
+            />
           </FormControl>
         )}
 
