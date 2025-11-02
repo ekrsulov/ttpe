@@ -32,8 +32,8 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
   const borderColor = useColorModeValue('gray.300', 'whiteAlpha.300');
   const textColor = useColorModeValue('gray.800', 'gray.100');
   const hoverBg = useColorModeValue('gray.50', 'whiteAlpha.200');
-  const selectedBg = useColorModeValue('blue.50', 'blue.900');
-  const selectedColor = useColorModeValue('blue.600', 'blue.200');
+  const selectedBg = useColorModeValue('gray.200', 'gray.700');
+  const selectedColor = useColorModeValue('gray.800', 'gray.200');
 
   const selectedOption = options.find(option => option.value === value);
   const displayText = selectedOption ? selectedOption.label : placeholder;
