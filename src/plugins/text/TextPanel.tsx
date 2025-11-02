@@ -103,7 +103,7 @@ export const TextPanel: React.FC = () => {
             onClick={() => handleFontWeightChange(current.fontWeight === 'bold' ? 'normal' : 'bold')}
             icon={<Bold size={12} />}
             aria-label="Bold"
-            size="lg"
+            size="sm"
           />
           
           <ToggleButton
@@ -111,7 +111,7 @@ export const TextPanel: React.FC = () => {
             onClick={() => handleFontStyleChange(current.fontStyle === 'italic' ? 'normal' : 'italic')}
             icon={<Italic size={12} />}
             aria-label="Italic"
-            size="lg"
+            size="sm"
           />
         </HStack>
       </VStack>
