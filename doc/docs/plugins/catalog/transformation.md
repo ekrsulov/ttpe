@@ -266,7 +266,7 @@ No plugin-specific shortcuts.
 
 ### Overlays
 
-No overlays.
+- **TransformationOverlay**: Visual rendering of transformation handles, bounding box, and real-time transform feedback
 
 ### Canvas Layers
 

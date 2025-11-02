@@ -145,7 +145,8 @@ Handles clicks on elements and canvas for selection
 
 ## Keyboard Shortcuts
 
-- **Delete**: Delete selected elements\n- **Ctrl/Cmd+A**: Select all (reserved)
+- **Delete**: Delete selected elements
+- **Ctrl/Cmd+A**: Select all (reserved)
 
 ## UI Contributions
 
@@ -163,7 +164,17 @@ Handles clicks on elements and canvas for selection
 
 ## Public APIs
 
-### `addToSelection`\n\nAdd element IDs to selection\n\n### `removeFromSelection`\n\nRemove from selection\n\n### `clearSelection`\n\nClear all selected elements
+### `addToSelection`
+
+Add element IDs to selection
+
+### `removeFromSelection`
+
+Remove from selection
+
+### `clearSelection`
+
+Clear all selected elements
 
 ## Usage Examples
 
@@ -181,7 +192,9 @@ const selectState = useCanvasStore(state => state.select);
 
 ```typescript
 const api = pluginManager.getPluginApi('select');
-api?.addToSelection();\napi?.removeFromSelection();\napi?.clearSelection();
+api?.addToSelection();
+api?.removeFromSelection();
+api?.clearSelection();
 ```
 
 

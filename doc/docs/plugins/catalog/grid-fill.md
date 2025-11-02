@@ -10,7 +10,11 @@ sidebar_label: Grid Fill
 
 ## Overview
 
-- Fill individual grid cells\n- Works with all grid types\n- Rapid tessellation workflow\n- Uses current fill color and opacity\n- Multiple shape options
+- Fill individual grid cells
+- Works with all grid types
+- Rapid tessellation workflow
+- Uses current fill color and opacity
+- Multiple shape options
 
 ## Plugin Interaction Flow
 

@@ -10,7 +10,13 @@ sidebar_label: Subpath
 
 ## Overview
 
-- Select individual subpaths\n- Multi-select subpaths (constrained to single element)\n- Delete subpaths\n- Reorder subpaths\n- Align and distribute subpaths\n- Split subpaths into separate paths\n- Reverse subpath direction
+- Select individual subpaths
+- Multi-select subpaths (constrained to single element)
+- Delete subpaths
+- Reorder subpaths
+- Align and distribute subpaths
+- Split subpaths into separate paths
+- Reverse subpath direction
 
 ## Plugin Interaction Flow
 
@@ -58,7 +64,7 @@ No plugin-specific shortcuts.
 
 ### Overlays
 
-No overlays.
+- **SubpathOverlay**: Visual rendering of individual subpaths with selection highlights and manipulation controls
 
 ### Canvas Layers
 

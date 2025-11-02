@@ -10,7 +10,11 @@ sidebar_label: Curves
 
 ## Overview
 
-- Lattice-based curve deformation\n- Adjustable grid resolution\n- Tension/smoothness controls\n- Preview lattice grid\n- Apply deformation to selected paths
+- Lattice-based curve deformation
+- Adjustable grid resolution
+- Tension/smoothness controls
+- Preview lattice grid
+- Apply deformation to selected paths
 
 ## Plugin Interaction Flow
 

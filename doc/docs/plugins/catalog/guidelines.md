@@ -10,7 +10,11 @@ sidebar_label: Guidelines
 
 ## Overview
 
-- Smart edge and center guides\n- Distance repetition detection\n- Sticky mode for automatic snapping\n- Zoom-scaled snap threshold\n- Visual feedback lines
+- Smart edge and center guides
+- Distance repetition detection
+- Sticky mode for automatic snapping
+- Zoom-scaled snap threshold
+- Visual feedback lines
 
 ## Plugin Interaction Flow
 
@@ -20,25 +24,31 @@ sequenceDiagram
     participant Canvas
     participant GP as Guidelines Plugin
     participant Store
-    participant SM as Snap Manager
-    participant EB as Event Bus
     
-    User->>Canvas: Drag from ruler
-    Canvas->>GP: handleGuidelineCreate(axis)
-    GP->>Store: Add guideline
-    Store->>Canvas: Draw guideline
+    User->>Canvas: Start dragging element
+    Canvas->>GP: findAlignmentGuidelines(elementId, bounds)
+    GP->>Store: Read other elements
+    Store->>GP: Return element bounds
+    GP->>GP: Calculate edge/center matches
+    GP->>Canvas: Return guideline matches
+    Canvas->>Canvas: Draw guideline visuals
     
-    User->>Canvas: Drag element near guideline
-    Canvas->>SM: checkProximity(pos, guidelines)
-    SM->>GP: Found guideline within threshold
-    GP->>EB: Publish 'snap:guideline'
-    EB->>Canvas: Snap element position
-    Canvas->>Canvas: Show snap indicator
+    User->>Canvas: Continue dragging
+    Canvas->>GP: findDistanceGuidelines(elementId, bounds)
+    GP->>GP: Detect repeated distances
+    GP->>Canvas: Return distance matches
+    Canvas->>Canvas: Draw distance indicators
     
-    User->>Canvas: Double-click guideline
-    Canvas->>GP: removeGuideline(id)
-    GP->>Store: Delete guideline
-    Store->>Canvas: Clear from display
+    User->>Canvas: Release element (sticky snap enabled)
+    Canvas->>GP: checkStickySnap(delta, projectedBounds)
+    GP->>GP: Apply snap if within threshold
+    GP->>Canvas: Return snapped position
+    Canvas->>Store: Update element position
+    
+    User->>Canvas: Stop dragging
+    Canvas->>GP: clearGuidelines()
+    GP->>GP: Clear matches
+    Canvas->>Canvas: Hide all guidelines
 ```
 
 ## Handler
@@ -59,7 +69,7 @@ No plugin-specific shortcuts.
 
 ### Overlays
 
-No overlays.
+- **GuidelinesOverlay**: Visual guideline rendering showing alignment and distance guides during element drag
 
 ### Canvas Layers
 

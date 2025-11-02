@@ -6,9 +6,9 @@ sidebar_label: Persistence
 
 # Persistence
 
-The persistence system provides **automatic state storage** to `localStorage`, ensuring user work is preserved across browser sessions. Built on Zustand's persist middleware, the system intelligently serializes canvas state to the browser's local storage, rehydrates it on application load, and handles storage quota limits gracefully.
+The persistence system provides **automatic state storage** to `localStorage`, ensuring user work is preserved across browser sessions. Built on Zustand's persist middleware, the system serializes canvas state to the browser's local storage, rehydrates it on application load, and handles storage quota limits gracefully.
 
-Persistence is essential for a web-based editor, enabling users to close their browser without losing work, recover from crashes, and maintain continuity between editing sessions. The system excludes transient state (viewport, UI panels) to keep storage lean while capturing all essential canvas data.
+Persistence is essential for a web-based editor, enabling users to close their browser without losing work, recover from crashes, and maintain continuity between editing sessions.
 
 ## Overview
 

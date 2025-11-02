@@ -246,7 +246,7 @@ No plugin-specific shortcuts.
 
 ### Overlays
 
-No overlays.
+- **GridOverlay**: Visual grid rendering showing cartesian, isometric, triangular, or hexagonal grids with optional rulers
 
 ### Canvas Layers
 

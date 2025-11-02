@@ -272,7 +272,8 @@ Select and drag control points and handles
 
 ### Overlays
 
-No overlays.
+- **EditPointsOverlay**: Visual rendering of control points and handles for path editing
+- **AddPointFeedbackOverlay**: Visual feedback when adding new points to paths
 
 ### Canvas Layers
 

@@ -10,7 +10,11 @@ sidebar_label: Minimap
 
 ## Overview
 
-- Bird's-eye view of entire canvas\n- Viewport indicator\n- Click to jump to location\n- Scales with canvas content\n- Always visible (global panel)
+- Bird's-eye view of entire canvas
+- Viewport indicator
+- Click to jump to location
+- Scales with canvas content
+- Always visible (global panel)
 
 ## Plugin Interaction Flow
 

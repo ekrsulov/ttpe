@@ -10,7 +10,10 @@ sidebar_label: Optical Alignment
 
 ## Overview
 
-- Visual weight-based alignment\n- Compensates for optical illusions\n- Adjustable threshold\n- Works with boolean operations
+- Visual weight-based alignment
+- Compensates for optical illusions
+- Adjustable threshold
+- Works with boolean operations
 
 ## Plugin Interaction Flow
 
@@ -63,7 +66,9 @@ No canvas layers.
 
 ## Public APIs
 
-### `applyOpticalAlignment`\n\nApply optical alignment to selection
+### `applyOpticalAlignment`
+
+Apply optical alignment to selection
 
 ## Usage Examples
 

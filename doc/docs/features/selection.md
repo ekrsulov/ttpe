@@ -97,12 +97,12 @@ flowchart TD
 The selection state is managed in the Canvas Store as an array of element IDs:
 
 ```typescript
-interface CanvasState {
+interface SelectionSlice {
   selectedIds: string[];           // Array of selected element IDs
-  selectionBounds: Rect | null;   // Computed bounds of selection
-  selectionRect: Rect | null;     // Active rectangle selection (during drag)
 }
 ```
+
+**Note:** Selection bounds are computed on-demand when needed, not stored in state. Rectangle selection (during drag) is handled by the canvas interaction hooks, not persisted in the store.
 
 ### State Transitions
 
@@ -172,30 +172,29 @@ See [Mobile Features](./mobile.md) for more details.
 // Get store instance
 const state = useCanvasStore.getState();
 
-// Select single element (replaces selection)
-state.selectElement(elementId: string): void
+// Select single element (replaces selection if multiSelect=false)
+state.selectElement(elementId: string, multiSelect?: boolean): void
 
-// Add element to selection
-state.addToSelection(elementId: string): void
-
-// Remove element from selection
-state.removeFromSelection(elementId: string): void
-
-// Toggle element in selection
-state.toggleSelection(elementId: string): void
+// Select multiple elements (replaces selection)
+state.selectElements(ids: string[]): void
 
 // Clear all selection
 state.clearSelection(): void
 
-// Select multiple elements
-state.setSelectedIds(ids: string[]): void
+// Get currently selected elements
+state.getSelectedElements(): CanvasElement[]
 
-// Select elements within bounds
-state.selectByBounds(rect: Rect): void
+// Get count of selected path elements
+state.getSelectedPathsCount(): number
 
-// Check if element is selected
-state.isSelected(elementId: string): boolean
+// Move all selected elements by delta
+state.moveSelectedElements(deltaX: number, deltaY: number): void
+
+// Update path properties on all selected paths
+state.updateSelectedPaths(properties: Partial<PathData>): void
 ```
+
+**Note:** Methods like `addToSelection`, `removeFromSelection`, `toggleSelection`, `setSelectedIds`, `selectByBounds`, and `isSelected` do not exist in the current implementation. Use `selectElement(id, true)` for multi-selection and `selectElements([...ids])` to set multiple selections.
 
 ### Hook Usage
 
@@ -206,35 +205,50 @@ import { useCanvasStore } from '../store/canvasStore';
 const selectedIds = useCanvasStore(state => state.selectedIds);
 const selectionCount = selectedIds.length;
 
-// Get selection bounds
-const selectionBounds = useCanvasStore(state => state.selectionBounds);
-
-// Programmatically modify selection
-const addToSelection = useCanvasStore(state => state.addToSelection);
+// Get selection methods
+const selectElement = useCanvasStore(state => state.selectElement);
+const selectElements = useCanvasStore(state => state.selectElements);
 const clearSelection = useCanvasStore(state => state.clearSelection);
+
+// Example: Select element with multi-select support
+const handleElementClick = (id: string, shiftKey: boolean) => {
+  selectElement(id, shiftKey);
+};
 ```
+
+**Note:** `selectionBounds` is not stored in state. Compute bounds on-demand using element positions when needed.
 
 ---
 
 ## Selection Events
 
-The Event Bus publishes selection events that plugins and UI components can subscribe to:
+Selection changes can be detected by subscribing to the Zustand store:
 
 ```typescript
-// Event published when selection changes
-eventBus.publish('selection:changed', {
-  selectedIds: string[],
-  addedIds: string[],
-  removedIds: string[],
-  selectionBounds: Rect | null
-});
+import { useCanvasStore } from '../store/canvasStore';
 
-// Subscribe to selection changes
-eventBus.subscribe('selection:changed', (payload) => {
-  console.log('Selection changed:', payload.selectedIds);
-  updateUI(payload);
-});
+// React component: subscribe to selection changes
+const selectedIds = useCanvasStore(state => state.selectedIds);
+
+// React effect: run side effects when selection changes
+useEffect(() => {
+  console.log('Selection changed:', selectedIds);
+  // Update UI, trigger actions, etc.
+}, [selectedIds]);
+
+// Outside React: subscribe to store changes
+const unsubscribe = useCanvasStore.subscribe(
+  (state) => state.selectedIds,
+  (selectedIds) => {
+    console.log('Selection changed:', selectedIds);
+  }
+);
+
+// Clean up subscription
+unsubscribe();
 ```
+
+**Note:** The application does not currently publish `selection:changed` events to the Event Bus. Selection state changes are tracked through Zustand's subscription mechanism.
 
 ---
 
