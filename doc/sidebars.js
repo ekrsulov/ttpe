@@ -1,0 +1,152 @@
+/**
+ * Creating a sidebar enables you to:
+ - create an ordered group of docs
+ - render a sidebar for each doc of that group
+ - provide next/previous navigation
+
+ The sidebars can be generated from the filesystem, or explicitly defined here.
+
+ Create as many sidebars as you want.
+ */
+
+// @ts-check
+
+/** @type {import('@docusaurus/plugin-content-docs').SidebarsConfig} */
+const sidebars = {
+  docs: [
+    {
+      type: 'doc',
+      id: 'index',
+      label: 'Introduction',
+    },
+    {
+      type: 'category',
+      label: 'Application Structure',
+      collapsed: false,
+      items: [
+        'app-structure/overview',
+        'app-structure/canvas',
+        'app-structure/actionbars',
+        'app-structure/sidebar',
+        'app-structure/file-panel',
+        'app-structure/settings-panel',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Architecture',
+      collapsed: false,
+      items: [
+        'architecture/overview',
+        'architecture/diagrams',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Plugin System',
+      collapsed: false,
+      items: [
+        'plugins/overview',
+        'plugins/lifecycle',
+        'plugins/registration',
+        'plugins/configuration',
+        {
+          type: 'category',
+          label: 'Plugin Catalog',
+          items: [
+            'plugins/catalog/select',
+            'plugins/catalog/pencil',
+            'plugins/catalog/text',
+            'plugins/catalog/shape',
+            'plugins/catalog/transformation',
+            'plugins/catalog/edit',
+            'plugins/catalog/subpath',
+            'plugins/catalog/curves',
+            'plugins/catalog/optical-alignment',
+            'plugins/catalog/guidelines',
+            'plugins/catalog/grid',
+            'plugins/catalog/grid-fill',
+            'plugins/catalog/minimap',
+          ],
+        },
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Event Bus',
+      collapsed: false,
+      items: [
+        'event-bus/overview',
+        'event-bus/topics',
+        'event-bus/patterns',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Public API',
+      collapsed: false,
+      items: [
+        'api/create-api',
+        'api/plugin-manager',
+        'api/canvas-store-api',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Core Features',
+      collapsed: false,
+      items: [
+        'features/selection',
+        'features/transforms',
+        'features/ordering',
+        'features/alignment',
+        'features/distribution',
+        'features/groups',
+        'features/undo-redo',
+        'features/persistence',
+        'features/mobile',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'UI & Theming',
+      collapsed: false,
+      items: [
+        'ui/components',
+        'ui/theming',
+        'ui/accessibility',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Utilities',
+      collapsed: false,
+      items: [
+        'utilities/hooks',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Operations',
+      collapsed: false,
+      items: [
+        'ops/operations',
+        'ops/testing',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Contributing',
+      collapsed: false,
+      items: [
+        'contributing/style-guide',
+        'contributing/code-standards',
+      ],
+    },
+    'faq',
+    'troubleshooting',
+    'changelog',
+  ],
+};
+
+module.exports = sidebars;

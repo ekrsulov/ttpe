@@ -1,0 +1,106 @@
+/**
+ * Custom CSS for TTPE Documentation
+ */
+
+:root {
+  /* Primary brand colors */
+  --ifm-color-primary: #007bff;
+  --ifm-color-primary-dark: #0062cc;
+  --ifm-color-primary-darker: #005cbf;
+  --ifm-color-primary-darkest: #004a99;
+  --ifm-color-primary-light: #1a8cff;
+  --ifm-color-primary-lighter: #3399ff;
+  --ifm-color-primary-lightest: #4da6ff;
+
+  /* Font settings */
+  --ifm-code-font-size: 90%;
+  --ifm-font-family-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
+    'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  --ifm-font-family-monospace: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono',
+    Consolas, 'Courier New', monospace;
+}
+
+/* Dark mode overrides */
+[data-theme='dark'] {
+  --ifm-color-primary: #4da6ff;
+  --ifm-color-primary-dark: #1a8cff;
+  --ifm-color-primary-darker: #0080ff;
+  --ifm-color-primary-darkest: #007bff;
+  --ifm-color-primary-light: #66b3ff;
+  --ifm-color-primary-lighter: #80bfff;
+  --ifm-color-primary-lightest: #99ccff;
+}
+
+/* Code blocks */
+.docusaurus-highlight-code-line {
+  background-color: rgba(0, 0, 0, 0.1);
+  display: block;
+  margin: 0 calc(-1 * var(--ifm-pre-padding));
+  padding: 0 var(--ifm-pre-padding);
+}
+
+[data-theme='dark'] .docusaurus-highlight-code-line {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Mermaid diagram styling */
+.docusaurus-mermaid-container {
+  text-align: center;
+  margin: 2rem 0;
+}
+
+/* Custom admonitions */
+.admonition {
+  margin-bottom: 1.5rem;
+}
+
+/* Table styling */
+table {
+  display: table;
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+
+/* Improve code block copy button */
+.clean-btn {
+  transition: opacity 0.2s;
+}
+
+.clean-btn:hover {
+  opacity: 0.8;
+}
+
+/* Custom heading anchors */
+.anchor {
+  margin-left: -1.2rem;
+  padding-right: 0.5rem;
+}
+
+/* Sidebar enhancements */
+.theme-doc-sidebar-container {
+  border-right: 1px solid var(--ifm-toc-border-color);
+}
+
+/* Better spacing for lists in docs */
+.markdown li {
+  margin-bottom: 0.5rem;
+}
+
+.markdown ul ul,
+.markdown ol ol {
+  margin-top: 0.5rem;
+}
+
+/* Inline code */
+code {
+  border-radius: 3px;
+  padding: 0.15rem 0.3rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 996px) {
+  .docusaurus-mermaid-container {
+    overflow-x: auto;
+  }
+}
