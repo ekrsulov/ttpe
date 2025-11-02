@@ -17,11 +17,11 @@ Persistence operates through Zustand's **persist middleware**, which wraps the s
 **Key characteristics:**
 
 - **Automatic persistence**: Every state change triggers storage update (debounced)
-- **Selective storage**: Only essential state is persisted via `partialize` function
+- **Full state storage**: All state is persisted by default (see Configuration section)
 - **localStorage backend**: Uses browser's `localStorage` API (typically 5-10 MB limit)
 - **JSON serialization**: State is serialized to JSON for storage
 - **Graceful degradation**: Falls back to default state if storage is unavailable
-- **No undo history**: Undo/redo stacks are excluded to save space
+- **No undo history**: Undo/redo stacks are excluded via temporal middleware's `partialize`
 
 ## Persistence Flow
 
@@ -87,11 +87,13 @@ All canvas elements (paths, groups, shapes) and their complete data:
 
 Global application settings and preferences:
 
-- **Grid settings**: `showGrid`, `gridSize`, `snapToGrid`
-- **Precision**: `keyboardMovePrecision` for arrow key movement
-- **Render settings**: `showRenderCounters` (debug mode)
-- **Virtual shift**: `isVirtualShiftActive` (mobile modifier key)
-- **Document metadata**: `documentName` (current file name)
+- **Keyboard precision**: `keyboardMovementPrecision` (decimal places for arrow key movement)
+- **Render badges**: `showRenderCountBadges` (debug mode for render counts)
+- **Minimap**: `showMinimap` (minimap overlay visibility)
+- **Tooltips**: `showTooltips` (tooltip visibility on desktop)
+- **Default stroke color**: `defaultStrokeColor` (default stroke color for new paths)
+
+**Note:** Grid settings (`showGrid`, `gridSize`, `snapToGrid`) are managed by the Grid plugin, not in the base settings object.
 
 **Storage key:** `settings` object in persisted state
 
@@ -107,39 +109,18 @@ Plugin-specific state that contributes to canvas appearance:
 
 ## What's Not Saved
 
-The following state is **excluded from persistence** to reduce storage size and avoid restoring transient data:
-
-### Viewport State
-
-Pan and zoom state is not persisted:
-
-- **Pan offset**: `viewport.panX`, `viewport.panY`
-- **Zoom level**: `viewport.zoom`
-
-**Rationale:** Viewport state is session-specific; users expect to start with a fresh view each session. Restoring saved zoom/pan can be disorienting if the canvas content has changed.
-
-**Exception:** Some users may prefer persistent viewport. This can be enabled by modifying the `partialize` function.
-
-### Transient UI State
-
-Temporary interaction states are not persisted:
-
-- **Hover states**: Element hover highlights
-- **Drag previews**: In-progress drag operations
-- **Selection rectangle**: Rectangle selection bounds during drag
-- **Active tool indicators**: Currently active plugin/tool
-- **Panel visibility**: Sidebar open/closed, panel expansion states
-
-**Rationale:** These states represent ephemeral UI that should reset between sessions. Persisting them can cause confusing initial states on reload.
+The following state is managed by temporal middleware's `partialize` function and **excluded from undo/redo history** (but still persisted to localStorage):
 
 ### Undo/Redo History
 
-Temporal middleware history stacks are not persisted:
+Temporal middleware history stacks are not persisted to localStorage:
 
 - **Past states**: `temporal.pastStates[]`
 - **Future states**: `temporal.futureStates[]`
 
 **Rationale:** Undo history can be large (50 snapshots × full state size) and is session-specific. Users expect undo to work within a session but not across reloads.
+
+**Note:** The temporal middleware uses its own `partialize` function that only includes `elements`, `selectedIds`, and `viewport` in the undo/redo history. However, the persist middleware saves the full state (including viewport, UI panels, settings, and all plugin state) to localStorage.
 
 ## Configuration
 
@@ -175,21 +156,22 @@ const useCanvasStore = create<CanvasStore>()(
 | Parameter | Value | Purpose |
 |-----------|-------|---------|
 | `name` | `'canvas-app-state'` | Key used in localStorage |
-| `partialize` | `(state) => filteredState` | Function to filter persisted state |
+| `partialize` | `(state) => state` | Function to filter persisted state (currently returns full state) |
 | `storage` | `localStorage` (default) | Storage backend (can be `sessionStorage` or custom) |
 
-**Note:** Current implementation persists most state. A refined `partialize` function could exclude viewport, UI panels, etc.
+**Current Implementation:** The `partialize` function currently returns the complete state (`{ ...rest } = state; return rest;`), which means **all state is persisted** including viewport, UI panels, plugin state, and settings.
 
 ### Partialize Example
 
-To exclude viewport and UI state explicitly:
+To exclude specific state explicitly (not currently implemented):
 
 ```typescript
 partialize: (state: CanvasStore) => ({
   elements: state.elements,
   selectedIds: state.selectedIds,
   settings: state.settings,
-  // Exclude: viewport, ui panels, undo history
+  // Explicitly include what you want to persist
+  // Currently all state is persisted
 })
 ```
 
@@ -206,17 +188,23 @@ Data is stored in `localStorage` under the key `canvas-app-state` with the follo
         "type": "path",
         "data": { /* path data */ },
         "zIndex": 0,
-        "parentId": null,
-        "visible": true,
-        "locked": false
+        "parentId": null
       },
       // ... more elements
     ],
     "selectedIds": ["element-1"],
+    "viewport": {
+      "zoom": 1,
+      "panX": 0,
+      "panY": 0
+    },
     "settings": {
-      "showGrid": true,
-      "gridSize": 20,
-      "snapToGrid": false,
+      "keyboardMovementPrecision": 2,
+      "showRenderCountBadges": false,
+      "showMinimap": true,
+      "showTooltips": true,
+      "defaultStrokeColor": "#000000"
+    },
       "keyboardMovePrecision": 1,
       "showRenderCounters": false,
       "documentName": "Untitled"

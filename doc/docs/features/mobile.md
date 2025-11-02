@@ -33,7 +33,7 @@ Use two fingers to zoom in and out of the canvas.
 
 **Implementation Details:**
 - Minimum zoom: 0.1× (10%)
-- Maximum zoom: 10× (1000%)
+- Maximum zoom: 100× (10000%)
 - Smooth interpolation between zoom levels
 - Real-time viewport updates during gesture
 
@@ -73,7 +73,6 @@ Virtual Shift is a toggle button that simulates holding the Shift key modifier. 
 
 - **Multi-selection**: Add/remove elements from selection
 - **Constrained transformations**: Maintain aspect ratios
-- **Snapping behavior**: Toggle snap-to-grid and guidelines
 - **Path operations**: Extend selections in edit mode
 
 ### How to Use
@@ -129,7 +128,7 @@ breakpoints: {
   base: '0em',    // 0px - Mobile portrait
   sm: '30em',     // ~480px - Mobile landscape
   md: '48em',     // ~768px - Tablet/Desktop
-  lg: '62em',     // ~992px - Desktop
+  lg: '64em',     // ~1024px - Desktop
   xl: '80em',     // ~1280px - Large desktop
   '2xl': '96em'   // ~1536px - Extra large
 }
