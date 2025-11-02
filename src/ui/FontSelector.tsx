@@ -97,7 +97,8 @@ export const FontSelector: React.FC<FontSelectorProps> = ({
             onFocus={onOpen}
             placeholder={isOpen ? "Search fonts..." : value}
             isDisabled={disabled}
-            fontSize="xs"
+            fontSize="sm"
+            h="20px"
             bg={disabled ? 'gray.50' : 'white'}
             _dark={{
               bg: disabled ? 'gray.900' : 'gray.800',

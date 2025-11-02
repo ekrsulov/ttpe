@@ -40,7 +40,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
 
   const fontSize = size === 'sm' ? '12px' : '14px';
   const padding = size === 'sm' ? '4px 8px' : '6px 12px';
-  const height = size === 'sm' ? '28px' : '32px';
+  const height = size === 'sm' ? '20px' : '32px';
 
   return (
     <Menu>
@@ -52,6 +52,8 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
         borderRadius="full"
         color={textColor}
         cursor={isDisabled ? 'not-allowed' : 'pointer'}
+        display="flex"
+        alignItems="center"
         fontSize={fontSize}
         h={height}
         minW="120px"
