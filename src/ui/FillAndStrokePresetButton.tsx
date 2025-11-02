@@ -26,7 +26,7 @@ export const PresetButton: React.FC<PresetButtonProps> = ({ preset, onClick, isA
         borderRadius="md"
         border="none"
         boxShadow={isActive ? '0 0 0 1px var(--chakra-colors-blue-500)' : 'none'}
-        _hover={{ transform: 'scale(1.05)' }}
+        _hover={{ transform: 'scale(1.5)' }}
         _dark={{
           bg: 'transparent',
           _hover: {
@@ -52,16 +52,6 @@ export const PresetButton: React.FC<PresetButtonProps> = ({ preset, onClick, isA
             strokeWidth={Math.max(0.5, preset.strokeWidth * 0.25)} // Scale down for preview
             strokeOpacity={preset.strokeOpacity}
           />
-
-          {/* Inner accent for better visibility */}
-          {preset.fillColor !== 'none' && (
-            <circle
-              cx="10"
-              cy="10"
-              r="4"
-              fill="rgba(255,255,255,0.3)"
-            />
-          )}
         </svg>
       </Button>
     </ConditionalTooltip>
