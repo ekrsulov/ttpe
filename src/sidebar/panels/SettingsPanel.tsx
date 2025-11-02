@@ -18,14 +18,14 @@ export const SettingsPanel: React.FC = () => {
   // Use individual selectors to prevent re-renders on unrelated changes
   const settings = useCanvasStore(state => state.settings);
   const updateSettings = useCanvasStore(state => state.updateSettings);
-  const { colorMode, setColorMode } = useColorMode();
+  const { setColorMode } = useColorMode();
   
   // Detect if we're on mobile (base breakpoint)
   const isMobile = useBreakpointValue({ base: true, md: false }) ?? false;
   
   const [selectedTheme, setSelectedTheme] = useState<'light' | 'dark' | 'system'>(() => {
     const stored = localStorage.getItem('chakra-ui-color-mode');
-    return (stored === 'light' || stored === 'dark' || stored === 'system') ? stored : colorMode;
+    return (stored === 'light' || stored === 'dark' || stored === 'system') ? stored : 'light';
   });
   const [logLevel, setLogLevel] = useState<LogLevel>(LogLevel.WARN); // Default log level
   const [showCallerInfo, setShowCallerInfo] = useState(false);
@@ -34,6 +34,7 @@ export const SettingsPanel: React.FC = () => {
   // Sync selected theme with Chakra color mode
   useEffect(() => {
     setColorMode(selectedTheme);
+    localStorage.setItem('chakra-ui-color-mode', selectedTheme);
   }, [selectedTheme, setColorMode]);
 
   // Initialize log level and caller info from current logger config
@@ -88,6 +89,7 @@ export const SettingsPanel: React.FC = () => {
             Theme
           </FormLabel>
           <JoinedButtonGroup
+            key={selectedTheme}
             options={[
               { value: 'light', label: 'Light' },
               { value: 'dark', label: 'Dark' },
