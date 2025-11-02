@@ -21,7 +21,7 @@ TTPE uses Zustand for state management with the following key principles:
 
 ### Base Slice
 
-The base slice manages fundamental canvas operations:
+The base slice manages fundamental canvas operations and application settings:
 
 ```typescript
 interface BaseSlice {
@@ -31,176 +31,312 @@ interface BaseSlice {
   // Active tool
   activePlugin: string | null;
   
-  // Selection state
-  selectedIds: string[];
+  // Document name
+  documentName: string;
+  
+  // Panel visibility
+  showFilePanel: boolean;
+  showSettingsPanel: boolean;
+  
+  // Mobile features
+  isVirtualShiftActive: boolean;
+  
+  // Style eyedropper
+  styleEyedropper: {
+    isActive: boolean;
+    copiedStyle: PathData | null;
+  };
+  
+  // Application settings
+  settings: {
+    keyboardMovementPrecision: number;
+    showRenderCountBadges: boolean;
+    showMinimap: boolean;
+    showTooltips: boolean;
+    defaultStrokeColor: string;
+  };
   
   // Core actions
-  deleteSelectedElements(): void;
-  setMode(pluginId: string): void;
-  addElement(element: CanvasElement): void;
+  addElement(element: Omit<CanvasElement, 'id' | 'zIndex'>): string;
   updateElement(id: string, updates: Partial<CanvasElement>): void;
-  removeElement(id: string): void;
+  deleteElement(id: string): void;
+  deleteSelectedElements(): void;
+  setActivePlugin(plugin: string | null): void;
+  setMode(mode: string): void;
+  setDocumentName(name: string): void;
+  setShowFilePanel(show: boolean): void;
+  setShowSettingsPanel(show: boolean): void;
+  setVirtualShift(active: boolean): void;
+  toggleVirtualShift(): void;
+  updateSettings(updates: Partial<BaseSlice['settings']>): void;
 }
 ```
 
 **Key Methods:**
+- `deleteElement(id)`: Removes a single element by ID
 - `deleteSelectedElements()`: Removes all currently selected elements
 - `setMode(pluginId)`: Activates a plugin/tool by ID
-- `addElement(element)`: Adds a new element to the canvas
+- `addElement(element)`: Adds a new element to the canvas and returns its ID
 - `updateElement(id, updates)`: Updates an existing element's properties
-- `removeElement(id)`: Removes an element by ID
+
+**Note**: Selection state (`selectedIds`) is managed by SelectionSlice, not BaseSlice.
 
 ### Viewport Slice
 
-Manages canvas pan, zoom, and coordinate transformations:
+Manages canvas pan and zoom with a nested viewport object:
 
 ```typescript
+interface Viewport {
+  zoom: number;      // Zoom level (1.0 = 100%)
+  panX: number;      // Pan offset X
+  panY: number;      // Pan offset Y
+}
+
 interface ViewportSlice {
-  // Pan offset
-  pan: { x: number; y: number };
-  
-  // Zoom level (1.0 = 100%)
-  zoom: number;
-  
-  // Viewport bounds
-  bounds: { width: number; height: number };
+  // State
+  viewport: Viewport;
   
   // Actions
-  setPan(offset: { x: number; y: number }): void;
-  setZoom(level: number): void;
-  zoomIn(): void;
-  zoomOut(): void;
-  fitToContent(): void;
-  centerOnSelection(): void;
+  setViewport(viewport: Partial<Viewport>): void;
+  pan(deltaX: number, deltaY: number): void;
+  zoom(factor: number, centerX?: number, centerY?: number): void;
+  resetPan(): void;
+  resetZoom(): void;
+  
+  // Selectors
+  selectViewport(): Viewport;
+  selectZoom(): number;
 }
 ```
 
 **Key Methods:**
-- `setPan(offset)`: Updates the canvas pan offset
-- `setZoom(level)`: Sets the zoom level (clamped between min/max values)
-- `zoomIn()/zoomOut()`: Incremental zoom with predefined steps
-- `fitToContent()`: Adjusts zoom and pan to show all elements
-- `centerOnSelection()`: Centers viewport on selected elements
+- `setViewport(viewport)`: Updates viewport properties (zoom, panX, panY)
+- `pan(deltaX, deltaY)`: Increments pan offset by delta values
+- `zoom(factor, centerX?, centerY?)`: Multiplies zoom by factor, optionally around a point
+- `resetPan()`: Resets pan offset to (0, 0)
+- `resetZoom()`: Resets zoom level to 1.0 (100%)
+
+**Important**: Zoom is multiplicative (not incremental steps), and there are no built-in `fitToContent()` or `centerOnSelection()` methods.
 
 ### Selection Slice
 
-Handles element selection and multi-selection operations:
+Handles element selection and provides utilities for selected elements:
 
 ```typescript
 interface SelectionSlice {
-  // Selected element IDs
+  // State
   selectedIds: string[];
   
-  // Selection bounds
-  selectionBounds: Rect | null;
-  
   // Actions
-  addToSelection(id: string): void;
-  removeFromSelection(id: string): void;
+  selectElement(id: string, multiSelect?: boolean): void;
+  selectElements(ids: string[]): void;
   clearSelection(): void;
-  selectAll(): void;
-  invertSelection(): void;
-  selectByBounds(bounds: Rect): void;
+  getSelectedElements(): CanvasElement[];
+  getSelectedPathsCount(): number;
+  moveSelectedElements(deltaX: number, deltaY: number): void;
+  updateSelectedPaths(properties: Partial<PathData>): void;
 }
 ```
 
 **Key Methods:**
-- `addToSelection(id)`: Adds an element to the current selection
-- `removeFromSelection(id)`: Removes an element from selection
+- `selectElement(id, multiSelect?)`: Selects a single element (optionally adding to existing selection)
+- `selectElements(ids)`: Replaces current selection with provided IDs
 - `clearSelection()`: Clears all selections
-- `selectAll()`: Selects all elements on canvas
-- `invertSelection()`: Inverts the current selection
-- `selectByBounds(bounds)`: Selects elements within a rectangular area
+- `getSelectedElements()`: Returns array of currently selected element objects
+- `getSelectedPathsCount()`: Returns count of selected path elements
+- `moveSelectedElements(deltaX, deltaY)`: Translates all selected elements
+- `updateSelectedPaths(properties)`: Updates PathData properties on selected paths
+
+**Important**: There is no `selectionBounds` property calculated automatically. Selection bounds must be computed on-demand when needed. Methods like `addToSelection`, `removeFromSelection`, `selectAll`, `invertSelection`, and `selectByBounds` do not exist in this slice.
 
 ## Plugin Slices
 
-Each plugin can contribute its own slice to the global store. Plugin slices are namespaced by plugin ID:
+Each plugin can contribute its own slice to the global store. Plugin slices are namespaced by plugin ID and registered dynamically at runtime:
 
 ```typescript
 // Access plugin state
 const pencilState = useCanvasStore(state => state.pencil);
-const selectState = useCanvasStore(state => state.select);
+const gridState = useCanvasStore(state => state.grid);
 
-// Plugin slice example
-interface PencilSlice {
-  // Pencil-specific state
-  brushSize: number;
-  brushColor: string;
-  brushOpacity: number;
-  
-  // Actions
-  setBrushSize(size: number): void;
-  setBrushColor(color: string): void;
-  setBrushOpacity(opacity: number): void;
+// Plugin slice example (PencilPluginSlice)
+interface PencilPluginSlice {
+  pencil: {
+    // Pencil-specific state
+    brushSize: number;
+    brushColor: string;
+    brushOpacity: number;
+    
+    // Actions
+    setBrushSize(size: number): void;
+    setBrushColor(color: string): void;
+    setBrushOpacity(opacity: number): void;
+  };
 }
 ```
+
+**Available Plugin Slices**:
+- `pencil` - Pencil drawing tool state
+- `text` - Text tool state
+- `shape` - Shape tool state
+- `transformation` - Transformation tool state
+- `edit` - Edit tool state
+- `subpath` - Subpath editing state
+- `opticalAlignment` - Optical alignment state
+- `curves` - Curves tool state
+- `guidelines` - Guidelines plugin state
+- `grid` - Grid plugin state
+
+**Note**: The `select` plugin does not have its own slice. Selection state is managed globally by SelectionSlice.
 
 ### Accessing Plugin State
 
 ```typescript
 import { useCanvasStore } from '@/store/canvas';
 
-// Get plugin state
+// Get plugin state (may be undefined if plugin not loaded)
 const pencilState = useCanvasStore(state => state.pencil);
 const gridState = useCanvasStore(state => state.grid);
 
-// Subscribe to changes
+// Safe access with optional chaining
 const brushSize = useCanvasStore(state => state.pencil?.brushSize);
 ```
 
 ## State Persistence
 
-The store supports automatic persistence to localStorage:
+The store uses Zustand's `persist` middleware to automatically save state to localStorage:
 
 ```typescript
-interface PersistenceConfig {
-  // What to persist
-  include: string[];
-  
-  // What to exclude
-  exclude: string[];
-  
-  // Storage key
-  key: string;
-}
-
-// Configure persistence
-const persistConfig = {
-  include: ['elements', 'viewport'],
-  exclude: ['selection'],
-  key: 'ttpe-canvas-state'
-};
+// Persistence configuration
+persist(
+  temporal(/* ... */),
+  {
+    name: 'canvas-app-state',
+    partialize: (state: CanvasStore) => {
+      // All state is persisted by default
+      return state;
+    }
+  }
+)
 ```
+
+**Persisted State**:
+- All elements and their properties
+- Viewport (zoom, pan)
+- Plugin-specific state
+- Application settings
+
+**Temporal Middleware (Undo/Redo)**:
+
+The store also uses `zundo`'s temporal middleware for undo/redo functionality:
+
+```typescript
+temporal(
+  (set, get, api) => ({ /* slices */ }),
+  {
+    limit: 50, // Keep last 50 states
+    partialize: (state) => ({
+      elements: state.elements,
+      selectedIds: state.selectedIds,
+      viewport: state.viewport,
+    }),
+    equality: isDeepEqual,
+    handleSet: debounce(handleSet, 100), // 100ms cool-off period
+  }
+)
+```
+
+**Note**: There is no support for custom `include`/`exclude` lists beyond the `partialize` function.
 
 ## Type Definitions
 
 ```typescript
-interface CanvasElement {
+// Base element types
+export type ElementType = 'path' | 'group';
+
+export interface CanvasElementBase {
   id: string;
-  type: string;
+  type: ElementType;
+  zIndex: number;
+  parentId?: string | null;
+}
+
+export interface PathElement extends CanvasElementBase {
+  type: 'path';
+  data: PathData;
+}
+
+export interface GroupElement extends CanvasElementBase {
+  type: 'group';
+  data: GroupData;
+}
+
+export type CanvasElement = PathElement | GroupElement;
+
+// Path data structure
+export interface PathData {
+  subPaths: SubPath[];
+  strokeWidth: number;
+  strokeColor: string;
+  strokeOpacity: number;
+  fillColor: string;
+  fillOpacity: number;
+  strokeLinecap?: 'butt' | 'round' | 'square';
+  strokeLinejoin?: 'miter' | 'round' | 'bevel';
+  fillRule?: 'nonzero' | 'evenodd';
+  strokeDasharray?: string;
+  isPencilPath?: boolean;
+  transform?: {
+    scaleX: number;
+    scaleY: number;
+    rotation: number;
+    translateX: number;
+    translateY: number;
+  };
+}
+
+// Group data structure
+export interface GroupData {
+  childIds: string[];
+  name: string;
+  isLocked: boolean;
+  isHidden: boolean;
+  isExpanded: boolean;
+  transform: {
+    translateX: number;
+    translateY: number;
+    rotation: number;
+    scaleX: number;
+    scaleY: number;
+  };
+}
+
+// Viewport structure
+export interface Viewport {
+  zoom: number;
+  panX: number;
+  panY: number;
+}
+
+// Geometric types
+export interface Point {
+  x: number;
+  y: number;
+}
+
+export interface Rect {
   x: number;
   y: number;
   width: number;
   height: number;
-  rotation: number;
-  opacity: number;
-  visible: boolean;
-  locked: boolean;
-  data: Record<string, any>;
-}
-
-interface Rect {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
-interface Point {
-  x: number;
-  y: number;
 }
 ```
+
+**Important Notes**:
+- `CanvasElement` is a union type, not a flat object with dimensions
+- Specific element data is stored in the `data` property
+- Properties like `visible`, `locked`, `opacity`, `width`, and `height` are NOT at the top level
+- Groups have `isLocked` and `isHidden` in their `GroupData`
+- Transform data is nested within the element's `data` property
 
 ## Best Practices
 
