@@ -75,15 +75,15 @@ export const EditPointsOverlay: React.FC<EditPointsOverlayProps> = ({
   onStartDraggingPoint,
   onSelectCommand,
 }) => {
+  // Get canvas background color based on theme - MUST be called before early return
+  const canvasBgColor = useColorModeValue('#f9fafb', '#111827'); // gray.50 and gray.900
+  // Determine if we're in dark mode
+  const isDarkMode = useColorModeValue(false, true);
+
   if (element.type !== 'path') return null;
 
   const pathData = element.data as PathData;
   const commands = pathData.subPaths.flat();
-
-  // Get canvas background color based on theme
-  const canvasBgColor = useColorModeValue('#f9fafb', '#111827'); // gray.50 and gray.900
-  // Determine if we're in dark mode
-  const isDarkMode = useColorModeValue(false, true);
 
   // Use filtered points that consider subpath selection
   const points = getFilteredEditablePoints(element.id);

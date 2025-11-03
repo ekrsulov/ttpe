@@ -1,7 +1,7 @@
 import React, { useMemo, useCallback } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { extractEditablePoints, getControlPointAlignmentInfo } from '../../utils/path';
-import type { Command, Point, ControlPoint } from '../../types';
+import { extractEditablePoints, getControlPointAlignmentInfo, updateCommands, extractSubpaths } from '../../utils/path';
+import type { Command, Point, ControlPoint, PathData } from '../../types';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import {
   VStack,
@@ -24,6 +24,8 @@ import ConditionalTooltip from '../../ui/ConditionalTooltip';
 import { Panel } from '../../ui/Panel';
 import { JoinedButtonGroup } from '../../ui/JoinedButtonGroup';
 import { PanelStyledButton } from '../../ui/PanelStyledButton';
+import { NumberInput } from '../../ui/NumberInput';
+import { formatToPrecision } from '../../utils';
 
 export const ControlPointAlignmentPanel: React.FC = () => {
   // ALL HOOKS FIRST - must be called unconditionally
@@ -44,10 +46,12 @@ export const ControlPointAlignmentPanel: React.FC = () => {
   
   const deleteZCommandForMPoint = useCanvasStore(state => state.deleteZCommandForMPoint);
   const convertZToLineForMPoint = useCanvasStore(state => state.convertZToLineForMPoint);
+  const addZCommandToSubpath = useCanvasStore(state => state.addZCommandToSubpath);
   const moveToM = useCanvasStore(state => state.moveToM);
   const convertCommandType = useCanvasStore(state => state.convertCommandType);
   const cutSubpathAtPoint = useCanvasStore(state => state.cutSubpathAtPoint);
   const setControlPointAlignmentType = useCanvasStore(state => state.setControlPointAlignmentType);
+  const updateElement = useCanvasStore(state => state.updateElement);
 
   /**
    * Helper function to retrieve path commands with validation
@@ -192,6 +196,34 @@ export const ControlPointAlignmentPanel: React.FC = () => {
     }, false);
   }, [withPathCommands]);
 
+  // Check if the subpath already has a Z command
+  const subpathHasZCommand = useCallback((elementId: string, commandIndex: number): boolean => {
+    return withPathCommands(elementId, commandIndex, (commands) => {
+      // Find the end of the current subpath
+      let subpathEndIndex = commandIndex;
+      for (let i = commandIndex + 1; i < commands.length; i++) {
+        if (commands[i].type === 'M') {
+          break;
+        }
+        subpathEndIndex = i;
+      }
+
+      // Check if there's a Z command after the last command
+      if (subpathEndIndex < commands.length - 1 && commands[subpathEndIndex + 1].type === 'Z') {
+        return true;
+      }
+
+      // Also check if there's a Z within the subpath
+      for (let i = commandIndex; i <= subpathEndIndex; i++) {
+        if (commands[i].type === 'Z') {
+          return true;
+        }
+      }
+
+      return false;
+    }, false);
+  }, [withPathCommands]);
+
   // Get info for a single selected control point
   const getSinglePointInfo = useCallback(() => {
     if (activePlugin !== 'edit' || !selectedCommands || selectedCommands.length !== 1) {
@@ -294,6 +326,45 @@ export const ControlPointAlignmentPanel: React.FC = () => {
 
   const singlePointInfo = useMemo(() => getSinglePointInfo(), [getSinglePointInfo]);
 
+  // Define handlers before early return
+  const handlePositionChange = useCallback((axis: 'x' | 'y', value: number) => {
+    if (!selectedCommands || selectedCommands.length !== 1) return;
+    if (!singlePointInfo) return;
+
+    const selectedCmd = selectedCommands[0];
+    const element = elements.find(el => el.id === selectedCmd.elementId);
+    if (!element || element.type !== 'path') return;
+
+    const pathData = element.data as PathData;
+    const commands = pathData.subPaths.flat();
+    const points = extractEditablePoints(commands);
+
+    const pointToUpdate = points.find(p =>
+      p.commandIndex === selectedCmd.commandIndex &&
+      p.pointIndex === selectedCmd.pointIndex
+    );
+
+    if (!pointToUpdate) return;
+
+    // Update the point position
+    const newX = axis === 'x' ? formatToPrecision(value, 2) : pointToUpdate.x;
+    const newY = axis === 'y' ? formatToPrecision(value, 2) : pointToUpdate.y;
+
+    pointToUpdate.x = newX;
+    pointToUpdate.y = newY;
+
+    // Update commands with the new point position
+    const updatedCommands = updateCommands(commands, [pointToUpdate]);
+    const newSubPaths = extractSubpaths(updatedCommands).map(s => s.commands);
+
+    updateElement(selectedCmd.elementId, {
+      data: {
+        ...pathData,
+        subPaths: newSubPaths
+      }
+    });
+  }, [singlePointInfo, selectedCommands, elements, updateElement]);
+
   // Early return AFTER all hooks: Only render when in edit mode and exactly one point is selected
   if (activePlugin !== 'edit' || !selectedCommands || selectedCommands.length !== 1) {
     return null;
@@ -326,7 +397,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
     }
 
     return (
-      <VStack spacing={2} align="stretch" mb={2}>
+      <VStack spacing={0} align="stretch" mb={1}>
         <HStack spacing={1}>
           <Box flex={1}>
             <JoinedButtonGroup
@@ -357,7 +428,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
         </HStack>
 
         {/* Etiqueta descriptiva siempre visible */}
-        <Text fontSize="12px" color="text.muted">
+        <Text fontSize="11px" color="text.muted">
           {(singlePointInfo.info?.type || 'independent') === 'independent' && 'Points move independently'}
           {(singlePointInfo.info?.type || 'independent') === 'aligned' && 'Points maintain opposite directions'}
           {(singlePointInfo.info?.type || 'independent') === 'mirrored' && 'Points are mirrored across anchor'}
@@ -372,7 +443,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
     if (singlePointInfo.pairedPoint) {
       return (
         <Collapse in={showDetails} animateOpacity>
-          <VStack spacing={2} align="stretch" fontSize="12px" color="text.muted" lineHeight="1.4">
+          <VStack spacing={0} align="stretch" fontSize="11px" color="text.muted" lineHeight="1.4">
             <Text><Text as="strong" color="text.primary">Point Index:</Text> {singlePointInfo.point.pointIndex}</Text>
             <Text><Text as="strong" color="text.primary">Anchor:</Text> ({singlePointInfo.anchor1?.x.toFixed(2) || '0'}, {singlePointInfo.anchor1?.y.toFixed(2) || '0'})</Text>
             <Text><Text as="strong" color="text.primary">Direction:</Text> {singlePointInfo.angle1?.toFixed(1) || '0'}°</Text>
@@ -424,15 +495,39 @@ export const ControlPointAlignmentPanel: React.FC = () => {
 
   return (
     <Box pb={0}>
-        <Divider my={2} />
-      <Panel title="Control Point Alignment" showRenderCount={true}>
+      <Divider my={2} />
+      <Panel title="Point" showRenderCount={true}>
+
         {renderAlignmentButtons()}
       
-      {/* Always visible Position and Command info */}
+      {/* Always visible Position controls */}
       {singlePointInfo && (
-        <VStack spacing={1} align="stretch" fontSize="12px" color="text.muted" lineHeight="1.4" mb={2}>
-          <Text><Text as="strong" color="text.primary">Position:</Text> ({singlePointInfo.point.x.toFixed(2)}, {singlePointInfo.point.y.toFixed(2)})</Text>
-          <Text><Text as="strong" color="text.primary">Command:</Text> {singlePointInfo.command.type} at index {singlePointInfo.point.commandIndex}</Text>
+        <VStack spacing={0} align="stretch" mb={1}>
+          <HStack spacing={2}>
+            <Box flex={1}>
+              <NumberInput
+                label="X"
+                value={singlePointInfo.point.x}
+                onChange={(value) => handlePositionChange('x', value)}
+                step={0.1}
+                labelWidth="20px"
+                inputWidth="100%"
+              />
+            </Box>
+            <Box flex={1}>
+              <NumberInput
+                label="Y"
+                value={singlePointInfo.point.y}
+                onChange={(value) => handlePositionChange('y', value)}
+                step={0.1}
+                labelWidth="20px"
+                inputWidth="100%"
+              />
+            </Box>
+          </HStack>
+          <Text fontSize="11px" color="text.muted">
+            Command {singlePointInfo.command.type} at index {singlePointInfo.point.commandIndex}
+          </Text>
         </VStack>
       )}
       
@@ -440,8 +535,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
 
       {/* Always visible anchor-specific actions */}
       {singlePointInfo && singlePointInfo.isAnchor && (
-        <VStack spacing={2} align="stretch" fontSize="11px" color="text.muted" lineHeight="1.4">
-          <Text><Text as="strong" color="text.primary">Location:</Text> {singlePointInfo.location}</Text>
+        <VStack spacing={1} align="stretch" fontSize="11px" color="text.muted" lineHeight="1.4">
           {hasClosingZCommand(selectedCmd.elementId, selectedCmd.commandIndex) && (
             <>
               <PanelStyledButton
@@ -475,6 +569,20 @@ export const ControlPointAlignmentPanel: React.FC = () => {
                 title="Move this point to start a new subpath"
               >
                 Move to M
+              </PanelStyledButton>
+            )}
+          {(singlePointInfo.command.type === 'L' || singlePointInfo.command.type === 'C') &&
+            isLastPointOfSubpath(selectedCmd.elementId, selectedCmd.commandIndex, selectedCmd.pointIndex) &&
+            isAtMPosition(selectedCmd.elementId, selectedCmd.commandIndex, selectedCmd.pointIndex) &&
+            !subpathHasZCommand(selectedCmd.elementId, selectedCmd.commandIndex) && (
+              <PanelStyledButton
+                onClick={() => addZCommandToSubpath?.(selectedCmd.elementId, selectedCmd.commandIndex)}
+                size="xs"
+                fontSize="12px"
+                w="full"
+                title="Add Z command to close this subpath"
+              >
+                Add Z Command
               </PanelStyledButton>
             )}
           {(singlePointInfo.command.type === 'L' || singlePointInfo.command.type === 'C') && (

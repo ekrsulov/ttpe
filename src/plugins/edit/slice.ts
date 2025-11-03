@@ -371,6 +371,7 @@ export interface EditPluginSlice {
   deleteSelectedCommands: () => void;
   deleteZCommandForMPoint: (elementId: string, commandIndex: number) => void;
   convertZToLineForMPoint: (elementId: string, commandIndex: number) => void;
+  addZCommandToSubpath: (elementId: string, commandIndex: number) => void;
   moveToM: (elementId: string, commandIndex: number, pointIndex: number) => void;
   convertCommandType: (elementId: string, commandIndex: number) => void;
   cutSubpathAtPoint: (elementId: string, commandIndex: number, pointIndex: number) => void;
@@ -2024,6 +2025,66 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
       }));
       }
     }
+  },
+
+  addZCommandToSubpath: (elementId: string, commandIndex: number) => {
+    const state = get() as FullCanvasState;
+    const element = state.elements.find((el: CanvasElement) => el.id === elementId);
+
+    if (!element || element.type !== 'path') return;
+
+    const pathData = element.data as PathData;
+    const commands = pathData.subPaths.flat();
+    const command = commands[commandIndex];
+
+    if (!command || (command.type !== 'L' && command.type !== 'C')) return;
+
+    // Find the M command for this subpath
+    let subpathMIndex = -1;
+    for (let i = commandIndex - 1; i >= 0; i--) {
+      if (commands[i].type === 'M') {
+        subpathMIndex = i;
+        break;
+      }
+    }
+
+    if (subpathMIndex === -1) return;
+
+    // Find the end of the current subpath
+    let subpathEndIndex = commandIndex;
+    for (let i = commandIndex + 1; i < commands.length; i++) {
+      if (commands[i].type === 'M' || commands[i].type === 'Z') {
+        break;
+      }
+      subpathEndIndex = i;
+    }
+
+    // Check if already has a Z command
+    if (subpathEndIndex < commands.length - 1 && commands[subpathEndIndex + 1].type === 'Z') {
+      return; // Already has Z command
+    }
+
+    // Add Z command after the last command of the subpath
+    const updatedCommands = [
+      ...commands.slice(0, subpathEndIndex + 1),
+      { type: 'Z' as const },
+      ...commands.slice(subpathEndIndex + 1)
+    ];
+
+    // Normalize and reconstruct path
+    const normalizedCommands = normalizePathCommands(updatedCommands);
+    const newSubPaths = extractSubpaths(normalizedCommands).map(s => s.commands);
+
+    // Update the element
+    (set as (fn: (state: FullCanvasState) => Partial<FullCanvasState>) => void)((currentState) => ({
+      ...currentState,
+      elements: currentState.elements.map((el) => {
+        if (el.id === elementId && el.type === 'path') {
+          return { ...el, data: { ...pathData, subPaths: newSubPaths } };
+        }
+        return el;
+      }) as CanvasElement[],
+    }));
   },
 
   moveToM: (elementId: string, commandIndex: number, pointIndex: number) => {

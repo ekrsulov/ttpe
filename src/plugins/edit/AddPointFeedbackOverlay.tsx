@@ -17,12 +17,12 @@ export const AddPointFeedbackOverlay: React.FC<AddPointFeedbackOverlayProps> = (
   isActive,
   viewport,
 }) => {
+  // Get canvas background color based on theme - MUST be called before early return
+  const canvasBgColor = useColorModeValue('#f9fafb', '#111827'); // gray.50 and gray.900
+
   if (!isActive || !hoverPosition) {
     return null;
   }
-
-  // Get canvas background color based on theme
-  const canvasBgColor = useColorModeValue('#f9fafb', '#111827'); // gray.50 and gray.900
 
   // Calculate the size of the feedback circle based on zoom
   // We want it to maintain a consistent screen size

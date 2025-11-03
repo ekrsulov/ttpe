@@ -64,7 +64,7 @@ The sidebar **displays multiple panels** based on the active plugin. Most modes 
 | `text` | Editor Panel, Text Panel | Text editing, typography, stroke/fill |
 | `shape` | Editor Panel, Shape Panel | Shape creation, stroke/fill properties |
 | `transformation` | Editor Panel, Transformation Panel | Transform controls, stroke/fill properties |
-| `edit` | Editor Panel, Edit Panel, Control Point Alignment | Path editing, smooth brush, control points |
+| `edit` | Editor Panel, Edit Panel, Point | Path editing, smooth brush, point position and alignment |
 | `subpath` | Editor Panel, SubPath Operations | Subpath operations, stroke/fill |
 | `curves` | Editor Panel, Curves Panel | Curve control points, stroke/fill |
 | `pan` | Editor Panel, Pan Panel | Viewport navigation |

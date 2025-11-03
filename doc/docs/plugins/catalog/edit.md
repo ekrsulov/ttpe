@@ -262,19 +262,24 @@ Select and drag control points and handles
 - Smooth brush settings with tolerance adjustment
 - Path simplification controls
 
-**ControlPointAlignmentPanel**: Advanced panel for Bézier handle alignment
-- Appears when control points with handles are selected
-- Displays alignment information for in/out handles
-- Provides alignment type controls:
-  - **Asymmetric**: Handles move independently
-  - **Symmetric**: Handles mirror each other (same length and opposite angles)
-  - **Smooth**: Handles maintain opposite angles but independent lengths
+**Point Panel (ControlPointAlignmentPanel)**: Precise point position and alignment control
+- Appears when exactly one point is selected
+- Numeric X/Y position inputs for precise coordinate editing
+- Command type and index information display
+- For control points with paired handles:
+  - Alignment type controls:
+    - **Independent**: Handles move independently
+    - **Aligned**: Handles maintain opposite angles but independent lengths
+    - **Mirrored**: Handles mirror each other (same length and opposite angles)
+  - Expandable detailed view with handle angles and magnitudes
 - Command type conversion (M, L, C, Z)
 - Point manipulation operations:
-  - Move to M (convert point to move command)
-  - Delete Z command
-  - Convert Z to Line
-  - Cut subpath at point
+  - **Move to M**: Convert last point to start a new subpath (when not at M position)
+  - **Add Z Command**: Add closing Z command to subpath (when last point is at M position)
+  - **Delete Z command**: Remove closing Z command from subpath (for M points)
+  - **Convert Z to Line**: Replace Z command with explicit L command (for M points)
+  - **Cut subpath at point**: Split subpath at selected point
+  - **Change to Curve/Line**: Convert between L and C command types
 - Collapsible detailed view showing:
   - Selected point coordinates
   - Handle angles and lengths
@@ -308,20 +313,26 @@ state.setActivePlugin('edit');
 const editState = useCanvasStore(state => state.edit);
 ```
 
-### Control Point Alignment
+### Point Panel
+
+The Point panel appears when a single control point or anchor point is selected in edit mode. It provides:
+
+- **Position Controls**: Numeric inputs for precise X and Y coordinate adjustment
+- **Alignment Controls**: For control points with paired handles (independent, aligned, mirrored)
+- **Command Information**: Display of command type and index
 
 ```typescript
 // Set alignment type for selected control points
 const state = useCanvasStore.getState();
 
-// Asymmetric: handles move independently
-state.setControlPointAlignmentType('asymmetric');
+// Independent: handles move independently
+state.setControlPointAlignmentType(elementId, cmdIdx1, ptIdx1, cmdIdx2, ptIdx2, 'independent');
 
-// Symmetric: handles mirror (same length, opposite angles)
-state.setControlPointAlignmentType('symmetric');
+// Aligned: handles maintain opposite angles but can have different lengths
+state.setControlPointAlignmentType(elementId, cmdIdx1, ptIdx1, cmdIdx2, ptIdx2, 'aligned');
 
-// Smooth: handles maintain opposite angles but can have different lengths
-state.setControlPointAlignmentType('smooth');
+// Mirrored: handles mirror (same length, opposite angles)
+state.setControlPointAlignmentType(elementId, cmdIdx1, ptIdx1, cmdIdx2, ptIdx2, 'mirrored');
 ```
 
 ### Command Type Conversion
@@ -346,6 +357,9 @@ state.cutSubpathAtPoint(elementId, commandIndex);
 ```typescript
 const state = useCanvasStore.getState();
 
+// Add Z command to close a subpath (when last point is at M position)
+state.addZCommandToSubpath(elementId, commandIndex);
+
 // Delete Z command (open the path)
 state.deleteZCommandForMPoint(elementId, mCommandIndex);
 
@@ -353,37 +367,103 @@ state.deleteZCommandForMPoint(elementId, mCommandIndex);
 state.convertZToLineForMPoint(elementId, mCommandIndex);
 ```
 
-## Control Point Alignment Details
+**Use Cases:**
+- **Add Z Command**: Converts visually closed paths into explicitly closed paths. Use when the last L or C command ends at the same position as the M command that starts the subpath.
+- **Delete Z Command**: Opens a closed path by removing the Z command, leaving an open subpath.
+- **Convert Z to Line**: Replaces implicit Z closing with an explicit L command, useful for further editing the closing segment.
 
-The Edit plugin includes sophisticated control point alignment features for managing Bézier curve handles:
+**Example Workflow:**
+```typescript
+// Scenario: You have a path that visually looks closed but lacks a Z command
+// Path: M 100,100 L 200,100 L 200,200 L 100,200 L 100,100
+// The last L command returns to the starting M position
 
-### Alignment Types
+const state = useCanvasStore.getState();
 
-**Asymmetric**
+// 1. Select the last L command point (at 100,100)
+state.selectCommand({ 
+  elementId: 'path-1', 
+  commandIndex: 4, // Index of last L command
+  pointIndex: 0 
+});
+
+// 2. The Point panel will show "Add Z Command" button because:
+//    - Point is type L (or C)
+//    - It's the last point of the subpath
+//    - Position matches the M command (100,100)
+//    - No Z command exists yet
+
+// 3. Add Z command to properly close the path
+state.addZCommandToSubpath('path-1', 4);
+
+// Result: M 100,100 L 200,100 L 200,200 L 100,200 L 100,100 Z
+// Now the path is explicitly closed with proper Z command
+```
+
+## Point Panel Details
+
+The Edit plugin includes a Point panel for precise control point and anchor point manipulation:
+
+### Point Position Controls
+
+The panel displays numeric inputs for direct coordinate editing:
+
+- **X Coordinate**: Numeric input for horizontal position (step: 0.1)
+- **Y Coordinate**: Numeric input for vertical position (step: 0.1)
+- **Command Info**: Displays command type and index for reference
+
+These controls allow precise positioning without manual dragging, useful for exact alignment and measurements.
+
+### Control Point Alignment Types
+
+When a control point with a paired handle is selected, alignment controls appear:
+
+**Independent**
 - Handles move completely independently
 - No constraints on angle or length
 - Maximum flexibility for custom curve shapes
 
-**Symmetric**
-- Handles maintain equal length
-- Angles are exact opposites (180° apart)
-- Creates smooth, balanced curves
-- Moving one handle automatically updates the other
-
-**Smooth**
+**Aligned**
 - Handles maintain opposite angles (180° apart)
 - Lengths can differ independently
 - Creates smooth tangent continuity
 - Allows for asymmetric curve weight while maintaining smoothness
 
-### Alignment Information Display
+**Mirrored**
+- Handles maintain equal length
+- Angles are exact opposites (180° apart)
+- Creates smooth, balanced curves
+- Moving one handle automatically updates the other
 
-The ControlPointAlignmentPanel shows:
-- Current alignment type for each selected control point
-- In-handle angle and length
-- Out-handle angle and length
-- Visual indicators when alignment is active
-- Quick buttons to change alignment type
+### Panel Information Display
+
+The Point panel shows:
+- **Position Controls**: Always visible X and Y numeric inputs
+- **Command Type**: The type of path command (M, L, C, Z)
+- **Command Index**: The position in the command list
+- **Alignment Type**: Current alignment mode for control points (when applicable)
+- **Detailed View**: Expandable section with handle directions, sizes, and paired point information
+
+### Point Manipulation Operations
+
+The Point panel provides context-sensitive operations based on the selected point type and position:
+
+**For M (Move) Points with Z Command:**
+- **Delete Z Command**: Removes the closing Z command, opening the subpath
+- **Convert Z to Line**: Replaces the Z with an explicit L command back to the M point
+
+**For Last L/C Points NOT at M Position:**
+- **Move to M**: Converts the point to start a new subpath
+- **Change to Curve/Line**: Toggles between L and C command types
+- **Cut Subpath**: Splits the subpath at this point (when not the last point)
+
+**For Last L/C Points AT M Position (visually closed):**
+- **Add Z Command**: Adds a Z command to explicitly close the subpath
+- **Change to Curve/Line**: Toggles between L and C command types
+- **Cut Subpath**: Splits the subpath at this point (when not the last point)
+
+**For Any L/C Point:**
+- **Change to Curve/Line**: Toggles between L (straight line) and C (Bézier curve) command types
 
 
 
@@ -395,13 +475,14 @@ The ControlPointAlignmentPanel shows:
 - `index.tsx`: Plugin definition and event handlers
 - `slice.ts`: Zustand slice for edit state management
 - `EditPanel.tsx`: Main UI panel with editing controls
-- `ControlPointAlignmentPanel.tsx`: Panel for Bézier handle alignment and command operations
+- `ControlPointAlignmentPanel.tsx`: Point panel for position control, Bézier handle alignment, and command operations
 - `EditPointsOverlay.tsx`: Canvas overlay rendering control points
 - `AddPointFeedbackOverlay.tsx`: Visual feedback for point addition
 
 **Key Features**:
 - Real-time point manipulation with visual feedback
-- Bézier handle constraint system (asymmetric/symmetric/smooth)
+- Numeric position controls for precise coordinate editing
+- Bézier handle constraint system (independent/aligned/mirrored)
 - Command type conversion between M, L, C, Z
 - Path splitting and joining operations
 - Smooth brush for path simplification
@@ -409,13 +490,18 @@ The ControlPointAlignmentPanel shows:
 
 ## Edge Cases & Limitations
 
-- **Selection Requirements**: Control Point Alignment panel only appears when points with Bézier handles are selected
+- **Selection Requirements**: Point panel only appears when exactly one point is selected
+- **Control Point Alignment**: Alignment controls only show for control points with paired handles
 - **Command Types**: Not all command types support all alignment modes (e.g., Line commands have no handles)
-- **Z Command Handling**: Closing Z commands reference the last M command in their subpath
-- **Symmetric Constraints**: Changing handle length in symmetric mode updates both handles simultaneously
+- **Z Command Operations**: 
+  - Add Z Command only available when last point is at M position and subpath doesn't already have a Z
+  - Delete/Convert Z operations only available for M commands with closing Z
+  - Z commands reference the last M command in their subpath
+- **Mirrored Constraints**: Changing handle length in mirrored mode updates both handles simultaneously
 - **Performance**: Complex paths with many points may experience slower manipulation on lower-end devices
 - **Handle Visibility**: Handles only visible when their anchor point is selected
-- **Undo/Redo**: Each handle adjustment creates an undo state (may create many undo steps during dragging)
+- **Position Tolerance**: Points are considered "at M position" with a tolerance of 0.1 units
+- **Undo/Redo**: Each position adjustment creates an undo state (may create many undo steps during editing)
 
 ## Related
 
