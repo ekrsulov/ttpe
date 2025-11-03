@@ -855,10 +855,10 @@ const ArrangePanelComponent: React.FC = () => {
 
 ## Related Documentation
 
-- [Canvas Store API](../api/canvas-store-api.md) - State management with Zustand
+- [Canvas Store](../api/canvas-store.md) - State management with Zustand
 - [UI Components](../ui/components.md) - Components that use these hooks
-- [Select Panel](./select-panel.md) - Uses `useSelectPanelActions`, `useSidebarFooterHeight`
-- [Action Bars](./actionbars.md) - Uses `useDeletionActions`
+- [Selection](../features/selection.md) - Uses selection-related hooks
+- [Action Bars](../app-structure/actionbars.md) - Uses action hooks
 - [Performance Optimization](../architecture/overview.md#performance-optimizations) - Optimization strategies
 
 ---

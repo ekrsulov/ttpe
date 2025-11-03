@@ -476,5 +476,5 @@ Snapshot:  ✓    ✗   ✗    ✗    ✗    ✓
 - [State Management](../architecture/overview.md#state-management-strategy) - Zustand + Zundo integration
 - [Persistence](./persistence.md) - localStorage persistence (undo history not saved)
 - [Action Bars](../app-structure/actionbars.md) - Undo/redo UI controls
-- [Keyboard Shortcuts](../getting-started/usage.md#keyboard-shortcuts) - Shortcut reference
+- [Event Bus](../event-bus/topics.md) - Keyboard event handling for shortcuts
 - [Zundo Documentation](https://github.com/charkour/zundo) - Official Zundo middleware docs

@@ -246,7 +246,7 @@ interface PluginDefinition<TStore> {
   id: string;
   metadata: {
     label: string;
-    icon?: ComponentType;
+    icon?: React.ComponentType;
     cursor?: string;
   };
   handler?: (event, point, target, context) => void;

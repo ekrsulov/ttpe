@@ -199,7 +199,7 @@ interface PluginDefinition {
   id: string;           // Required
   metadata: {           // Required
     label: string;      // Required
-    icon?: ComponentType;
+    icon?: React.ComponentType;
     cursor?: string;
   };
   // All other fields optional

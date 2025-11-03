@@ -712,4 +712,3 @@ test('ungroups selected group and restores child parent references', async ({ pa
 - [UI Components](../ui/components.md) - UI for group management
 - [Transform System](./transforms.md) - Group transforms and child propagation
 - [Canvas Store API](../api/canvas-store.md) - Group slice methods
-- [SVG Import](../api/svg-import.md) - Groups from imported SVG `<g>` elements

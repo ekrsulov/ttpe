@@ -37,7 +37,7 @@ interface PluginDefinition<TStore> {
   // Required: Display metadata
   metadata: {
     label: string;           // Human-readable name
-    icon?: ComponentType;    // Icon component
+    icon?: React.ComponentType;    // Icon component
     cursor?: string;         // CSS cursor (e.g., 'crosshair')
   };
   
@@ -72,14 +72,14 @@ interface PluginDefinition<TStore> {
 // Panels and Overlays
 interface PluginUIContribution<TProps = Record<string, unknown>> {
   id: string;                         // Required: Unique identifier
-  component: ComponentType<TProps>;   // Required: React component
+  component: React.ComponentType<TProps>;   // Required: React component
   placement?: 'tool' | 'global';      // Optional: When to show
 }
 
 // Actions (Toolbar buttons)
 interface PluginActionContribution<TProps = Record<string, unknown>> {
   id: string;                         // Required: Unique identifier
-  component: ComponentType<TProps>;   // Required: React component
+  component: React.ComponentType<TProps>;   // Required: React component
   placement: 'top' | 'bottom';        // Required: Toolbar position
 }
 

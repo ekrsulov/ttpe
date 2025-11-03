@@ -584,9 +584,7 @@ const setDocumentName = useCanvasStore(state => state.setDocumentName);
 ## Related Documentation
 
 - [Sidebar](./sidebar.md) - Sidebar container and navigation
-- [Canvas Store API](../api/canvas-store-api.md) - State management API
-- [SVG Import](../features/svg-import.md) - SVG parsing and conversion
-- [Boolean Operations](../features/boolean-ops.md) - Path union/intersection
+- [Canvas Store](../api/canvas-store.md) - State management API
 - [Persistence](../features/persistence.md) - Project save/load
 
 ---

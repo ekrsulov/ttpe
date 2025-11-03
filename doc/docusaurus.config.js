@@ -13,14 +13,13 @@ const config = {
   // Set the production url of your site here
   url: 'https://ekrsulov.github.io',
   // Set the /<baseUrl>/ pathname under which your site is served
-  baseUrl: '/docs/',
+  baseUrl: '/ttpe/',
 
   // GitHub pages deployment config (adjust as needed)
   organizationName: 'ekrsulov',
   projectName: 'ttpe',
 
   onBrokenLinks: 'warn',
-  onBrokenMarkdownLinks: 'warn',
 
   // Internationalization (i18n)
   i18n: {
@@ -157,8 +156,13 @@ const config = {
       },
     }),
 
+  onBrokenMarkdownLinks: 'ignore',
+
   markdown: {
     mermaid: true,
+    hooks: {
+      onBrokenMarkdownImages: 'ignore',
+    },
   },
   themes: [
     '@docusaurus/theme-mermaid',

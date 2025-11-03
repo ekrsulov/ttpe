@@ -1,8 +1,14 @@
+---
+id: shape-Shape-Creation-should-create-different-shapes-chromium
+title: "should create different shapes"
+sidebar_label: "should create different shapes"
+---
+
 # should create different shapes
 Description: This test verifies that should create different shapes.
 
-![Screenshot](/test-evidences/shape-Shape-Creation-should-create-different-shapes-chromium/test-finished-1.png)
+![Screenshot](/ttpe/test-evidences/shape-Shape-Creation-should-create-different-shapes-chromium/test-finished-1.png)
 
 <video controls>
-  <source src="/test-evidences/shape-Shape-Creation-should-create-different-shapes-chromium/video.webm" type="video/webm" />
+  <source src="/ttpe/test-evidences/shape-Shape-Creation-should-create-different-shapes-chromium/video.webm" type="video/webm" />
 </video>

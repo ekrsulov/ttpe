@@ -399,7 +399,7 @@ const currentStrokeColor = useSelectedPathProperty(
 
 **When visible**: Available in most modes, but most relevant in `select` mode
 
-[See detailed documentation](./select-panel.md)
+See also: [Selection](../features/selection.md), [Groups](../features/groups.md)
 
 ---
 
@@ -591,7 +591,7 @@ This allows the main scrollable panel area (`SidebarPanelHost`) to adjust its pa
 
 **When visible**: `select` mode (collapsible section)
 
-[See detailed documentation](./arrange-panel.md)
+See also: [Alignment](../features/alignment.md), [Distribution](../features/distribution.md), [Ordering](../features/ordering.md)
 
 ---
 
@@ -840,7 +840,7 @@ src/sidebar/
 
 - [Canvas](./canvas.md) - Main canvas component
 - [Action Bars](./actionbars.md) - Top and bottom toolbars
-- [Select Panel](./select-panel.md) - Selection and hierarchy management
+- [Selection](../features/selection.md) - Selection and hierarchy management
 - [File Panel](./file-panel.md) - Import/export operations
 - [Settings Panel](./settings-panel.md) - Application preferences
 - [UI Components](../ui/components.md) - Reusable UI components
