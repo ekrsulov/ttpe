@@ -299,12 +299,14 @@ Selected elements can be deleted using the **Delete** or **Backspace** key:
 | Key | Action | Description |
 |-----|--------|-------------|
 | `Delete` or `Backspace` | Delete selected elements | Removes all selected elements from canvas |
-| `Arrow Keys` | Move selection | Move selected elements by 1px in the arrow direction |
-| `Shift + Arrow Keys` | Move selection (fast) | Move selected elements by 10px in the arrow direction |
+| `Arrow Keys` | Move selection | Move selected elements by 1px in the arrow direction (adjusted for zoom) |
+| `Shift + Arrow Keys` | Move selection (fast) | Move selected elements by 10px in the arrow direction (adjusted for zoom) |
 | `Shift + Click` | Toggle selection | Add or remove element from selection |
 
 :::tip
 The movement precision can be adjusted in Settings under "Keyboard Movement Precision". The default precision rounds to whole pixels (0 decimal places).
+
+**Zoom-adjusted movement**: When zoomed in (zoom > 1), arrow key movement is automatically divided by the zoom level for finer precision. For example, at 2x zoom, arrow keys move by 0.5px instead of 1px.
 :::
 
 ---

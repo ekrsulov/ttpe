@@ -318,6 +318,7 @@ Adjust the distance elements move when using arrow keys.
 
 - **Arrow keys**: Move selected elements by specified distance
 - **Shift + Arrow keys**: Move by 10× distance (for larger adjustments)
+- **Zoom adjustment**: Movement is automatically divided by zoom level when zoom > 1 for finer precision
 - **Value 0**: Disables arrow key movement
 
 **Use cases:**
@@ -325,6 +326,7 @@ Adjust the distance elements move when using arrow keys.
 - **Fine control** (0.5-1px): Pixel-perfect positioning
 - **Standard** (1-2px): General editing
 - **Quick positioning** (5-10px): Rapid layout adjustments
+- **Zoomed work**: Automatic precision scaling at high zoom levels
 
 ---
 
