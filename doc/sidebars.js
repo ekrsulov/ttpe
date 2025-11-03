@@ -67,6 +67,7 @@ const sidebars = {
             'plugins/catalog/grid',
             'plugins/catalog/grid-fill',
             'plugins/catalog/minimap',
+            'plugins/catalog/duplicate-on-drag',
           ],
         },
       ],

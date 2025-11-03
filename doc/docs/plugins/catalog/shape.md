@@ -12,7 +12,10 @@ sidebar_label: Shape
 
 - Shapes: square, rectangle, circle, triangle, line, diamond, heart
 - Two-point creation (drag to define size)
-- Shift key for proportional shapes
+- Shift key for proportional shapes:
+  - **Circle/Rectangle**: Creates perfect circles and squares
+  - **Triangle**: Creates equilateral triangles
+  - **Line**: Constrains to horizontal, vertical, or 45° diagonal angles
 - Preview during creation
 - Converts to editable paths
 
@@ -124,13 +127,14 @@ flowchart TD
     C -->|Circle| D1[Calculate Radius]
     C -->|Rectangle| D2[Calculate Width/Height]
     C -->|Triangle| D3[Calculate Vertices]
-    C -->|Line| D4[Two Points]
+    C -->|Line| D4[Calculate Line Points]
     C -->|Diamond| D5[Calculate 4 Points]
     C -->|Heart| D6[Heart Bezier Curves]
     
     D1 --> E1{Shift Key?}
     D2 --> E2{Shift Key?}
     D3 --> E3{Shift Key?}
+    D4 --> E4{Shift Key?}
     
     E1 -->|Yes| F1[Perfect Circle]
     E1 -->|No| F1b[Ellipse]
@@ -138,8 +142,14 @@ flowchart TD
     E2 -->|No| F2b[Rectangle]
     E3 -->|Yes| F3[Equilateral Triangle]
     E3 -->|No| F3b[Scalene Triangle]
+    E4 -->|Yes| F4[Constrained Line]
+    E4 -->|No| F4b[Free Line]
     
-    D4 --> G4[Line Path]
+    F4 --> F4_1{Angle?}
+    F4_1 -->|0° or 180°| F4_H[Horizontal Line]
+    F4_1 -->|90° or 270°| F4_V[Vertical Line]
+    F4_1 -->|45°, 135°, 225°, 315°| F4_D[Diagonal Line]
+    
     D5 --> G5[Diamond Path]
     D6 --> G6[Heart Path]
     
@@ -149,7 +159,10 @@ flowchart TD
     F2b --> H
     F3 --> H
     F3b --> H
-    G4 --> H
+    F4b --> H
+    F4_H --> H
+    F4_V --> H
+    F4_D --> H
     G5 --> H
     G6 --> H
     
@@ -169,6 +182,11 @@ flowchart TD
     style D1 fill:#e1f5ff
     style D2 fill:#e1f5ff
     style D3 fill:#e1f5ff
+    style D4 fill:#e1f5ff
+    style F4 fill:#fff4e1
+    style F4_H fill:#e1ffe1
+    style F4_V fill:#e1ffe1
+    style F4_D fill:#e1ffe1
     style N fill:#e1ffe1
     style O fill:#ffe1e1
 ```
@@ -219,6 +237,36 @@ Two-point shape creation with preview
 ## Keyboard Shortcuts
 
 No plugin-specific shortcuts.
+
+### Modifier Keys
+
+The **Shift** key provides constrained drawing for different shape types:
+
+| Shape Type | Normal Behavior | Shift Key Behavior |
+|-----------|----------------|-------------------|
+| **Circle** | Free ellipse | Perfect circle (1:1 aspect ratio) |
+| **Rectangle** | Free rectangle | Perfect square (1:1 aspect ratio) |
+| **Triangle** | Scalene triangle | Equilateral triangle |
+| **Line** | Free angle line | Constrained to 8 directions:<br/>- Horizontal (0°, 180°)<br/>- Vertical (90°, 270°)<br/>- Diagonal (45°, 135°, 225°, 315°) |
+| **Diamond** | Free diamond | Square diamond |
+| **Heart** | No constraint | No constraint |
+| **Star** | No constraint | No constraint |
+
+#### Line Constraints with Shift
+
+When drawing lines with Shift pressed, the line snaps to the nearest 45° angle:
+
+```
+        90° (↑)
+         |
+135° ↖  |  ↗ 45°
+    ----+----  0° (→)
+225° ↙  |  ↘ 315°
+         |
+       270° (↓)
+```
+
+This makes it easy to draw perfectly horizontal, vertical, or diagonal lines without manual precision.
 
 ## UI Contributions
 

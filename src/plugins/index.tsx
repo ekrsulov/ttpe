@@ -15,6 +15,7 @@ import { guidelinesPlugin } from './guidelines';
 import { gridPlugin } from './grid';
 import { minimapPlugin } from './minimap';
 import { gridFillPlugin } from './gridFill';
+import { duplicateOnDragPlugin } from './duplicateOnDrag';
 import { SelectionOverlay, BlockingOverlay } from '../overlays';
 import { useColorMode } from '@chakra-ui/react';
 
@@ -207,6 +208,7 @@ export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   guidelinesPlugin,
   gridPlugin,
   minimapPlugin,
+  duplicateOnDragPlugin,
 ];
 
 export * from './pencil';
@@ -221,3 +223,4 @@ export * from './guidelines';
 export * from './grid';
 export * from './gridFill';
 export * from './minimap';
+export * from './duplicateOnDrag';

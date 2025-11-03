@@ -78,7 +78,7 @@ The select plugin **does not have its own slice**. Selection state is managed in
 graph TB
     subgraph "SelectionSlice (Global Store)"
         State[Selection State]
-        State --> SI[selectedIds: string[]]
+        State --> SI["selectedIds: array of strings"]
     end
     
     subgraph "SelectionSlice Methods"

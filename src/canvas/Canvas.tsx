@@ -22,6 +22,7 @@ import { CanvasServicesProvider } from './services/CanvasServicesProvider';
 import { useEditSmoothBrush } from './hooks/useEditSmoothBrush';
 import { usePencilDrawing } from './hooks/usePencilDrawing';
 import { useEditAddPoint } from './hooks/useEditAddPoint';
+import { useDuplicateOnDrag } from './hooks/useDuplicateOnDrag';
 import './listeners/AddPointListener';
 import { useDynamicCanvasSize } from './hooks/useDynamicCanvasSize';
 import { useCanvasSideEffects } from './hooks/useCanvasSideEffects';
@@ -240,6 +241,13 @@ const CanvasContent: React.FC = () => {
     screenToCanvas,
     emitPointerEvent,
     isSmoothBrushActive,
+  });
+
+  // Use duplicate on drag service (always active)
+  useDuplicateOnDrag({
+    svgRef,
+    currentMode,
+    screenToCanvas,
   });
 
   // Use pencil drawing hook

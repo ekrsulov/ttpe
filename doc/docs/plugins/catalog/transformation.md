@@ -52,8 +52,7 @@ sequenceDiagram
     alt Shift Key (Proportional)
         TP->>TM: calculateProportionalScale(delta)
         TM->>TP: Return constrained dimensions
-    else Alt/Option Key (Center)
-```
+    else Alt or Option Key (Center)
         TP->>TM: calculateCenterScale(delta)
         TM->>TP: Return mirrored dimensions
     else Normal
