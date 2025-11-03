@@ -15,39 +15,61 @@ The application consists of several key areas that work together to provide the 
 ```mermaid
 graph TB
     subgraph App["TTPE Application Window"]
-        subgraph Canvas["Canvas Area (Full Screen)"]
-            CanvasMain[Canvas Component<br/>SVG Rendering]
-            TopBar[Top Action Bar<br/>Tool Selection]
-            BottomBar[Bottom Action Bar<br/>Undo/Redo/Zoom/Delete]
-            Minimap[Minimap Plugin<br/>Viewport Overview]
-            VirtualShift[Virtual Shift Button<br/>Mobile Only]
+        direction TB
+        
+        TopBar[Top Action Bar<br/>Tool Selection]
+        
+        subgraph Layout["Main Layout"]
+            direction LR
+            
+            subgraph Canvas["Canvas Area (Full Screen)"]
+                direction TB
+                CanvasMain[Canvas Component<br/>SVG Rendering]
+                CanvasSpace1[ ]
+                CanvasSpace2[ ]
+                Minimap[Minimap Plugin<br/>Viewport Overview]
+                VirtualShift[Virtual Shift Button<br/>Mobile Only]
+                
+                style CanvasSpace1 fill:none,stroke:none
+                style CanvasSpace2 fill:none,stroke:none
+            end
+            
+            subgraph Sidebar["Sidebar (Right)"]
+                direction TB
+                ResizeHandle[Resize Handle<br/>Desktop Only]
+                ToolGrid[Tool Grid<br/>Mode Selection]
+                
+                subgraph MainPanels["Main Panel Area (Scrollable)"]
+                    direction TB
+                    EditorPanel[Editor Panel<br/>Stroke/Fill/Opacity]
+                    PluginPanels[Plugin-Specific Panels<br/>Edit/Pencil/Text/Shape/etc.]
+                    SpecialPanels[Special Panels<br/>File/Settings]
+                end
+                
+                subgraph BottomSection["Bottom Section (Fixed)"]
+                    direction TB
+                    ArrangePanel[Arrange Panel<br/>Collapsible]
+                    ToggleBtn[Toggle Button]
+                    SelectPanel[Select Panel<br/>Always Visible]
+                end
+            end
         end
         
-        subgraph Sidebar["Sidebar (Right)"]
-            ResizeHandle[Resize Handle<br/>Desktop Only]
-            ToolGrid[Tool Grid<br/>Mode Selection]
-            
-            subgraph MainPanels["Main Panel Area (Scrollable)"]
-                EditorPanel[Editor Panel<br/>Stroke/Fill/Opacity]
-                PluginPanels[Plugin-Specific Panels<br/>Edit/Pencil/Text/Shape/etc.]
-                SpecialPanels[Special Panels<br/>File/Settings]
-            end
-            
-            subgraph BottomSection["Bottom Section (Fixed)"]
-                ArrangePanel[Arrange Panel<br/>Collapsible]
-                ToggleBtn[Toggle Button]
-                SelectPanel[Select Panel<br/>Always Visible]
-            end
-        end
+        BottomBar[Bottom Action Bar<br/>Undo/Redo/Zoom/Delete]
     end
     
-    ToolGrid --> CanvasMain
-    TopBar --> CanvasMain
-    BottomBar --> CanvasMain
+    TopBar -.-> CanvasMain
+    ToolGrid -.-> CanvasMain
     EditorPanel -.-> CanvasMain
     PluginPanels -.-> CanvasMain
-    SelectPanel -.-> CanvasMain
     ArrangePanel -.-> CanvasMain
+    SelectPanel -.-> CanvasMain
+    BottomBar -.-> CanvasMain
+    
+    CanvasMain ~~~ CanvasSpace1
+    CanvasSpace1 ~~~ CanvasSpace2
+    CanvasSpace2 ~~~ Minimap
+    Minimap ~~~ VirtualShift
 ```
 
 ## Component Hierarchy
@@ -351,34 +373,36 @@ src/
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
+│  Canvas (Infinite SVG Workspace)                                │
+│                                                                 │
 │  ╔═══════════════════════════════════════════════════════════╗  │
 │  ║ Top Action Bar (Floating)                                 ║  │
 │  ║ [Select][Subpath][Transform][Edit][Pan][Pencil]...[Menu]  ║  │
 │  ╚═══════════════════════════════════════════════════════════╝  │
 │                                                                 │
-│  ┌──────────────────────────────────────────┐  ┌─────────────┐  │
-│  │ Canvas (Infinite SVG Workspace)          │  │ Sidebar     │  │
-│  │                                          │  │             │  │
-│  │  ┌─────────────┐                         │  │ Tool Grid   │  │
-│  │  │ Elements    │                         │  │ [9 modes]   │  │
-│  │  │ + Plugin    │                         │  │             │  │
-│  │  │ Overlays    │                         │  │─────────────│  │
-│  │  └─────────────┘                         │  │             │  │
-│  │                                          │  │ Main Panels │  │
-│  │                                          │  │ (Scroll)    │  │
-│  │                                          │  │             │  │
-│  │                                          │  │ • Editor    │  │
-│  │                   ┌──────────────┐       │  │ • Plugin    │  │
-│  │                   │ Minimap      │       │  │   Panels    │  │
-│  │                   │ (Optional)   │       │  │             │  │
-│  │                   └──────────────┘       │  │─────────────│  │
-│  │                                          │  │ Bottom      │  │
-│  │                                          │  │ (Fixed)     │  │
-│  │                                          │  │             │  │
-│  │                                          │  │ • Arrange   │  │
-│  │                                          │  │   [Toggle]  │  │
-│  │                                          │  │ • Select    │  │
-│  └──────────────────────────────────────────┘  └─────────────┘  │
+│                                                ┌─────────────┐  │
+│                                                │ Sidebar     │  │
+│                                                │             │  │
+│     ┌─────────────┐                            │ Tool Grid   │  │
+│     │ Elements    │                            │─────────────│  │
+│     │ + Plugin    │                            │             │  │
+│     │ Overlays    │                            │             │  │
+│     └─────────────┘                            │             │  │
+│                                                │ Main Panels │  │
+│                                                │ (Scroll)    │  │
+│                                                │             │  │
+│                                                │ • Editor    │  │
+│                      ┌──────────────┐          │ • Plugin    │  │
+│                      │ Minimap      │          │   Panels    │  │
+│                      │ (Optional)   │          │             │  │
+│                      ├──────────────┤          │─────────────│  │
+│                      │ [⇧] Virtual  │          │ Bottom      │  │
+│                      │  Shift Btn   │          │ (Fixed)     │  │
+│                      │ (Mobile)     │          │             │  │
+│                      └──────────────┘          │ • Arrange   │  │
+│                                                │   [Toggle]  │  │
+│                                                │ • Select    │  │
+│                                                └─────────────┘  │
 │                                                                 │
 │  ╔═══════════════════════════════════════════════════════════╗  │
 │  ║ Bottom Action Bar (Floating)                              ║  │

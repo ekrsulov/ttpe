@@ -43,42 +43,64 @@ Features should be testable in isolation and as integrated systems.
 ## System Context
 
 ```mermaid
-C4Context
-    title System Context - TTPE Web Vector Editor
+graph TB
+    User["👤 Designer/Artist<br/><small>Creates and edits<br/>vector graphics</small>"]
     
-    Person(user, "Designer/Artist", "Creates and edits vector graphics")
-    System(ttpe, "TTPE Application", "Web-based vector editor")
-    System_Ext(browser, "Web Browser", "Chrome, Firefox, Safari")
-    System_Ext(storage, "Local Storage", "Persists canvas state")
-    System_Ext(wasm, "WASM Modules", "Potrace for text-to-curves")
+    TTPE["<b>TTPE Application</b><br/><small>Web-based vector editor</small>"]
     
-    Rel(user, ttpe, "Interacts with")
-    Rel(ttpe, browser, "Runs in")
-    Rel(ttpe, storage, "Persists to/loads from")
-    Rel(ttpe, wasm, "Uses for heavy computation")
+    Browser["🌐 Web Browser<br/><small>Chrome, Firefox, Safari</small>"]
+    Storage["💾 Local Storage<br/><small>Persists canvas state</small>"]
+    WASM["⚡ WASM Modules<br/><small>Potrace for text-to-curves</small>"]
+    
+    User -->|"Interacts with"| TTPE
+    TTPE -->|"Runs in"| Browser
+    TTPE -->|"Persists to/loads from"| Storage
+    TTPE -->|"Uses for heavy computation"| WASM
+    
+    style User fill:#08427b,stroke:#052e56,color:#fff
+    style TTPE fill:#1168bd,stroke:#0b4884,color:#fff
+    style Browser fill:#999,stroke:#666,color:#fff
+    style Storage fill:#999,stroke:#666,color:#fff
+    style WASM fill:#999,stroke:#666,color:#fff
 ```
 
 ## Container Architecture
 
 ```mermaid
-C4Container
-    title Container Diagram - TTPE Core Components
+graph TB
+    subgraph Presentation["🎨 Presentation Layer"]
+        UI["UI Components<br/><small>Canvas, Sidebars,<br/>Toolbars, Panels</small>"]
+    end
     
-    Container(ui, "UI Layer", "React 19", "Canvas, Sidebars, Toolbars, Panels")
-    Container(plugins, "Plugin System", "TypeScript", "Extensible tools and features")
-    Container(store, "State Management", "Zustand", "Global state with slices")
-    Container(eventBus, "Event Bus", "TypeScript", "Pub/sub for canvas events")
-    Container(services, "Canvas Services", "TypeScript", "Zoom, smooth brush, listeners")
-    ContainerDb(persistence, "Persistence Layer", "LocalStorage", "Auto-save and restore")
+    subgraph Processing["⚙️ Processing Layer"]
+        EventBus["Event Bus<br/><small>Pub/sub for<br/>canvas events</small>"]
+        Plugins["Plugin System<br/><small>Extensible tools<br/>and features</small>"]
+        Services["Canvas Services<br/><small>Zoom, smooth brush,<br/>listeners</small>"]
+    end
     
-    Rel(ui, eventBus, "Emits events")
-    Rel(eventBus, plugins, "Notifies")
-    Rel(plugins, store, "Reads/writes state")
-    Rel(plugins, eventBus, "Subscribes to")
-    Rel(services, eventBus, "Subscribes to")
-    Rel(services, store, "Reads/writes state")
-    Rel(store, persistence, "Saves/loads")
-    Rel(store, ui, "Triggers re-renders")
+    subgraph State["💾 State Layer"]
+        Store["State Management<br/><small>Zustand with slices</small>"]
+        Persistence["Persistence<br/><small>LocalStorage<br/>auto-save</small>"]
+    end
+    
+    UI -->|"Emits pointer/<br/>touch events"| EventBus
+    UI -.->|"Subscribes to<br/>state changes"| Store
+    
+    EventBus -->|"Notifies"| Plugins
+    EventBus -->|"Notifies"| Services
+    
+    Plugins -->|"Reads/writes<br/>state"| Store
+    Services -->|"Reads/writes<br/>state"| Store
+    
+    Store <-->|"Auto-save/<br/>restore"| Persistence
+    
+    style UI fill:#1168bd,stroke:#0b4884,color:#fff
+    style EventBus fill:#2d9cdb,stroke:#1a7db8,color:#fff
+    style Plugins fill:#27ae60,stroke:#1e8449,color:#fff
+    style Services fill:#27ae60,stroke:#1e8449,color:#fff
+    style Store fill:#e67e22,stroke:#ca6510,color:#fff
+    style Persistence fill:#95a5a6,stroke:#7f8c8d,color:#fff
+```
 ```
 
 ## Component Architecture

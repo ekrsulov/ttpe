@@ -12,6 +12,7 @@ The tests cover the main functionalities of the application:
 - **text.spec.ts**: Text input and formatting
 - **selection.spec.ts**: Element selection and transformation
 - **edit.spec.ts**: Path editing with smooth brush
+- **duplicate_on_drag.spec.ts**: Duplicate on drag functionality (Command/Ctrl+Drag)
 
 ## Running Tests
 
