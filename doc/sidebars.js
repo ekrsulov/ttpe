@@ -117,6 +117,7 @@ const sidebars = {
         'ui/components',
         'ui/theming',
         'ui/accessibility',
+        'ui/feedback-overlay',
       ],
     },
     {

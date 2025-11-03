@@ -257,7 +257,28 @@ Select and drag control points and handles
 
 ### Panels
 
-- Point editing controls, smooth brush settings, simplification
+**EditPanel**: Main control panel for path editing operations
+- Point selection and manipulation controls
+- Smooth brush settings with tolerance adjustment
+- Path simplification controls
+
+**ControlPointAlignmentPanel**: Advanced panel for Bézier handle alignment
+- Appears when control points with handles are selected
+- Displays alignment information for in/out handles
+- Provides alignment type controls:
+  - **Asymmetric**: Handles move independently
+  - **Symmetric**: Handles mirror each other (same length and opposite angles)
+  - **Smooth**: Handles maintain opposite angles but independent lengths
+- Command type conversion (M, L, C, Q, A, Z)
+- Point manipulation operations:
+  - Move to M (convert point to move command)
+  - Delete Z command
+  - Convert Z to Line
+  - Cut subpath at point
+- Collapsible detailed view showing:
+  - Selected point coordinates
+  - Handle angles and lengths
+  - Command type information
 
 ### Overlays
 
@@ -266,7 +287,9 @@ Select and drag control points and handles
 
 ### Canvas Layers
 
-- Control points, handles, and smooth brush visualization
+- Control points visualization (anchor points, handles)
+- Bézier handle lines connecting control points
+- Smooth brush preview visualization
 
 ## Public APIs
 
@@ -274,14 +297,93 @@ No public APIs exposed.
 
 ## Usage Examples
 
+### Activating Edit Mode
+
 ```typescript
 // Activate the plugin
 const state = useCanvasStore.getState();
-state.setMode('edit');
+state.setActivePlugin('edit');
 
 // Access plugin state
 const editState = useCanvasStore(state => state.edit);
 ```
+
+### Control Point Alignment
+
+```typescript
+// Set alignment type for selected control points
+const state = useCanvasStore.getState();
+
+// Asymmetric: handles move independently
+state.setControlPointAlignmentType('asymmetric');
+
+// Symmetric: handles mirror (same length, opposite angles)
+state.setControlPointAlignmentType('symmetric');
+
+// Smooth: handles maintain opposite angles but can have different lengths
+state.setControlPointAlignmentType('smooth');
+```
+
+### Command Type Conversion
+
+```typescript
+const state = useCanvasStore.getState();
+
+// Convert command to a different type
+state.convertCommandType(elementId, commandIndex, 'C'); // to Cubic Bézier
+state.convertCommandType(elementId, commandIndex, 'L'); // to Line
+state.convertCommandType(elementId, commandIndex, 'Q'); // to Quadratic Bézier
+
+// Move point to become a new subpath start
+state.moveToM(elementId, commandIndex);
+
+// Cut subpath at selected point
+state.cutSubpathAtPoint(elementId, commandIndex);
+```
+
+### Working with Z Commands (Close Path)
+
+```typescript
+const state = useCanvasStore.getState();
+
+// Delete Z command (open the path)
+state.deleteZCommandForMPoint(elementId, mCommandIndex);
+
+// Convert Z to explicit Line command
+state.convertZToLineForMPoint(elementId, mCommandIndex);
+```
+
+## Control Point Alignment Details
+
+The Edit plugin includes sophisticated control point alignment features for managing Bézier curve handles:
+
+### Alignment Types
+
+**Asymmetric**
+- Handles move completely independently
+- No constraints on angle or length
+- Maximum flexibility for custom curve shapes
+
+**Symmetric**
+- Handles maintain equal length
+- Angles are exact opposites (180° apart)
+- Creates smooth, balanced curves
+- Moving one handle automatically updates the other
+
+**Smooth**
+- Handles maintain opposite angles (180° apart)
+- Lengths can differ independently
+- Creates smooth tangent continuity
+- Allows for asymmetric curve weight while maintaining smoothness
+
+### Alignment Information Display
+
+The ControlPointAlignmentPanel shows:
+- Current alignment type for each selected control point
+- In-handle angle and length
+- Out-handle angle and length
+- Visual indicators when alignment is active
+- Quick buttons to change alignment type
 
 
 
@@ -290,16 +392,30 @@ const editState = useCanvasStore(state => state.edit);
 **Location**: `src/plugins/edit/`
 
 **Files**:
-- `index.ts`: Plugin definition
-- `slice.ts`: Zustand slice (if applicable)
-- `*Panel.tsx`: UI panels (if applicable)
-- `*Overlay.tsx`: Overlays (if applicable)
+- `index.tsx`: Plugin definition and event handlers
+- `slice.ts`: Zustand slice for edit state management
+- `EditPanel.tsx`: Main UI panel with editing controls
+- `ControlPointAlignmentPanel.tsx`: Panel for Bézier handle alignment and command operations
+- `EditPointsOverlay.tsx`: Canvas overlay rendering control points
+- `AddPointFeedbackOverlay.tsx`: Visual feedback for point addition
+
+**Key Features**:
+- Real-time point manipulation with visual feedback
+- Bézier handle constraint system (asymmetric/symmetric/smooth)
+- Command type conversion between L, C, Q, A, Z
+- Path splitting and joining operations
+- Smooth brush for path simplification
+- Detailed alignment information and controls
 
 ## Edge Cases & Limitations
 
-- Implementation-specific constraints
-- Performance considerations for large datasets
-- Browser compatibility notes (if any)
+- **Selection Requirements**: Control Point Alignment panel only appears when points with Bézier handles are selected
+- **Command Types**: Not all command types support all alignment modes (e.g., Line commands have no handles)
+- **Z Command Handling**: Closing Z commands reference the last M command in their subpath
+- **Symmetric Constraints**: Changing handle length in symmetric mode updates both handles simultaneously
+- **Performance**: Complex paths with many points may experience slower manipulation on lower-end devices
+- **Handle Visibility**: Handles only visible when their anchor point is selected
+- **Undo/Redo**: Each handle adjustment creates an undo state (may create many undo steps during dragging)
 
 ## Related
 
