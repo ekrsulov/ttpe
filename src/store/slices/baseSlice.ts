@@ -44,6 +44,7 @@ export interface BaseSlice {
     showTooltips: boolean; // Show tooltips on desktop
     defaultStrokeColor: string; // Default stroke color for new drawing operations
     scaleStrokeWithZoom: boolean; // Scale stroke width with zoom level
+    exportPadding: number; // Padding in pixels when exporting SVG/PNG
   };
 
   // Actions
@@ -199,6 +200,7 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => {
     showTooltips: false, // Show tooltips by default
     defaultStrokeColor: '#000000',
     scaleStrokeWithZoom: false, // Default to false (strokes don't scale with zoom)
+    exportPadding: 20, // Default padding for SVG/PNG export
   },
 
   // Actions
@@ -405,12 +407,12 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => {
 
   saveAsSvg: (selectedOnly: boolean = false) => {
     const state = get() as CanvasStore;
-    exportSelection('svg', state.elements, state.selectedIds, state.documentName, selectedOnly);
+    exportSelection('svg', state.elements, state.selectedIds, state.documentName, selectedOnly, state.settings.exportPadding);
   },
 
   saveAsPng: (selectedOnly: boolean = false) => {
     const state = get() as CanvasStore;
-    exportSelection('png', state.elements, state.selectedIds, state.documentName, selectedOnly);
+    exportSelection('png', state.elements, state.selectedIds, state.documentName, selectedOnly, state.settings.exportPadding);
   },
 
   loadDocument: async (append: boolean = false) => {

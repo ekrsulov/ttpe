@@ -9,6 +9,7 @@ import { Panel } from '../../ui/Panel';
 import { PanelToggle } from '../../ui/PanelToggle';
 import { PanelStyledButton } from '../../ui/PanelStyledButton';
 import { NumberInput } from '../../ui/NumberInput';
+import { SliderControl } from '../../ui/SliderControl';
 import type { PathData, CanvasElement } from '../../types';
 import type { ImportedElement } from '../../utils';
 
@@ -120,6 +121,8 @@ export const FilePanel: React.FC = () => {
   const clearSelection = useCanvasStore(state => state.clearSelection);
   const selectElements = useCanvasStore(state => state.selectElements);
   const setActivePlugin = useCanvasStore(state => state.setActivePlugin);
+  const settings = useCanvasStore(state => state.settings);
+  const updateSettings = useCanvasStore(state => state.updateSettings);
   
   const [appendMode, setAppendMode] = useState(false);
   const [addFrame, setAddFrame] = useState(false);
@@ -510,6 +513,19 @@ export const FilePanel: React.FC = () => {
           style={{ display: 'none' }}
           onChange={handleSVGFileSelected}
         />
+
+        {/* Export Padding Slider */}
+        <Box mt={2}>
+          <SliderControl
+            label="Export Padding:"
+            value={settings.exportPadding}
+            min={0}
+            max={100}
+            step={5}
+            onChange={(value) => updateSettings({ exportPadding: value })}
+            title="Padding in pixels around exported SVG/PNG"
+          />
+        </Box>
 
         {/* Advanced Section - Collapsible */}
         <Box mt={1}>

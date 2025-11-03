@@ -267,6 +267,44 @@ const svgContent = saveAsSvg(elementsToExport);
 - Extract portions of design
 - Create component library
 
+---
+
+#### Export Padding
+
+**Slider**: `exportPadding` (default: `20`, range: `0` to `100`, step: `5`)
+
+Configure the padding (in pixels) added around exported SVG/PNG content.
+
+```typescript
+const padding = settings.exportPadding; // Default: 20
+
+// Apply padding to bounds
+const exportBounds = {
+  minX: bounds.minX - padding,
+  minY: bounds.minY - padding,
+  maxX: bounds.maxX + padding,
+  maxY: bounds.maxY + padding,
+};
+```
+
+**Behavior:**
+
+- Adds whitespace around exported content
+- Applies to both SVG and PNG exports
+- Only applied when exporting all elements (not selected only)
+- Configurable via slider in File Panel
+
+**Use cases:**
+
+- **No padding (0px)**: Tight crop, minimal file size
+- **Small padding (5-10px)**: Subtle breathing room
+- **Medium padding (20-40px)**: Standard presentation
+- **Large padding (50-100px)**: Extra space for presentations/prints
+
+**Note**: When "Selected Only" is enabled, padding is automatically set to 0 for precise exports.
+
+---
+
 ### SVG Output Format
 
 ```xml

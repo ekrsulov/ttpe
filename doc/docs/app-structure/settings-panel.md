@@ -21,6 +21,8 @@ The Settings Panel (`/src/sidebar/panels/SettingsPanel.tsx`) is accessible via t
 - **Developer Tools**: Log level, render count badges, debug overlays (dev mode only)
 - **Minimap**: Toggle minimap visibility (desktop only)
 
+**Note**: Export-related settings (such as Export Padding) are located in the [File Panel](./file-panel.md) for convenient access during export operations.
+
 ## Architecture
 
 ```mermaid

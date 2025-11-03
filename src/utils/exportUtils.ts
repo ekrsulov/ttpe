@@ -309,7 +309,8 @@ export function exportSelection(
   elements: CanvasElement[],
   selectedIds: string[],
   documentName: string,
-  selectedOnly: boolean = false
+  selectedOnly: boolean = false,
+  padding: number = 20
 ): void {
   // Validation
   if (elements.length === 0) {
@@ -321,7 +322,7 @@ export function exportSelection(
   const result = serializePathsForExport(
     elements,
     selectedIds,
-    { selectedOnly, padding: selectedOnly ? 0 : 20 }
+    { selectedOnly, padding: selectedOnly ? 0 : padding }
   );
 
   if (!result) {

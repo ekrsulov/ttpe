@@ -11,6 +11,11 @@ All notable changes to VectorNest will be documented here.
 ## [Unreleased]
 
 ### Added
+- **Export Padding** configurable slider in File Panel
+  - Control padding (0-100px) around exported SVG/PNG content
+  - Default value: 20px
+  - Accessible via slider in File Panel for easy adjustment before export
+  - Only applied when exporting all elements (not selected only)
 - **Scale Stroke With Zoom** setting to control whether stroke widths scale proportionally with zoom level
   - New toggle in Settings Panel
   - Default behavior (disabled) maintains constant visual stroke thickness
