@@ -41,10 +41,25 @@ jobs:
       - name: Build project
         run: npm run build
 
+      - name: Install documentation dependencies
+        run: npm ci
+        working-directory: doc
+
+      - name: Build documentation
+        run: npm run build
+        working-directory: doc
+
+      - name: Prepare deployment directory
+        run: |
+          mkdir -p _site
+          cp -r dist/* _site/
+          mkdir -p _site/docs
+          cp -r doc/build/* _site/docs/
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: _site
 
   deploy:
     needs: build
