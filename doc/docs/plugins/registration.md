@@ -35,18 +35,20 @@ CORE_PLUGINS.forEach((plugin) => {
 // src/plugins/index.tsx
 export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   selectPlugin,
+  panPlugin,
   pencilPlugin,
+  curvesPlugin,
   textPlugin,
   shapePlugin,
+  subpathPlugin,
   transformationPlugin,
   editPlugin,
-  subpathPlugin,
-  curvesPlugin,
+  gridFillPlugin,
   opticalAlignmentPlugin,
   guidelinesPlugin,
   gridPlugin,
-  gridFillPlugin,
   minimapPlugin,
+  duplicateOnDragPlugin,
 ];
 ```
 
@@ -199,7 +201,7 @@ interface PluginDefinition {
   id: string;           // Required
   metadata: {           // Required
     label: string;      // Required
-    icon?: React.ComponentType;
+    icon?: ComponentType<{ size?: number }>;
     cursor?: string;
   };
   // All other fields optional

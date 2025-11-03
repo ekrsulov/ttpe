@@ -37,7 +37,7 @@ interface PluginDefinition<TStore> {
   // Required: Display metadata
   metadata: {
     label: string;           // Human-readable name
-    icon?: React.ComponentType;    // Icon component
+    icon?: ComponentType<{ size?: number }>;    // Icon component
     cursor?: string;         // CSS cursor (e.g., 'crosshair')
   };
   
@@ -72,14 +72,14 @@ interface PluginDefinition<TStore> {
 // Panels and Overlays
 interface PluginUIContribution<TProps = Record<string, unknown>> {
   id: string;                         // Required: Unique identifier
-  component: React.ComponentType<TProps>;   // Required: React component
+  component: ComponentType<TProps>;   // Required: React component
   placement?: 'tool' | 'global';      // Optional: When to show
 }
 
 // Actions (Toolbar buttons)
 interface PluginActionContribution<TProps = Record<string, unknown>> {
   id: string;                         // Required: Unique identifier
-  component: React.ComponentType<TProps>;   // Required: React component
+  component: ComponentType<TProps>;   // Required: React component
   placement: 'top' | 'bottom';        // Required: Toolbar position
 }
 
@@ -200,16 +200,7 @@ export const advancedToolPlugin: PluginDefinition<CanvasStore> = {
     {
       id: 'advanced-action',
       placement: 'bottom',  // 'top' or 'bottom' only
-      component: () => (
-        <ToolbarIconButton
-          icon={AdvancedIcon}
-          label="Advanced Action"
-          onClick={() => {
-            const state = useCanvasStore.getState();
-            state.advancedTool?.performAction();
-          }}
-        />
-      ),
+      component: AdvancedActionButton,
     },
   ],
   
@@ -430,19 +421,25 @@ Toolbar buttons and menu items:
 actions: [
   {
     id: 'my-action',
-    placement: 'bottom-toolbar', // or 'top-toolbar', 'context-menu'
-    label: 'Do Something',
-    icon: MyIcon,
-    shortcut: 'Ctrl+Shift+M',
-    onClick: (context) => {
-      context.store.getState().myTool?.doSomething();
-    },
-    isDisabled: (context) => {
-      const state = context.store.getState();
-      return !state.myTool?.canDoSomething;
-    },
+    placement: 'top', // 'top' or 'bottom'
+    component: MyActionButton,
   },
 ],
+
+// MyActionButton.tsx
+const MyActionButton: React.FC = () => {
+  const doSomething = useCanvasStore(state => state.myTool?.doSomething);
+  const canDoSomething = useCanvasStore(state => state.myTool?.canDoSomething);
+  
+  return (
+    <IconButton
+      aria-label="Do Something"
+      icon={<MyIcon />}
+      onClick={doSomething}
+      isDisabled={!canDoSomething}
+    />
+  );
+};
 ```
 
 ## Keyboard Shortcuts
