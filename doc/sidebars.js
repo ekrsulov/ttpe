@@ -122,6 +122,23 @@ const sidebars = {
     },
     {
       type: 'category',
+      label: 'TypeScript Types',
+      collapsed: false,
+      items: [
+        'types/index',
+        'types/canvas-elements',
+        'types/geometry',
+        'types/viewport',
+        'types/plugin-definition',
+        'types/plugin-context',
+        'types/plugin-contributions',
+        'types/selection',
+        'types/curves',
+        'types/shortcuts',
+      ],
+    },
+    {
+      type: 'category',
       label: 'Utilities',
       collapsed: false,
       items: [
