@@ -19,6 +19,96 @@ TTPE is a full-featured SVG vector graphics editor that runs entirely in the bro
 - **Modern Stack**: React 19, TypeScript, Zustand state management, Chakra UI
 - **Comprehensive Testing**: E2E tests with Playwright ensuring reliability
 
+## Documentation Structure
+
+This documentation is organized into the following main sections:
+
+### Application Structure
+Learn about the overall application layout and key components:
+- **Overview**: High-level application architecture
+- **Canvas**: The main drawing surface and rendering system
+- **Action Bars**: Top and bottom toolbars with controls
+- **Sidebar**: Plugin panels and configuration options
+- **File Panel**: Document management and import/export
+- **Settings Panel**: Application preferences and configuration
+
+### Architecture
+Understand the system design and technical foundations:
+- **Overview**: Core architectural principles and design decisions
+- **Diagrams**: Visual representations of system interactions and data flow
+
+### Plugin System
+Master the extensible plugin architecture:
+- **Overview**: Plugin concepts and registration process
+- **Lifecycle**: Plugin initialization, activation, and cleanup
+- **Registration**: How plugins are discovered and loaded
+- **Configuration**: Plugin settings and customization
+- **Plugin Catalog**: Complete reference for all built-in plugins
+
+### Event Bus
+Learn about the communication system that connects components:
+- **Overview**: Event-driven architecture principles
+- **Topics**: Available event types and payload structures
+- **Patterns**: Best practices for event publishing and subscription
+
+### Public API
+Reference documentation for plugin development:
+- **Create API**: The plugin interface for extending TTPE
+- **Plugin Manager**: Runtime plugin management and coordination
+- **Canvas Store**: State management and data persistence
+
+### Core Features
+Explore TTPE's main editing capabilities:
+- **Selection**: Element selection and manipulation
+- **Transforms**: Scaling, rotation, and positioning tools
+- **Ordering**: Z-index management and layering
+- **Alignment**: Precise element positioning
+- **Distribution**: Spacing and layout tools
+- **Groups**: Element grouping and hierarchy
+- **Undo/Redo**: History management and state restoration
+- **Persistence**: Data saving and loading
+- **Mobile**: Touch and mobile device support
+
+### UI & Theming
+Customize the appearance and user experience:
+- **Components**: Reusable UI components and patterns
+- **Theming**: Color schemes and visual customization
+- **Accessibility**: Inclusive design and keyboard navigation
+- **Feedback Overlay**: User notifications and status messages
+
+### TypeScript Types
+Complete type definitions for development:
+- **Index**: Type system overview and conventions
+- **Canvas Elements**: Element data structures and properties
+- **Geometry**: Points, paths, and mathematical types
+- **Viewport**: Camera and coordinate transformation types
+- **Plugin Definition**: Plugin registration and metadata types
+- **Plugin Context**: Runtime context and helper types
+- **Plugin Contributions**: UI and canvas layer contribution types
+- **Selection**: Selection state and manipulation types
+- **Curves**: Interactive curve creation types
+- **Shortcuts**: Keyboard shortcut system types
+
+### Utilities
+Helper functions and development tools:
+- **Hooks**: Custom React hooks for common patterns
+
+### Operations
+Build, test, and deployment workflows:
+- **Operations**: Development and production workflows
+- **Testing**: Test execution and quality assurance
+- **Test Results**: Automated test evidence and reports
+
+### Contributing
+Guidelines for contributors and maintainers:
+- **Style Guide**: Code formatting and documentation standards
+- **Code Standards**: Development best practices and conventions
+
+### Additional Resources
+- **FAQ**: Frequently asked questions
+- **Troubleshooting**: Common issues and solutions
+- **Changelog**: Version history and release notes
+
 ## Quick Links
 
 ### For Developers
