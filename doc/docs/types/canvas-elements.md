@@ -1,6 +1,6 @@
 # Canvas Elements
 
-Canvas elements are the fundamental building blocks of the Vectornest canvas. Every shape, path, or group on the canvas is represented by a strongly-typed element.
+Canvas elements are the fundamental building blocks of the VectorNest canvas. Every shape, path, or group on the canvas is represented by a strongly-typed element.
 
 ## Element Type Hierarchy
 

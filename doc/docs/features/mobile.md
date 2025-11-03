@@ -6,7 +6,7 @@ sidebar_label: Mobile
 
 # Mobile Features
 
-Vectornest provides a comprehensive set of mobile-specific features and adaptations to ensure a smooth touch-based editing experience on smartphones and tablets.
+VectorNest provides a comprehensive set of mobile-specific features and adaptations to ensure a smooth touch-based editing experience on smartphones and tablets.
 
 ## Overview
 

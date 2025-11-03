@@ -6,7 +6,7 @@ sidebar_label: Overview
 
 # Event Bus Overview
 
-The **Canvas Event Bus** is a type-safe publish/subscribe (pub/sub) system that serves as the communication backbone of Vectornest. It decouples plugins from direct canvas manipulation and enables loose coupling between components, allowing them to communicate without explicit dependencies.
+The **Canvas Event Bus** is a type-safe publish/subscribe (pub/sub) system that serves as the communication backbone of VectorNest. It decouples plugins from direct canvas manipulation and enables loose coupling between components, allowing them to communicate without explicit dependencies.
 
 ## Why an Event Bus?
 
@@ -112,7 +112,7 @@ This ensures:
 
 ## Event Types
 
-Vectornest's Event Bus handles five primary event types:
+VectorNest's Event Bus handles five primary event types:
 
 | Event Type | Trigger | Use Cases |
 |------------|---------|-----------|

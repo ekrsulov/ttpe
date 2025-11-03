@@ -8,13 +8,13 @@ sidebar_label: FAQ
 
 ## General
 
-### What is Vectornest?
+### What is VectorNest?
 
-Vectornest (The TypeScript Path Editor) is a web-based vector graphics editor built with React, TypeScript, and a plugin architecture.
+VectorNest (The TypeScript Path Editor) is a web-based vector graphics editor built with React, TypeScript, and a plugin architecture.
 
 ### Is it production-ready?
 
-Vectornest is under active development (v0.0.0). APIs may change before 1.0.
+VectorNest is under active development (v0.0.0). APIs may change before 1.0.
 
 ### Can I use it offline?
 
@@ -42,7 +42,7 @@ Simpler API, less boilerplate, better TypeScript support.
 
 ### Can I add a backend?
 
-Vectornest is client-only, but you can add API calls in plugin handlers.
+VectorNest is client-only, but you can add API calls in plugin handlers.
 
 ### How do I extend the canvas?
 

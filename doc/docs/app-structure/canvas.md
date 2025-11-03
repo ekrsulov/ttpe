@@ -6,7 +6,7 @@ sidebar_label: Canvas
 
 # Canvas
 
-The **Canvas** is the core rendering and interaction surface of Vectornest. It's an infinite 2D workspace where users create, edit, and manipulate vector graphics using an **SVG-based rendering system** with React components.
+The **Canvas** is the core rendering and interaction surface of VectorNest. It's an infinite 2D workspace where users create, edit, and manipulate vector graphics using an **SVG-based rendering system** with React components.
 
 ## Overview
 
@@ -54,7 +54,7 @@ graph TB
 
 ## Canvas Coordinate Systems
 
-Vectornest uses **multiple coordinate systems** for different purposes:
+VectorNest uses **multiple coordinate systems** for different purposes:
 
 ### 1. **Screen Coordinates** (Viewport Space)
 - Origin: Top-left corner of the browser window
@@ -258,7 +258,7 @@ const addPointMode = useCanvasStore(state => state.addPointMode);
 
 ## Performance Optimizations
 
-Vectornest implements several optimizations for smooth rendering:
+VectorNest implements several optimizations for smooth rendering:
 
 ### 1. **React SVG Reconciliation**
 React efficiently diffs and updates only changed SVG elements (not full re-renders).

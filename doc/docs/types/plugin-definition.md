@@ -1,6 +1,6 @@
 # Plugin Definition
 
-Plugin definitions describe the complete structure and behavior of a Vectornest plugin, including metadata, handlers, UI contributions, and state management.
+Plugin definitions describe the complete structure and behavior of a VectorNest plugin, including metadata, handlers, UI contributions, and state management.
 
 ## Core Plugin Interface
 

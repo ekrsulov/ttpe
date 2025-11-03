@@ -6,7 +6,7 @@ sidebar_label: Accessibility
 
 # Accessibility
 
-Vectornest follows WCAG 2.1 AA guidelines.
+VectorNest follows WCAG 2.1 AA guidelines.
 
 ## Keyboard Navigation
 

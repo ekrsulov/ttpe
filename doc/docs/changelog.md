@@ -6,7 +6,7 @@ sidebar_label: Changelog
 
 # Changelog
 
-All notable changes to Vectornest will be documented here.
+All notable changes to VectorNest will be documented here.
 
 ## [Unreleased]
 

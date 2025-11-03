@@ -15,9 +15,9 @@ export default function Home() {
       padding: '2rem',
       textAlign: 'center'
     }}>
-      <img src="./img/logo.svg" alt="Vectornest Logo" style={{ width: '400px', marginBottom: '2rem' }} />
+      <img src="./img/logo.svg" alt="VectorNest Logo" style={{ width: '400px', marginBottom: '2rem' }} />
       <h1 style={{ fontSize: '3rem', marginBottom: '1rem' }}>
-        Vectornest Documentation
+        VectorNest Documentation
       </h1>
       <p style={{ fontSize: '1.2rem', marginBottom: '2rem', maxWidth: '600px' }}>
         Welcome to the comprehensive technical documentation for 

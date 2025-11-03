@@ -10,7 +10,7 @@ The **Editor Panel** provides universal stroke/fill/opacity controls, independen
 
 ## Overview
 
-The Editor Panel (`/src/sidebar/panels/EditorPanel.tsx`) serves as the **universal property editor** for Vectornest:
+The Editor Panel (`/src/sidebar/panels/EditorPanel.tsx`) serves as the **universal property editor** for VectorNest:
 
 - **Transversal panel**: Available in all editing modes
 - **Dual operation modes**: Creation mode (no selection) and editing mode (selection active)

@@ -6,7 +6,7 @@ sidebar_label: Testing
 
 # Testing
 
-Vectornest uses Playwright for end-to-end testing.
+VectorNest uses Playwright for end-to-end testing.
 
 ## Test Structure
 

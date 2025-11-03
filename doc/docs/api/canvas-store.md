@@ -6,11 +6,11 @@ sidebar_label: Canvas Store
 
 # Canvas Store API
 
-The **Canvas Store** is Vectornest's centralized state management system built on Zustand. It serves as the single source of truth for all application state, including canvas elements, viewport settings, selection, UI state, and plugin-specific data.
+The **Canvas Store** is VectorNest's centralized state management system built on Zustand. It serves as the single source of truth for all application state, including canvas elements, viewport settings, selection, UI state, and plugin-specific data.
 
 ## Why Zustand?
 
-Vectornest uses Zustand instead of Redux or Context API because it provides:
+VectorNest uses Zustand instead of Redux or Context API because it provides:
 
 1. **Minimal Boilerplate**: No actions, reducers, or complex setup
 2. **Performance**: Fine-grained subscriptions prevent unnecessary re-renders
@@ -130,7 +130,7 @@ Each slice is self-contained and can be developed independently, making the code
 
 ## Core Architecture
 
-Vectornest uses Zustand for state management with the following key principles:
+VectorNest uses Zustand for state management with the following key principles:
 
 - **Slice-based**: Each feature area has its own slice with dedicated actions
 - **Immutable updates**: All state changes create new state objects

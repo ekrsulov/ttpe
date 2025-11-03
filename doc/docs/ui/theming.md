@@ -6,7 +6,7 @@ sidebar_label: Theming
 
 # Theming
 
-Vectornest uses Chakra UI with custom theme tokens.
+VectorNest uses Chakra UI with custom theme tokens.
 
 ## Color Tokens
 

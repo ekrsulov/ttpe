@@ -6,7 +6,7 @@ sidebar_label: Components
 
 # UI Components
 
-Vectornest provides a comprehensive library of **reusable React components** built on top of **Chakra UI**, providing consistent styling, accessibility, and responsive behavior across the application. These components range from low-level primitives (buttons, inputs) to high-level composites (panels, toolbars) designed specifically for canvas editing workflows.
+VectorNest provides a comprehensive library of **reusable React components** built on top of **Chakra UI**, providing consistent styling, accessibility, and responsive behavior across the application. These components range from low-level primitives (buttons, inputs) to high-level composites (panels, toolbars) designed specifically for canvas editing workflows.
 
 All components follow Chakra UI's design system, support light/dark themes automatically, and are fully accessible with keyboard navigation and ARIA attributes.
 
@@ -1083,7 +1083,7 @@ export default CustomStrokePanel;
 
 ## Accessibility
 
-All Vectornest UI components follow accessibility best practices:
+All VectorNest UI components follow accessibility best practices:
 
 ### Keyboard Navigation
 
@@ -1183,7 +1183,7 @@ src/ui/
 ## Related Documentation
 
 - [Chakra UI Documentation](https://chakra-ui.com/docs/getting-started) - Base component library
-- [Lucide Icons](https://lucide.dev/icons/) - Icon library used throughout Vectornest
+- [Lucide Icons](https://lucide.dev/icons/) - Icon library used throughout VectorNest
 - [Plugins Overview](../plugins/overview.md) - How plugins use UI components
 - [Architecture Overview](../architecture/overview.md) - Application structure
 - [Canvas Store API](../api/canvas-store) - State management integration

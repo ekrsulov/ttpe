@@ -12,7 +12,7 @@ Groups are essential for managing large projects with dozens or hundreds of elem
 
 ## Overview
 
-A **group** is a special container element that holds references to child elements via their IDs. Unlike visual grouping systems that merely select multiple elements, Vectornest groups establish true parent-child relationships with the following characteristics:
+A **group** is a special container element that holds references to child elements via their IDs. Unlike visual grouping systems that merely select multiple elements, VectorNest groups establish true parent-child relationships with the following characteristics:
 
 **Key characteristics:**
 

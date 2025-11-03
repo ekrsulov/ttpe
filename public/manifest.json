@@ -1,7 +1,7 @@
 {
-  "name": "Vectornest",
-  "short_name": "Vectornest",
-  "description": "Touch-optimized SVG path editor",
+  "name": "VectorNest",
+  "short_name": "VectorNest",
+  "description": "Vector editor",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

@@ -1,10 +1,10 @@
-# Vectornest
+# VectorNest
 
 A modern, extensible web-based vector graphics editor built with React, TypeScript, and a sophisticated plugin architecture.
 
 ## Interface Overview
 
-Vectornest is an SVG-based vector graphics editor presented in a full-screen layout: a central canvas for editing, top and bottom action bars, a collapsible/resizable sidebar, and a virtual **Shift** button for shortcuts on touch devices. The Canvas coordinates interaction layers (selection, node and subpath editing, shape preview, guides, grid) and supports keyboard shortcuts, drag selection, transforms, shape creation, and a smoothing brush.
+VectorNest is an SVG-based vector graphics editor presented in a full-screen layout: a central canvas for editing, top and bottom action bars, a collapsible/resizable sidebar, and a virtual **Shift** button for shortcuts on touch devices. The Canvas coordinates interaction layers (selection, node and subpath editing, shape preview, guides, grid) and supports keyboard shortcuts, drag selection, transforms, shape creation, and a smoothing brush.
 
 ## Architecture & Global State
 
@@ -91,7 +91,7 @@ The viewport slice manages zoom (with limits, re-centering around the focus poin
 
 ## In Short
 
-Vectornest combines a powerful SVG canvas, a modular slice-based architecture with persistence and history, professional-grade creation/editing tools (including optical alignment and boolean ops), organization utilities, and a robust import/export flow—optimized for both desktop and touch.
+VectorNest combines a powerful SVG canvas, a modular slice-based architecture with persistence and history, professional-grade creation/editing tools (including optical alignment and boolean ops), organization utilities, and a robust import/export flow—optimized for both desktop and touch.
 
 ## Getting Started
 

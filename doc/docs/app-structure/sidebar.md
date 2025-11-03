@@ -6,7 +6,7 @@ sidebar_label: Sidebar
 
 # Sidebar
 
-The **Sidebar** is the main **panel container** in Vectornest, providing contextual controls and settings based on the active plugin/mode. It displays different panels (Select, Editor, Arrange, File, Settings) and can be **pinned**, **resized**, or **hidden** based on user preference and screen size.
+The **Sidebar** is the main **panel container** in VectorNest, providing contextual controls and settings based on the active plugin/mode. It displays different panels (Select, Editor, Arrange, File, Settings) and can be **pinned**, **resized**, or **hidden** based on user preference and screen size.
 
 ## Overview
 

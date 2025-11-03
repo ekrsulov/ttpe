@@ -6,7 +6,7 @@ const darkCodeTheme = require('prism-react-renderer').themes.dracula;
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'Vectornest Documentation',
+  title: 'VectorNest Documentation',
   tagline: 'Web Vector Editor - Technical Documentation',
   favicon: 'img/logo.svg',
 
@@ -53,9 +53,9 @@ const config = {
       // Social card image
       image: 'img/social-card.png',
       navbar: {
-        title: 'Vectornest',
+        title: 'VectorNest',
         logo: {
-          alt: 'Vectornest Logo',
+          alt: 'VectorNest Logo',
           src: 'img/logo.svg',
         },
         items: [
@@ -127,7 +127,7 @@ const config = {
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} Vectornest Project. Built with Docusaurus.`,
+        copyright: `Copyright © ${new Date().getFullYear()} VectorNest Project. Built with Docusaurus.`,
       },
       prism: {
         theme: lightCodeTheme,

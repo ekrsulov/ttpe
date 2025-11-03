@@ -6,7 +6,7 @@ sidebar_label: Action Bars
 
 # Action Bars
 
-Vectornest features two **floating action bars** that provide quick access to tools, actions, and canvas operations. These bars are **non-intrusive overlays** positioned at the top and bottom of the canvas, adapting to sidebar state and screen size.
+VectorNest features two **floating action bars** that provide quick access to tools, actions, and canvas operations. These bars are **non-intrusive overlays** positioned at the top and bottom of the canvas, adapting to sidebar state and screen size.
 
 ## Overview
 

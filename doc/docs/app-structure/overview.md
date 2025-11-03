@@ -6,7 +6,7 @@ sidebar_label: Overview
 
 # Application Structure Overview
 
-Vectornest is a **React-based vector graphics editor** with a modular architecture. This page provides a visual overview of how the major UI components are organized and interact.
+VectorNest is a **React-based vector graphics editor** with a modular architecture. This page provides a visual overview of how the major UI components are organized and interact.
 
 ## Visual Layout
 
@@ -14,7 +14,7 @@ The application consists of several key areas that work together to provide the 
 
 ```mermaid
 graph TB
-    subgraph App["Vectornest Application Window"]
+    subgraph App["VectorNest Application Window"]
         direction TB
         
         TopBar[Top Action Bar<br/>Tool Selection]
@@ -231,7 +231,7 @@ The application UI can be divided into several functional zones:
 
 ## Responsive Breakpoints
 
-Vectornest uses **Chakra UI breakpoints** for responsive design:
+VectorNest uses **Chakra UI breakpoints** for responsive design:
 
 ```typescript
 breakpoints: {

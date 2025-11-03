@@ -6,7 +6,7 @@ sidebar_label: Overview
 
 # Architecture Overview
 
-Vectornest is architected as a modular, extensible vector graphics editor. This document provides a high-level view of the system's design, key abstractions, and architectural decisions.
+VectorNest is architected as a modular, extensible vector graphics editor. This document provides a high-level view of the system's design, key abstractions, and architectural decisions.
 
 ## Design Goals
 
@@ -46,19 +46,19 @@ Features should be testable in isolation and as integrated systems.
 graph TB
     User["👤 Designer/Artist<br/><small>Creates and edits<br/>vector graphics</small>"]
     
-    Vectornest["<b>Vectornest Application</b><br/><small>Web-based vector editor</small>"]
+    VectorNest["<b>VectorNest Application</b><br/><small>Web-based vector editor</small>"]
     
     Browser["🌐 Web Browser<br/><small>Chrome, Firefox, Safari</small>"]
     Storage["💾 Local Storage<br/><small>Persists canvas state</small>"]
     WASM["⚡ WASM Modules<br/><small>Potrace for text-to-curves</small>"]
     
-    User -->|"Interacts with"| Vectornest
-    Vectornest -->|"Runs in"| Browser
-    Vectornest -->|"Persists to/loads from"| Storage
-    Vectornest -->|"Uses for heavy computation"| WASM
+    User -->|"Interacts with"| VectorNest
+    VectorNest -->|"Runs in"| Browser
+    VectorNest -->|"Persists to/loads from"| Storage
+    VectorNest -->|"Uses for heavy computation"| WASM
     
     style User fill:#08427b,stroke:#052e56,color:#fff
-    style Vectornest fill:#1168bd,stroke:#0b4884,color:#fff
+    style VectorNest fill:#1168bd,stroke:#0b4884,color:#fff
     style Browser fill:#999,stroke:#666,color:#fff
     style Storage fill:#999,stroke:#666,color:#fff
     style WASM fill:#999,stroke:#666,color:#fff
@@ -520,7 +520,7 @@ function migrateState(state: any): CanvasStore {
 
 | Term | Definition |
 |------|------------|
-| **Plugin** | Self-contained module extending Vectornest functionality |
+| **Plugin** | Self-contained module extending VectorNest functionality |
 | **Slice** | Modular piece of Zustand store state |
 | **Event Bus** | Pub/sub system for canvas interactions |
 | **Canvas Service** | Background service independent of active tool |

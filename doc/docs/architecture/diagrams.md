@@ -6,7 +6,7 @@ sidebar_label: Diagrams
 
 # Architecture Diagrams
 
-This page provides comprehensive Mermaid diagrams visualizing Vectornest's architecture, data flows, and subsystem interactions.
+This page provides comprehensive Mermaid diagrams visualizing VectorNest's architecture, data flows, and subsystem interactions.
 
 ## System Context Diagram
 
@@ -17,8 +17,8 @@ graph TB
         Browser[🌐 Web Browser]
     end
     
-    subgraph "Vectornest Application"
-        App[Vectornest Editor]
+    subgraph "VectorNest Application"
+        App[VectorNest Editor]
     end
     
     subgraph "External Systems"
@@ -609,7 +609,7 @@ graph LR
 
 These diagrams illustrate:
 
-1. **System Context**: Vectornest's external dependencies
+1. **System Context**: VectorNest's external dependencies
 2. **Containers**: Major architectural components
 3. **Components**: Internal module structure
 4. **Sequences**: Time-ordered interactions
