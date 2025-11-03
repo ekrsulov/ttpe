@@ -61,6 +61,7 @@ const sidebars = {
             'plugins/catalog/transformation',
             'plugins/catalog/edit',
             'plugins/catalog/subpath',
+            'plugins/catalog/path',
             'plugins/catalog/curves',
             'plugins/catalog/optical-alignment',
             'plugins/catalog/guidelines',
