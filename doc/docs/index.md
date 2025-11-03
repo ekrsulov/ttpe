@@ -29,6 +29,7 @@ Learn about the overall application layout and key components:
 - **Canvas**: The main drawing surface and rendering system
 - **Action Bars**: Top and bottom toolbars with controls
 - **Sidebar**: Plugin panels and configuration options
+- **Editor Panel**: Provides universal stroke/fill/opacity controls, independent of the active mode
 - **File Panel**: Document management and import/export
 - **Settings Panel**: Application preferences and configuration
 
@@ -59,16 +60,15 @@ Reference documentation for plugin development:
 
 ### Core Features
 Explore TTPE's main editing capabilities:
-- **Selection**: Element selection and manipulation
-- **Transforms**: Scaling, rotation, and positioning tools
-- **Ordering**: Z-index management and layering
 - **Alignment**: Precise element positioning
 - **Distribution**: Spacing and layout tools
-- **Match**: Homogenize dimensions by matching width or height
 - **Groups**: Element grouping and hierarchy
-- **Undo/Redo**: History management and state restoration
-- **Persistence**: Data saving and loading
+- **Match**: Homogenize dimensions by matching width or height
 - **Mobile**: Touch and mobile device support
+- **Ordering**: Z-index management and layering
+- **Persistence**: Data saving and loading
+- **Selection**: Element selection and manipulation
+- **Undo/Redo**: History management and state restoration
 
 ### UI & Theming
 Customize the appearance and user experience:
@@ -81,14 +81,14 @@ Customize the appearance and user experience:
 Complete type definitions for development:
 - **Index**: Type system overview and conventions
 - **Canvas Elements**: Element data structures and properties
+- **Curves**: Interactive curve creation types
 - **Geometry**: Points, paths, and mathematical types
-- **Viewport**: Camera and coordinate transformation types
-- **Plugin Definition**: Plugin registration and metadata types
 - **Plugin Context**: Runtime context and helper types
 - **Plugin Contributions**: UI and canvas layer contribution types
+- **Plugin Definition**: Plugin registration and metadata types
 - **Selection**: Selection state and manipulation types
-- **Curves**: Interactive curve creation types
 - **Shortcuts**: Keyboard shortcut system types
+- **Viewport**: Camera and coordinate transformation types
 
 ### Utilities
 Helper functions and development tools:
