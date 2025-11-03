@@ -23,6 +23,7 @@ export const useCanvasKeyboardControls = () => {
     curveState,
     finishCurve,
     cancelCurve,
+    viewport,
   } = useCanvasStore();
 
   // Get curves methods when in curves mode
@@ -92,22 +93,26 @@ export const useCanvasKeyboardControls = () => {
       // Only handle if not typing in an input
       if (isTextFieldFocused()) return;
 
-      const delta = e.shiftKey ? 10 : 1;
+      // Calculate zoom-adjusted movement delta
+      // For zoom > 1, divide the movement to get finer precision
+      const baseDelta = e.shiftKey ? 10 : 1;
+      const zoomAdjustedDelta = viewport.zoom > 1 ? baseDelta / viewport.zoom : baseDelta;
+      
       let deltaX = 0;
       let deltaY = 0;
 
       switch (e.key) {
         case 'ArrowUp':
-          deltaY = -delta;
+          deltaY = -zoomAdjustedDelta;
           break;
         case 'ArrowDown':
-          deltaY = delta;
+          deltaY = zoomAdjustedDelta;
           break;
         case 'ArrowLeft':
-          deltaX = -delta;
+          deltaX = -zoomAdjustedDelta;
           break;
         case 'ArrowRight':
-          deltaX = delta;
+          deltaX = zoomAdjustedDelta;
           break;
       }
 
@@ -144,7 +149,7 @@ export const useCanvasKeyboardControls = () => {
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [selectedCommands?.length, selectedSubpaths?.length, selectedIds.length, settings.keyboardMovementPrecision, moveSelectedPoints, moveSelectedSubpaths, moveSelectedElements, deleteSelectedCommands, deleteSelectedSubpaths, deleteSelectedElements, performDeletion]);
+  }, [selectedCommands?.length, selectedSubpaths?.length, selectedIds.length, settings.keyboardMovementPrecision, viewport.zoom, moveSelectedPoints, moveSelectedSubpaths, moveSelectedElements, deleteSelectedCommands, deleteSelectedSubpaths, deleteSelectedElements, performDeletion]);
 
   // Handle curves mode keyboard shortcuts
   useEffect(() => {
