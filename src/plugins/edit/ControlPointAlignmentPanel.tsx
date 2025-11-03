@@ -35,6 +35,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
   const selectedCommands = useCanvasStore(state => state.selectedCommands);
   const activePlugin = useCanvasStore(state => state.activePlugin);
   const allElements = useCanvasStore(state => state.elements);
+  const settings = useCanvasStore(state => state.settings);
   
   // Filter elements in useMemo to avoid recalculation and infinite loops
   const elements = useMemo(() => {
@@ -347,8 +348,8 @@ export const ControlPointAlignmentPanel: React.FC = () => {
     if (!pointToUpdate) return;
 
     // Update the point position
-    const newX = axis === 'x' ? formatToPrecision(value, 2) : pointToUpdate.x;
-    const newY = axis === 'y' ? formatToPrecision(value, 2) : pointToUpdate.y;
+    const newX = axis === 'x' ? formatToPrecision(value, settings.keyboardMovementPrecision) : pointToUpdate.x;
+    const newY = axis === 'y' ? formatToPrecision(value, settings.keyboardMovementPrecision) : pointToUpdate.y;
 
     pointToUpdate.x = newX;
     pointToUpdate.y = newY;
@@ -363,7 +364,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
         subPaths: newSubPaths
       }
     });
-  }, [singlePointInfo, selectedCommands, elements, updateElement]);
+  }, [singlePointInfo, selectedCommands, elements, settings.keyboardMovementPrecision, updateElement]);
 
   // Early return AFTER all hooks: Only render when in edit mode and exactly one point is selected
   if (activePlugin !== 'edit' || !selectedCommands || selectedCommands.length !== 1) {
@@ -445,14 +446,14 @@ export const ControlPointAlignmentPanel: React.FC = () => {
         <Collapse in={showDetails} animateOpacity>
           <VStack spacing={0} align="stretch" fontSize="11px" color="text.muted" lineHeight="1.4">
             <Text><Text as="strong" color="text.primary">Point Index:</Text> {singlePointInfo.point.pointIndex}</Text>
-            <Text><Text as="strong" color="text.primary">Anchor:</Text> ({singlePointInfo.anchor1?.x.toFixed(2) || '0'}, {singlePointInfo.anchor1?.y.toFixed(2) || '0'})</Text>
+            <Text><Text as="strong" color="text.primary">Anchor:</Text> ({formatToPrecision(singlePointInfo.anchor1?.x || 0, settings.keyboardMovementPrecision)}, {formatToPrecision(singlePointInfo.anchor1?.y || 0, settings.keyboardMovementPrecision)})</Text>
             <Text><Text as="strong" color="text.primary">Direction:</Text> {singlePointInfo.angle1?.toFixed(1) || '0'}°</Text>
-            <Text><Text as="strong" color="text.primary">Size:</Text> {singlePointInfo.mag1?.toFixed(2) || '0'}</Text>
+            <Text><Text as="strong" color="text.primary">Size:</Text> {formatToPrecision(singlePointInfo.mag1 || 0, settings.keyboardMovementPrecision)}</Text>
             <Text><Text as="strong" color="text.primary">Alignment:</Text> {singlePointInfo.info?.type || 'independent'}</Text>
             {singlePointInfo.pairedPoint && (
               <>
-                <Text><Text as="strong" color="text.primary">Paired Point:</Text> ({singlePointInfo.pairedPoint.x.toFixed(2)}, {singlePointInfo.pairedPoint.y.toFixed(2)}) at command {singlePointInfo.pairedInfo?.commandIndex}, point {singlePointInfo.pairedInfo?.pointIndex}</Text>
-                <Text><Text as="strong" color="text.primary">Paired Anchor:</Text> ({singlePointInfo.anchor2?.x.toFixed(2)}, {singlePointInfo.anchor2?.y.toFixed(2)})</Text>
+                <Text><Text as="strong" color="text.primary">Paired Point:</Text> ({formatToPrecision(singlePointInfo.pairedPoint.x, settings.keyboardMovementPrecision)}, {formatToPrecision(singlePointInfo.pairedPoint.y, settings.keyboardMovementPrecision)}) at command {singlePointInfo.pairedInfo?.commandIndex}, point {singlePointInfo.pairedInfo?.pointIndex}</Text>
+                <Text><Text as="strong" color="text.primary">Paired Anchor:</Text> ({formatToPrecision(singlePointInfo.anchor2?.x || 0, settings.keyboardMovementPrecision)}, {formatToPrecision(singlePointInfo.anchor2?.y || 0, settings.keyboardMovementPrecision)})</Text>
                 <TableContainer>
                   <Table size="sm" fontSize="12px" mt={2}>
                     <Thead>
@@ -470,8 +471,8 @@ export const ControlPointAlignmentPanel: React.FC = () => {
                       </Tr>
                       <Tr>
                         <Td fontSize="12px" p={1} borderColor="border.panel">Size</Td>
-                        <Td fontSize="12px" p={1} borderColor="border.panel">{singlePointInfo.mag1?.toFixed(2) || '0'}</Td>
-                        <Td fontSize="12px" p={1} borderColor="border.panel">{singlePointInfo.mag2?.toFixed(2)}</Td>
+                        <Td fontSize="12px" p={1} borderColor="border.panel">{formatToPrecision(singlePointInfo.mag1 || 0, settings.keyboardMovementPrecision)}</Td>
+                        <Td fontSize="12px" p={1} borderColor="border.panel">{formatToPrecision(singlePointInfo.mag2 || 0, settings.keyboardMovementPrecision)}</Td>
                       </Tr>
                     </Tbody>
                   </Table>
@@ -500,14 +501,14 @@ export const ControlPointAlignmentPanel: React.FC = () => {
 
         {renderAlignmentButtons()}
       
-      {/* Always visible Position controls */}
+            {/* Always visible Position controls */}
       {singlePointInfo && (
         <VStack spacing={0} align="stretch" mb={1}>
           <HStack spacing={2}>
             <Box flex={1}>
               <NumberInput
                 label="X"
-                value={singlePointInfo.point.x}
+                value={formatToPrecision(singlePointInfo.point.x, settings.keyboardMovementPrecision)}
                 onChange={(value) => handlePositionChange('x', value)}
                 step={0.1}
                 labelWidth="20px"
@@ -517,7 +518,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
             <Box flex={1}>
               <NumberInput
                 label="Y"
-                value={singlePointInfo.point.y}
+                value={formatToPrecision(singlePointInfo.point.y, settings.keyboardMovementPrecision)}
                 onChange={(value) => handlePositionChange('y', value)}
                 step={0.1}
                 labelWidth="20px"

@@ -35,7 +35,7 @@ export type Command =
 export type SubPath = Command[];
 
 // Configurable decimal precision for path coordinates
-export const PATH_DECIMAL_PRECISION = 2;
+export const PATH_DECIMAL_PRECISION = 4;
 
 export interface PathData {
   subPaths: SubPath[]; // Structured representation of SVG path commands
