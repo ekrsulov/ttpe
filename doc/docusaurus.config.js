@@ -11,9 +11,9 @@ const config = {
   favicon: 'img/favicon.ico',
 
   // Set the production url of your site here
-  url: 'https://your-docusaurus-site.example.com',
+  url: 'https://ekrsulov.github.io',
   // Set the /<baseUrl>/ pathname under which your site is served
-  baseUrl: '/',
+  baseUrl: '/docs/',
 
   // GitHub pages deployment config (adjust as needed)
   organizationName: 'ekrsulov',
