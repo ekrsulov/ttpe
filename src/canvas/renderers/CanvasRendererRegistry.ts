@@ -18,6 +18,7 @@ export interface CanvasElementEventHandlers {
 export interface CanvasRenderContext {
   viewport: Viewport;
   activePlugin: string | null;
+  scaleStrokeWithZoom: boolean;
   isElementHidden?: (elementId: string) => boolean;
   isElementLocked?: (elementId: string) => boolean;
   isElementSelected?: (elementId: string) => boolean;

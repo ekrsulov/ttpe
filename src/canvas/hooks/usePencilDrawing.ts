@@ -9,6 +9,7 @@ export interface UsePencilDrawingParams {
   currentMode: string;
   pencil: PencilPluginSlice['pencil'];
   viewportZoom: number;
+  scaleStrokeWithZoom: boolean;
   screenToCanvas: (screenX: number, screenY: number) => Point;
   emitPointerEvent: (
     type: 'pointerdown' | 'pointermove' | 'pointerup',
@@ -38,6 +39,7 @@ export function usePencilDrawing(
     currentMode,
     pencil,
     viewportZoom,
+    scaleStrokeWithZoom,
     screenToCanvas,
     emitPointerEvent,
     startPath,
@@ -71,6 +73,7 @@ export function usePencilDrawing(
       activePlugin: currentMode,
       pencil,
       viewportZoom,
+      scaleStrokeWithZoom,
       screenToCanvas,
       emitPointerEvent,
       startPath,
@@ -83,6 +86,7 @@ export function usePencilDrawing(
     currentMode,
     pencil,
     viewportZoom,
+    scaleStrokeWithZoom,
     screenToCanvas,
     emitPointerEvent,
     startPath,

@@ -11,6 +11,11 @@ All notable changes to VectorNest will be documented here.
 ## [Unreleased]
 
 ### Added
+- **Scale Stroke With Zoom** setting to control whether stroke widths scale proportionally with zoom level
+  - New toggle in Settings Panel
+  - Default behavior (disabled) maintains constant visual stroke thickness
+  - When enabled, strokes scale with zoom for accurate preview
+  - Affects both rendered elements and pencil drawing preview
 - Comprehensive documentation site with Docusaurus
 - Plugin system with 13+ core plugins
 - Event bus for decoupled communication

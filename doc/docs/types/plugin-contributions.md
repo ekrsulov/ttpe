@@ -454,11 +454,15 @@ Canvas layers render in canvas coordinate space (not screen space):
 <rect x={100} y={100} width={50} height={50} />
 
 // Stroke width scaled by zoom (stays constant on screen)
+// Note: For path elements, this behavior is controlled by the
+// "Scale stroke with zoom" setting in Settings Panel
 <rect strokeWidth={2 / viewport.zoom} />
 
 // Hit testing (disable pointer events for overlays)
 <rect pointerEvents="none" />
 ```
+
+**Note on Stroke Scaling**: The application provides a user-configurable setting (`settings.scaleStrokeWithZoom`) that controls whether path element strokes scale with zoom. Plugin overlays typically use `strokeWidth / viewport.zoom` to maintain constant visual thickness, but path elements respect the user's preference.
 
 ## Best Practices
 

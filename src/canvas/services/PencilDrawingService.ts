@@ -12,6 +12,7 @@ export interface AttachPencilDrawingListenersOptions {
   activePlugin: string | null;
   pencil: PencilSettings;
   viewportZoom: number;
+  scaleStrokeWithZoom: boolean;
   screenToCanvas: (x: number, y: number) => Point;
   emitPointerEvent: (type: PointerEventType, event: PointerEvent, point: Point) => void;
   startPath: (point: Point) => void;
@@ -66,7 +67,9 @@ export class PencilDrawingService {
       const { strokeWidth, strokeColor, strokeOpacity } = options.pencil;
       const defaultStrokeColor = getDefaultStrokeColorFromSettings();
       const effectiveStrokeColor = strokeColor === 'none' ? defaultStrokeColor : strokeColor;
-      const strokeWidthForZoom = strokeWidth / options.viewportZoom;
+      const strokeWidthForZoom = options.scaleStrokeWithZoom 
+        ? strokeWidth 
+        : strokeWidth / options.viewportZoom;
 
       tempPath.setAttribute('fill', 'none');
       tempPath.setAttribute('stroke', effectiveStrokeColor);

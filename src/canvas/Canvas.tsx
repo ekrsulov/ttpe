@@ -80,6 +80,7 @@ const CanvasContent: React.FC = () => {
 
   const controller = useCanvasController();
   const defaultStrokeColor = useCanvasStore(state => state.settings.defaultStrokeColor);
+  const scaleStrokeWithZoom = useCanvasStore(state => state.settings.scaleStrokeWithZoom);
   const {
     currentMode,
     transition: transitionCanvasMode,
@@ -268,6 +269,7 @@ const CanvasContent: React.FC = () => {
       simplificationTolerance: 0,
     },
     viewportZoom: viewport.zoom,
+    scaleStrokeWithZoom,
     screenToCanvas,
     emitPointerEvent,
     startPath,
@@ -378,6 +380,7 @@ const CanvasContent: React.FC = () => {
   const renderContext = useMemo<CanvasRenderContext>(() => ({
     viewport,
     activePlugin: currentMode,
+    scaleStrokeWithZoom,
     isElementHidden,
     isElementLocked,
     isElementSelected,
@@ -393,6 +396,7 @@ const CanvasContent: React.FC = () => {
   }), [
     viewport,
     currentMode,
+    scaleStrokeWithZoom,
     isElementHidden,
     isElementLocked,
     isElementSelected,

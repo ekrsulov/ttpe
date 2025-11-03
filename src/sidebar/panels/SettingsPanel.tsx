@@ -152,6 +152,14 @@ export const SettingsPanel: React.FC = () => {
           </PanelToggle>
         )}
 
+        {/* Scale Stroke With Zoom */}
+        <PanelToggle
+          isChecked={settings.scaleStrokeWithZoom}
+          onChange={(e) => updateSettings({ scaleStrokeWithZoom: e.target.checked })}
+        >
+          Scale stroke with zoom
+        </PanelToggle>
+
         {/* Keyboard Movement Precision */}
         <SliderControl
           label="Precision:"

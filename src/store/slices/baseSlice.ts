@@ -43,6 +43,7 @@ export interface BaseSlice {
     showMinimap: boolean; // Show minimap overlay
     showTooltips: boolean; // Show tooltips on desktop
     defaultStrokeColor: string; // Default stroke color for new drawing operations
+    scaleStrokeWithZoom: boolean; // Scale stroke width with zoom level
   };
 
   // Actions
@@ -197,6 +198,7 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => {
     showMinimap: false, // Show minimap by default
     showTooltips: false, // Show tooltips by default
     defaultStrokeColor: '#000000',
+    scaleStrokeWithZoom: false, // Default to false (strokes don't scale with zoom)
   },
 
   // Actions

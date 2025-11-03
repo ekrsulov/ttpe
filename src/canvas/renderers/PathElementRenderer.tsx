@@ -25,11 +25,16 @@ export const PathElementRenderer: CanvasElementRenderer<PathElement> = (
   element,
   context: CanvasRenderContext
 ) => {
-  const { viewport, activePlugin, eventHandlers, isElementSelected, isElementLocked, isTransforming, isSelecting, isCreatingShape } = context;
+  const { viewport, activePlugin, scaleStrokeWithZoom, eventHandlers, isElementSelected, isElementLocked, isTransforming, isSelecting, isCreatingShape } = context;
   const pathData = element.data;
 
   const effectiveStrokeColor = getEffectiveStrokeColor(pathData);
   const effectiveFillColor = getEffectiveFillColor(pathData);
+
+  // Calculate stroke width based on scaleStrokeWithZoom setting
+  const effectiveStrokeWidth = scaleStrokeWithZoom 
+    ? pathData.strokeWidth 
+    : pathData.strokeWidth / viewport.zoom;
 
   const pathD = commandsToString(pathData.subPaths.flat());
   const pointerDownHandler = eventHandlers.onPointerDown;
@@ -45,7 +50,7 @@ export const PathElementRenderer: CanvasElementRenderer<PathElement> = (
         data-element-id={element.id}
         d={pathD}
         stroke={effectiveStrokeColor}
-        strokeWidth={pathData.strokeWidth / viewport.zoom}
+        strokeWidth={effectiveStrokeWidth}
         fill={effectiveFillColor}
         fillOpacity={pathData.fillOpacity}
         strokeOpacity={pathData.strokeOpacity}

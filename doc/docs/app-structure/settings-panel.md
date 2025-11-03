@@ -16,6 +16,7 @@ The Settings Panel (`/src/sidebar/panels/SettingsPanel.tsx`) is accessible via t
 - **Grid Configuration**: Enable/disable, spacing, subdivisions, rulers
 - **Snap to Grid**: Toggle grid snapping behavior
 - **Default Colors**: Set default stroke/fill colors for new elements
+- **Scale Stroke With Zoom**: Control whether stroke widths scale with zoom level
 - **Keyboard Precision**: Adjust arrow key movement distance
 - **Developer Tools**: Log level, render count badges, debug overlays (dev mode only)
 - **Minimap**: Toggle minimap visibility (desktop only)
@@ -27,6 +28,7 @@ graph TB
     SettingsPanel[SettingsPanel.tsx] --> Theme[Theme Settings]
     SettingsPanel --> Grid[Grid Configuration]
     SettingsPanel --> Defaults[Default Colors]
+    SettingsPanel --> StrokeScale[Stroke Scaling]
     SettingsPanel --> Keyboard[Keyboard Precision]
     SettingsPanel --> DevTools[Developer Tools]
     SettingsPanel --> Minimap[Minimap Toggle]
@@ -293,6 +295,54 @@ Set default stroke and fill colors for newly created elements.
 - Applied to new shapes (circle, rectangle)
 - Default is `none` (no fill, transparent)
 - Paths drawn with Pencil tool have no fill by default
+
+---
+
+### Stroke Scaling
+
+Control whether stroke widths scale proportionally with zoom level.
+
+**Toggle**: `settings.scaleStrokeWithZoom` (default: `false`)
+
+```tsx
+<PanelToggle
+  isChecked={settings.scaleStrokeWithZoom}
+  onChange={(e) => updateSettings({ scaleStrokeWithZoom: e.target.checked })}
+>
+  Scale stroke with zoom
+</PanelToggle>
+```
+
+**Behavior:**
+
+- **Disabled (default)**: Stroke widths maintain constant visual thickness regardless of zoom level
+  - When zoomed in, strokes appear thinner relative to canvas content
+  - When zoomed out, strokes appear thicker relative to canvas content
+  - Best for maintaining consistent visual line weight during editing
+  
+- **Enabled**: Stroke widths scale proportionally with zoom level
+  - When zoomed in, strokes become visually thicker
+  - When zoomed out, strokes become visually thinner
+  - Provides accurate preview of final output at different scales
+  - Useful for print design or when exact stroke proportions matter
+
+**Implementation details:**
+
+The setting affects both:
+- Rendered path elements on canvas
+- Temporary pencil drawing preview during creation
+
+```typescript
+// PathElementRenderer.tsx
+const effectiveStrokeWidth = scaleStrokeWithZoom 
+  ? pathData.strokeWidth 
+  : pathData.strokeWidth / viewport.zoom;
+```
+
+**Use cases:**
+
+- **Non-scaling (default)**: UI/UX design, icon design, general editing where consistent visual feedback is important
+- **Scaling enabled**: Print design, technical drawings, architectural plans where proportional accuracy matters
 
 ---
 
