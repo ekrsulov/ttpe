@@ -1,4 +1,5 @@
 import React from 'react';
+import { useColorModeValue } from '@chakra-ui/react';
 import type { Point } from '../../types';
 
 interface AddPointFeedbackOverlayProps {
@@ -20,6 +21,9 @@ export const AddPointFeedbackOverlay: React.FC<AddPointFeedbackOverlayProps> = (
     return null;
   }
 
+  // Get canvas background color based on theme
+  const canvasBgColor = useColorModeValue('#f9fafb', '#111827'); // gray.50 and gray.900
+
   // Calculate the size of the feedback circle based on zoom
   // We want it to maintain a consistent screen size
   const baseRadius = 6;
@@ -28,13 +32,13 @@ export const AddPointFeedbackOverlay: React.FC<AddPointFeedbackOverlayProps> = (
 
   return (
     <g>
-      {/* Outer circle - white stroke for contrast */}
+      {/* Outer circle - canvas background color for contrast */}
       <circle
         cx={hoverPosition.x}
         cy={hoverPosition.y}
         r={radius + strokeWidth}
         fill="none"
-        stroke="white"
+        stroke={canvasBgColor}
         strokeWidth={strokeWidth * 1.5}
         style={{ pointerEvents: 'none' }}
       />

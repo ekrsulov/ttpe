@@ -3,6 +3,7 @@ import { getCommandStartPoint } from '../../utils/path';
 import { mapSvgToCanvas } from '../../utils/geometry';
 import { useCanvasStore } from '../../store/canvasStore';
 import { getEffectiveShift } from '../../utils/effectiveShift';
+import { useColorModeValue } from '@chakra-ui/react';
 import type { Point, PathData, Command } from '../../types';
 
 interface EditPointsOverlayProps {
@@ -79,6 +80,11 @@ export const EditPointsOverlay: React.FC<EditPointsOverlayProps> = ({
   const pathData = element.data as PathData;
   const commands = pathData.subPaths.flat();
 
+  // Get canvas background color based on theme
+  const canvasBgColor = useColorModeValue('#f9fafb', '#111827'); // gray.50 and gray.900
+  // Determine if we're in dark mode
+  const isDarkMode = useColorModeValue(false, true);
+
   // Use filtered points that consider subpath selection
   const points = getFilteredEditablePoints(element.id);
 
@@ -125,7 +131,7 @@ export const EditPointsOverlay: React.FC<EditPointsOverlayProps> = ({
           }
         }
 
-        const pointStyle = getPointStyle(point, selectedCommands, element, commands, pathData, smoothBrush);
+        const pointStyle = getPointStyle(point, selectedCommands, element, commands, pathData, smoothBrush, canvasBgColor, isDarkMode);
         
         // Calculate larger hit area for better touch/mouse interaction
         // Use a minimum size in screen pixels (12px) regardless of zoom
@@ -168,6 +174,7 @@ export const EditPointsOverlay: React.FC<EditPointsOverlayProps> = ({
         editingPoint={editingPoint}
         dragPosition={dragPosition}
         viewport={viewport}
+        isDarkMode={isDarkMode}
       />
     </g>
   );
@@ -201,11 +208,14 @@ const getPointStyle = (
       x: number;
       y: number;
     }>;
-  }
+  },
+  canvasBgColor?: string,
+  isDarkMode?: boolean
 ) => {
-  let color = 'black';
+  // Use high contrast colors for dark mode
+  let color = isDarkMode ? '#ffffff' : '#000000'; // White in dark mode, black in light mode
   let size = 4;
-  let strokeColor = 'white';
+  let strokeColor = canvasBgColor || (isDarkMode ? '#111827' : '#f9fafb');
   let strokeWidth = 1;
 
   // Check if this point is selected
@@ -226,12 +236,13 @@ const getPointStyle = (
     strokeColor = '#92400e'; // darker orange stroke
     strokeWidth = 1.5;
   } else if (isSelected) {
-    strokeColor = 'yellow';
+    strokeColor = isDarkMode ? '#fbbf24' : '#eab308'; // Brighter yellow in dark mode
     strokeWidth = 2;
   }
 
   if (point.isControl) {
-    color = 'blue'; // control points in blue
+    // Control points: cyan/light blue for better visibility in dark mode
+    color = isDarkMode ? '#22d3ee' : '#0ea5e9'; // cyan-400 in dark, sky-500 in light
     size = 3;
   } else {
     // command points
@@ -255,13 +266,16 @@ const getPointStyle = (
     }
 
     if (cmd.type === 'M') {
-      color = 'green';
+      // Initial points: bright green for high visibility
+      color = isDarkMode ? '#4ade80' : '#22c55e'; // green-400 in dark, green-500 in light
       size = 6; // larger
     } else if (isLastPointInPath || isEndOfSubPath) {
-      color = 'red';
+      // End points: bright red/pink for high visibility
+      color = isDarkMode ? '#f87171' : '#ef4444'; // red-400 in dark, red-500 in light
       size = 3; // smaller
     } else {
-      color = 'blue'; // intermediate command points in blue
+      // Intermediate command points: cyan/light blue
+      color = isDarkMode ? '#22d3ee' : '#0ea5e9'; // cyan-400 in dark, sky-500 in light
       size = 4;
     }
   }
@@ -381,7 +395,11 @@ const ControlPointLines: React.FC<{
     panX: number;
     panY: number;
   };
-}> = ({ commands, points, element, editingPoint, dragPosition, viewport }) => {
+  isDarkMode: boolean;
+}> = ({ commands, points, element, editingPoint, dragPosition, viewport, isDarkMode }) => {
+  // Use high contrast color for control point lines in dark mode
+  const lineColor = isDarkMode ? '#22d3ee' : '#0ea5e9'; // cyan-400 in dark, sky-500 in light
+  
   return (
     <>
       {commands.map((cmd, cmdIndex) => {
@@ -426,7 +444,7 @@ const ControlPointLines: React.FC<{
                   y1={startPoint.y}
                   x2={control1X}
                   y2={control1Y}
-                  stroke="blue"
+                  stroke={lineColor}
                   strokeWidth={1 / viewport.zoom}
                 />
                 <line
@@ -434,7 +452,7 @@ const ControlPointLines: React.FC<{
                   y1={control2Y}
                   x2={endX}
                   y2={endY}
-                  stroke="blue"
+                  stroke={lineColor}
                   strokeWidth={1 / viewport.zoom}
                 />
               </g>
