@@ -30,9 +30,9 @@ stateDiagram-v2
     [*] --> Present: Initial state
     
     Present --> Past: Action performed<br/>(snapshot created)
-    Past --> Present: Undo (Ctrl+Z)<br/>(restore previous)
+    Past --> Present: Undo<br/>(restore previous)
     Present --> Future: Undo executed<br/>(save current to future)
-    Future --> Present: Redo (Ctrl+Shift+Z)<br/>(restore next)
+    Future --> Present: Redo<br/>(restore next)
     
     Present --> Present: Action (cooldown active)<br/>(no snapshot)
     
@@ -66,8 +66,8 @@ stateDiagram-v2
 **State transitions:**
 
 1. **Action performed**: `present` → `past`, `future` cleared
-2. **Undo (Ctrl+Z)**: `past.pop()` → `present`, old `present` → `future.push()`
-3. **Redo (Ctrl+Shift+Z)**: `future.pop()` → `present`, old `present` → `past.push()`
+2. **Undo**: `past.pop()` → `present`, old `present` → `future.push()`
+3. **Redo**: `future.pop()` → `present`, old `present` → `past.push()`
 4. **Within cooldown**: State change ignored, no snapshot created
 
 ## Configuration
@@ -187,7 +187,7 @@ sequenceDiagram
         Note over Zundo: Debounced action ignored
     end
     
-    User->>UI: Press Ctrl+Z (Undo)
+    User->>UI: Click Undo button
     UI->>Zundo: temporal.undo()
     Zundo->>History: Pop from past[]
     Zundo->>History: Push current to future[]
@@ -195,7 +195,7 @@ sequenceDiagram
     Store->>UI: Re-render with old state
     Note over UI: Elements restored<br/>Selection restored<br/>Viewport restored
     
-    User->>UI: Press Ctrl+Shift+Z (Redo)
+    User->>UI: Click Redo button
     UI->>Zundo: temporal.redo()
     Zundo->>History: Pop from future[]
     Zundo->>History: Push current to past[]
@@ -205,15 +205,6 @@ sequenceDiagram
 ```
 
 ## Usage
-
-### Keyboard Shortcuts
-
-The system provides standard keyboard shortcuts for undo/redo:
-
-- **Undo**: `Ctrl + Z` (Windows/Linux) or `Cmd + Z` (macOS)
-- **Redo**: `Ctrl + Shift + Z` (Windows/Linux) or `Cmd + Shift + Z` (macOS)
-
-**Implementation:** Handled by `useKeyboardShortcuts` hook which dispatches to `temporal.undo()` and `temporal.redo()`.
 
 ### UI Controls
 
