@@ -22,7 +22,7 @@ const sidebars = {
     {
       type: 'category',
       label: 'Application Structure',
-      collapsed: false,
+      collapsed: true,
       items: [
         'app-structure/overview',
         'app-structure/canvas',
@@ -35,7 +35,7 @@ const sidebars = {
     {
       type: 'category',
       label: 'Architecture',
-      collapsed: false,
+      collapsed: true,
       items: [
         'architecture/overview',
         'architecture/diagrams',
@@ -44,7 +44,7 @@ const sidebars = {
     {
       type: 'category',
       label: 'Plugin System',
-      collapsed: false,
+      collapsed: true,
       items: [
         'plugins/overview',
         'plugins/lifecycle',
@@ -76,7 +76,7 @@ const sidebars = {
     {
       type: 'category',
       label: 'Event Bus',
-      collapsed: false,
+      collapsed: true,
       items: [
         'event-bus/overview',
         'event-bus/topics',
@@ -86,7 +86,7 @@ const sidebars = {
     {
       type: 'category',
       label: 'Public API',
-      collapsed: false,
+      collapsed: true,
       items: [
         'api/create-api',
         'api/plugin-manager',
@@ -96,7 +96,7 @@ const sidebars = {
     {
       type: 'category',
       label: 'Core Features',
-      collapsed: false,
+      collapsed: true,
       items: [
         'features/selection',
         'features/transforms',
@@ -112,7 +112,7 @@ const sidebars = {
     {
       type: 'category',
       label: 'UI & Theming',
-      collapsed: false,
+      collapsed: true,
       items: [
         'ui/components',
         'ui/theming',
@@ -123,7 +123,7 @@ const sidebars = {
     {
       type: 'category',
       label: 'TypeScript Types',
-      collapsed: false,
+      collapsed: true,
       items: [
         'types/index',
         'types/canvas-elements',
@@ -140,7 +140,7 @@ const sidebars = {
     {
       type: 'category',
       label: 'Utilities',
-      collapsed: false,
+      collapsed: true,
       items: [
         'utilities/hooks',
       ],
@@ -148,7 +148,7 @@ const sidebars = {
     {
       type: 'category',
       label: 'Operations',
-      collapsed: false,
+      collapsed: true,
       items: [
         'ops/operations',
         'ops/testing',
@@ -168,7 +168,7 @@ const sidebars = {
     {
       type: 'category',
       label: 'Contributing',
-      collapsed: false,
+      collapsed: true,
       items: [
         'contributing/style-guide',
         'contributing/code-standards',
