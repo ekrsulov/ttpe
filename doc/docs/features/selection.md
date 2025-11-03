@@ -265,7 +265,7 @@ Selected elements are highlighted with:
 
 During rectangle selection, a semi-transparent overlay shows:
 - **Stroke**: Dashed blue border indicating selection area
-- **Fill**: Light blue semi-transparent background
+- **Fill**: Gray semi-transparent background
 - **Real-time bounds**: Updates as you drag
 
 ---
