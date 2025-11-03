@@ -76,8 +76,6 @@ for each selected element:
 - Multiple selections move as a block to the top
 - Ignores child elements within groups
 
-**Keyboard shortcut:** Often mapped to `Shift + Ctrl + ]` or `Cmd + ]`
-
 ### Bring Forward
 
 Moves selected element(s) **up one layer** by swapping Z-index with the element immediately above. If no element exists above, the operation has no effect.
@@ -98,8 +96,6 @@ for each selected element:
 - Incremental adjustment (one layer at a time)
 - No effect if element is already at top
 - Preserves Z-index values (just swaps them)
-
-**Keyboard shortcut:** Often mapped to `Ctrl + ]` or `Cmd + ]`
 
 ### Send Backward
 
@@ -122,8 +118,6 @@ for each selected element:
 - No effect if element is already at bottom
 - Preserves Z-index values (just swaps them)
 
-**Keyboard shortcut:** Often mapped to `Ctrl + [` or `Cmd + [`
-
 ### Send to Back
 
 Moves selected element(s) to the **bottom of the rendering stack**, giving them the lowest Z-index value(s). This operation makes elements appear below all others.
@@ -142,8 +136,6 @@ for each selected element:
 - Maintains relative order among selected elements
 - Multiple selections move as a block to the bottom
 - Ignores child elements within groups
-
-**Keyboard shortcut:** Often mapped to `Shift + Ctrl + [` or `Cmd + [`
 
 ## API Reference
 
