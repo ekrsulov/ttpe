@@ -406,6 +406,6 @@ test('should arrange elements using bring to front and send to back', async ({ p
 - [Selection System](./selection.md) - Element selection
 - [Groups](./groups.md) - Group hierarchies and Z-index
 - [Arrange Panel](../app-structure/sidebar.md) - UI controls
-- [Select Plugin](../plugins/catalog/select.md) - Select mode ordering
+- [Transformation Plugin](../plugins/catalog/transformation.md) - Transform mode ordering
 - [Subpath Plugin](../plugins/catalog/subpath.md) - Subpath ordering
 - [Canvas Store API](../api/canvas-store) - Order slice methods

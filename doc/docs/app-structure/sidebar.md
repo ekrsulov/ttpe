@@ -391,7 +391,7 @@ const currentStrokeColor = useSelectedPathProperty(
 
 - **Element list**: Hierarchical tree view of canvas elements
 - **Group support**: Nested groups with expand/collapse
-- **Selection**: Click to select, Ctrl/Cmd+Click to multi-select
+- **Selection**: Click to select
 - **Visibility toggles**: Eye icon to show/hide elements
 - **Lock toggles**: Lock icon to prevent editing
 - **Group operations**: Create group, ungroup, rename
@@ -513,7 +513,7 @@ The bottom section (`SidebarFooter`) contains two key panels:
 
 ### Arrange Panel (Collapsible)
 
-**Visibility**: Only shows when elements/commands/subpaths are selected
+**Visibility**: Only shows when elements/commands/subpaths are selected and is expanded
 
 **State**: Expandable/collapsible via chevron button
 - **Expanded**: Shows alignment, distribution, and ordering controls
@@ -580,18 +580,21 @@ This allows the main scrollable panel area (`SidebarPanelHost`) to adjust its pa
 
 ### Arrange Panel
 
-**Purpose**: Alignment, distribution, ordering, arrangement operations
+**Purpose**: Alignment, distribution, ordering, size matching, and arrangement operations
 
 **Features:**
 
 - **Alignment**: Align elements left/center/right/top/middle/bottom
 - **Distribution**: Distribute elements horizontally/vertically with even spacing
+- **Match**: Homogenize dimensions by matching width or height to largest element
 - **Ordering**: Change Z-index (bring to front, send to back, step forward/backward)
 - **Grouping shortcuts**: Quick access to group/ungroup operations
 
 **When visible**: `select` mode (collapsible section)
 
-See also: [Alignment](../features/alignment.md), [Distribution](../features/distribution.md), [Ordering](../features/ordering.md)
+**Requirements**: At least 2 elements selected for alignment, distribution, and match operations
+
+See also: [Alignment](../features/alignment.md), [Distribution](../features/distribution.md), [Match](../features/match.md), [Ordering](../features/ordering.md)
 
 ---
 

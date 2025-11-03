@@ -262,6 +262,10 @@ export const myPlugin: PluginDefinition = {
 
 ## Next Steps
 
-- **[Plugin Catalog](./catalog/select)**: Examples from built-in plugins
+## Related
+
+- **[Plugin Registration](./registration)**: Register plugins with the system
+- **[Plugin Lifecycle](./lifecycle)**: Lifecycle hooks
+- **[Plugin Catalog](./catalog/pencil)**: Examples from built-in plugins
 - **[Event Bus](../event-bus/overview)**: Cross-plugin communication
 - **[API Reference](../api/create-api)**: Public API patterns

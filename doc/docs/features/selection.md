@@ -12,12 +12,17 @@ The Selection System is the foundational interaction mechanism in TTPE, enabling
 
 Selection in TTPE is **context-aware** and **non-destructive**. When you select elements, they remain in the canvas while being highlighted with visual indicators (bounding boxes, selection handles). The selection state is tracked globally in the Canvas Store and can be modified through user interactions or programmatically via the API.
 
-The system supports:
+**Key Features:**
 - **Single Selection**: Click an element to select it exclusively
-- **Multi-Selection**: Hold Shift while clicking to add/remove elements
+- **Multi-Selection**: Hold Shift while clicking to add/remove elements (toggle behavior)
 - **Rectangle Selection**: Click and drag on empty canvas to select all elements within bounds
 - **Keyboard Navigation**: Use arrow keys to adjust selection
 - **Programmatic Selection**: Use API methods to control selection state
+- **Hidden/Locked Elements**: Cannot be selected (filtered automatically)
+
+:::note
+**Alignment, distribution, and ordering** (bring to front, send to back) are provided by the `useArrangeHandlers` hook and displayed in the **ArrangePanel** in the sidebar when elements are selected. These features are not part of the selection system itself.
+:::
 
 ---
 
@@ -34,22 +39,25 @@ Click any element on the canvas to select it. The previously selected elements a
 
 ### Multi-Selection with Shift
 
-Hold **Shift** and click elements to build a selection set.
+Hold **Shift** and click elements to build a selection set with **toggle behavior**.
 
 **Behavior:**
 - Shift + Click unselected element → Adds to selection
-- Shift + Click selected element → Removes from selection (toggle)
+- Shift + Click selected element → **Removes from selection (toggle)**
 - Works with both mouse clicks and touch events (with Virtual Shift on mobile)
+- Toggle behavior allows precise control over selection
 
 ### Rectangle Selection
 
-Click and drag on empty canvas to draw a selection rectangle. All elements whose bounds intersect with the rectangle are selected.
+Click and drag on empty canvas (SVG element) to draw a selection rectangle. All elements whose bounds intersect with the rectangle are selected.
 
 **Behavior:**
-- Drag from top-left to bottom-right → Selects elements within bounds
-- Works in any direction (start and end points determine rectangle)
+- Drag from any direction → Rectangle adapts to drag motion
+- Works only when clicking on the empty SVG canvas (not on elements)
 - Real-time visual feedback with semi-transparent overlay
 - Automatically selects elements on pointer up
+- **Without Shift**: Replaces current selection
+- **With Shift**: Adds to current selection
 
 ---
 
@@ -261,12 +269,28 @@ Selected elements are highlighted with:
 - **Resize handles**: 8 corner/edge handles for transformation (when in transform mode)
 - **Selection badge**: Element count indicator (for multi-selection)
 
+### Canvas Layers
+
+The selection system renders **4 canvas layers** (all in midground placement):
+
+1. **selection-overlays**: Selection overlays for individual path elements showing control points
+2. **group-selection-bounds**: Dashed rectangles around selected groups
+3. **selection-rectangle**: Live rectangle during drag-to-select operation
+4. **selection-blocking-overlay**: Blocks interactions during rectangle selection
+
 ### Rectangle Selection Overlay
 
 During rectangle selection, a semi-transparent overlay shows:
 - **Stroke**: Dashed blue border indicating selection area
 - **Fill**: Gray semi-transparent background
 - **Real-time bounds**: Updates as you drag
+
+### Delete Functionality
+
+Selected elements can be deleted using the **Delete** key:
+- Removes elements from canvas
+- Clears selection automatically
+- Adds operation to undo stack
 
 ---
 
@@ -345,7 +369,37 @@ state.setSelectedIds(redElements.map(el => el.id));
 
 ## Related Documentation
 
-- [Select Plugin](../plugins/catalog/select.md) - Plugin implementation
-- [Transformation System](./transforms.md) - Transform selected elements
+- [Transformation Plugin](../plugins/catalog/transformation.md) - Transform selected elements
 - [Alignment](./alignment.md) - Align selected elements
+- [Distribution](./distribution.md) - Distribute selected elements
 - [Mobile Features](./mobile.md) - Virtual Shift and touch selection
+- [Canvas Store API](../api/canvas-store.md) - Selection slice methods
+
+---
+
+## Implementation Notes
+
+### Plugin Architecture
+
+Selection is implemented through the **Select Plugin** (`src/plugins/index.tsx`) which:
+- Defines inline within the `CORE_PLUGINS` array (no separate directory)
+- Provides pointer event handler for click and drag interactions
+- Registers 4 canvas layers for visual feedback
+- Exposes Delete keyboard shortcut
+- **Does not have its own slice** - uses global `SelectionSlice`
+
+### State Location
+
+Selection state lives in `src/store/slices/features/selectionSlice.ts`:
+- Contains `selectedIds` array
+- Provides core methods: `selectElement`, `selectElements`, `clearSelection`
+- Filters hidden and locked elements automatically
+- Clears subpath selection when switching to different path in select mode
+
+### Selection Controller
+
+The `SelectionController` (`src/canvas/selection/SelectionController.ts`) handles:
+- Keyboard modifier state (Shift, Ctrl)
+- Multi-select mode tracking
+- Integration between pointer events and store actions
+- Provides `selectElement`, `toggleSelection`, and `clearSelection` methods

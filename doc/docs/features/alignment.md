@@ -106,9 +106,9 @@ state.alignLeft();
 
 ---
 
-## Related Documentation
+## Related
 
-- [Distribution](./distribution.md) - Even spacing between elements
+- [Distribution Features](./distribution.md) - Distribute elements evenly
+- [Transformation Plugin](../plugins/catalog/transformation.md) - Element transformation
 - [Selection System](./selection.md) - Element selection
-- [Transform System](./transforms.md) - Element transformation
-- [Select Plugin](../plugins/catalog/select.md) - Plugin implementation
+- [Ordering Features](./ordering.md) - Z-index control

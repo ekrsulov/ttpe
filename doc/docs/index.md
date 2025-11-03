@@ -64,6 +64,7 @@ Explore TTPE's main editing capabilities:
 - **Ordering**: Z-index management and layering
 - **Alignment**: Precise element positioning
 - **Distribution**: Spacing and layout tools
+- **Match**: Homogenize dimensions by matching width or height
 - **Groups**: Element grouping and hierarchy
 - **Undo/Redo**: History management and state restoration
 - **Persistence**: Data saving and loading
@@ -125,7 +126,7 @@ Guidelines for contributors and maintainers:
 
 ### Reference
 
-- **[Plugin Catalog](plugins/catalog/select)** - Complete reference for all built-in plugins
+- **[Plugin Catalog](plugins/catalog/pencil)** - Complete reference for all built-in plugins
 - **[UI Components](ui/components)** - Reusable React components
 - **[Theming](ui/theming)** - Color tokens and theme customization
 - **[FAQ](faq)** - Frequently asked questions

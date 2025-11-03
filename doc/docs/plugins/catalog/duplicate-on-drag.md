@@ -210,7 +210,7 @@ Possible improvements:
 - [Architecture Overview](../../architecture/overview) - System design patterns
 - [Event Bus](../../event-bus/overview) - Event-driven architecture
 - [Plugin System](../overview) - Plugin development guide
-- [Select Plugin](./select) - Selection handling
+- [Selection System](../../features/selection) - Selection handling
 
 ## Code References
 

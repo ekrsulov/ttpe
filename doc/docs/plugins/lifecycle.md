@@ -564,4 +564,4 @@ console.log(this.interactionSubscriptions.get('my-plugin'));
 
 - **[Plugin Registration](./registration)**: How registration works under the hood
 - **[Plugin Configuration](./configuration)**: Advanced configuration options
-- **[Plugin Catalog](./catalog/select)**: Examples from built-in plugins
+- **[Plugin Catalog](./catalog/pencil)**: Examples from built-in plugins

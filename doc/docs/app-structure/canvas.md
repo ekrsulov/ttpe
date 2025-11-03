@@ -512,10 +512,9 @@ Canvas is positioned absolutely to fill viewport, with UI overlays on top.
 
 - [Architecture Overview](../architecture/overview.md) - Application architecture
 - [Plugin System](../plugins/overview.md) - How plugins interact with Canvas
-- [Select Plugin](../plugins/catalog/select.md) - Selection and transformation
+- [Selection System](../features/selection.md) - Selection functionality
 - [Pencil Plugin](../plugins/catalog/pencil.md) - Freehand drawing on canvas
-- [Transform System](../features/transforms.md) - Element transformations
-- [Viewport Operations](../features/transforms.md) - Pan and zoom
+- [Transformation Plugin](../plugins/catalog/transformation.md) - Element transformations
 
 ## Best Practices
 

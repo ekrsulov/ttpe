@@ -239,5 +239,5 @@ if (pencil) {
 ## Next Steps
 
 - **[Plugin Configuration](./configuration)**: Advanced options
-- **[Plugin Catalog](./catalog/select)**: Browse built-in plugins
+- **[Plugin Catalog](./catalog/pencil)**: Browse built-in plugins
 - **[Event Bus](../event-bus/overview)**: How plugins interact

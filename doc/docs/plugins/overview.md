@@ -654,4 +654,4 @@ const api = pluginManager.getPluginApi('pluginA'); // ✅
 - **[Plugin Lifecycle](./lifecycle)**: Detailed lifecycle states and transitions
 - **[Plugin Registration](./registration)**: How to register and discover plugins
 - **[Plugin Configuration](./configuration)**: Advanced configuration options
-- **[Plugin Catalog](./catalog/select)**: Reference for all built-in plugins
+- **[Plugin Catalog](./catalog/pencil)**: Reference for all built-in plugins
