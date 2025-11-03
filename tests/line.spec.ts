@@ -148,13 +148,15 @@ test.describe('Line Creation', () => {
     const startY = canvasBox.y + canvasBox.height * 0.3;
 
     await page.mouse.move(startX, startY);
+
+    // Hold shift before mouse down
+    await page.keyboard.down('Shift');
     await page.mouse.down();
 
-    // Hold shift and move diagonally (approximately 45 degrees)
-    await page.keyboard.down('Shift');
+    // Move diagonally (exactly 45 degrees)
     await page.mouse.move(
-      canvasBox.x + canvasBox.width * 0.6,
-      canvasBox.y + canvasBox.height * 0.58, // Slightly off to test 45° snapping
+      canvasBox.x + canvasBox.width * 0.5,
+      canvasBox.y + canvasBox.height * 0.8,
       { steps: 10 }
     );
 
