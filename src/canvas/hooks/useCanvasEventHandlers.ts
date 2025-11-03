@@ -556,7 +556,11 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       const deltaY = point.y - dragStart.y;
 
       // Only start actual dragging if we've moved more than a threshold
-      if (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3) {
+      // Once dragging has started, move with any delta (no threshold) for smooth continuous movement
+      const shouldStartDragging = !isDragging && (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3);
+      const shouldContinueDragging = isDragging && (Math.abs(deltaX) > 0.001 || Math.abs(deltaY) > 0.001);
+      
+      if (shouldStartDragging || shouldContinueDragging) {
         if (!isDragging) {
           setIsDragging(true); // Start dragging now
         }
