@@ -13,7 +13,7 @@ The **Settings Panel** provides application-wide configuration options, includin
 The Settings Panel (`/src/sidebar/panels/SettingsPanel.tsx`) is accessible via the **Settings button** in the Top Action Bar and provides:
 
 - **Theme**: Light/dark mode and system preference
-- **Grid Configuration**: Enable/disable, spacing, subdivisions, color, rulers
+- **Grid Configuration**: Enable/disable, spacing, subdivisions, rulers
 - **Snap to Grid**: Toggle grid snapping behavior
 - **Default Colors**: Set default stroke/fill colors for new elements
 - **Keyboard Precision**: Adjust arrow key movement distance
@@ -38,9 +38,8 @@ graph TB
     Grid --> Enable[Enable/Disable]
     Grid --> Spacing[Grid Spacing]
     Grid --> Subdivisions[Subdivisions]
-    Grid --> Color[Grid Color]
-    Grid --> Rulers[Show Rulers]
     Grid --> Snap[Snap to Grid]
+    Grid --> Rulers[Show Rulers]
     
     Defaults --> Stroke[Default Stroke]
     Defaults --> Fill[Default Fill]
@@ -97,6 +96,34 @@ When theme changes, the following updates automatically:
 - Text colors (for contrast)
 - Canvas default stroke color (white in dark, black in light)
 - Existing elements with default colors (transformed to new theme)
+
+**Automatic Path Color Transformation:**
+
+When switching between light and dark themes, existing path elements automatically transform their colors for optimal visibility:
+
+```typescript
+// From App.tsx - Theme change logic
+const transformColor = (color: string): string => {
+  if (colorMode === 'dark') {
+    // From light to dark: white becomes black, black becomes white
+    if (color === '#ffffff') return '#000000';
+    if (color === '#000000') return '#ffffff';
+  } else {
+    // From dark to light: black becomes white, white becomes black
+    if (color === '#000000') return '#ffffff';
+    if (color === '#ffffff') return '#000000';
+  }
+  return color;
+};
+```
+
+**Transformation Rules:**
+- **Light → Dark**: White strokes become black, black strokes become white
+- **Dark → Light**: Black strokes become white, white strokes become black  
+- **Fill colors**: Black/white fills are also transformed for consistency
+- **Other colors**: Remain unchanged (only pure black/white are transformed)
+
+This ensures that paths drawn in one theme remain visible and appropriately colored when switching themes.
 
 ---
 
@@ -170,15 +197,13 @@ Number of minor grid lines between major grid lines.
 
 #### Grid Color
 
-**Color Picker**: `grid.color` (default: `#e0e0e0` light, `#444444` dark)
+**Note**: Grid color is automatically adjusted based on the current theme for optimal visibility. The grid uses theme-appropriate colors (darker in light mode, lighter in dark mode) and cannot be manually configured through the UI.
 
-Color of grid lines.
+**Implementation** (from `GridOverlay.tsx`):
 
-```tsx
-<ColorPicker
-  value={grid?.color ?? '#e0e0e0'}
-  onChange={(color) => updateGrid({ color })}
-/>
+```typescript
+const defaultGridColor = useColorModeValue('#000000', 'rgba(255, 255, 255, 0.7)');
+const color = grid.color === '#000000' ? defaultGridColor : (grid.color ?? defaultGridColor);
 ```
 
 **Automatic theme adjustment**: Grid color changes with theme for visibility
@@ -224,8 +249,6 @@ Enable automatic snapping of element positions to grid intersections.
 - When dragging elements, positions snap to nearest grid point
 - Snapping distance based on grid spacing
 - Applies to all movement operations (drag, arrow keys, nudge)
-
-**Keyboard modifier**: Hold `Shift` to temporarily disable snapping
 
 ---
 
