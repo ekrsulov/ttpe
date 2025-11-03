@@ -164,15 +164,15 @@ flowchart TD
     A[Parse SVG Path] --> B[Extract Commands]
     B --> C{Command Type?}
     
-    C -->|M/L| D[Line Points]
-    C -->|C| E[Cubic Bezier]
-    C -->|Q| F[Quadratic Bezier]
-    C -->|A| G[Arc]
+    C -->|M| D[Move Point]
+    C -->|L| E[Line Point]
+    C -->|C| F[Cubic Bezier]
+    C -->|Z| G[Close Path]
     
     D --> H[Create Control Point]
-    E --> I[Create Point + 2 Handles]
-    F --> J[Create Point + 1 Handle]
-    G --> K[Create Arc Controls]
+    E --> H
+    F --> I[Create Point + 2 Handles]
+    G --> J[Link to Start Point]
     
     H --> L[Store Point Data]
     I --> L
@@ -228,7 +228,7 @@ graph TB
         CC[Conversions]
         CC --> LTC[Line to Curve]
         CC --> CTL[Curve to Line]
-        CC --> QTC[Quadratic to Cubic]
+        CC --> MTZ[Move to Close]
     end
     
     subgraph "Path Operations"
@@ -269,7 +269,7 @@ Select and drag control points and handles
   - **Asymmetric**: Handles move independently
   - **Symmetric**: Handles mirror each other (same length and opposite angles)
   - **Smooth**: Handles maintain opposite angles but independent lengths
-- Command type conversion (M, L, C, Q, A, Z)
+- Command type conversion (M, L, C, Z)
 - Point manipulation operations:
   - Move to M (convert point to move command)
   - Delete Z command
@@ -332,7 +332,7 @@ const state = useCanvasStore.getState();
 // Convert command to a different type
 state.convertCommandType(elementId, commandIndex, 'C'); // to Cubic Bézier
 state.convertCommandType(elementId, commandIndex, 'L'); // to Line
-state.convertCommandType(elementId, commandIndex, 'Q'); // to Quadratic Bézier
+state.convertCommandType(elementId, commandIndex, 'Z'); // to Close Path
 
 // Move point to become a new subpath start
 state.moveToM(elementId, commandIndex);
@@ -402,7 +402,7 @@ The ControlPointAlignmentPanel shows:
 **Key Features**:
 - Real-time point manipulation with visual feedback
 - Bézier handle constraint system (asymmetric/symmetric/smooth)
-- Command type conversion between L, C, Q, A, Z
+- Command type conversion between M, L, C, Z
 - Path splitting and joining operations
 - Smooth brush for path simplification
 - Detailed alignment information and controls
