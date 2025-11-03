@@ -22,35 +22,30 @@ sidebar_label: Transformation
 sequenceDiagram
     participant User
     participant UI as UI/Toolbar
-    participant PM as PluginManager
-    participant TP as Transform Plugin
     participant Store as Canvas Store
-    participant EB as Event Bus
+    participant TP as Transform Plugin
     participant Canvas as Canvas Renderer
     participant TM as Transform Math
     
-    Note over User,Canvas: 1. Plugin Activation
+    Note over User,Canvas: 1. Tool Activation
     User->>UI: Click Transform Tool
-    UI->>Store: setMode('transformation')
-    Store->>PM: Plugin mode changed
-    PM->>TP: activate()
-    TP->>Store: Initialize transform slice
-    TP->>Store: Get selected elements
+    UI->>Store: setActivePlugin('transformation')
+    Store->>Store: Update activePlugin
+    Store->>Store: Get selected elements
     TP->>TM: calculateBoundingBox(elements)
     TM->>TP: Return bounds + handles
-    TP->>Store: Set transform handles
-    TP->>EB: Publish 'plugin:activated'
-    EB->>Canvas: Draw bounding box & handles
+    Store->>Store: Set transform handles
+    Canvas->>Canvas: Draw bounding box & handles
     
     Note over User,Canvas: 2. Resize via Corner Handle
     User->>Canvas: Click corner handle
-    Canvas->>TP: handleHandleDown(handleId, event)
+    Canvas->>TP: Internal handle down handling
     TP->>Store: Set activeHandle = 'corner-se'
     TP->>Store: Store initial bounds
     TP->>Store: Check modifier keys
     
     User->>Canvas: Drag handle
-    Canvas->>TP: handleHandleMove(event)
+    Canvas->>TP: Internal handle move handling
     TP->>Store: Get activeHandle position
     TP->>Store: Calculate delta [dx, dy]
     
@@ -58,6 +53,7 @@ sequenceDiagram
         TP->>TM: calculateProportionalScale(delta)
         TM->>TP: Return constrained dimensions
     else Alt/Option Key (Center)
+```
         TP->>TM: calculateCenterScale(delta)
         TM->>TP: Return mirrored dimensions
     else Normal
@@ -136,17 +132,7 @@ sequenceDiagram
     TP->>TM: scaleToWidth(elements, newWidth)
     TM->>TP: Return scaled elements
     TP->>Store: updateElements(scaled)
-    Store->>EB: Publish 'elements:transformed'
-    EB->>Canvas: Re-render
-    
-    Note over User,Canvas: 6. Plugin Deactivation
-    User->>UI: Select different tool
-    UI->>Store: setMode('select')
-    Store->>PM: Plugin mode changed
-    PM->>TP: deactivate()
-    TP->>Store: Clear transform handles
-    TP->>EB: Publish 'plugin:deactivated'
-    EB->>Canvas: Remove handles overlay
+    Store->>Canvas: Re-render
 ```
 
 ## Transform Math Operations

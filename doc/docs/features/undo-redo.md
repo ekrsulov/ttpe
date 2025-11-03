@@ -475,6 +475,6 @@ Snapshot:  ✓    ✗   ✗    ✗    ✗    ✓
 - [Canvas Store](../api/canvas-store.md) - Store architecture and slices
 - [State Management](../architecture/overview.md#state-management-strategy) - Zustand + Zundo integration
 - [Persistence](./persistence.md) - localStorage persistence (undo history not saved)
-- [Bottom Action Bar](../ui/components.md#bottom-action-bar) - Undo/redo UI controls
+- [Action Bars](../app-structure/actionbars.md) - Undo/redo UI controls
 - [Keyboard Shortcuts](../getting-started/usage.md#keyboard-shortcuts) - Shortcut reference
 - [Zundo Documentation](https://github.com/charkour/zundo) - Official Zundo middleware docs

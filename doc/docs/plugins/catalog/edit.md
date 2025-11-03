@@ -154,18 +154,7 @@ sequenceDiagram
     PP->>PP: Remove redundant points
     PP->>EP: Return simplified path
     EP->>Store: updateElement(simplified)
-    Store->>EB: Publish 'path:simplified'
-    EB->>Canvas: Re-render with fewer points
-    
-    Note over User,Canvas: 9. Plugin Deactivation
-    User->>UI: Select different tool
-    UI->>Store: setMode('select')
-    Store->>PM: Plugin mode changed
-    PM->>EP: deactivate()
-    EP->>Store: Clear selected points
-    EP->>Store: Clear edit state
-    EP->>EB: Publish 'plugin:deactivated'
-    EB->>Canvas: Hide control points
+    Store->>Canvas: Re-render with fewer points
 ```
 
 ## Point Editing System

@@ -61,11 +61,15 @@ graph TB
 ### Plugin Definition with createApi
 
 ```typescript
-import { PluginDefinition } from '@/plugins/types';
+import { PluginDefinition } from '@/types/plugins';
+import type { CanvasStore } from '@/store/canvasStore';
 
-export const myPlugin: PluginDefinition = {
+export const myPlugin: PluginDefinition<CanvasStore> = {
   id: 'my-plugin',
-  name: 'My Plugin',
+  metadata: {
+    label: 'My Plugin',
+    icon: MyIcon,
+  },
   
   // Public API definition
   createApi: (context) => ({
@@ -87,38 +91,32 @@ export const myPlugin: PluginDefinition = {
       context.store.getState().updateElement(pathId, { d: simplified });
       return true;
     },
-    
-    // Method 3: Event emission
-    triggerAction: (actionType: string): void => {
-      context.eventBus.emit('customEvent', { actionType });
-    },
   }),
   
-  // ... rest of plugin definition
+  // ... rest of plugin definition (handler, keyboardShortcuts, etc.)
 };
 ```
 
 ### Context Object
 
-The `context` parameter provides access to core TTPE services:
+The `context` parameter provides access to the Canvas Store:
 
 ```typescript
-interface PluginContext {
+interface PluginApiContext<TStore> {
   // Zustand store for state management
-  store: CanvasStore;
-  
-  // Event bus for pub/sub communication
-  eventBus: CanvasEventBus;
-  
-  // Plugin manager for accessing other plugins
-  pluginManager: PluginManager;
+  store: PluginStoreApi<TStore>;
 }
 ```
 
+**Note**: The context object **only contains the `store`**. It does not include:
+- ❌ `eventBus` - Event Bus is accessed separately via hooks/contexts
+- ❌ `pluginManager` - Plugin Manager is not injected into API context
+- ❌ `name` - Plugin metadata uses `metadata.label` instead
+
 This allows APIs to:
-- Read and modify store state
-- Emit events
-- Access other plugin APIs
+- Read store state via `context.store.getState()`
+- Modify state by calling store methods
+- Subscribe to state changes via `context.store.subscribe()`
 
 ## Type Safety
 
@@ -134,8 +132,12 @@ export interface SubpathPluginAPI {
 }
 
 // Implement the interface
-export const subpathPlugin: PluginDefinition = {
+export const subpathPlugin: PluginDefinition<CanvasStore> = {
   id: 'subpath',
+  metadata: {
+    label: 'Subpath',
+    icon: SubpathIcon,
+  },
   
   createApi: (context): SubpathPluginAPI => ({
     performPathSimplify: () => {
@@ -252,9 +254,12 @@ export interface SubpathPluginAPI {
   performSubPathReverse: () => void;
 }
 
-export const subpathPlugin: PluginDefinition = {
+export const subpathPlugin: PluginDefinition<CanvasStore> = {
   id: 'subpath',
-  name: 'Subpath',
+  metadata: {
+    label: 'Subpath',
+    icon: SubpathIcon,
+  },
   
   createApi: ({ store }): SubpathPluginAPI => ({
     performPathSimplify: () => {
@@ -281,9 +286,12 @@ export interface GridFillAPI {
   fillGridCell: (point: Point) => void;
 }
 
-export const gridFillPlugin: PluginDefinition = {
+export const gridFillPlugin: PluginDefinition<CanvasStore> = {
   id: 'gridFill',
-  name: 'Grid Fill',
+  metadata: {
+    label: 'Grid Fill',
+    icon: GridFillIcon,
+  },
   
   createApi: ({ store }): GridFillAPI => ({
     fillGridCell: (point: Point) => {
@@ -306,9 +314,12 @@ export interface ShapeAPI {
   createShape: (startPoint: Point, endPoint: Point) => void;
 }
 
-export const shapePlugin: PluginDefinition = {
+export const shapePlugin: PluginDefinition<CanvasStore> = {
   id: 'shape',
-  name: 'Shape',
+  metadata: {
+    label: 'Shape',
+    icon: ShapeIcon,
+  },
   
   createApi: ({ store }): ShapeAPI => ({
     createShape: (startPoint: Point, endPoint: Point) => {

@@ -30,8 +30,8 @@ sequenceDiagram
     participant Canvas
     
     User->>UI: Activate Curves Tool
-    UI->>Store: setMode('curves')
-    Store->>CP: activate()
+    UI->>Store: setActivePlugin('curves')
+    Store->>Store: Update activePlugin
     CP->>Store: Get selected paths
     CP->>LG: createLattice(bounds, resolution)
     LG->>CP: Return lattice control points

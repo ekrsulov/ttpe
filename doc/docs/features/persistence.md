@@ -548,6 +548,6 @@ const handleLogout = () => {
 - [Canvas Store](../api/canvas-store.md) - Store architecture and slices
 - [Undo/Redo](./undo-redo.md) - History management (not persisted)
 - [State Management](../architecture/overview.md#persistence-strategy) - Persistence architecture
-- [File Panel](../ui/components.md#file-panel) - Save/Load UI controls
+- [File Panel](../app-structure/file-panel.md) - Save/Load UI controls
 - [Versioning & Migration](../architecture/overview.md#versioning--migration) - Migration strategies
 - [Zustand Persist Middleware](https://github.com/pmndrs/zustand#persist-middleware) - Official documentation

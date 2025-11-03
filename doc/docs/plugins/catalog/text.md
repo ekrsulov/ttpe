@@ -57,12 +57,11 @@ sequenceDiagram
     TP->>Store: Update text.fontSize
     
     User->>UI: Set font weight to "bold"
-    UI->>TP: setFontWeight("bold")
-    TP->>Store: Update text.fontWeight
+    UI->>Store: Update fontWeight
     
-    Note over User,Canvas: 5. Generate Text Paths
-    User->>UI: Click "Convert to Paths" button
-    UI->>TP: convertTextToPaths()
+    Note over User,Canvas: 5. Create Text Path
+    User->>Canvas: Click on canvas
+    Canvas->>TP: handler(event, point)
     
     TP->>Store: Get text properties
     TP->>WASM: renderText(content, font, size, weight)
@@ -84,34 +83,14 @@ sequenceDiagram
     TP->>TP: Combine all glyph paths
     TP->>TP: Calculate bounding box
     TP->>TP: Apply baseline alignment
+    TP->>TP: Position at click point
     
     TP->>Store: Get current stroke/fill settings
     TP->>TP: Apply styling to paths
     
-    TP->>Store: createElements(textPaths)
-    Store->>EB: Publish 'elements:created'
-    EB->>Canvas: Render text as paths
-    EB->>Store: Add to undo stack
-    
-    TP->>UI: Show success message
-    TP->>Store: Clear text input
-    
-    Note over User,Canvas: 6. Advanced Options
-    User->>UI: Toggle "Kerning" option
-    UI->>TP: setKerning(true)
-    TP->>Store: Update text.kerning = true
-    
-    User->>UI: Adjust letter spacing
-    UI->>TP: setLetterSpacing(value)
-    TP->>Store: Update text.letterSpacing
-    
-    Note over User,Canvas: 7. Plugin Deactivation
-    User->>UI: Select different tool
-    UI->>Store: setMode('select')
-    Store->>TP: deactivate()
-    TP->>Store: Clear text state
-    TP->>EB: Publish 'plugin:deactivated'
-    EB->>UI: Hide text panel
+    TP->>Store: addElement(textPath)
+    Store->>Store: Add to undo stack
+    Canvas->>Canvas: Render text as path
 ```
 
 ## Text-to-Path Conversion
@@ -173,8 +152,6 @@ graph TB
         TS --> FS[fontSize: number]
         TS --> FW[fontWeight: string]
         TS --> FT[fontStyle: string]
-        TS --> KN[kerning: boolean]
-        TS --> LS[letterSpacing: number]
     end
     
     subgraph "WASM Integration"
@@ -198,7 +175,7 @@ graph TB
 
 ## Handler
 
-N/A (uses panel input)
+Responds to pointer events when text content is available and creates text paths on canvas click.
 
 ## Keyboard Shortcuts
 

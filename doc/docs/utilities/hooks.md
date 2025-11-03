@@ -859,7 +859,7 @@ const ArrangePanelComponent: React.FC = () => {
 - [UI Components](../ui/components.md) - Components that use these hooks
 - [Select Panel](./select-panel.md) - Uses `useSelectPanelActions`, `useSidebarFooterHeight`
 - [Action Bars](./actionbars.md) - Uses `useDeletionActions`
-- [Performance Optimization](../architecture/overview.md#performance) - Optimization strategies
+- [Performance Optimization](../architecture/overview.md#performance-optimizations) - Optimization strategies
 
 ---
 

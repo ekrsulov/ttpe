@@ -28,7 +28,7 @@ sequenceDiagram
     participant Canvas
     
     User->>UI: Select element + GridFill tool
-    UI->>GF: activate()
+    UI->>Store: setActivePlugin('gridFill')
     GF->>UI: Show grid parameters panel
     
     User->>UI: Set rows=3, cols=3, spacing=10

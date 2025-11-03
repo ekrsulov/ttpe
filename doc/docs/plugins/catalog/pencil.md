@@ -22,74 +22,62 @@ sidebar_label: Pencil
 sequenceDiagram
     participant User
     participant UI as UI/Toolbar
-    participant PM as PluginManager
-    participant PP as Pencil Plugin
     participant Store as Canvas Store
-    participant EB as Event Bus
+    participant PP as Pencil Plugin
+    participant Service as PencilDrawingService
     participant Canvas as Canvas Renderer
     
-    Note over User,Canvas: 1. Plugin Activation
+    Note over User,Canvas: 1. Tool Activation
     User->>UI: Click Pencil Tool
-    UI->>Store: setMode('pencil')
-    Store->>PM: Plugin mode changed
-    PM->>PP: activate()
-    PP->>Store: Initialize pencil slice
-    PP->>Store: Set default settings
+    UI->>Store: setActivePlugin('pencil')
+    Store->>Store: Update activePlugin
     Canvas->>Canvas: Set cursor to crosshair
     
     Note over User,Canvas: 2. Start Drawing
     User->>Canvas: Press pointer down
     Canvas->>PP: handler(event, point)
-    PP->>PP: startPath(point)
-    PP->>PP: Create PencilDrawingService
-    PP->>PP: Start point collection
+    PP->>Service: startPath(point)
+    Service->>Service: Initialize local state
+    Service->>Service: Start point collection
     
     Note over User,Canvas: 3. Drawing Motion
     User->>Canvas: Move pointer (drawing)
-    Canvas->>PP: Service handles pointermove
-    PP->>PP: Check drawing state
-    PP->>PP: Calculate distance from last point
+    Canvas->>Service: Service handles pointermove
+    Service->>Service: Check drawing state
+    Service->>Service: Calculate distance from last point
     
     alt Distance > minDistance threshold
-        PP->>PP: Filter point (noise reduction)
-        PP->>PP: Add point to local array
+        Service->>Service: Filter point (noise reduction)
+        Service->>Service: Add point to local array
         Canvas->>Canvas: Draw line segment (DOM)
     else Distance too small
-        PP->>PP: Skip point (reduce noise)
+        Service->>Service: Skip point (reduce noise)
     end
     
     loop While Drawing
-        Canvas->>PP: Service captures points
-        PP->>PP: Accumulate in local state
+        Canvas->>Service: Service captures points
+        Service->>Service: Accumulate in local state
         Canvas->>Canvas: Update preview path
     end
     
     Note over User,Canvas: 4. Finish Drawing
     User->>Canvas: Release pointer
-    Canvas->>PP: Service handles pointerup
-    PP->>PP: finalizePath(points)
-    PP->>PP: Apply smoothing algorithm
-    PP->>PP: Convert points to SVG path data
-    PP->>Store: addElement(pathElement)
+    Canvas->>Service: Service handles pointerup
+    Service->>Service: finalizePath(points)
+    Service->>Service: Apply smoothing algorithm
+    Service->>Service: Convert points to SVG path data
+    Service->>Store: addElement(pathElement)
     Store->>Store: Add to undo stack
     Canvas->>Canvas: Render final path
     
     Note over User,Canvas: 5. Settings Change
     User->>UI: Adjust tolerance slider
-    UI->>Store: updatePencilState({ simplificationTolerance })
+    UI->>Store: Update simplificationTolerance
     Store->>UI: Update slider value
     
     User->>UI: Toggle path mode
-    UI->>Store: updatePencilState({ reusePath })
+    UI->>Store: Update reusePath
     Store->>UI: Update toggle state
-    
-    Note over User,Canvas: 6. Plugin Deactivation
-    User->>UI: Select different tool
-    UI->>Store: setMode('select')
-    Store->>PM: Plugin mode changed
-    PM->>PP: deactivate()
-    PP->>PP: Clear drawing service
-    Canvas->>Canvas: Reset cursor
 ```
 
 ## Drawing Process Diagram

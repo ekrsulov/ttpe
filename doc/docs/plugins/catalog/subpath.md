@@ -30,7 +30,7 @@ sequenceDiagram
     participant Canvas
     
     User->>UI: Select path with subpaths
-    UI->>SP: activate()
+    UI->>Store: setActivePlugin('subpath')
     SP->>PP: parseSubpaths(pathData)
     PP->>SP: Return subpath list
     SP->>Canvas: Highlight subpaths

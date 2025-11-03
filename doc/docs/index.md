@@ -187,7 +187,7 @@ TTPE is designed for performance:
 - **Memoization**: React components use `useMemo` and `useCallback` extensively
 - **Canvas services**: Heavy computations run outside the React render cycle
 
-See [Architecture Overview](architecture/overview#performance) for optimization strategies.
+See [Architecture Overview](architecture/overview#performance-optimizations) for optimization strategies.
 
 ## Browser Support
 

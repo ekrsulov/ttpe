@@ -709,7 +709,7 @@ test('ungroups selected group and restores child parent references', async ({ pa
 
 - [Selection System](./selection.md) - Element and group selection
 - [Ordering](./ordering.md) - Z-index management (groups use root-level Z-index)
-- [Select Panel](../ui/components.md#select-panel) - UI for group management
+- [UI Components](../ui/components.md) - UI for group management
 - [Transform System](./transforms.md) - Group transforms and child propagation
 - [Canvas Store API](../api/canvas-store.md) - Group slice methods
 - [SVG Import](../api/svg-import.md) - Groups from imported SVG `<g>` elements

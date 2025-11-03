@@ -22,31 +22,25 @@ sidebar_label: Shape
 sequenceDiagram
     participant User
     participant UI as UI/Toolbar
-    participant PM as PluginManager
-    participant SHP as Shape Plugin
     participant Store as Canvas Store
-    participant EB as Event Bus
+    participant SHP as Shape Plugin
     participant Canvas as Canvas Renderer
     participant SG as Shape Generator
     
-    Note over User,Canvas: 1. Plugin Activation & Shape Selection
+    Note over User,Canvas: 1. Tool Activation & Shape Selection
     User->>UI: Click Shape Tool
-    UI->>Store: setMode('shape')
-    Store->>PM: Plugin mode changed
-    PM->>SHP: activate()
-    SHP->>Store: Initialize shape slice
-    SHP->>Store: Set default shape type (circle)
-    SHP->>EB: Publish 'plugin:activated'
-    EB->>Canvas: Set cursor to crosshair
+    UI->>Store: setActivePlugin('shape')
+    Store->>Store: Update activePlugin
+    Store->>Store: Set default shape type (circle)
+    Canvas->>Canvas: Set cursor to crosshair
     
     User->>UI: Select Triangle from shape panel
-    UI->>SHP: setShapeType('triangle')
-    SHP->>Store: Update shape.currentType
+    UI->>Store: Update currentShapeType
     Store->>UI: Update panel selection
     
     Note over User,Canvas: 2. Start Shape Creation
     User->>Canvas: Press pointer down
-    Canvas->>SHP: handlePointerDown(event)
+    Canvas->>SHP: handler(event, point)
     SHP->>Store: Set isCreating = true
     SHP->>Store: Store startPoint [x, y]
     SHP->>Store: Check Shift key state
@@ -54,7 +48,7 @@ sequenceDiagram
     
     Note over User,Canvas: 3. Shape Preview During Drag
     User->>Canvas: Drag pointer
-    Canvas->>SHP: handlePointerMove(event)
+    Canvas->>SHP: Internal pointermove handling
     SHP->>SHP: Check isCreating
     SHP->>Store: Get startPoint
     SHP->>SHP: Calculate endPoint [x, y]
@@ -87,14 +81,14 @@ sequenceDiagram
     Store->>Canvas: Draw preview shape (dashed)
     
     loop While Dragging
-        Canvas->>SHP: handlePointerMove
+        Canvas->>SHP: Process pointermove
         SHP->>SG: generateShape
         SG->>Canvas: Update preview
     end
     
     Note over User,Canvas: 4. Complete Shape Creation
     User->>Canvas: Release pointer
-    Canvas->>SHP: handlePointerUp(event)
+    Canvas->>SHP: Internal pointerup handling
     SHP->>Store: Set isCreating = false
     SHP->>SG: generateShape(final dimensions)
     SG->>SHP: Return final SVG path
@@ -106,9 +100,8 @@ sequenceDiagram
         SHP->>Store: Set element type = 'path'
         SHP->>Store: Add shape metadata
         SHP->>Store: addElement(shapeElement)
-        Store->>EB: Publish 'element:created'
-        EB->>Canvas: Render final shape
-        EB->>Store: Add to undo stack
+        Store->>Canvas: Render final shape
+        Store->>Store: Add to undo stack
     else Too Small
         SHP->>SHP: Discard shape
     end
@@ -117,18 +110,8 @@ sequenceDiagram
     
     Note over User,Canvas: 5. Shape Type Change
     User->>UI: Select Heart shape
-    UI->>SHP: setShapeType('heart')
-    SHP->>Store: Update shape.currentType
+    UI->>Store: Update currentShapeType
     Store->>UI: Highlight heart button
-    
-    Note over User,Canvas: 6. Plugin Deactivation
-    User->>UI: Select different tool
-    UI->>Store: setMode('select')
-    Store->>PM: Plugin mode changed
-    PM->>SHP: deactivate()
-    SHP->>Store: Clear shape state
-    SHP->>EB: Publish 'plugin:deactivated'
-    EB->>Canvas: Reset cursor
 ```
 
 ## Shape Generation Process

@@ -516,7 +516,7 @@ function App() {
 - [UI Components](../ui/components.md) - ToolbarIconButton and other components
 - [Plugin System](../plugins/overview.md) - Mode/plugin registration
 - [Undo/Redo](../features/undo-redo.md) - History management
-- [Viewport Management](../features/transforms.md#viewport-management) - Pan and zoom
+- [Viewport Operations](../features/transforms.md) - Pan and zoom
 
 ---
 

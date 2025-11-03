@@ -295,7 +295,7 @@ state.distributeHorizontally();
 - [Alignment](./alignment.md) - Align elements to common edges
 - [Selection System](./selection.md) - Element selection
 - [Transform System](./transforms.md) - Element transformation
-- [Arrange Panel](../ui/components.md#arrange-panel) - UI controls
+- [Arrange Panel](../app-structure/sidebar.md) - UI controls
 - [Select Plugin](../plugins/catalog/select.md) - Plugin implementation
 - [Edit Plugin](../plugins/catalog/edit.md) - Edit mode distribution
 - [Subpath Plugin](../plugins/catalog/subpath.md) - Subpath distribution

@@ -27,7 +27,7 @@ sequenceDiagram
     participant Canvas
     
     User->>UI: Select elements + Optical Align
-    UI->>OA: activate()
+    UI->>Store: Trigger optical alignment
     OA->>VA: analyzeVisualWeight(elements)
     VA->>VA: Calculate visual centers
     VA->>VA: Analyze shape distribution
