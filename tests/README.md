@@ -2,17 +2,52 @@
 
 This directory contains end-to-end tests for the TTPE (Text-to-Path Editor) application using Playwright.
 
+# TTPE Playwright Tests
+
+This directory contains end-to-end tests for the TTPE (Text-to-Path Editor) application using Playwright.
+
 ## Test Structure
 
 The tests cover the main functionalities of the application:
 
+### Core Functionality
 - **basic.spec.ts**: Basic application loading and mode switching
+- **global_actions.spec.ts**: Global application actions and shortcuts
+
+### Drawing Tools
 - **pencil.spec.ts**: Pencil drawing functionality
 - **shape.spec.ts**: Shape creation (squares, circles, triangles, rectangles)
 - **text.spec.ts**: Text input and formatting
+- **line.spec.ts**: Line drawing functionality
+
+### Selection and Manipulation
 - **selection.spec.ts**: Element selection and transformation
-- **edit.spec.ts**: Path editing with smooth brush
 - **duplicate_on_drag.spec.ts**: Duplicate on drag functionality (Command/Ctrl+Drag)
+- **movement.spec.ts**: Element movement and positioning
+- **align.spec.ts**: Element alignment (horizontal, vertical, center, etc.)
+
+### Editing and Modification
+- **edit.spec.ts**: Path editing with smooth brush
+- **path_edit.spec.ts**: Advanced path editing operations
+- **subpath.spec.ts**: Subpath manipulation
+- **boolean_ops.spec.ts**: Boolean operations (union, intersection, etc.)
+
+### Layout and Organization
+- **distribution.spec.ts**: Element distribution and spacing
+- **grouping.spec.ts**: Element grouping functionality
+- **order.spec.ts**: Element layering and z-order management
+- **visibility.spec.ts**: Element visibility controls
+
+### View and Navigation
+- **view_control.spec.ts**: View controls (zoom, pan, fit to screen)
+- **grid.spec.ts**: Grid system functionality
+- **guides.spec.ts**: Guideline system
+
+### Styling and Appearance
+- **style_eyedropper.spec.ts**: Style copying with eyedropper tool
+
+### File Operations
+- **file_management.spec.ts**: File import/export operations
 
 ## Running Tests
 
@@ -68,36 +103,50 @@ The tests are configured in `playwright.config.ts` with:
 
 The tests cover:
 
-1. **Application Loading**
+1. **Application Loading & Global Actions**
    - Canvas and sidebar presence
    - Plugin button availability
+   - Global shortcuts and actions
 
 2. **Mode Switching**
-   - Switching between different tools (Select, Pencil, Shape, Text, etc.)
+   - Switching between different tools (Select, Pencil, Shape, Text, Line, etc.)
 
-3. **Pencil Drawing**
-   - Drawing paths on canvas
-   - Switching between new path and add subpath modes
+3. **Drawing Tools**
+   - Pencil drawing paths on canvas
+   - Shape creation (square, circle, triangle, rectangle)
+   - Text input and font formatting
+   - Line drawing functionality
 
-4. **Shape Creation**
-   - Creating different shapes (square, circle, triangle, rectangle)
-   - Switching between shape types
-
-5. **Text Functionality**
-   - Entering text
-   - Changing font properties (size, weight, style)
-   - Font selection
-
-6. **Selection and Transformation**
+4. **Selection and Transformation**
    - Selecting created elements
    - Transformation panel functionality
    - Duplicating elements
-   - Toggle coordinates and rulers
+   - Element movement and positioning
+   - Alignment operations (horizontal, vertical, center, etc.)
 
-7. **Edit Functionality**
+5. **Editing and Path Operations**
    - Smooth brush mode toggling
-   - Adjusting brush settings (radius, strength, tolerance)
-   - Applying smooth brush effects
+   - Advanced path editing operations
+   - Subpath manipulation
+   - Boolean operations (union, intersection, difference)
+   - Path modification tools
+
+6. **Layout and Organization**
+   - Element distribution and spacing
+   - Grouping functionality
+   - Layer ordering and z-index management
+   - Element visibility controls
+
+7. **View and Navigation**
+   - View controls (zoom, pan, fit to screen)
+   - Grid system functionality
+   - Guideline system
+
+8. **Styling and Appearance**
+   - Style copying with eyedropper tool
+
+9. **File Operations**
+   - File import/export operations
 
 ## Writing New Tests
 

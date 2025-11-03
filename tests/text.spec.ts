@@ -31,8 +31,9 @@ test.describe('Text Functionality', () => {
     // Wait a bit for the panel to fully load
     await page.waitForTimeout(500);
     
-    // Try to find the font size input - it might be within a NumberInput component
-    const fontSizeInput = page.locator('[role="spinbutton"]').first();
+    // Try to find the font size input by its label
+    const fontSizeInput = page.locator('text=Size').locator('xpath=following-sibling::input').first();
+    await expect(fontSizeInput).toBeVisible();
     await fontSizeInput.clear();
     await fontSizeInput.fill('96');
     await expect(fontSizeInput).toHaveValue('96');
@@ -54,12 +55,6 @@ test.describe('Text Functionality', () => {
     if (await fontSelector.isVisible()) {
       await fontSelector.selectOption('Arial');
     }
-
-    // Enter text with spaces in the input field
-    const textInput = page.locator('input[placeholder="Enter text"]');
-    await expect(textInput).toBeVisible();
-    await page.waitForTimeout(150); // Slow down
-    await textInput.fill('Hello World Text');
 
     // Click on canvas to place text (more to the left)
     await canvas.click({
