@@ -1,5 +1,5 @@
 import React from 'react';
-import { IconButton as ChakraIconButton, HStack, VStack, Tag as ChakraTag } from '@chakra-ui/react';
+import { IconButton as ChakraIconButton, HStack, VStack, Tag as ChakraTag, useColorModeValue } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { RotateCcw, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ArrowUpLeft, ArrowUpRight, ArrowDownLeft, ArrowDownRight } from 'lucide-react';
 import { Panel } from '../../ui/Panel';
@@ -43,6 +43,9 @@ export const PanPanel: React.FC = () => {
   
   const panAmount = 50; // pixels to pan
 
+  const buttonHoverBg = useColorModeValue('gray.100', 'whiteAlpha.200');
+  const buttonActiveBg = useColorModeValue('gray.200', 'whiteAlpha.300');
+
   return (
     <Panel 
       title="Pan"
@@ -67,6 +70,9 @@ export const PanPanel: React.FC = () => {
                   onClick={isReset ? resetPan : () => pan(button.dx * panAmount, button.dy * panAmount)}
                   size="sm"
                   variant="secondary"
+                  borderRadius="full"
+                  _hover={{ bg: buttonHoverBg }}
+                  _active={{ bg: buttonActiveBg }}
                 />
               );
             })}
