@@ -13,7 +13,7 @@ const config = {
   // Set the production url of your site here
   url: 'https://ekrsulov.github.io',
   // Set the /<baseUrl>/ pathname under which your site is served
-  baseUrl: '/ttpe/',
+  baseUrl: '/ttpe/docs/',
 
   // GitHub pages deployment config (adjust as needed)
   organizationName: 'ekrsulov',

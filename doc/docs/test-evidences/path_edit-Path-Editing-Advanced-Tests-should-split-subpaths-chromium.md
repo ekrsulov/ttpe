@@ -7,8 +7,8 @@ sidebar_label: "should split subpaths"
 # should split subpaths
 Description: This test verifies that should split subpaths.
 
-![Screenshot](/ttpe/test-evidences/path_edit-Path-Editing-Advanced-Tests-should-split-subpaths-chromium/test-finished-1.png)
+![Screenshot](/ttpe/docs/test-evidences/path_edit-Path-Editing-Advanced-Tests-should-split-subpaths-chromium/test-finished-1.png)
 
 <video controls>
-  <source src="/ttpe/test-evidences/path_edit-Path-Editing-Advanced-Tests-should-split-subpaths-chromium/video.webm" type="video/webm" />
+  <source src="/ttpe/docs/test-evidences/path_edit-Path-Editing-Advanced-Tests-should-split-subpaths-chromium/video.webm" type="video/webm" />
 </video>
