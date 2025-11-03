@@ -8,6 +8,7 @@ import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
 import { SelectPanelItem } from './SelectPanelItem';
 import { SelectPanelGroupItem } from './SelectPanelGroupItem';
 import { useDragResize } from '../../hooks/useDragResize';
+import { DocumentationCTA } from '../../ui/DocumentationCTA';
 import { getCommandsForPanelItem } from '../../utils/selectPanelHelpers';
 import { buildElementMap } from '../../utils/coreHelpers';
 
@@ -308,9 +309,11 @@ const SelectPanelComponent: React.FC = () => {
               alignItems="center"
               justifyContent="center"
             >
-              {hasSelection
-                ? 'No additional options available for the selected items'
-                : 'Select elements to see details and options'}
+              {hasSelection ? (
+                'No additional options available for the selected items'
+              ) : (
+                <DocumentationCTA />
+              )}
             </Box>
           )}
         </VStack>

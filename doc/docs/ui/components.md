@@ -1180,6 +1180,53 @@ src/ui/
 
 ---
 
+## Call-to-Action Components
+
+### DocumentationCTA
+
+A specialized call-to-action component that displays the VectorNest logo and a button linking to the official documentation. Used in empty states and settings panels to guide users toward learning resources.
+
+**Features:**
+- Displays the VectorNest logo with subtle opacity
+- Includes a styled button that opens documentation in a new tab
+- Uses consistent styling with other sidebar utility buttons
+- Responsive and accessible design
+
+**Props:** None (stateless component)
+
+**Usage:**
+
+```tsx
+import { DocumentationCTA } from '@/ui/DocumentationCTA';
+
+<DocumentationCTA />
+```
+
+**Example Implementation:**
+
+```tsx
+// Used in DocumentationPanel for settings sidebar
+import { Panel } from '@/ui/Panel';
+import { DocumentationCTA } from '@/ui/DocumentationCTA';
+import { Divider } from '@chakra-ui/react';
+
+export const DocumentationPanel: React.FC = () => {
+  return (
+    <Panel>
+      <Divider my={2} />
+      <DocumentationCTA />
+    </Panel>
+  );
+};
+```
+
+**Integration Points:**
+- Displayed as a separate panel in the Settings sidebar, positioned after the Grid panel
+- Also available in the SelectPanel when no elements are selected
+- Automatically opens documentation at `https://ekrsulov.github.io/ttpe/docs/` in a new tab
+
+---
+
 ## Related Documentation
 
 - [Chakra UI Documentation](https://chakra-ui.com/docs/getting-started) - Base component library

@@ -21,6 +21,7 @@ const PathOperationsPanel = React.lazy(() => import('../../plugins/path/PathOper
 const SubPathOperationsPanel = React.lazy(() => import('../../plugins/subpath/SubPathOperationsPanel').then(module => ({ default: module.SubPathOperationsPanel })));
 const GuidelinesPanel = React.lazy(() => import('../../plugins/guidelines/GuidelinesPanel').then(module => ({ default: module.GuidelinesPanel })));
 const GridPanel = React.lazy(() => import('../../plugins/grid/GridPanel').then(module => ({ default: module.default })));
+const DocumentationPanel = React.lazy(() => import('../panels/DocumentationPanel').then(module => ({ default: module.DocumentationPanel })));
 
 export interface PathSimplification {
   tolerance: number;
@@ -157,6 +158,11 @@ export const PANEL_CONFIGS: PanelConfig[] = [
     key: 'grid',
     condition: (ctx) => ctx.showSettingsPanel,
     component: GridPanel,
+  },
+  {
+    key: 'documentation',
+    condition: (ctx) => ctx.showSettingsPanel,
+    component: DocumentationPanel,
   },
   {
     key: 'pan',
