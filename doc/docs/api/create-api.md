@@ -547,5 +547,5 @@ describe('MyPlugin API', () => {
 
 - **[Plugin Manager](./plugin-manager)**: Complete PluginManager API reference
 - **[Canvas Store](./canvas-store)**: Store methods available in context
-- **[Plugin Development](/docs/plugins/development)**: How to build complete plugins
-- **[Type Definitions](/docs/plugins/types)**: Plugin type interfaces
+- **[Plugin Development](plugins/development)**: How to build complete plugins
+- **[Type Definitions](plugins/types)**: Plugin type interfaces

@@ -207,10 +207,10 @@ Possible improvements:
 
 ## Related Documentation
 
-- [Canvas Services](/docs/architecture/canvas-services) - Service pattern details
-- [Event Bus](/docs/event-bus/overview) - Event-driven architecture
-- [Plugin System](/docs/plugins/overview) - Plugin development guide
-- [Select Plugin](/docs/plugins/catalog/select) - Selection handling
+- [Canvas Services](architecture/canvas-services) - Service pattern details
+- [Event Bus](event-bus/overview) - Event-driven architecture
+- [Plugin System](plugins/overview) - Plugin development guide
+- [Select Plugin](plugins/catalog/select) - Selection handling
 
 ## Code References
 

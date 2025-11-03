@@ -381,5 +381,5 @@ export const eventBus = new CanvasEventBus();
 
 - **[Event Topics](./topics)**: Complete reference for all event payload schemas
 - **[Event Patterns](./patterns)**: Advanced patterns and best practices
-- **[Plugin System](/docs/plugins/overview)**: How plugins integrate with the Event Bus
-- **[Canvas Architecture](/docs/app-structure/canvas)**: How the canvas emits events
+- **[Plugin System](plugins/overview)**: How plugins integrate with the Event Bus
+- **[Canvas Architecture](app-structure/canvas)**: How the canvas emits events

@@ -81,15 +81,15 @@ const config = {
             items: [
               {
                 label: 'Getting Started',
-                to: '/docs',
+                to: '/',
               },
               {
                 label: 'Architecture',
-                to: '/docs/architecture/overview',
+                to: '/architecture/overview',
               },
               {
                 label: 'Plugins',
-                to: '/docs/plugins/overview',
+                to: '/plugins/overview',
               },
             ],
           },
@@ -98,15 +98,15 @@ const config = {
             items: [
               {
                 label: 'API Reference',
-                to: '/docs/api/create-api',
+                to: '/api/create-api',
               },
               {
                 label: 'UI Components',
-                to: '/docs/ui/components',
+                to: '/ui/components',
               },
               {
                 label: 'Theming',
-                to: '/docs/ui/theming',
+                to: '/ui/theming',
               },
             ],
           },
@@ -119,11 +119,11 @@ const config = {
               },
               {
                 label: 'Contributing',
-                to: '/docs/contributing/style-guide',
+                to: '/contributing/style-guide',
               },
               {
                 label: 'Changelog',
-                to: '/docs/changelog',
+                to: '/changelog',
               },
             ],
           },
