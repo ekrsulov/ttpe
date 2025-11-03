@@ -1186,4 +1186,4 @@ src/ui/
 - [Lucide Icons](https://lucide.dev/icons/) - Icon library used throughout TTPE
 - [Plugins Overview](../plugins/overview.md) - How plugins use UI components
 - [Architecture Overview](../architecture/overview.md) - Application structure
-- [Canvas Store API](../api/canvas-store.md) - State management integration
+- [Canvas Store API](../api/canvas-store) - State management integration

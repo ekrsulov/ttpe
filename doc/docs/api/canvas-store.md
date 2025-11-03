@@ -1,5 +1,5 @@
 ---
-id: canvas-store-api
+id: canvas-store
 title: Canvas Store API
 sidebar_label: Canvas Store
 ---

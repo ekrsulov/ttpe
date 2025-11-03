@@ -855,7 +855,7 @@ const ArrangePanelComponent: React.FC = () => {
 
 ## Related Documentation
 
-- [Canvas Store](../api/canvas-store.md) - State management with Zustand
+- [Canvas Store](../api/canvas-store) - State management with Zustand
 - [UI Components](../ui/components.md) - Components that use these hooks
 - [Selection](../features/selection.md) - Uses selection-related hooks
 - [Action Bars](../app-structure/actionbars.md) - Uses action hooks

@@ -536,5 +536,5 @@ transformElement(element, {
 
 - [Transformation Plugin](../plugins/catalog/transformation.md) - Plugin implementation
 - [Selection System](./selection.md) - Element selection
-- [Canvas Store API](../api/canvas-store-api) - State management
+- [Canvas Store API](../api/canvas-store) - State management
 - [Transform Controller](../architecture/overview.md) - Transform math

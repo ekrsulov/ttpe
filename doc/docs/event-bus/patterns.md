@@ -668,5 +668,5 @@ eventBus.subscribe('pointerdown', (payload) => {
 
 - **[Event Bus Overview](./overview)**: Core architecture and concepts
 - **[Event Topics](./topics)**: Complete payload type reference
-- **[Plugin Development](plugins/development)**: Building plugins with events
-- **[Performance Guide](architecture/overview#performance-optimizations)**: System-wide optimization strategies
+- **[Plugin Registration](../plugins/registration)**: Building plugins with events
+- **[Architecture Overview](../architecture/overview)**: System-wide design and patterns

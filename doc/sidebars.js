@@ -89,7 +89,7 @@ const sidebars = {
       items: [
         'api/create-api',
         'api/plugin-manager',
-        'api/canvas-store-api',
+        'api/canvas-store',
       ],
     },
     {

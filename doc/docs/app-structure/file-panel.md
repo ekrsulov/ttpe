@@ -584,7 +584,7 @@ const setDocumentName = useCanvasStore(state => state.setDocumentName);
 ## Related Documentation
 
 - [Sidebar](./sidebar.md) - Sidebar container and navigation
-- [Canvas Store](../api/canvas-store.md) - State management API
+- [Canvas Store](../api/canvas-store) - State management API
 - [Persistence](../features/persistence.md) - Project save/load
 
 ---

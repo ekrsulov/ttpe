@@ -415,5 +415,5 @@ eventBus.subscribe('pointerdown', handlePointerDown);
 
 - **[Event Bus Overview](./overview)**: Architecture and core concepts
 - **[Event Patterns](./patterns)**: Advanced usage patterns and best practices
-- **[Canvas Architecture](app-structure/canvas)**: How canvas emits events
-- **[Plugin System](plugins/overview)**: How plugins consume events
+- **[Canvas Architecture](../app-structure/canvas)**: How canvas emits events
+- **[Plugin System](../plugins/overview)**: How plugins consume events

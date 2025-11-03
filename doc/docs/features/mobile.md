@@ -579,5 +579,5 @@ Potential mobile improvements being considered:
 ## Related Documentation
 
 - [Architecture Overview](../architecture/overview.md) - System design
-- [Canvas Store API](../api/canvas-store-api) - State management
+- [Canvas Store API](../api/canvas-store) - State management
 - [UI Components](../ui/components.md) - UI system

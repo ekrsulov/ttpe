@@ -472,7 +472,7 @@ Snapshot:  ✓    ✗   ✗    ✗    ✗    ✓
 
 ## Related Documentation
 
-- [Canvas Store](../api/canvas-store.md) - Store architecture and slices
+- [Canvas Store](../api/canvas-store) - Store architecture and slices
 - [State Management](../architecture/overview.md#state-management-strategy) - Zustand + Zundo integration
 - [Persistence](./persistence.md) - localStorage persistence (undo history not saved)
 - [Action Bars](../app-structure/actionbars.md) - Undo/redo UI controls

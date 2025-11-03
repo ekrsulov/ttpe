@@ -614,5 +614,5 @@ describe('PluginManager', () => {
 
 - **[createApi Pattern](./create-api)**: How to expose plugin APIs
 - **[Canvas Store](./canvas-store)**: Store methods available to plugins
-- **[Plugin Development](plugins/development)**: Building complete plugins
-- **[Plugin Types](plugins/types)**: Type definitions for plugins
+- **[Plugin Registration](../plugins/registration)**: How to register and configure plugins
+- **[Plugin Lifecycle](../plugins/lifecycle)**: Understanding plugin lifecycle hooks

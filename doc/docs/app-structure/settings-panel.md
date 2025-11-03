@@ -563,7 +563,7 @@ interface CanvasState {
 ## Related Documentation
 
 - [Sidebar](./sidebar.md) - Sidebar container and navigation
-- [Canvas Store](../api/canvas-store.md) - State management API
+- [Canvas Store](../api/canvas-store) - State management API
 - [Grid Plugin](../plugins/catalog/grid.md) - Grid rendering and snapping
 - [Minimap Plugin](../plugins/catalog/minimap.md) - Canvas overview
 - [Theme System](../ui/theming.md) - Application theming

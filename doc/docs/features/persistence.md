@@ -545,7 +545,7 @@ const handleLogout = () => {
 
 ## Related Documentation
 
-- [Canvas Store](../api/canvas-store.md) - Store architecture and slices
+- [Canvas Store](../api/canvas-store) - Store architecture and slices
 - [Undo/Redo](./undo-redo.md) - History management (not persisted)
 - [State Management](../architecture/overview.md#persistence-strategy) - Persistence architecture
 - [File Panel](../app-structure/file-panel.md) - Save/Load UI controls

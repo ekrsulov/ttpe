@@ -19,7 +19,7 @@ Selection functionality in TTPE includes:
 - Grouping and ungrouping
 
 :::note
-**Alignment, distribution, and ordering** (bring to front, send to back) are provided by the [`useArrangeHandlers`](utilities/hooks#usearrangehandlers) hook and displayed in the **ArrangePanel** in the sidebar footer when elements are selected. These features are not part of the select plugin itself.
+**Alignment, distribution, and ordering** (bring to front, send to back) are provided by the `useArrangeHandlers` hook and displayed in the **ArrangePanel** in the sidebar footer when elements are selected. These features are not part of the select plugin itself.
 :::
 
 ## Plugin Interaction Flow
@@ -147,7 +147,7 @@ state.clearSelection();
 state.getSelectedElements();
 state.moveSelectedElements(deltaX, deltaY);
 ```
-See the [Canvas Store API](api/canvas-store-api) for more details.
+See the [Canvas Store API](../../api/canvas-store) for more details.
 :::
 
 ## Usage Examples
@@ -204,6 +204,6 @@ The select plugin is defined inline within the `CORE_PLUGINS` array and does not
 ## Related
 
 - [Plugin System Overview](../overview)
-- [Canvas Store API](api/canvas-store-api)
-- [SelectionSlice](architecture/store-slices#selectionslice)
+- [Canvas Store API](../../api/canvas-store)
+- [Architecture Overview](../../architecture/overview)
 
