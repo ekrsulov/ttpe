@@ -3,5 +3,7 @@ Description: This test verifies that should clear selections with Escape key bef
 
 ![Screenshot](/test-evidences/basic-TTPE-Application-sho-62a85-e-key-before-changing-modes-chromium/test-finished-1.png)
 
-[View test video](/test-evidences/basic-TTPE-Application-sho-62a85-e-key-before-changing-modes-chromium/video.webm
-)
+<video controls>
+<source src="/test-evidences/basic-TTPE-Application-sho-62a85-e-key-before-changing-modes-chromium/video.webm" type="video/webm" />
+Your browser does not support the video tag.
+</video>

@@ -3,5 +3,7 @@ Description: This test verifies that should select and manipulate individual sub
 
 ![Screenshot](/test-evidences/subpath-Subpath-Management-36652-ipulate-individual-subpaths-chromium/test-finished-1.png)
 
-[View test video](/test-evidences/subpath-Subpath-Management-36652-ipulate-individual-subpaths-chromium/video.webm
-)
+<video controls>
+<source src="/test-evidences/subpath-Subpath-Management-36652-ipulate-individual-subpaths-chromium/video.webm" type="video/webm" />
+Your browser does not support the video tag.
+</video>

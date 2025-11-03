@@ -3,5 +3,7 @@ Description: This test verifies that should create 45 degree diagonal line with 
 
 ![Screenshot](/test-evidences/line-Line-Creation-should--d69d1-iagonal-line-with-shift-key-chromium/test-finished-1.png)
 
-[View test video](/test-evidences/line-Line-Creation-should--d69d1-iagonal-line-with-shift-key-chromium/video.webm
-)
+<video controls>
+<source src="/test-evidences/line-Line-Creation-should--d69d1-iagonal-line-with-shift-key-chromium/video.webm" type="video/webm" />
+Your browser does not support the video tag.
+</video>

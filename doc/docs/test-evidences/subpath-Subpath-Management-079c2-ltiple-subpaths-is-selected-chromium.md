@@ -3,5 +3,7 @@ Description: This test verifies that should enable subpath mode when path with m
 
 ![Screenshot](/test-evidences/subpath-Subpath-Management-079c2-ltiple-subpaths-is-selected-chromium/test-finished-1.png)
 
-[View test video](/test-evidences/subpath-Subpath-Management-079c2-ltiple-subpaths-is-selected-chromium/video.webm
-)
+<video controls>
+<source src="/test-evidences/subpath-Subpath-Management-079c2-ltiple-subpaths-is-selected-chromium/video.webm" type="video/webm" />
+Your browser does not support the video tag.
+</video>

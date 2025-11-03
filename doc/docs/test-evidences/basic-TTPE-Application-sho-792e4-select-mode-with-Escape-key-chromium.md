@@ -3,5 +3,7 @@ Description: This test verifies that should return to select mode with Escape ke
 
 ![Screenshot](/test-evidences/basic-TTPE-Application-sho-792e4-select-mode-with-Escape-key-chromium/test-finished-1.png)
 
-[View test video](/test-evidences/basic-TTPE-Application-sho-792e4-select-mode-with-Escape-key-chromium/video.webm
-)
+<video controls>
+<source src="/test-evidences/basic-TTPE-Application-sho-792e4-select-mode-with-Escape-key-chromium/video.webm" type="video/webm" />
+Your browser does not support the video tag.
+</video>

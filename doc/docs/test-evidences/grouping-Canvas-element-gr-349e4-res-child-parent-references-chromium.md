@@ -3,5 +3,7 @@ Description: This test verifies that ungroups selected group and restores child 
 
 ![Screenshot](/test-evidences/grouping-Canvas-element-gr-349e4-res-child-parent-references-chromium/test-finished-1.png)
 
-[View test video](/test-evidences/grouping-Canvas-element-gr-349e4-res-child-parent-references-chromium/video.webm
-)
+<video controls>
+<source src="/test-evidences/grouping-Canvas-element-gr-349e4-res-child-parent-references-chromium/video.webm" type="video/webm" />
+Your browser does not support the video tag.
+</video>

@@ -3,5 +3,7 @@ Description: This test verifies that should create shape when starting over exis
 
 ![Screenshot](/test-evidences/shape-Shape-Creation-shoul-f86b7-rting-over-existing-element-chromium/test-finished-1.png)
 
-[View test video](/test-evidences/shape-Shape-Creation-shoul-f86b7-rting-over-existing-element-chromium/video.webm
-)
+<video controls>
+<source src="/test-evidences/shape-Shape-Creation-shoul-f86b7-rting-over-existing-element-chromium/video.webm" type="video/webm" />
+Your browser does not support the video tag.
+</video>
