@@ -15,8 +15,6 @@ Transformations in TTPE are **non-destructive** and **reversible**. When you tra
 The system provides:
 - **8-handle bounding box**: Corner and edge handles for precise control
 - **Rotation handle**: Circular handle above the bounding box
-- **Proportional scaling**: Hold Shift to maintain aspect ratio
-- **Center scaling**: Hold Alt/Option to scale from center
 - **Visual feedback**: Real-time dimension and angle display
 - **Snap to angles**: 15° increments when holding Shift during rotation
 
@@ -30,8 +28,6 @@ Drag any of the 8 handles on the bounding box to resize elements.
 
 **Corner Handles (4):**
 - Drag to scale both width and height
-- Hold **Shift** for proportional scaling (maintains aspect ratio)
-- Hold **Alt/Option** to scale from center point
 - Visual feedback shows current dimensions
 
 **Edge Handles (4):**
