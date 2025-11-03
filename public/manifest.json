@@ -1,6 +1,6 @@
 {
-  "name": "TTPE - SVG Path Editor",
-  "short_name": "TTPE",
+  "name": "Vectornest",
+  "short_name": "Vectornest",
   "description": "Touch-optimized SVG path editor",
   "start_url": "/",
   "display": "standalone",
@@ -9,7 +9,7 @@
   "orientation": "any",
   "icons": [
     {
-      "src": "/vite.svg",
+      "src": "/logo.svg",
       "sizes": "any",
       "type": "image/svg+xml"
     }
