@@ -12,8 +12,6 @@ sidebar_label: Optical Alignment
 
 - Visual weight-based alignment
 - Compensates for optical illusions
-- Adjustable threshold
-- Works with boolean operations
 
 ## Plugin Interaction Flow
 
