@@ -159,3 +159,27 @@ code {
     overflow-x: auto;
   }
 }
+
+/* Fix content spacing to prevent overlap with sidebar */
+.theme-doc-main-container {
+  padding-left: 2rem;
+}
+
+.theme-doc-sidebar-container + .theme-doc-main-container {
+  margin-left: var(--ifm-sidebar-width, 300px);
+  padding-left: 1rem;
+}
+
+.theme-doc-markdown h2,
+.theme-doc-markdown h3,
+.theme-doc-markdown h4 {
+  margin-left: 0;
+  padding-left: 0;
+}
+
+@media (max-width: 996px) {
+  .theme-doc-sidebar-container + .theme-doc-main-container {
+    margin-left: 0;
+    padding-left: 1rem;
+  }
+}
