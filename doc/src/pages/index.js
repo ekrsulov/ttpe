@@ -15,6 +15,7 @@ export default function Home() {
       padding: '2rem',
       textAlign: 'center'
     }}>
+      <img src="./img/logo.svg" alt="Vectornest Logo" style={{ width: '400px', marginBottom: '2rem' }} />
       <h1 style={{ fontSize: '3rem', marginBottom: '1rem' }}>
         Vectornest Documentation
       </h1>
@@ -26,7 +27,7 @@ export default function Home() {
         to={docsUrl}
         style={{
           padding: '1rem 2rem',
-          backgroundColor: '#007bff',
+          backgroundColor: '#000000',
           color: 'white',
           textDecoration: 'none',
           borderRadius: '5px',

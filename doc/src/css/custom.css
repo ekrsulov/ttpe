@@ -4,13 +4,13 @@
 
 :root {
   /* Primary brand colors */
-  --ifm-color-primary: #007bff;
-  --ifm-color-primary-dark: #0062cc;
-  --ifm-color-primary-darker: #005cbf;
-  --ifm-color-primary-darkest: #004a99;
-  --ifm-color-primary-light: #1a8cff;
-  --ifm-color-primary-lighter: #3399ff;
-  --ifm-color-primary-lightest: #4da6ff;
+  --ifm-color-primary: #6c757d;
+  --ifm-color-primary-dark: #5a6268;
+  --ifm-color-primary-darker: #545b62;
+  --ifm-color-primary-darkest: #495057;
+  --ifm-color-primary-light: #868e96;
+  --ifm-color-primary-lighter: #adb5bd;
+  --ifm-color-primary-lightest: #ced4da;
 
   /* Font settings */
   --ifm-code-font-size: 90%;
@@ -23,13 +23,13 @@
 
 /* Dark mode overrides */
 [data-theme='dark'] {
-  --ifm-color-primary: #4da6ff;
-  --ifm-color-primary-dark: #1a8cff;
-  --ifm-color-primary-darker: #0080ff;
-  --ifm-color-primary-darkest: #007bff;
-  --ifm-color-primary-light: #66b3ff;
-  --ifm-color-primary-lighter: #80bfff;
-  --ifm-color-primary-lightest: #99ccff;
+  --ifm-color-primary: #adb5bd;
+  --ifm-color-primary-dark: #868e96;
+  --ifm-color-primary-darker: #6c757d;
+  --ifm-color-primary-darkest: #5a6268;
+  --ifm-color-primary-light: #ced4da;
+  --ifm-color-primary-lighter: #dee2e6;
+  --ifm-color-primary-lightest: #f8f9fa;
 }
 
 /* Code blocks */
