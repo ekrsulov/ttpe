@@ -118,4 +118,4 @@ npm run lint:links
 
 ## License
 
-Same as the main TTPE project.
+Same as the main TTPE project
