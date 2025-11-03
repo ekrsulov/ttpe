@@ -9,7 +9,7 @@ import { SidebarUtilityButton } from '../ui/SidebarUtilityButton';
 export const DocumentationCTA: React.FC = () => {
   return (
     <VStack spacing={4} align="center">
-      <Image src="/logo.svg" boxSize="60px" opacity={0.7} />
+      <Image src="./logo.svg" boxSize="60px" opacity={0.7} />
       <SidebarUtilityButton
         label="VectorNest Documentation"
         isActive={false}
