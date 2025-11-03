@@ -6,7 +6,7 @@ sidebar_label: Theming
 
 # Theming
 
-TTPE uses Chakra UI with custom theme tokens.
+Vectornest uses Chakra UI with custom theme tokens.
 
 ## Color Tokens
 

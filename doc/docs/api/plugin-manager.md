@@ -6,7 +6,7 @@ sidebar_label: Plugin Manager
 
 # Plugin Manager API
 
-The **PluginManager** is the central orchestrator of TTPE's plugin system. It manages plugin lifecycle, handles plugin registration, provides access to plugin APIs, and coordinates UI components (panels, overlays, actions) across the application.
+The **PluginManager** is the central orchestrator of Vectornest's plugin system. It manages plugin lifecycle, handles plugin registration, provides access to plugin APIs, and coordinates UI components (panels, overlays, actions) across the application.
 
 ## Overview
 

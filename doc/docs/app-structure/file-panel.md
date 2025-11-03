@@ -6,7 +6,7 @@ sidebar_label: File Panel
 
 # File Panel
 
-The **File Panel** provides import/export functionality and project management for TTPE. It allows users to import SVG files, export canvas to SVG/PNG, and save/load project files in JSON format.
+The **File Panel** provides import/export functionality and project management for Vectornest. It allows users to import SVG files, export canvas to SVG/PNG, and save/load project files in JSON format.
 
 ## Overview
 
@@ -577,7 +577,7 @@ const setDocumentName = useCanvasStore(state => state.setDocumentName);
 
 - **SVG**: Clean, optimized SVG XML
 - **PNG**: Raster image with transparency
-- **JSON**: TTPE project format (full state serialization)
+- **JSON**: Vectornest project format (full state serialization)
 
 ---
 

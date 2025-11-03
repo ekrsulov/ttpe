@@ -10,7 +10,7 @@ Complete type reference for all Event Bus payloads. This page documents the exac
 
 ## Event Map Overview
 
-TTPE's Event Bus uses a strongly-typed `EventMap` that maps event names to their payload types:
+Vectornest's Event Bus uses a strongly-typed `EventMap` that maps event names to their payload types:
 
 ```typescript
 interface EventMap {

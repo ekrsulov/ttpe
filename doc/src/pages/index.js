@@ -16,10 +16,10 @@ export default function Home() {
       textAlign: 'center'
     }}>
       <h1 style={{ fontSize: '3rem', marginBottom: '1rem' }}>
-        TTPE Documentation
+        Vectornest Documentation
       </h1>
       <p style={{ fontSize: '1.2rem', marginBottom: '2rem', maxWidth: '600px' }}>
-        Welcome to the comprehensive technical documentation for TTPE (The TypeScript Path Editor),
+        Welcome to the comprehensive technical documentation for 
         a modern, extensible web-based vector graphics editor.
       </p>
       <Link

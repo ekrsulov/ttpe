@@ -6,7 +6,7 @@ sidebar_label: Overview
 
 # Plugin System Overview
 
-The plugin system is TTPE's core extensibility mechanism. Every interactive tool and feature is implemented as a plugin, making the editor highly modular and maintainable.
+The plugin system is Vectornest's core extensibility mechanism. Every interactive tool and feature is implemented as a plugin, making the editor highly modular and maintainable.
 
 ## Philosophy
 

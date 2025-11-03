@@ -6,7 +6,7 @@ sidebar_label: Code Standards
 
 # Code Standards
 
-Coding conventions for TTPE.
+Coding conventions for Vectornest.
 
 ## TypeScript
 

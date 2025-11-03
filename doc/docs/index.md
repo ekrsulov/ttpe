@@ -1,17 +1,17 @@
 ---
 id: index
-title: Welcome to TTPE Documentation
+title: Welcome to Vectornest Documentation
 sidebar_label: Introduction
 slug: /
 ---
 
-# TTPE — Web Vector Editor
+# Vectornest — Web Vector Editor
 
-Welcome to the comprehensive technical documentation for **TTPE** (The TypeScript Path Editor), a modern, extensible web-based vector graphics editor built with React, TypeScript, and a sophisticated plugin architecture.
+Welcome to the comprehensive technical documentation for **Vectornest**, a modern, extensible web-based vector graphics editor built with React, TypeScript, and a sophisticated plugin architecture.
 
-## What is TTPE?
+## What is Vectornest?
 
-TTPE is a full-featured SVG vector graphics editor that runs entirely in the browser. It provides:
+Vectornest is a full-featured SVG vector graphics editor that runs entirely in the browser. It provides:
 
 - **Advanced Path Editing**: Precise manipulation of Bézier curves and path segments
 - **Plugin Architecture**: Extensible tool system with hot-swappable plugins
@@ -54,12 +54,12 @@ Learn about the communication system that connects components:
 
 ### Public API
 Reference documentation for plugin development:
-- **Create API**: The plugin interface for extending TTPE
+- **Create API**: The plugin interface for extending Vectornest
 - **Plugin Manager**: Runtime plugin management and coordination
 - **Canvas Store**: State management and data persistence
 
 ### Core Features
-Explore TTPE's main editing capabilities:
+Explore Vectornest's main editing capabilities:
 - **Alignment**: Precise element positioning
 - **Distribution**: Spacing and layout tools
 - **Groups**: Element grouping and hierarchy
@@ -136,7 +136,7 @@ Guidelines for contributors and maintainers:
 
 ### Plugin-Based Architecture
 
-TTPE's core strength is its plugin system. Every tool—from selection and drawing to transforms and grid fills—is implemented as a plugin:
+Vectornest's core strength is its plugin system. Every tool—from selection and drawing to transforms and grid fills—is implemented as a plugin:
 
 ```typescript
 const myPlugin: PluginDefinition = {
@@ -192,7 +192,7 @@ See [Canvas Store API](api/canvas-store) for the complete reference.
 
 ### 1. Plugins
 
-Plugins are self-contained modules that extend TTPE's functionality. They can:
+Plugins are self-contained modules that extend Vectornest's functionality. They can:
 
 - Handle pointer events on the canvas
 - Register keyboard shortcuts
@@ -271,7 +271,7 @@ See [Architecture Diagrams](architecture/diagrams) for detailed system views.
 
 ## Performance Considerations
 
-TTPE is designed for performance:
+Vectornest is designed for performance:
 
 - **Virtual rendering**: Only visible elements are processed
 - **Debounced operations**: Undo snapshots and expensive calculations are throttled
@@ -291,8 +291,8 @@ See [Architecture Overview](architecture/overview#performance-optimizations) for
 
 Ready to dive in? Choose your path:
 
-- **Using TTPE**: See the main project README for running the application
-- **Extending TTPE**: Start with [Plugin System](plugins/overview)
+- **Using Vectornest**: See the main project README for running the application
+- **Extending Vectornest**: Start with [Plugin System](plugins/overview)
 - **Understanding the Code**: Begin with [Architecture Overview](architecture/overview)
 - **Contributing**: Read the [Style Guide](contributing/style-guide)
 
@@ -314,7 +314,7 @@ This documentation follows these principles:
 
 ## License
 
-TTPE is licensed under [LICENSE TYPE - Assumption: MIT]. See the main repository for details.
+Vectornest is licensed under [LICENSE TYPE - Assumption: MIT]. See the main repository for details.
 
 ---
 

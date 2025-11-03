@@ -6,11 +6,11 @@ sidebar_label: Selection
 
 # Selection System
 
-The Selection System is the foundational interaction mechanism in TTPE, enabling users to choose one or multiple elements for editing, transformation, or manipulation. It provides intuitive single-click, multi-select, and rectangle-drag selection modes with full keyboard modifier support.
+The Selection System is the foundational interaction mechanism in Vectornest, enabling users to choose one or multiple elements for editing, transformation, or manipulation. It provides intuitive single-click, multi-select, and rectangle-drag selection modes with full keyboard modifier support.
 
 ## Overview
 
-Selection in TTPE is **context-aware** and **non-destructive**. When you select elements, they remain in the canvas while being highlighted with visual indicators (bounding boxes, selection handles). The selection state is tracked globally in the Canvas Store and can be modified through user interactions or programmatically via the API.
+Selection in Vectornest is **context-aware** and **non-destructive**. When you select elements, they remain in the canvas while being highlighted with visual indicators (bounding boxes, selection handles). The selection state is tracked globally in the Canvas Store and can be modified through user interactions or programmatically via the API.
 
 **Key Features:**
 - **Single Selection**: Click an element to select it exclusively

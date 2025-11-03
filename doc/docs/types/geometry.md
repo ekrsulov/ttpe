@@ -1,6 +1,6 @@
 # Geometry Types
 
-Geometry types define points, coordinates, control points, and path commands that form the foundation of vector graphics in TTPE.
+Geometry types define points, coordinates, control points, and path commands that form the foundation of vector graphics in Vectornest.
 
 ## Point Types
 
@@ -165,7 +165,7 @@ Closes the current subpath by drawing a line back to the start.
 { type: 'Z' }
 ```
 
-**Note:** TTPE only supports M, L, C, and Z commands. Quadratic Bézier (Q) and Arc (A) commands are not supported.
+**Note:** Vectornest only supports M, L, C, and Z commands. Quadratic Bézier (Q) and Arc (A) commands are not supported.
 
 ### SubPath
 

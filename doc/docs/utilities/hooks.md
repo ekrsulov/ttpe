@@ -6,7 +6,7 @@ sidebar_label: Hooks
 
 # React Hooks
 
-TTPE provides a collection of **custom React hooks** that encapsulate common patterns and logic used throughout the application. These hooks promote code reuse, maintain consistency, and simplify component implementations.
+Vectornest provides a collection of **custom React hooks** that encapsulate common patterns and logic used throughout the application. These hooks promote code reuse, maintain consistency, and simplify component implementations.
 
 ## Overview
 

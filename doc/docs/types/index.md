@@ -1,6 +1,6 @@
 # TypeScript Types
 
-This section documents all TypeScript type definitions used in the TTPE application. These types provide strong typing for canvas elements, plugins, selection states, and other core data structures.
+This section documents all TypeScript type definitions used in the Vectornest application. These types provide strong typing for canvas elements, plugins, selection states, and other core data structures.
 
 ## Type Categories
 
@@ -23,7 +23,7 @@ This section documents all TypeScript type definitions used in the TTPE applicat
 
 ## Type System Philosophy
 
-The TTPE type system follows these principles:
+The Vectornest type system follows these principles:
 
 1. **Type Safety**: All data structures are strongly typed to catch errors at compile time
 2. **Immutability**: Types favor immutable patterns using readonly where appropriate

@@ -6,7 +6,7 @@ sidebar_label: Patterns
 
 # Event Patterns
 
-Advanced patterns and best practices for working with TTPE's Event Bus. This guide covers common scenarios, performance optimizations, error handling, and architectural patterns used throughout the codebase.
+Advanced patterns and best practices for working with Vectornest's Event Bus. This guide covers common scenarios, performance optimizations, error handling, and architectural patterns used throughout the codebase.
 
 ## Core Patterns
 

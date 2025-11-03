@@ -1,6 +1,6 @@
-# TTPE Documentation
+# Vectornest Documentation
 
-This directory contains the complete technical documentation for the TTPE Web Vector Editor, built with Docusaurus.
+This directory contains the complete technical documentation for the Vectornest Web Vector Editor, built with Docusaurus.
 
 ## Quick Start
 

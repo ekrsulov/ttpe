@@ -6,7 +6,7 @@ sidebar_label: Mobile
 
 # Mobile Features
 
-TTPE provides a comprehensive set of mobile-specific features and adaptations to ensure a smooth touch-based editing experience on smartphones and tablets.
+Vectornest provides a comprehensive set of mobile-specific features and adaptations to ensure a smooth touch-based editing experience on smartphones and tablets.
 
 ## Overview
 

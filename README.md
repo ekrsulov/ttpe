@@ -1,13 +1,17 @@
-# TTPE — Web Vector Editor
+# Vectornest
+
+A modern, extensible web-based vector graphics editor built with React, TypeScript, and a sophisticated plugin architecture.
 
 ## Interface Overview
 
-TTPE is an SVG-based vector graphics editor presented in a full-screen layout: a central canvas for editing, top and bottom action bars, a collapsible/resizable sidebar, and a virtual **Shift** button for shortcuts on touch devices. The Canvas coordinates interaction layers (selection, node and subpath editing, shape preview, guides, grid) and supports keyboard shortcuts, drag selection, transforms, shape creation, and a smoothing brush.
+Vectornest is an SVG-based vector graphics editor presented in a full-screen layout: a central canvas for editing, top and bottom action bars, a collapsible/resizable sidebar, and a virtual **Shift** button for shortcuts on touch devices. The Canvas coordinates interaction layers (selection, node and subpath editing, shape preview, guides, grid) and supports keyboard shortcuts, drag selection, transforms, shape creation, and a smoothing brush.
 
 ## Architecture & Global State
 
 The app is built with React 19, TypeScript, and Vite; it uses Zustand for state and Playwright for E2E tests. State is composed of multiple slices (base, viewport, selection, ordering, alignment, pencil, text, shapes, transforms, advanced editing, subpaths, optical alignment, curves, guides, and grid), with local persistence and undo/redo history (up to 50 steps, ~100 ms cooldown).
 The base slice manages elements, the active plugin, panel visibility, the "virtual shift," and settings such as keyboard move precision and render counters.
+
+The **Canvas Event Bus** provides a type-safe publish/subscribe system for decoupled communication between plugins and components, enabling loose coupling and extensibility without circular dependencies.
 
 ### Plugin architecture
 
@@ -76,6 +80,95 @@ The viewport slice manages zoom (with limits, re-centering around the focus poin
 * **Optical Alignment**: detects container/content pairs, computes the visual center (with guard margins), and applies the resulting translation; supports bulk corrections and reset.
 * **Curves**: incremental mode for designing custom curves with a lattice, live preview, and point handling.
 
+## Technology Stack
+
+- **React 19** with TypeScript 5.8
+- **Vite** for blazing-fast development and optimized builds
+- **Zustand** for state management with persistence and undo/redo (Zundo)
+- **Chakra UI** for accessible, composable UI components
+- **Playwright** for comprehensive E2E testing
+- **Paper.js** for advanced boolean operations
+
 ## In Short
 
-TTPE combines a powerful SVG canvas, a modular slice-based architecture with persistence and history, professional-grade creation/editing tools (including optical alignment and boolean ops), organization utilities, and a robust import/export flow—optimized for both desktop and touch.
+Vectornest combines a powerful SVG canvas, a modular slice-based architecture with persistence and history, professional-grade creation/editing tools (including optical alignment and boolean ops), organization utilities, and a robust import/export flow—optimized for both desktop and touch.
+
+## Getting Started
+
+### Development
+
+Start the development server:
+
+```bash
+npm run dev
+```
+
+The app will be available at `http://localhost:5173`
+
+### Build
+
+Create a production build:
+
+```bash
+npm run build
+```
+
+### Testing
+
+Run E2E tests with Playwright UI:
+
+```bash
+npm run test:ui
+```
+
+### Type Checking
+
+Verify TypeScript types:
+
+```bash
+npm run type-check
+```
+
+### Linting
+
+Check code quality:
+
+```bash
+npm run lint
+```
+
+## Documentation
+
+Comprehensive technical documentation is available in the `doc/` folder, built with Docusaurus. Topics include:
+
+- **Plugin System**: Learn how to create and register plugins
+- **Event Bus**: Type-safe pub/sub communication patterns
+- **API Reference**: Public APIs for plugin development
+- **Architecture**: System design and core principles
+- **Features**: Detailed guides for all editor capabilities
+- **Contributing**: Code standards and contribution guidelines
+
+To run the documentation site locally:
+
+```bash
+cd doc
+npm install
+npm run start
+```
+
+Visit `http://localhost:3000` to browse the full documentation.
+
+## Contributing
+
+We welcome contributions! Please follow these guidelines:
+
+- **Code Style**: Use TypeScript strict mode, functional React components, and follow the ESLint configuration
+- **Commit Messages**: Follow [Conventional Commits](https://www.conventionalcommits.org/) format (e.g., `feat:`, `fix:`, `docs:`)
+- **Testing**: Add E2E tests for user-facing features using Playwright
+- **Documentation**: Update relevant documentation in the `doc/` folder
+
+See `doc/docs/contributing/` for detailed code standards and style guide.
+
+## License
+
+This project is under active development (v0.0.0). APIs may change before 1.0.

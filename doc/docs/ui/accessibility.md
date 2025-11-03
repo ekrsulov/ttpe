@@ -6,7 +6,7 @@ sidebar_label: Accessibility
 
 # Accessibility
 
-TTPE follows WCAG 2.1 AA guidelines.
+Vectornest follows WCAG 2.1 AA guidelines.
 
 ## Keyboard Navigation
 

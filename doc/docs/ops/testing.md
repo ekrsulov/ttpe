@@ -6,7 +6,7 @@ sidebar_label: Testing
 
 # Testing
 
-TTPE uses Playwright for end-to-end testing.
+Vectornest uses Playwright for end-to-end testing.
 
 ## Test Structure
 
