@@ -1,0 +1,7 @@
+# should correctly delete multiple non continuous points in C commands
+Description: This test verifies that should correctly delete multiple non continuous points in C commands.
+
+![Screenshot](/test-evidences/edit-Edit-Functionality-sh-6ff4a-inuous-points-in-C-commands-chromium/test-finished-1.png)
+
+[View test video](/test-evidences/edit-Edit-Functionality-sh-6ff4a-inuous-points-in-C-commands-chromium/video.webm
+)
