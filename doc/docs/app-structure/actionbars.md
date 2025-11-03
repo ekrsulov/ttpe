@@ -236,8 +236,11 @@ Buttons for history navigation:
 
 - **Counter badges**: Show number of available undo/redo operations
 - **Disabled state**: Grayed out when no operations available
-- **Keyboard shortcuts**: `Ctrl/Cmd + Z` (undo), `Ctrl/Cmd + Shift + Z` (redo)
 - **Tooltips**: Show shortcuts and operation counts
+
+:::note
+Keyboard shortcuts for undo/redo (Ctrl/Cmd + Z, Ctrl/Cmd + Shift + Z) are not currently implemented.
+:::
 
 #### Zoom Controls
 
@@ -276,10 +279,10 @@ Single section with three zoom buttons:
   - Counter calculated as: `Math.round(viewport.zoom * 100)`
 - **No disabled states**: All three buttons are always enabled
 - **No min/max enforced in UI**: Zoom limits handled by Canvas Store
-- **Keyboard shortcuts**: 
-  - `Ctrl/Cmd + Plus` (zoom in)
-  - `Ctrl/Cmd + Minus` (zoom out)
-  - `Ctrl/Cmd + 0` (reset zoom)
+
+:::note
+Keyboard shortcuts for zoom controls (Ctrl/Cmd + Plus, Ctrl/Cmd + Minus, Ctrl/Cmd + 0) are not currently implemented.
+:::
 
 #### Delete Button
 

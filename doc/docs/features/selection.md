@@ -16,7 +16,7 @@ Selection in TTPE is **context-aware** and **non-destructive**. When you select 
 - **Single Selection**: Click an element to select it exclusively
 - **Multi-Selection**: Hold Shift while clicking to add/remove elements (toggle behavior)
 - **Rectangle Selection**: Click and drag on empty canvas to select all elements within bounds
-- **Keyboard Navigation**: Use arrow keys to adjust selection
+- **Keyboard Movement**: Use arrow keys to move selected elements (1px normal, 10px with Shift)
 - **Programmatic Selection**: Use API methods to control selection state
 - **Hidden/Locked Elements**: Cannot be selected (filtered automatically)
 
@@ -287,10 +287,25 @@ During rectangle selection, a semi-transparent overlay shows:
 
 ### Delete Functionality
 
-Selected elements can be deleted using the **Delete** key:
+Selected elements can be deleted using the **Delete** or **Backspace** key:
 - Removes elements from canvas
 - Clears selection automatically
 - Adds operation to undo stack
+
+---
+
+## Keyboard Shortcuts
+
+| Key | Action | Description |
+|-----|--------|-------------|
+| `Delete` or `Backspace` | Delete selected elements | Removes all selected elements from canvas |
+| `Arrow Keys` | Move selection | Move selected elements by 1px in the arrow direction |
+| `Shift + Arrow Keys` | Move selection (fast) | Move selected elements by 10px in the arrow direction |
+| `Shift + Click` | Toggle selection | Add or remove element from selection |
+
+:::tip
+The movement precision can be adjusted in Settings under "Keyboard Movement Precision". The default precision rounds to whole pixels (0 decimal places).
+:::
 
 ---
 

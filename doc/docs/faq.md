@@ -48,6 +48,32 @@ TTPE is client-only, but you can add API calls in plugin handlers.
 
 Use `canvasLayers` in plugin definition. See [Plugin Overview](./plugins/overview).
 
+## Keyboard Shortcuts
+
+### What keyboard shortcuts are available?
+
+**Global Shortcuts:**
+- `Escape`: Context-aware - closes panels, clears selection, exits edit mode, or switches to select tool
+- `Space`: Hold to activate pan mode (hand tool)
+- `Shift`: Hold while clicking to toggle element selection, or while drawing to constrain proportions
+- `Delete` or `Backspace`: Delete selected elements/points/subpaths
+- `Arrow Keys`: Move selected elements by 1px (hold Shift for 10px)
+
+**Plugin-Specific Shortcuts:**
+- **Curves Plugin**: `Enter` to finish curve, `Escape` to cancel, `Delete` to remove selected point
+- **Pencil Plugin**: `Delete` to remove selected path elements
+- **Duplicate on Drag**: Hold `Command` (Mac) or `Control` (Windows/Linux) while dragging selected elements to create duplicates
+
+See [Selection System](./features/selection#keyboard-shortcuts) and plugin documentation for details.
+
+### Are undo/redo keyboard shortcuts supported?
+
+Not currently. Undo/Redo are available via buttons in the Bottom Action Bar.
+
+### Can I customize keyboard shortcuts?
+
+Not in the UI, but plugins can register custom shortcuts. See [Keyboard Shortcuts Types](./types/shortcuts).
+
 ## Troubleshooting
 
 See [Troubleshooting](./troubleshooting) page for common issues.

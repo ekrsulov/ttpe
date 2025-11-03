@@ -166,7 +166,13 @@ Captures pointer events and delegates to PencilDrawingService for path creation.
 
 ## Keyboard Shortcuts
 
-- **Delete**: Delete selected elements
+| Key | Action |
+|-----|--------|
+| `Delete` | Delete selected path elements |
+
+:::note
+The Delete shortcut only works when the Pencil plugin is active and elements are selected.
+:::
 
 ## UI Contributions
 

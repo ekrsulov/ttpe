@@ -503,11 +503,16 @@ The bottom section (`SidebarFooter`) contains two key panels:
 
 ```
 ┌─────────────────────────────────┐
-│  Arrange Panel (Collapsible)   │ ← Only when selection exists & expanded
+│  Arrange Panel (Collapsible)    │ ← Only when selection exists & expanded
 ├─────────────────────────────────┤
 │  [Collapse/Expand Button]       │ ← Toggle button (centered)
 ├─────────────────────────────────┤
-│  Select Panel (Always Visible)  │ ← Element hierarchy tree
+│  ═══ Resize Handle (ns-resize) ═│ ← Drag up/down to adjust height
+├─────────────────────────────────┤
+│  Select Panel (Resizable)       │ ← Element hierarchy tree (96-360px)
+│  • Element list with scroll     │
+│  • Visibility/lock controls     │
+│  • Group/element cards          │
 └─────────────────────────────────┘
 ```
 
@@ -543,8 +548,63 @@ The bottom section (`SidebarFooter`) contains two key panels:
 - Visibility toggles (eye icon)
 - Lock toggles (lock icon)
 - Element count badges for groups
+- **Resizable height**: Drag the horizontal handle at the top to adjust panel height
+  - Default height: 140px
+  - Minimum height: 96px
+  - Maximum height: 360px
+  - **Drag up**: Increases panel height (shows more elements)
+  - **Double-click**: Resets to default height
+  - Visual feedback: Handle highlights on hover and during drag
 
 **Position**: Fixed at bottom of sidebar, always accessible regardless of scrolling in main panel area
+
+**Resize Behavior**:
+
+The Select Panel features a **vertical resize handle** at its top edge, allowing users to adjust the visible area to see more elements when many paths are created:
+
+```tsx
+<Box
+  height="6px"
+  cursor="ns-resize"
+  onPointerDown={handleResizeStart}
+  onDoubleClick={handleResetHeight}
+  bg={isResizing ? resizeColor : resizeInactiveColor}
+  borderRadius="full"
+  mx="auto"
+  my={1}
+  w="120px"
+  title="Arrastra para redimensionar, doble clic para resetear"
+  _hover={{ bg: resizeColor }}
+/>
+```
+
+**Implementation**:
+
+Uses the `useDragResize` hook with vertical direction and reverse mode (drag up = increase height):
+
+```typescript
+const { 
+  isDragging: isResizing, 
+  handlePointerDown: handleResizeStart, 
+  handleDoubleClick: handleResetHeight 
+} = useDragResize({
+  onResize: setPanelHeight,
+  onReset: () => setPanelHeight(DEFAULT_PANEL_HEIGHT),
+  minValue: MIN_PANEL_HEIGHT,   // 96px
+  maxValue: MAX_PANEL_HEIGHT,   // 360px
+  direction: 'vertical',
+  reverseVertical: true,         // Drag up increases height
+  initialValue: panelHeight,
+});
+```
+
+:::tip
+When you have many path elements in your canvas, increase the Select Panel height by dragging the handle upward. This allows you to see more element cards without scrolling.
+:::
+
+:::note
+This vertical resize is distinct from the sidebar's horizontal resize handle. The sidebar handle adjusts the overall sidebar width, while the Select Panel handle adjusts only the panel's internal height.
+:::
 
 ### Height Management
 
