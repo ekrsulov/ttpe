@@ -32,7 +32,7 @@ export default function Home() {
         View Documentation →
       </Link>
       <h1 style={{ fontSize: '3rem', marginBottom: '1rem' }}>
-        VectorNest Documentation
+        <span className="vector-nest-title">VectorNest</span> Documentation
       </h1>
       <p style={{ fontSize: '1.2rem', maxWidth: '600px' }}>
         Welcome to the comprehensive technical documentation for 

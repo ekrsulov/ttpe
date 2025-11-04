@@ -2,6 +2,13 @@
  * Custom CSS for TTPE Documentation
  */
 
+@font-face {
+  font-family: 'Momo Trust Display';
+  src: url('/fonts/MomoTrustDisplay-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
 :root {
   /* Primary brand colors */
   --ifm-color-primary: #6c757d;
@@ -55,6 +62,11 @@
   background: var(--ifm-background-surface-color);
   min-height: 200px;
   width: 100%;
+}
+
+.vector-nest-title {
+  font-family: 'Momo Trust Display', sans-serif;
+  font-weight: 400;
 }
 
 .docusaurus-mermaid-container svg {
@@ -182,4 +194,10 @@ code {
     margin-left: 0;
     padding-left: 1rem;
   }
+}
+
+/* Navbar title font */
+.navbar__title {
+  font-family: 'Momo Trust Display', sans-serif;
+  font-weight: 400;
 }
