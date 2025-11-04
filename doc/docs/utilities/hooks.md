@@ -385,12 +385,12 @@ interface SelectPanelActions {
   // Element actions
   toggleElementVisibility: (elementId: string) => void;
   toggleElementLock: (elementId: string) => void;
-  selectElement: (id: string) => void;
+  selectElement: (id: string, multiSelect?: boolean) => void;
   
   // Group actions
   toggleGroupVisibility: (groupId: string) => void;
   toggleGroupLock: (groupId: string) => void;
-  selectGroup: (id: string) => void;
+  selectGroup: (id: string, multiSelect?: boolean) => void;
 }
 ```
 
@@ -398,6 +398,8 @@ interface SelectPanelActions {
 
 ```tsx
 import { useSelectPanelActions } from '@/hooks/useSelectPanelActions';
+import { getEffectiveShift } from '@/utils/effectiveShift';
+import { useCanvasStore } from '@/store/canvasStore';
 
 function SelectPanelItem({ element }) {
   const {
@@ -405,9 +407,17 @@ function SelectPanelItem({ element }) {
     toggleElementLock,
     selectElement,
   } = useSelectPanelActions();
+  
+  const isVirtualShiftActive = useCanvasStore(state => state.isVirtualShiftActive);
+
+  const handleSelect = (e: React.MouseEvent) => {
+    // Support both physical Shift key and Virtual Shift
+    const effectiveMultiSelect = getEffectiveShift(e.shiftKey, isVirtualShiftActive);
+    selectElement(element.id, effectiveMultiSelect);
+  };
 
   return (
-    <div onClick={() => selectElement(element.id)}>
+    <div>
       <IconButton
         icon={element.isHidden ? EyeOff : Eye}
         onClick={(e) => {
@@ -422,11 +432,22 @@ function SelectPanelItem({ element }) {
           toggleElementLock(element.id);
         }}
       />
+      <IconButton
+        icon={MousePointer2}
+        onClick={handleSelect}
+      />
       {element.name}
     </div>
   );
 }
 ```
+
+**Multi-Selection Support**:
+
+- `selectElement` and `selectGroup` now accept optional `multiSelect` parameter
+- When `multiSelect=true`: Toggles element in selection (add/remove)
+- When `multiSelect=false` or omitted: Replaces current selection
+- Works with both physical Shift key and Virtual Shift (mobile)
 
 **Benefits**:
 
@@ -434,6 +455,7 @@ function SelectPanelItem({ element }) {
 - Single source of truth for panel actions
 - Prevents duplicate subscriptions
 - Simplifies component implementations
+- Unified multi-selection behavior across canvas and panel
 
 ---
 

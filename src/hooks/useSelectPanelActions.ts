@@ -7,7 +7,7 @@ import { useCanvasStore } from '../store/canvasStore';
 export function useSelectPanelActions() {
   const toggleElementVisibility = useCanvasStore(state => state.toggleElementVisibility);
   const toggleElementLock = useCanvasStore(state => state.toggleElementLock);
-  const selectElements = useCanvasStore(state => state.selectElements);
+  const selectElement = useCanvasStore(state => state.selectElement);
   const toggleGroupVisibility = useCanvasStore(state => state.toggleGroupVisibility);
   const toggleGroupLock = useCanvasStore(state => state.toggleGroupLock);
 
@@ -15,11 +15,11 @@ export function useSelectPanelActions() {
     // Element actions
     toggleElementVisibility,
     toggleElementLock,
-    selectElement: (id: string) => selectElements([id]),
+    selectElement: (id: string, multiSelect?: boolean) => selectElement(id, multiSelect),
     
     // Group actions (aliased for consistency)
     toggleGroupVisibility,
     toggleGroupLock,
-    selectGroup: (id: string) => selectElements([id]),
+    selectGroup: (id: string, multiSelect?: boolean) => selectElement(id, multiSelect),
   };
 }

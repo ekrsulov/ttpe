@@ -9,7 +9,7 @@ interface VisibilityLockControlsProps {
   isLocked: boolean;
   onToggleVisibility: (id: string) => void;
   onToggleLock: (id: string) => void;
-  onSelect: (id: string) => void;
+  onSelect: (id: string, multiSelect?: boolean) => void;
   hideLabel?: string;
   showLabel?: string;
   lockLabel?: string;
@@ -35,6 +35,12 @@ export const VisibilityLockControls: React.FC<VisibilityLockControlsProps> = ({
   unlockLabel = 'Unlock',
   selectLabel = 'Select',
 }) => {
+  const handleSelectClick = (e?: React.MouseEvent) => {
+    // Check if shift key is pressed (physical or will be combined with virtual shift in the parent)
+    const multiSelect = e?.shiftKey ?? false;
+    onSelect(elementId, multiSelect);
+  };
+
   return (
     <HStack spacing={1}>
       <PanelActionButton
@@ -53,7 +59,7 @@ export const VisibilityLockControls: React.FC<VisibilityLockControlsProps> = ({
         label={selectLabel}
         icon={MousePointer2}
         height="auto"
-        onClick={() => onSelect(elementId)}
+        onClick={handleSelectClick}
         isDisabled={isLocked || isHidden}
       />
     </HStack>

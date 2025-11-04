@@ -293,7 +293,9 @@ const currentStrokeColor = useSelectedPathProperty(
 
 - **Element list**: Hierarchical tree view of canvas elements
 - **Group support**: Nested groups with expand/collapse
-- **Selection**: Click to select
+- **Selection**: Click "Select group" or "Select element" buttons to select
+  - Hold **Shift** (or enable Virtual Shift) while clicking to add/remove from selection
+  - Without Shift: Replaces current selection
 - **Visibility toggles**: Eye icon to show/hide elements
 - **Lock toggles**: Lock icon to prevent editing
 - **Group operations**: Create group, ungroup, rename

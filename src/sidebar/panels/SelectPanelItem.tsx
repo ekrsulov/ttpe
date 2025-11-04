@@ -12,6 +12,7 @@ import { VisibilityLockControls } from './VisibilityLockControls';
 import { useSelectPanelActions } from '../../hooks/useSelectPanelActions';
 import { makeShallowComparator } from '../../utils/coreHelpers';
 import ConditionalTooltip from '../../ui/ConditionalTooltip';
+import { getEffectiveShift } from '../../utils/effectiveShift';
 
 // Import shared type instead of duplicating
 import type { SelectPanelItemData } from './SelectPanel.types';
@@ -39,6 +40,7 @@ const SelectPanelItemComponent: React.FC<SelectPanelItemProps> = ({
 }) => {
   // Only subscribe to the specific actions we need
   const createGroup = useCanvasStore(state => state.createGroupFromSelection);
+  const isVirtualShiftActive = useCanvasStore(state => state.isVirtualShiftActive);
   
   // Use shared hook for common actions
   const { toggleElementVisibility, toggleElementLock, selectElement } = useSelectPanelActions();
@@ -75,6 +77,14 @@ const SelectPanelItemComponent: React.FC<SelectPanelItemProps> = ({
   const coord1 = bbox ? `${bbox.topLeft.x} , ${bbox.topLeft.y}` : null;
   const coord2 = bbox ? `${bbox.bottomRight.x} , ${bbox.bottomRight.y}` : null;
   const dimensions = bbox ? `${bbox.bottomRight.x - bbox.topLeft.x} ✕ ${bbox.bottomRight.y - bbox.topLeft.y}` : null;
+
+  // Handler for element selection with shift support
+  const handleSelectElement = (id: string, multiSelect?: boolean) => {
+    const effectiveMultiSelect = multiSelect !== undefined 
+      ? getEffectiveShift(multiSelect, isVirtualShiftActive) 
+      : false;
+    selectElement(id, effectiveMultiSelect);
+  };
 
   return (
     <HStack
@@ -202,7 +212,7 @@ const SelectPanelItemComponent: React.FC<SelectPanelItemProps> = ({
             isLocked={directLocked}
             onToggleVisibility={toggleElementVisibility}
             onToggleLock={toggleElementLock}
-            onSelect={selectElement}
+            onSelect={handleSelectElement}
             hideLabel="Hide element"
             showLabel="Show element"
             lockLabel="Lock element"

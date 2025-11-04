@@ -9,6 +9,7 @@ import { VisibilityLockControls } from './VisibilityLockControls';
 import { useSelectPanelActions } from '../../hooks/useSelectPanelActions';
 import { makeShallowComparator } from '../../utils/coreHelpers';
 import ConditionalTooltip from '../../ui/ConditionalTooltip';
+import { getEffectiveShift } from '../../utils/effectiveShift';
 
 interface SelectPanelGroupItemProps {
   group: GroupElement;
@@ -36,6 +37,7 @@ const SelectPanelGroupItemComponent: React.FC<SelectPanelGroupItemProps> = ({
   const isElementHidden = useCanvasStore(state => state.isElementHidden);
   const isElementLocked = useCanvasStore(state => state.isElementLocked);
   const selectedIds = useCanvasStore(state => state.selectedIds);
+  const isVirtualShiftActive = useCanvasStore(state => state.isVirtualShiftActive);
   
   // Use shared hook for common actions
   const { toggleGroupVisibility, toggleGroupLock, selectGroup, selectElement } = useSelectPanelActions();
@@ -78,6 +80,14 @@ const SelectPanelGroupItemComponent: React.FC<SelectPanelGroupItemProps> = ({
       : defaultBg;
 
   const selectedIdSet = new Set(selectedIds);
+
+  // Handler for group selection with shift support
+  const handleSelectGroup = (id: string, multiSelect?: boolean) => {
+    const effectiveMultiSelect = multiSelect !== undefined 
+      ? getEffectiveShift(multiSelect, isVirtualShiftActive) 
+      : false;
+    selectGroup(id, effectiveMultiSelect);
+  };
 
   return (
     <Box
@@ -153,7 +163,7 @@ const SelectPanelGroupItemComponent: React.FC<SelectPanelGroupItemProps> = ({
             isLocked={groupLocked}
             onToggleVisibility={toggleGroupVisibility}
             onToggleLock={toggleGroupLock}
-            onSelect={selectGroup}
+            onSelect={handleSelectGroup}
             hideLabel="Hide group"
             showLabel="Show group"
             lockLabel="Lock group"
@@ -204,7 +214,10 @@ const SelectPanelGroupItemComponent: React.FC<SelectPanelGroupItemProps> = ({
                   <PanelActionButton
                     label="Select element"
                     icon={MousePointer2}
-                    onClick={() => selectElement(childId)}
+                    onClick={(e) => {
+                      const effectiveMultiSelect = e ? getEffectiveShift(e.shiftKey, isVirtualShiftActive) : false;
+                      selectElement(childId, effectiveMultiSelect);
+                    }}
                     isDisabled={childLocked || childHidden}
                   />
                 </HStack>

@@ -520,7 +520,9 @@ Groups are managed through the **Select Panel** in the sidebar:
 - **Visibility control**: Eye icon to hide/show group and descendants
 - **Lock control**: Lock icon to lock/unlock group and descendants
 - **Ungroup button**: Dissolves group and releases children
-- **Selection**: Click to select group
+- **Selection**: Click "Select group" or "Select element" buttons to select
+  - Hold **Shift** (or enable Virtual Shift) while clicking to add/remove from selection (toggle behavior)
+  - Without Shift: Replaces current selection
 
 ### Visual Hierarchy
 

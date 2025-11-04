@@ -59,6 +59,16 @@ Click and drag on empty canvas (SVG element) to draw a selection rectangle. All 
 - **Without Shift**: Replaces current selection
 - **With Shift**: Adds to current selection
 
+### Selection from Select Panel
+
+Elements and groups can also be selected from the **Select Panel** in the sidebar using the "Select element" or "Select group" buttons.
+
+**Behavior:**
+- Click "Select element" or "Select group" button → Replaces current selection
+- **Hold Shift** (or enable Virtual Shift) while clicking → Adds/removes from selection (toggle)
+- Works for both individual elements and groups
+- Respects element visibility and lock state (disabled buttons for hidden/locked elements)
+
 ---
 
 ## Selection Flow Diagram

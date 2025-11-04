@@ -8,7 +8,7 @@ interface PanelActionButtonProps {
   icon: LucideIcon;
   iconSize?: number;
   height?: string;
-  onClick: () => void;
+  onClick: (e?: React.MouseEvent) => void;
   isDisabled?: boolean;
   variant?: 'ghost' | 'solid' | 'outline' | 'link';
   tooltipDelay?: number;
