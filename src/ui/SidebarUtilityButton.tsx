@@ -43,6 +43,7 @@ export const SidebarUtilityButton: React.FC<SidebarUtilityButtonProps> = ({
       _hover={{
         bg: isActive ? activeHoverBg : inactiveHoverBg,
       }}
+      _focus={{ outline: 'none' }}
       sx={{
         minH: '28px',
         px: 3,

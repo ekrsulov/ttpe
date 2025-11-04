@@ -45,6 +45,7 @@ export const ToolbarIconButton: React.FC<ToolbarIconButtonProps> = ({
           minHeight: '28px',
           minWidth: '28px',
           borderRadius: 'full',
+          _focus: { outline: 'none' },
           ...sx,
         }}
         {...iconButtonProps}
