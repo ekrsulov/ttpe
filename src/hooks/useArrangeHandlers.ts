@@ -25,6 +25,8 @@ export const useArrangeHandlers = () => {
       distributeVertically: store[`distributeVertically${suffix}` as keyof typeof store] as () => void,
       matchWidthToLargest: store[`matchWidthToLargest${suffix}` as keyof typeof store] as () => void,
       matchHeightToLargest: store[`matchHeightToLargest${suffix}` as keyof typeof store] as () => void,
+      matchWidthToSmallest: store[`matchWidthToSmallest${suffix}` as keyof typeof store] as () => void,
+      matchHeightToSmallest: store[`matchHeightToSmallest${suffix}` as keyof typeof store] as () => void,
     });
 
     const createOrderHandlerMap = (suffix: string = '') => ({

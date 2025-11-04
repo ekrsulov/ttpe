@@ -7,10 +7,94 @@ import {
   alignmentTargets,
   scalePathData
 } from '../../../utils/transformationUtils';
-import { collectSelectedElementBounds } from '../../../utils/arrangementUtils';
-import { measurePath } from '../../../utils/measurementUtils';
+import { 
+  collectSelectedElementBounds,
+  getTopLevelSelectedElements 
+} from '../../../utils/arrangementUtils';
 
+/**
+ * Helper function to translate all descendants of a group
+ */
+const translateGroupDescendants = (
+  elements: CanvasElement[],
+  groupId: string,
+  deltaX: number,
+  deltaY: number
+): CanvasElement[] => {
+  const elementMap = new Map(elements.map(el => [el.id, el]));
+  const group = elementMap.get(groupId);
+  
+  if (!group || group.type !== 'group') {
+    return elements;
+  }
 
+  // Collect all descendant IDs
+  const descendants = new Set<string>();
+  const queue = [...group.data.childIds];
+
+  while (queue.length > 0) {
+    const childId = queue.shift();
+    if (!childId) continue;
+    
+    descendants.add(childId);
+    const child = elementMap.get(childId);
+    if (child && child.type === 'group') {
+      queue.push(...child.data.childIds);
+    }
+  }
+
+  // Translate all descendants
+  return elements.map(el => {
+    if (descendants.has(el.id) && el.type === 'path') {
+      const pathData = el.data as import('../../../types').PathData;
+      return { ...el, data: translatePathData(pathData, deltaX, deltaY) };
+    }
+    return el;
+  });
+};
+
+/**
+ * Helper function to scale all descendants of a group
+ */
+const scaleGroupDescendants = (
+  elements: CanvasElement[],
+  groupId: string,
+  scaleX: number,
+  scaleY: number,
+  centerX: number,
+  centerY: number
+): CanvasElement[] => {
+  const elementMap = new Map(elements.map(el => [el.id, el]));
+  const group = elementMap.get(groupId);
+  
+  if (!group || group.type !== 'group') {
+    return elements;
+  }
+
+  // Collect all descendant IDs
+  const descendants = new Set<string>();
+  const queue = [...group.data.childIds];
+
+  while (queue.length > 0) {
+    const childId = queue.shift();
+    if (!childId) continue;
+    
+    descendants.add(childId);
+    const child = elementMap.get(childId);
+    if (child && child.type === 'group') {
+      queue.push(...child.data.childIds);
+    }
+  }
+
+  // Scale all descendants
+  return elements.map(el => {
+    if (descendants.has(el.id) && el.type === 'path') {
+      const pathData = el.data as import('../../../types').PathData;
+      return { ...el, data: scalePathData(pathData, scaleX, scaleY, centerX, centerY) };
+    }
+    return el;
+  });
+};
 
 // Helper function to perform element alignment using the new consolidated utilities
 const alignElements = (
@@ -20,48 +104,54 @@ const alignElements = (
   targetCalculator: import('../../../utils/transformationUtils').TargetCalculator,
   axis: import('../../../utils/transformationUtils').Axis
 ): CanvasElement[] => {
-  const selectedElements = elements.filter(el => selectedIds.includes(el.id));
-  if (selectedElements.length < 2) return elements;
+  // Use centralized bounds collection (handles groups automatically)
+  const elementBounds = collectSelectedElementBounds(elements, selectedIds, zoom);
+  
+  if (elementBounds.length < 2) return elements;
 
-  // Calculate bounds for all selected elements
-  const boundsArray = selectedElements.map(el => {
-    if (el.type === 'path') {
-      const pathData = el.data as import('../../../types').PathData;
-      return measurePath(pathData.subPaths, pathData.strokeWidth, zoom);
-    }
-    return { minX: 0, minY: 0, maxX: 0, maxY: 0 };
-  }).filter(bounds => bounds.minX !== 0 || bounds.minY !== 0 || bounds.maxX !== 0 || bounds.maxY !== 0);
-
-  if (boundsArray.length === 0) return elements;
-
-  // Calculate target position
+  // Calculate target position based on all top-level elements/groups
+  const boundsArray = elementBounds.map(item => item.bounds);
   const targetValue = targetCalculator(boundsArray);
 
+  // Get top-level elements (groups and standalone paths)
+  const topLevelIds = getTopLevelSelectedElements(elements, selectedIds);
+  const topLevelSet = new Set(topLevelIds);
+
   // Update elements
-  return elements.map(el => {
-    if (!selectedIds.includes(el.id) || el.type !== 'path') return el;
+  let updatedElements = elements;
 
-    const pathData = el.data as import('../../../types').PathData;
-    const currentBounds = measurePath(pathData.subPaths, pathData.strokeWidth, zoom);
+  elementBounds.forEach(item => {
+    if (!topLevelSet.has(item.element.id)) return;
 
+    const currentValue = targetCalculator([item.bounds]);
     let deltaX = 0;
     let deltaY = 0;
 
     if (axis === 'x') {
-      const currentValue = targetCalculator([currentBounds]);
       deltaX = formatToPrecision(targetValue - currentValue, PATH_DECIMAL_PRECISION);
     } else {
-      const currentValue = targetCalculator([currentBounds]);
       deltaY = formatToPrecision(targetValue - currentValue, PATH_DECIMAL_PRECISION);
     }
 
-    if (!isNaN(deltaX) && !isNaN(deltaY)) {
-      const newPathData = translatePathData(pathData, deltaX, deltaY);
-      return { ...el, data: newPathData };
-    }
+    if (isNaN(deltaX) || isNaN(deltaY)) return;
 
-    return el;
+    // Handle groups and individual paths differently
+    if (item.element.type === 'group') {
+      // Translate all descendants of the group
+      updatedElements = translateGroupDescendants(updatedElements, item.element.id, deltaX, deltaY);
+    } else if (item.element.type === 'path') {
+      // Translate individual path
+      updatedElements = updatedElements.map(el => {
+        if (el.id === item.element.id && el.type === 'path') {
+          const pathData = el.data as import('../../../types').PathData;
+          return { ...el, data: translatePathData(pathData, deltaX, deltaY) };
+        }
+        return el;
+      });
+    }
   });
+
+  return updatedElements;
 };
 
 // Helper function for parameterized alignment
@@ -86,10 +176,7 @@ const distributeElements = (
   zoom: number,
   axis: 'x' | 'y'
 ): CanvasElement[] => {
-  const selectedElements = elements.filter((el: CanvasElement) => selectedIds.includes(el.id));
-  if (selectedElements.length < 3) return elements;
-
-  // Use centralized bounds collection
+  // Use centralized bounds collection (handles groups automatically)
   const elementBounds = collectSelectedElementBounds(elements, selectedIds, zoom);
 
   if (elementBounds.length < 3) return elements;
@@ -126,24 +213,47 @@ const distributeElements = (
     currentPos += elementSize + spaceBetween;
   }
 
-  return elements.map((el: CanvasElement) => {
-    const boundItemIndex = elementBounds.findIndex((item) => item.element.id === el.id);
-    if (boundItemIndex !== -1) {
-      const boundItem = elementBounds[boundItemIndex];
-      const targetPos = positions[boundItemIndex];
-      const currentPos = axis === 'x' ? boundItem.bounds.minX : boundItem.bounds.minY;
-      const delta = formatToPrecision(targetPos - currentPos, PATH_DECIMAL_PRECISION);
+  // Get top-level elements (groups and standalone paths)
+  const topLevelIds = getTopLevelSelectedElements(elements, selectedIds);
+  const topLevelSet = new Set(topLevelIds);
 
-      if (el.type === 'path') {
-        const pathData = el.data as import('../../../types').PathData;
-        return {
-          ...el,
-          data: translatePathData(pathData, axis === 'x' ? delta : 0, axis === 'y' ? delta : 0),
-        };
-      }
+  // Update elements
+  let updatedElements = elements;
+
+  elementBounds.forEach((boundItem, boundItemIndex) => {
+    if (!topLevelSet.has(boundItem.element.id)) return;
+
+    const targetPos = positions[boundItemIndex];
+    const currentPos = axis === 'x' ? boundItem.bounds.minX : boundItem.bounds.minY;
+    const delta = formatToPrecision(targetPos - currentPos, PATH_DECIMAL_PRECISION);
+
+    if (isNaN(delta)) return;
+
+    // Handle groups and individual paths differently
+    if (boundItem.element.type === 'group') {
+      // Translate all descendants of the group
+      updatedElements = translateGroupDescendants(
+        updatedElements,
+        boundItem.element.id,
+        axis === 'x' ? delta : 0,
+        axis === 'y' ? delta : 0
+      );
+    } else if (boundItem.element.type === 'path') {
+      // Translate individual path
+      updatedElements = updatedElements.map((el: CanvasElement) => {
+        if (el.id === boundItem.element.id && el.type === 'path') {
+          const pathData = el.data as import('../../../types').PathData;
+          return {
+            ...el,
+            data: translatePathData(pathData, axis === 'x' ? delta : 0, axis === 'y' ? delta : 0),
+          };
+        }
+        return el;
+      });
     }
-    return el;
   });
+
+  return updatedElements;
 };
 
 // Helper function for distribution - reduces duplication in horizontal/vertical distribution
@@ -167,10 +277,7 @@ const matchSizeToLargest = (
   zoom: number,
   dimension: 'width' | 'height'
 ): CanvasElement[] => {
-  const selectedElements = elements.filter((el: CanvasElement) => selectedIds.includes(el.id));
-  if (selectedElements.length < 2) return elements;
-
-  // Use centralized bounds collection
+  // Use centralized bounds collection (handles groups automatically)
   const elementBounds = collectSelectedElementBounds(elements, selectedIds, zoom);
 
   if (elementBounds.length < 2) return elements;
@@ -180,45 +287,139 @@ const matchSizeToLargest = (
     dimension === 'width' ? item.width : item.height
   ));
 
+  // Get top-level elements (groups and standalone paths)
+  const topLevelIds = getTopLevelSelectedElements(elements, selectedIds);
+  const topLevelSet = new Set(topLevelIds);
+
   // Scale each element to match the largest dimension
-  return elements.map((el: CanvasElement) => {
-    const boundItem = elementBounds.find((item) => item.element.id === el.id);
-    if (!boundItem) return el;
+  let updatedElements = elements;
+
+  elementBounds.forEach((boundItem) => {
+    if (!topLevelSet.has(boundItem.element.id)) return;
 
     const currentSize = dimension === 'width' ? boundItem.width : boundItem.height;
-    if (currentSize === 0) return el; // Avoid division by zero
+    if (currentSize === 0) return; // Avoid division by zero
 
     const scaleFactor = largestSize / currentSize;
     
     // Only scale if the element is not already the largest
-    if (Math.abs(scaleFactor - 1) < 0.0001) return el;
+    if (Math.abs(scaleFactor - 1) < 0.0001) return;
 
-    if (el.type === 'path') {
-      const pathData = el.data as import('../../../types').PathData;
-      const bounds = boundItem.bounds;
-      
-      // Calculate the center point of the element for scaling
-      const centerX = (bounds.minX + bounds.maxX) / 2;
-      const centerY = (bounds.minY + bounds.maxY) / 2;
+    const bounds = boundItem.bounds;
+    
+    // Calculate the center point of the element for scaling
+    const centerX = (bounds.minX + bounds.maxX) / 2;
+    const centerY = (bounds.minY + bounds.maxY) / 2;
 
-      // Scale the path data - scale only on the specified dimension
-      const scaleX = dimension === 'width' ? scaleFactor : 1;
-      const scaleY = dimension === 'height' ? scaleFactor : 1;
-      
-      const newPathData = scalePathData(pathData, scaleX, scaleY, centerX, centerY);
+    // Scale only on the specified dimension
+    const scaleX = dimension === 'width' ? scaleFactor : 1;
+    const scaleY = dimension === 'height' ? scaleFactor : 1;
 
-      return {
-        ...el,
-        data: newPathData
-      };
+    // Handle groups and individual paths differently
+    if (boundItem.element.type === 'group') {
+      // Scale all descendants of the group
+      updatedElements = scaleGroupDescendants(
+        updatedElements,
+        boundItem.element.id,
+        scaleX,
+        scaleY,
+        centerX,
+        centerY
+      );
+    } else if (boundItem.element.type === 'path') {
+      // Scale individual path
+      updatedElements = updatedElements.map((el: CanvasElement) => {
+        if (el.id === boundItem.element.id && el.type === 'path') {
+          const pathData = el.data as import('../../../types').PathData;
+          return {
+            ...el,
+            data: scalePathData(pathData, scaleX, scaleY, centerX, centerY)
+          };
+        }
+        return el;
+      });
     }
-
-    return el;
   });
+
+  return updatedElements;
 };
 
-// Helper function for matching sizes
-const performMatchSize = (
+// Helper function to match sizes - either width or height to the smallest element
+const matchSizeToSmallest = (
+  elements: CanvasElement[],
+  selectedIds: string[],
+  zoom: number,
+  dimension: 'width' | 'height'
+): CanvasElement[] => {
+  // Use centralized bounds collection (handles groups automatically)
+  const elementBounds = collectSelectedElementBounds(elements, selectedIds, zoom);
+
+  if (elementBounds.length < 2) return elements;
+
+  // Find the smallest dimension
+  const smallestSize = Math.min(...elementBounds.map(item => 
+    dimension === 'width' ? item.width : item.height
+  ));
+
+  // Get top-level elements (groups and standalone paths)
+  const topLevelIds = getTopLevelSelectedElements(elements, selectedIds);
+  const topLevelSet = new Set(topLevelIds);
+
+  // Scale each element to match the smallest dimension
+  let updatedElements = elements;
+
+  elementBounds.forEach((boundItem) => {
+    if (!topLevelSet.has(boundItem.element.id)) return;
+
+    const currentSize = dimension === 'width' ? boundItem.width : boundItem.height;
+    if (currentSize === 0) return; // Avoid division by zero
+
+    const scaleFactor = smallestSize / currentSize;
+    
+    // Only scale if the element is not already the smallest
+    if (Math.abs(scaleFactor - 1) < 0.0001) return;
+
+    const bounds = boundItem.bounds;
+    
+    // Calculate the center point of the element for scaling
+    const centerX = (bounds.minX + bounds.maxX) / 2;
+    const centerY = (bounds.minY + bounds.maxY) / 2;
+
+    // Scale only on the specified dimension
+    const scaleX = dimension === 'width' ? scaleFactor : 1;
+    const scaleY = dimension === 'height' ? scaleFactor : 1;
+
+    // Handle groups and individual paths differently
+    if (boundItem.element.type === 'group') {
+      // Scale all descendants of the group
+      updatedElements = scaleGroupDescendants(
+        updatedElements,
+        boundItem.element.id,
+        scaleX,
+        scaleY,
+        centerX,
+        centerY
+      );
+    } else if (boundItem.element.type === 'path') {
+      // Scale individual path
+      updatedElements = updatedElements.map((el: CanvasElement) => {
+        if (el.id === boundItem.element.id && el.type === 'path') {
+          const pathData = el.data as import('../../../types').PathData;
+          return {
+            ...el,
+            data: scalePathData(pathData, scaleX, scaleY, centerX, centerY)
+          };
+        }
+        return el;
+      });
+    }
+  });
+
+  return updatedElements;
+};
+
+// Helper function for matching sizes to largest
+const performMatchSizeToLargest = (
   set: (updater: (state: CanvasStore) => Partial<CanvasStore>) => void,
   get: () => ArrangeSlice,
   dimension: 'width' | 'height'
@@ -228,6 +429,20 @@ const performMatchSize = (
 
   setStore((state) => ({
     elements: matchSizeToLargest(state.elements, fullState.selectedIds, fullState.viewport.zoom, dimension)
+  }));
+};
+
+// Helper function for matching sizes to smallest
+const performMatchSizeToSmallest = (
+  set: (updater: (state: CanvasStore) => Partial<CanvasStore>) => void,
+  get: () => ArrangeSlice,
+  dimension: 'width' | 'height'
+) => {
+  const fullState = get() as CanvasStore;
+  const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
+
+  setStore((state) => ({
+    elements: matchSizeToSmallest(state.elements, fullState.selectedIds, fullState.viewport.zoom, dimension)
   }));
 };
 
@@ -243,6 +458,8 @@ export interface ArrangeSlice {
   distributeVertically: () => void;
   matchWidthToLargest: () => void;
   matchHeightToLargest: () => void;
+  matchWidthToSmallest: () => void;
+  matchHeightToSmallest: () => void;
 }
 
 export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) => ({
@@ -280,10 +497,18 @@ export const createArrangeSlice: StateCreator<ArrangeSlice> = (set, get, _api) =
   },
 
   matchWidthToLargest: () => {
-    performMatchSize(set, get, 'width');
+    performMatchSizeToLargest(set, get, 'width');
   },
 
   matchHeightToLargest: () => {
-    performMatchSize(set, get, 'height');
+    performMatchSizeToLargest(set, get, 'height');
+  },
+
+  matchWidthToSmallest: () => {
+    performMatchSizeToSmallest(set, get, 'width');
+  },
+
+  matchHeightToSmallest: () => {
+    performMatchSizeToSmallest(set, get, 'height');
   },
 });

@@ -20,7 +20,38 @@ Distribution requires **at least 3 elements** to perform meaningful spacing calc
 - **Preserves size**: Element dimensions remain unchanged
 - **Equal spacing**: Gaps between adjacent elements become uniform
 - **Non-destructive**: Original shapes are unaffected, only positions change
+- **Supports groups as single units**: Moves entire groups together
 - **Works across modes**: Available for elements, edit mode points, and subpaths
+
+## Group Support
+
+The distribution system handles groups intelligently:
+
+### Automatic Group Detection
+
+When paths inside groups are selected on the canvas, the distribution system:
+1. **Identifies parent groups** of selected paths
+2. **Works with top-level groups** rather than individual paths
+3. **Moves all descendants** together as a single unit
+4. **Calculates group bounds** from all descendants for spacing
+
+### Selection Behavior Examples
+
+**Example 1: Distributing groups and standalone elements**
+```typescript
+// Selected: path-1 (in group-A), path-2 (in group-A), standalone-path, path-3 (in group-B)
+// System works with: [group-A, standalone-path, group-B]
+state.distributeHorizontally();
+// → group-A, standalone path, and group-B distributed with equal spacing
+```
+
+**Example 2: Mixed groups**
+```typescript
+// Selected: path-1 (in group-1), path-2 (in group-2), path-3 (in group-3)
+// System works with: [group-1, group-2, group-3]
+state.distributeVertically();
+// → All three groups distributed vertically with equal gaps
+```
 
 ## Distribution Flow
 
@@ -28,9 +59,18 @@ Distribution requires **at least 3 elements** to perform meaningful spacing calc
 flowchart TD
     Start([User Action]) --> Check{3+ elements<br/>selected?}
     Check -->|No| Error[Show error/<br/>disable button]
-    Check -->|Yes| Collect[Collect element bounds]
+    Check -->|Yes| GetTopLevel[Get Top-Level Elements]
     
-    Collect --> Measure[Measure total span<br/>and element sizes]
+    GetTopLevel --> ReplaceWithGroups[Replace paths with parent groups]
+    ReplaceWithGroups --> Collect[Collect bounds for each]
+    
+    Collect --> CalcBounds{Is Group?}
+    CalcBounds -->|Yes| GroupBounds[Calculate combined<br/>descendant bounds]
+    CalcBounds -->|No| PathBounds[Calculate path bounds]
+    
+    GroupBounds --> Measure[Measure total span<br/>and element sizes]
+    PathBounds --> Measure
+    
     Measure --> Calculate[Calculate available space<br/>and spacing interval]
     
     Calculate --> Sort{Horizontal or<br/>Vertical?}
@@ -40,21 +80,31 @@ flowchart TD
     SortX --> Position[Position each element<br/>with equal gaps]
     SortY --> Position
     
-    Position --> Update[Update element positions<br/>in store]
+    Position --> ApplyTransform{Is Group?}
+    ApplyTransform -->|Yes| TranslateDescendants[Translate all descendants]
+    ApplyTransform -->|No| TranslatePath[Translate single path]
+    
+    TranslateDescendants --> Update[Update element positions<br/>in store]
+    TranslatePath --> Update
     Update --> Undo[Push to undo stack]
     Undo --> End([Elements distributed])
     
     Error --> End
+    
+    style GetTopLevel fill:#fff4e1
+    style ReplaceWithGroups fill:#fff4e1
 ```
 
 **Flow explanation:**
 
 1. **Selection validation**: System checks that at least 3 elements are selected
-2. **Bounds collection**: Measures each element's position and size using `measurePath`
-3. **Span calculation**: Identifies leftmost/rightmost (or topmost/bottommost) edges
-4. **Spacing calculation**: Computes available space after subtracting element sizes
-5. **Element positioning**: Places each element with uniform gaps between neighbors
-6. **State update**: Updates positions atomically and adds to undo history
+2. **Group resolution**: Replaces selected paths with their parent groups
+3. **Bounds collection**: Measures each element/group's position and size
+4. **Span calculation**: Identifies leftmost/rightmost (or topmost/bottommost) edges
+5. **Spacing calculation**: Computes available space after subtracting element sizes
+6. **Element positioning**: Places each element/group with uniform gaps between neighbors
+7. **Group translation**: For groups, translates all descendants together
+8. **State update**: Updates positions atomically and adds to undo history
 
 ## Distribution Operations
 
@@ -293,6 +343,8 @@ state.distributeHorizontally();
 ## Related Documentation
 
 - [Alignment](./alignment.md) - Align elements to common edges
+- [Match Features](./match.md) - Match element sizes
+- [Groups](./groups.md) - Group management
 - [Selection System](./selection.md) - Element selection
 - [Transformation Plugin](../plugins/catalog/transformation.md) - Element transformation
 - [Arrange Panel](../app-structure/sidebar.md) - UI controls

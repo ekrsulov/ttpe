@@ -11,8 +11,10 @@ import {
   AlignVerticalJustifyStart,
   AlignVerticalJustifyCenter,
   AlignVerticalJustifyEnd,
-  MoveHorizontal,
-  MoveVertical,
+  UnfoldHorizontal,
+  UnfoldVertical,
+  FoldHorizontal,
+  FoldVertical,
   ArrowLeftRight,
   ArrowUpDown
 } from 'lucide-react';
@@ -54,8 +56,10 @@ const ArrangePanelComponent: React.FC = () => {
   ];
 
   const sizeMatchButtons: ButtonConfig[] = [
-    { handler: currentHandlers.matchWidthToLargest, icon: <MoveHorizontal size={12} />, title: "Match Width to Largest", disabled: !canAlign },
-    { handler: currentHandlers.matchHeightToLargest, icon: <MoveVertical size={12} />, title: "Match Height to Largest", disabled: !canAlign }
+    { handler: currentHandlers.matchWidthToLargest, icon: <UnfoldHorizontal size={12} />, title: "Match Width to Largest", disabled: !canAlign },
+    { handler: currentHandlers.matchHeightToLargest, icon: <UnfoldVertical size={12} />, title: "Match Height to Largest", disabled: !canAlign },
+    { handler: currentHandlers.matchWidthToSmallest, icon: <FoldHorizontal size={12} />, title: "Match Width to Smallest", disabled: !canAlign },
+    { handler: currentHandlers.matchHeightToSmallest, icon: <FoldVertical size={12} />, title: "Match Height to Smallest", disabled: !canAlign }
   ];
 
   const orderButtons: ButtonConfig[] = activePlugin === 'edit' ? [] : [
@@ -114,24 +118,24 @@ const ArrangePanelComponent: React.FC = () => {
     >
       <RenderCountBadgeWrapper componentName="ArrangePanel" position="top-right" />
       <VStack spacing={1} align="stretch">
-        {/* Row 2: Align buttons and Match Height button (hide match button in edit mode) */}
-        {activePlugin === 'edit' 
-          ? renderButtonRow(alignmentButtons)
-          : renderButtonRow([...alignmentButtons, sizeMatchButtons[1]])
-        }
+        {/* Row 1: Align buttons */}
+        {renderButtonRow(alignmentButtons)}
 
-        {/* Row 1: Distribution, Order, and Match Width buttons */}
+        {/* Row 2: Distribution and Order buttons */}
         {activePlugin === 'edit' ? (
-          /* Edit mode has different layout - no order or match buttons */
+          /* Edit mode has different layout - no order buttons */
           <HStack spacing={0.5} justify="space-between">
             {renderButtonRow(distributionButtons)}
           </HStack>
         ) : (
           /* Normal layout for select and subpath modes */
           <HStack spacing={0.5}>
-            {renderButtonRow([...distributionButtons, ...orderButtons, sizeMatchButtons[0]])}
+            {renderButtonRow([...distributionButtons, ...orderButtons])}
           </HStack>
         )}
+
+        {/* Row 3: Size Match buttons (hidden in edit mode) */}
+        {activePlugin !== 'edit' && renderButtonRow(sizeMatchButtons)}
       </VStack>
     </Box>
   );
