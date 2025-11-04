@@ -7,6 +7,11 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+@font-face {
+  font-family: 'Momo Trust Display';
+  src: url('/fonts/MomoTrustDisplay-Regular.ttf') format('truetype');
+}
+
 /* Prevent tap highlight on mobile devices (especially Android) */
 * {
   -webkit-tap-highlight-color: transparent;
