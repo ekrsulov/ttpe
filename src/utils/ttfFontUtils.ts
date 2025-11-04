@@ -11,6 +11,7 @@ export const TTF_FONTS = [
   { name: 'Montserrat', file: 'Montserrat-Regular.ttf' },
   { name: 'OpenSans', file: 'OpenSans-Regular.ttf' },
   { name: 'Roboto', file: 'Roboto-Regular.ttf' },
+  { name: 'Momo Trust Display', file: 'MomoTrustDisplay-Regular.ttf' },
 ] as const;
 
 // Cache for loaded fonts
