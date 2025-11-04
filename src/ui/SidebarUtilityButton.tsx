@@ -43,13 +43,16 @@ export const SidebarUtilityButton: React.FC<SidebarUtilityButtonProps> = ({
       _hover={{
         bg: isActive ? activeHoverBg : inactiveHoverBg,
       }}
-      _focus={{ outline: 'none' }}
+      _focus={{ outline: 'none', boxShadow: 'none' }}
       sx={{
         minH: '28px',
         px: 3,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
+        '-webkit-appearance': 'none',
+        appearance: 'none',
+        '-webkit-tap-highlight-color': 'transparent',
       }}
     >
       {label}
