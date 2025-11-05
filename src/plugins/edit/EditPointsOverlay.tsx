@@ -76,7 +76,7 @@ export const EditPointsOverlay: React.FC<EditPointsOverlayProps> = ({
   onSelectCommand,
 }) => {
   // Get canvas background color based on theme - MUST be called before early return
-  const canvasBgColor = useColorModeValue('#f9fafb', '#111827'); // gray.50 and gray.900
+  const canvasBgColor = useColorModeValue('#f8f9fa', '#212529'); // gray.50 and gray.900
   // Determine if we're in dark mode
   const isDarkMode = useColorModeValue(false, true);
 
@@ -153,15 +153,35 @@ export const EditPointsOverlay: React.FC<EditPointsOverlayProps> = ({
               onPointerDown={(e) => handlePointPointerDown(e, point, element, selectedCommands, viewport, onStartDraggingPoint, onSelectCommand, smoothBrush)}
             />
             {/* Visible point */}
-            <circle
-              cx={displayX}
-              cy={displayY}
-              r={pointStyle.size / viewport.zoom}
-              fill={pointStyle.color}
-              stroke={pointStyle.strokeColor}
-              strokeWidth={2 / viewport.zoom}
-              style={{ pointerEvents: 'none' }} // Let the overlay handle interactions
-            />
+            {point.isControl ? (
+              // Draw square for control points
+              (() => {
+                const size = pointStyle.size / viewport.zoom;
+                return (
+                  <rect
+                    x={displayX - size / 2}
+                    y={displayY - size / 2}
+                    width={size}
+                    height={size}
+                    fill={pointStyle.color}
+                    stroke={pointStyle.strokeColor}
+                    strokeWidth={2 / viewport.zoom}
+                    style={{ pointerEvents: 'none' }} // Let the overlay handle interactions
+                  />
+                );
+              })()
+            ) : (
+              // Draw circle for command points
+              <circle
+                cx={displayX}
+                cy={displayY}
+                r={pointStyle.size / viewport.zoom}
+                fill={pointStyle.color}
+                stroke={pointStyle.strokeColor}
+                strokeWidth={2 / viewport.zoom}
+                style={{ pointerEvents: 'none' }} // Let the overlay handle interactions
+              />
+            )}
           </g>
         );
       })}
@@ -243,7 +263,7 @@ const getPointStyle = (
   if (point.isControl) {
     // Control points: cyan/light blue for better visibility in dark mode
     color = isDarkMode ? '#22d3ee' : '#0ea5e9'; // cyan-400 in dark, sky-500 in light
-    size = 3;
+    size = 6; // doubled from 3
   } else {
     // command points
     const cmd = commands[point.commandIndex];
