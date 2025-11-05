@@ -11,6 +11,12 @@ All notable changes to VectorNest will be documented here.
 ## [Unreleased]
 
 ### Added
+- **Selection Bbox Visual Feedback** for multi-element selections
+  - Amber-colored bounding box showing overall selection extent
+  - Only displays when four corner-defining elements or groups are different
+  - Uses group bounds for elements that belong to groups and directly selected groups
+  - 10px margin around calculated bounds (larger than group bounds)
+  - Helps visualize the complete span of scattered selections
 - **Export Padding** configurable slider in File Panel
   - Control padding (0-100px) around exported SVG/PNG content
   - Default value: 20px

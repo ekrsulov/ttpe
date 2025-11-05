@@ -16,6 +16,7 @@ Selection in VectorNest is **context-aware** and **non-destructive**. When you s
 - **Single Selection**: Click an element to select it exclusively
 - **Multi-Selection**: Hold Shift while clicking to add/remove elements (toggle behavior)
 - **Rectangle Selection**: Click and drag on empty canvas to select all elements within bounds
+- **Selection Bbox Feedback**: Visual bounding box showing overall selection extent when multiple elements span different areas
 - **Keyboard Movement**: Use arrow keys to move selected elements (1px normal, 10px with Shift)
 - **Programmatic Selection**: Use API methods to control selection state
 - **Hidden/Locked Elements**: Cannot be selected (filtered automatically)
@@ -279,14 +280,38 @@ Selected elements are highlighted with:
 - **Resize handles**: 8 corner/edge handles for transformation (when in transform mode)
 - **Selection badge**: Element count indicator (for multi-selection)
 
+### Selection Bbox Feedback
+
+When multiple elements or groups are selected, a **selection bounding box** appears to show the overall extent of the selection:
+
+- **Visual indicator**: Amber-colored rectangle showing the complete bounds from the leftmost element to the rightmost, and topmost to bottommost
+- **Margin**: 10px padding around the calculated bounds (larger than group selection bounds)
+- **Conditional display**: Only appears when the four corner-defining elements or groups are different (prevents showing for single elements or compact selections)
+- **Group-aware**: Considers both directly selected groups and elements (using group bounds when elements belong to groups)
+- **Color scheme**: Amber stroke with low-opacity fill, distinct from group selection bounds (cyan) and rectangle selection (gray)
+
+The bbox is calculated by finding:
+- **Left edge**: Element or group with the smallest `minX` coordinate
+- **Top edge**: Element or group with the smallest `minY` coordinate  
+- **Right edge**: Element or group with the largest `maxX` coordinate
+- **Bottom edge**: Element or group with the largest `maxY` coordinate
+
+The calculation considers:
+- **Directly selected groups**: Use their complete group bounds
+- **Individual elements**: Use their own bounds, or their parent group's bounds if they belong to a group
+- **Mixed selections**: Handles combinations of groups and elements seamlessly
+
+If all four edges are defined by the same element or group, no bbox is drawn.
+
 ### Canvas Layers
 
-The selection system renders **4 canvas layers** (all in midground placement):
+The selection system renders **5 canvas layers** (all in midground placement):
 
 1. **selection-overlays**: Selection overlays for individual path elements showing control points
 2. **group-selection-bounds**: Dashed rectangles around selected groups
-3. **selection-rectangle**: Live rectangle during drag-to-select operation
-4. **selection-blocking-overlay**: Blocks interactions during rectangle selection
+3. **selection-bbox**: Amber bounding box showing overall selection extent (when applicable)
+4. **selection-rectangle**: Live rectangle during drag-to-select operation
+5. **selection-blocking-overlay**: Blocks interactions during rectangle selection
 
 ### Rectangle Selection Overlay
 

@@ -1,6 +1,9 @@
 import type { PluginDefinition } from '../types/plugins';
 import type { CanvasStore } from '../store/canvasStore';
-import type { Point } from '../types';
+import type { Point, CanvasElement, Viewport, GroupElement } from '../types';
+import type { Bounds } from '../utils/boundsUtils';
+import type { ElementMap } from '../canvas/geometry/CanvasGeometryService';
+import { getGroupBounds } from '../canvas/geometry/CanvasGeometryService';
 import { getToolMetadata } from './toolMetadata';
 
 import { pencilPlugin } from './pencil';
@@ -90,6 +93,121 @@ const GroupSelectionBoundsComponent: React.FC<{
   );
 };
 
+// Component for selection bbox from top-left to bottom-right element
+const SelectionBboxComponent: React.FC<{
+  selectedIds: string[];
+  getElementBounds: (element: CanvasElement) => Bounds | null;
+  elementMap: ElementMap;
+  viewport: Viewport;
+}> = ({ selectedIds, getElementBounds, elementMap, viewport }) => {
+  const { colorMode } = useColorMode();
+
+  if (selectedIds.length <= 1) {
+    return null;
+  }
+
+  // Separate selected elements and groups
+  const selectedElements: CanvasElement[] = [];
+  const selectedGroups: GroupElement[] = [];
+
+  selectedIds.forEach(id => {
+    const item = elementMap.get(id);
+    if (item) {
+      if (item.type === 'group') {
+        selectedGroups.push(item as GroupElement);
+      } else {
+        selectedElements.push(item);
+      }
+    }
+  });
+
+  // Create pairs of representative elements (element/group or its parent group) and their bounds
+  const representativeBoundsPairs: { representative: CanvasElement; bounds: Bounds }[] = [];
+
+  // Handle directly selected groups
+  selectedGroups.forEach(group => {
+    const groupBounds = getGroupBounds(group, elementMap, viewport);
+    if (groupBounds) {
+      representativeBoundsPairs.push({ representative: group, bounds: groupBounds });
+    }
+  });
+
+  // Handle selected elements (considering their parent groups)
+  selectedElements.forEach(element => {
+    // If element belongs to a group, use the group's bounds instead
+    if (element.parentId) {
+      const parentGroup = elementMap.get(element.parentId);
+      if (parentGroup && parentGroup.type === 'group') {
+        const groupBounds = getGroupBounds(parentGroup as GroupElement, elementMap, viewport);
+        if (groupBounds) {
+          representativeBoundsPairs.push({ representative: parentGroup, bounds: groupBounds });
+        }
+        return; // Skip adding the individual element
+      }
+    }
+    
+    // Otherwise use the element itself
+    const bounds = getElementBounds(element);
+    if (bounds) {
+      representativeBoundsPairs.push({ representative: element, bounds });
+    }
+  });
+
+  if (representativeBoundsPairs.length < 2) {
+    return null;
+  }
+
+  // Find representatives defining the four extremes
+  let leftRep = representativeBoundsPairs[0];
+  let topRep = representativeBoundsPairs[0];
+  let rightRep = representativeBoundsPairs[0];
+  let bottomRep = representativeBoundsPairs[0];
+
+  for (const pair of representativeBoundsPairs) {
+    if (pair.bounds.minX < leftRep.bounds.minX) {
+      leftRep = pair;
+    }
+    if (pair.bounds.minY < topRep.bounds.minY) {
+      topRep = pair;
+    }
+    if (pair.bounds.maxX > rightRep.bounds.maxX) {
+      rightRep = pair;
+    }
+    if (pair.bounds.maxY > bottomRep.bounds.maxY) {
+      bottomRep = pair;
+    }
+  }
+
+  // Only draw if not all four extremes are defined by the same representative
+  const extremeRepresentatives = new Set([leftRep.representative.id, topRep.representative.id, rightRep.representative.id, bottomRep.representative.id]);
+  if (extremeRepresentatives.size === 1) {
+    return null;
+  }
+
+  // Use theme-adaptive color, similar to group selection but different
+  const strokeColor = colorMode === 'dark' ? '#f59e0b' : '#d97706'; // amber
+  const fillColor = colorMode === 'dark' ? '#f59e0b10' : '#f59e0b20';
+  const padding = 10 / viewport.zoom; // Greater than the 8px used for groups
+
+  const x = leftRep.bounds.minX - padding;
+  const y = topRep.bounds.minY - padding;
+  const width = rightRep.bounds.maxX - leftRep.bounds.minX + 2 * padding;
+  const height = bottomRep.bounds.maxY - topRep.bounds.minY + 2 * padding;
+
+  return (
+    <rect
+      x={x}
+      y={y}
+      width={width}
+      height={height}
+      fill={fillColor}
+      stroke={strokeColor}
+      strokeWidth={1 / viewport.zoom}
+      pointerEvents="none"
+    />
+  );
+};
+
 
 const selectPlugin: PluginDefinition<CanvasStore> = {
   id: 'select',
@@ -174,6 +292,18 @@ const selectPlugin: PluginDefinition<CanvasStore> = {
       render: ({ selectedGroupBounds, viewport }) => (
         <GroupSelectionBoundsComponent
           selectedGroupBounds={selectedGroupBounds}
+          viewport={viewport}
+        />
+      ),
+    },
+    {
+      id: 'selection-bbox',
+      placement: 'midground',
+      render: ({ selectedIds, getElementBounds, elementMap, viewport }) => (
+        <SelectionBboxComponent
+          selectedIds={selectedIds}
+          getElementBounds={getElementBounds}
+          elementMap={elementMap}
           viewport={viewport}
         />
       ),
