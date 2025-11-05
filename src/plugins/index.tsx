@@ -68,6 +68,7 @@ const GroupSelectionBoundsComponent: React.FC<{
 
   // Use theme-adaptive color for group selection (same as selection rectangle)
   const strokeColor = colorMode === 'dark' ? '#22d3ee' : '#0ea5e9';
+  const fillColor = colorMode === 'dark' ? '#cccccc10' : '#cccccc30';
   const padding = 8 / viewport.zoom; // Greater than the 5px used for selected elements
 
   return (
@@ -79,7 +80,7 @@ const GroupSelectionBoundsComponent: React.FC<{
           y={bounds.minY - padding}
           width={bounds.maxX - bounds.minX + 2 * padding}
           height={bounds.maxY - bounds.minY + 2 * padding}
-          fill="none"
+          fill={fillColor}
           stroke={strokeColor}
           strokeWidth={1 / viewport.zoom}
           pointerEvents="none"
