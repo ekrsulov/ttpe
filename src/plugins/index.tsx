@@ -55,6 +55,40 @@ const SelectionRectangleComponent: React.FC<{
   );
 };
 
+// Component for group selection bounds that can use hooks
+const GroupSelectionBoundsComponent: React.FC<{
+  selectedGroupBounds: Array<{ id: string; bounds: { minX: number; minY: number; maxX: number; maxY: number } }>;
+  viewport: { zoom: number };
+}> = ({ selectedGroupBounds, viewport }) => {
+  const { colorMode } = useColorMode();
+
+  if (!selectedGroupBounds.length) {
+    return null;
+  }
+
+  // Use theme-adaptive color for group selection (same as selection rectangle)
+  const strokeColor = colorMode === 'dark' ? '#22d3ee' : '#0ea5e9';
+  const padding = 8 / viewport.zoom; // Greater than the 5px used for selected elements
+
+  return (
+    <>
+      {selectedGroupBounds.map(({ id, bounds }) => (
+        <rect
+          key={`group-selection-${id}`}
+          x={bounds.minX - padding}
+          y={bounds.minY - padding}
+          width={bounds.maxX - bounds.minX + 2 * padding}
+          height={bounds.maxY - bounds.minY + 2 * padding}
+          fill="none"
+          stroke={strokeColor}
+          strokeWidth={1 / viewport.zoom}
+          pointerEvents="none"
+        />
+      ))}
+    </>
+  );
+};
+
 
 const selectPlugin: PluginDefinition<CanvasStore> = {
   id: 'select',
@@ -136,30 +170,12 @@ const selectPlugin: PluginDefinition<CanvasStore> = {
     {
       id: 'group-selection-bounds',
       placement: 'midground',
-      render: ({ selectedGroupBounds, viewport }) => {
-        if (!selectedGroupBounds.length) {
-          return null;
-        }
-
-        return (
-          <>
-            {selectedGroupBounds.map(({ id, bounds }) => (
-              <rect
-                key={`group-selection-${id}`}
-                x={bounds.minX}
-                y={bounds.minY}
-                width={bounds.maxX - bounds.minX}
-                height={bounds.maxY - bounds.minY}
-                fill="none"
-                stroke="#6b7280"
-                strokeWidth={1 / viewport.zoom}
-                strokeDasharray={`${6 / viewport.zoom} ${4 / viewport.zoom}`}
-                pointerEvents="none"
-              />
-            ))}
-          </>
-        );
-      },
+      render: ({ selectedGroupBounds, viewport }) => (
+        <GroupSelectionBoundsComponent
+          selectedGroupBounds={selectedGroupBounds}
+          viewport={viewport}
+        />
+      ),
     },
     {
       id: 'selection-rectangle',
