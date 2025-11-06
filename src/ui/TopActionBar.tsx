@@ -43,6 +43,10 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
   
   // Get grid state to conditionally show gridFill tool
   const gridEnabled = useCanvasStore(state => state.grid?.enabled ?? false);
+  
+  // Get selection state for transformation/edit mode enablement
+  const selectedIds = useCanvasStore(state => state.selectedIds);
+  const elements = useCanvasStore(state => state.elements);
 
   // State and refs for animated background
   const buttonRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -139,7 +143,21 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
         {/* Tool buttons */}
         {toolsToRender.map(({ id, icon: Icon, label }) => {
           const isDisabled = (() => {
-            if (id === 'transformation' || id === 'edit') {
+            if (id === 'transformation') {
+              // Enable transformation for:
+              // 1. Single path
+              // 2. Single group
+              // 3. Multiple selection (2+ elements)
+              if (selectedIds.length === 0) return true;
+              if (selectedIds.length === 1) {
+                // Check if it's a path or group
+                const element = elements.find(el => el.id === selectedIds[0]);
+                return !element || (element.type !== 'path' && element.type !== 'group');
+              }
+              // Multi-selection (2+ elements) - always enable
+              return false;
+            }
+            if (id === 'edit') {
               return selectedPaths.length !== 1;
             }
             if (id === 'subpath') {

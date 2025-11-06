@@ -10,21 +10,27 @@ sidebar_label: Transformation
 
 ## Overview
 
-The Transformation Plugin provides intuitive visual handles for resizing, rotating, and transforming selected elements on the canvas. It supports both proportional and free-form scaling, rotation with angle snapping, and real-time visual feedback during transformations.
+The Transformation Plugin provides intuitive visual handles for resizing, rotating, and transforming selected elements on the canvas. It operates as a dedicated mode that must be explicitly activated by the user, ensuring intentional transformations and preventing accidental modifications.
 
 **Key Features:**
+- **Explicit activation**: Transformation mode must be activated via the toolbar button
 - **8-handle bounding box**: Corner and edge handles for precise control
 - **Rotation handle**: Circular handle above the bounding box
 - **Visual feedback**: Real-time dimension and angle display
 - **Proportional scaling**: Shift key for aspect ratio preservation
-- **Center scaling**: Alt/Option key to scale from center
 - **Angle snapping**: 15° increments when holding Shift during rotation
 - **Visual rulers**: Optional coordinate display
-- **Multi-element support**: Transform multiple selected elements together
+- **Multi-element support**: Transform single paths, groups, or multiple selected elements together
+- **Integrated panel controls**: Direct input for width, height, and rotation values
+
+**Activation Requirements:**
+- **Single path**: Transformation mode enabled when one path is selected
+- **Single group**: Transformation mode enabled when one group is selected
+- **Multi-selection**: Transformation mode enabled when 2+ elements are selected (paths or groups)
 
 **Transform Operations:**
-- Resize (Scale) via 8 handles
-- Rotate via rotation handle above bounding box
+- Resize (Scale) via 8 handles or panel inputs
+- Rotate via rotation handle or panel input
 - Move (Translate) by dragging inside bounding box
 
 ## Plugin Interaction Flow
@@ -296,6 +302,147 @@ Click and drag anywhere inside the bounding box (not on handles) to move element
 
 ---
 
+## Group and Multi-Selection Transformations
+
+The transformation plugin supports specialized handlers for groups and multi-selection scenarios, allowing you to resize and rotate multiple elements or entire groups as a single unit. **These handlers only appear when transformation mode is explicitly activated.**
+
+### Activation and Mode Behavior
+
+**Transformation Mode Activation:**
+- Transformation mode is enabled in the toolbar when valid selections are present:
+  - Single path selected
+  - Single group selected  
+  - Multiple elements (2+) selected
+- Users must explicitly click the transformation tool button to enter transformation mode
+- Handlers appear only in transformation mode, never in select mode
+
+**Visual Feedback:**
+- **Select Mode**: Shows only selection feedback (bounding boxes without handles)
+  - Cyan bounding box for groups
+  - Amber bounding box for multi-selection
+  - Blue bounding box for individual paths
+- **Transformation Mode**: Shows interactive transformation handlers
+  - Replaces feedback-only bounding boxes with full handler controls
+  - Handlers include 8 resize handles (corners + edges) and 1 rotation handle
+
+### Multi-Selection Transformation
+
+When two or more elements are selected that do not all belong to the same parent group, amber-colored transformation handlers are displayed in transformation mode.
+
+**Features:**
+- **Amber-colored handlers**: Distinct visual indication for multi-selection (#f59e0b)
+- **Resize all elements**: All selected elements scale proportionally from the anchor point (opposite corner/edge)
+- **Rotate all elements**: All selected elements rotate around the combined center point
+- **Recursive group handling**: If any selected element is a group, all its descendants are also transformed
+- **Transform from original state**: Each transformation is applied from the original element state, preventing accumulation errors
+- **Fixed anchor scaling**: When dragging a corner, the opposite corner stays fixed; when dragging an edge, the opposite edge stays fixed
+
+**Visual Indicators:**
+- Amber transformation handles (8 resize + 1 rotation)
+- Combined bounding box encompassing all selected elements
+- Center marker showing the rotation pivot point
+- Optional measurement rulers and coordinate labels
+- Only visible in transformation mode (not in select mode)
+
+**Note:** If all selected elements belong to the same parent group, cyan group handlers are shown instead (see Group Transformation).
+
+### Group Transformation
+
+When a single group is selected, or when multiple elements that all belong to the same parent group are selected, cyan-colored transformation handlers are displayed in transformation mode.
+
+**Features:**
+- **Cyan-colored handlers**: Distinct visual indication for groups (#22d3ee)
+- **Resize entire group**: All descendant elements scale proportionally
+- **Rotate entire group**: All descendant elements rotate around the group's center
+- **Recursive descendant transformation**: All nested groups and paths are transformed
+- **Preserves group structure**: Group hierarchy remains intact during transformation
+- **Smart selection detection**: Automatically shows group handlers when all selected elements belong to the same parent group
+
+**Visual Indicators:**
+- Cyan transformation handles (8 resize + 1 rotation)
+- Group bounding box calculated from all descendants (with 8px padding)
+- Center marker showing the rotation pivot point
+- Optional measurement rulers and coordinate labels
+- Only visible in transformation mode (not in select mode)
+
+### Priority System
+
+The transformation overlay system follows a priority hierarchy to determine which handlers to display **when transformation mode is active**:
+
+1. **All elements from same group** (highest priority): When multiple elements are selected and all belong to the same parent group, show cyan group handlers for the parent group
+2. **Multi-selection** (high priority): When 2+ elements are selected but not all from the same group, show amber multi-selection handlers
+3. **Single group**: When only 1 group is selected, show cyan group handlers
+4. **Single path** (lowest priority): When only 1 path is selected, show default transformation handlers
+
+This ensures that the most appropriate transformation interface is always displayed based on the current selection context.
+
+**Mode-Based Display:**
+- **Select Mode**: Shows only visual feedback (bounding boxes) without interactive handlers
+  - Users see cyan boxes around selected groups
+  - Users see amber boxes around multi-selection
+  - Users see blue boxes around individual paths
+- **Transformation Mode**: Shows interactive handlers with full transformation controls
+  - All feedback bounding boxes are replaced by handler overlays
+  - Users can resize, rotate, and manipulate selections
+  - Panel controls become active for direct value input
+
+### Technical Implementation
+
+**Pseudo-Element Creation:**
+- For groups and multi-selection, the system creates temporary "pseudo-elements" with rectangular paths
+- These pseudo-elements serve as transformation targets in the TransformController
+- The rectangular path is based on the calculated bounds: `[M, L, L, L, Z]` commands
+
+**Original State Tracking:**
+- When transformation starts, the original state of all affected elements is stored in a `Map<string, CanvasElement>`
+- During transformation updates, changes are calculated and applied from the original state
+- This prevents transformation accumulation (e.g., scale(1.1) × scale(1.1) = scale(1.21))
+
+**Transform Application:**
+- Scale and rotation are applied from the anchor point (opposite corner/edge) not from center
+- For corner handles: the opposite corner remains fixed during scaling
+- For edge handles: the opposite edge remains fixed during scaling
+- Transform origin is calculated based on the handler being dragged
+- For groups, transformations recursively apply to all descendants
+- Each frame applies the full transformation from original state, not incremental changes
+
+**Canvas Layer Integration:**
+- Handlers are rendered in the "selection-transformation-handlers" canvas layer
+- This layer is part of the transformation plugin's foreground placement
+- Handlers are only visible in TRANSFORMATION mode (not in select mode)
+- Selection feedback (bounding boxes) remain visible in select mode
+
+**Handler Padding:**
+- Group handlers use 8px padding to match the group selection feedback visual
+- Multi-selection handlers use 10px padding for visual distinction
+- Individual path handlers use 5px padding for tighter control
+
+**Workflow:**
+1. **Select elements** in select mode (see feedback bounding boxes)
+2. **Activate transformation mode** via toolbar button (button enabled when valid selection exists)
+3. **Transform using handlers** or panel controls (feedback replaced by interactive handlers)
+4. **Return to select mode** when transformation is complete (handlers hide, feedback reappears)
+
+### Usage Example
+
+```typescript
+// Select multiple elements
+const state = useCanvasStore.getState();
+state.setSelectedIds(['element1', 'element2', 'element3']);
+
+// Amber multi-selection handlers appear automatically
+// User can drag corner handles to resize all elements
+// User can drag rotation handle to rotate all elements around center
+
+// Select a single group
+state.setSelectedIds(['group1']);
+
+// Cyan group handlers appear automatically
+// User can resize/rotate the entire group
+```
+
+---
+
 ## Transform Mathematics
 
 ### Scale Calculation
@@ -369,6 +516,68 @@ const scaledStrokeWidth = calculateScaledStrokeWidth(
 
 ---
 
+## Transformation Panel
+
+The Transformation Panel provides direct input controls for precise transformations, complementing the visual handlers. The panel is active whenever transformation mode is enabled and works seamlessly with all selection types.
+
+**Panel Features:**
+- **Width/Height Inputs**: Direct numeric input for exact dimensions
+- **Rotation Input**: Precise angle control in degrees
+- **Aspect Ratio Lock**: Toggle to maintain proportions during resize
+- **Visual Toggles**: Show/hide rulers and coordinate labels
+- **Real-time Updates**: Values update as transformations are applied via handlers
+
+**Supported Selection Types:**
+- **Single Path**: Panel displays and controls the path's transformation bounds
+- **Single Group**: Panel calculates and controls transformation for entire group
+- **Multi-Selection**: Panel operates on the combined bounding box of all selected elements
+
+**Panel Controls:**
+
+1. **Dimension Controls**:
+   - Width input (numeric, updates in real-time)
+   - Height input (numeric, updates in real-time)
+   - Lock icon to toggle aspect ratio preservation
+   - Values reflect the bounding box dimensions
+
+2. **Rotation Control**:
+   - Angle input (0-360 degrees)
+   - Applies rotation around the center point
+   - Works with all selection types
+
+3. **Visual Aids**:
+   - "Show Coordinates" toggle: Displays corner position labels
+   - "Show Rulers" toggle: Displays measurement rulers with dimensions
+   - Both toggles persist during the transformation session
+
+**Workflow Integration:**
+```typescript
+// User enters transformation mode
+state.setActivePlugin('transformation');
+
+// Panel becomes active and displays current bounds
+const bounds = state.getTransformationBounds();
+// Returns: { minX, minY, maxX, maxY }
+
+// User enters new width value
+state.applyResizeTransform(newWidth, currentHeight);
+// Applies to all selected elements from their original state
+
+// User enters rotation value
+state.applyRotationTransform(45);
+// Rotates all selected elements around center
+```
+
+**Calculation Modes:**
+
+- **Single Path**: Direct measurement from path commands
+- **Single Group**: Recursive calculation including all descendants
+- **Multi-Selection**: Combined bounds of all selected elements (paths and groups)
+
+All transformations applied via the panel use the same origin-based scaling as the handlers, ensuring consistent behavior.
+
+---
+
 ## Visual Feedback
 
 ### Dimension Display
@@ -412,32 +621,70 @@ No direct keyboard shortcuts for activation.
 
 ## UI Contributions
 
+### Toolbar
+
+**Transformation Button**: Tool activation button in top action bar
+- **Enabled when**:
+  - One or more paths selected
+  - One or more groups selected
+  - Any combination of 2+ elements selected
+- **Disabled when**: No elements selected
+- **Behavior**: Activates transformation mode, showing handlers and enabling panel controls
+
 ### Panels
 
-**TransformationPanel**: Display and input controls for:
-- Width and height values (direct input)
-- Rotation angle (direct input)
-- X and Y position coordinates
-- Lock aspect ratio toggle
-- Reset transform button
-- Visual rulers toggle
-- Corner coordinate labels toggle
+**TransformationPanel**: Active when transformation mode is enabled, provides:
+- **Dimension inputs**: Width and height with real-time updates
+- **Rotation input**: Angle control (0-360 degrees)
+- **Aspect ratio lock**: Toggle to maintain proportions
+- **Visual aids toggles**: Show/hide rulers and coordinate labels
+- **Works with**: Single paths, single groups, and multi-selection
+
+**Features**:
+- Direct numeric input for precise transformations
+- Live updates as handlers are dragged
+- Maintains aspect ratio when lock is enabled
+- Applies transformations from original element state
 
 ### Overlays
 
-**TransformationOverlay**: Complete visual transformation system including:
-- **Bounding box**: Rectangle encompassing all selected elements
+**TransformationOverlay** (for single paths and subpaths):
+- **Bounding box**: Rectangle encompassing the selected path
 - **8 resize handles**: Corner handles (4) and edge handles (4)
 - **Rotation handle**: Circular handle above bounding box
 - **Center marker**: Visual indicator of rotation center
-- **Measurement rulers**: Optional horizontal and vertical rulers with dimensions
-- **Corner coordinate labels**: Optional position labels at corners
-- **Real-time feedback**: Dimension tooltips during operations
+- **Measurement rulers**: Optional rulers with dimensions
+- **Corner coordinate labels**: Optional position labels
+
+**GroupTransformationOverlay** (for single groups):
+- Cyan-colored handlers (8 resize + 1 rotation)
+- Calculated bounds including all descendants
+- Same controls as path transformation
+- 8px padding to match group selection feedback
+
+**SelectionBboxTransformationOverlay** (for multi-selection):
+- Amber-colored handlers (8 resize + 1 rotation)
+- Combined bounds of all selected elements
+- Same controls as other transformations
+- 10px padding for visual distinction
+
+**Common Features**:
+- All overlays only visible in transformation mode
+- Real-time feedback during operations
+- Optional measurement rulers and coordinate labels
+- Center marker for rotation pivot point
 
 ### Canvas Layers
 
-- Transform handles and bounding box (foreground layer)
-- Measurement overlays (when enabled)
+**Selection Feedback** (midground, select mode):
+- Cyan bounding boxes for selected groups (without handlers)
+- Amber bounding boxes for multi-selection (without handlers)
+- Blue bounding boxes for individual paths (without handlers)
+
+**Transformation Handlers** (foreground, transformation mode):
+- Interactive handlers replacing feedback bounding boxes
+- Measurement overlays when enabled
+- Visual indicators for active transformations
 
 ## Public APIs
 
@@ -541,7 +788,9 @@ if (isSubpathMode) {
 - `slice.ts`: Zustand slice for transformation state
 - `TransformationPanel.tsx`: UI panel with input controls
 - `TransformationOverlay.tsx`: Main overlay component coordinating all visual elements
-- `TransformationHandlers.tsx`: Handle interaction logic
+- `GroupTransformationOverlay.tsx`: Overlay component for single group transformations (cyan handlers)
+- `SelectionBboxTransformationOverlay.tsx`: Overlay component for multi-selection transformations (amber handlers)
+- `TransformationHandlers.tsx`: Handle interaction logic (unified component for all handler types)
 - `MeasurementRulers.tsx`: Optional measurement ruler overlay
 - `CornerCoordinateLabels.tsx`: Optional corner position labels
 - `CenterMarker.tsx`: Rotation center visual indicator
@@ -551,12 +800,20 @@ if (isSubpathMode) {
 - Real-time feedback computed during drag operations
 - Transform operations applied to path commands (non-destructive)
 - Stroke width scales proportionally with element
+- **ID prefix system**: Uses prefixes to route different transformation types:
+  - `"subpath:"` for individual subpath transformations
+  - `"group:"` for single group transformations
+  - `"selection-bbox"` for multi-selection transformations
+- **Original element tracking**: Stores deep clones of elements before transformation starts
+- **Shared transform utilities**: Uses `transformCommands()` for applying both scale and rotation
 
 **Transform Controller:**
 - Calculates bounding box for selected elements
 - Handles 8 resize handles + 1 rotation handle
 - Computes transform matrices and applies to path data
 - Respects scale limits (0.05× to 10×)
+- **Pseudo-element support**: Creates temporary rectangular path elements for groups and multi-selection
+- **Transform hooks**: `useCanvasTransformControls` manages transformation state and application
 
 ## Edge Cases & Limitations
 

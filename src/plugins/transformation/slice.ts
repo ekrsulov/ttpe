@@ -2,6 +2,63 @@ import type { StateCreator } from 'zustand';
 import type { CanvasStore } from '../../store/canvasStore';
 import { accumulateBounds } from '../../utils/measurementUtils';
 import { transformCommands, calculateScaledStrokeWidth } from '../../utils/sharedTransformUtils';
+import { getGroupBounds } from '../../canvas/geometry/CanvasGeometryService';
+import type { GroupElement, PathData, CanvasElement } from '../../types';
+
+/**
+ * Helper function to transform all descendants of a group recursively
+ */
+function transformGroupDescendants(
+  group: GroupElement,
+  elementMap: Map<string, CanvasElement>,
+  updateElement: (id: string, updates: Partial<CanvasElement>) => void,
+  transform: {
+    scaleX: number;
+    scaleY: number;
+    originX: number;
+    originY: number;
+    rotation: number;
+    rotationCenterX: number;
+    rotationCenterY: number;
+  },
+  visited: Set<string> = new Set()
+): void {
+  if (visited.has(group.id)) return;
+  visited.add(group.id);
+
+  group.data.childIds.forEach((childId) => {
+    const child = elementMap.get(childId);
+    if (!child) return;
+
+    if (child.type === 'group') {
+      // Recursively transform nested groups
+      transformGroupDescendants(child as GroupElement, elementMap, updateElement, transform, visited);
+    } else if (child.type === 'path') {
+      // Transform path element
+      const pathData = child.data as PathData;
+      
+      const newSubPaths = pathData.subPaths.map((subPath) =>
+        transformCommands(subPath, transform)
+      );
+
+      const newStrokeWidth = calculateScaledStrokeWidth(
+        pathData.strokeWidth,
+        transform.scaleX,
+        transform.scaleY
+      );
+
+      updateElement(child.id, {
+        data: {
+          ...pathData,
+          subPaths: newSubPaths,
+          strokeWidth: newStrokeWidth
+        }
+      });
+    }
+  });
+
+  visited.delete(group.id);
+}
 
 export interface TransformationPluginSlice {
   // State
@@ -75,24 +132,43 @@ export const createTransformationPluginSlice: StateCreator<
 
         return accumulateBounds(subpathCommandsToMeasure, strokeWidth, state.viewport.zoom);
       } else {
-        // Calculate bounds for selected elements
-        const elementCommandsToMeasure: import('../../types').Command[][] = [];
-        let commonStrokeWidth = 1;
+        // Calculate bounds for selected elements (paths and groups)
+        let minX = Infinity;
+        let minY = Infinity;
+        let maxX = -Infinity;
+        let maxY = -Infinity;
+        let hasBounds = false;
+
+        // Create element map for group bounds calculation
+        const elementMap = new Map(state.elements.map(el => [el.id, el]));
 
         state.selectedIds.forEach((id) => {
           const element = state.elements.find((el) => el.id === id);
-          if (element && element.type === 'path') {
+          if (!element) return;
+
+          let bounds: { minX: number; minY: number; maxX: number; maxY: number } | null = null;
+
+          if (element.type === 'path') {
+            // For paths, accumulate bounds from subpaths
             const pathData = element.data as import('../../types').PathData;
-            pathData.subPaths.forEach((commands) => {
-              elementCommandsToMeasure.push(commands);
-            });
-            commonStrokeWidth = pathData.strokeWidth;
+            bounds = accumulateBounds(pathData.subPaths, pathData.strokeWidth, state.viewport.zoom);
+          } else if (element.type === 'group') {
+            // For groups, use getGroupBounds
+            bounds = getGroupBounds(element as GroupElement, elementMap, state.viewport);
+          }
+
+          if (bounds) {
+            minX = Math.min(minX, bounds.minX);
+            minY = Math.min(minY, bounds.minY);
+            maxX = Math.max(maxX, bounds.maxX);
+            maxY = Math.max(maxY, bounds.maxY);
+            hasBounds = true;
           }
         });
 
-        if (elementCommandsToMeasure.length === 0) return null;
+        if (!hasBounds) return null;
 
-        return accumulateBounds(elementCommandsToMeasure, commonStrokeWidth, state.viewport.zoom);
+        return { minX, minY, maxX, maxY };
       }
     },
 
@@ -115,6 +191,16 @@ export const createTransformationPluginSlice: StateCreator<
       const originX = (bounds.minX + bounds.maxX) / 2;
       const originY = (bounds.minY + bounds.maxY) / 2;
 
+      const transform = {
+        scaleX,
+        scaleY,
+        originX,
+        originY,
+        rotation: 0,
+        rotationCenterX: originX,
+        rotationCenterY: originY
+      };
+
       if (isSubpathMode && (state.selectedSubpaths?.length ?? 0) > 0) {
         // Apply transformation to selected subpaths
         (state.selectedSubpaths ?? []).forEach(({ elementId, subpathIndex }) => {
@@ -123,15 +209,7 @@ export const createTransformationPluginSlice: StateCreator<
             const pathData = element.data as import('../../types').PathData;
             const newSubPaths = [...pathData.subPaths];
             
-            newSubPaths[subpathIndex] = transformCommands(newSubPaths[subpathIndex], {
-              scaleX,
-              scaleY,
-              originX,
-              originY,
-              rotation: 0,
-              rotationCenterX: originX,
-              rotationCenterY: originY
-            });
+            newSubPaths[subpathIndex] = transformCommands(newSubPaths[subpathIndex], transform);
 
             state.updateElement(elementId, {
               data: {
@@ -142,22 +220,22 @@ export const createTransformationPluginSlice: StateCreator<
           }
         });
       } else {
-        // Apply transformation to selected elements
+        // Apply transformation to selected elements (paths and groups)
+        const elementMap = new Map(state.elements.map(el => [el.id, el]));
+
         state.selectedIds.forEach((id) => {
           const element = state.elements.find((el) => el.id === id);
-          if (element && element.type === 'path') {
+          if (!element) return;
+
+          if (element.type === 'group') {
+            // Transform all descendants of the group
+            transformGroupDescendants(element as GroupElement, elementMap, state.updateElement, transform);
+          } else if (element.type === 'path') {
+            // Transform path element
             const pathData = element.data as import('../../types').PathData;
             
             const newSubPaths = pathData.subPaths.map((subPath) =>
-              transformCommands(subPath, {
-                scaleX,
-                scaleY,
-                originX,
-                originY,
-                rotation: 0,
-                rotationCenterX: originX,
-                rotationCenterY: originY
-              })
+              transformCommands(subPath, transform)
             );
 
             const newStrokeWidth = calculateScaledStrokeWidth(pathData.strokeWidth, scaleX, scaleY);
@@ -185,6 +263,16 @@ export const createTransformationPluginSlice: StateCreator<
       const centerX = (bounds.minX + bounds.maxX) / 2;
       const centerY = (bounds.minY + bounds.maxY) / 2;
 
+      const transform = {
+        scaleX: 1,
+        scaleY: 1,
+        originX: centerX,
+        originY: centerY,
+        rotation: degrees,
+        rotationCenterX: centerX,
+        rotationCenterY: centerY
+      };
+
       if (isSubpathMode && (state.selectedSubpaths?.length ?? 0) > 0) {
         // Apply rotation to selected subpaths
         (state.selectedSubpaths ?? []).forEach(({ elementId, subpathIndex }) => {
@@ -193,15 +281,7 @@ export const createTransformationPluginSlice: StateCreator<
             const pathData = element.data as import('../../types').PathData;
             const newSubPaths = [...pathData.subPaths];
             
-            newSubPaths[subpathIndex] = transformCommands(newSubPaths[subpathIndex], {
-              scaleX: 1,
-              scaleY: 1,
-              originX: centerX,
-              originY: centerY,
-              rotation: degrees,
-              rotationCenterX: centerX,
-              rotationCenterY: centerY
-            });
+            newSubPaths[subpathIndex] = transformCommands(newSubPaths[subpathIndex], transform);
 
             state.updateElement(elementId, {
               data: {
@@ -212,22 +292,27 @@ export const createTransformationPluginSlice: StateCreator<
           }
         });
       } else {
-        // Apply rotation to selected elements
+        // Apply rotation to selected elements (paths and groups)
+        const elementMap = new Map(state.elements.map(el => [el.id, el]));
+
         state.selectedIds.forEach((id) => {
           const element = state.elements.find((el) => el.id === id);
-          if (element && element.type === 'path') {
+          if (!element) return;
+
+          if (element.type === 'group') {
+            // Transform all descendants of the group (rotation only, no scaling)
+            const rotationTransform = {
+              ...transform,
+              scaleX: 1,
+              scaleY: 1
+            };
+            transformGroupDescendants(element as GroupElement, elementMap, state.updateElement, rotationTransform);
+          } else if (element.type === 'path') {
+            // Transform path element
             const pathData = element.data as import('../../types').PathData;
             
             const newSubPaths = pathData.subPaths.map((subPath) =>
-              transformCommands(subPath, {
-                scaleX: 1,
-                scaleY: 1,
-                originX: centerX,
-                originY: centerY,
-                rotation: degrees,
-                rotationCenterX: centerX,
-                rotationCenterY: centerY
-              })
+              transformCommands(subPath, transform)
             );
 
             state.updateElement(id, {

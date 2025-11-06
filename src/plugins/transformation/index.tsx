@@ -45,50 +45,78 @@ export const transformationPlugin: PluginDefinition<CanvasStore> = {
         handleTransformationHandlerPointerUp,
         getElementBounds,
       }) => {
-        const selections = (selectedSubpaths ?? []).length > 0 ? selectedSubpaths ?? [] : selectedIds;
-        if (!selections || selections.length === 0) {
-          return null;
-        }
+        // This layer handles:
+        // 1. Subpath transformations (when in subpath/transformation mode)
+        // 2. Single path transformations (when in select/transformation mode)
+        // Note: Group and multi-selection handlers are rendered by the select plugin
 
-        return (
-          <>
-            {selections.map((selection) => {
-              const elementId = typeof selection === 'string' ? selection : selection.elementId;
-              const element = elementMap.get(elementId);
+        // Case 1: Working with subpaths
+        if (isWorkingWithSubpaths?.() && (selectedSubpaths ?? []).length > 0) {
+          return (
+            <>
+              {selectedSubpaths!.map((selection) => {
+                const element = elementMap.get(selection.elementId);
 
-              if (!element || element.type !== 'path' || (isElementHidden && isElementHidden(elementId))) {
-                return null;
-              }
+                if (!element || element.type !== 'path' || (isElementHidden && isElementHidden(selection.elementId))) {
+                  return null;
+                }
 
-              const pathData = element.data as PathData;
-              let bounds = getElementBounds(element);
-
-              if (typeof selection !== 'string') {
-                const subpathIndex = selection.subpathIndex;
-                bounds = measureSubpathBounds(
-                  pathData.subPaths[subpathIndex],
+                const pathData = element.data as PathData;
+                const bounds = measureSubpathBounds(
+                  pathData.subPaths[selection.subpathIndex],
                   pathData.strokeWidth ?? 1,
                   viewport.zoom
                 );
-              }
 
+                return (
+                  <TransformationOverlay
+                    key={`subpath-${selection.elementId}-${selection.subpathIndex}`}
+                    element={element}
+                    bounds={bounds}
+                    selectedSubpaths={selectedSubpaths ?? []}
+                    viewport={viewport}
+                    activePlugin={activePlugin}
+                    transformation={transformation}
+                    isWorkingWithSubpaths={true}
+                    onTransformationHandlerPointerDown={handleTransformationHandlerPointerDown}
+                    onTransformationHandlerPointerUp={handleTransformationHandlerPointerUp}
+                  />
+                );
+              })}
+            </>
+          );
+        }
+
+        // Case 2: Single path selected (not a group, not multi-selection)
+        // Only show if in select or transformation mode
+        if (selectedIds.length === 1 && (activePlugin === 'select' || activePlugin === 'transformation')) {
+          const element = elementMap.get(selectedIds[0]);
+          if (!element || (isElementHidden && isElementHidden(selectedIds[0]))) {
+            return null;
+          }
+
+          // Only handle paths here (groups are handled by select plugin)
+          if (element.type === 'path') {
+            const bounds = getElementBounds(element);
+            if (bounds) {
               return (
                 <TransformationOverlay
-                  key={typeof selection === 'string' ? elementId : `subpath-${elementId}-${selection.subpathIndex}`}
                   element={element}
                   bounds={bounds}
-                  selectedSubpaths={selectedSubpaths ?? []}
+                  selectedSubpaths={[]}
                   viewport={viewport}
                   activePlugin={activePlugin}
                   transformation={transformation}
-                  isWorkingWithSubpaths={isWorkingWithSubpaths?.() ?? false}
+                  isWorkingWithSubpaths={false}
                   onTransformationHandlerPointerDown={handleTransformationHandlerPointerDown}
                   onTransformationHandlerPointerUp={handleTransformationHandlerPointerUp}
                 />
               );
-            })}
-          </>
-        );
+            }
+          }
+        }
+
+        return null;
       },
     },
     {

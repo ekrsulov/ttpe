@@ -34,6 +34,11 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
     return elementId;
   };
 
+  const handlePointerDown = (e: React.PointerEvent, handlerType: string) => {
+    const targetId = generateTargetId();
+    onPointerDown(e, targetId, handlerType);
+  };
+
   const triangleOpacity = "0.5";
   const lineOpacity = "1";
   const triangleSize = handlerSize;
@@ -84,8 +89,8 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
         height={cornerOverlaySize}
         fill="transparent"
         opacity="0.1"
-        style={{ cursor: 'nw-resize' }}
-        onPointerDown={(e) => onPointerDown(e, generateTargetId(), 'corner-tl')}
+        style={{ cursor: 'nw-resize', pointerEvents: 'all' }}
+        onPointerDown={(e) => handlePointerDown(e, 'corner-tl')}
         onPointerUp={onPointerUp}
       />
 
@@ -125,8 +130,8 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
         height={cornerOverlaySize}
         fill="transparent"
         opacity="0.1"
-        style={{ cursor: 'ne-resize' }}
-        onPointerDown={(e) => onPointerDown(e, generateTargetId(), 'corner-tr')}
+        style={{ cursor: 'ne-resize', pointerEvents: 'all' }}
+        onPointerDown={(e) => handlePointerDown(e, 'corner-tr')}
         onPointerUp={onPointerUp}
       />
 
@@ -166,8 +171,8 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
         height={cornerOverlaySize}
         fill="transparent"
         opacity="0.1"
-        style={{ cursor: 'sw-resize' }}
-        onPointerDown={(e) => onPointerDown(e, generateTargetId(), 'corner-bl')}
+        style={{ cursor: 'sw-resize', pointerEvents: 'all' }}
+        onPointerDown={(e) => handlePointerDown(e, 'corner-bl')}
         onPointerUp={onPointerUp}
       />
 
@@ -207,8 +212,8 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
         height={cornerOverlaySize}
         fill="transparent"
         opacity="0.1"
-        style={{ cursor: 'se-resize' }}
-        onPointerDown={(e) => onPointerDown(e, generateTargetId(), 'corner-br')}
+        style={{ cursor: 'se-resize', pointerEvents: 'all' }}
+        onPointerDown={(e) => handlePointerDown(e, 'corner-br')}
         onPointerUp={onPointerUp}
       />
 
@@ -232,8 +237,8 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
         r={rotationOverlaySize / 2}
         fill="transparent"
         opacity="0.1"
-        style={{ cursor: 'alias' }}
-        onPointerDown={(e) => onPointerDown(e, generateTargetId(), 'rotate-tr')}
+        style={{ cursor: 'alias', pointerEvents: 'all' }}
+        onPointerDown={(e) => handlePointerDown(e, 'rotate-tr')}
         onPointerUp={onPointerUp}
       />
 
@@ -257,8 +262,8 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
         height={overlaySize / viewport.zoom}
         fill="transparent"
         opacity="0.1"
-        style={{ cursor: 'n-resize' }}
-        onPointerDown={(e) => onPointerDown(e, generateTargetId(), 'midpoint-t')}
+        style={{ cursor: 'n-resize', pointerEvents: 'all' }}
+        onPointerDown={(e) => handlePointerDown(e, 'midpoint-t')}
         onPointerUp={onPointerUp}
       />
 
@@ -281,8 +286,8 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
         height={Math.max(0, bounds.maxY - bounds.minY - 2 * handlerSize - 2 * lineSeparation)}
         fill="transparent"
         opacity="0.1"
-        style={{ cursor: 'e-resize' }}
-        onPointerDown={(e) => onPointerDown(e, generateTargetId(), 'midpoint-r')}
+        style={{ cursor: 'e-resize', pointerEvents: 'all' }}
+        onPointerDown={(e) => handlePointerDown(e, 'midpoint-r')}
         onPointerUp={onPointerUp}
       />
 
@@ -305,8 +310,8 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
         height={overlaySize / viewport.zoom}
         fill="transparent"
         opacity="0.1"
-        style={{ cursor: 's-resize' }}
-        onPointerDown={(e) => onPointerDown(e, generateTargetId(), 'midpoint-b')}
+        style={{ cursor: 's-resize', pointerEvents: 'all' }}
+        onPointerDown={(e) => handlePointerDown(e, 'midpoint-b')}
         onPointerUp={onPointerUp}
       />
 
@@ -329,8 +334,8 @@ export const TransformationHandlers: React.FC<TransformationHandlersProps> = ({
         height={Math.max(0, bounds.maxY - bounds.minY - 2 * handlerSize - 2 * lineSeparation)}
         fill="transparent"
         opacity="0.1"
-        style={{ cursor: 'w-resize' }}
-        onPointerDown={(e) => onPointerDown(e, generateTargetId(), 'midpoint-l')}
+        style={{ cursor: 'w-resize', pointerEvents: 'all' }}
+        onPointerDown={(e) => handlePointerDown(e, 'midpoint-l')}
         onPointerUp={onPointerUp}
       />
     </>

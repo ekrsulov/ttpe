@@ -11,6 +11,8 @@ export interface TransformState {
   transformedBounds: { minX: number; minY: number; maxX: number; maxY: number } | null;
   initialTransform: { scaleX: number; scaleY: number; rotation: number; translateX: number; translateY: number } | null;
   originalElementData: PathData | null;
+  // For multi-selection and group transformations: store original state of all affected elements
+  originalElementsData?: Map<string, CanvasElement>;
 }
 
 export interface TransformFeedback {
@@ -79,6 +81,14 @@ export class TransformController {
       const realElementId = parts[1];
       subpathIndex = parseInt(parts[2]);
       element = elements.find(el => el.id === realElementId);
+    } else if (state.transformElementId === 'selection-bbox' || state.transformElementId.startsWith('group:')) {
+      // For selection bbox and groups, create a pseudo element for transformation calculation
+      element = {
+        id: state.transformElementId,
+        type: 'path',
+        data: state.originalElementData,
+        zIndex: 0
+      };
     } else {
       element = elements.find(el => el.id === state.transformElementId);
     }

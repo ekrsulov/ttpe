@@ -50,9 +50,9 @@ export const SidebarUtilityButton: React.FC<SidebarUtilityButtonProps> = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        '-webkit-appearance': 'none',
+        WebkitAppearance: 'none',
         appearance: 'none',
-        '-webkit-tap-highlight-color': 'transparent',
+        WebkitTapHighlightColor: 'transparent',
       }}
     >
       {label}

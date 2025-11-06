@@ -51,8 +51,8 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
   const rulerColor = useColorModeValue('#666', '#d1d5db');
   const rulerTextColor = useColorModeValue('#666', '#d1d5db');
 
-  // Show handlers for complete elements when in transformation mode
-  // Show handlers for subpaths only when in transformation mode AND exactly one subpath is selected
+  // Show handlers only in transformation mode (user activates this mode explicitly)
+  // For subpaths: only show in transformation mode AND exactly one subpath is selected
   const shouldShowHandlers = !isWorkingWithSubpaths
     ? activePlugin === 'transformation'
     : activePlugin === 'transformation' && selectedSubpaths.length === 1;

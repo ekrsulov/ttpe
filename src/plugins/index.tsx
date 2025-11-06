@@ -10,6 +10,8 @@ import { pencilPlugin } from './pencil';
 import { textPlugin } from './text';
 import { shapePlugin } from './shape';
 import { transformationPlugin } from './transformation';
+import { GroupTransformationOverlay } from './transformation/GroupTransformationOverlay';
+import { SelectionBboxTransformationOverlay } from './transformation/SelectionBboxTransformationOverlay';
 import { editPlugin } from './edit';
 import { subpathPlugin } from './subpath';
 import { curvesPlugin } from './curves';
@@ -209,6 +211,44 @@ const SelectionBboxComponent: React.FC<{
 };
 
 
+// Helper function to check if all selected elements belong to the same group
+const getAllElementsShareSameParentGroup = (
+  selectedIds: string[],
+  elementMap: ElementMap
+): string | null => {
+  if (selectedIds.length === 0) return null;
+  
+  let sharedParentId: string | null = null;
+  
+  for (const selectedId of selectedIds) {
+    // Find parent group of this element
+    let parentId: string | null = null;
+    
+    for (const [elementId, element] of elementMap) {
+      if (element.type === 'group') {
+        const childIds = (element.data as { childIds: string[] }).childIds;
+        if (childIds.includes(selectedId)) {
+          parentId = elementId;
+          break;
+        }
+      }
+    }
+    
+    // First iteration - set the shared parent
+    if (sharedParentId === null) {
+      sharedParentId = parentId;
+    } else {
+      // If this element has a different parent (or no parent), they don't share the same group
+      if (sharedParentId !== parentId) {
+        return null;
+      }
+    }
+  }
+  
+  return sharedParentId;
+};
+
+
 const selectPlugin: PluginDefinition<CanvasStore> = {
   id: 'select',
   metadata: getToolMetadata('select'),
@@ -289,24 +329,169 @@ const selectPlugin: PluginDefinition<CanvasStore> = {
     {
       id: 'group-selection-bounds',
       placement: 'midground',
-      render: ({ selectedGroupBounds, viewport }) => (
-        <GroupSelectionBoundsComponent
-          selectedGroupBounds={selectedGroupBounds}
-          viewport={viewport}
-        />
-      ),
+      render: ({ selectedGroupBounds, viewport, activePlugin, selectedIds, elementMap }) => {
+        if (activePlugin === 'transformation') {
+          // In transformation mode, show feedback only for parent groups (not the directly selected group)
+          // This provides visual context similar to edit mode
+          
+          // If a single path is selected, show all parent group bounds as feedback
+          if (selectedIds.length === 1) {
+            const element = elementMap.get(selectedIds[0]);
+            if (element && element.type === 'path') {
+              // Show parent groups feedback (they won't have handlers)
+              return (
+                <GroupSelectionBoundsComponent
+                  selectedGroupBounds={selectedGroupBounds}
+                  viewport={viewport}
+                />
+              );
+            }
+          }
+          
+          // For group selections or multi-selection, don't show feedback (handlers are shown instead)
+          return null;
+        }
+        
+        // In select mode, always show group bounds feedback
+        return (
+          <GroupSelectionBoundsComponent
+            selectedGroupBounds={selectedGroupBounds}
+            viewport={viewport}
+          />
+        );
+      },
     },
     {
       id: 'selection-bbox',
       placement: 'midground',
-      render: ({ selectedIds, getElementBounds, elementMap, viewport }) => (
-        <SelectionBboxComponent
-          selectedIds={selectedIds}
-          getElementBounds={getElementBounds}
-          elementMap={elementMap}
-          viewport={viewport}
-        />
-      ),
+      render: ({ selectedIds, getElementBounds, elementMap, viewport, activePlugin }) => {
+        // Don't show feedback visual in transformation mode (handlers are shown instead)
+        if (activePlugin === 'transformation') {
+          return null;
+        }
+        
+        return (
+          <SelectionBboxComponent
+            selectedIds={selectedIds}
+            getElementBounds={getElementBounds}
+            elementMap={elementMap}
+            viewport={viewport}
+          />
+        );
+      },
+    },
+    {
+      id: 'selection-transformation-handlers',
+      placement: 'foreground',
+      render: ({
+        selectedIds,
+        elementMap,
+        viewport,
+        activePlugin,
+        transformation,
+        isElementHidden,
+        handleTransformationHandlerPointerDown,
+        handleTransformationHandlerPointerUp,
+        getElementBounds,
+      }) => {
+        if (!selectedIds.length || activePlugin !== 'transformation') {
+          return null;
+        }
+
+        // Priority: Single group (including multiple elements from same group) > Multi-selection bbox > Single element (path/group handled individually)
+        
+        // Check if all selected elements belong to the same parent group (only if multiple elements selected)
+        const sharedParentGroupId = selectedIds.length > 1 
+          ? getAllElementsShareSameParentGroup(selectedIds, elementMap)
+          : null;
+        
+        // Case 1: Multiple elements all belonging to the same parent group - show group handlers
+        if (sharedParentGroupId) {
+          const groupElement = elementMap.get(sharedParentGroupId);
+          if (groupElement && groupElement.type === 'group' && (!isElementHidden || !isElementHidden(sharedParentGroupId))) {
+            const bounds = getGroupBounds(groupElement as GroupElement, elementMap, viewport);
+            if (bounds && isFinite(bounds.minX)) {
+              return (
+                <GroupTransformationOverlay
+                  group={groupElement as GroupElement}
+                  bounds={bounds}
+                  viewport={viewport}
+                  activePlugin={activePlugin}
+                  transformation={transformation}
+                  onTransformationHandlerPointerDown={handleTransformationHandlerPointerDown}
+                  onTransformationHandlerPointerUp={handleTransformationHandlerPointerUp}
+                />
+              );
+            }
+          }
+        }
+        
+        // Case 2: Multiple selection (not all from same group) - show selection bbox handlers
+        if (selectedIds.length > 1) {
+          let minX = Infinity;
+          let minY = Infinity;
+          let maxX = -Infinity;
+          let maxY = -Infinity;
+          let hasBounds = false;
+
+          selectedIds.forEach((id) => {
+            const element = elementMap.get(id);
+            if (!element || (isElementHidden && isElementHidden(id))) return;
+
+            let bounds = null;
+            if (element.type === 'group') {
+              bounds = getGroupBounds(element as GroupElement, elementMap, viewport);
+            } else if (element.type === 'path') {
+              bounds = getElementBounds(element);
+            }
+
+            if (bounds && isFinite(bounds.minX)) {
+              minX = Math.min(minX, bounds.minX);
+              minY = Math.min(minY, bounds.minY);
+              maxX = Math.max(maxX, bounds.maxX);
+              maxY = Math.max(maxY, bounds.maxY);
+              hasBounds = true;
+            }
+          });
+
+          if (hasBounds && isFinite(minX)) {
+            return (
+              <SelectionBboxTransformationOverlay
+                bounds={{ minX, minY, maxX, maxY }}
+                viewport={viewport}
+                activePlugin={activePlugin}
+                transformation={transformation}
+                onTransformationHandlerPointerDown={handleTransformationHandlerPointerDown}
+                onTransformationHandlerPointerUp={handleTransformationHandlerPointerUp}
+              />
+            );
+          }
+        }
+
+        // Case 3: Single group selected - show group handlers
+        if (selectedIds.length === 1) {
+          const element = elementMap.get(selectedIds[0]);
+          if (element && element.type === 'group' && (!isElementHidden || !isElementHidden(selectedIds[0]))) {
+            const bounds = getGroupBounds(element as GroupElement, elementMap, viewport);
+            if (bounds && isFinite(bounds.minX)) {
+              return (
+                <GroupTransformationOverlay
+                  group={element as GroupElement}
+                  bounds={bounds}
+                  viewport={viewport}
+                  activePlugin={activePlugin}
+                  transformation={transformation}
+                  onTransformationHandlerPointerDown={handleTransformationHandlerPointerDown}
+                  onTransformationHandlerPointerUp={handleTransformationHandlerPointerUp}
+                />
+              );
+            }
+          }
+        }
+
+        // Case 4: Single path - handlers will be shown by transformation plugin when needed
+        return null;
+      },
     },
     {
       id: 'selection-rectangle',
