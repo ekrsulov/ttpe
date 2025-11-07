@@ -274,6 +274,70 @@ export const useCanvasTransformControls = () => {
     }
   }, [transformController]);
 
+  // Helper function to scale group descendants
+  const scaleGroupDescendants = useCallback((
+    groupId: string,
+    scaleX: number,
+    scaleY: number,
+    originX: number,
+    originY: number,
+    _rotation: number
+  ) => {
+    const { elements, updateElement } = useCanvasStore.getState();
+    const elementMap = new Map(elements.map(el => [el.id, el]));
+    const group = elementMap.get(groupId);
+
+    if (!group || group.type !== 'group') return;
+
+    // Get original elements data from transform state
+    const originalElementsData = transformStateRef.current.originalElementsData;
+
+    // Collect all descendant IDs
+    const descendants = new Set<string>();
+    const queue = [...(group.data as { childIds: string[] }).childIds];
+
+    while (queue.length > 0) {
+      const childId = queue.shift();
+      if (!childId) continue;
+
+      descendants.add(childId);
+      const child = elementMap.get(childId);
+      if (child && child.type === 'group') {
+        queue.push(...(child.data as { childIds: string[] }).childIds);
+      }
+    }
+
+    // Scale all descendants
+    descendants.forEach((descendantId) => {
+      const element = elementMap.get(descendantId);
+      if (element && element.type === 'path') {
+        // Use original path data if available, otherwise use current
+        const originalElement = originalElementsData?.get(descendantId);
+        const originalPathData = (originalElement?.data as PathData) || (element.data as PathData);
+        
+        // Apply both scale and rotation
+        const transformedSubPaths = originalPathData.subPaths.map((subPath) =>
+          transformCommands(subPath, {
+            scaleX,
+            scaleY,
+            originX,
+            originY,
+            rotation: _rotation,
+            rotationCenterX: originX,
+            rotationCenterY: originY
+          })
+        );
+        
+        const transformedData: PathData = {
+          ...originalPathData,
+          subPaths: transformedSubPaths
+        };
+        
+        updateElement(descendantId, { ...element, data: transformedData });
+      }
+    });
+  }, []);
+
   const updateTransformation = useCallback((point: Point, isShiftPressed: boolean) => {
     const currentState = transformStateRef.current;
     if (!currentState.isTransforming || !currentState.transformElementId) {
@@ -397,71 +461,7 @@ export const useCanvasTransformControls = () => {
     }
 
     setFeedback(result.feedback);
-  }, [transformController, calculateTransformOrigin]);
-
-  // Helper function to scale group descendants
-  const scaleGroupDescendants = useCallback((
-    groupId: string,
-    scaleX: number,
-    scaleY: number,
-    originX: number,
-    originY: number,
-    _rotation: number
-  ) => {
-    const { elements, updateElement } = useCanvasStore.getState();
-    const elementMap = new Map(elements.map(el => [el.id, el]));
-    const group = elementMap.get(groupId);
-
-    if (!group || group.type !== 'group') return;
-
-    // Get original elements data from transform state
-    const originalElementsData = transformStateRef.current.originalElementsData;
-
-    // Collect all descendant IDs
-    const descendants = new Set<string>();
-    const queue = [...(group.data as { childIds: string[] }).childIds];
-
-    while (queue.length > 0) {
-      const childId = queue.shift();
-      if (!childId) continue;
-
-      descendants.add(childId);
-      const child = elementMap.get(childId);
-      if (child && child.type === 'group') {
-        queue.push(...(child.data as { childIds: string[] }).childIds);
-      }
-    }
-
-    // Scale all descendants
-    descendants.forEach((descendantId) => {
-      const element = elementMap.get(descendantId);
-      if (element && element.type === 'path') {
-        // Use original path data if available, otherwise use current
-        const originalElement = originalElementsData?.get(descendantId);
-        const originalPathData = (originalElement?.data as PathData) || (element.data as PathData);
-        
-        // Apply both scale and rotation
-        const transformedSubPaths = originalPathData.subPaths.map((subPath) =>
-          transformCommands(subPath, {
-            scaleX,
-            scaleY,
-            originX,
-            originY,
-            rotation: _rotation,
-            rotationCenterX: originX,
-            rotationCenterY: originY
-          })
-        );
-        
-        const transformedData: PathData = {
-          ...originalPathData,
-          subPaths: transformedSubPaths
-        };
-        
-        updateElement(descendantId, { ...element, data: transformedData });
-      }
-    });
-  }, []);
+  }, [transformController, calculateTransformOrigin, scaleGroupDescendants]);
 
   const endTransformation = useCallback(() => {
     const resetState = transformController.resetTransform();

@@ -322,8 +322,9 @@ The transformation plugin supports specialized handlers for groups and multi-sel
   - Amber bounding box for multi-selection
   - Blue bounding box for individual paths
 - **Transformation Mode**: Shows interactive transformation handlers
-  - Replaces feedback-only bounding boxes with full handler controls
+  - Replaces feedback-only bounding boxes with full handler controls for the selected element(s)
   - Handlers include 8 resize handles (corners + edges) and 1 rotation handle
+  - **Context feedback**: When transforming a single path that belongs to groups, parent group boundaries are shown as cyan feedback boxes (without handlers) to provide visual context of the group hierarchy
 
 ### Multi-Selection Transformation
 
@@ -382,9 +383,29 @@ This ensures that the most appropriate transformation interface is always displa
   - Users see amber boxes around multi-selection
   - Users see blue boxes around individual paths
 - **Transformation Mode**: Shows interactive handlers with full transformation controls
-  - All feedback bounding boxes are replaced by handler overlays
+  - All feedback bounding boxes are replaced by handler overlays for the primary selection
   - Users can resize, rotate, and manipulate selections
   - Panel controls become active for direct value input
+  - **Context preservation**: When transforming individual paths within groups, parent group boundaries remain visible as cyan feedback boxes to maintain visual context of the group hierarchy
+
+### Group Hierarchy Context
+
+When transforming individual paths that belong to groups, the system provides visual context by displaying parent group boundaries as feedback-only cyan boxes (without interactive handlers). This behavior mirrors the visual feedback shown in select mode and helps users understand the group structure during transformations.
+
+**Context Feedback Rules:**
+- **Single path in group**: Shows cyan feedback boxes for all ancestor groups (parent, grandparent, etc.)
+- **Single path in nested groups**: Displays feedback for the entire group hierarchy chain
+- **Multiple paths**: Only shows handlers for the primary selection type (no additional context feedback)
+- **Group transformations**: No additional context feedback needed (group handlers provide full context)
+
+**Example Hierarchy Visualization:**
+```
+Root Group (feedback: cyan □)
+  └─ Parent Group (feedback: cyan □)
+      └─ Child Path (handlers: blue ⊞)
+```
+
+This ensures users maintain spatial awareness of group relationships while performing precise transformations on individual elements.
 
 ### Technical Implementation
 
