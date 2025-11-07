@@ -465,6 +465,8 @@ For third-party plugins:
 - **Memoization**: `useMemo`, `useCallback` on all expensive computations
 - **Render Counting**: Optional render count badges in dev mode
 - **Selective Subscriptions**: Zustand selectors only subscribe to needed state
+- **Frozen Elements During Drag**: `useFrozenElementsDuringDrag` hook prevents SelectPanel re-renders during element movement
+- **Virtual Scrolling**: SelectPanel uses `@tanstack/react-virtual` for efficient rendering of large element lists
 
 ```typescript
 // Good: Only re-renders when selectedIds changes

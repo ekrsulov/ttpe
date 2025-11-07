@@ -15,6 +15,7 @@ All notable changes to VectorNest will be documented here.
 - **Multi-Selection Duplication**: Duplicate on Drag now duplicates all selected elements when dragging any selected element, enabling bulk duplication workflows
 - **Enhanced Group Thumbnails**: Select Panel group thumbnails now include visual previews of all paths within nested groups, providing better visual representation of complex group structures
 - **Improved Element Deletion**: Enhanced deletion logic for groups that recursively removes all descendants and automatically ungroups when deletion results in a group with only one child
+- **Performance Optimizations**: Added @tanstack/react-virtual library for virtualized rendering and implemented useFrozenElementsDuringDrag hook to prevent unnecessary re-renders during drag operations
 
 ### Changed
 - **Selection Behavior**: When clicking elements inside groups, the root group is now selected instead of the individual element for better group manipulation
@@ -41,6 +42,8 @@ All notable changes to VectorNest will be documented here.
 - Undo/redo with Zundo
 - Auto-persist to localStorage
 - E2E testing with Playwright
+- **SelectPanel Rendering**: Optimized SelectPanel to use virtual scrolling with @tanstack/react-virtual, reducing DOM nodes and improving performance with large selections
+- **Action Bars Optimization**: BottomActionBar and TopActionBar now avoid expensive calculations during drag operations to prevent UI lag
 
 ### Changed
 - Migrated to React 19
