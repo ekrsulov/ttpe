@@ -262,13 +262,30 @@ interface BaseSlice {
 ```
 
 **Key Methods:**
-- `deleteElement(id)`: Removes a single element by ID
+- `deleteElement(id)`: Removes an element by ID. For groups, recursively deletes all descendants and updates parent references. Automatically ungroups when deletion results in a group with only one child.
 - `deleteSelectedElements()`: Removes all currently selected elements
 - `setMode(pluginId)`: Activates a plugin/tool by ID
 - `addElement(element)`: Adds a new element to the canvas and returns its ID
 - `updateElement(id, updates)`: Updates an existing element's properties
 
 **Note**: Selection state (`selectedIds`) is managed by SelectionSlice, not BaseSlice.
+
+#### Element Deletion Behavior
+
+The `deleteElement` method handles different element types with special logic:
+
+**For Path Elements:**
+- Removes the element and updates parent group references
+- If the parent group has only one child remaining after deletion, automatically ungroups (promotes the remaining child to the parent's level)
+
+**For Group Elements:**
+- Recursively collects all descendants (children, grandchildren, etc.)
+- Deletes the group and all its descendants
+- Updates parent references of remaining elements
+- Maintains proper Z-index ordering
+
+**Auto-Ungrouping:**
+When deleting an element from a group that results in only one child remaining, the system automatically dissolves the group to prevent unnecessary nesting.
 
 ### Viewport Slice
 

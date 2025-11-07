@@ -10,11 +10,16 @@ The **Duplicate on Drag** plugin provides an intuitive way to duplicate elements
 
 ## Overview
 
-This plugin implements a **Canvas Service** that listens to pointer events globally, regardless of the active tool. When it detects Command+Click+Drag on a selected element, it:
+This plugin implements a **Canvas Service** that listens to pointer events globally, regardless of the active tool. When it detects Command+Click+Drag on a selected element or group, it:
 
-1. Creates a duplicate of the selected element
-2. Selects the new duplicate
+1. Creates a duplicate of the selected element or entire group hierarchy
+2. Selects the new duplicate(s)
 3. Begins dragging the duplicate from the original position
+
+**Key Features:**
+- **Recursive Group Duplication**: When duplicating an element inside a group, duplicates the entire root group and all its children
+- **Hierarchy Preservation**: Maintains parent-child relationships in duplicated groups
+- **Smart Selection**: Automatically selects the root group when clicking elements within groups
 
 ## Architecture
 
@@ -77,14 +82,30 @@ const handlePointerDown = (event: PointerEvent) => {
   // Only work when select tool is active
   if (state.activePlugin !== 'select') return;
   
-  // Check if clicking on selected element
+  // Check if clicking on an element
   const elementId = targetElement?.getAttribute('data-element-id');
-  if (!elementId || !state.selectedIds.includes(elementId)) return;
+  if (!elementId) return;
   
-  // Duplicate and select the new element
-  const newElement = { ...element, id: generateUniqueId() };
-  store.addElement(newElement);
-  store.selectElements([newElement.id]);
+  const element = state.elementMap.get(elementId);
+  if (!element) return;
+  
+  // Find the root group if this element is inside a group
+  let elementToDuplicateId = elementId;
+  if (element.parentId) {
+    let currentElement = element;
+    while (currentElement.parentId) {
+      const parent = state.elementMap.get(currentElement.parentId);
+      if (!parent) break;
+      currentElement = parent;
+    }
+    elementToDuplicateId = currentElement.id;
+  }
+  
+  // Recursively duplicate the element or entire group hierarchy
+  const duplicatedIds = duplicateElementRecursively(elementToDuplicateId);
+  
+  // Select and start dragging the duplicated element(s)
+  store.selectElements(duplicatedIds);
   
   // Prevent default interactions
   event.preventDefault();
@@ -193,14 +214,13 @@ useDuplicateOnDrag({
 ## Limitations
 
 - Currently only works in **Select mode**
-- Duplicates only **single selected elements** (not multi-selection yet)
 - Command key detection depends on browser event handling
 
 ## Future Enhancements
 
 Possible improvements:
 
-1. **Multi-selection support** - Duplicate groups of elements
+1. **Multi-selection support** - Duplicate multiple independent elements simultaneously
 2. **Modifier variations** - Different behaviors with Shift, Alt, etc.
 3. **Visual feedback** - Show duplicate preview before dropping
 4. **Smart positioning** - Snap to grid or guides while dragging

@@ -11,6 +11,12 @@ All notable changes to VectorNest will be documented here.
 ## [Unreleased]
 
 ### Added
+- **Recursive Group Duplication**: Duplicate on Drag now supports duplicating entire group hierarchies, maintaining parent-child relationships when duplicating elements within groups
+- **Enhanced Group Thumbnails**: Select Panel group thumbnails now include visual previews of all paths within nested groups, providing better visual representation of complex group structures
+- **Improved Element Deletion**: Enhanced deletion logic for groups that recursively removes all descendants and automatically ungroups when deletion results in a group with only one child
+
+### Changed
+- **Selection Behavior**: When clicking elements inside groups, the root group is now selected instead of the individual element for better group manipulation
 - **Selection Bbox Visual Feedback** for multi-element selections
   - Amber-colored bounding box showing overall selection extent
   - Only displays when four corner-defining elements or groups are different

@@ -516,6 +516,7 @@ Groups are managed through the **Select Panel** in the sidebar:
 
 - **Name display**: Editable name with truncation for long names
 - **Child count badge**: Shows number of direct children
+- **Thumbnail preview**: Visual preview showing all paths within the group, including nested groups
 - **Expand/collapse**: Toggle to show/hide children
 - **Visibility control**: Eye icon to hide/show group and descendants
 - **Lock control**: Lock icon to lock/unlock group and descendants
