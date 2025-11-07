@@ -12,6 +12,7 @@ export const TTF_FONTS = [
   { name: 'OpenSans', file: 'OpenSans-Regular.ttf' },
   { name: 'Roboto', file: 'Roboto-Regular.ttf' },
   { name: 'Momo Trust Display', file: 'MomoTrustDisplay-Regular.ttf' },
+  { name: 'Futura Hand', file: 'FuturaHand.ttf' },
 ] as const;
 
 // Cache for loaded fonts
