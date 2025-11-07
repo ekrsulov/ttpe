@@ -552,9 +552,9 @@ test.describe('Edit Functionality', () => {
     expect(circlesAfter).toBeGreaterThan(0); // Should still have points remaining
 
     // The key assertion: a command point should still be selected (auto-selected next command point)
-    // Selected points have yellow stroke
-    const yellowStrokeCircles = await page.locator('svg circle[stroke="yellow"]').count();
-    expect(yellowStrokeCircles).toBeGreaterThanOrEqual(1);
+    // Selected points have yellow/gold stroke
+    const selectedStrokeCircles = await page.locator('svg circle[stroke="#eab308"], svg circle[stroke="#fbbf24"]').count();
+    expect(selectedStrokeCircles).toBeGreaterThanOrEqual(1);
 
     // Verify path still exists
     const paths = await getCanvasPaths(page).count();

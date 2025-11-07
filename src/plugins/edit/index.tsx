@@ -42,8 +42,8 @@ export const editPlugin: PluginDefinition<CanvasStore> = {
     }
   },
   keyboardShortcuts: {
-    Delete: () => {
-      // Reserved for edit tool deletion behaviour
+    Delete: (_event, context) => {
+      (context.store as any).deleteSelectedCommands?.();
     },
   },
   canvasLayers: [
