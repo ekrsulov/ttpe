@@ -55,15 +55,29 @@ const SelectPanelGroupItemComponent: React.FC<SelectPanelGroupItemProps> = ({
     setEditValue(groupData.name);
   }, [groupData.name]);
 
-  // Create thumbnail commands from all paths in the group
-  const groupThumbnailCommands: Command[] = [];
-  groupData.childIds.forEach(childId => {
-    const child = elements.find(el => el.id === childId);
-    if (child && child.type === 'path') {
-      const pathData = child.data as PathData;
-      groupThumbnailCommands.push(...pathData.subPaths.flat());
-    }
-  });
+  // Create thumbnail commands from all paths in the group (including nested groups)
+  const collectGroupCommands = (childIds: string[]): Command[] => {
+    const commands: Command[] = [];
+    const elementMap = new Map(elements.map(el => [el.id, el]));
+
+    const processChild = (childId: string) => {
+      const child = elementMap.get(childId);
+      if (!child) return;
+
+      if (child.type === 'path') {
+        const pathData = child.data as PathData;
+        commands.push(...pathData.subPaths.flat());
+      } else if (child.type === 'group') {
+        // Recursively process nested group children
+        child.data.childIds.forEach(processChild);
+      }
+    };
+
+    childIds.forEach(processChild);
+    return commands;
+  };
+
+  const groupThumbnailCommands: Command[] = collectGroupCommands(groupData.childIds);
 
   const selectedBg = useColorModeValue('gray.200', 'gray.600');
   const descendantBg = useColorModeValue('gray.200', 'gray.600');

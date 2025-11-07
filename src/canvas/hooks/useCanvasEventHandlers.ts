@@ -402,6 +402,20 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
         return;
       }
 
+      // Find the root group if this element is inside a group
+      const element = state.elements.find(el => el.id === elementId);
+      let targetId = elementId;
+      if (element && element.parentId) {
+        // Find the root group (group with no parent)
+        let currentElement = element;
+        while (currentElement.parentId) {
+          const parent = state.elements.find(el => el.id === currentElement.parentId);
+          if (!parent) break;
+          currentElement = parent;
+        }
+        targetId = currentElement.id;
+      }
+
       // Effective shift state (physical OR virtual)
       const effectiveShiftKey = getEffectiveShift(e.shiftKey, isVirtualShiftActive);
 
@@ -409,11 +423,11 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       // When shift is pressed, let handleElementClick handle the toggle selection
       if (!effectiveShiftKey) {
         const selectedIds = state.selectedIds;
-        const isElementSelected = selectedIds.includes(elementId);
+        const isElementSelected = selectedIds.includes(targetId);
 
         if (!isElementSelected) {
           // If element not selected, select it first (without multiselect)
-          state.selectElement(elementId, false);
+          state.selectElement(targetId, false);
         }
 
         // Start dragging

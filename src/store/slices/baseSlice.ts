@@ -276,58 +276,90 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => {
       }
 
       const parentId = elementToDelete.parentId ?? null;
-      let updatedElements = currentState.elements.filter((element) => element.id !== id);
+      const idsToDelete: string[] = [id];
+      let updatedElements = currentState.elements;
 
       if (elementToDelete.type === 'group') {
-        const groupData = elementToDelete.data;
+        // Collect all descendants to delete recursively
+        const collectDescendants = (group: GroupElement, elements: CanvasElement[]): string[] => {
+          const descendants: string[] = [];
+          const queue = [...group.data.childIds];
+          const elementMap = new Map(elements.map(el => [el.id, el]));
 
-        // Reparent children to the group's parent
-        updatedElements = updatedElements.map((element) => {
-          if (groupData.childIds.includes(element.id)) {
-            return { ...element, parentId };
-          }
-          return element;
-        });
-
-        // If the group had a parent, replace the group entry with its children
-        if (parentId) {
-          updatedElements = updatedElements.map((element) => {
-            if (element.id === parentId && element.type === 'group') {
-              const parentData = element.data;
-              const newChildIds: string[] = [];
-              parentData.childIds.forEach((childId) => {
-                if (childId === id) {
-                  newChildIds.push(...groupData.childIds);
-                } else {
-                  newChildIds.push(childId);
-                }
-              });
-              return {
-                ...element,
-                data: {
-                  ...parentData,
-                  childIds: newChildIds,
-                },
-              };
+          while (queue.length > 0) {
+            const childId = queue.shift();
+            if (!childId) continue;
+            descendants.push(childId);
+            const childElement = elementMap.get(childId);
+            if (childElement && childElement.type === 'group') {
+              queue.push(...childElement.data.childIds);
             }
-            return element;
-          });
-        }
-      } else if (parentId) {
-        // Remove the element reference from its parent group
-        updatedElements = updatedElements.map((element) => {
-          if (element.id === parentId && element.type === 'group') {
-            const parentData = element.data;
+          }
+
+          return descendants;
+        };
+
+        const descendants = collectDescendants(elementToDelete as GroupElement, currentState.elements);
+        idsToDelete.push(...descendants);
+
+        // Remove all elements in the group and its descendants
+        updatedElements = currentState.elements.filter((element) => !idsToDelete.includes(element.id));
+      } else {
+        // For non-group elements, just remove this element
+        updatedElements = currentState.elements.filter((element) => element.id !== id);
+      }
+
+      // Update childIds in remaining elements to remove references to deleted elements
+      updatedElements = updatedElements.map((element) => {
+        if (element.type === 'group') {
+          const filteredChildIds = element.data.childIds.filter((childId) => !idsToDelete.includes(childId));
+          if (filteredChildIds.length !== element.data.childIds.length) {
             return {
               ...element,
               data: {
-                ...parentData,
-                childIds: parentData.childIds.filter((childId) => childId !== id),
+                ...element.data,
+                childIds: filteredChildIds,
               },
             };
           }
-          return element;
-        });
+        }
+        return element;
+      });
+
+      // If deleting a non-group element from a group that now has only one child, ungroup it
+      if (elementToDelete.type !== 'group' && parentId) {
+        const parentElement = updatedElements.find((el) => el.id === parentId);
+        if (parentElement && parentElement.type === 'group' && parentElement.data.childIds.length === 1) {
+          const singleChildId = parentElement.data.childIds[0];
+          const grandParentId = parentElement.parentId ?? null;
+
+          // Update the single child's parentId to the grandparent
+          updatedElements = updatedElements.map((el) =>
+            el.id === singleChildId ? { ...el, parentId: grandParentId } : el
+          );
+
+          // Remove the group
+          updatedElements = updatedElements.filter((el) => el.id !== parentId);
+
+          // Update the grandparent's childIds to replace the group with the single child
+          if (grandParentId) {
+            updatedElements = updatedElements.map((el) => {
+              if (el.id === grandParentId && el.type === 'group') {
+                const newChildIds = el.data.childIds.map((childId) =>
+                  childId === parentId ? singleChildId : childId
+                );
+                return {
+                  ...el,
+                  data: {
+                    ...el.data,
+                    childIds: newChildIds,
+                  },
+                };
+              }
+              return el;
+            });
+          }
+        }
       }
 
       return { elements: updatedElements };
