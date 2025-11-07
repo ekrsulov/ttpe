@@ -38,25 +38,37 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
   const disabledDeleteColor = useColorModeValue('gray.700', 'gray.300');
   const zoom = useCanvasStore(state => state.zoom);
   const resetZoom = useCanvasStore(state => state.resetZoom);
-  const viewport = useCanvasStore(state => state.viewport);
-  const selectedIds = useCanvasStore(state => state.selectedIds);
-  const selectedCommands = useCanvasStore(state => state.selectedCommands);
+  
+  // Optimize: Only subscribe to zoom value, not the entire viewport object
+  const viewportZoom = useCanvasStore(state => state.viewport.zoom);
+  
+  // Optimize: Only subscribe to array lengths, not entire arrays
+  const selectedIdsCount = useCanvasStore(state => state.selectedIds.length);
+  const selectedCommandsCount = useCanvasStore(state => state.selectedCommands?.length ?? 0);
+  
+  const isDraggingElements = useCanvasStore(state => state.isDraggingElements);
+  
+  // Get actions from store but don't subscribe to unnecessary state
   const deleteSelectedElements = useCanvasStore(state => state.deleteSelectedElements);
   const deleteSelectedCommands = useCanvasStore(state => state.deleteSelectedCommands);
   const deleteSelectedSubpaths = useCanvasStore(state => state.deleteSelectedSubpaths);
   const getSelectedSubpathsCount = useCanvasStore(state => state.getSelectedSubpathsCount);
   const activePlugin = useCanvasStore(state => state.activePlugin);
-  const selectedSubpaths = useCanvasStore(state => state.selectedSubpaths);
 
   const { undo, redo, pastStates, futureStates } = useTemporalState();
   
-  // Calculate current zoom percentage
-  const currentZoom = useMemo(() => Math.round((viewport.zoom as number) * 100), [viewport.zoom]);
+  // Calculate current zoom percentage - memoize based only on zoom value
+  const currentZoom = useMemo(() => Math.round((viewportZoom as number) * 100), [viewportZoom]);
   const isZoomDifferent = currentZoom !== 100;
 
-  const selectedCount = useMemo(() => selectedIds.length, [selectedIds]);
-  const selectedCommandsCount = useMemo(() => selectedCommands?.length ?? 0, [selectedCommands]);
-  const selectedSubpathsCount = useMemo(() => getSelectedSubpathsCount?.() ?? 0, [selectedSubpaths]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Memoize counts to avoid recalculations during drag
+  const selectedCount = useMemo(() => selectedIdsCount, [selectedIdsCount]);
+  const selectedSubpathsCount = useMemo(() => {
+    // Skip expensive calculation during dragging
+    if (isDraggingElements) return 0;
+    return getSelectedSubpathsCount?.() ?? 0;
+  }, [isDraggingElements, getSelectedSubpathsCount]);
+  
   const canUndo = useMemo(() => pastStates.length > 0, [pastStates.length]);
   const canRedo = useMemo(() => futureStates.length > 0, [futureStates.length]);
 

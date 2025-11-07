@@ -438,13 +438,13 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
           state.selectElement(targetId, false);
         }
 
-        // Start dragging
-        setIsDragging(true);
+        // Prepare for dragging (but don't start yet - wait for movement threshold in handlePointerMove)
         setDragStart(screenToCanvas(e.clientX, e.clientY));
         setHasDragMoved(false);
+        // Note: isDragging and isDraggingElements will be set in handlePointerMove after threshold
       }
     }
-  }, [activePlugin, screenToCanvas, setIsDragging, setDragStart, setHasDragMoved, isVirtualShiftActive]);
+  }, [activePlugin, screenToCanvas, setDragStart, setHasDragMoved, isVirtualShiftActive]);
 
   // Handle transformation handler pointer down
   const handleTransformationHandlerPointerDown = useCallback((e: React.PointerEvent, elementId: string, handler: string) => {
@@ -585,6 +585,8 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       if (shouldStartDragging || shouldContinueDragging) {
         if (!isDragging) {
           setIsDragging(true); // Start dragging now
+          // Set global flag to prevent re-renders in action bars and select panel
+          useCanvasStore.getState().setIsDraggingElements(true);
         }
         setHasDragMoved(true);
 
@@ -773,12 +775,18 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     // Only handle dragging if it hasn't been handled by element click already
     if (isDragging) {
       applySnapToDraggedElements();
-      setIsDragging(false);      // Clear guidelines when drag ends
+      setIsDragging(false);
+      // Clear guidelines when drag ends
       const state = useCanvasStore.getState();
       if (state.clearGuidelines) {
         state.clearGuidelines();
       }
     }
+    
+    // Always clear global flag on pointer up (even if local isDragging is false)
+    // This ensures the flag doesn't get stuck when clicking to add shapes, etc.
+    useCanvasStore.getState().setIsDraggingElements(false);
+    
     setDragStart(null);
     setHasDragMoved(false);
 

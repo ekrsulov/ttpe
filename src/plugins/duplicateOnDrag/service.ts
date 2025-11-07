@@ -19,8 +19,6 @@ export interface DuplicateOnDragServiceState {
 class DuplicateOnDragListenerService implements CanvasService<DuplicateOnDragServiceState> {
   readonly id = DUPLICATE_ON_DRAG_SERVICE_ID;
 
-  private idCounter = 0;
-
   // Helper function to duplicate an element and its children recursively
   private duplicateElement(
     element: CanvasElement,
@@ -28,9 +26,6 @@ class DuplicateOnDragListenerService implements CanvasService<DuplicateOnDragSer
     store: ReturnType<typeof useCanvasStore.getState>,
     newParentId?: string | null
   ): string {
-    const timestamp = this.idCounter++;
-    const baseId = element.id.split('-')[0];
-    const newId = `${baseId}-copy-${timestamp}`;
 
     if (element.type === 'group') {
       // Duplicate group and its children recursively, maintaining hierarchy
@@ -52,20 +47,15 @@ class DuplicateOnDragListenerService implements CanvasService<DuplicateOnDragSer
         data: tempGroupData,
       };
 
-      console.log(`Creating temp group for ${element.id}`);
       const groupId = store.addElement(tempGroupWithoutId);
-      console.log(`Temp group created with id ${groupId}`);
 
       // Now duplicate all children with the correct parentId
       const newChildIds: string[] = [];
-      console.log(`Duplicating children for group ${element.id}, children:`, groupData.childIds);
 
       for (const childId of groupData.childIds) {
         const child = elementMap.get(childId);
         if (child) {
-          console.log(`Duplicating child ${childId} (${child.type})`);
           const newChildId = this.duplicateElement(child, elementMap, store, groupId);
-          console.log(`Child ${childId} duplicated as ${newChildId}`);
           newChildIds.push(newChildId);
         } else {
           console.warn(`Child ${childId} not found in elementMap`);
@@ -73,7 +63,6 @@ class DuplicateOnDragListenerService implements CanvasService<DuplicateOnDragSer
       }
 
       // Update the group with the correct childIds
-      console.log(`Updating group ${groupId} with childIds:`, newChildIds);
       store.updateElement(groupId, { data: { ...tempGroupData, childIds: newChildIds } });
       return groupId;
     } else {
@@ -84,9 +73,7 @@ class DuplicateOnDragListenerService implements CanvasService<DuplicateOnDragSer
         data: element.data,
       };
 
-      console.log(`Duplicating path ${element.id} -> ${newId}`);
       const actualNewId = store.addElement(newElementWithoutId);
-      console.log(`Path created with id ${actualNewId}`);
       return actualNewId;
     }
   }
@@ -129,8 +116,6 @@ class DuplicateOnDragListenerService implements CanvasService<DuplicateOnDragSer
       const store = useCanvasStore.getState();
       const duplicatedIds: string[] = [];
 
-      console.log('handlePointerDown: selected elements:', state.selectedIds);
-
       // For each selected element, find its root group and duplicate it
       const elementsToDuplicate = new Set<string>();
       
@@ -157,9 +142,7 @@ class DuplicateOnDragListenerService implements CanvasService<DuplicateOnDragSer
       for (const rootId of elementsToDuplicate) {
         const elementToDuplicate = state.elementMap.get(rootId);
         if (elementToDuplicate) {
-          console.log(`Duplicating element ${rootId} (${elementToDuplicate.type})`);
           const newId = this.duplicateElement(elementToDuplicate, state.elementMap, store);
-          console.log(`Element ${rootId} duplicated as ${newId}`);
           duplicatedIds.push(newId);
         }
       }

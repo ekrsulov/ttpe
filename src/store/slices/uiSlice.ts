@@ -9,6 +9,7 @@ export interface UiSlice {
   selectPanelHeight: number;
   sidebarWidth: number;
   showCallerInfo: boolean;
+  isDraggingElements: boolean;
 
   // Actions
   setArrangePanelExpanded: (expanded: boolean) => void;
@@ -17,6 +18,7 @@ export interface UiSlice {
   setSelectPanelHeight: (height: number) => void;
   setSidebarWidth: (width: number) => void;
   setShowCallerInfo: (show: boolean) => void;
+  setIsDraggingElements: (isDragging: boolean) => void;
 }
 
 const DEFAULT_PANEL_HEIGHT = 140;
@@ -77,6 +79,8 @@ export const createUiSlice: StateCreator<CanvasStore, [], [], UiSlice> = (set) =
     }
   })(),
 
+  isDraggingElements: false,
+
   // Actions
   setArrangePanelExpanded: (expanded) => set({ arrangePanelExpanded: expanded }),
   setEditorAdvancedStrokeOpen: (open) => set({ editorAdvancedStrokeOpen: open }),
@@ -84,4 +88,5 @@ export const createUiSlice: StateCreator<CanvasStore, [], [], UiSlice> = (set) =
   setSelectPanelHeight: (height) => set({ selectPanelHeight: height }),
   setSidebarWidth: (width) => set({ sidebarWidth: width }),
   setShowCallerInfo: (show) => set({ showCallerInfo: show }),
+  setIsDraggingElements: (isDragging) => set({ isDraggingElements: isDragging }),
 });

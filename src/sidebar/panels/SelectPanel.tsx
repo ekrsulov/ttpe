@@ -1,6 +1,7 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { VStack, Box, useColorModeValue } from '@chakra-ui/react';
+import { Box, useColorModeValue } from '@chakra-ui/react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { extractEditablePoints, extractSubpaths, commandsToString, translateCommands } from '../../utils/path';
 import type { CanvasElement, PathData, GroupElement } from '../../types';
 import { logger } from '../../utils';
@@ -11,6 +12,7 @@ import { useDragResize } from '../../hooks/useDragResize';
 import { DocumentationCTA } from '../../ui/DocumentationCTA';
 import { getCommandsForPanelItem } from '../../utils/selectPanelHelpers';
 import { buildElementMap } from '../../utils/coreHelpers';
+import { useFrozenElementsDuringDrag } from '../../hooks/useFrozenElementsDuringDrag';
 
 const DEFAULT_PANEL_HEIGHT = 140;
 const MIN_PANEL_HEIGHT = 96;
@@ -39,13 +41,13 @@ const SelectPanelComponent: React.FC = () => {
   const isElementHidden = useCanvasStore(state => state.isElementHidden);
   const hiddenElementIds = useCanvasStore(state => state.hiddenElementIds);
   const lockedElementIds = useCanvasStore(state => state.lockedElementIds);
-
-  // Optimize subscriptions - only re-subscribe when elements structure changes (not data)
-  // This prevents re-renders when elements are transformed/moved
+  
+  // Optimize subscriptions - only re-subscribe when selection IDs change
   const selectedIds = useCanvasStore(state => state.selectedIds);
   
-  // Get elements from store
-  const elements = useCanvasStore(state => state.elements);
+  // Use custom hook that freezes elements during drag operations
+  // This prevents re-renders when element positions change during drag
+  const elements = useFrozenElementsDuringDrag();
   
   // Memoize the filtered selected elements to prevent unnecessary re-renders
   const selectedElements = useMemo(() =>
@@ -53,19 +55,27 @@ const SelectPanelComponent: React.FC = () => {
     [elements, selectedIds]
   );
 
-  const groups = useMemo(
-    () =>
-      elements
+  const groups = useMemo(() => {
+    return elements
         .filter((el): el is GroupElement => el.type === 'group')
-        .sort((a, b) => a.data.name.localeCompare(b.data.name)),
-    [elements]
-  );
+        .sort((a, b) => a.data.name.localeCompare(b.data.name));
+  }, [elements]);
 
-  const elementMap = useMemo(() => buildElementMap(elements), [elements]);
+  const elementMap = useMemo(() => {
+    return buildElementMap(elements);
+  }, [elements]);
 
-  const selectedIdSet = useMemo(() => new Set(selectedIds), [selectedIds]);
-  const hiddenIdSet = useMemo(() => new Set(hiddenElementIds), [hiddenElementIds]);
-  const lockedIdSet = useMemo(() => new Set(lockedElementIds), [lockedElementIds]);
+  const selectedIdSet = useMemo(() => {
+    return new Set(selectedIds);
+  }, [selectedIds]);
+  
+  const hiddenIdSet = useMemo(() => {
+    return new Set(hiddenElementIds);
+  }, [hiddenElementIds]);
+  
+  const lockedIdSet = useMemo(() => {
+    return new Set(lockedElementIds);
+  }, [lockedElementIds]);
 
   const selectedSubpathsByElement = useMemo(() => {
     const map = new Map<string, typeof selectedSubpaths>();
@@ -239,6 +249,57 @@ const SelectPanelComponent: React.FC = () => {
   const resizeInactiveColor = useColorModeValue('gray.200', 'gray.700');
   const messageColor = useColorModeValue('gray.600', 'gray.300');
 
+  // Ref for the scrollable container
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Combine groups and items into a single virtualized list
+  const virtualizedItems = useMemo(() => {
+    const allVirtualItems: Array<{ type: 'group', data: GroupElement } | { type: 'item', data: SelectPanelItemData }> = [];
+    
+    // Add groups first
+    orderedGroups.forEach(group => {
+      allVirtualItems.push({ type: 'group', data: group });
+    });
+    
+    // Add items
+    items.forEach(item => {
+      allVirtualItems.push({ type: 'item', data: item });
+    });
+    
+    return allVirtualItems;
+  }, [orderedGroups, items]);
+
+  // Calculate dynamic size for each item
+  const estimateSize = useCallback((index: number) => {
+    const item = virtualizedItems[index];
+    if (!item) return 60;
+    
+    if (item.type === 'group') {
+      const group = item.data;
+      // Base height + spacing + (children count * child height)
+      // Groups show their children in a nested list
+      const childCount = group.data.childIds.length;
+      // Base group item: ~48px, each child adds ~32px, plus spacing
+      return 56 + (childCount > 0 ? childCount * 36 : 0);
+    } else {
+      // Regular items have fixed height
+      // Item height + spacing
+      return 68;
+    }
+  }, [virtualizedItems]);
+
+  // Setup virtualizer with dynamic measurement
+  const rowVirtualizer = useVirtualizer({
+    count: virtualizedItems.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize,
+    overscan: 5, // Number of items to render outside visible area
+    measureElement:
+      typeof window !== 'undefined' && navigator.userAgent.indexOf('Firefox') === -1
+        ? (element) => element?.getBoundingClientRect().height ?? 60
+        : undefined,
+  });
+
   return (
     <Box bg={panelBg} px={2} position="relative">
       <RenderCountBadgeWrapper componentName="SelectPanel" position="top-right" />
@@ -255,68 +316,98 @@ const SelectPanelComponent: React.FC = () => {
         title="Arrastra para redimensionar, doble clic para resetear"
         _hover={{ bg: resizeColor }}
       />
-      <Box h={`${panelHeight}px`} overflowY="auto">
-        <VStack spacing={2} align="stretch">
-          {orderedGroups.length > 0 && (
-            <VStack spacing={1} align="stretch" pt={1}>
-              {orderedGroups.map((group) => (
-                <SelectPanelGroupItem
-                  key={`group-${group.id}`}
-                  group={group}
-                  isSelected={selectedIdSet.has(group.id)}
-                  hasSelectedDescendant={groupHasSelectedDescendant(group)}
-                  elements={elements}
-                />
-              ))}
-            </VStack>
-          )}
-          {items.length > 0 ? (
-            <VStack spacing={1} align="stretch">
-              {items.map((item) => {
-                const elementId = item.element.id;
+      <Box 
+        ref={scrollRef}
+        h={`${panelHeight}px`} 
+        overflowY="auto"
+      >
+        {virtualizedItems.length > 0 ? (
+          <Box
+            position="relative"
+            h={`${rowVirtualizer.getTotalSize()}px`}
+          >
+            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+              const item = virtualizedItems[virtualRow.index];
+              
+              if (item.type === 'group') {
+                const group = item.data;
+                return (
+                  <Box
+                    key={`group-${group.id}`}
+                    data-index={virtualRow.index}
+                    ref={rowVirtualizer.measureElement}
+                    position="absolute"
+                    top={0}
+                    left={0}
+                    w="100%"
+                    transform={`translateY(${virtualRow.start}px)`}
+                    pb={2}
+                  >
+                    <SelectPanelGroupItem
+                      group={group}
+                      isSelected={selectedIdSet.has(group.id)}
+                      hasSelectedDescendant={groupHasSelectedDescendant(group)}
+                      elements={elements}
+                    />
+                  </Box>
+                );
+              } else {
+                const panelItem = item.data;
+                const elementId = panelItem.element.id;
                 const elementHidden = isElementHidden(elementId);
                 const isSelectedElement = selectedIdSet.has(elementId);
                 const directHidden = hiddenIdSet.has(elementId);
                 const directLocked = lockedIdSet.has(elementId);
                 
-                const itemKey = item.type === 'subpath' && item.subpathIndex !== undefined
-                  ? `${item.element.id}-${item.type}-${item.subpathIndex}`
-                  : `${item.element.id}-${item.type}`;
+                const itemKey = panelItem.type === 'subpath' && panelItem.subpathIndex !== undefined
+                  ? `${panelItem.element.id}-${panelItem.type}-${panelItem.subpathIndex}`
+                  : `${panelItem.element.id}-${panelItem.type}`;
 
                 return (
-                  <SelectPanelItem
+                  <Box
                     key={itemKey}
-                    item={item}
-                    isSelected={isSelectedElement}
-                    isHidden={elementHidden}
-                    directHidden={directHidden}
-                    directLocked={directLocked}
-                    canGroup={canGroup}
-                    onDuplicate={duplicateItem}
-                    onCopyPath={copyPathToClipboard}
-                  />
+                    data-index={virtualRow.index}
+                    ref={rowVirtualizer.measureElement}
+                    position="absolute"
+                    top={0}
+                    left={0}
+                    w="100%"
+                    transform={`translateY(${virtualRow.start}px)`}
+                    pb={2}
+                  >
+                    <SelectPanelItem
+                      item={panelItem}
+                      isSelected={isSelectedElement}
+                      isHidden={elementHidden}
+                      directHidden={directHidden}
+                      directLocked={directLocked}
+                      canGroup={canGroup}
+                      onDuplicate={duplicateItem}
+                      onCopyPath={copyPathToClipboard}
+                    />
+                  </Box>
                 );
-              })}
-            </VStack>
-          ) : (
-            <Box
-              fontSize="11px"
-              color={messageColor}
-              textAlign="center"
-              p={2}
-              h="full"
-              display="flex"
-              alignItems="center"
-              justifyContent="center"
-            >
-              {hasSelection ? (
-                'No additional options available for the selected items'
-              ) : (
-                <DocumentationCTA />
-              )}
-            </Box>
-          )}
-        </VStack>
+              }
+            })}
+          </Box>
+        ) : (
+          <Box
+            fontSize="11px"
+            color={messageColor}
+            textAlign="center"
+            p={2}
+            h="full"
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+          >
+            {hasSelection ? (
+              'No additional options available for the selected items'
+            ) : (
+              <DocumentationCTA />
+            )}
+          </Box>
+        )}
       </Box>
     </Box>
   );

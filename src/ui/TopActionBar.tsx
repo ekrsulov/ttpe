@@ -44,9 +44,51 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
   // Get grid state to conditionally show gridFill tool
   const gridEnabled = useCanvasStore(state => state.grid?.enabled ?? false);
   
-  // Get selection state for transformation/edit mode enablement
-  const selectedIds = useCanvasStore(state => state.selectedIds);
-  const elements = useCanvasStore(state => state.elements);
+  // Optimize subscriptions - only subscribe to length/count, not entire arrays
+  // This prevents re-renders when elements data changes (e.g., during movement)
+  const selectedIdsCount = useCanvasStore(state => state.selectedIds.length);
+  const elementsCount = useCanvasStore(state => state.elements.length);
+  const isDraggingElements = useCanvasStore(state => state.isDraggingElements);
+  
+  // Memoize element lookups to avoid recalculating on every render
+  const disabledStates = React.useMemo(() => {
+    // Skip expensive calculations during dragging
+    if (isDraggingElements) {
+      return {
+        transformation: false,
+        edit: false,
+        subpath: false,
+      };
+    }
+    
+    const state = useCanvasStore.getState();
+    const { selectedIds, elements } = state;
+    
+    const transformationDisabled = (() => {
+      if (selectedIds.length === 0) return true;
+      if (selectedIds.length === 1) {
+        const element = elements.find(el => el.id === selectedIds[0]);
+        return !element || (element.type !== 'path' && element.type !== 'group');
+      }
+      return false;
+    })();
+    
+    const editDisabled = selectedPaths.length !== 1;
+    
+    const subpathDisabled = (() => {
+      if (selectedPaths.length !== 1) return true;
+      const element = selectedPaths[0];
+      if (!element || element.type !== 'path') return true;
+      const pathData = element.data as import('../types').PathData;
+      return pathData.subPaths.length <= 1;
+    })();
+    
+    return {
+      transformation: transformationDisabled,
+      edit: editDisabled,
+      subpath: subpathDisabled,
+    };
+  }, [selectedIdsCount, elementsCount, selectedPaths, isDraggingElements]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // State and refs for animated background
   const buttonRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -144,32 +186,13 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
         {toolsToRender.map(({ id, icon: Icon, label }) => {
           const isDisabled = (() => {
             if (id === 'transformation') {
-              // Enable transformation for:
-              // 1. Single path
-              // 2. Single group
-              // 3. Multiple selection (2+ elements)
-              if (selectedIds.length === 0) return true;
-              if (selectedIds.length === 1) {
-                // Check if it's a path or group
-                const element = elements.find(el => el.id === selectedIds[0]);
-                return !element || (element.type !== 'path' && element.type !== 'group');
-              }
-              // Multi-selection (2+ elements) - always enable
-              return false;
+              return disabledStates.transformation;
             }
             if (id === 'edit') {
-              return selectedPaths.length !== 1;
+              return disabledStates.edit;
             }
             if (id === 'subpath') {
-              if (selectedPaths.length !== 1) {
-                return true;
-              }
-              const element = selectedPaths[0];
-              if (!element || element.type !== 'path') {
-                return true;
-              }
-              const pathData = element.data as import('../types').PathData;
-              return pathData.subPaths.length <= 1;
+              return disabledStates.subpath;
             }
             return false;
           })();
