@@ -61,16 +61,14 @@ export const measurePath = (
     // Get bounding box from SVG (geometry only)
     const bbox = pathElement.getBBox();
 
-    // Add stroke width to get the visual bounds
-    const halfStroke = strokeWidth / 2;
-    const result = {
-      minX: bbox.x - halfStroke,
-      minY: bbox.y - halfStroke,
-      maxX: bbox.x + bbox.width + halfStroke,
-      maxY: bbox.y + bbox.height + halfStroke,
-    };
-
-    // Cache the result
+  // Add stroke width to get the visual bounds
+  const halfStroke = strokeWidth / 2;
+  const result = {
+    minX: bbox.x - halfStroke,
+    minY: bbox.y - halfStroke,
+    maxX: bbox.x + bbox.width + halfStroke,
+    maxY: bbox.y + bbox.height + halfStroke,
+  };    // Cache the result
     pathMeasurementCache.set(cacheKey, result);
 
     return result;
