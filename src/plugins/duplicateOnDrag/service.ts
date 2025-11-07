@@ -121,31 +121,47 @@ class DuplicateOnDragListenerService implements CanvasService<DuplicateOnDragSer
       const element = state.elementMap.get(elementId);
       if (!element) return;
 
-      // If the element belongs to a group, find the root group and duplicate it
-      let elementToDuplicateId = elementId;
-      if (element.parentId) {
-        // Find the root group (group with no parent)
-        let currentElement = element;
-        while (currentElement.parentId) {
-          const parent = state.elementMap.get(currentElement.parentId);
-          if (!parent) break;
-          currentElement = parent;
-        }
-        elementToDuplicateId = currentElement.id;
-      }
+      // Check if the clicked element is among the selected elements
+      const isElementSelected = state.selectedIds.includes(elementId);
+      if (!isElementSelected) return;
 
-      // Duplicate the element (or its root group)
+      // Duplicate all selected elements (or their root groups)
       const store = useCanvasStore.getState();
       const duplicatedIds: string[] = [];
 
-      console.log('handlePointerDown: clicked element:', elementId, 'duplicating:', elementToDuplicateId);
+      console.log('handlePointerDown: selected elements:', state.selectedIds);
 
-      const elementToDuplicate = state.elementMap.get(elementToDuplicateId);
-      if (elementToDuplicate) {
-        console.log(`Duplicating element ${elementToDuplicateId} (${elementToDuplicate.type})`);
-        const newId = this.duplicateElement(elementToDuplicate, state.elementMap, store);
-        console.log(`Element ${elementToDuplicateId} duplicated as ${newId}`);
-        duplicatedIds.push(newId);
+      // For each selected element, find its root group and duplicate it
+      const elementsToDuplicate = new Set<string>();
+      
+      for (const selectedId of state.selectedIds) {
+        const selectedElement = state.elementMap.get(selectedId);
+        if (!selectedElement) continue;
+
+        // Find the root group for this selected element
+        let rootId = selectedId;
+        if (selectedElement.parentId) {
+          let currentElement = selectedElement;
+          while (currentElement.parentId) {
+            const parent = state.elementMap.get(currentElement.parentId);
+            if (!parent) break;
+            currentElement = parent;
+          }
+          rootId = currentElement.id;
+        }
+        
+        elementsToDuplicate.add(rootId);
+      }
+
+      // Duplicate each unique root element
+      for (const rootId of elementsToDuplicate) {
+        const elementToDuplicate = state.elementMap.get(rootId);
+        if (elementToDuplicate) {
+          console.log(`Duplicating element ${rootId} (${elementToDuplicate.type})`);
+          const newId = this.duplicateElement(elementToDuplicate, state.elementMap, store);
+          console.log(`Element ${rootId} duplicated as ${newId}`);
+          duplicatedIds.push(newId);
+        }
       }
 
       // Store state for movement - move the duplicated element

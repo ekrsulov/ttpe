@@ -12,14 +12,14 @@ The **Duplicate on Drag** plugin provides an intuitive way to duplicate elements
 
 This plugin implements a **Canvas Service** that listens to pointer events globally, regardless of the active tool. When it detects Command+Click+Drag on a selected element or group, it:
 
-1. Creates a duplicate of the selected element or entire group hierarchy
-2. Selects the new duplicate(s)
-3. Begins dragging the duplicate from the original position
+1. Creates a duplicate of all selected elements or entire group hierarchies
+2. Selects the new duplicates
+3. Begins dragging the duplicates from the original positions
 
 **Key Features:**
-- **Recursive Group Duplication**: When duplicating an element inside a group, duplicates the entire root group and all its children
-- **Hierarchy Preservation**: Maintains parent-child relationships in duplicated groups
-- **Smart Selection**: Automatically selects the root group when clicking elements within groups
+- **Recursive Group Duplication**: When duplicating elements inside groups, duplicates the entire root group and all its children
+- **Multi-Selection Support**: Duplicates all currently selected elements when dragging any selected element
+- **Smart Selection**: Automatically selects the root groups when clicking elements within groups
 
 ## Architecture
 
@@ -220,10 +220,9 @@ useDuplicateOnDrag({
 
 Possible improvements:
 
-1. **Multi-selection support** - Duplicate multiple independent elements simultaneously
-2. **Modifier variations** - Different behaviors with Shift, Alt, etc.
-3. **Visual feedback** - Show duplicate preview before dropping
-4. **Smart positioning** - Snap to grid or guides while dragging
+1. **Modifier variations** - Different behaviors with Shift, Alt, etc.
+2. **Visual feedback** - Show duplicate preview before dropping
+3. **Smart positioning** - Snap to grid or guides while dragging
 
 ## Related Documentation
 
