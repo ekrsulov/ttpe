@@ -423,9 +423,17 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       // When shift is pressed, let handleElementClick handle the toggle selection
       if (!effectiveShiftKey) {
         const selectedIds = state.selectedIds;
-        const isElementSelected = selectedIds.includes(targetId);
-
-        if (!isElementSelected) {
+        const hasMultiSelection = selectedIds.length > 1;
+        
+        // Check if the clicked element or its root group is part of the current selection
+        const isElementInSelection = selectedIds.includes(elementId) || selectedIds.includes(targetId);
+        
+        // If there's a multiselection and the element is part of it, preserve the selection
+        // Otherwise, select only the target (root group or element)
+        if (hasMultiSelection && isElementInSelection) {
+          // Keep the current multiselection - don't change it
+          // Just start dragging all selected elements
+        } else if (!isElementInSelection) {
           // If element not selected, select it first (without multiselect)
           state.selectElement(targetId, false);
         }
