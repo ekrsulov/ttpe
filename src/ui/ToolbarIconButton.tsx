@@ -45,9 +45,9 @@ export const ToolbarIconButton: React.FC<ToolbarIconButtonProps> = ({
           minHeight: '28px',
           minWidth: '28px',
           borderRadius: 'full',
-          '-webkit-appearance': 'none',
+          WebkitAppearance: 'none',
           appearance: 'none',
-          '-webkit-tap-highlight-color': 'transparent',
+          WebkitTapHighlightColor: 'transparent',
           _focus: { outline: 'none', boxShadow: 'none' },
           ...sx,
         }}
