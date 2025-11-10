@@ -186,21 +186,31 @@ export const FloatingContextMenu: React.FC<FloatingContextMenuProps> = ({
             maxW="240px"
             py={1}
           >
-            {action.submenu.map(subAction => (
-              <MenuItem
-                key={subAction.id}
-                onClick={subAction.onClick}
-                isDisabled={subAction.isDisabled}
-                icon={<subAction.icon size={16} />}
-                color={subAction.variant === 'danger' ? dangerColor : iconColor}
-                _hover={!subAction.isDisabled ? {
-                  bg: subAction.variant === 'danger' ? dangerHoverBg : hoverBg
-                } : {}}
-                fontSize="14px"
-              >
-                {subAction.label}
-              </MenuItem>
-            ))}
+            {action.submenu.map(subAction => {
+              const iconElement = subAction.id === 'send-back' ? (
+                <Box transform="rotate(180deg)">
+                  <subAction.icon size={16} />
+                </Box>
+              ) : (
+                <subAction.icon size={16} />
+              );
+              
+              return (
+                <MenuItem
+                  key={subAction.id}
+                  onClick={subAction.onClick}
+                  isDisabled={subAction.isDisabled}
+                  icon={iconElement}
+                  color={subAction.variant === 'danger' ? dangerColor : iconColor}
+                  _hover={!subAction.isDisabled ? {
+                    bg: subAction.variant === 'danger' ? dangerHoverBg : hoverBg
+                  } : {}}
+                  fontSize="14px"
+                >
+                  {subAction.label}
+                </MenuItem>
+              );
+            })}
           </MenuList>
         </Menu>
       );

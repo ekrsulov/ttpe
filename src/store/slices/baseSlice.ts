@@ -196,10 +196,10 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => {
   settings: {
     keyboardMovementPrecision: 2, // Default to 0 (integers only)
     showRenderCountBadges: false, // Show badges in development by default
-    showMinimap: false, // Show minimap by default
-    showTooltips: false, // Show tooltips by default
+    showMinimap: true, // Show minimap by default
+    showTooltips: true, // Show tooltips by default
     defaultStrokeColor: '#000000',
-    scaleStrokeWithZoom: false, // Default to false (strokes don't scale with zoom)
+    scaleStrokeWithZoom: true, // Default to false (strokes don't scale with zoom)
     exportPadding: 20, // Default padding for SVG/PNG export
   },
 

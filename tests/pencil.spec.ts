@@ -87,7 +87,7 @@ test.describe('Pencil Drawing', () => {
     await getToolButton(page, 'Pencil').click();
 
     // Check that pencil panel is visible
-    await expect(page.locator('text=Pencil')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Pencil' })).toBeVisible();
 
     // Get SVG canvas element
     const canvas = getCanvas(page);
