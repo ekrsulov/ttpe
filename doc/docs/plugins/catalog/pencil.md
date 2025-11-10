@@ -180,7 +180,7 @@ The Delete shortcut only works when the Pencil plugin is active and elements are
 
 **Pencil Panel** provides:
 - **Path Mode Toggle**: Switch between "New Path" and "Add Subpath" modes
-- **Tolerance Slider**: Adjust path simplification (0-10, step 0.1)
+- **Tolerance Slider**: Adjust path simplification (0-10, step 0.1, default: 5)
 
 :::note
 The panel does NOT provide color, width, or opacity controls. These are managed through the global style system.

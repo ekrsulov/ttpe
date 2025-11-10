@@ -103,10 +103,10 @@ The sidebar adapts to screen size:
 
 ### Desktop (≥ 768px)
 
-- **Pinned by default**: Fixed position on left side
+- **Unpinned by default**: Fixed position on left side when pinned, drawer when unpinned
 - **Resizable**: Drag handle to adjust width (250px - 600px)
-- **Always visible**: Remains open, action bars offset to right
-- **Pin toggle**: Can be unpinned to float over canvas
+- **Always visible when pinned**: Remains open, action bars offset to right
+- **Pin toggle**: Can be pinned to fix position or unpinned to float over canvas
 
 **Pinned sidebar positioning:**
 
