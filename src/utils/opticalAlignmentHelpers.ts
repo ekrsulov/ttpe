@@ -82,10 +82,54 @@ export function prepareAlignmentContext(
   );
 
   // Get the container's fill color for accurate background representation
-  // If container has no fill (none), use white background
-  const containerFillColor = (containerData.fillColor && containerData.fillColor !== 'none') 
-    ? containerData.fillColor 
-    : 'white';
+  // If container has no fill (none), we need to choose a background color that provides contrast
+  let containerFillColor: string;
+  
+  if (containerData.fillColor && containerData.fillColor !== 'none') {
+    containerFillColor = containerData.fillColor;
+  } else {
+    // Container has no fill - we need to detect if the content would have contrast
+    // Check if content has white or very light colors that would blend with white background
+    const contentFillColor = contentData.fillColor || 'none';
+    const contentStrokeColor = contentData.strokeColor || 'none';
+    
+    const isLightColor = (color: string): boolean => {
+      if (color === 'none' || color === 'transparent') return false;
+      
+      // Check common light color names
+      const lightColorNames = ['white', 'whitesmoke', 'snow', 'ivory', 'floralwhite', 'ghostwhite', 'azure', 'aliceblue', 'mintcream', 'honeydew'];
+      if (lightColorNames.includes(color.toLowerCase())) return true;
+      
+      // Check if it's a hex color close to white
+      if (color.startsWith('#')) {
+        const hex = color.replace('#', '');
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        // Consider light if average RGB > 200
+        return (r + g + b) / 3 > 200;
+      }
+      
+      // Check if it's an rgb/rgba color close to white
+      const rgbMatch = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+      if (rgbMatch) {
+        const r = parseInt(rgbMatch[1]);
+        const g = parseInt(rgbMatch[2]);
+        const b = parseInt(rgbMatch[3]);
+        return (r + g + b) / 3 > 200;
+      }
+      
+      return false;
+    };
+    
+    // Check if either fill or stroke is light-colored
+    const hasLightFill = isLightColor(contentFillColor);
+    const hasLightStroke = isLightColor(contentStrokeColor);
+    
+    // If content has light colors, use dark background for contrast
+    // Otherwise use white background (default)
+    containerFillColor = (hasLightFill || hasLightStroke) ? '#333333' : 'white';
+  }
 
   return {
     containerElement,
