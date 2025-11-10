@@ -36,6 +36,6 @@ export const createPencilPluginSlice: StateCreator<PencilPluginSlice, [], [], Pe
       fillRule: 'nonzero',
       strokeDasharray: 'none',
       reusePath: false,
-      simplificationTolerance: 5,
+      simplificationTolerance: 0,
     }
   );

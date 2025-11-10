@@ -180,7 +180,7 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => {
   return ({
   // Initial state
   elements: [],
-  activePlugin: 'select',
+  activePlugin: 'pencil',
   documentName: 'Untitled Document',
   showFilePanel: false,
   showSettingsPanel: false,
