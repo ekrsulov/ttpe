@@ -98,6 +98,65 @@ import { PanelHeader } from '@/ui/PanelHeader';
 
 ---
 
+### ExpandableToolPanel
+
+Bottom expandable panel that displays tool-specific controls when the sidebar is not pinned. Automatically managed by the plugin system and shows the expandable panel registered by the active plugin.
+
+**Props:**
+
+```typescript
+interface ExpandableToolPanelProps {
+  activePlugin: string | null;   // ID of the active plugin
+  sidebarWidth?: number;          // Current sidebar width in pixels (default: 0)
+}
+```
+
+**Features:**
+- Automatically hidden when sidebar is pinned (`sidebarWidth > 0`)
+- Smooth expand/collapse animation with Chakra UI Collapse
+- Centered at bottom of canvas with responsive positioning
+- Blur background with semi-transparent backdrop
+- Chevron toggle button for expand/collapse
+- Retrieves panel component from PluginManager
+
+**Usage:**
+
+```tsx
+import { ExpandableToolPanel } from '@/ui/ExpandableToolPanel';
+
+<ExpandableToolPanel
+  activePlugin={activePluginId}
+  sidebarWidth={sidebarWidth}
+/>
+```
+
+**Implementation Notes:**
+- Uses `pluginManager.getExpandablePanel(activePlugin)` to retrieve the panel component
+- Returns `null` if no panel is registered or sidebar is pinned
+- Panel content is provided by the plugin's `expandablePanel` property
+- Position adjusts automatically based on sidebar width
+- Fixed positioning at bottom center with responsive max-width
+- z-index: 998 (below modals, above canvas content)
+
+**Example in App.tsx:**
+
+```tsx
+const activePluginId = useCanvasStore((state) => state.activePlugin);
+const sidebarWidth = useCanvasStore((state) => state.ui.sidebarWidth);
+
+return (
+  <>
+    <Canvas />
+    <ExpandableToolPanel 
+      activePlugin={activePluginId} 
+      sidebarWidth={sidebarWidth} 
+    />
+  </>
+);
+```
+
+---
+
 ### SectionHeader
 
 Section header with icon, title, and optional action button. Used for subsections within panels.
@@ -581,17 +640,25 @@ import { CustomSelect } from '@/ui/CustomSelect';
 
 ### FontSelector
 
-Font family dropdown selector.
+Font family dropdown selector with search functionality, built on Chakra UI Popover for improved UX.
 
 **Props:**
 
 ```typescript
 interface FontSelectorProps {
-  value: string;
-  onChange: (font: string) => void;
-  fonts?: string[];
+  value: string;                // Current font family
+  onChange: (font: string) => void;  // Callback when font changes
+  fonts?: string[];             // Available fonts (defaults to common web fonts)
 }
 ```
+
+**Features:**
+- **Search functionality**: Filter fonts by typing
+- **Popover-based UI**: Better positioning and control than Menu
+- **Keyboard navigation**: Arrow keys to navigate, Enter to select
+- **Visual feedback**: Hover states and selected font highlighting
+- **Focus management**: Auto-focus search input on open
+- **Sample preview**: Each font displays in its own typeface
 
 **Usage:**
 
@@ -601,7 +668,32 @@ import { FontSelector } from '@/ui/FontSelector';
 <FontSelector
   value={fontFamily}
   onChange={setFontFamily}
-  fonts={['Arial', 'Times New Roman', 'Courier New']}
+  fonts={['Arial', 'Times New Roman', 'Courier New', 'Georgia']}
+/>
+```
+
+**Implementation Notes:**
+- Migrated from Chakra UI Menu to Popover for better UX
+- Uses `Popover`, `PopoverTrigger`, `PopoverContent` components
+- Search input filters fonts case-insensitively
+- Default font list includes common web-safe and Google fonts
+- Scrollable list with max height constraint
+- Accessible with ARIA labels and keyboard navigation
+
+**Example with custom fonts:**
+
+```tsx
+<FontSelector
+  value={currentFont}
+  onChange={(font) => updateTextStyle({ fontFamily: font })}
+  fonts={[
+    'Inter',
+    'Roboto',
+    'Open Sans',
+    'Lato',
+    'Montserrat',
+    'Poppins'
+  ]}
 />
 ```
 

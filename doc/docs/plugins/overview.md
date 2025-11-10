@@ -63,6 +63,9 @@ interface PluginDefinition<TStore> {
   
   // Optional: Public API
   createApi?: PluginApiFactory<TStore>;
+  
+  // Optional: Expandable panel for bottom toolbar
+  expandablePanel?: ComponentType;
 }
 ```
 
@@ -89,7 +92,56 @@ interface CanvasLayerContribution {
   placement?: 'background' | 'midground' | 'foreground';
   render: (context: CanvasLayerContext) => ReactNode;
 }
+
+// Expandable Panel (optional)
+// Provides quick access to tool controls at the bottom when sidebar is unpinned
+expandablePanel?: ComponentType;
 ```
+
+### Expandable Panels
+
+Expandable panels provide quick access to tool-specific controls when the sidebar is not pinned. They appear at the bottom center of the canvas with an expand/collapse toggle.
+
+**Key Features:**
+- Automatically hidden when sidebar is pinned
+- Smooth expand/collapse animation
+- Centered at bottom of canvas
+- Accessible via chevron toggle button
+- Self-contained tool-specific UI
+
+**Example:**
+
+```typescript
+// src/plugins/my-tool/MyToolExpandablePanel.tsx
+import React from 'react';
+import { VStack, Button } from '@chakra-ui/react';
+
+export const MyToolExpandablePanel: React.FC = () => {
+  const { doSomething } = useCanvasStore((state) => state.myTool);
+  
+  return (
+    <VStack spacing={2} p={2}>
+      <Button onClick={doSomething}>Execute Action</Button>
+    </VStack>
+  );
+};
+
+// In plugin definition
+import { MyToolExpandablePanel } from './MyToolExpandablePanel';
+
+export const myToolPlugin: PluginDefinition<CanvasStore> = {
+  id: 'my-tool',
+  metadata: { label: 'My Tool', icon: MyIcon },
+  expandablePanel: MyToolExpandablePanel,
+  // ... other properties
+};
+```
+
+**Usage Notes:**
+- Panels should be concise and focused on primary tool actions
+- Use Chakra UI components for consistent theming
+- Access tool state via Zustand store hooks
+- The `ExpandableToolPanel` wrapper handles positioning and animation automatically
 ```
 
 ## Minimal Plugin Example

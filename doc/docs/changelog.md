@@ -11,6 +11,17 @@ All notable changes to VectorNest will be documented here.
 ## [Unreleased]
 
 ### Added
+- **Expandable Tool Panels**: New bottom expandable panel system for plugin-specific controls when sidebar is unpinned
+  - Added `expandablePanel` property to `PluginDefinition` for optional tool-specific UI
+  - Implemented `ExpandableToolPanel` component with smooth expand/collapse animation
+  - Added `getExpandablePanel()` method to PluginManager for retrieving panel components
+  - Created expandable panels for Curves, Edit, Pencil, Shape, Text, and Transformation plugins
+  - Panels automatically hide when sidebar is pinned
+  - Provides quick access to tool controls without taking permanent screen space
+- **Enhanced Path Parser**: Added start point verification for cubic Bézier curves (C commands) in `pathParserUtils`
+  - Validates that C command start points match previous segment end points
+  - Improves path parsing reliability and error detection
+- **Copilot Instructions**: Added comprehensive `.github/copilot-instructions.md` with project architecture overview, patterns, and workflows for AI-assisted development
 - **Multi-Selection Lock & Hide**: Added Lock and Hide actions to the floating context menu for multi-selection
   - Applies lock/hide to topmost parent groups when elements belong to groups
   - Correctly handles nested group hierarchies by finding the root group
@@ -50,6 +61,14 @@ All notable changes to VectorNest will be documented here.
 - **Action Bars Optimization**: BottomActionBar and TopActionBar now avoid expensive calculations during drag operations to prevent UI lag
 
 ### Changed
+- **FontSelector Refactor**: Migrated from Menu to Popover component for improved UX and better control positioning
+  - Enhanced search functionality with better focus management
+  - Improved keyboard navigation and accessibility
+  - Better visual feedback and hover states
+- **FloatingContextMenu Enhancements**: Expanded context menu actions with improved organization
+  - Enhanced multi-selection actions for locking and hiding elements
+  - Better handling of grouped elements in context actions
+  - Improved visual hierarchy and action grouping
 - **Select Panel UI Simplification**: Streamlined element and group cards in the Select Panel
   - Removed Group, Duplicate, and Copy to Clipboard buttons from element cards (actions available via context menu)
   - Removed Ungroup button from group cards (action available via context menu)

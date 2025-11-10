@@ -460,6 +460,57 @@ graph TB
     style L3 fill:#c8e6c9
 ```
 
+#### `getExpandablePanel(pluginId: string): React.ComponentType | null`
+
+Returns the expandable panel component registered by a plugin, or `null` if the plugin doesn't have one.
+
+```typescript
+const panelComponent = pluginManager.getExpandablePanel('shape');
+
+if (panelComponent) {
+  // Render the panel component
+  const PanelComponent = panelComponent;
+  return <PanelComponent />;
+}
+```
+
+**Usage in ExpandableToolPanel**:
+```typescript
+function ExpandableToolPanel({ activePlugin, sidebarWidth }) {
+  const PanelComponent = activePlugin 
+    ? pluginManager.getExpandablePanel(activePlugin) 
+    : null;
+  
+  if (!PanelComponent || sidebarWidth > 0) {
+    return null; // Hide when sidebar is pinned
+  }
+  
+  return (
+    <Box position="fixed" bottom="60px" left="50%">
+      <Collapse in={isExpanded}>
+        <PanelComponent />
+      </Collapse>
+    </Box>
+  );
+}
+```
+
+**Features**:
+- Returns the component registered in plugin's `expandablePanel` property
+- Returns `null` if plugin doesn't exist or has no expandable panel
+- Used by `ExpandableToolPanel` wrapper to display tool-specific controls
+- Panels typically shown when sidebar is unpinned for quick access
+
+**Panel Registration**:
+```typescript
+export const shapePlugin: PluginDefinition<CanvasStore> = {
+  id: 'shape',
+  metadata: { label: 'Shape', icon: ShapeIcon },
+  expandablePanel: ShapeExpandablePanel, // This component is returned
+  // ... other properties
+};
+```
+
 ## Advanced Usage
 
 ### Plugin Hot Reloading
