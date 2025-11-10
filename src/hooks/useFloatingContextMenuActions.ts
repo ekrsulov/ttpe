@@ -849,6 +849,8 @@ export function useFloatingContextMenuActions(
     getSubpathSplitAction,
     getApplyVisualCenterAction,
     hasGroupsInSelection,
+    handleHideSelected,
+    handleLockSelected,
   ]);
 
   return actions;

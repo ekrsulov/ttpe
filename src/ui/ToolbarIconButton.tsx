@@ -19,7 +19,7 @@ interface ToolbarIconButtonProps extends Omit<IconButtonProps, 'icon' | 'aria-la
  */
 export const ToolbarIconButton: React.FC<ToolbarIconButtonProps> = ({
   icon: Icon,
-  iconSize = 14,
+  iconSize = 16,
   label,
   tooltip,
   counter,
@@ -42,8 +42,8 @@ export const ToolbarIconButton: React.FC<ToolbarIconButtonProps> = ({
         colorScheme={colorScheme}
         size="xs"
         sx={{
-          minHeight: '28px',
-          minWidth: '28px',
+          minHeight: '32px',
+          minWidth: '32px',
           borderRadius: 'full',
           WebkitAppearance: 'none',
           appearance: 'none',
