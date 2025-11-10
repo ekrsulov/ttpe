@@ -48,8 +48,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     onRegisterOpenHandler?.(onOpen);
   }, [onOpen, onRegisterOpenHandler]);
   
-  // Desktop: pinned by default, Mobile: never pinned
-  const [isPinned, setIsPinned] = useState(isDesktop ?? true);
+  // Sidebar unpinned by default, even on desktop
+  const [isPinned, setIsPinned] = useState(false);
   
   // Sidebar width state (only for pinned mode)
   const sidebarWidth = useCanvasStore((state) => state.sidebarWidth);
