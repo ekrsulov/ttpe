@@ -47,6 +47,27 @@ Common issues and solutions.
 3. Check handler is registered in plugin definition
 4. Look for errors in handler function
 
+## Text Vectorization Fails
+
+**Symptom**: Error "offset is out of bounds" when converting text to path, or text fails to vectorize
+
+**Cause**: Long text strings or large font sizes can exceed potrace-wasm's internal memory buffer limits.
+
+**Solution**:
+The system automatically handles this by:
+1. Reducing rendering scale from 4x down to 1x
+2. Checking canvas dimensions (max 2048×768px)
+3. Verifying total pixel count (max 1.5M pixels)
+4. Proportionally scaling down if needed
+
+**Manual workarounds** (if issues persist):
+1. Reduce font size before vectorizing
+2. Split long text into multiple shorter segments
+3. Use system fonts instead of web fonts when possible
+4. Check browser console for specific error details
+
+**Technical details**: See [Text Plugin documentation](./plugins/catalog/text#edge-cases--limitations)
+
 ## Performance Issues
 
 **Symptom**: Canvas is laggy with many elements

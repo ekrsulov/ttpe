@@ -56,9 +56,15 @@ export const textToPath = async (
 
   // Scale factor: render at higher resolution for better vectorization
   // But limit it to avoid memory issues with potrace-wasm
-  const maxCanvasWidth = 4096; // Maximum width
-  const maxCanvasHeight = 1024; // Maximum height (more restrictive - potrace issue)
+  // Potrace has internal buffer limits - being conservative with dimensions
+  // The total pixel count (width * height) should not exceed ~1.5M pixels
+  const maxCanvasWidth = 2048; // Maximum width (reduced from 4096)
+  const maxCanvasHeight = 768; // Maximum height (reduced from 1024)
+  const maxPixelCount = 1500000; // Maximum total pixels (~1.5M)
   let renderScale = 4;
+  
+  // Minimal padding - just 2 pixels to avoid edge artifacts
+  const padding = 2;
   
   // First, measure at original size to estimate final canvas size
   const canvas = document.createElement('canvas');
@@ -73,66 +79,80 @@ export const textToPath = async (
   const estimateWidth = Math.ceil(estimateMetrics.width);
   const estimateHeight = Math.ceil(fontSize * 1.2);
   
+  const estimatedPixels = estimateWidth * estimateHeight;
+  
   // Adjust renderScale if estimated canvas would be too large
   const estimatedScaledWidth = estimateWidth * renderScale;
   const estimatedScaledHeight = estimateHeight * renderScale;
+  const estimatedScaledPixels = estimatedScaledWidth * estimatedScaledHeight;
   
-  // Check both width and height limits separately
-  if (estimatedScaledWidth > maxCanvasWidth || estimatedScaledHeight > maxCanvasHeight) {
+  // Check dimensions, and also check pixel count constraint
+  if (estimatedScaledWidth > maxCanvasWidth || estimatedScaledHeight > maxCanvasHeight || estimatedScaledPixels > maxPixelCount) {
     const scaleByWidth = maxCanvasWidth / estimateWidth;
     const scaleByHeight = maxCanvasHeight / estimateHeight;
-    renderScale = Math.floor(Math.min(scaleByWidth, scaleByHeight));
+    const scaleByPixels = Math.sqrt(maxPixelCount / estimatedPixels);
+    
+    renderScale = Math.floor(Math.min(scaleByWidth, scaleByHeight, scaleByPixels));
     renderScale = Math.max(1, renderScale); // Ensure at least 1x
   }
 
-  const scaledFontSize = fontSize * renderScale;
+  // Iteratively measure and adjust scale to ensure we stay within limits
+  let canvasWidth = 0;
+  let canvasHeight = 0;
+  let scaledAscent = 0;
+  let scaledDescent = 0;
+  let scaledLeft = 0;
+  let scaledRight = 0;
+  let actualTextWidth = 0;
+  let actualTextHeight = 0;
+  
+  // Keep trying with progressively smaller scales until we fit within limits
+  while (renderScale >= 1) {
+    const scaledFontSize = fontSize * renderScale;
+    const scaledFont = `${fontStyle} ${fontWeight} ${scaledFontSize}px ${fontFamily}`;
+    ctx.font = scaledFont;
 
-  // Set font for measurement at scaled size
-  const scaledFont = `${fontStyle} ${fontWeight} ${scaledFontSize}px ${fontFamily}`;
-  ctx.font = scaledFont;
+    // Measure text to determine canvas size (at scaled size)
+    const textMetrics = ctx.measureText(text);
+    const textWidth = Math.ceil(textMetrics.width);
 
-  // Measure text to determine canvas size (at scaled size)
-  const textMetrics = ctx.measureText(text);
-  const textWidth = Math.ceil(textMetrics.width);
+    // Use actual bounding box for tighter fit
+    scaledAscent = textMetrics.actualBoundingBoxAscent || scaledFontSize * 0.8;
+    scaledDescent = textMetrics.actualBoundingBoxDescent || scaledFontSize * 0.2;
+    scaledLeft = textMetrics.actualBoundingBoxLeft || 0;
+    scaledRight = textMetrics.actualBoundingBoxRight || textWidth;
 
-  // Use actual bounding box for tighter fit
-  let scaledAscent = textMetrics.actualBoundingBoxAscent || scaledFontSize * 0.8;
-  let scaledDescent = textMetrics.actualBoundingBoxDescent || scaledFontSize * 0.2;
-  let scaledLeft = textMetrics.actualBoundingBoxLeft || 0;
-  let scaledRight = textMetrics.actualBoundingBoxRight || textWidth;
-
-  // Use actual bounding box dimensions for minimal padding
-  let actualTextWidth = Math.ceil(scaledRight - scaledLeft);
-  let actualTextHeight = Math.ceil(scaledAscent + scaledDescent);
-
-  // Minimal padding - just 2 pixels to avoid edge artifacts
-  const padding = 2;
-  let canvasWidth = actualTextWidth + (padding * 2);
-  let canvasHeight = actualTextHeight + (padding * 2);
-
-  // CRITICAL: Check if canvas height exceeds limit and recalculate with smaller scale if needed
-  if (canvasHeight > maxCanvasHeight) {
-    const heightWithoutPadding = actualTextHeight;
-    const unscaledHeight = heightWithoutPadding / renderScale;
-    const newRenderScale = Math.floor((maxCanvasHeight - padding * 2) / unscaledHeight);
-    renderScale = Math.max(1, newRenderScale);
-    
-    // Recalculate with new scale
-    const newScaledFontSize = fontSize * renderScale;
-    const newScaledFont = `${fontStyle} ${fontWeight} ${newScaledFontSize}px ${fontFamily}`;
-    ctx.font = newScaledFont;
-    
-    const newMetrics = ctx.measureText(text);
-    scaledAscent = newMetrics.actualBoundingBoxAscent || newScaledFontSize * 0.8;
-    scaledDescent = newMetrics.actualBoundingBoxDescent || newScaledFontSize * 0.2;
-    scaledLeft = newMetrics.actualBoundingBoxLeft || 0;
-    scaledRight = newMetrics.actualBoundingBoxRight || Math.ceil(newMetrics.width);
-    
+    // Use actual bounding box dimensions for minimal padding
     actualTextWidth = Math.ceil(scaledRight - scaledLeft);
     actualTextHeight = Math.ceil(scaledAscent + scaledDescent);
-    
+
     canvasWidth = actualTextWidth + (padding * 2);
     canvasHeight = actualTextHeight + (padding * 2);
+    
+    const pixelCount = canvasWidth * canvasHeight;
+    
+    // Check if we're within limits (both dimensions AND total pixel count)
+    if (canvasWidth <= maxCanvasWidth && canvasHeight <= maxCanvasHeight && pixelCount <= maxPixelCount) {
+      break; // Success! We fit within limits
+    }
+    
+    // Reduce scale and try again
+    renderScale = Math.max(1, renderScale - 1);
+    
+    // If we're at scale 1 and still don't fit, we need to give up
+    if (renderScale === 1 && (canvasWidth > maxCanvasWidth || canvasHeight > maxCanvasHeight || pixelCount > maxPixelCount)) {
+      // Last resort: force it to fit by clamping dimensions
+      // If pixel count is the issue, scale down both dimensions proportionally
+      if (pixelCount > maxPixelCount) {
+        const scaleFactor = Math.sqrt(maxPixelCount / pixelCount);
+        canvasWidth = Math.floor(canvasWidth * scaleFactor);
+        canvasHeight = Math.floor(canvasHeight * scaleFactor);
+      } else {
+        canvasWidth = Math.min(canvasWidth, maxCanvasWidth);
+        canvasHeight = Math.min(canvasHeight, maxCanvasHeight);
+      }
+      break;
+    }
   }
 
   // Keep unscaled metrics for final positioning
@@ -143,12 +163,16 @@ export const textToPath = async (
   canvas.width = canvasWidth;
   canvas.height = canvasHeight;
   
-  // Emergency check: verify height constraint (potrace has issues with tall canvases)
-  if (canvasHeight > maxCanvasHeight) {
+  const finalPixelCount = canvasWidth * canvasHeight;
+  
+  // Final safety check: verify constraints
+  if (canvasWidth > maxCanvasWidth || canvasHeight > maxCanvasHeight || finalPixelCount > maxPixelCount) {
     return '';
   }
 
   // Set font again after canvas resize
+  const scaledFontSize = fontSize * renderScale;
+  const scaledFont = `${fontStyle} ${fontWeight} ${scaledFontSize}px ${fontFamily}`;
   ctx.font = scaledFont;
   ctx.textBaseline = 'alphabetic';
   ctx.textAlign = 'left';

@@ -11,6 +11,12 @@ All notable changes to VectorNest will be documented here.
 ## [Unreleased]
 
 ### Added
+- **Text Vectorization Limits**: Implemented adaptive canvas sizing for potrace to prevent memory errors with long text
+  - Added triple constraint system: max width (2048px), max height (768px), and max pixel count (1.5M pixels)
+  - Intelligent scale calculation considers all three limits to find optimal rendering scale
+  - Iterative scale adjustment ensures canvas stays within potrace's internal buffer limits
+  - Proportional dimension scaling for extreme cases when even 1x scale exceeds limits
+  - Prevents "offset is out of bounds" errors when vectorizing long text strings
 - **Expandable Tool Panels**: New bottom expandable panel system for plugin-specific controls when sidebar is unpinned
   - Added `expandablePanel` property to `PluginDefinition` for optional tool-specific UI
   - Implemented `ExpandableToolPanel` component with smooth expand/collapse animation
