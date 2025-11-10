@@ -4,6 +4,7 @@ import { getToolMetadata } from '../toolMetadata';
 import { createPencilPluginSlice } from './slice';
 import type { PencilPluginSlice } from './slice';
 import { PencilPanel } from './PencilPanel';
+import { PencilExpandablePanel } from './PencilExpandablePanel';
 import { startPath, addPointToPath, finalizePath } from './actions';
 import type { Point } from '../../types';
 
@@ -47,6 +48,7 @@ export const pencilPlugin: PluginDefinition<CanvasStore> = {
       finalizePath(points, store.getState);
     },
   }),
+  expandablePanel: PencilExpandablePanel,
 };
 
 export type { PencilPluginSlice };

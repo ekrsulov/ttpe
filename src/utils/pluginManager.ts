@@ -527,6 +527,11 @@ export class PluginManager {
       this.addInteractionSubscription(plugin.id, unsubscribe);
     }
   }
+
+  getExpandablePanel(pluginId: string): React.ComponentType | null {
+    const plugin = this.registry.get(pluginId);
+    return plugin?.expandablePanel ?? null;
+  }
 }
 
 export const pluginManager = new PluginManager();

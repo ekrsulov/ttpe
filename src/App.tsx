@@ -2,6 +2,7 @@ import { Canvas } from './canvas/Canvas';
 import { Sidebar } from './sidebar/Sidebar';
 import { TopActionBar } from './ui/TopActionBar';
 import { BottomActionBar } from './ui/BottomActionBar';
+import { ExpandableToolPanel } from './ui/ExpandableToolPanel';
 import { VirtualShiftButton } from './ui/VirtualShiftButton';
 import { MinimapPanel } from './plugins/minimap/MinimapPanel';
 import { useCanvasStore } from './store/canvasStore';
@@ -210,6 +211,7 @@ function App() {
         <BottomActionBar 
           sidebarWidth={sidebarWidth}
         />
+        <ExpandableToolPanel activePlugin={activePlugin} sidebarWidth={sidebarWidth} />
         <VirtualShiftButton 
           sidebarWidth={sidebarWidth}
         />

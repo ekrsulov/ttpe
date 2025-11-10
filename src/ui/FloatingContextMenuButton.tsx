@@ -5,6 +5,8 @@ import { ToolbarIconButton } from './ToolbarIconButton';
 import { FloatingContextMenu } from './FloatingContextMenu';
 import { useFloatingContextMenuActions, type SelectionContextInfo } from '../hooks/useFloatingContextMenuActions';
 import { useCanvasStore } from '../store/canvasStore';
+import { extractEditablePoints } from '../utils/pathParserUtils';
+import type { PathData } from '../types';
 
 /**
  * Floating Context Menu Button
@@ -27,9 +29,32 @@ export const FloatingContextMenuButton: React.FC = () => {
   const context: SelectionContextInfo | null = useMemo(() => {
     // Priority: commands > subpaths > elements
     if (selectedCommands && selectedCommands.length > 0) {
-      // For now, treat all command selection as point-anchor-m (generic point)
-      // TODO: Determine exact command type for more specific actions
-      return { type: 'point-anchor-m', pointInfo: selectedCommands[0] };
+      // Determine the exact point type
+      const cmd = selectedCommands[0];
+      const element = elements.find(el => el.id === cmd.elementId);
+      if (element && element.type === 'path') {
+        const pathData = element.data as PathData;
+        const commands = pathData.subPaths.flat();
+        const points = extractEditablePoints(commands);
+        const point = points.find(p => p.commandIndex === cmd.commandIndex && p.pointIndex === cmd.pointIndex);
+        
+        if (point) {
+          if (point.isControl) {
+            return { type: 'point-control', pointInfo: cmd };
+          } else {
+            const command = commands[cmd.commandIndex];
+            if (command.type === 'M') {
+              return { type: 'point-anchor-m', pointInfo: cmd };
+            } else if (command.type === 'L') {
+              return { type: 'point-anchor-l', pointInfo: cmd };
+            } else if (command.type === 'C') {
+              return { type: 'point-anchor-c', pointInfo: cmd };
+            }
+          }
+        }
+      }
+      // Fallback
+      return { type: 'point-anchor-m', pointInfo: cmd };
     }
 
     if (selectedSubpaths && selectedSubpaths.length > 0) {

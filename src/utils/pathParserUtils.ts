@@ -710,12 +710,24 @@ function findPairedControlPoint(
         
         // Check if path is closed (Z command or last point at M position)
         if (hasZCommand && distance < tolerance) {
-          // Find first C command after M
+          // Find first C command after M and verify it starts at M point
           for (let j = mCommandIndex + 1; j < commands.length; j++) {
             if (commands[j].type === 'C') {
-              pairedCommandIndex = j;
-              pairedPointIndex = 0;
-              anchor = mPoint; // Use M point as anchor
+              // Verify that the first C command starts at the M point
+              const firstCStartPoint = getCommandStartPoint(commands, j);
+              if (firstCStartPoint) {
+                const startDistance = Math.sqrt(
+                  Math.pow(firstCStartPoint.x - mPoint.x, 2) +
+                  Math.pow(firstCStartPoint.y - mPoint.y, 2)
+                );
+                
+                // Only pair if the first C command also starts at M point
+                if (startDistance < tolerance) {
+                  pairedCommandIndex = j;
+                  pairedPointIndex = 0;
+                  anchor = mPoint; // Use M point as anchor
+                }
+              }
               break;
             }
           }

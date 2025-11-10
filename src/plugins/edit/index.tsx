@@ -4,6 +4,7 @@ import { getToolMetadata } from '../toolMetadata';
 import { createEditPluginSlice } from './slice';
 import type { EditPluginSlice } from './slice';
 import { EditPanel } from './EditPanel';
+import { EditExpandablePanel } from './EditExpandablePanel';
 import { ControlPointAlignmentPanel } from './ControlPointAlignmentPanel';
 import { EditPointsOverlay } from './EditPointsOverlay';
 import { AddPointFeedbackOverlay } from './AddPointFeedbackOverlay';
@@ -178,6 +179,7 @@ export const editPlugin: PluginDefinition<CanvasStore> = {
     },
   ],
   slices: [editSliceFactory],
+  expandablePanel: EditExpandablePanel,
 };
 
 export type { EditPluginSlice };

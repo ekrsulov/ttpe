@@ -42,6 +42,8 @@ import { useArrangeHandlers } from './useArrangeHandlers';
 import type { FloatingContextMenuAction } from '../ui/FloatingContextMenu';
 import type { SelectedCommand } from '../types/selection';
 import { duplicateElements } from '../utils/duplicationUtils';
+import { extractEditablePoints, getControlPointAlignmentInfo } from '../utils/pathParserUtils';
+import type { ControlPoint, Command, Point } from '../types';
 
 export type SelectionContextType = 
   | 'multiselection' 
@@ -84,6 +86,9 @@ export function useFloatingContextMenuActions(
   const cutSubpathAtPoint = useCanvasStore(state => state.cutSubpathAtPoint);
   const moveToM = useCanvasStore(state => state.moveToM);
   const setControlPointAlignmentType = useCanvasStore(state => state.setControlPointAlignmentType);
+  const addZCommandToSubpath = useCanvasStore(state => state.addZCommandToSubpath);
+  const deleteZCommandForMPoint = useCanvasStore(state => state.deleteZCommandForMPoint);
+  const convertZToLineForMPoint = useCanvasStore(state => state.convertZToLineForMPoint);
   
   // Get path operations
   const performPathUnion = useCanvasStore(state => state.performPathUnion);
@@ -473,6 +478,165 @@ export function useFloatingContextMenuActions(
     };
   }, [canPerformOpticalAlignment, calculateOpticalAlignment, applyOpticalAlignment]);
 
+  // Helper function to retrieve path commands with validation
+  const withPathCommands = useCallback(<T,>(
+    elementId: string,
+    commandIndex: number,
+    callback: (commands: Command[], command: Command) => T,
+    fallbackValue: T
+  ): T => {
+    const element = elements.find(el => el.id === elementId);
+    if (!element || element.type !== 'path') return fallbackValue;
+
+    const pathData = element.data as import('../types').PathData;
+    const commands = pathData.subPaths.flat();
+
+    const command = commands[commandIndex];
+    if (!command) return fallbackValue;
+
+    return callback(commands, command);
+  }, [elements]);
+
+  // Helper to check if a point is the last in its subpath
+  const isLastPointInSubpath = useCallback((elementId: string, commandIndex: number, pointIndex: number): boolean => {
+    return withPathCommands(elementId, commandIndex, (commands, command) => {
+      // Check if this is the last point of the command
+      const pointsLength = command.type === 'M' || command.type === 'L' ? 1 : command.type === 'C' ? 3 : 0;
+      const isLastPoint = pointIndex === pointsLength - 1;
+      if (!isLastPoint) return false;
+
+      // Check if this is the last command in the path or before a Z/M
+      const isLastCommandInSubpath = commandIndex === commands.length - 1 ||
+        commands[commandIndex + 1].type === 'M' ||
+        commands[commandIndex + 1].type === 'Z';
+
+      return isLastCommandInSubpath;
+    }, false);
+  }, [withPathCommands]);
+
+  // Check if selected M point has a closing Z command
+  const hasClosingZCommand = useCallback((elementId: string, commandIndex: number): boolean => {
+    return withPathCommands(elementId, commandIndex, (commands, command) => {
+      // Check if the command at commandIndex is an M command
+      if (command.type !== 'M') return false;
+
+      // Look for Z commands after this M command
+      for (let i = commandIndex + 1; i < commands.length; i++) {
+        if (commands[i].type === 'Z') {
+          // Check if this Z closes to our M point
+          // A Z closes to the last M before it
+          let lastMIndex = -1;
+          for (let j = i - 1; j >= 0; j--) {
+            if (commands[j].type === 'M') {
+              lastMIndex = j;
+              break;
+            }
+          }
+
+          if (lastMIndex === commandIndex) {
+            return true;
+          }
+        } else if (commands[i].type === 'M') {
+          // If we hit another M, stop looking
+          break;
+        }
+      }
+
+      return false;
+    }, false);
+  }, [withPathCommands]);
+
+  // Check if selected point is already at the same position as the M of its subpath
+  const isAtMPosition = useCallback((elementId: string, commandIndex: number, pointIndex: number): boolean => {
+    return withPathCommands(elementId, commandIndex, (commands, command) => {
+      // Find the M command for this subpath (the last M before this command)
+      let subpathMIndex = -1;
+      for (let i = commandIndex - 1; i >= 0; i--) {
+        if (commands[i].type === 'M') {
+          subpathMIndex = i;
+          break;
+        }
+      }
+
+      if (subpathMIndex === -1) return false;
+
+      // Get the point to check
+      let pointToCheck: Point | null = null;
+      if (command.type === 'M' || command.type === 'L') {
+        if (pointIndex === 0) pointToCheck = command.position;
+      } else if (command.type === 'C') {
+        if (pointIndex === 0) pointToCheck = command.controlPoint1;
+        else if (pointIndex === 1) pointToCheck = command.controlPoint2;
+        else if (pointIndex === 2) pointToCheck = command.position;
+      }
+      const mPosition = (commands[subpathMIndex] as Command & { type: 'M' }).position;
+
+      if (!pointToCheck || !mPosition) return false;
+
+      // Check if they are at the same position (with small tolerance for floating point)
+      const tolerance = 0.1;
+      return Math.abs(pointToCheck.x - mPosition.x) < tolerance &&
+        Math.abs(pointToCheck.y - mPosition.y) < tolerance;
+    }, false);
+  }, [withPathCommands]);
+
+  // Helper to check if the subpath has a Z command
+  const subpathHasZCommand = useCallback((elementId: string, commandIndex: number): boolean => {
+    const element = elements.find(el => el.id === elementId);
+    if (!element || element.type !== 'path') return false;
+
+    const pathData = element.data as import('../types').PathData;
+    const commands = pathData.subPaths.flat();
+    
+    // Find the end of the current subpath
+    let subpathEndIndex = commandIndex;
+    for (let i = commandIndex + 1; i < commands.length; i++) {
+      if (commands[i].type === 'M') {
+        break;
+      }
+      subpathEndIndex = i;
+    }
+
+    // Check if there's a Z command after the last command
+    if (subpathEndIndex < commands.length - 1 && commands[subpathEndIndex + 1].type === 'Z') {
+      return true;
+    }
+
+    // Also check if there's a Z within the subpath
+    for (let i = commandIndex; i <= subpathEndIndex; i++) {
+      if (commands[i].type === 'Z') {
+        return true;
+      }
+    }
+
+    return false;
+  }, [elements]);
+
+  // Helper to check if control point has a paired point
+  const hasPairedControlPoint = useCallback((elementId: string, commandIndex: number, pointIndex: number): boolean => {
+    const element = elements.find(el => el.id === elementId);
+    if (!element || element.type !== 'path') return false;
+
+    const pathData = element.data as import('../types').PathData;
+    const commands = pathData.subPaths.flat();
+    const points = extractEditablePoints(commands);
+    const point = points.find(p => p.commandIndex === commandIndex && p.pointIndex === pointIndex);
+    
+    if (!point || !point.isControl) return false;
+    
+    const alignmentInfo = getControlPointAlignmentInfo(commands, points, commandIndex, pointIndex);
+    if (!alignmentInfo || alignmentInfo.pairedCommandIndex === undefined || alignmentInfo.pairedPointIndex === undefined) {
+      return false;
+    }
+    
+    // Find the paired control point to ensure it exists
+    const pairedPoint = points.find((p: ControlPoint) =>
+      p.commandIndex === alignmentInfo.pairedCommandIndex && p.pointIndex === alignmentInfo.pairedPointIndex
+    );
+    
+    return !!pairedPoint;
+  }, [elements]);
+
   const actions = useMemo<FloatingContextMenuAction[]>(() => {
     if (!context) return [];
 
@@ -679,142 +843,244 @@ export function useFloatingContextMenuActions(
       }
 
       case 'point-anchor-m': {
+        const pointInfo = context.pointInfo!;
         const arrangeActions = getArrangeActions();
+        const hasZ = hasClosingZCommand(pointInfo.elementId, pointInfo.commandIndex);
         
-        return [
+        const actions: FloatingContextMenuAction[] = [
           // Arrange actions (align and distribute for multiple points)
           ...arrangeActions,
-          // Standard actions
-          {
-            id: 'delete',
-            label: 'Delete',
-            icon: Trash2,
-            onClick: () => deleteSelectedCommands?.(),
-            variant: 'danger',
-          },
         ];
+        
+        // Add Z command options if the M point has a closing Z command
+        if (hasZ) {
+          actions.push(
+            {
+              id: 'delete-z-command',
+              label: 'Delete Z Command',
+              icon: Trash2,
+              onClick: () => deleteZCommandForMPoint?.(pointInfo.elementId, pointInfo.commandIndex),
+            },
+            {
+              id: 'convert-z-to-line',
+              label: 'Convert Z to Line',
+              icon: Grid3x3,
+              onClick: () => convertZToLineForMPoint?.(pointInfo.elementId, pointInfo.commandIndex),
+            }
+          );
+        }
+        
+        // Standard actions
+        actions.push({
+          id: 'delete',
+          label: 'Delete',
+          icon: Trash2,
+          onClick: () => deleteSelectedCommands?.(),
+          variant: 'danger',
+        });
+        
+        return actions;
       }
 
       case 'point-anchor-l': {
         const pointInfo = context.pointInfo!;
-        return [
+        const isLast = isLastPointInSubpath(pointInfo.elementId, pointInfo.commandIndex, pointInfo.pointIndex);
+        const atMPosition = isAtMPosition(pointInfo.elementId, pointInfo.commandIndex, pointInfo.pointIndex);
+        const hasZ = subpathHasZCommand(pointInfo.elementId, pointInfo.commandIndex);
+        
+        const actions: FloatingContextMenuAction[] = [
           {
-            id: 'to-curve',
+            id: 'change-to-curve',
             label: 'Change to Curve',
             icon: Grid3x3,
             onClick: () => convertCommandType?.(pointInfo.elementId, pointInfo.commandIndex),
           },
-          {
-            id: 'move-to-m',
-            label: 'Move to M',
-            icon: Move,
-            onClick: () => moveToM?.(pointInfo.elementId, pointInfo.commandIndex, pointInfo.pointIndex),
-          },
-          {
+        ];
+        
+        if (isLast) {
+          if (!atMPosition) {
+            actions.push({
+              id: 'move-to-m',
+              label: 'Move to M',
+              icon: Move,
+              onClick: () => moveToM?.(pointInfo.elementId, pointInfo.commandIndex, pointInfo.pointIndex),
+            });
+          } else if (!hasZ) {
+            actions.push({
+              id: 'add-z-command',
+              label: 'Add Z Command',
+              icon: Combine,
+              onClick: () => addZCommandToSubpath?.(pointInfo.elementId, pointInfo.commandIndex),
+            });
+          }
+        } else {
+          actions.push({
             id: 'cut-subpath',
             label: 'Cut Subpath',
             icon: SplitSquareVertical,
             onClick: () => cutSubpathAtPoint?.(pointInfo.elementId, pointInfo.commandIndex, pointInfo.pointIndex),
-          },
-          {
-            id: 'delete',
-            label: 'Delete',
-            icon: Trash2,
-            onClick: () => deleteSelectedCommands?.(),
-            variant: 'danger',
-          },
-        ];
+          });
+        }
+        
+        actions.push({
+          id: 'delete',
+          label: 'Delete',
+          icon: Trash2,
+          onClick: () => deleteSelectedCommands?.(),
+          variant: 'danger',
+        });
+        
+        return actions;
       }
 
       case 'point-anchor-c': {
         const pointInfo = context.pointInfo!;
-        return [
+        const isLast = isLastPointInSubpath(pointInfo.elementId, pointInfo.commandIndex, pointInfo.pointIndex);
+        const atMPosition = isAtMPosition(pointInfo.elementId, pointInfo.commandIndex, pointInfo.pointIndex);
+        const hasZ = subpathHasZCommand(pointInfo.elementId, pointInfo.commandIndex);
+        
+        const actions: FloatingContextMenuAction[] = [
           {
-            id: 'to-line',
+            id: 'change-to-line',
             label: 'Change to Line',
             icon: Grid3x3,
             onClick: () => convertCommandType?.(pointInfo.elementId, pointInfo.commandIndex),
           },
-          {
-            id: 'move-to-m',
-            label: 'Move to M',
-            icon: Move,
-            onClick: () => moveToM?.(pointInfo.elementId, pointInfo.commandIndex, pointInfo.pointIndex),
-          },
-          {
+        ];
+        
+        if (isLast) {
+          if (!atMPosition) {
+            actions.push({
+              id: 'move-to-m',
+              label: 'Move to M',
+              icon: Move,
+              onClick: () => moveToM?.(pointInfo.elementId, pointInfo.commandIndex, pointInfo.pointIndex),
+            });
+          } else if (!hasZ) {
+            actions.push({
+              id: 'add-z-command',
+              label: 'Add Z Command',
+              icon: Combine,
+              onClick: () => addZCommandToSubpath?.(pointInfo.elementId, pointInfo.commandIndex),
+            });
+          }
+        } else {
+          actions.push({
             id: 'cut-subpath',
             label: 'Cut Subpath',
             icon: SplitSquareVertical,
             onClick: () => cutSubpathAtPoint?.(pointInfo.elementId, pointInfo.commandIndex, pointInfo.pointIndex),
-          },
-          {
-            id: 'delete',
-            label: 'Delete',
-            icon: Trash2,
-            onClick: () => deleteSelectedCommands?.(),
-            variant: 'danger',
-          },
-        ];
+          });
+        }
+        
+        actions.push({
+          id: 'delete',
+          label: 'Delete',
+          icon: Trash2,
+          onClick: () => deleteSelectedCommands?.(),
+          variant: 'danger',
+        });
+        
+        return actions;
       }
 
       case 'point-control': {
         const pointInfo = context.pointInfo!;
+        const hasPair = hasPairedControlPoint(pointInfo.elementId, pointInfo.commandIndex, pointInfo.pointIndex);
         
-        return [
-          {
-            id: 'independent',
-            label: 'Independent',
+        const actions: FloatingContextMenuAction[] = [];
+        
+        if (hasPair) {
+          actions.push({
+            id: 'control-point-alignment',
+            label: 'Control Point Alignment',
             icon: Grid3x3,
-            onClick: () => {
-              // Need to find paired control point - this is complex logic
-              // For now, simplified version
-              if (setControlPointAlignmentType) {
-                setControlPointAlignmentType(
-                  pointInfo.elementId,
-                  pointInfo.commandIndex,
-                  pointInfo.pointIndex,
-                  0, // pairedCommandIndex - would need to calculate
-                  0, // pairedPointIndex - would need to calculate
-                  'independent'
-                );
-              }
-            },
-          },
-          {
-            id: 'aligned',
-            label: 'Aligned',
-            icon: Grid3x3,
-            onClick: () => {
-              if (setControlPointAlignmentType) {
-                setControlPointAlignmentType(
-                  pointInfo.elementId,
-                  pointInfo.commandIndex,
-                  pointInfo.pointIndex,
-                  0,
-                  0,
-                  'aligned'
-                );
-              }
-            },
-          },
-          {
-            id: 'mirrored',
-            label: 'Mirrored',
-            icon: Grid3x3,
-            onClick: () => {
-              if (setControlPointAlignmentType) {
-                setControlPointAlignmentType(
-                  pointInfo.elementId,
-                  pointInfo.commandIndex,
-                  pointInfo.pointIndex,
-                  0,
-                  0,
-                  'mirrored'
-                );
-              }
-            },
-          },
-        ];
+            submenu: [
+              {
+                id: 'independent',
+                label: 'Independent',
+                icon: Grid3x3,
+                onClick: () => {
+                  const element = elements.find(el => el.id === pointInfo.elementId);
+                  if (element && element.type === 'path') {
+                    const pathData = element.data as import('../types').PathData;
+                    const commands = pathData.subPaths.flat();
+                    const points = extractEditablePoints(commands);
+                    const alignmentInfo = getControlPointAlignmentInfo(commands, points, pointInfo.commandIndex, pointInfo.pointIndex);
+                    if (alignmentInfo && setControlPointAlignmentType) {
+                      setControlPointAlignmentType(
+                        pointInfo.elementId,
+                        pointInfo.commandIndex,
+                        pointInfo.pointIndex,
+                        alignmentInfo.pairedCommandIndex ?? 0,
+                        alignmentInfo.pairedPointIndex ?? 0,
+                        'independent'
+                      );
+                    }
+                  }
+                },
+              },
+              {
+                id: 'aligned',
+                label: 'Aligned',
+                icon: Grid3x3,
+                onClick: () => {
+                  const element = elements.find(el => el.id === pointInfo.elementId);
+                  if (element && element.type === 'path') {
+                    const pathData = element.data as import('../types').PathData;
+                    const commands = pathData.subPaths.flat();
+                    const points = extractEditablePoints(commands);
+                    const alignmentInfo = getControlPointAlignmentInfo(commands, points, pointInfo.commandIndex, pointInfo.pointIndex);
+                    if (alignmentInfo && setControlPointAlignmentType) {
+                      setControlPointAlignmentType(
+                        pointInfo.elementId,
+                        pointInfo.commandIndex,
+                        pointInfo.pointIndex,
+                        alignmentInfo.pairedCommandIndex ?? 0,
+                        alignmentInfo.pairedPointIndex ?? 0,
+                        'aligned'
+                      );
+                    }
+                  }
+                },
+              },
+              {
+                id: 'mirrored',
+                label: 'Mirrored',
+                icon: Grid3x3,
+                onClick: () => {
+                  const element = elements.find(el => el.id === pointInfo.elementId);
+                  if (element && element.type === 'path') {
+                    const pathData = element.data as import('../types').PathData;
+                    const commands = pathData.subPaths.flat();
+                    const points = extractEditablePoints(commands);
+                    const alignmentInfo = getControlPointAlignmentInfo(commands, points, pointInfo.commandIndex, pointInfo.pointIndex);
+                    if (alignmentInfo && setControlPointAlignmentType) {
+                      setControlPointAlignmentType(
+                        pointInfo.elementId,
+                        pointInfo.commandIndex,
+                        pointInfo.pointIndex,
+                        alignmentInfo.pairedCommandIndex ?? 0,
+                        alignmentInfo.pairedPointIndex ?? 0,
+                        'mirrored'
+                      );
+                    }
+                  }
+                },
+              },
+            ],
+          });
+        }
+        
+        actions.push({
+          id: 'delete',
+          label: 'Delete',
+          icon: Trash2,
+          onClick: () => deleteSelectedCommands?.(),
+          variant: 'danger',
+        });
+        
+        return actions;
       }
 
       default:
@@ -823,6 +1089,7 @@ export function useFloatingContextMenuActions(
   }, [
     context,
     selectedIds,
+    elements,
     createGroupFromSelection,
     ungroupSelectedGroups,
     ungroupGroupById,
@@ -837,6 +1104,9 @@ export function useFloatingContextMenuActions(
     cutSubpathAtPoint,
     moveToM,
     setControlPointAlignmentType,
+    addZCommandToSubpath,
+    deleteZCommandForMPoint,
+    convertZToLineForMPoint,
     handleDuplicate,
     handleCopyToClipboard,
     isGroupHidden,
@@ -851,6 +1121,11 @@ export function useFloatingContextMenuActions(
     hasGroupsInSelection,
     handleHideSelected,
     handleLockSelected,
+    isLastPointInSubpath,
+    subpathHasZCommand,
+    hasPairedControlPoint,
+    hasClosingZCommand,
+    isAtMPosition,
   ]);
 
   return actions;

@@ -4,6 +4,7 @@ import { getToolMetadata } from '../toolMetadata';
 import { createTransformationPluginSlice } from './slice';
 import type { TransformationPluginSlice } from './slice';
 import { TransformationPanel } from './TransformationPanel';
+import { TransformationExpandablePanel } from './TransformationExpandablePanel';
 import { TransformationOverlay } from './TransformationOverlay';
 import { FeedbackOverlay, BlockingOverlay } from '../../overlays';
 import { measureSubpathBounds } from '../../utils/geometry';
@@ -147,6 +148,7 @@ export const transformationPlugin: PluginDefinition<CanvasStore> = {
     },
   ],
   slices: [transformationSliceFactory],
+  expandablePanel: TransformationExpandablePanel,
 };
 
 export type { TransformationPluginSlice };

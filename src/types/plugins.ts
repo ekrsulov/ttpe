@@ -119,4 +119,9 @@ export interface PluginDefinition<TStore extends object = object> {
    * This allows plugins to expose functionality without coupling to the store.
    */
   createApi?: PluginApiFactory<TStore>;
+  /**
+   * Expandable panel component shown at bottom when sidebar is not pinned.
+   * This panel provides quick access to plugin-specific controls.
+   */
+  expandablePanel?: ComponentType;
 }

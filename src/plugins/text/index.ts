@@ -4,6 +4,7 @@ import { getToolMetadata } from '../toolMetadata';
 import { createTextPluginSlice } from './slice';
 import type { TextPluginSlice } from './slice';
 import { TextPanel } from './TextPanel';
+import { TextExpandablePanel } from './TextExpandablePanel';
 import { addText } from './actions';
 
 type TextPluginApi = {
@@ -37,6 +38,7 @@ export const textPlugin: PluginDefinition<CanvasStore> = {
       return addText(x, y, text, store.getState);
     },
   }),
+  expandablePanel: TextExpandablePanel,
 };
 
 export type { TextPluginSlice };
