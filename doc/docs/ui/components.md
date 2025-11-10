@@ -515,7 +515,7 @@ import { NumberInput } from '@/ui/NumberInput';
 
 ### SliderControl
 
-Slider with label and formatted value display.
+Slider with label and formatted value display. Supports dynamic step precision based on value ranges.
 
 **Props:**
 
@@ -527,6 +527,7 @@ interface SliderControlProps {
   min: number;
   max: number;
   step?: number;
+  stepFunction?: (value: number) => number; // Dynamic step calculation
   onChange: (value: number) => void;
   formatter?: (value: number) => string;
   title?: string;
@@ -570,6 +571,26 @@ import { Droplet } from 'lucide-react';
   formatter={(val) => `${Math.round(val * 100)}%`}
 />
 ```
+
+**Dynamic Step Precision:**
+
+For controls that need different precision levels based on value ranges (e.g., fine control for small values, coarse control for large values), use the `stepFunction` prop:
+
+```tsx
+<SliderControl
+  label="Stroke Width"
+  value={strokeWidth}
+  min={0}
+  max={20}
+  stepFunction={(value) => value < 1 ? 0.1 : 1} // 0.1 for values < 1, 1 for values >= 1
+  onChange={setStrokeWidth}
+  formatter={(value) => value < 1 ? `${value.toFixed(1)}px` : `${Math.round(value)}px`}
+/>
+```
+
+This provides:
+- **Fine precision** (0.1 increments) for small values (0.0, 0.1, 0.2, ..., 0.9)
+- **Coarse precision** (1.0 increments) for larger values (1, 2, 3, ..., 20)
 
 ---
 

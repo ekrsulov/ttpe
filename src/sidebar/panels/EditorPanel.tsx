@@ -365,8 +365,10 @@ export const EditorPanel: React.FC = () => {
                   value={currentStrokeWidth}
                   min={0}
                   max={20}
+                  step={0.1}
+                  stepFunction={(value) => value < 1 ? 0.1 : 1}
                   onChange={handleStrokeWidthChange}
-                  formatter={(value) => `${value}px`}
+                  formatter={(value) => value < 1 ? `${value.toFixed(1)}px` : `${Math.round(value)}px`}
                   title="Stroke Width"
                   inline={true}
                   minWidth="50px"

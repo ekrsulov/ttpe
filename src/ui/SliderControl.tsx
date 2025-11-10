@@ -16,6 +16,7 @@ interface SliderControlProps {
   min: number;
   max: number;
   step?: number;
+  stepFunction?: (value: number) => number; // Dynamic step function
   onChange: (value: number) => void;
   formatter?: (value: number) => string;
   title?: string;
@@ -34,6 +35,7 @@ export const SliderControl: React.FC<SliderControlProps> = ({
   min,
   max,
   step = 1,
+  stepFunction,
   onChange,
   formatter,
   title,
@@ -45,10 +47,18 @@ export const SliderControl: React.FC<SliderControlProps> = ({
   gap = '8px'
 }) => {
   const handleChange = (newValue: number) => {
-    onChange(newValue);
+    // If stepFunction is provided, quantize the value to the appropriate step
+    if (stepFunction) {
+      const dynamicStep = stepFunction(newValue);
+      const quantizedValue = Math.round(newValue / dynamicStep) * dynamicStep;
+      onChange(Math.max(min, Math.min(max, quantizedValue)));
+    } else {
+      onChange(newValue);
+    }
   };
 
-  const formattedValue = formatter ? formatter(value) : (step < 1 ? value.toFixed(2) : value.toString());
+  const currentStep = stepFunction ? stepFunction(value) : step;
+  const formattedValue = formatter ? formatter(value) : (currentStep < 1 ? value.toFixed(2) : value.toString());
 
   return (
     <HStack
@@ -76,7 +86,7 @@ export const SliderControl: React.FC<SliderControlProps> = ({
         flex={1}
         min={min}
         max={max}
-        step={step}
+        step={stepFunction ? 0.01 : step} // Use very small step when stepFunction is provided
         value={value}
         onChange={handleChange}
         minW={minWidth}

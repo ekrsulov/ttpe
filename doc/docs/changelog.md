@@ -18,6 +18,10 @@ All notable changes to VectorNest will be documented here.
   - Proportional dimension scaling for extreme cases when even 1x scale exceeds limits
   - Prevents "offset is out of bounds" errors when vectorizing long text strings
 - **Expandable Tool Panels**: New bottom expandable panel system for plugin-specific controls when sidebar is unpinned
+- **Dynamic Step Precision for Sliders**: Enhanced `SliderControl` component with `stepFunction` prop for adaptive precision
+  - Fine control (0.1 increments) for small values, coarse control (1.0 increments) for larger values
+  - Applied to Stroke Width control: decimal precision for thin strokes (< 1px), integer precision for thick strokes (≥ 1px)
+  - Improved user experience with appropriate precision levels based on value ranges
   - Added `expandablePanel` property to `PluginDefinition` for optional tool-specific UI
   - Implemented `ExpandableToolPanel` component with smooth expand/collapse animation
   - Added `getExpandablePanel()` method to PluginManager for retrieving panel components
