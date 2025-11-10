@@ -1,6 +1,6 @@
 import React from 'react';
 import { HStack } from '@chakra-ui/react';
-import { MousePointer2, Eye, EyeOff, Lock, Unlock } from 'lucide-react';
+import { MousePointer2, Eye, Unlock } from 'lucide-react';
 import { PanelActionButton } from '../../ui/PanelActionButton';
 
 interface VisibilityLockControlsProps {
@@ -10,9 +10,7 @@ interface VisibilityLockControlsProps {
   onToggleVisibility: (id: string) => void;
   onToggleLock: (id: string) => void;
   onSelect: (id: string, multiSelect?: boolean) => void;
-  hideLabel?: string;
   showLabel?: string;
-  lockLabel?: string;
   unlockLabel?: string;
   selectLabel?: string;
 }
@@ -21,6 +19,8 @@ interface VisibilityLockControlsProps {
  * Shared component for visibility, lock, and select controls.
  * Used by both SelectPanelItem and SelectPanelGroupItem to ensure
  * consistent behavior and appearance.
+ * 
+ * Only shows unlock button when locked, view button when hidden, and always shows select button.
  */
 export const VisibilityLockControls: React.FC<VisibilityLockControlsProps> = ({
   elementId,
@@ -29,9 +29,7 @@ export const VisibilityLockControls: React.FC<VisibilityLockControlsProps> = ({
   onToggleVisibility,
   onToggleLock,
   onSelect,
-  hideLabel = 'Hide',
   showLabel = 'Show',
-  lockLabel = 'Lock',
   unlockLabel = 'Unlock',
   selectLabel = 'Select',
 }) => {
@@ -43,18 +41,22 @@ export const VisibilityLockControls: React.FC<VisibilityLockControlsProps> = ({
 
   return (
     <HStack spacing={1}>
-      <PanelActionButton
-        label={isLocked ? unlockLabel : lockLabel}
-        icon={isLocked ? Unlock : Lock}
-        height="auto"
-        onClick={() => onToggleLock(elementId)}
-      />
-      <PanelActionButton
-        label={isHidden ? showLabel : hideLabel}
-        icon={isHidden ? Eye : EyeOff}
-        height="auto"
-        onClick={() => onToggleVisibility(elementId)}
-      />
+      {isLocked && (
+        <PanelActionButton
+          label={unlockLabel}
+          icon={Unlock}
+          height="auto"
+          onClick={() => onToggleLock(elementId)}
+        />
+      )}
+      {isHidden && (
+        <PanelActionButton
+          label={showLabel}
+          icon={Eye}
+          height="auto"
+          onClick={() => onToggleVisibility(elementId)}
+        />
+      )}
       <PanelActionButton
         label={selectLabel}
         icon={MousePointer2}

@@ -209,6 +209,91 @@ export function useFloatingContextMenuActions(
     }
   }, [context, elements]);
 
+  /**
+   * Helper to find the topmost parent group for an element.
+   * If element belongs to nested groups, returns the root group.
+   * If element has no parent, returns the element itself.
+   */
+  const findTopMostGroupForElement = useCallback((elementId: string): string => {
+    const elementMap = new Map(elements.map(el => [el.id, el]));
+    const element = elementMap.get(elementId);
+    
+    if (!element) return elementId;
+    
+    // If element has no parent, it's already at top level
+    if (!element.parentId) {
+      return elementId;
+    }
+    
+    // Walk up the hierarchy to find the topmost group
+    let topMostId = elementId;
+    let currentParentId: string | null | undefined = element.parentId;
+    
+    while (currentParentId) {
+      const parent = elementMap.get(currentParentId);
+      if (!parent) break;
+      
+      topMostId = parent.id;
+      currentParentId = parent.parentId;
+    }
+    
+    return topMostId;
+  }, [elements]);
+
+  // Hide selected elements action
+  // For elements that belong to groups, applies hide to the topmost parent group
+  const handleHideSelected = useCallback(() => {
+    if (!context || context.type !== 'multiselection' || !context.elementIds) return;
+    
+    // Track which IDs we've already processed to avoid duplicates
+    const processedIds = new Set<string>();
+    
+    context.elementIds.forEach(id => {
+      // Find the topmost group for this element
+      const topMostId = findTopMostGroupForElement(id);
+      
+      // Skip if we've already processed this top-level element/group
+      if (processedIds.has(topMostId)) return;
+      processedIds.add(topMostId);
+      
+      const element = elements.find(el => el.id === topMostId);
+      if (element) {
+        if (element.type === 'group') {
+          toggleGroupVisibility(topMostId);
+        } else if (element.type === 'path') {
+          toggleElementVisibility(topMostId);
+        }
+      }
+    });
+  }, [context, elements, toggleElementVisibility, toggleGroupVisibility, findTopMostGroupForElement]);
+
+  // Lock selected elements action
+  // For elements that belong to groups, applies lock to the topmost parent group
+  const handleLockSelected = useCallback(() => {
+    if (!context || context.type !== 'multiselection' || !context.elementIds) return;
+    
+    // Track which IDs we've already processed to avoid duplicates
+    const processedIds = new Set<string>();
+    
+    context.elementIds.forEach(id => {
+      // Find the topmost group for this element
+      const topMostId = findTopMostGroupForElement(id);
+      
+      // Skip if we've already processed this top-level element/group
+      if (processedIds.has(topMostId)) return;
+      processedIds.add(topMostId);
+      
+      const element = elements.find(el => el.id === topMostId);
+      if (element) {
+        if (element.type === 'group') {
+          toggleGroupLock(topMostId);
+        } else if (element.type === 'path') {
+          toggleElementLock(topMostId);
+        }
+      }
+    });
+  }, [context, elements, toggleElementLock, toggleGroupLock, findTopMostGroupForElement]);
+
   // Helper to generate arrange actions based on selection count
   const getArrangeActions = useCallback((): FloatingContextMenuAction[] => {
     // Determine count based on context type
@@ -419,6 +504,18 @@ export function useFloatingContextMenuActions(
             icon: UngroupIcon,
             onClick: () => ungroupSelectedGroups(),
           }] : []),
+          {
+            id: 'lock',
+            label: 'Lock',
+            icon: Lock,
+            onClick: handleLockSelected,
+          },
+          {
+            id: 'hide',
+            label: 'Hide',
+            icon: EyeOff,
+            onClick: handleHideSelected,
+          },
           {
             id: 'duplicate',
             label: 'Duplicate',

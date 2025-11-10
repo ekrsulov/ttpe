@@ -1,6 +1,6 @@
 import React, { memo, useState, useEffect } from 'react';
 import { Box, HStack, VStack, Text, useColorModeValue } from '@chakra-ui/react';
-import { ChevronDown, ChevronRight, Ungroup as UngroupIcon, Lock, EyeOff, MousePointer2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, Lock, EyeOff, MousePointer2 } from 'lucide-react';
 import type { GroupElement, PathData, Command, CanvasElement } from '../../types';
 import { useCanvasStore } from '../../store/canvasStore';
 import { PathThumbnail } from '../../ui/PathThumbnail';
@@ -31,7 +31,6 @@ const SelectPanelGroupItemComponent: React.FC<SelectPanelGroupItemProps> = ({
   elements,
 }) => {
   // Only subscribe to the specific actions we need
-  const ungroupGroupById = useCanvasStore(state => state.ungroupGroupById);
   const renameGroup = useCanvasStore(state => state.renameGroup);
   const setGroupExpanded = useCanvasStore(state => state.setGroupExpanded);
   const isElementHidden = useCanvasStore(state => state.isElementHidden);
@@ -165,12 +164,6 @@ const SelectPanelGroupItemComponent: React.FC<SelectPanelGroupItemProps> = ({
           </Text>
         </ConditionalTooltip>
         <HStack spacing={1} ml="auto">
-          <PanelActionButton
-            label="Ungroup"
-            icon={UngroupIcon}
-            onClick={() => ungroupGroupById(group.id)}
-            isDisabled={groupLocked}
-          />
           <VisibilityLockControls
             elementId={group.id}
             isHidden={groupHidden}
@@ -178,9 +171,7 @@ const SelectPanelGroupItemComponent: React.FC<SelectPanelGroupItemProps> = ({
             onToggleVisibility={toggleGroupVisibility}
             onToggleLock={toggleGroupLock}
             onSelect={handleSelectGroup}
-            hideLabel="Hide group"
             showLabel="Show group"
-            lockLabel="Lock group"
             unlockLabel="Unlock group"
             selectLabel="Select group"
           />

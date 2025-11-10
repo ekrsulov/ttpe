@@ -29,7 +29,7 @@ graph TB
     
     BottomBar --> UndoRedo[Undo/Redo]
     BottomBar --> ZoomControls[Zoom Controls]
-    BottomBar --> DeleteButton[Delete Button]
+    BottomBar --> ContextMenuButton[Context Menu Button]
     BottomBar --> PluginActions[Plugin Actions Optional]
     
     ToolButtons --> PluginManager[Plugin Manager]

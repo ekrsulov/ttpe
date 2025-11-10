@@ -13,6 +13,7 @@ const DEFAULT_GROUP_TRANSFORM: GroupData['transform'] = {
 interface GroupSliceHelpers {
   normalizeRootZIndices: (elements: CanvasElement[]) => CanvasElement[];
   hasSelectedAncestor: (element: CanvasElement, selectedIds: Set<string>, map: Map<string, CanvasElement>) => boolean;
+  findTopMostGroup: (element: CanvasElement, map: Map<string, CanvasElement>) => CanvasElement;
   getElementMap: (elements: CanvasElement[]) => Map<string, CanvasElement>;
   collectDescendants: (group: GroupElement, map: Map<string, CanvasElement>) => string[];
 }
@@ -62,6 +63,26 @@ const helpers: GroupSliceHelpers = {
       currentParent = currentParent.parentId ? map.get(currentParent.parentId) : undefined;
     }
     return false;
+  },
+  findTopMostGroup: (element, map) => {
+    // If element has no parent, it's already at top level
+    if (!element.parentId) {
+      return element;
+    }
+    
+    // Walk up the hierarchy to find the topmost group
+    let topMost = element;
+    let currentParentId: string | null | undefined = element.parentId;
+    
+    while (currentParentId) {
+      const parent = map.get(currentParentId);
+      if (!parent) break;
+      
+      topMost = parent;
+      currentParentId = parent.parentId;
+    }
+    
+    return topMost;
   },
   getElementMap: (elements) => new Map(elements.map((element) => [element.id, element])),
   collectDescendants: (group, map) => {
@@ -140,10 +161,22 @@ export const createGroupSlice: StateCreator<CanvasStore, [], [], GroupSlice> = (
     }
 
     const elementMap = helpers.getElementMap(state.elements);
-    const normalizedSelection = selectedIds
-      .map((id) => elementMap.get(id))
-      .filter((element): element is CanvasElement => Boolean(element))
-      .filter((element) => !helpers.hasSelectedAncestor(element, new Set(selectedIds), elementMap));
+    
+    // Replace each selected element with its topmost parent group (if it has one)
+    // This ensures that if a child element is selected, we group its root parent instead
+    const topMostElements = new Map<string, CanvasElement>();
+    selectedIds.forEach((id) => {
+      const element = elementMap.get(id);
+      if (!element) return;
+      
+      const topMost = helpers.findTopMostGroup(element, elementMap);
+      topMostElements.set(topMost.id, topMost);
+    });
+    
+    // Now filter out elements that have selected ancestors
+    const selectedSet = new Set(Array.from(topMostElements.keys()));
+    const normalizedSelection = Array.from(topMostElements.values())
+      .filter((element) => !helpers.hasSelectedAncestor(element, selectedSet, elementMap));
 
     if (normalizedSelection.length < 2) {
       return null;

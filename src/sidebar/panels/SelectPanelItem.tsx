@@ -1,10 +1,9 @@
 import React, { memo } from 'react';
 import { VStack, HStack, Text, Icon, useColorModeValue } from '@chakra-ui/react';
-import { Copy, Clipboard, Group as GroupIcon, RulerDimensionLine, MoveUpLeft, MoveDownRight } from 'lucide-react';
+import { RulerDimensionLine, MoveUpLeft, MoveDownRight } from 'lucide-react';
 import { extractSubpaths } from '../../utils/path';
 import type { PathData } from '../../types';
 import { PathThumbnail } from '../../ui/PathThumbnail';
-import { PanelActionButton } from '../../ui/PanelActionButton';
 import { useCanvasStore } from '../../store/canvasStore';
 import { haveBoundsChanged, areBboxesEqual } from '../../utils/comparators/bounds';
 import { getItemThumbnailData } from '../../utils/selectPanelHelpers';
@@ -34,12 +33,8 @@ const SelectPanelItemComponent: React.FC<SelectPanelItemProps> = ({
   isHidden,
   directHidden,
   directLocked,
-  canGroup,
-  onDuplicate,
-  onCopyPath,
 }) => {
   // Only subscribe to the specific actions we need
-  const createGroup = useCanvasStore(state => state.createGroupFromSelection);
   const isVirtualShiftActive = useCanvasStore(state => state.isVirtualShiftActive);
   
   // Use shared hook for common actions
@@ -56,7 +51,6 @@ const SelectPanelItemComponent: React.FC<SelectPanelItemProps> = ({
 
   const elementId = item.element.id;
   const subpathIndex = item.type === 'subpath' ? item.subpathIndex : undefined;
-  const canCopyPath = item.type === 'element' && item.element.type === 'path';
   const selectedBg = useColorModeValue('gray.200', 'gray.600');
   const defaultBg = useColorModeValue('gray.50', 'whiteAlpha.100');
   const baseTextColor = useColorModeValue('gray.800', 'gray.100');
@@ -176,51 +170,20 @@ const SelectPanelItemComponent: React.FC<SelectPanelItemProps> = ({
           </HStack>
         </ConditionalTooltip>
       </VStack>
-      <VStack spacing={1} align="flex-end">
-        {/* Fila 1: Group (si aplica), Duplicate, Clipboard */}
-        <HStack spacing={1}>
-          {item.type === 'element' && isSelected && (
-            <PanelActionButton
-              label="Group selected elements"
-              icon={GroupIcon}
-              height="auto"
-              onClick={() => createGroup()}
-              isDisabled={!canGroup}
-            />
-          )}
-          <PanelActionButton
-            label="Duplicate"
-            icon={Copy}
-            height="auto"
-            onClick={() => onDuplicate(item)}
-          />
-          {item.type === 'element' && (
-            <PanelActionButton
-              label="Copy path to clipboard"
-              icon={Clipboard}
-              height="auto"
-              onClick={() => onCopyPath(item)}
-              isDisabled={!canCopyPath}
-            />
-          )}
-        </HStack>
-        {/* Fila 2: Lock, View, Select - using shared component */}
-        {item.type === 'element' && (
-          <VisibilityLockControls
-            elementId={elementId}
-            isHidden={directHidden}
-            isLocked={directLocked}
-            onToggleVisibility={toggleElementVisibility}
-            onToggleLock={toggleElementLock}
-            onSelect={handleSelectElement}
-            hideLabel="Hide element"
-            showLabel="Show element"
-            lockLabel="Lock element"
-            unlockLabel="Unlock element"
-            selectLabel="Select element"
-          />
-        )}
-      </VStack>
+      {/* Only show controls for element type (not subpaths) */}
+      {item.type === 'element' && (
+        <VisibilityLockControls
+          elementId={elementId}
+          isHidden={directHidden}
+          isLocked={directLocked}
+          onToggleVisibility={toggleElementVisibility}
+          onToggleLock={toggleElementLock}
+          onSelect={handleSelectElement}
+          showLabel="Show element"
+          unlockLabel="Unlock element"
+          selectLabel="Select element"
+        />
+      )}
     </HStack>
   );
 };
