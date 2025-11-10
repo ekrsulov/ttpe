@@ -11,6 +11,10 @@ All notable changes to VectorNest will be documented here.
 ## [Unreleased]
 
 ### Added
+- **Multi-Selection Lock & Hide**: Added Lock and Hide actions to the floating context menu for multi-selection
+  - Applies lock/hide to topmost parent groups when elements belong to groups
+  - Correctly handles nested group hierarchies by finding the root group
+  - Prevents duplicate operations when multiple elements from the same group are selected
 - **Recursive Group Duplication**: Duplicate on Drag now supports duplicating entire group hierarchies, maintaining parent-child relationships when duplicating elements within groups
 - **Multi-Selection Duplication**: Duplicate on Drag now duplicates all selected elements when dragging any selected element, enabling bulk duplication workflows
 - **Enhanced Group Thumbnails**: Select Panel group thumbnails now include visual previews of all paths within nested groups, providing better visual representation of complex group structures
@@ -46,6 +50,14 @@ All notable changes to VectorNest will be documented here.
 - **Action Bars Optimization**: BottomActionBar and TopActionBar now avoid expensive calculations during drag operations to prevent UI lag
 
 ### Changed
+- **Select Panel UI Simplification**: Streamlined element and group cards in the Select Panel
+  - Removed Group, Duplicate, and Copy to Clipboard buttons from element cards (actions available via context menu)
+  - Removed Ungroup button from group cards (action available via context menu)
+  - Visibility and Lock controls now show conditionally:
+    - Unlock button only appears when element/group is locked
+    - View button only appears when element/group is hidden
+    - Select button always visible (disabled if locked or hidden)
+  - Cleaner, less cluttered interface focusing on core selection and visibility controls
 - Migrated to React 19
 - Updated to TypeScript 5.8
 - Improved performance with memoization

@@ -293,13 +293,36 @@ const currentStrokeColor = useSelectedPathProperty(
 
 - **Element list**: Hierarchical tree view of canvas elements
 - **Group support**: Nested groups with expand/collapse
-- **Selection**: Click "Select group" or "Select element" buttons to select
+- **Selection**: Click "Select" button to select elements or groups
   - Hold **Shift** (or enable Virtual Shift) while clicking to add/remove from selection
   - Without Shift: Replaces current selection
-- **Visibility toggles**: Eye icon to show/hide elements
-- **Lock toggles**: Lock icon to prevent editing
-- **Group operations**: Create group, ungroup, rename
+
+#### Element Cards (Paths and Subpaths)
+
+Element cards display information about paths and their subpaths with the following controls:
+
+**Visibility & Lock Controls:**
+- **Unlock button**: Only shown when element is locked - click to unlock
+- **View button**: Only shown when element is hidden - click to show
+- **Select button**: Always visible - click to select the element (disabled if locked or hidden)
+
+#### Group Cards
+
+Group cards show group information with the following controls:
+
+**Visibility & Lock Controls:**
+- **Unlock button**: Only shown when group is locked - click to unlock
+- **View button**: Only shown when group is hidden - click to show
+- **Select button**: Always visible - click to select the group (disabled if locked or hidden)
+
+**Removed controls** (simplified UI):
+- Ungroup button has been removed from group cards
+- Ungroup action is now available through the floating context menu
+
+**Other features:**
 - **Element count badges**: Show number of children in groups
+- **Rename**: Click on group name to edit
+- **Expand/collapse**: Toggle to show/hide group children
 
 **When visible**: Available in most modes, but most relevant in `select` mode
 

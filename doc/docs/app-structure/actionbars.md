@@ -313,6 +313,14 @@ The floating context menu provides different actions based on the current select
 - **Optical Alignment** (for exactly 2 paths)
 - **Group**: Create group from selection
 - **Ungroup**: Ungroup selected groups (if any)
+- **Lock**: Lock all selected elements
+  - For elements that belong to groups, locks the topmost parent group
+  - Handles nested groups correctly by finding the root group
+  - Avoids duplicate operations when multiple elements from the same group are selected
+- **Hide**: Hide all selected elements
+  - For elements that belong to groups, hides the topmost parent group
+  - Handles nested groups correctly by finding the root group
+  - Avoids duplicate operations when multiple elements from the same group are selected
 - **Duplicate**: Create independent copies
 - **Copy to Clipboard**: Copy elements to clipboard
 - **Delete**: Remove selected elements
