@@ -13,6 +13,8 @@ export interface PanelProps {
   icon?: React.ReactNode
   /** Panel title */
   title?: string
+  /** Hide header (title & icon) entirely */
+  hideHeader?: boolean
   /** Panel content */
   children: React.ReactNode
   /** Optional actions in header (e.g., badges, buttons) */
@@ -28,6 +30,7 @@ export interface PanelProps {
 export const Panel: React.FC<PanelProps> = ({
   icon,
   title,
+  hideHeader = false,
   children,
   headerActions,
   defaultOpen = true,
@@ -45,7 +48,7 @@ export const Panel: React.FC<PanelProps> = ({
         <RenderCountBadgeWrapper componentName={`Panel: ${title || 'Untitled'}`} position="top-left" />
       )}
       
-      {(icon || title) && (
+      {!hideHeader && (icon || title) && (
         <PanelHeader
           icon={icon}
           title={title}

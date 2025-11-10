@@ -3,7 +3,8 @@ import type { CanvasStore } from '../../store/canvasStore';
 import { createCurvesPluginSlice } from './slice';
 import { getToolMetadata } from '../toolMetadata';
 import { CurvesRenderer } from './CurvesRenderer';
-import { CurvesExpandablePanel } from './CurvesExpandablePanel';
+import React from 'react';
+import { CurvesPanel } from './CurvesPanel';
 import { getGlobalCurvesController } from './globalController';
 
 const curvesSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
@@ -71,7 +72,7 @@ export const curvesPlugin: PluginDefinition<CanvasStore> = {
       },
     },
   },
-  expandablePanel: CurvesExpandablePanel,
+  expandablePanel: () => React.createElement(CurvesPanel, { hideTitle: true }),
 };
 
 // Re-export from other files for external use

@@ -8,7 +8,9 @@ import { PanelToggle } from '../../ui/PanelToggle';
 import { NumberInput } from '../../ui/NumberInput';
 import { usePanelToggleHandlers } from '../../hooks/usePanelToggleHandlers';
 
-export const TransformationPanel: React.FC = () => {
+interface TransformationPanelProps { hideTitle?: boolean }
+
+export const TransformationPanel: React.FC<TransformationPanelProps> = ({ hideTitle = false }) => {
   // Use individual selectors to prevent re-renders on unrelated changes
   const selectedIds = useCanvasStore(state => state.selectedIds);
   const selectedSubpaths = useCanvasStore(state => state.selectedSubpaths);
@@ -100,6 +102,7 @@ export const TransformationPanel: React.FC = () => {
   return (
     <Panel 
       title="Transform"
+      hideHeader={hideTitle}
       headerActions={isSubpathMode && (
         <Tag size="sm" colorScheme="purple" fontSize="xs">
           Subpath

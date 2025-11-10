@@ -249,6 +249,8 @@ const getAllElementsShareSameParentGroup = (
 };
 
 
+import { EditorPanel } from '../sidebar/panels/EditorPanel';
+
 const selectPlugin: PluginDefinition<CanvasStore> = {
   id: 'select',
   metadata: getToolMetadata('select'),
@@ -510,6 +512,8 @@ const selectPlugin: PluginDefinition<CanvasStore> = {
       ),
     },
   ],
+  // Show the same styling controls as the Editor panel in the bottom expandable panel
+  expandablePanel: EditorPanel,
 };
 
 const panPlugin: PluginDefinition<CanvasStore> = {

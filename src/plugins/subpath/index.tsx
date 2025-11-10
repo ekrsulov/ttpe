@@ -4,6 +4,7 @@ import { getToolMetadata } from '../toolMetadata';
 import { createSubpathPluginSlice } from './slice';
 import type { SubpathPluginSlice } from './slice';
 import { SubPathOperationsPanel } from './SubPathOperationsPanel';
+import { EditorPanel } from '../../sidebar/panels/EditorPanel';
 import { SubpathOverlay } from './SubpathOverlay';
 import type { PathData } from '../../types';
 import { performPathSimplify, performSubPathReverse } from './actions';
@@ -79,6 +80,8 @@ export const subpathPlugin: PluginDefinition<CanvasStore> = {
     },
   ],
   slices: [subpathSliceFactory],
+  // Reuse Editor styling controls for subpath editing in the bottom expandable panel
+  expandablePanel: EditorPanel,
   createApi: ({ store }) => ({
     performPathSimplify: () => {
       performPathSimplify(store.getState);

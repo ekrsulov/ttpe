@@ -14,7 +14,9 @@ import { Panel } from '../../ui/Panel';
 import { logger } from '../../utils';
 import { createPropertyUpdater, createPropertyGetters, preventSpacebarPropagation } from '../../utils/panelHelpers';
 
-export const TextPanel: React.FC = () => {
+interface TextPanelProps { hideTitle?: boolean }
+
+export const TextPanel: React.FC<TextPanelProps> = ({ hideTitle = false }) => {
   // Use individual selectors to prevent re-renders on unrelated changes
   const text = useCanvasStore(state => state.text);
   const updateTextState = useCanvasStore(state => state.updateTextState);
@@ -61,8 +63,17 @@ export const TextPanel: React.FC = () => {
   };
 
   return (
-    <Panel title="Text">
+    <Panel title="Text" hideHeader={hideTitle}>
       <VStack spacing={2} align="stretch">
+        {/* Font Selector */}
+        <FontSelector
+          value={current.fontFamily}
+          onChange={updateProperty('fontFamily')}
+          fonts={availableFonts}
+          disabled={isScanningFonts}
+          loading={isScanningFonts}
+        />
+
         {/* Text Input */}
         <Input
           value={current.text}
@@ -76,15 +87,6 @@ export const TextPanel: React.FC = () => {
             borderColor: 'gray.600',
             boxShadow: '0 0 0 1px var(--chakra-colors-gray-600)'
           }}
-        />
-
-        {/* Font Selector */}
-        <FontSelector
-          value={current.fontFamily}
-          onChange={updateProperty('fontFamily')}
-          fonts={availableFonts}
-          disabled={isScanningFonts}
-          loading={isScanningFonts}
         />
 
         {/* Font Size and Style Controls */}

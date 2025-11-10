@@ -3,8 +3,8 @@ import type { CanvasStore } from '../../store/canvasStore';
 import { getToolMetadata } from '../toolMetadata';
 import { createShapePluginSlice } from './slice';
 import type { ShapePluginSlice } from './slice';
+import React from 'react';
 import { ShapePanel } from './ShapePanel';
-import { ShapeExpandablePanel } from './ShapeExpandablePanel';
 import { ShapePreview } from './ShapePreview';
 import { BlockingOverlay } from '../../overlays';
 import { createShape } from './actions';
@@ -76,7 +76,7 @@ export const shapePlugin: PluginDefinition<CanvasStore> = {
       createShape(startPoint, endPoint, store.getState);
     },
   }),
-  expandablePanel: ShapeExpandablePanel,
+  expandablePanel: () => React.createElement(ShapePanel, { hideTitle: true }),
 };
 
 export type { ShapePluginSlice };

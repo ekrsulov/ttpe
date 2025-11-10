@@ -5,7 +5,9 @@ import { Panel } from '../../ui/Panel';
 import { SliderControl } from '../../ui/SliderControl';
 import { ToggleButton } from '../../ui/ToggleButton';
 
-export const PencilPanel: React.FC = () => {
+interface PencilPanelProps { hideTitle?: boolean }
+
+export const PencilPanel: React.FC<PencilPanelProps> = ({ hideTitle = false }) => {
   // Use individual selectors to prevent re-renders on unrelated changes
   const pencil = useCanvasStore(state => state.pencil);
   const updatePencilState = useCanvasStore(state => state.updatePencilState);
@@ -15,7 +17,7 @@ export const PencilPanel: React.FC = () => {
   };
 
   return (
-    <Panel title="Pencil">
+    <Panel title="Pencil" hideHeader={hideTitle}>
       <VStack spacing={2} align="stretch">
         {/* Path Mode Selection */}
         <HStack spacing={1} justify="space-between">

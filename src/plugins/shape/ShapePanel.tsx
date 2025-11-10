@@ -7,7 +7,9 @@ import { Square, Circle, Triangle, Minus, RectangleHorizontal, Diamond, Heart, t
 import { Panel } from '../../ui/Panel';
 import type { ShapeType } from './slice';
 
-export const ShapePanel: React.FC = () => {
+interface ShapePanelProps { hideTitle?: boolean }
+
+export const ShapePanel: React.FC<ShapePanelProps> = ({ hideTitle = false }) => {
   // Use individual selectors to prevent re-renders on unrelated changes
   const shape = useCanvasStore(state => state.shape);
   const updateShapeState = useCanvasStore(state => state.updateShapeState);
@@ -31,7 +33,7 @@ export const ShapePanel: React.FC = () => {
   };
 
   return (
-    <Panel title="Shape">
+    <Panel title="Shape" hideHeader={hideTitle}>
       <VStack spacing={3} align="stretch">
         <HStack spacing={1} justify="space-between" w="full">
           {shapes.map((shapeItem) => {

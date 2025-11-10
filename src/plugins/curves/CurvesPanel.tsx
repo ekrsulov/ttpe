@@ -14,7 +14,9 @@ import { PanelStyledButton } from '../../ui/PanelStyledButton';
 import { useCanvasStore } from '../../store/canvasStore';
 import { useCanvasCurves } from './useCanvasCurves';
 
-const CurvesPanelComponent: React.FC = () => {
+interface CurvesPanelProps { hideTitle?: boolean }
+
+const CurvesPanelComponent: React.FC<CurvesPanelProps> = ({ hideTitle = false }) => {
   // Only subscribe to activePlugin to control visibility
   const activePlugin = useCanvasStore(state => state.activePlugin);
   
@@ -52,7 +54,7 @@ const CurvesPanelComponent: React.FC = () => {
   };
 
   return (
-    <Panel title="Curves">
+    <Panel title="Curves" hideHeader={hideTitle}>
       <VStack spacing={3} align="stretch">
         {/* Selected Point Section */}
         {hasSelectedPoint && selectedPoint && (
