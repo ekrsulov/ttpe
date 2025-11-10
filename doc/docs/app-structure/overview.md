@@ -55,7 +55,7 @@ graph TB
             end
         end
         
-        BottomBar[Bottom Action Bar<br/>Undo/Redo/Zoom/Delete]
+        BottomBar[Bottom Action Bar<br/>Undo/Redo/Zoom/Actions]
     end
     
     TopBar -.-> CanvasMain
@@ -89,7 +89,7 @@ App.tsx
 ├── Bottom Action Bar (Floating, bottom)
 │   ├── Undo/Redo Buttons (with counters)
 │   ├── Zoom Controls (Out/Reset/In)
-│   └── Delete Button (with counter)
+│   └── Context Menu Button (with counter)
 │
 ├── Sidebar (Right, pinned or drawer)
 │   ├── Resize Handle (Pinned mode, desktop)
@@ -406,7 +406,7 @@ src/
 │                                                                 │
 │  ╔═══════════════════════════════════════════════════════════╗  │
 │  ║ Bottom Action Bar (Floating)                              ║  │
-│  ║ [Undo][Redo] | [ZoomOut][Reset][ZoomIn] | [Delete]        ║  │
+│  ║ [Undo][Redo] | [ZoomOut][Reset][ZoomIn] | [Actions]        ║  │
 │  ╚═══════════════════════════════════════════════════════════╝  │
 └─────────────────────────────────────────────────────────────────┘
 ```

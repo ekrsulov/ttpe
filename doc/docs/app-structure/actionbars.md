@@ -208,7 +208,7 @@ box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
 ## Bottom Action Bar
 
-The Bottom Action Bar (`/src/ui/BottomActionBar.tsx`) provides **undo/redo**, **zoom controls**, and **element deletion**.
+The Bottom Action Bar (`/src/ui/BottomActionBar.tsx`) provides **undo/redo**, **zoom controls**, and **contextual actions** for selected elements.
 
 ### Components
 
@@ -284,25 +284,73 @@ Single section with three zoom buttons:
 Keyboard shortcuts for zoom controls (Ctrl/Cmd + Plus, Ctrl/Cmd + Minus, Ctrl/Cmd + 0) are not currently implemented.
 :::
 
-#### Delete Button
+#### Context Menu Button
 
-Button for deleting selected elements:
+Button that opens a floating context menu with actions for selected elements:
 
 ```tsx
-<ToolbarIconButton
-  icon={Trash2}
-  label="Delete"
-  onClick={deleteSelected}
-  counter={selectedIds.length}
-  counterColor="red"
-  isDisabled={selectedIds.length === 0}
-/>
+<FloatingContextMenuButton />
 ```
 
-- **Counter badge**: Shows number of selected elements (red color)
+- **Counter badge**: Shows number of selected elements
 - **Disabled state**: Grayed out when nothing selected
-- **Keyboard shortcut**: `Delete` or `Backspace` key
-- **Confirmation**: No confirmation dialog (undo available)
+- **Context menu**: Opens a popover with contextual actions based on selection type
+- **Responsive**: Adapts menu layout for mobile vs desktop
+
+#### Context Menu Actions
+
+The floating context menu provides different actions based on the current selection context:
+
+##### Multi-Selection (2+ elements)
+
+- **Arrange** submenu:
+  - Align: Left, Center, Right, Top, Middle, Bottom
+  - Match: Width/Height to Largest/Smallest
+  - Distribute: Horizontally, Vertically
+- **Path Operations** submenu (when 2+ paths selected):
+  - Union, Union (PaperJS)
+  - Subtract, Intersect, Exclude, Divide (for exactly 2 paths)
+- **Optical Alignment** (for exactly 2 paths)
+- **Group**: Create group from selection
+- **Ungroup**: Ungroup selected groups (if any)
+- **Duplicate**: Create independent copies
+- **Copy to Clipboard**: Copy elements to clipboard
+- **Delete**: Remove selected elements
+
+##### Single Group
+
+- **Arrange** submenu: Alignment, matching, distribution
+- **Ungroup**: Dissolve the group
+- **Lock/Unlock**: Toggle group editing lock
+- **Show/Hide**: Toggle group visibility
+- **Duplicate**: Create independent copy
+- **Copy to Clipboard**: Copy group to clipboard
+- **Delete**: Remove the group
+
+##### Single Path
+
+- **Arrange** submenu: Alignment, matching, distribution
+- **Path Operations** submenu (when combined with other paths)
+- **Split Subpaths** (if path has multiple subpaths)
+- **Group**: Create group from selection
+- **Lock/Unlock**: Toggle path editing lock
+- **Show/Hide**: Toggle path visibility
+- **Duplicate**: Create independent copy
+- **Copy to Clipboard**: Copy path to clipboard
+- **Delete**: Remove the path
+
+##### Subpath Selection
+
+- **Arrange** submenu: Alignment, matching, distribution
+- **Reverse Direction**: Reverse subpath drawing direction
+- **Duplicate**: Create independent copy
+- **Copy to Clipboard**: Copy subpath to clipboard
+- **Delete**: Remove selected subpaths
+
+##### Point/Anchor Selection
+
+- **Arrange** submenu: Alignment, distribution (for multiple points)
+- **Delete**: Remove selected points
 
 ### Props
 

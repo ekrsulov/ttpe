@@ -26,9 +26,9 @@ All custom hooks are located in `/src/hooks/` and follow React hooks conventions
 **Location**: `/src/hooks/useDeletionActions.ts`
 
 **Use Cases**:
-- Delete button in Bottom Action Bar
+- Context menu delete actions in Bottom Action Bar
 - Keyboard shortcuts (Delete/Backspace keys)
-- Context menu delete actions
+- Other delete operations
 
 **Interface**:
 
