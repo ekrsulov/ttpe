@@ -1,19 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import {
-  Box,
-  Input,
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-  PopoverBody,
-  Button,
-  InputGroup,
-  InputRightElement,
-  Text,
-  useDisclosure,
-  Badge
-} from '@chakra-ui/react';
-import { ChevronDown } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Box } from '@chakra-ui/react';
 import { isTTFFont } from '../utils/ttfFontUtils';
 
 interface FontSelectorProps {
@@ -31,38 +17,46 @@ export const FontSelector: React.FC<FontSelectorProps> = ({
   disabled = false,
   loading = false
 }) => {
-  const { isOpen, onOpen, onClose } = useDisclosure();
-  const [searchTerm, setSearchTerm] = useState('');
-  const menuListRef = useRef<HTMLDivElement>(null);
-  const selectedItemRef = useRef<HTMLButtonElement>(null);
+  const ITEM_HEIGHT = 28; // px, fixed to ensure exactly 5 visible rows
 
-  // Filter fonts based on search term
-  const filteredFonts = fonts.filter(font =>
-    font.toLowerCase().includes(searchTerm.toLowerCase())
+  const selectedIndex = useMemo(
+    () => Math.max(0, fonts.findIndex((f) => f === value)),
+    [fonts, value]
   );
+  const [highlightIndex, setHighlightIndex] = useState<number>(selectedIndex);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const selectedRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to selected font when dropdown opens
   useEffect(() => {
-    if (isOpen && selectedItemRef.current) {
-      // Use setTimeout to ensure the DOM has been rendered
-      setTimeout(() => {
-        selectedItemRef.current?.scrollIntoView({ 
-          block: 'center',
-          behavior: 'smooth'
-        });
-      }, 50);
+    setHighlightIndex(selectedIndex);
+  }, [selectedIndex]);
+
+  // Ensure selected item stays in view
+  useEffect(() => {
+    if (selectedRef.current) {
+      selectedRef.current.scrollIntoView({ block: 'nearest' });
     }
-  }, [isOpen]);
+  }, [highlightIndex]);
 
-  const handleFontSelect = (font: string) => {
-    onChange(font);
-    onClose();
-    setSearchTerm('');
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-    if (!isOpen) onOpen();
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (disabled) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlightIndex((i) => Math.min(fonts.length - 1, i + 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlightIndex((i) => Math.max(0, i - 1));
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      setHighlightIndex(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      setHighlightIndex(fonts.length - 1);
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      const font = fonts[highlightIndex];
+      if (font) onChange(font);
+    }
   };
 
   if (loading) {
@@ -72,10 +66,11 @@ export const FontSelector: React.FC<FontSelectorProps> = ({
         p="4px 8px"
         border="1px solid"
         borderColor="gray.300"
-        borderRadius="full"
+        borderRadius="md"
         fontSize="xs"
         bg="gray.50"
         color="gray.600"
+        _dark={{ bg: 'gray.900', borderColor: 'whiteAlpha.300', color: 'gray.300' }}
       >
         Loading fonts...
       </Box>
@@ -83,133 +78,63 @@ export const FontSelector: React.FC<FontSelectorProps> = ({
   }
 
   return (
-    <Popover
-      isOpen={isOpen}
-      onClose={() => { onClose(); setSearchTerm(''); }}
-      placement="bottom-start"
-      strategy="absolute"
-      closeOnBlur={true}
-      closeOnEsc={true}
+    <Box
+      ref={containerRef}
+      role="listbox"
+      aria-activedescendant={`font-opt-${highlightIndex}`}
+      tabIndex={disabled ? -1 : 0}
+      onKeyDown={handleKeyDown}
+      width="100%"
+      border="1px solid"
+      borderColor="gray.300"
+      borderRadius="md"
+      fontSize="sm"
+      bg="white"
+      color="inherit"
+      _dark={{ bg: 'gray.800', borderColor: 'whiteAlpha.300' }}
+      overflowY="auto"
+      maxH={`${ITEM_HEIGHT * 5}px`}
+      height={`${ITEM_HEIGHT * 5}px`}
+      cursor={disabled ? 'not-allowed' : 'default'}
+      opacity={disabled ? 0.6 : 1}
     >
-      <PopoverTrigger>
-        <Box
-          position="relative"
-          flex={1}
-          onClick={disabled ? undefined : onOpen}
-          cursor={disabled ? 'not-allowed' : 'pointer'}
-        >
-          <InputGroup size="sm" borderRadius="full" overflow="hidden">
-            <Input
-              value={isOpen ? searchTerm : value}
-              onChange={handleInputChange}
-              onFocus={onOpen}
-              placeholder={isOpen ? "Search fonts..." : value}
-              isDisabled={disabled}
-              fontSize="sm"
-              h="20px"
-              bg={disabled ? 'gray.50' : 'white'}
-              _dark={{
-                bg: disabled ? 'gray.900' : 'gray.800',
-                borderColor: 'whiteAlpha.300',
-                _hover: { borderColor: 'whiteAlpha.400' }
-              }}
-              borderColor="gray.300"
-              borderRadius="full"
-              _hover={{ borderColor: 'gray.400' }}
-              _focus={{ borderColor: 'gray.600', boxShadow: '0 0 0 1px var(--chakra-colors-gray-600)' }}
-            />
-            <InputRightElement h="full">
-              <Box color="gray.600" _dark={{ color: 'gray.400' }}>
-                <ChevronDown
-                  size={14}
-                  style={{
-                    transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                    transition: 'transform 0.2s'
-                  }}
-                />
-              </Box>
-            </InputRightElement>
-          </InputGroup>
-        </Box>
-      </PopoverTrigger>
-
-      <PopoverContent
-        ref={menuListRef}
-        maxH="200px"
-        overflowY="auto"
-        maxW="240px"
-        zIndex={1500}
-        bg="white"
-        border="1px solid"
-        borderColor="gray.200"
-        borderRadius="md"
-        boxShadow="lg"
-        _dark={{ bg: 'gray.800', borderColor: 'whiteAlpha.300' }}
-      >
-        <PopoverBody p={0}>
-          {filteredFonts.length === 0 ? (
-            <Box p={2} textAlign="center">
-              <Text fontSize="xs" color="gray.600" _dark={{ color: 'gray.400' }}>
-                No fonts found
-              </Text>
-            </Box>
-          ) : (
-            filteredFonts.map((font) => (
-              <Button
-                key={font}
-                ref={font === value ? selectedItemRef : null}
-                data-selected={font === value ? "true" : undefined}
-                onClick={() => handleFontSelect(font)}
-                fontSize="sm"
-                fontFamily={font}
-                variant="ghost"
-                justifyContent="flex-start"
-                h="32px"
-                w="full"
-                bg={font === value ? 'gray.200' : 'transparent'}
-                _dark={{
-                  bg: font === value ? 'gray.700' : 'transparent'
-                }}
-                _hover={{ bg: 'gray.50', _dark: { bg: 'whiteAlpha.100' } }}
-                title={font}
-                borderRadius="0"
-              >
-                <Text
-                  flex={1}
-                  fontFamily={font}
-                  overflow="hidden"
-                  textOverflow="ellipsis"
-                  whiteSpace="nowrap"
-                >
-                  {font}
-                </Text>
-                {isTTFFont(font) && (
-                  <Badge 
-                    colorScheme="purple" 
-                    fontSize="9px"
-                    ml={2}
-                    px={1.5}
-                    py={0.5}
-                    borderRadius="sm"
-                  >
-                    TTF
-                  </Badge>
-                )}
-                {font === value && (
-                  <Text
-                    color="gray.600"
-                    fontSize="xs"
-                    fontWeight="bold"
-                    ml={2}
-                  >
-                    ✓
-                  </Text>
-                )}
-              </Button>
-            ))
-          )}
-        </PopoverBody>
-      </PopoverContent>
-    </Popover>
+      {fonts.map((font, idx) => {
+        const isSelected = font === value;
+        const isHighlighted = idx === highlightIndex;
+        return (
+          <Box
+            id={`font-opt-${idx}`}
+            key={font}
+            ref={isHighlighted ? selectedRef : undefined}
+            role="option"
+            aria-selected={isSelected}
+            onMouseEnter={() => setHighlightIndex(idx)}
+            onClick={() => !disabled && onChange(font)}
+            display="flex"
+            alignItems="center"
+            height={`${ITEM_HEIGHT}px`
+            }
+            px={2}
+            // Separator between items
+            borderBottom={idx < fonts.length - 1 ? '1px solid' : 'none'}
+            borderColor="gray.200"
+            // Visual states
+            bg={isHighlighted ? (isSelected ? 'gray.300' : 'gray.100') : (isSelected ? 'gray.200' : 'transparent')}
+            _dark={{
+              borderColor: 'whiteAlpha.200',
+              ...(isHighlighted
+                ? { bg: isSelected ? 'gray.600' : 'gray.700' }
+                : { bg: isSelected ? 'gray.700' : 'transparent' }
+              ),
+            }}
+            fontFamily={font}
+            title={font}
+            pointerEvents={disabled ? 'none' : 'auto'}
+          >
+            {isTTFFont(font) ? `${font} (TTF)` : font}
+          </Box>
+        );
+      })}
+    </Box>
   );
 };
