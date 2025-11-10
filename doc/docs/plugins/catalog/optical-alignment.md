@@ -98,9 +98,20 @@ api?.applyOpticalAlignment();
 
 ## Edge Cases & Limitations
 
-- Implementation-specific constraints
-- Performance considerations for large datasets
-- Browser compatibility notes (if any)
+### Contrast Requirements
+
+The visual center algorithm requires sufficient contrast between the content and background to accurately detect visual weight distribution. The system automatically handles this:
+
+- **Container with fill**: Uses the container's fill color as background
+- **Container without fill + dark content**: Uses white background (default)
+- **Container without fill + light content** (white, light grays, etc.): Automatically uses dark background (#333333) for proper contrast
+
+This ensures accurate visual center calculation regardless of color combinations.
+
+### Performance Considerations
+
+- Visual center calculation involves pixel analysis and may take longer with very complex paths
+- Batch operations (Apply All) process multiple pairs sequentially
 
 ## Related
 

@@ -74,6 +74,12 @@ Not currently. Undo/Redo are available via buttons in the Bottom Action Bar.
 
 Not in the UI, but plugins can register custom shortcuts. See [Keyboard Shortcuts Types](./types/shortcuts).
 
+## Features
+
+### Why does "Apply Visual Center" sometimes not work as expected?
+
+The visual center algorithm requires sufficient contrast between content and background to detect visual weight. If your content has white or very light strokes/fills and the container has no fill, the system automatically uses a dark background for proper contrast detection. This ensures accurate visual center calculation instead of falling back to geometric center.
+
 ## Troubleshooting
 
 See [Troubleshooting](./troubleshooting) page for common issues.

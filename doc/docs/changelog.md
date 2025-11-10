@@ -82,6 +82,11 @@ All notable changes to VectorNest will be documented here.
 - Improved performance with memoization
 
 ### Fixed
+- **Visual Center Algorithm**: Fixed "Apply Visual Center" to correctly calculate visual center instead of geometric center when content has white/light stroke and container has no fill
+  - Added intelligent background color detection to ensure contrast between content and background
+  - System now uses dark background (#333333) when content has light colors (white, light grays, etc.)
+  - Prevents the algorithm from falling back to geometric center due to lack of contrast
+  - Applies to all visual center operations including batch alignment
 - Various selection edge cases
 - Zoom behavior on mobile
 - Keyboard shortcut conflicts
