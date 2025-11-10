@@ -500,14 +500,36 @@ function ExpandableToolPanel({ activePlugin, sidebarWidth }) {
 - Returns `null` if plugin doesn't exist or has no expandable panel
 - Used by `ExpandableToolPanel` wrapper to display tool-specific controls
 - Panels typically shown when sidebar is unpinned for quick access
+ - Recommended: point to existing sidebar panels with their header hidden to avoid duplication
 
-**Panel Registration**:
+**Panel Registration (recommended pattern)**:
 ```typescript
+// Reuse the sidebar panel component in the expandable area without a header
 export const shapePlugin: PluginDefinition<CanvasStore> = {
   id: 'shape',
   metadata: { label: 'Shape', icon: ShapeIcon },
-  expandablePanel: ShapeExpandablePanel, // This component is returned
+  // If this file is .ts (not .tsx), prefer React.createElement to avoid JSX parsing issues
+  expandablePanel: () => React.createElement(ShapePanel, { hideTitle: true }),
   // ... other properties
+};
+
+// Special case (Edit): use a wrapper that maps store state/actions to props
+export const editPlugin: PluginDefinition<CanvasStore> = {
+  id: 'edit',
+  metadata: { label: 'Edit', icon: EditIcon },
+  expandablePanel: EditExpandablePanelWrapper, // returns <EditPanel {...props} />
+};
+
+// Select/Subpath use the transversal Editor panel content in the expandable area
+export const selectPlugin: PluginDefinition<CanvasStore> = {
+  id: 'select',
+  metadata: { label: 'Select', icon: CursorIcon },
+  expandablePanel: EditorPanel,
+};
+export const subpathPlugin: PluginDefinition<CanvasStore> = {
+  id: 'subpath',
+  metadata: { label: 'Subpath', icon: NodeIcon },
+  expandablePanel: EditorPanel,
 };
 ```
 

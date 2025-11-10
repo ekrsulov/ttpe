@@ -27,6 +27,7 @@ interface PanelProps {
   defaultOpen?: boolean;             // Whether panel starts open (default: true)
   isCollapsible?: boolean;           // Can be collapsed (default: false)
   showRenderCount?: boolean;         // Show render count badge (dev only)
+  hideHeader?: boolean;              // Hide header entirely (used by expandable panels)
 }
 ```
 
@@ -41,6 +42,7 @@ import { Settings } from 'lucide-react';
   title="Settings"
   isCollapsible={true}
   defaultOpen={true}
+  hideHeader={false}
 >
   <div>Panel content goes here</div>
 </Panel>
@@ -53,6 +55,7 @@ import { Settings } from 'lucide-react';
 <Panel
   title="Transform"
   isCollapsible={true}
+  hideHeader={false}
   headerActions={
     <Badge colorScheme="blue">Active</Badge>
   }
@@ -63,6 +66,8 @@ import { Settings } from 'lucide-react';
   </VStack>
 </Panel>
 ```
+
+Tip: For bottom expandable variants, reuse the same panel component and set `hideHeader={true}` so the content renders without the title bar.
 
 ---
 
@@ -137,6 +142,21 @@ import { ExpandableToolPanel } from '@/ui/ExpandableToolPanel';
 - Position adjusts automatically based on sidebar width
 - Fixed positioning at bottom center with responsive max-width
 - z-index: 998 (below modals, above canvas content)
+
+Recommended registration pattern for plugins:
+
+```ts
+// In the plugin definition, reuse the sidebar panel without its header
+export const shapePlugin: PluginDefinition<CanvasStore> = {
+  id: 'shape',
+  metadata: { label: 'Shape', icon: Shapes },
+  // ...
+  expandablePanel: () => React.createElement(ShapePanel, { hideTitle: true }),
+};
+
+// If your expandable variant needs hooks or extra mapping (e.g., Edit),
+// use a small wrapper component that returns <EditPanel {...mappedProps} />.
+```
 
 **Example in App.tsx:**
 

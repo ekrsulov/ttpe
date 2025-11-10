@@ -69,6 +69,7 @@ All notable changes to VectorNest will be documented here.
 - E2E testing with Playwright
 - **SelectPanel Rendering**: Optimized SelectPanel to use virtual scrolling with @tanstack/react-virtual, reducing DOM nodes and improving performance with large selections
 - **Action Bars Optimization**: BottomActionBar and TopActionBar now avoid expensive calculations during drag operations to prevent UI lag
+- **Tool Panel Unification (2025-11-10)**: Removed duplicated `*ExpandablePanel.tsx` files for Pencil, Text, Shape, Curves, Transformation, and Edit tools. Plugins now reuse their sidebar panel component as the expandable variant with the header hidden via `hideHeader`/`hideTitle`. Select and Subpath modes use the transversal `EditorPanel` in the expandable area. Edit uses a wrapper component to map store state to `EditPanel` props.
 
 ### Changed
 - **FontSelector Refactor**: Migrated from Menu to Popover component for improved UX and better control positioning

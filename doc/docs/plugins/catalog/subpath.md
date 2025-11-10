@@ -114,7 +114,7 @@ const subpathState = useCanvasStore(state => state.subpath);
 **Files**:
 - `index.ts`: Plugin definition
 - `slice.ts`: Zustand slice (if applicable)
-- `*Panel.tsx`: UI panels (if applicable)
+- `*Panel.tsx`: UI panels (if applicable) (reused for expandable variant when needed)
 - `*Overlay.tsx`: Overlays (if applicable)
 
 ## Edge Cases & Limitations
@@ -127,5 +127,18 @@ const subpathState = useCanvasStore(state => state.subpath);
 
 - [Plugin System Overview](../overview)
 - [Event Bus](../../event-bus/overview)
+
+## Expandable Panel Behavior
+
+When the sidebar is unpinned and Subpath mode is active, the bottom expandable panel shows the transversal `EditorPanel` content (shared stroke/fill/opacity controls). This avoids duplicating Subpath-specific UI while still giving quick access to styling properties. The plugin registers:
+
+```ts
+export const subpathPlugin: PluginDefinition<CanvasStore> = {
+    id: 'subpath',
+    metadata: { label: 'Subpath', icon: NodeIcon },
+    expandablePanel: EditorPanel, // Reuse universal panel
+    // other properties...
+};
+```
 
 

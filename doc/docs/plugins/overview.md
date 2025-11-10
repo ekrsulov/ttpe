@@ -107,38 +107,44 @@ Expandable panels provide quick access to tool-specific controls when the sideba
 - Smooth expand/collapse animation
 - Centered at bottom of canvas
 - Accessible via chevron toggle button
-- Self-contained tool-specific UI
+- Reuses existing sidebar panels to avoid duplication
 
-**Example:**
+**Recommended Pattern (No Duplicated Components):**
 
-```typescript
-// src/plugins/my-tool/MyToolExpandablePanel.tsx
-import React from 'react';
-import { VStack, Button } from '@chakra-ui/react';
+Reuse the same sidebar panel component in the expandable area with its header hidden. This keeps a single source of truth for a tool's UI.
 
-export const MyToolExpandablePanel: React.FC = () => {
-  const { doSomething } = useCanvasStore((state) => state.myTool);
-  
-  return (
-    <VStack spacing={2} p={2}>
-      <Button onClick={doSomething}>Execute Action</Button>
-    </VStack>
-  );
+```ts
+// In plugin definition (.ts file): prefer createElement to avoid JSX parsing issues
+export const shapePlugin: PluginDefinition<CanvasStore> = {
+  id: 'shape',
+  metadata: { label: 'Shape', icon: ShapeIcon },
+  // Sidebar uses <ShapePanel /> normally
+  // Expandable uses the same component without the header/title
+  expandablePanel: () => React.createElement(ShapePanel, { hideTitle: true }),
 };
 
-// In plugin definition
-import { MyToolExpandablePanel } from './MyToolExpandablePanel';
+// Special case (Edit): create a tiny wrapper that maps store to props
+export const editPlugin: PluginDefinition<CanvasStore> = {
+  id: 'edit',
+  metadata: { label: 'Edit', icon: EditIcon },
+  expandablePanel: EditExpandablePanelWrapper, // returns <EditPanel {...props} />
+};
 
-export const myToolPlugin: PluginDefinition<CanvasStore> = {
-  id: 'my-tool',
-  metadata: { label: 'My Tool', icon: MyIcon },
-  expandablePanel: MyToolExpandablePanel,
-  // ... other properties
+// Select and Subpath show the transversal Editor panel in expandable mode
+export const selectPlugin: PluginDefinition<CanvasStore> = {
+  id: 'select',
+  metadata: { label: 'Select', icon: CursorIcon },
+  expandablePanel: EditorPanel,
+};
+export const subpathPlugin: PluginDefinition<CanvasStore> = {
+  id: 'subpath',
+  metadata: { label: 'Subpath', icon: NodeIcon },
+  expandablePanel: EditorPanel,
 };
 ```
 
 **Usage Notes:**
-- Panels should be concise and focused on primary tool actions
+- Keep the UI concise and focused on primary actions
 - Use Chakra UI components for consistent theming
 - Access tool state via Zustand store hooks
 - The `ExpandableToolPanel` wrapper handles positioning and animation automatically
