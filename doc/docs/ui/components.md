@@ -681,25 +681,26 @@ import { CustomSelect } from '@/ui/CustomSelect';
 
 ### FontSelector
 
-Font family dropdown selector with search functionality, built on Chakra UI Popover for improved UX.
+Font family selector presented as an always-visible list (listbox) with five rows, optimized for quick scanning and keyboard navigation.
 
 **Props:**
 
 ```typescript
 interface FontSelectorProps {
-  value: string;                // Current font family
-  onChange: (font: string) => void;  // Callback when font changes
-  fonts?: string[];             // Available fonts (defaults to common web fonts)
+  value: string;                      // Current font family
+  onChange: (font: string) => void;   // Callback when font changes
+  fonts: string[];                    // Available fonts to render
+  disabled?: boolean;                 // Disable interaction
+  loading?: boolean;                  // Show loading placeholder
 }
 ```
 
 **Features:**
-- **Search functionality**: Filter fonts by typing
-- **Popover-based UI**: Better positioning and control than Menu
-- **Keyboard navigation**: Arrow keys to navigate, Enter to select
-- **Visual feedback**: Hover states and selected font highlighting
-- **Focus management**: Auto-focus search input on open
-- **Sample preview**: Each font displays in its own typeface
+- **Always-open list**: Shows 5 visible items with fixed row height
+- **Padding and separators**: Each item has subtle horizontal padding and a thin divider between options
+- **Keyboard navigation**: Arrow Up/Down, Home/End to move; Enter/Space to select
+- **Visual feedback**: Distinct highlight for active row and selection state; respects light/dark themes
+- **Live preview**: Each option renders using its own font-family; TTF fonts are marked with “(TTF)”
 
 **Usage:**
 
@@ -710,16 +711,17 @@ import { FontSelector } from '@/ui/FontSelector';
   value={fontFamily}
   onChange={setFontFamily}
   fonts={['Arial', 'Times New Roman', 'Courier New', 'Georgia']}
+  disabled={false}
+  loading={false}
 />
 ```
 
 **Implementation Notes:**
-- Migrated from Chakra UI Menu to Popover for better UX
-- Uses `Popover`, `PopoverTrigger`, `PopoverContent` components
-- Search input filters fonts case-insensitively
-- Default font list includes common web-safe and Google fonts
-- Scrollable list with max height constraint
-- Accessible with ARIA labels and keyboard navigation
+- Listbox pattern using a scrollable container with `role="listbox"` and `role="option"`
+- Exactly 5 visible rows via fixed item height (28px) and container height
+- Separator using `borderBottom` between items; adapts to theme colors
+- Keyboard handling for navigation and selection; mouse hover updates active row
+- Shows "(TTF)" suffix for TrueType fonts via `isTTFFont()` helper
 
 **Example with custom fonts:**
 

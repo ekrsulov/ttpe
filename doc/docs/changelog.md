@@ -43,6 +43,12 @@ All notable changes to VectorNest will be documented here.
 - **Performance Optimizations**: Added @tanstack/react-virtual library for virtualized rendering and implemented useFrozenElementsDuringDrag hook to prevent unnecessary re-renders during drag operations
 
 ### Changed
+- **FontSelector UI (2025-11-10)**: Replaced Popover dropdown with an always-open listbox showing 5 items
+  - Faster font scanning with persistent list
+  - Added small padding per item and thin separators between options
+  - Clear selection and highlight states (light/dark aware)
+  - Keyboard: Up/Down/Home/End navigation; Enter/Space to select
+  - TTF fonts indicated via textual suffix "(TTF)"
 - **Selection Behavior**: When clicking elements inside groups, the root group is now selected instead of the individual element for better group manipulation
 - **Selection Bbox Visual Feedback** for multi-element selections
   - Amber-colored bounding box showing overall selection extent

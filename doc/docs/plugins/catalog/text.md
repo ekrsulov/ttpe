@@ -185,7 +185,7 @@ No plugin-specific shortcuts.
 
 ### Panels
 
-- Text input, font selection, size, weight, style
+- Text input, font selection (always-visible 5-row list), size, weight, style
 
 ### Overlays
 
