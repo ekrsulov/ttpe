@@ -78,7 +78,16 @@ All notable changes to VectorNest will be documented here.
 - **Tool Panel Unification (2025-11-10)**: Removed duplicated `*ExpandablePanel.tsx` files for Pencil, Text, Shape, Curves, Transformation, and Edit tools. Plugins now reuse their sidebar panel component as the expandable variant with the header hidden via `hideHeader`/`hideTitle`. Select and Subpath modes use the transversal `EditorPanel` in the expandable area. Edit uses a wrapper component to map store state to `EditPanel` props.
 
 ### Changed
-- **FontSelector Refactor**: Migrated from Menu to Popover component for improved UX and better control positioning
+- **Default Settings Updates (2025-11-10)**: Updated default application settings for improved user experience
+  - Grid plugin now enabled by default with snapping and rulers visible
+  - Guidelines plugin now enabled by default with distance detection active
+  - Minimap now shown by default in the UI
+  - Tooltips now enabled by default on desktop
+  - Stroke scaling with zoom now enabled by default
+- **Sidebar Dev Mode Behavior**: In development mode on desktop, sidebar is now always pinned for better debugging experience
+- **FloatingContextMenu Enhancement**: Improved submenu item rendering with rotated icon for 'send-back' action
+- **Pencil Test Improvements**: Enhanced visibility checks in pencil drawing tests using semantic heading selectors
+- **Test Cleanup**: Removed unused visibility tests to streamline test suite
   - Enhanced search functionality with better focus management
   - Improved keyboard navigation and accessibility
   - Better visual feedback and hover states

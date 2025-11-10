@@ -29,9 +29,9 @@ sequenceDiagram
     participant Store
     participant Overlay
     
-    Note over User,Canvas: 1. Enable Guidelines
-    User->>GP: Toggle "Alignment" in settings
-    GP->>Store: Update guidelines.enabled = true
+    Note over User,Canvas: 1. Plugin Initialization
+    GP->>Store: Initialize guidelines slice
+    GP->>Store: Set defaults (enabled, distance enabled)
     
     Note over User,Canvas: 2. Start Dragging Element
     User->>Canvas: Click and drag element
@@ -43,7 +43,7 @@ sequenceDiagram
     GP->>Store: Update currentMatches[]
     Store->>Overlay: Render guideline visuals
     
-    Note over User,Canvas: 3. Distance Detection (if enabled)
+    Note over User,Canvas: 3. Distance Detection (enabled by default)
     Canvas->>GP: findDistanceGuidelines(elementId, bounds)
     GP->>GP: Detect repeated distances
     GP->>GP: Find common spacing patterns

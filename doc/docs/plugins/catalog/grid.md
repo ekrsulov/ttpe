@@ -33,7 +33,7 @@ sequenceDiagram
     
     Note over User,Canvas: 1. Plugin Initialization
     GP->>Store: Initialize grid slice
-    GP->>Store: Set defaults (disabled, square, 20px)
+    GP->>Store: Set defaults (enabled, square, 20px, snap enabled, rulers shown)
     
     Note over User,Canvas: 2. Enable Grid Display
     User->>UI: Toggle "Show" checkbox

@@ -89,8 +89,9 @@ Global application settings and preferences:
 
 - **Keyboard precision**: `keyboardMovementPrecision` (decimal places for arrow key movement)
 - **Render badges**: `showRenderCountBadges` (debug mode for render counts)
-- **Minimap**: `showMinimap` (minimap overlay visibility)
-- **Tooltips**: `showTooltips` (tooltip visibility on desktop)
+- **Minimap**: `showMinimap` (minimap overlay visibility, enabled by default)
+- **Tooltips**: `showTooltips` (tooltip visibility on desktop, enabled by default)
+- **Scale stroke with zoom**: `scaleStrokeWithZoom` (whether stroke widths scale with zoom level, enabled by default)
 - **Default stroke color**: `defaultStrokeColor` (default stroke color for new paths)
 
 **Note:** Grid settings (`showGrid`, `gridSize`, `snapToGrid`) are managed by the Grid plugin, not in the base settings object.
