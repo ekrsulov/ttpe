@@ -1,3 +1,4 @@
 export { SelectionOverlay } from './SelectionOverlay';
-export { FeedbackOverlay } from './FeedbackOverlay';
+export { SelectionRects } from './SelectionRects';
 export { BlockingOverlay } from './BlockingOverlay';
+export { FeedbackOverlay } from './FeedbackOverlay';

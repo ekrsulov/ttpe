@@ -4,8 +4,9 @@ import type {
   CanvasServiceInstance,
 } from '../../utils/pluginManager';
 import { pluginManager } from '../../utils/pluginManager';
-import type { Point, CanvasElement, GroupData } from '../../types';
+import type { Point, CanvasElement } from '../../types';
 import { useCanvasStore } from '../../store/canvasStore';
+import { duplicateElements } from '../../utils/duplicationUtils';
 
 export const DUPLICATE_ON_DRAG_SERVICE_ID = 'duplicate-on-drag-listener';
 
@@ -18,65 +19,6 @@ export interface DuplicateOnDragServiceState {
 
 class DuplicateOnDragListenerService implements CanvasService<DuplicateOnDragServiceState> {
   readonly id = DUPLICATE_ON_DRAG_SERVICE_ID;
-
-  // Helper function to duplicate an element and its children recursively
-  private duplicateElement(
-    element: CanvasElement,
-    elementMap: Map<string, CanvasElement>,
-    store: ReturnType<typeof useCanvasStore.getState>,
-    newParentId?: string | null
-  ): string {
-
-    if (element.type === 'group') {
-      // Duplicate group and its children recursively, maintaining hierarchy
-      const groupData = element.data as GroupData;
-
-      // First, create the group with empty childIds to get its ID
-      const tempGroupData = {
-        childIds: [],
-        name: `${groupData.name} Copy`,
-        isLocked: groupData.isLocked,
-        isHidden: groupData.isHidden,
-        isExpanded: true, // Always expand duplicated groups
-        transform: groupData.transform,
-      };
-
-      const tempGroupWithoutId = {
-        type: 'group' as const,
-        parentId: newParentId !== undefined ? newParentId : element.parentId,
-        data: tempGroupData,
-      };
-
-      const groupId = store.addElement(tempGroupWithoutId);
-
-      // Now duplicate all children with the correct parentId
-      const newChildIds: string[] = [];
-
-      for (const childId of groupData.childIds) {
-        const child = elementMap.get(childId);
-        if (child) {
-          const newChildId = this.duplicateElement(child, elementMap, store, groupId);
-          newChildIds.push(newChildId);
-        } else {
-          console.warn(`Child ${childId} not found in elementMap`);
-        }
-      }
-
-      // Update the group with the correct childIds
-      store.updateElement(groupId, { data: { ...tempGroupData, childIds: newChildIds } });
-      return groupId;
-    } else {
-      // Duplicate path element
-      const newElementWithoutId = {
-        type: 'path' as const,
-        parentId: newParentId !== undefined ? newParentId : element.parentId,
-        data: element.data,
-      };
-
-      const actualNewId = store.addElement(newElementWithoutId);
-      return actualNewId;
-    }
-  }
 
   create({ svg }: CanvasServiceContext): CanvasServiceInstance<DuplicateOnDragServiceState> {
     let currentState: DuplicateOnDragServiceState | null = null;
@@ -112,40 +54,16 @@ class DuplicateOnDragListenerService implements CanvasService<DuplicateOnDragSer
       const isElementSelected = state.selectedIds.includes(elementId);
       if (!isElementSelected) return;
 
-      // Duplicate all selected elements (or their root groups)
+      // Duplicate all selected elements using consolidated utility
+      // Don't apply auto offset - user controls position with drag
       const store = useCanvasStore.getState();
-      const duplicatedIds: string[] = [];
-
-      // For each selected element, find its root group and duplicate it
-      const elementsToDuplicate = new Set<string>();
-      
-      for (const selectedId of state.selectedIds) {
-        const selectedElement = state.elementMap.get(selectedId);
-        if (!selectedElement) continue;
-
-        // Find the root group for this selected element
-        let rootId = selectedId;
-        if (selectedElement.parentId) {
-          let currentElement = selectedElement;
-          while (currentElement.parentId) {
-            const parent = state.elementMap.get(currentElement.parentId);
-            if (!parent) break;
-            currentElement = parent;
-          }
-          rootId = currentElement.id;
-        }
-        
-        elementsToDuplicate.add(rootId);
-      }
-
-      // Duplicate each unique root element
-      for (const rootId of elementsToDuplicate) {
-        const elementToDuplicate = state.elementMap.get(rootId);
-        if (elementToDuplicate) {
-          const newId = this.duplicateElement(elementToDuplicate, state.elementMap, store);
-          duplicatedIds.push(newId);
-        }
-      }
+      const duplicatedIds = duplicateElements(
+        state.selectedIds,
+        state.elementMap,
+        store.addElement,
+        store.updateElement,
+        { applyAutoOffset: false }
+      );
 
       // Store state for movement - move the duplicated element
       originalElementId = duplicatedIds[0]; // Move the duplicated element
