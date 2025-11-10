@@ -15,7 +15,7 @@ export const PencilExpandablePanel: React.FC = () => {
   return (
     <VStack spacing={2} align="stretch" w="full">
       <HStack spacing={1} justify="space-between">
-        <Text fontSize="12px">Path Mode:</Text>
+        <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>Path Mode:</Text>
         <HStack spacing={1}>
           <ToggleButton
             isActive={!(pencil?.reusePath ?? false)}
