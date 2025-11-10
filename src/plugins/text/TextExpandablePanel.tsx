@@ -21,8 +21,13 @@ export const TextExpandablePanel: React.FC = () => {
   };
   
   return (
-    <Box minH="300px" w="full">
+    <Box minH="220px" w="full">
       <VStack spacing={2} align="stretch" w="full">
+        <FontSelector
+          value={text?.fontFamily ?? 'Arial'}
+          onChange={(value) => updateTextState?.({ fontFamily: value })}
+          fonts={getAvailableFonts()}
+        />
         <Input
           value={text?.text ?? ''}
           onChange={(e) => updateTextState?.({ text: e.target.value })}
@@ -35,11 +40,6 @@ export const TextExpandablePanel: React.FC = () => {
             borderColor: 'gray.600',
             boxShadow: '0 0 0 1px var(--chakra-colors-gray-600)'
           }}
-        />
-        <FontSelector
-          value={text?.fontFamily ?? 'Arial'}
-          onChange={(value) => updateTextState?.({ fontFamily: value })}
-          fonts={getAvailableFonts()}
         />
         <HStack spacing={1}>
           <NumberInput
