@@ -61,6 +61,14 @@ export const FloatingContextMenu: React.FC<FloatingContextMenuProps> = ({
         boxShadow="lg"
         minW="180px"
         py={1}
+        tabIndex={-1}
+        _focus={{ outline: 'none', boxShadow: 'lg' }}
+        sx={{
+          '&:focus': { outline: 'none !important' },
+          '&:focus-visible': { outline: 'none !important' },
+          '& *:focus': { outline: 'none !important' },
+          '& *:focus-visible': { outline: 'none !important' },
+        }}
       >
         {/* Header with back button and title */}
         <HStack
@@ -79,6 +87,8 @@ export const FloatingContextMenu: React.FC<FloatingContextMenuProps> = ({
             minW="auto"
             h="auto"
             p={1}
+            _focus={{ outline: 'none', boxShadow: 'none' }}
+            _active={{ outline: 'none' }}
           />
           <Text fontSize="12px" fontWeight="semibold" color={iconColor} flex="1">
             {activeSubmenu.label}
@@ -86,33 +96,50 @@ export const FloatingContextMenu: React.FC<FloatingContextMenuProps> = ({
         </HStack>
         
         {/* Submenu items */}
-        {activeSubmenu.submenu?.map(subAction => (
-          <Box
-            key={subAction.id}
-            as="button"
-            onClick={subAction.onClick}
-            disabled={subAction.isDisabled}
-            px={3}
-            py={2}
-            w="full"
-            display="flex"
-            alignItems="center"
-            gap={2}
-            transition="all 0.2s"
-            bg="transparent"
-            color={subAction.variant === 'danger' ? dangerColor : iconColor}
-            opacity={subAction.isDisabled ? 0.4 : 1}
-            cursor={subAction.isDisabled ? 'not-allowed' : 'pointer'}
-            _hover={!subAction.isDisabled ? {
-              bg: subAction.variant === 'danger' ? dangerHoverBg : hoverBg
-            } : {}}
-            fontSize="14px"
-            fontWeight="medium"
-          >
+        {activeSubmenu.submenu?.map(subAction => {
+          const iconElement = subAction.id === 'send-back' ? (
+            <Box transform="rotate(180deg)">
+              <subAction.icon size={16} />
+            </Box>
+          ) : (
             <subAction.icon size={16} />
-            <span>{subAction.label}</span>
-          </Box>
-        ))}
+          );
+          
+          return (
+            <Box
+              key={subAction.id}
+              as="button"
+              onClick={subAction.onClick}
+              disabled={subAction.isDisabled}
+              px={3}
+              py={2}
+              w="full"
+              display="flex"
+              alignItems="center"
+              gap={2}
+              transition="all 0.2s"
+              bg="transparent"
+              color={subAction.variant === 'danger' ? dangerColor : iconColor}
+              opacity={subAction.isDisabled ? 0.4 : 1}
+              cursor={subAction.isDisabled ? 'not-allowed' : 'pointer'}
+              _hover={!subAction.isDisabled ? {
+                bg: subAction.variant === 'danger' ? dangerHoverBg : hoverBg
+              } : {}}
+              _focus={{ outline: 'none', boxShadow: 'none' }}
+              _active={{ outline: 'none' }}
+              sx={{
+                WebkitTapHighlightColor: 'transparent',
+                '&:focus': { outline: 'none !important', boxShadow: 'none !important' },
+                '&:focus-visible': { outline: 'none !important', boxShadow: 'none !important' },
+              }}
+              fontSize="14px"
+              fontWeight="medium"
+            >
+              {iconElement}
+              <span>{subAction.label}</span>
+            </Box>
+          );
+        })}
       </VStack>
     );
   }
@@ -142,6 +169,13 @@ export const FloatingContextMenu: React.FC<FloatingContextMenuProps> = ({
             color={iconColor}
             cursor="pointer"
             _hover={{ bg: hoverBg }}
+            _focus={{ outline: 'none', boxShadow: 'none' }}
+            _active={{ outline: 'none' }}
+            sx={{
+              WebkitTapHighlightColor: 'transparent',
+              '&:focus': { outline: 'none !important', boxShadow: 'none !important' },
+              '&:focus-visible': { outline: 'none !important', boxShadow: 'none !important' },
+            }}
             fontSize="14px"
             fontWeight="medium"
           >
@@ -158,6 +192,7 @@ export const FloatingContextMenu: React.FC<FloatingContextMenuProps> = ({
       return (
         <Menu key={action.id} placement={submenuPlacement} isLazy>
           <MenuButton
+            as={Box}
             px={3}
             py={2}
             w="full"
@@ -167,6 +202,12 @@ export const FloatingContextMenu: React.FC<FloatingContextMenuProps> = ({
             color={iconColor}
             cursor="pointer"
             _hover={{ bg: hoverBg }}
+            _focus={{ outline: 'none', boxShadow: 'none' }}
+            _active={{ outline: 'none' }}
+            sx={{
+              '&:focus': { outline: 'none !important', boxShadow: 'none !important' },
+              '&:focus-visible': { outline: 'none !important', boxShadow: 'none !important' },
+            }}
             fontSize="14px"
             fontWeight="medium"
           >
@@ -185,6 +226,11 @@ export const FloatingContextMenu: React.FC<FloatingContextMenuProps> = ({
             minW="160px"
             maxW="240px"
             py={1}
+            _focus={{ outline: 'none', boxShadow: 'lg' }}
+            sx={{
+              '&:focus': { outline: 'none !important' },
+              '&:focus-visible': { outline: 'none !important' },
+            }}
           >
             {action.submenu.map(subAction => {
               const iconElement = subAction.id === 'send-back' ? (
@@ -205,6 +251,13 @@ export const FloatingContextMenu: React.FC<FloatingContextMenuProps> = ({
                   _hover={!subAction.isDisabled ? {
                     bg: subAction.variant === 'danger' ? dangerHoverBg : hoverBg
                   } : {}}
+                  _focus={{ outline: 'none', boxShadow: 'none', bg: 'transparent' }}
+                  _active={{ outline: 'none', bg: 'transparent' }}
+                  sx={{
+                    WebkitTapHighlightColor: 'transparent',
+                    '&:focus': { outline: 'none !important', boxShadow: 'none !important' },
+                    '&:focus-visible': { outline: 'none !important', boxShadow: 'none !important' },
+                  }}
                   fontSize="14px"
                 >
                   {subAction.label}
@@ -238,6 +291,13 @@ export const FloatingContextMenu: React.FC<FloatingContextMenuProps> = ({
           _hover={!action.isDisabled ? {
             bg: action.variant === 'danger' ? dangerHoverBg : hoverBg
           } : {}}
+          _focus={{ outline: 'none', boxShadow: 'none' }}
+          _active={{ outline: 'none' }}
+          sx={{
+            WebkitTapHighlightColor: 'transparent',
+            '&:focus': { outline: 'none !important', boxShadow: 'none !important' },
+            '&:focus-visible': { outline: 'none !important', boxShadow: 'none !important' },
+          }}
           fontSize="14px"
           fontWeight="medium"
         >
@@ -259,6 +319,14 @@ export const FloatingContextMenu: React.FC<FloatingContextMenuProps> = ({
       boxShadow="lg"
       minW="180px"
       py={1}
+      tabIndex={-1}
+      _focus={{ outline: 'none', boxShadow: 'lg' }}
+      sx={{
+        '&:focus': { outline: 'none !important' },
+        '&:focus-visible': { outline: 'none !important' },
+        '& *:focus': { outline: 'none !important' },
+        '& *:focus-visible': { outline: 'none !important' },
+      }}
     >
       {defaultActions.length > 0 && (
         <>

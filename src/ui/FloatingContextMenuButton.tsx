@@ -137,7 +137,15 @@ export const FloatingContextMenuButton: React.FC = () => {
         border="none"
         boxShadow="none"
         bg="transparent"
-        _focus={{ outline: 'none' }}
+        _focus={{ outline: 'none', boxShadow: 'none' }}
+        _focusVisible={{ outline: 'none', boxShadow: 'none' }}
+        sx={{
+          '&:focus': { outline: 'none !important', boxShadow: 'none !important' },
+          '&:focus-visible': { outline: 'none !important', boxShadow: 'none !important' },
+          '& > *': { outline: 'none !important' },
+          '& *:focus': { outline: 'none !important' },
+          '& *:focus-visible': { outline: 'none !important' },
+        }}
       >
         <FloatingContextMenu 
           actions={wrappedActions} 
