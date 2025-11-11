@@ -67,13 +67,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   }, [isDesktop]);
 
-  // In dev mode on desktop, ensure sidebar stays pinned
-  useEffect(() => {
-    if (import.meta.env.DEV && isDesktop && !isPinned) {
-      setIsPinned(true);
-    }
-  }, [isPinned, isDesktop]);
-
   // Notify parent when pinned state changes
   useEffect(() => {
     onPinnedChange?.(isPinned && isDesktop === true);

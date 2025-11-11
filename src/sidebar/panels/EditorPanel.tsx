@@ -364,7 +364,7 @@ export const EditorPanel: React.FC = () => {
                 <SliderControl
                   value={currentStrokeWidth}
                   min={0}
-                  max={20}
+                  max={5}
                   step={0.1}
                   stepFunction={(value) => value < 1 ? 0.1 : 1}
                   onChange={handleStrokeWidthChange}

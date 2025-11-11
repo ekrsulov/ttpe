@@ -17,10 +17,10 @@ interface ExpandableToolPanelProps {
 export const ExpandableToolPanel: React.FC<ExpandableToolPanelProps> = ({ activePlugin, sidebarWidth = 0 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   
-  const bg = useColorModeValue('rgba(255, 255, 255, 0.95)', 'rgba(26, 32, 44, 0.95)');
-  const borderColor = useColorModeValue('gray.200', 'whiteAlpha.300');
+  const bg = useColorModeValue('rgba(255, 255, 255, 1)', 'rgba(26, 32, 44, 1)');
+  const borderColor = useColorModeValue('gray.200', 'gray.700');
   const iconColor = useColorModeValue('gray.600', 'gray.300');
-  const hoverBg = useColorModeValue('gray.50', 'whiteAlpha.100');
+  const hoverBg = useColorModeValue('gray.50', 'gray.700');
   
   const isSidebarPinned = sidebarWidth > 0;
   
@@ -50,7 +50,6 @@ export const ExpandableToolPanel: React.FC<ExpandableToolPanelProps> = ({ active
       <VStack spacing={0} align="stretch">
         <Box
           bg={bg}
-          backdropFilter="blur(10px)"
           borderRadius={isExpanded ? "12px 12px 0 0" : "full"}
           borderWidth="1px"
           borderColor={borderColor}
@@ -82,7 +81,6 @@ export const ExpandableToolPanel: React.FC<ExpandableToolPanelProps> = ({ active
         <Collapse in={isExpanded} animateOpacity>
           <Box
             bg={bg}
-            backdropFilter="blur(10px)"
             borderRadius="0 0 12px 12px"
             borderWidth="1px"
             borderColor={borderColor}
