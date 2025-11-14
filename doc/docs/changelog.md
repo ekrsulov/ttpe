@@ -22,6 +22,12 @@ All notable changes to VectorNest will be documented here.
   - Fine control (0.1 increments) for small values, coarse control (1.0 increments) for larger values
   - Applied to Stroke Width control: decimal precision for thin strokes (< 1px), integer precision for thick strokes (≥ 1px)
   - Improved user experience with appropriate precision levels based on value ranges
+- **Direct Value Editing for Sliders**: Added click-to-edit functionality to `SliderControl` value display
+  - Click on the value text to open an inline input field for direct numeric entry
+  - Enter or blur to confirm changes, Escape to cancel
+  - Automatic percentage conversion for percentage-based sliders (enter "50" for 50%, not "0.5")
+  - Values are clamped to min/max range and respect step constraints
+  - Consistent with group name editing in selection panel
   - Added `expandablePanel` property to `PluginDefinition` for optional tool-specific UI
   - Implemented `ExpandableToolPanel` component with smooth expand/collapse animation
   - Added `getExpandablePanel()` method to PluginManager for retrieving panel components

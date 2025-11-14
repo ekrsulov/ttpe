@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   HStack,
@@ -6,7 +6,8 @@ import {
   SliderTrack,
   SliderFilledTrack,
   SliderThumb,
-  Text
+  Text,
+  useColorModeValue
 } from '@chakra-ui/react';
 
 interface SliderControlProps {
@@ -46,6 +47,20 @@ export const SliderControl: React.FC<SliderControlProps> = ({
   inline = false,
   gap = '8px'
 }) => {
+  const currentStep = stepFunction ? stepFunction(value) : step;
+  const formattedValue = formatter ? formatter(value) : (currentStep < 1 ? value.toFixed(2) : value.toString());
+  const isPercent = formattedValue.includes('%');
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(isPercent ? (value * 100).toString() : value.toString());
+
+  // Update editValue when value changes
+  useEffect(() => {
+    setEditValue(isPercent ? (value * 100).toString() : value.toString());
+  }, [value, isPercent]);
+
+  const valueTextColor = useColorModeValue('gray.600', 'gray.400');
+
   const handleChange = (newValue: number) => {
     // If stepFunction is provided, quantize the value to the appropriate step
     if (stepFunction) {
@@ -57,8 +72,19 @@ export const SliderControl: React.FC<SliderControlProps> = ({
     }
   };
 
-  const currentStep = stepFunction ? stepFunction(value) : step;
-  const formattedValue = formatter ? formatter(value) : (currentStep < 1 ? value.toFixed(2) : value.toString());
+  const handleEditConfirm = () => {
+    const parsed = parseFloat(editValue);
+    if (!isNaN(parsed)) {
+      const actualValue = isPercent ? parsed / 100 : parsed;
+      handleChange(Math.max(min, Math.min(max, actualValue)));
+    }
+    setIsEditing(false);
+  };
+
+  const handleEditCancel = () => {
+    setEditValue(isPercent ? (value * 100).toString() : value.toString());
+    setIsEditing(false);
+  };
 
   return (
     <HStack
@@ -97,16 +123,45 @@ export const SliderControl: React.FC<SliderControlProps> = ({
         </SliderTrack>
         <SliderThumb boxSize="12px" />
       </Slider>
-      <Text
-        fontSize="12px"
-        color="gray.600"
-        _dark={{ color: 'gray.400' }}
-        w={valueWidth}
-        textAlign="right"
-        flexShrink={0}
-      >
-        {formattedValue}
-      </Text>
+      {isEditing ? (
+        <input
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          onBlur={handleEditConfirm}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              handleEditConfirm();
+            } else if (e.key === 'Escape') {
+              handleEditCancel();
+            }
+          }}
+          style={{
+            fontSize: '12px',
+            color: 'inherit',
+            width: valueWidth,
+            textAlign: 'right',
+            border: 'none',
+            outline: 'none',
+            background: 'transparent',
+            flexShrink: 0
+          }}
+          autoFocus
+          onFocus={(e) => e.target.select()}
+        />
+      ) : (
+        <Text
+          fontSize="12px"
+          color="gray.600"
+          _dark={{ color: 'gray.400' }}
+          w={valueWidth}
+          textAlign="right"
+          flexShrink={0}
+          cursor="text"
+          onClick={() => setIsEditing(true)}
+        >
+          {formattedValue}
+        </Text>
+      )}
     </HStack>
   );
 };

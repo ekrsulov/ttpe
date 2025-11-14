@@ -612,11 +612,32 @@ This provides:
 - **Fine precision** (0.1 increments) for small values (0.0, 0.1, 0.2, ..., 0.9)
 - **Coarse precision** (1.0 increments) for larger values (1, 2, 3, ..., 20)
 
+**Direct Value Editing:**
+
+Click on the value text next to the slider to edit it directly. This opens an input field where you can type the desired value.
+
+- **Enter** or **blur** (clicking outside) confirms the change
+- **Escape** cancels the edit and reverts to the original value
+- For percentage sliders, enter the percentage value (e.g., "50" for 50%, not "0.5")
+- Values are automatically clamped to the min/max range
+
+```tsx
+// Example: Click "50%" to edit directly
+<SliderControl
+  label="Opacity"
+  value={0.5}
+  min={0}
+  max={1}
+  onChange={setOpacity}
+  formatter={(val) => `${Math.round(val * 100)}%`}
+/>
+```
+
 ---
 
 ### PercentSliderControl
 
-Slider specifically for percentage values (0-100%).
+Slider specifically for percentage values (0-100%). Inherits all `SliderControl` features including direct value editing.
 
 **Props:**
 
@@ -640,6 +661,8 @@ import { PercentSliderControl } from '@/ui/PercentSliderControl';
   onChange={setOpacity}
 />
 ```
+
+**Direct Editing:** Click the percentage value (e.g., "50%") to edit directly. Enter values like "75" for 75%.
 
 ---
 
