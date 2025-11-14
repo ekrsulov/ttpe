@@ -23,7 +23,7 @@ interface ToolUsage {
 /**
  * Hook to manage dynamic tool selection based on usage patterns
  */
-export const useDynamicTools = () => {
+export const useDynamicTools = (activeMode: string | null) => {
   const [toolUsage, setToolUsage] = useState<ToolUsage>({});
   const [showExtraTools, setShowExtraTools] = useState(false);
 
@@ -64,8 +64,17 @@ export const useDynamicTools = () => {
       .slice(0, MOBILE_VISIBLE_TOOLS)
       .map(({ tool }) => tool);
 
-    return sortedTools;
-  }, [toolUsage]);
+    let visibleDynamicTools = sortedTools;
+
+    // Always include the active tool in the visible tools
+    if (activeMode && !ALWAYS_SHOWN_TOOLS.includes(activeMode as ToolMode) && !visibleDynamicTools.includes(activeMode as ToolMode)) {
+      // Replace the second most used with the active tool
+      visibleDynamicTools = visibleDynamicTools.slice();
+      visibleDynamicTools[1] = activeMode as ToolMode;
+    }
+
+    return visibleDynamicTools;
+  }, [toolUsage, activeMode]);
 
   // Get tools that should be shown in the extra tools bar
   const getExtraTools = useCallback((): ToolMode[] => {

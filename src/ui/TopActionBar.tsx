@@ -49,7 +49,7 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
     showExtraTools,
     toggleExtraTools,
     alwaysShownTools,
-  } = useDynamicTools();
+  } = useDynamicTools(activeMode);
   
   // Colors for active buttons
   const activeBg = useColorModeValue('gray.800', 'gray.200');
@@ -170,17 +170,12 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
             icon,
           }));
 
-    if (isMobile) {
-      // On mobile, show always shown tools + 2 most used dynamic tools
-      const mobileVisibleTools = getMobileVisibleTools();
-      const allowedTools = [...alwaysShownTools, ...mobileVisibleTools];
-      
-      return baseTools.filter(tool => allowedTools.includes(tool.id as ToolMode));
-    }
-
-    // On desktop, show all tools
-    return baseTools;
-  }, [registeredTools, gridEnabled, isMobile, getMobileVisibleTools, alwaysShownTools]);
+    // Show always shown tools + dynamic tools based on usage
+    const visibleDynamicTools = getMobileVisibleTools();
+    const allowedTools = [...alwaysShownTools, ...visibleDynamicTools];
+    
+    return baseTools.filter(tool => allowedTools.includes(tool.id as ToolMode));
+  }, [registeredTools, gridEnabled, getMobileVisibleTools, alwaysShownTools]);
 
   // Get extra tools for mobile overflow menu
   const extraTools = React.useMemo(() => {
@@ -371,15 +366,15 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
       <RenderCountBadgeWrapper componentName="TopActionBar" position="top-right" />
     </FloatingToolbarShell>
     
-    {/* Extra tools bar for mobile */}
-    {isMobile && showExtraTools && extraTools.length > 0 && (
+    {/* Extra tools bar */}
+    {showExtraTools && extraTools.length > 0 && (
       <Box ref={extraToolsBarRef}>
         <FloatingToolbarShell
           toolbarPosition="top"
           sidebarWidth={sidebarWidth}
-          showGridRulers={false}
+          showGridRulers={showGridRulers}
           sx={{
-            marginTop: '8px',
+            marginTop: '42px',
             transition: 'all 0.2s ease-in-out',
           }}
         >
