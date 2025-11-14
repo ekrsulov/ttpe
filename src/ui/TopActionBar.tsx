@@ -170,12 +170,17 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
             icon,
           }));
 
-    // Show always shown tools + dynamic tools based on usage
-    const visibleDynamicTools = getMobileVisibleTools();
-    const allowedTools = [...alwaysShownTools, ...visibleDynamicTools];
-    
-    return baseTools.filter(tool => allowedTools.includes(tool.id as ToolMode));
-  }, [registeredTools, gridEnabled, getMobileVisibleTools, alwaysShownTools]);
+    if (isMobile) {
+      // On mobile, show always shown tools + dynamic tools based on usage
+      const visibleDynamicTools = getMobileVisibleTools();
+      const allowedTools = [...alwaysShownTools, ...visibleDynamicTools];
+      
+      return baseTools.filter(tool => allowedTools.includes(tool.id as ToolMode));
+    }
+
+    // On desktop, show all tools
+    return baseTools;
+  }, [registeredTools, gridEnabled, isMobile, getMobileVisibleTools, alwaysShownTools]);
 
   // Get extra tools for mobile overflow menu
   const extraTools = React.useMemo(() => {
