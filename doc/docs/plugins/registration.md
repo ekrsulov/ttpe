@@ -49,6 +49,7 @@ export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   gridPlugin,
   minimapPlugin,
   duplicateOnDragPlugin,
+  trimPathPlugin,
 ];
 ```
 

@@ -105,6 +105,7 @@ const sidebars = {
             'plugins/catalog/subpath',
             'plugins/catalog/text',
             'plugins/catalog/transformation',
+            'plugins/catalog/trim-path',
           ],
         },
       ],

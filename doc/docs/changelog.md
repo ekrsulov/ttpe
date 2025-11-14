@@ -41,6 +41,14 @@ All notable changes to VectorNest will be documented here.
 - **Enhanced Group Thumbnails**: Select Panel group thumbnails now include visual previews of all paths within nested groups, providing better visual representation of complex group structures
 - **Improved Element Deletion**: Enhanced deletion logic for groups that recursively removes all descendants and automatically ungroups when deletion results in a group with only one child
 - **Performance Optimizations**: Added @tanstack/react-virtual library for virtualized rendering and implemented useFrozenElementsDuringDrag hook to prevent unnecessary re-renders during drag operations
+- **Trim Path Plugin**: New interactive tool for trimming path segments at intersections
+  - Added Trim Path plugin with activation/deactivation logic and state management
+  - Implemented hover and drag states for precise trimming interactions
+  - Created utility functions for path validation, intersection computation, and path splitting
+  - Developed UI components including Trim Path overlay and expandable panel
+  - Integrated keyboard shortcuts for tool activation
+  - Added functionality to trim segments based on user interactions and path intersections
+  - Implemented path reconstruction after trimming to maintain visual integrity
 
 ### Changed
 - **FontSelector UI (2025-11-10)**: Replaced Popover dropdown with an always-open listbox showing 5 items

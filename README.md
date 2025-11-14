@@ -49,6 +49,7 @@ All plugin definitions are exported from `src/plugins/index.ts` as `CORE_PLUGINS
 
 * **Subpath Management**: single/multi selection constrained by element, deletion, precision nudging, reordering within the same path, and align/distribute across subpaths.
 * **Path Editing**: select and drag points/groups; convert commands; split subpaths; align/distribute points; simplification and rounding parameters; helpers to align control points.
+* **Trim Path**: interactive trimming of path segments at intersection points; click to trim individual segments or drag to trim multiple segments along a path.
 * **Smoothing Brush**: configurable (radius, strength, simplification, minimum distance); works on selected points or within a radius and can simplify after smoothing.
 * **Global Actions**: split subpaths into independent paths and reverse direction of selected subpaths, clearing the selection when finished.
 
