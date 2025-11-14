@@ -8,14 +8,15 @@ import {
   SquareDashedMousePointer,
   MousePointerClick,
   Hand,
-  PaintBucket
+  PaintBucket,
+  Scissors
 } from 'lucide-react';
 import type { ComponentType } from 'react';
 
 /**
  * Tool mode type definition
  */
-export type ToolMode = 'select' | 'pencil' | 'text' | 'shape' | 'curves' | 'subpath' | 'transformation' | 'edit' | 'pan' | 'gridFill';
+export type ToolMode = 'select' | 'pencil' | 'text' | 'shape' | 'curves' | 'subpath' | 'transformation' | 'edit' | 'pan' | 'gridFill' | 'trimPath';
 
 /**
  * Unified tool definition interface
@@ -104,5 +105,12 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     icon: PaintBucket,
     cursor: 'crosshair',
     order: 10,
+  },
+  {
+    mode: 'trimPath',
+    label: 'Trim Path',
+    icon: Scissors,
+    cursor: 'crosshair',
+    order: 11,
   },
 ];

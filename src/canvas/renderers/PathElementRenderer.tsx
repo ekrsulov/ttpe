@@ -89,7 +89,7 @@ export const PathElementRenderer: CanvasElementRenderer<PathElement> = (
                 ? 'move'
                 : 'pointer'
               : 'default',
-          pointerEvents: (activePlugin === 'subpath' || activePlugin === 'shape' || activePlugin === 'pencil' || activePlugin === 'curves' || isTransforming || isSelecting || isCreatingShape) ? 'none' : 'auto',
+          pointerEvents: (activePlugin === 'subpath' || activePlugin === 'shape' || activePlugin === 'pencil' || activePlugin === 'curves' || activePlugin === 'trimPath' || isTransforming || isSelecting || isCreatingShape) ? 'none' : 'auto',
         }}
       />
     </g>

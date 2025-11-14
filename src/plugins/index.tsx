@@ -21,6 +21,7 @@ import { gridPlugin } from './grid';
 import { minimapPlugin } from './minimap';
 import { gridFillPlugin } from './gridFill';
 import { duplicateOnDragPlugin } from './duplicateOnDrag';
+import { trimPathPlugin } from './trimPath';
 import { SelectionOverlay, BlockingOverlay } from '../overlays';
 import { useColorMode } from '@chakra-ui/react';
 
@@ -296,6 +297,11 @@ const selectPlugin: PluginDefinition<CanvasStore> = {
           return null;
         }
 
+        // Hide individual selection feedback when Trim Path tool is active
+        if (activePlugin === 'trimPath') {
+          return null;
+        }
+
         return (
           <>
             {elements
@@ -355,6 +361,10 @@ const selectPlugin: PluginDefinition<CanvasStore> = {
         }
         
         // In select mode, always show group bounds feedback
+        // Hide group bounds feedback in Trim Path mode (only show overall selection bbox)
+        if (activePlugin === 'trimPath') {
+          return null;
+        }
         return (
           <GroupSelectionBoundsComponent
             selectedGroupBounds={selectedGroupBounds}
@@ -545,6 +555,7 @@ export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   gridPlugin,
   minimapPlugin,
   duplicateOnDragPlugin,
+  trimPathPlugin,
 ];
 
 export * from './pencil';
@@ -560,3 +571,4 @@ export * from './grid';
 export * from './gridFill';
 export * from './minimap';
 export * from './duplicateOnDrag';
+export * from './trimPath';

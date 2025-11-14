@@ -25,6 +25,14 @@ if (typeof document !== 'undefined') {
   
   paper.setup(canvas);
   
+  // Configure Paper.js settings for better curve preservation
+  if (paper.settings) {
+    // Increase precision for geometric calculations
+    paper.settings.precision = 6; // Default is 5
+    // Disable automatic curve simplification
+    paper.settings.tolerance = 0.1; // Smaller tolerance means less simplification
+  }
+  
   // Restore original addEventListener
   canvas.addEventListener = originalAddEventListener;
 }
@@ -159,7 +167,7 @@ export function reverseSubPath(subPath: SubPath): SubPath {
   return newCommands;
 }
 
-function convertPathDataToPaperPath(pathData: PathData): paper.Path | paper.CompoundPath {
+export function convertPathDataToPaperPath(pathData: PathData): paper.Path | paper.CompoundPath {
   if (pathData.subPaths.length === 1) {
     // Single subPath, create Path
     const paperPath = new paper.Path();
@@ -242,7 +250,7 @@ function convertPathDataToPaperPath(pathData: PathData): paper.Path | paper.Comp
   }
 }
 
-function convertPaperPathToPathData(paperPath: paper.Path | paper.CompoundPath): PathData {
+export function convertPaperPathToPathData(paperPath: paper.Path | paper.CompoundPath): PathData {
   if (paperPath instanceof paper.CompoundPath) {
     // Handle CompoundPath by combining all children into a single PathData with multiple subPaths
     const pathData: PathData = {
@@ -286,12 +294,24 @@ function convertSinglePaperPathToPathData(paperPath: paper.Path): PathData {
     strokeDasharray: 'none',
   };
 
+  // Helper function to round with precision
+  const roundToPrecision = (value: number, precision = 2): number => {
+    const multiplier = Math.pow(10, precision);
+    return Math.round(value * multiplier) / multiplier;
+  };
+
   // Paper.js paths can have multiple segments, but for simplicity, assume one subpath
   const segments = paperPath.segments;
   if (segments.length > 0) {
     const subPath: SubPath = [];
     // M at first point
-    subPath.push({ type: 'M', position: { x: Math.round(segments[0].point.x), y: Math.round(segments[0].point.y) } });
+    subPath.push({ 
+      type: 'M', 
+      position: { 
+        x: roundToPrecision(segments[0].point.x), 
+        y: roundToPrecision(segments[0].point.y) 
+      } 
+    });
     
     // Process segments
     const numSegmentsToProcess = paperPath.closed ? segments.length : segments.length - 1;
@@ -303,19 +323,52 @@ function convertSinglePaperPathToPathData(paperPath: paper.Path): PathData {
       const cp2x = segments[nextIndex].point.x + segments[nextIndex].handleIn.x;
       const cp2y = segments[nextIndex].point.y + segments[nextIndex].handleIn.y;
       
-      const hasHandles = Math.abs(segments[i].handleOut.x) > 0.01 || Math.abs(segments[i].handleOut.y) > 0.01 ||
-                         Math.abs(segments[nextIndex].handleIn.x) > 0.01 || Math.abs(segments[nextIndex].handleIn.y) > 0.01;
+      // Check if segment has bezier handles (use smaller threshold to preserve more curves)
+      const hasHandles = Math.abs(segments[i].handleOut.x) > 0.001 || Math.abs(segments[i].handleOut.y) > 0.001 ||
+                         Math.abs(segments[nextIndex].handleIn.x) > 0.001 || Math.abs(segments[nextIndex].handleIn.y) > 0.001;
       
       if (hasHandles) {
-        const nextPoint = { x: Math.round(segments[nextIndex].point.x), y: Math.round(segments[nextIndex].point.y) };
+        const nextPoint = { 
+          x: roundToPrecision(segments[nextIndex].point.x), 
+          y: roundToPrecision(segments[nextIndex].point.y) 
+        };
         subPath.push({
           type: 'C',
-          controlPoint1: { x: Math.round(cp1x), y: Math.round(cp1y), commandIndex: 0, pointIndex: 0, anchor: nextPoint, isControl: true },
-          controlPoint2: { x: Math.round(cp2x), y: Math.round(cp2y), commandIndex: 0, pointIndex: 0, anchor: nextPoint, isControl: true },
+          controlPoint1: { 
+            x: roundToPrecision(cp1x), 
+            y: roundToPrecision(cp1y), 
+            commandIndex: 0, 
+            pointIndex: 0, 
+            anchor: nextPoint, 
+            isControl: true 
+          },
+          controlPoint2: { 
+            x: roundToPrecision(cp2x), 
+            y: roundToPrecision(cp2y), 
+            commandIndex: 0, 
+            pointIndex: 1, 
+            anchor: nextPoint, 
+            isControl: true 
+          },
           position: nextPoint
         });
       } else {
-        subPath.push({ type: 'L', position: { x: Math.round(segments[nextIndex].point.x), y: Math.round(segments[nextIndex].point.y) } });
+        // Only convert to line if handles are truly negligible
+        // Log when we're converting a curve to a line for debugging
+        if (Math.abs(segments[i].handleOut.x) > 0 || Math.abs(segments[i].handleOut.y) > 0 ||
+            Math.abs(segments[nextIndex].handleIn.x) > 0 || Math.abs(segments[nextIndex].handleIn.y) > 0) {
+          console.debug('[PathOps] Very small handles detected, treating as line', {
+            handleOut: { x: segments[i].handleOut.x, y: segments[i].handleOut.y },
+            handleIn: { x: segments[nextIndex].handleIn.x, y: segments[nextIndex].handleIn.y }
+          });
+        }
+        subPath.push({ 
+          type: 'L', 
+          position: { 
+            x: roundToPrecision(segments[nextIndex].point.x), 
+            y: roundToPrecision(segments[nextIndex].point.y) 
+          } 
+        });
       }
     }
     
