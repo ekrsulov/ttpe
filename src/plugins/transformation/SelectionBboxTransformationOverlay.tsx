@@ -1,6 +1,7 @@
 import React from 'react';
 import { useColorModeValue } from '@chakra-ui/react';
 import { TransformationHandlers } from './TransformationHandlers';
+import { AdvancedTransformationOverlay } from './AdvancedTransformationOverlay';
 import { CenterMarker } from './CenterMarker';
 import { CornerCoordinateLabels } from './CornerCoordinateLabels';
 import { MeasurementRulers } from './MeasurementRulers';
@@ -17,6 +18,7 @@ interface SelectionBboxTransformationOverlayProps {
   transformation?: {
     showCoordinates?: boolean;
     showRulers?: boolean;
+    advancedMode?: boolean;
   };
   onTransformationHandlerPointerDown: (e: React.PointerEvent, targetId: string, handler: string) => void;
   onTransformationHandlerPointerUp: (e: React.PointerEvent) => void;
@@ -58,15 +60,26 @@ export const SelectionBboxTransformationOverlay: React.FC<SelectionBboxTransform
   return (
     <g key="selection-bbox-transformation">
       {/* Transformation handlers for multi-selection */}
-      <TransformationHandlers
-        bounds={adjustedBounds}
-        elementId="selection-bbox"
-        handlerSize={handlerSize}
-        selectionColor={selectionColor}
-        viewport={viewport}
-        onPointerDown={onTransformationHandlerPointerDown}
-        onPointerUp={onTransformationHandlerPointerUp}
-      />
+      {transformation?.advancedMode ? (
+        <AdvancedTransformationOverlay
+          bounds={adjustedBounds}
+          elementId="selection-bbox"
+          viewport={viewport}
+          onPointerDown={onTransformationHandlerPointerDown}
+          onPointerUp={onTransformationHandlerPointerUp}
+          selectionColor={selectionColor}
+        />
+      ) : (
+        <TransformationHandlers
+          bounds={adjustedBounds}
+          elementId="selection-bbox"
+          handlerSize={handlerSize}
+          selectionColor={selectionColor}
+          viewport={viewport}
+          onPointerDown={onTransformationHandlerPointerDown}
+          onPointerUp={onTransformationHandlerPointerUp}
+        />
+      )}
 
       {/* Center marker */}
       <CenterMarker

@@ -2,8 +2,9 @@ import type { StateCreator } from 'zustand';
 import type { CanvasStore } from '../../store/canvasStore';
 import { accumulateBounds } from '../../utils/measurementUtils';
 import { transformCommands, calculateScaledStrokeWidth } from '../../utils/sharedTransformUtils';
+import { applyDistortTransform, applySkewXTransform, applySkewYTransform } from '../../utils/advancedTransformUtils';
 import { getGroupBounds } from '../../canvas/geometry/CanvasGeometryService';
-import type { GroupElement, PathData, CanvasElement } from '../../types';
+import type { GroupElement, PathData, CanvasElement, Point } from '../../types';
 
 /**
  * Helper function to transform all descendants of a group recursively
@@ -68,6 +69,7 @@ export interface TransformationPluginSlice {
     showCoordinates: boolean;
     showRulers: boolean;
     maintainAspectRatio: boolean;
+    advancedMode: boolean;
   };
 
   // Actions
@@ -76,6 +78,8 @@ export interface TransformationPluginSlice {
   isWorkingWithSubpaths: () => boolean;
   applyResizeTransform: (width: number, height: number) => void;
   applyRotationTransform: (degrees: number) => void;
+  applyAdvancedDistortTransform: (newCorners: { tl: Point; tr: Point; bl: Point; br: Point }) => void;
+  applyAdvancedSkewTransform: (axis: 'x' | 'y', angle: number) => void;
 }
 
 export const createTransformationPluginSlice: StateCreator<
@@ -92,6 +96,7 @@ export const createTransformationPluginSlice: StateCreator<
       showCoordinates: false,
       showRulers: false,
       maintainAspectRatio: true,
+      advancedMode: false,
     },
 
     // Actions
@@ -313,6 +318,185 @@ export const createTransformationPluginSlice: StateCreator<
             
             const newSubPaths = pathData.subPaths.map((subPath) =>
               transformCommands(subPath, transform)
+            );
+
+            state.updateElement(id, {
+              data: {
+                ...pathData,
+                subPaths: newSubPaths
+              }
+            });
+          }
+        });
+      }
+    },
+
+    // Apply advanced distort transformation (free-form corner movement)
+    applyAdvancedDistortTransform: (newCorners: { tl: Point; tr: Point; bl: Point; br: Point }) => {
+      const state = get() as CanvasStore;
+      const isSubpathMode = (get() as CanvasStore).isWorkingWithSubpaths?.() ?? false;
+      const bounds = (get() as CanvasStore).getTransformationBounds?.();
+      
+      if (!bounds) return;
+
+      if (isSubpathMode && (state.selectedSubpaths?.length ?? 0) > 0) {
+        // Apply transformation to selected subpaths
+        (state.selectedSubpaths ?? []).forEach(({ elementId, subpathIndex }) => {
+          const element = state.elements.find((el) => el.id === elementId);
+          if (element && element.type === 'path') {
+            const pathData = element.data as import('../../types').PathData;
+            const newSubPaths = [...pathData.subPaths];
+            
+            newSubPaths[subpathIndex] = applyDistortTransform(newSubPaths[subpathIndex], bounds, newCorners);
+
+            state.updateElement(elementId, {
+              data: {
+                ...pathData,
+                subPaths: newSubPaths
+              }
+            });
+          }
+        });
+      } else {
+        // Apply transformation to selected elements (paths and groups)
+        const elementMap = new Map(state.elements.map(el => [el.id, el]));
+
+        state.selectedIds.forEach((id) => {
+          const element = state.elements.find((el) => el.id === id);
+          if (!element) return;
+
+          if (element.type === 'group') {
+            // For groups, transform all descendants
+            const group = element as GroupElement;
+            const visited = new Set<string>();
+            
+            const transformDescendantsDistort = (grp: GroupElement) => {
+              if (visited.has(grp.id)) return;
+              visited.add(grp.id);
+
+              grp.data.childIds.forEach((childId) => {
+                const child = elementMap.get(childId);
+                if (!child) return;
+
+                if (child.type === 'group') {
+                  transformDescendantsDistort(child as GroupElement);
+                } else if (child.type === 'path') {
+                  const pathData = child.data as PathData;
+                  const newSubPaths = pathData.subPaths.map((subPath) =>
+                    applyDistortTransform(subPath, bounds, newCorners)
+                  );
+
+                  state.updateElement(child.id, {
+                    data: {
+                      ...pathData,
+                      subPaths: newSubPaths
+                    }
+                  });
+                }
+              });
+            };
+
+            transformDescendantsDistort(group);
+          } else if (element.type === 'path') {
+            // Transform path element
+            const pathData = element.data as import('../../types').PathData;
+            
+            const newSubPaths = pathData.subPaths.map((subPath) =>
+              applyDistortTransform(subPath, bounds, newCorners)
+            );
+
+            state.updateElement(id, {
+              data: {
+                ...pathData,
+                subPaths: newSubPaths
+              }
+            });
+          }
+        });
+      }
+    },
+
+    // Apply advanced skew transformation
+    applyAdvancedSkewTransform: (axis: 'x' | 'y', angle: number) => {
+      const state = get() as CanvasStore;
+      const isSubpathMode = (get() as CanvasStore).isWorkingWithSubpaths?.() ?? false;
+      const bounds = (get() as CanvasStore).getTransformationBounds?.();
+      
+      if (!bounds) return;
+
+      const originX = (bounds.minX + bounds.maxX) / 2;
+      const originY = (bounds.minY + bounds.maxY) / 2;
+
+      if (isSubpathMode && (state.selectedSubpaths?.length ?? 0) > 0) {
+        // Apply transformation to selected subpaths
+        (state.selectedSubpaths ?? []).forEach(({ elementId, subpathIndex }) => {
+          const element = state.elements.find((el) => el.id === elementId);
+          if (element && element.type === 'path') {
+            const pathData = element.data as import('../../types').PathData;
+            const newSubPaths = [...pathData.subPaths];
+            
+            newSubPaths[subpathIndex] = axis === 'x'
+              ? applySkewXTransform(newSubPaths[subpathIndex], angle, originY)
+              : applySkewYTransform(newSubPaths[subpathIndex], angle, originX);
+
+            state.updateElement(elementId, {
+              data: {
+                ...pathData,
+                subPaths: newSubPaths
+              }
+            });
+          }
+        });
+      } else {
+        // Apply transformation to selected elements (paths and groups)
+        const elementMap = new Map(state.elements.map(el => [el.id, el]));
+
+        state.selectedIds.forEach((id) => {
+          const element = state.elements.find((el) => el.id === id);
+          if (!element) return;
+
+          if (element.type === 'group') {
+            // For groups, transform all descendants
+            const group = element as GroupElement;
+            const visited = new Set<string>();
+            
+            const transformDescendantsSkew = (grp: GroupElement) => {
+              if (visited.has(grp.id)) return;
+              visited.add(grp.id);
+
+              grp.data.childIds.forEach((childId) => {
+                const child = elementMap.get(childId);
+                if (!child) return;
+
+                if (child.type === 'group') {
+                  transformDescendantsSkew(child as GroupElement);
+                } else if (child.type === 'path') {
+                  const pathData = child.data as PathData;
+                  const newSubPaths = pathData.subPaths.map((subPath) =>
+                    axis === 'x'
+                      ? applySkewXTransform(subPath, angle, originY)
+                      : applySkewYTransform(subPath, angle, originX)
+                  );
+
+                  state.updateElement(child.id, {
+                    data: {
+                      ...pathData,
+                      subPaths: newSubPaths
+                    }
+                  });
+                }
+              });
+            };
+
+            transformDescendantsSkew(group);
+          } else if (element.type === 'path') {
+            // Transform path element
+            const pathData = element.data as import('../../types').PathData;
+            
+            const newSubPaths = pathData.subPaths.map((subPath) =>
+              axis === 'x'
+                ? applySkewXTransform(subPath, angle, originY)
+                : applySkewYTransform(subPath, angle, originX)
             );
 
             state.updateElement(id, {

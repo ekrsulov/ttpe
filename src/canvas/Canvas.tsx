@@ -3,6 +3,7 @@ import { useCanvasDragInteractions } from './hooks/useCanvasDragInteractions';
 import { useCanvasKeyboardControls } from './hooks/useCanvasKeyboardControls';
 import { useSelectionController } from './hooks/useSelectionController';
 import { useCanvasTransformControls } from './hooks/useCanvasTransformControls';
+import { useAdvancedTransformControls } from './hooks/useAdvancedTransformControls';
 import { useCanvasShapeCreation } from './hooks/useCanvasShapeCreation';
 import { useCanvasSmoothBrush } from './hooks/useCanvasSmoothBrush';
 import { useCanvasEventHandlers } from './hooks/useCanvasEventHandlers';
@@ -61,6 +62,12 @@ const CanvasContent: React.FC = () => {
     updateTransformation,
     endTransformation
   } = useCanvasTransformControls();
+  const {
+    transformState: advancedTransformState,
+    startAdvancedTransformation,
+    updateAdvancedTransformation,
+    endAdvancedTransformation
+  } = useAdvancedTransformControls();
   const {
     isCreatingShape,
     shapeStart,
@@ -308,7 +315,9 @@ const CanvasContent: React.FC = () => {
     isCreatingShape,
     shapeStart,
     transformStateIsTransforming: transformState.isTransforming,
+    advancedTransformStateIsTransforming: advancedTransformState.isTransforming,
     updateTransformation,
+    updateAdvancedTransformation,
     beginSelectionRectangle,
     startShapeCreation,
     isSmoothBrushActive,
@@ -320,6 +329,8 @@ const CanvasContent: React.FC = () => {
     selectedIds,
     startTransformation,
     endTransformation,
+    startAdvancedTransformation,
+    endAdvancedTransformation,
     completeSelectionRectangle,
     updateSelectionRectangle,
     updateShapeCreation,

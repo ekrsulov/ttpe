@@ -2,6 +2,7 @@ import React from 'react';
 import { useColorModeValue } from '@chakra-ui/react';
 import { useSelectionBounds } from '../../hooks/useSelectionBounds';
 import { TransformationHandlers } from './TransformationHandlers';
+import { AdvancedTransformationOverlay } from './AdvancedTransformationOverlay';
 import { CenterMarker } from './CenterMarker';
 import { CornerCoordinateLabels } from './CornerCoordinateLabels';
 import { MeasurementRulers } from './MeasurementRulers';
@@ -28,6 +29,7 @@ interface TransformationOverlayProps {
   transformation?: {
     showCoordinates?: boolean;
     showRulers?: boolean;
+    advancedMode?: boolean;
   };
   isWorkingWithSubpaths: boolean;
   onTransformationHandlerPointerDown: (e: React.PointerEvent, elementId: string, handler: string) => void;
@@ -104,29 +106,52 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
       {/* Transformation handlers */}
       {!isWorkingWithSubpaths ? (
         // For complete paths
-        <TransformationHandlers
-          bounds={adjustedElementBounds}
-          elementId={element.id}
-          handlerSize={handlerSize}
-          selectionColor={selectionColor}
-          viewport={viewport}
-          onPointerDown={onTransformationHandlerPointerDown}
-          onPointerUp={onTransformationHandlerPointerUp}
-        />
+        transformation?.advancedMode ? (
+          <AdvancedTransformationOverlay
+            bounds={adjustedElementBounds}
+            elementId={element.id}
+            viewport={viewport}
+            onPointerDown={onTransformationHandlerPointerDown}
+            onPointerUp={onTransformationHandlerPointerUp}
+            selectionColor={selectionColor}
+          />
+        ) : (
+          <TransformationHandlers
+            bounds={adjustedElementBounds}
+            elementId={element.id}
+            handlerSize={handlerSize}
+            selectionColor={selectionColor}
+            viewport={viewport}
+            onPointerDown={onTransformationHandlerPointerDown}
+            onPointerUp={onTransformationHandlerPointerUp}
+          />
+        )
       ) : (
         // For subpaths - show individual handlers for each selected subpath
         subpathBoundsResults.map((result) => (
           <g key={`subpath-handlers-${element.id}-${result.subpathIndex}`}>
-            <TransformationHandlers
-              bounds={result.bounds}
-              elementId={element.id}
-              subpathIndex={result.subpathIndex}
-              handlerSize={handlerSize}
-              selectionColor={subpathSelectionColor}
-              viewport={viewport}
-              onPointerDown={onTransformationHandlerPointerDown}
-              onPointerUp={onTransformationHandlerPointerUp}
-            />
+            {transformation?.advancedMode ? (
+              <AdvancedTransformationOverlay
+                bounds={result.bounds}
+                elementId={element.id}
+                subpathIndex={result.subpathIndex}
+                viewport={viewport}
+                onPointerDown={onTransformationHandlerPointerDown}
+                onPointerUp={onTransformationHandlerPointerUp}
+                selectionColor={subpathSelectionColor}
+              />
+            ) : (
+              <TransformationHandlers
+                bounds={result.bounds}
+                elementId={element.id}
+                subpathIndex={result.subpathIndex}
+                handlerSize={handlerSize}
+                selectionColor={subpathSelectionColor}
+                viewport={viewport}
+                onPointerDown={onTransformationHandlerPointerDown}
+                onPointerUp={onTransformationHandlerPointerUp}
+              />
+            )}
 
             {/* Center marker for subpath */}
             <CenterMarker

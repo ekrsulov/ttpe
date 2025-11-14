@@ -24,10 +24,11 @@ export const TransformationPanel: React.FC<TransformationPanelProps> = ({ hideTi
   
   const { createToggleHandler } = usePanelToggleHandlers(updateTransformationState ?? (() => {}));
   
-  const { showCoordinates, showRulers, maintainAspectRatio } = transformation ?? { 
+  const { showCoordinates, showRulers, maintainAspectRatio, advancedMode } = transformation ?? { 
     showCoordinates: false, 
     showRulers: false,
-    maintainAspectRatio: true
+    maintainAspectRatio: true,
+    advancedMode: false
   };
 
   const isSubpathMode = isWorkingWithSubpaths?.() ?? false;
@@ -124,6 +125,13 @@ export const TransformationPanel: React.FC<TransformationPanelProps> = ({ hideTi
             onChange={createToggleHandler('showRulers')}
           >
             Rulers
+          </PanelToggle>
+          
+          <PanelToggle
+            isChecked={advancedMode}
+            onChange={createToggleHandler('advancedMode')}
+          >
+            Advanced
           </PanelToggle>
         </HStack>
 

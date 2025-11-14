@@ -21,7 +21,9 @@ interface EventHandlerDeps {
   isCreatingShape: boolean;
   shapeStart: Point | null;
   transformStateIsTransforming: boolean;
+  advancedTransformStateIsTransforming: boolean;
   updateTransformation: (point: Point, shiftPressed: boolean) => void;
+  updateAdvancedTransformation: (point: Point) => void;
   beginSelectionRectangle: (point: Point, shiftKey?: boolean, subpathMode?: boolean) => void;
   startShapeCreation: (point: Point) => void;
   isSmoothBrushActive: boolean;
@@ -36,6 +38,8 @@ interface EventHandlerDeps {
   selectElement: (elementId: string, toggle: boolean) => void;
   startTransformation: (elementId: string, handler: string, point: Point) => void;
   endTransformation: () => void;
+  startAdvancedTransformation: (handler: string, point: Point, isModifierPressed: boolean) => void;
+  endAdvancedTransformation: () => void;
   completeSelectionRectangle: () => void;
   updateSelectionRectangle: (point: Point) => void;
   updateShapeCreation: (point: Point, shiftPressed: boolean) => void;
@@ -60,7 +64,9 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     isCreatingShape,
     shapeStart,
     transformStateIsTransforming,
+    advancedTransformStateIsTransforming,
     updateTransformation,
+    updateAdvancedTransformation,
     beginSelectionRectangle,
     startShapeCreation,
     isSmoothBrushActive,
@@ -75,6 +81,8 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     selectElement,
     startTransformation,
     endTransformation,
+    startAdvancedTransformation,
+    endAdvancedTransformation,
     completeSelectionRectangle,
     updateSelectionRectangle,
     updateShapeCreation,
@@ -450,13 +458,22 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
   const handleTransformationHandlerPointerDown = useCallback((e: React.PointerEvent, elementId: string, handler: string) => {
     e.stopPropagation();
     const point = screenToCanvas(e.clientX, e.clientY);
+    
+    // Check if this is an advanced transformation handler
+    if (handler.startsWith('advanced-')) {
+      const isModifierPressed = e.metaKey || e.ctrlKey || e.altKey;
+      startAdvancedTransformation(handler, point, isModifierPressed);
+      return;
+    }
+    
     startTransformation(elementId, handler, point);
-  }, [screenToCanvas, startTransformation]);
+  }, [screenToCanvas, startTransformation, startAdvancedTransformation]);
 
   // Handle transformation handler pointer up
   const handleTransformationHandlerPointerUp = useCallback((_e: React.PointerEvent) => {
     endTransformation();
-  }, [endTransformation]);
+    endAdvancedTransformation();
+  }, [endTransformation, endAdvancedTransformation]);
 
   // Handle pointer down
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
@@ -668,6 +685,13 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       return;
     }
 
+    if (advancedTransformStateIsTransforming) {
+      // Handle advanced transformations (distort, skew, perspective)
+      // Mode is already determined in startAdvancedTransformation
+      updateAdvancedTransformation(point);
+      return;
+    }
+
     // Handle curves tool
     if (activePlugin === 'curves') {
       handleCurvesPointerMove(point);
@@ -736,6 +760,8 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     endShapeCreation,
     startShapeCreation,
     eventBus,
+    advancedTransformStateIsTransforming,
+    updateAdvancedTransformation,
   ]);
 
   // Handle pointer up
@@ -801,6 +827,10 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     if (transformStateIsTransforming) {
       endTransformation();
     }
+
+    if (advancedTransformStateIsTransforming) {
+      endAdvancedTransformation();
+    }
   }, [
     activePlugin,
     handleCurvesPointerUp,
@@ -815,6 +845,8 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     endShapeCreation,
     transformStateIsTransforming,
     endTransformation,
+    advancedTransformStateIsTransforming,
+    endAdvancedTransformation,
     screenToCanvas,
     updateSelectionRectangle,
     updateShapeCreation,

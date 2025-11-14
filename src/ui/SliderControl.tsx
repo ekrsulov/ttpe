@@ -6,8 +6,7 @@ import {
   SliderTrack,
   SliderFilledTrack,
   SliderThumb,
-  Text,
-  useColorModeValue
+  Text
 } from '@chakra-ui/react';
 
 interface SliderControlProps {
@@ -58,8 +57,6 @@ export const SliderControl: React.FC<SliderControlProps> = ({
   useEffect(() => {
     setEditValue(isPercent ? (value * 100).toString() : value.toString());
   }, [value, isPercent]);
-
-  const valueTextColor = useColorModeValue('gray.600', 'gray.400');
 
   const handleChange = (newValue: number) => {
     // If stepFunction is provided, quantize the value to the appropriate step

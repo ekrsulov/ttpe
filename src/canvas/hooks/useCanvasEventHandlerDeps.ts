@@ -14,7 +14,9 @@ export interface CanvasEventHandlerDepsInput {
   isCreatingShape: boolean;
   shapeStart: Point | null;
   transformStateIsTransforming: boolean;
+  advancedTransformStateIsTransforming: boolean;
   updateTransformation: (point: Point, isShiftPressed: boolean) => void;
+  updateAdvancedTransformation: (point: Point) => void;
   // Note: applyBrush and updateCursorPosition removed as they were not propagated
   beginSelectionRectangle: (point: Point, shiftKey?: boolean, subpathMode?: boolean) => void;
   startShapeCreation: (point: Point) => void;
@@ -27,6 +29,8 @@ export interface CanvasEventHandlerDepsInput {
   selectedIds: string[];
   startTransformation: (elementId: string, handler: string, point: Point) => void;
   endTransformation: () => void;
+  startAdvancedTransformation: (handler: string, point: Point, isModifierPressed: boolean) => void;
+  endAdvancedTransformation: () => void;
   completeSelectionRectangle: () => void;
   updateSelectionRectangle: (point: Point) => void;
   updateShapeCreation: (point: Point, shiftPressed: boolean) => void;
@@ -50,7 +54,9 @@ export interface CanvasEventHandlerDeps {
   isCreatingShape: boolean;
   shapeStart: Point | null;
   transformStateIsTransforming: boolean;
+  advancedTransformStateIsTransforming: boolean;
   updateTransformation: (point: Point, isShiftPressed: boolean) => void;
+  updateAdvancedTransformation: (point: Point) => void;
   beginSelectionRectangle: (point: Point, shiftKey?: boolean, subpathMode?: boolean) => void;
   startShapeCreation: (point: Point) => void;
   isSmoothBrushActive: boolean;
@@ -62,6 +68,8 @@ export interface CanvasEventHandlerDeps {
   selectedIds: string[];
   startTransformation: (elementId: string, handler: string, point: Point) => void;
   endTransformation: () => void;
+  startAdvancedTransformation: (handler: string, point: Point, isModifierPressed: boolean) => void;
+  endAdvancedTransformation: () => void;
   completeSelectionRectangle: () => void;
   updateSelectionRectangle: (point: Point) => void;
   updateShapeCreation: (point: Point, shiftPressed: boolean) => void;
@@ -92,7 +100,9 @@ export function useCanvasEventHandlerDeps(
     isCreatingShape: input.isCreatingShape,
     shapeStart: input.shapeStart,
     transformStateIsTransforming: input.transformStateIsTransforming,
+    advancedTransformStateIsTransforming: input.advancedTransformStateIsTransforming,
     updateTransformation: input.updateTransformation,
+    updateAdvancedTransformation: input.updateAdvancedTransformation,
     beginSelectionRectangle: input.beginSelectionRectangle,
     startShapeCreation: input.startShapeCreation,
     isSmoothBrushActive: input.isSmoothBrushActive,
@@ -104,6 +114,8 @@ export function useCanvasEventHandlerDeps(
     selectedIds: input.selectedIds,
     startTransformation: input.startTransformation,
     endTransformation: input.endTransformation,
+    startAdvancedTransformation: input.startAdvancedTransformation,
+    endAdvancedTransformation: input.endAdvancedTransformation,
     completeSelectionRectangle: input.completeSelectionRectangle,
     updateSelectionRectangle: input.updateSelectionRectangle,
     updateShapeCreation: input.updateShapeCreation,
@@ -125,7 +137,9 @@ export function useCanvasEventHandlerDeps(
     input.isCreatingShape,
     input.shapeStart,
     input.transformStateIsTransforming,
+    input.advancedTransformStateIsTransforming,
     input.updateTransformation,
+    input.updateAdvancedTransformation,
     input.beginSelectionRectangle,
     input.startShapeCreation,
     input.isSmoothBrushActive,
@@ -137,6 +151,8 @@ export function useCanvasEventHandlerDeps(
     input.selectedIds,
     input.startTransformation,
     input.endTransformation,
+    input.startAdvancedTransformation,
+    input.endAdvancedTransformation,
     input.completeSelectionRectangle,
     input.updateSelectionRectangle,
     input.updateShapeCreation,

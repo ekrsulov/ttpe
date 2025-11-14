@@ -1,6 +1,7 @@
 import React from 'react';
 import { useColorModeValue } from '@chakra-ui/react';
 import { TransformationHandlers } from './TransformationHandlers';
+import { AdvancedTransformationOverlay } from './AdvancedTransformationOverlay';
 import { CenterMarker } from './CenterMarker';
 import { CornerCoordinateLabels } from './CornerCoordinateLabels';
 import { MeasurementRulers } from './MeasurementRulers';
@@ -19,6 +20,7 @@ interface GroupTransformationOverlayProps {
   transformation?: {
     showCoordinates?: boolean;
     showRulers?: boolean;
+    advancedMode?: boolean;
   };
   onTransformationHandlerPointerDown: (e: React.PointerEvent, groupId: string, handler: string) => void;
   onTransformationHandlerPointerUp: (e: React.PointerEvent) => void;
@@ -60,15 +62,26 @@ export const GroupTransformationOverlay: React.FC<GroupTransformationOverlayProp
   return (
     <g key={`group-transformation-${group.id}`}>
       {/* Transformation handlers for group */}
-      <TransformationHandlers
-        bounds={adjustedBounds}
-        elementId={`group:${group.id}`}
-        handlerSize={handlerSize}
-        selectionColor={selectionColor}
-        viewport={viewport}
-        onPointerDown={onTransformationHandlerPointerDown}
-        onPointerUp={onTransformationHandlerPointerUp}
-      />
+      {transformation?.advancedMode ? (
+        <AdvancedTransformationOverlay
+          bounds={adjustedBounds}
+          elementId={`group:${group.id}`}
+          viewport={viewport}
+          onPointerDown={onTransformationHandlerPointerDown}
+          onPointerUp={onTransformationHandlerPointerUp}
+          selectionColor={selectionColor}
+        />
+      ) : (
+        <TransformationHandlers
+          bounds={adjustedBounds}
+          elementId={`group:${group.id}`}
+          handlerSize={handlerSize}
+          selectionColor={selectionColor}
+          viewport={viewport}
+          onPointerDown={onTransformationHandlerPointerDown}
+          onPointerUp={onTransformationHandlerPointerUp}
+        />
+      )}
 
       {/* Center marker */}
       <CenterMarker
