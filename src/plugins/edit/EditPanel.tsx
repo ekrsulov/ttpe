@@ -173,7 +173,7 @@ export const EditPanel: React.FC<EditPanelProps> = ({
           step={0.01}
           onChange={(value) => updateSmoothBrush({ strength: value })}
           labelWidth="60px"
-          valueWidth="35px"
+          valueWidth="40px"
           marginBottom='0'
         />
 
@@ -187,7 +187,7 @@ export const EditPanel: React.FC<EditPanelProps> = ({
             step={1}
             onChange={(value) => updateSmoothBrush({ radius: value })}
             labelWidth="60px"
-            valueWidth="35px"
+            valueWidth="40px"
             marginBottom='0'
           />
         )}
@@ -204,7 +204,7 @@ export const EditPanel: React.FC<EditPanelProps> = ({
             onChange={(value) => updateSmoothBrush({ simplificationTolerance: value })}
             formatter={(value) => value.toFixed(1)}
             labelWidth="60px"
-            valueWidth="35px"
+            valueWidth="40px"
             marginBottom='0'
           />
         )}
@@ -239,7 +239,7 @@ export const EditPanel: React.FC<EditPanelProps> = ({
           actionTitle={pathSimplificationLabel}
         />
 
-        <SliderControl
+          <SliderControl
           label="Tolerance:"
           value={pathSimplification.tolerance}
           min={0.01}
@@ -248,7 +248,7 @@ export const EditPanel: React.FC<EditPanelProps> = ({
           onChange={(value) => updatePathSimplification({ tolerance: value })}
           formatter={(value) => value.toFixed(2)}
           labelWidth="60px"
-          valueWidth="35px"
+            valueWidth="40px"
           marginBottom='0'
         />
       </Box>
@@ -274,7 +274,7 @@ export const EditPanel: React.FC<EditPanelProps> = ({
           onChange={(value) => updatePathRounding({ radius: value })}
           formatter={(value) => value.toFixed(1)}
           labelWidth="60px"
-          valueWidth="35px"
+          valueWidth="40px"
           marginBottom='0'
         />
       </Box>

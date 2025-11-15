@@ -67,7 +67,7 @@ const ObjectSnapPanelComponent: React.FC = () => {
               step={1}
               onChange={(value) => updateObjectSnapState?.({ snapThreshold: value })}
               labelWidth="70px"
-              valueWidth="35px"
+              valueWidth="40px"
               marginBottom="0"
             />
           </Box>
