@@ -6,7 +6,8 @@ import {
   SliderTrack,
   SliderFilledTrack,
   SliderThumb,
-  Text
+  Text,
+  VStack,
 } from '@chakra-ui/react';
 
 interface SliderControlProps {
@@ -120,45 +121,59 @@ export const SliderControl: React.FC<SliderControlProps> = ({
         </SliderTrack>
         <SliderThumb boxSize="12px" />
       </Slider>
-      {isEditing ? (
-        <input
-          value={editValue}
-          onChange={(e) => setEditValue(e.target.value)}
-          onBlur={handleEditConfirm}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              handleEditConfirm();
-            } else if (e.key === 'Escape') {
-              handleEditCancel();
-            }
-          }}
-          style={{
-            fontSize: '12px',
-            color: 'inherit',
-            width: valueWidth,
-            textAlign: 'right',
-            border: 'none',
-            outline: 'none',
-            background: 'transparent',
-            flexShrink: 0
-          }}
-          autoFocus
-          onFocus={(e) => e.target.select()}
-        />
-      ) : (
-        <Text
-          fontSize="12px"
-          color="gray.600"
-          _dark={{ color: 'gray.400' }}
-          w={valueWidth}
-          textAlign="right"
-          flexShrink={0}
-          cursor="text"
-          onClick={() => setIsEditing(true)}
+      <VStack spacing="2px" alignItems="flex-end" w={valueWidth} flexShrink={0} ml={gap}>
+        <Box
+          minH="20px"
+          w="100%"
+          borderWidth="1px"
+          borderColor={isEditing ? 'gray.600' : 'gray.300'}
+          bg="white"
+          _dark={{ borderColor: isEditing ? 'gray.300' : 'whiteAlpha.300', bg: 'gray.800' }}
+          _focusWithin={{ borderColor: 'gray.600', boxShadow: '0 0 0 1px var(--chakra-colors-gray-600)' }}
+          opacity={isEditing ? 1 : 0.95}
+          aria-hidden="true"
+          onClick={isEditing ? undefined : () => setIsEditing(true)}
+          px="2px"
+          py="0px"
+          borderRadius="0"
         >
-          {formattedValue}
-        </Text>
-      )}
+          {isEditing ? (
+            <input
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onBlur={handleEditConfirm}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleEditConfirm();
+                } else if (e.key === 'Escape') {
+                  handleEditCancel();
+                }
+              }}
+              style={{
+                fontSize: '11px',
+                color: 'inherit',
+                width: '100%',
+                textAlign: 'right',
+                border: 'none',
+                outline: 'none',
+                background: 'transparent'
+              }}
+              autoFocus
+              onFocus={(e) => e.target.select()}
+            />
+          ) : (
+            <Text
+              fontSize="11px"
+              color="gray.600"
+              _dark={{ color: 'gray.400' }}
+              textAlign="right"
+              w="100%"
+            >
+              {formattedValue}
+            </Text>
+          )}
+        </Box>
+      </VStack>
     </HStack>
   );
 };
