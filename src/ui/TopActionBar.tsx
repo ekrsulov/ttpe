@@ -41,6 +41,9 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
   // Detect mobile breakpoint
   const isMobile = useBreakpointValue({ base: true, md: false }, { fallback: 'md' });
   
+  // Get grid state to conditionally show gridFill tool
+  const gridEnabled = useCanvasStore(state => state.grid?.enabled ?? false);
+  
   // Dynamic tools hook
   const {
     trackToolUsage,
@@ -49,14 +52,11 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
     showExtraTools,
     toggleExtraTools,
     alwaysShownTools,
-  } = useDynamicTools(activeMode);
+  } = useDynamicTools(activeMode, gridEnabled);
   
   // Colors for active buttons
   const activeBg = useColorModeValue('gray.800', 'gray.200');
   const activeColor = useColorModeValue('white', 'gray.900');
-  
-  // Get grid state to conditionally show gridFill tool
-  const gridEnabled = useCanvasStore(state => state.grid?.enabled ?? false);
   
   // Optimize subscriptions - only subscribe to length/count, not entire arrays
   // This prevents re-renders when elements data changes (e.g., during movement)

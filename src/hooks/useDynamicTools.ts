@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { ToolMode } from '../config/toolDefinitions';
 
 // Tools that can be dynamically shown/hidden based on usage
@@ -23,9 +23,15 @@ interface ToolUsage {
 /**
  * Hook to manage dynamic tool selection based on usage patterns
  */
-export const useDynamicTools = (activeMode: string | null) => {
+export const useDynamicTools = (activeMode: string | null, gridEnabled: boolean = false) => {
   const [toolUsage, setToolUsage] = useState<ToolUsage>({});
   const [showExtraTools, setShowExtraTools] = useState(false);
+
+  // Compute dynamic tools based on grid state
+  const dynamicTools = useMemo(() => 
+    DYNAMIC_TOOLS.filter(tool => tool !== 'gridFill' || gridEnabled),
+    [gridEnabled]
+  );
 
   // Load tool usage from localStorage on mount
   useEffect(() => {
@@ -58,7 +64,7 @@ export const useDynamicTools = (activeMode: string | null) => {
 
   // Get the most used dynamic tools for mobile
   const getMobileVisibleTools = useCallback((): ToolMode[] => {
-    const sortedTools = DYNAMIC_TOOLS
+    const sortedTools = dynamicTools
       .map(tool => ({ tool, usage: toolUsage[tool] || 0 }))
       .sort((a, b) => b.usage - a.usage)
       .slice(0, MOBILE_VISIBLE_TOOLS)
@@ -74,13 +80,13 @@ export const useDynamicTools = (activeMode: string | null) => {
     }
 
     return visibleDynamicTools;
-  }, [toolUsage, activeMode]);
+  }, [dynamicTools, toolUsage, activeMode]);
 
   // Get tools that should be shown in the extra tools bar
   const getExtraTools = useCallback((): ToolMode[] => {
     const visibleTools = getMobileVisibleTools();
-    return DYNAMIC_TOOLS.filter(tool => !visibleTools.includes(tool));
-  }, [getMobileVisibleTools]);
+    return dynamicTools.filter(tool => !visibleTools.includes(tool));
+  }, [dynamicTools, getMobileVisibleTools]);
 
   // Toggle extra tools visibility
   const toggleExtraTools = useCallback(() => {
@@ -100,6 +106,6 @@ export const useDynamicTools = (activeMode: string | null) => {
     toggleExtraTools,
     resetToolUsage,
     alwaysShownTools: ALWAYS_SHOWN_TOOLS,
-    dynamicTools: DYNAMIC_TOOLS,
+    dynamicTools,
   };
 };
