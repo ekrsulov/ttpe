@@ -45,32 +45,171 @@ Individual toggles for different snap point types:
 - **Midpoints**: Snap to center points of segments (enabled by default)
 - **Intersections**: Snap to points where paths cross (disabled by default)
 
-## Visual Feedback
+## Plugin Interaction Flow
 
-During active snapping:
-- Small circular indicators appear at available snap points
-- The active snap point is highlighted with a larger indicator
-- Cursor position is constrained to the snap point
-- Indicators use theme-appropriate colors (black in light mode, white in dark mode)
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI as UI/Toolbar
+    participant Store as Canvas Store
+    participant OSP as Object Snap Plugin
+    participant Canvas as Canvas Renderer
+    
+    Note over User,Canvas: 1. Plugin Activation
+    User->>UI: Enter Edit mode
+    UI->>Store: setActivePlugin('edit')
+    Store->>OSP: Plugin becomes active
+    OSP->>Store: Initialize object snap state
+    OSP->>Canvas: Render snap overlay (when dragging)
+    
+    Note over User,Canvas: 2. Point Editing with Snapping
+    User->>Canvas: Start dragging point in Edit mode
+    Canvas->>OSP: Point drag starts
+    OSP->>Store: Get available snap points
+    Store->>OSP: Return SnapPoint[]
+    OSP->>Store: Find closest snap point within threshold
+    Store->>OSP: Return closest SnapPoint or null
+    
+    alt Snap point found
+        OSP->>Canvas: Constrain cursor to snap point
+        OSP->>Canvas: Show snap indicators
+        OSP->>Store: Update currentSnapPoint
+    else No snap point
+        OSP->>Canvas: Allow free dragging
+    end
+    
+    User->>Canvas: Continue dragging
+    Canvas->>OSP: Update drag position
+    OSP->>Store: Recalculate closest snap point
+    OSP->>Canvas: Update visual feedback
+    
+    User->>Canvas: Release point
+    Canvas->>OSP: End drag operation
+    OSP->>Store: Clear currentSnapPoint
+    OSP->>Canvas: Hide snap indicators
+    
+    Note over User,Canvas: 3. Selection Dragging with Snapping
+    User->>Canvas: Start dragging selection
+    Canvas->>OSP: Selection drag starts
+    OSP->>Store: Calculate selection bounds
+    OSP->>Store: Find snap points for selection anchor
+    OSP->>Canvas: Show snap feedback for selection
+    
+    User->>Canvas: Release selection
+    Canvas->>OSP: End selection drag
+    OSP->>Store: Clear snap state
+```
 
-## Usage Scenarios
+## State Management
 
-### Precise Path Editing
-When editing control points of curves or shapes, Object Snap helps align points to existing geometry, creating smoother and more intentional curves.
+The plugin adds an `objectSnap` slice to the global store:
 
-### Element Alignment
-During selection dragging, snap to intersections or endpoints of other elements to achieve pixel-perfect alignment without manual measurement.
+```typescript
+interface ObjectSnapState {
+  /** Whether object snapping is enabled */
+  enabled: boolean;
+  
+  /** Snap threshold in screen pixels (4-20) */
+  snapThreshold: number;
+  
+  /** Currently active snap point for visualization */
+  currentSnapPoint: SnapPoint | null;
+  
+  /** All available snap points for current operation */
+  availableSnapPoints: SnapPoint[];
+  
+  /** Whether to snap to path endpoints */
+  snapToEndpoints: boolean;
+  
+  /** Whether to snap to segment midpoints */
+  snapToMidpoints: boolean;
+  
+  /** Whether to snap to path intersections */
+  snapToIntersections: boolean;
+  
+  /** Cached snap points for performance */
+  cachedSnapPoints: SnapPoint[] | null;
+  
+  /** Cache key to detect element changes */
+  cacheKey: string | null;
+}
 
-### Complex Intersections
-Enable intersection snapping when working with overlapping paths to ensure points land exactly at crossing locations.
+interface SnapPoint {
+  x: number;
+  y: number;
+  type: 'endpoint' | 'control' | 'midpoint';
+  elementId: string;
+  commandIndex: number;
+  pointIndex: number;
+}
+```
+
+## UI Components
+
+### Object Snap Panel
+
+Provides configuration controls for the snapping system:
+- Master enable/disable toggle for OSNAP
+- Threshold slider (4-20px) for sensitivity adjustment
+- Individual toggles for snap types (Endpoints, Midpoints, Intersections)
+- Expandable panel integration for quick access
+
+### Object Snap Overlay
+
+Renders visual feedback on the canvas:
+- Circular indicators at available snap points
+- Larger indicator at the active snap point
+- Theme-aware colors (black/white based on color mode)
+- Only visible during active dragging in Edit mode
+
+## Utility Functions
+
+Located in `src/plugins/objectSnap/slice.ts`:
+
+- `distance()`: Calculate Euclidean distance between two points
+- `midpoint()`: Calculate center point between two points
+- `lineSegmentIntersection()`: Find intersection point between two line segments
+- `getCommandEndpoint()`: Extract endpoint from a path command
+- `extractSnapPointsFromPath()`: Generate snap points from a path element
+- `findIntersectionsBetweenPaths()`: Calculate intersection points between multiple paths
+- `findAvailableSnapPoints()`: Get all snap points from visible elements
+- `findClosestSnapPoint()`: Find nearest snap point within threshold
+- `applyObjectSnap()`: Apply snapping to a position
+
+## Usage Examples
+
+### Basic Point Snapping
+
+1. Enter Edit mode and select a path
+2. Enable Object Snap in the expandable panel
+3. Drag a point near another path's endpoint
+4. The point automatically snaps to the endpoint with visual feedback
+
+### Selection Alignment
+
+1. Select multiple elements
+2. Enable Object Snap
+3. Drag the selection near intersection points
+4. Selection anchor snaps to intersections for precise alignment
+
+### Threshold Adjustment
+
+1. Set threshold to 4px for precise snapping
+2. Increase to 20px for easier snapping from farther distances
+3. Adjust based on zoom level and desired precision
+
+## Integration Points
+
+- **Canvas Store**: Adds object snap state slice with caching
+- **Plugin Manager**: Registers as core plugin, active during Edit mode
+- **Event Bus**: Responds to mode changes and element updates
+- **Edit Plugin**: Integrates with point editing and selection dragging
+- **Viewport System**: Converts screen thresholds to canvas coordinates
 
 ## Performance Considerations
 
-- Snap points are cached and only recalculated when elements change
-- Visual indicators only appear during active dragging operations
-- Threshold checking uses efficient distance calculations
-- System automatically disables when not in Edit mode
-
-## Integration
-
-Object Snap integrates seamlessly with the Edit tool and is controlled through its expandable panel. The feature is designed to be non-intrusive - snapping only occurs when explicitly enabled and within the configured parameters.
+- **Caching**: Snap points are cached and invalidated when elements change
+- **Lazy Calculation**: Intersections only computed when enabled
+- **Threshold Filtering**: Distance checks use efficient Euclidean calculations
+- **Viewport Scaling**: Threshold automatically adjusts for zoom levels
+- **Selective Computation**: Only processes visible, unlocked elements
