@@ -276,7 +276,7 @@ export const createObjectSnapPluginSlice: StateCreator<
       availableSnapPoints: [],
       snapToEndpoints: true,
       snapToMidpoints: true,
-      snapToIntersections: false, // Disabled by default (more complex)
+      snapToIntersections: true, // Enabled by default for Edit panel UX
       cachedSnapPoints: null,
       cacheKey: null,
     },

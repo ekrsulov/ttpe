@@ -32,6 +32,30 @@ const ObjectSnapPanelComponent: React.FC = () => {
           Enable OSNAP
         </PanelToggle>
         
+        {/* Snap Type Toggles (single row) */}
+        {isEnabled && (
+          <PanelToggleGroup
+            toggles={[
+              {
+                label: 'End',
+                isChecked: objectSnap?.snapToEndpoints ?? true,
+                onChange: handleToggleEndpoints,
+              },
+              {
+                label: 'Mid',
+                isChecked: objectSnap?.snapToMidpoints ?? true,
+                onChange: handleToggleMidpoints,
+              },
+              {
+                label: 'Inter',
+                isChecked: objectSnap?.snapToIntersections ?? false,
+                onChange: handleToggleIntersections,
+              },
+            ]}
+            spacing={3}
+          />
+        )}
+
         {/* Threshold Slider */}
         {isEnabled && (
           <Box>
@@ -47,36 +71,6 @@ const ObjectSnapPanelComponent: React.FC = () => {
               marginBottom="0"
             />
           </Box>
-        )}
-
-        {/* Snap Type Toggles */}
-        {isEnabled && (
-          <PanelToggleGroup
-            toggles={[
-              {
-                label: 'Endpoints',
-                isChecked: objectSnap?.snapToEndpoints ?? true,
-                onChange: handleToggleEndpoints,
-              },
-            ]}
-          />
-        )}
-
-        {isEnabled && (
-          <PanelToggleGroup
-            toggles={[
-              {
-                label: 'Midpoints',
-                isChecked: objectSnap?.snapToMidpoints ?? true,
-                onChange: handleToggleMidpoints,
-              },
-              {
-                label: 'Intersections',
-                isChecked: objectSnap?.snapToIntersections ?? false,
-                onChange: handleToggleIntersections,
-              },
-            ]}
-          />
         )}
       </VStack>
     </Panel>

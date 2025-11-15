@@ -41,7 +41,6 @@ export const Panel: React.FC<PanelProps> = ({
 
   return (
     <Box
-      mb={0.5}
       position="relative"
     >
       {showRenderCount && (
@@ -61,12 +60,12 @@ export const Panel: React.FC<PanelProps> = ({
       
       {isCollapsible ? (
         <Collapse in={isOpen} animateOpacity>
-          <Box pb={2}>
+          <Box>
             {children}
           </Box>
         </Collapse>
       ) : (
-        <Box pb={2}>
+        <Box>
           {children}
         </Box>
       )}

@@ -3,7 +3,6 @@ import type { PluginDefinition, PluginSliceFactory } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createTrimPathPluginSlice, type TrimPathPluginSlice } from './slice';
 import { TrimPathOverlayConnected } from './TrimPathOverlay';
-import { TrimPathPanel } from './TrimPathPanel';
 import { findSegmentAtPoint } from '../../utils/trimPathGeometry';
 
 /**
@@ -130,12 +129,8 @@ export const trimPathPlugin: PluginDefinition<CanvasStore> = {
       render: () => <TrimPathOverlayConnected />,
     },
   ],
-  panels: [
-    {
-      id: 'trim-path-panel',
-      component: TrimPathPanel,
-    },
-  ],
+  // Trim Path no longer exposes a persistent panel in the UI.
+  // Panels removed per UX decision; the overlay and handler remain active.
   slices: [trimPathSliceFactory],
 };
 
