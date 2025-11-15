@@ -160,6 +160,7 @@ export const EditPanel: React.FC<EditPanelProps> = ({
             onClick={resetSmoothBrush}
             size="xs"
             title="Reset all smooth brush settings to defaults"
+            mb="2px"
           >
             Reset
           </PanelStyledButton>
