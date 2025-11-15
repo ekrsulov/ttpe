@@ -160,6 +160,12 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => {
     set({ activePlugin: result.mode });
 
     const updatedState = get() as CanvasStore;
+    
+    // Invalidate snap cache when entering edit mode from another mode
+    if (result.mode === 'edit' && currentMode !== 'edit') {
+      updatedState.invalidateObjectSnapCache?.();
+    }
+    
     for (const action of result.actions) {
       switch (action) {
         case 'clearGuidelines':

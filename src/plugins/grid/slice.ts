@@ -127,11 +127,11 @@ export const createGridPluginSlice: StateCreator<GridPluginSlice, [], [], GridPl
   return {
     // Initial state
     grid: {
-      enabled: true,
-      snapEnabled: true,
+      enabled: false,
+      snapEnabled: false,
       type: 'square',
       spacing: 20,
-      showRulers: true,
+      showRulers: false,
       polarDivisions: 12,
       hexOrientation: 'pointy',
       opacity: 0.3,

@@ -14,6 +14,7 @@ import { SectionHeader } from '../../ui/SectionHeader';
 import { PanelToggle } from '../../ui/PanelToggle';
 import { PanelStyledButton } from '../../ui/PanelStyledButton';
 import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
+import { ObjectSnapPanel } from '../objectSnap';
 
 interface EditPanelProps {
   activePlugin: string | null;
@@ -276,6 +277,12 @@ export const EditPanel: React.FC<EditPanelProps> = ({
           marginBottom='0'
         />
       </Box>
+
+      {/* Separator between Round Path and Object Snap */}
+      <Divider my={2} />
+
+      {/* Object Snap Section */}
+      <ObjectSnapPanel />
     </VStack>
     </Box>
   );

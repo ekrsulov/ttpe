@@ -362,7 +362,7 @@ export interface EditPluginSlice {
   // Actions
   setEditingPoint: (point: { elementId: string; commandIndex: number; pointIndex: number } | null) => void;
   startDraggingPoint: (elementId: string, commandIndex: number, pointIndex: number, offsetX: number, offsetY: number) => void;
-  updateDraggingPoint: (x: number, y: number) => void;
+  updateDraggingPoint: (x: number, y: number) => { x: number; y: number };
   stopDraggingPoint: () => void;
   emergencyCleanupDrag: () => void;
   selectCommand: (command: { elementId: string; commandIndex: number; pointIndex: number }, multiSelect?: boolean) => void;
@@ -540,18 +540,47 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
   updateDraggingPoint: (x, y) => {
     const state = get() as FullCanvasState;
 
+    // Apply object snap if enabled
+    let snappedX = x;
+    let snappedY = y;
+    
+    if (state.objectSnap?.enabled && state.applyObjectSnap) {
+      // Get IDs of elements being edited to exclude from snap
+      const excludeElementIds: string[] = [];
+      
+      if (state.draggingSelection?.isDragging) {
+        // Collect all element IDs from dragging selection
+        state.draggingSelection.initialPositions.forEach(pos => {
+          if (!excludeElementIds.includes(pos.elementId)) {
+            excludeElementIds.push(pos.elementId);
+          }
+        });
+      } else if (state.editingPoint?.isDragging) {
+        excludeElementIds.push(state.editingPoint.elementId);
+      }
+      
+      // Apply object snap
+      try {
+        const snappedPoint = state.applyObjectSnap({ x, y }, excludeElementIds);
+        snappedX = snappedPoint.x;
+        snappedY = snappedPoint.y;
+      } catch (error) {
+        console.error('Error applying object snap:', error);
+      }
+    }
+
     if (state.draggingSelection?.isDragging) {
       // Handle group drag of selected points - but don't update path data here anymore
       // The path updates will be handled directly in the renderer for real-time feedback
-      const deltaX = x - state.draggingSelection.startX;
-      const deltaY = y - state.draggingSelection.startY;
+      const deltaX = snappedX - state.draggingSelection.startX;
+      const deltaY = snappedY - state.draggingSelection.startY;
 
       // Just update the dragging selection state for tracking
       set((currentState) => ({
         draggingSelection: currentState.draggingSelection ? {
           ...currentState.draggingSelection,
-          currentX: x,
-          currentY: y,
+          currentX: snappedX,
+          currentY: snappedY,
           deltaX,
           deltaY
         } : null
@@ -561,11 +590,14 @@ export const createEditPluginSlice: StateCreator<EditPluginSlice, [], [], EditPl
       set((currentState) => ({
         editingPoint: {
           ...currentState.editingPoint!,
-          offsetX: x,
-          offsetY: y
+          offsetX: snappedX,
+          offsetY: snappedY
         }
       }));
     }
+
+    // Return the snapped coordinates
+    return { x: snappedX, y: snappedY };
   },
 
   stopDraggingPoint: () => {

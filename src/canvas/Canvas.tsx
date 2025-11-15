@@ -88,6 +88,8 @@ const CanvasContent: React.FC = () => {
   const controller = useCanvasController();
   const defaultStrokeColor = useCanvasStore(state => state.settings.defaultStrokeColor);
   const scaleStrokeWithZoom = useCanvasStore(state => state.settings.scaleStrokeWithZoom);
+  const updateDraggingPoint = useCanvasStore(state => state.updateDraggingPoint);
+  const objectSnap = useCanvasStore(state => state.objectSnap);
   const {
     currentMode,
     transition: transitionCanvasMode,
@@ -379,6 +381,7 @@ const CanvasContent: React.FC = () => {
       getControlPointInfo: getControlPointInfo ?? (() => null),
       snapToGrid,
       clearGuidelines,
+      updateDraggingPoint,
     }
   });
 
@@ -440,6 +443,7 @@ const CanvasContent: React.FC = () => {
       handleSubpathDoubleClick,
       handleSubpathTouchEnd,
       setDragStart: setDragStartForLayers,
+      objectSnap, // Add objectSnap state to context
     };
 
     // Conditionally add plugin-specific context
@@ -477,6 +481,7 @@ const CanvasContent: React.FC = () => {
       handleSubpathDoubleClick,
       handleSubpathTouchEnd,
       setDragStartForLayers,
+      objectSnap,
       // Plugin-specific dependencies
       isCreatingShape,
       shapeStart,

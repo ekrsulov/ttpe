@@ -17,6 +17,7 @@ import { subpathPlugin } from './subpath';
 import { curvesPlugin } from './curves';
 import { opticalAlignmentPlugin } from './opticalAlignment';
 import { guidelinesPlugin } from './guidelines';
+import { objectSnapPlugin } from './objectSnap';
 import { gridPlugin } from './grid';
 import { minimapPlugin } from './minimap';
 import { gridFillPlugin } from './gridFill';
@@ -552,6 +553,7 @@ export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   gridFillPlugin,
   opticalAlignmentPlugin,
   guidelinesPlugin,
+  objectSnapPlugin,
   gridPlugin,
   minimapPlugin,
   duplicateOnDragPlugin,
@@ -567,6 +569,7 @@ export * from './subpath';
 export * from './curves';
 export * from './opticalAlignment';
 export * from './guidelines';
+export * from './objectSnap';
 export * from './grid';
 export * from './gridFill';
 export * from './minimap';

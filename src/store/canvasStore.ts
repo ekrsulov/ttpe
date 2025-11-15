@@ -25,6 +25,7 @@ import type { SubpathPluginSlice } from '../plugins/subpath/slice';
 import type { OpticalAlignmentSlice } from '../plugins/opticalAlignment/slice';
 import type { CurvesPluginSlice } from '../plugins/curves/slice';
 import type { GuidelinesPluginSlice } from '../plugins/guidelines/slice';
+import type { ObjectSnapPluginSlice } from '../plugins/objectSnap/slice';
 import type { GridPluginSlice } from '../plugins/grid/slice';
 import type { DuplicateOnDragPluginSlice } from '../plugins/duplicateOnDrag/slice';
 import type { TrimPathPluginSlice } from '../plugins/trimPath/slice';
@@ -68,6 +69,7 @@ export type CanvasStore = CoreCanvasStore &
   Partial<OpticalAlignmentSlice> &
   Partial<CurvesPluginSlice> &
   Partial<GuidelinesPluginSlice> &
+  Partial<ObjectSnapPluginSlice> &
   Partial<GridPluginSlice> &
   Partial<DuplicateOnDragPluginSlice> &
   Partial<TrimPathPluginSlice>;

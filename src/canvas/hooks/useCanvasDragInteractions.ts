@@ -10,6 +10,7 @@ interface DragCallbacks {
   getControlPointInfo: (elementId: string, commandIndex: number, pointIndex: number) => ControlPointInfo | null;
   snapToGrid?: (x: number, y: number) => { x: number; y: number };
   clearGuidelines?: () => void;
+  updateDraggingPoint?: (x: number, y: number) => { x: number; y: number };
 }
 
 interface DragState {
@@ -97,8 +98,15 @@ export const useCanvasDragInteractions = ({
 
           // Convert SVG coordinates to canvas coordinates (accounting for viewport)
           const canvasPoint = mapSvgToCanvas(svgX, svgY, viewport);
-          const canvasX = canvasPoint.x;
-          const canvasY = canvasPoint.y;
+          let canvasX = canvasPoint.x;
+          let canvasY = canvasPoint.y;
+
+          // Apply object snap if available (this will modify canvasX/canvasY)
+          if (callbacks.updateDraggingPoint) {
+            const snapped = callbacks.updateDraggingPoint(canvasX, canvasY);
+            canvasX = snapped.x;
+            canvasY = snapped.y;
+          }
 
           // Update local drag position for smooth visualization
           setDragPosition({
