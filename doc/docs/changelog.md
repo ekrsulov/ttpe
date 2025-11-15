@@ -98,6 +98,10 @@ All notable changes to VectorNest will be documented here.
 - **Action Bars Optimization**: BottomActionBar and TopActionBar now avoid expensive calculations during drag operations to prevent UI lag
 - **Tool Panel Unification (2025-11-10)**: Removed duplicated `*ExpandablePanel.tsx` files for Pencil, Text, Shape, Curves, Transformation, and Edit tools. Plugins now reuse their sidebar panel component as the expandable variant with the header hidden via `hideHeader`/`hideTitle`. Select and Subpath modes use the transversal `EditorPanel` in the expandable area. Edit uses a wrapper component to map store state to `EditPanel` props.
 
+- **Shape creation threshold (2025-11-15)**: Prevented accidental tiny shapes from being created by requiring a minimum movement between pointerDown and pointerUp before creating a shape. This avoids generating tiny elements and unnecessary undo stack entries.
+  - New constant: `MIN_SHAPE_CREATION_DISTANCE` (default: 5 pixels) in `src/plugins/shape/config.ts`
+  - Behavior: Click-only or very small drags below the threshold will not create a shape; normal drag creation is unchanged.
+
 ### Changed
 - **Default Settings Updates (2025-11-10)**: Updated default application settings for improved user experience
   - Grid plugin now enabled by default with snapping and rulers visible

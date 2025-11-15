@@ -332,6 +332,27 @@ const shapeState = useCanvasStore(state => state.shape);
 - Performance considerations for large datasets
 - Browser compatibility notes (if any)
 
+## Minimum Movement Threshold (Click Tolerance) ⚠️
+
+To prevent tiny or accidental shapes from being created when users only click or perform a very small movement, the Shape tool now requires a minimum pointer movement between pointerDown and pointerUp before creating an element. This prevents unusable tiny elements and avoids creating unnecessary undo history entries.
+
+- Default threshold: **5 pixels** (Euclidean distance)
+- Behavior: If the movement between pointerDown and pointerUp is less than the configured threshold, the shape creation is cancelled and nothing is added to the canvas or undo stack.
+- Rationale: Prevents creating tiny shapes from accidental clicks and improves UX.
+
+## Configuration
+
+- You can configure this threshold by updating the constant in the plugin configuration file:
+
+```ts
+// src/plugins/shape/config.ts
+export const MIN_SHAPE_CREATION_DISTANCE = 5; // in pixels
+```
+
+Adjust the value to increase or decrease the sensitivity (for example, set to 3 for a more permissive threshold, or 10 to require a longer drag to create shapes).
+
+Note: Because the threshold validation happens before the element is added to the store, tiny clicks do not produce elements or create entries on the undo/redo stack.
+
 ## Related
 
 - [Plugin System Overview](../overview)
