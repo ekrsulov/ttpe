@@ -74,9 +74,10 @@ No plugin-specific shortcuts.
 - Interactive controls:
   - **Click**: Pan to clicked location
   - **Double-click**: Zoom to fit the clicked area into view
-  - **Drag viewport rectangle**: Pan the main canvas
+  - **Drag viewport rectangle**: Pan the main canvas (constrained to visible bounds)
 - Auto-scales to fit all elements with padding
 - Updates in real-time as elements move or viewport changes
+- Movement is constrained to the union of viewport and content bounds
 
 ### Overlays
 
@@ -112,6 +113,8 @@ No public APIs exposed.
 ```typescript
 // User can drag the viewport rectangle on the minimap
 // -> Updates main canvas pan in real-time
+// -> Movement is constrained to keep the viewport within the minimap bounds
+// -> Prevents dragging beyond the combined area of content and viewport
 ```
 
 ### Accessing Minimap State
@@ -150,6 +153,8 @@ function MyComponent() {
 - Viewport rectangle tracking and interaction
 - Drag state management with pointer events
 - Real-time synchronization with main canvas
+- Constrained movement to prevent viewport from leaving visible bounds
+- Accurate viewport reflection accounting for sidebar width
 
 ## Edge Cases & Limitations
 
@@ -159,6 +164,8 @@ function MyComponent() {
 - **Scaling**: Automatically adjusts scale to show all content with padding
 - **Touch devices**: Supports both mouse and touch pointer events
 - **Position**: Fixed in bottom-right corner, offset by sidebar width
+- **Movement bounds**: Viewport movement is constrained to the union of content and viewport bounds, preventing navigation beyond the visible/content area
+- **Viewport accuracy**: The viewport rectangle accurately reflects the visible canvas area by accounting for the sidebar width when calculating dimensions
 
 ## Related
 

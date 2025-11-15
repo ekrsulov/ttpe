@@ -23,10 +23,41 @@ interface MinimapMetrics {
   offsetY: number;
 }
 
-const MINIMAP_WIDTH = 150;
-const MINIMAP_HEIGHT = 100;
-const MINIMAP_MARGIN = 16;
-const CONTENT_PADDING = 32;
+const MINIMAP_MAX_WIDTH = 200;
+const MINIMAP_MAX_HEIGHT = 150;
+const MINIMAP_MARGIN = 16; // Screen position margin
+const MINIMAP_INTERNAL_PADDING = 4; // Internal padding for content
+
+const computeMinimapSize = (canvasWidth: number, canvasHeight: number) => {
+  const aspectRatio = canvasWidth / canvasHeight;
+  
+  let width: number;
+  let height: number;
+  
+  if (aspectRatio > 1) {
+    // Landscape: constrain by width
+    width = MINIMAP_MAX_WIDTH;
+    height = width / aspectRatio;
+    
+    // If height exceeds max, constrain by height instead
+    if (height > MINIMAP_MAX_HEIGHT) {
+      height = MINIMAP_MAX_HEIGHT;
+      width = height * aspectRatio;
+    }
+  } else {
+    // Portrait or square: constrain by height
+    height = MINIMAP_MAX_HEIGHT;
+    width = height * aspectRatio;
+    
+    // If width exceeds max, constrain by width instead
+    if (width > MINIMAP_MAX_WIDTH) {
+      width = MINIMAP_MAX_WIDTH;
+      height = width / aspectRatio;
+    }
+  }
+  
+  return { width, height };
+};
 
 const unionBounds = (source: Bounds | null, next: Bounds | null): Bounds | null => {
   if (!next) {
@@ -44,13 +75,6 @@ const unionBounds = (source: Bounds | null, next: Bounds | null): Bounds | null 
     maxY: Math.max(source.maxY, next.maxY),
   };
 };
-
-const expandBounds = (bounds: Bounds, padding: number): Bounds => ({
-  minX: bounds.minX - padding,
-  minY: bounds.minY - padding,
-  maxX: bounds.maxX + padding,
-  maxY: bounds.maxY + padding,
-});
 
 const getViewportBounds = (
   viewport: { panX: number; panY: number; zoom: number },
@@ -80,12 +104,12 @@ const computeMinimapMetrics = (
 
   const boundsWidth = bounds.maxX - bounds.minX || 1;
   const boundsHeight = bounds.maxY - bounds.minY || 1;
-  const padding = 2 * MINIMAP_MARGIN;
+  const padding = 2 * MINIMAP_INTERNAL_PADDING;
   const availableWidth = width - padding;
   const availableHeight = height - padding;
   const scale = Math.min(availableWidth / boundsWidth, availableHeight / boundsHeight);
-  const offsetX = MINIMAP_MARGIN - bounds.minX * scale;
-  const offsetY = MINIMAP_MARGIN - bounds.minY * scale;
+  const offsetX = MINIMAP_INTERNAL_PADDING - bounds.minX * scale;
+  const offsetY = MINIMAP_INTERNAL_PADDING - bounds.minY * scale;
 
   return {
     bounds,
@@ -137,11 +161,17 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) 
     return calculateBounds(pathData.subPaths, strokeWidth);
   }, []);
 
-  // Get canvas size from viewport (we'll use a large default if not available)
+  // Get canvas size from viewport, accounting for sidebar width
   const canvasSize = useMemo(() => ({
-    width: window.innerWidth,
+    width: window.innerWidth - sidebarWidth,
     height: window.innerHeight,
-  }), []);
+  }), [sidebarWidth]);
+
+  // Calculate minimap size proportional to canvas
+  const minimapSize = useMemo(() => 
+    computeMinimapSize(canvasSize.width, canvasSize.height),
+    [canvasSize.width, canvasSize.height]
+  );
 
   const visiblePaths = useMemo(() => {
     return elements.filter((element): element is PathElement => {
@@ -165,21 +195,44 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) 
       aggregate = unionBounds(aggregate, bounds);
     });
 
-    return aggregate ? expandBounds(aggregate, CONTENT_PADDING) : null;
+    return aggregate;
   }, [getElementBounds, visiblePaths]);
 
   const viewportBounds = useMemo(() => getViewportBounds(viewport, canvasSize), [viewport, canvasSize]);
 
   const minimapMetrics = useMemo(() => {
     const combined = unionBounds(contentBounds, viewportBounds);
-    return computeMinimapMetrics(combined, MINIMAP_WIDTH, MINIMAP_HEIGHT);
-  }, [contentBounds, viewportBounds]);
+    return computeMinimapMetrics(combined, minimapSize.width, minimapSize.height);
+  }, [contentBounds, viewportBounds, minimapSize]);
 
   const handleViewportUpdate = useCallback(
     (centerX: number, centerY: number) => {
+      // Get the bounds that should limit movement (whichever is larger)
+      const movementBounds = minimapMetrics?.bounds;
+      
+      if (!movementBounds) {
+        return;
+      }
+
+      // Calculate viewport dimensions in world coordinates
+      const viewWidth = canvasSize.width / viewport.zoom;
+      const viewHeight = canvasSize.height / viewport.zoom;
+      const halfViewWidth = viewWidth / 2;
+      const halfViewHeight = viewHeight / 2;
+
+      // Clamp the center position to keep the viewport within bounds
+      const clampedCenterX = Math.max(
+        movementBounds.minX + halfViewWidth,
+        Math.min(centerX, movementBounds.maxX - halfViewWidth)
+      );
+      const clampedCenterY = Math.max(
+        movementBounds.minY + halfViewHeight,
+        Math.min(centerY, movementBounds.maxY - halfViewHeight)
+      );
+
       // Calculate target pan values
-      const targetPanX = canvasSize.width / 2 - centerX * viewport.zoom;
-      const targetPanY = canvasSize.height / 2 - centerY * viewport.zoom;
+      const targetPanX = canvasSize.width / 2 - clampedCenterX * viewport.zoom;
+      const targetPanY = canvasSize.height / 2 - clampedCenterY * viewport.zoom;
 
       // Apply damping factor for smoother, more controllable movement (0-1, lower = heavier)
       const dampingFactor = 0.15;
@@ -190,7 +243,7 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) 
 
       setViewport({ panX, panY });
     },
-    [canvasSize.height, canvasSize.width, setViewport, viewport.zoom, viewport.panX, viewport.panY]
+    [canvasSize.height, canvasSize.width, setViewport, viewport.zoom, viewport.panX, viewport.panY, minimapMetrics]
   );
 
   const getWorldPoint = useCallback(
@@ -200,15 +253,15 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) 
       }
 
       const rect = svgRef.current.getBoundingClientRect();
-      const localX = ((event.clientX - rect.left) / rect.width) * MINIMAP_WIDTH;
-      const localY = ((event.clientY - rect.top) / rect.height) * MINIMAP_HEIGHT;
+      const localX = ((event.clientX - rect.left) / rect.width) * minimapSize.width;
+      const localY = ((event.clientY - rect.top) / rect.height) * minimapSize.height;
 
       return {
         x: minimapToWorld(localX, minimapMetrics.scale, minimapMetrics.offsetX),
         y: minimapToWorld(localY, minimapMetrics.scale, minimapMetrics.offsetY),
       };
     },
-    [minimapMetrics]
+    [minimapMetrics, minimapSize]
   );
 
   const handleElementDoubleClick = useCallback(
@@ -359,8 +412,8 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) 
       position="fixed"
       bottom={`${MINIMAP_MARGIN}px`}
       right={`${MINIMAP_MARGIN + sidebarWidth}px`}
-      width={`${MINIMAP_WIDTH}px`}
-      height={`${MINIMAP_HEIGHT}px`}
+      width={`${minimapSize.width}px`}
+      height={`${minimapSize.height}px`}
       borderRadius="xl"
       borderWidth={borderWidth}
       borderColor={borderColor}
@@ -374,7 +427,7 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) 
     >
       <svg
         ref={svgRef}
-        viewBox={`0 0 ${MINIMAP_WIDTH} ${MINIMAP_HEIGHT}`}
+        viewBox={`0 0 ${minimapSize.width} ${minimapSize.height}`}
         width="100%"
         height="100%"
         onPointerDown={handlePointerDown}
@@ -386,10 +439,10 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) 
       >
         <defs>
           <clipPath id={clipPathId}>
-            <rect x="0" y="0" width={MINIMAP_WIDTH} height={MINIMAP_HEIGHT} rx="14" ry="14" />
+            <rect x="0" y="0" width={minimapSize.width} height={minimapSize.height} rx="14" ry="14" />
           </clipPath>
         </defs>
-        <rect x="0" y="0" width={MINIMAP_WIDTH} height={MINIMAP_HEIGHT} fill={canvasFill} />
+        <rect x="0" y="0" width={minimapSize.width} height={minimapSize.height} fill={canvasFill} />
         <g clipPath={`url(#${clipPathId})`}>
           {visiblePaths.map((element) => {
             const bounds = getElementBounds(element);
