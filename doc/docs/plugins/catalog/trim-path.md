@@ -286,12 +286,7 @@ interface TrimPathPluginSlice {
 
 ## UI Components
 
-### Trim Path Panel
-
-Provides controls for the trim tool:
-- Tool activation status
-- Instructions for use
-- Visual feedback for current operation
+Note: The Trim Path tool does not provide a dedicated sidebar panel. All interactions are performed via the canvas overlay and keyboard shortcuts.
 
 ### Trim Path Overlay
 
