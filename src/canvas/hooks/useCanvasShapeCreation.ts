@@ -112,9 +112,11 @@ export const useCanvasShapeCreation = (): UseCanvasShapeCreationReturn => {
     if (!shapeStart || !shapeEnd) return;
 
     // Use controller to complete shape creation
+    // The controller will only create the shape if movement is sufficient
     controller.completeShapeCreation(shapeStart, shapeEnd);
 
-    // Reset state
+    // Reset state regardless of whether shape was created
+    // This ensures the UI returns to normal state even if shape was cancelled
     setIsCreatingShape(false);
     setShapeStart(null);
     setShapeEnd(null);

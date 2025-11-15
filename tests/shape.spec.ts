@@ -168,4 +168,106 @@ test.describe('Shape Creation', () => {
     await expect(editButton).toBeEnabled();
     await expect(transformButton).toBeEnabled();
   });
+
+  test('should NOT create shape on simple click without dragging', async ({ page }) => {
+    await page.goto('/');
+    await waitForLoad(page);
+
+    // Get SVG canvas element
+    const canvas = getCanvas(page);
+    const canvasBox = await canvas.boundingBox();
+    if (!canvasBox) throw new Error('SVG canvas not found');
+
+    // Switch to shape mode
+    await getToolButton(page, 'Shape').click();
+    await page.locator('[aria-label="Square"]').click();
+
+    // Count initial elements
+    const initialPaths = await getCanvasPaths(page).count();
+
+    // Perform a simple click (no drag)
+    const clickX = canvasBox.x + canvasBox.width * 0.5;
+    const clickY = canvasBox.y + canvasBox.height * 0.5;
+    
+    await page.mouse.move(clickX, clickY);
+    await page.mouse.down();
+    await page.mouse.up();
+
+    // Wait for potential shape creation
+    await page.waitForTimeout(200);
+
+    // Verify NO new shape was created
+    const pathsAfterClick = await getCanvasPaths(page).count();
+    expect(pathsAfterClick).toBe(initialPaths);
+  });
+
+  test('should NOT create shape with minimal movement below threshold', async ({ page }) => {
+    await page.goto('/');
+    await waitForLoad(page);
+
+    // Get SVG canvas element
+    const canvas = getCanvas(page);
+    const canvasBox = await canvas.boundingBox();
+    if (!canvasBox) throw new Error('SVG canvas not found');
+
+    // Switch to shape mode
+    await getToolButton(page, 'Shape').click();
+    await page.locator('[aria-label="Circle"]').click();
+
+    // Count initial elements
+    const initialPaths = await getCanvasPaths(page).count();
+
+    // Perform a very small drag (below 5 pixel threshold)
+    const startX = canvasBox.x + canvasBox.width * 0.5;
+    const startY = canvasBox.y + canvasBox.height * 0.5;
+    
+    await page.mouse.move(startX, startY);
+    await page.mouse.down();
+    
+    // Move only 3 pixels (below the MIN_SHAPE_CREATION_DISTANCE of 5)
+    await page.mouse.move(startX + 3, startY + 2);
+    await page.mouse.up();
+
+    // Wait for potential shape creation
+    await page.waitForTimeout(200);
+
+    // Verify NO new shape was created
+    const pathsAfterSmallDrag = await getCanvasPaths(page).count();
+    expect(pathsAfterSmallDrag).toBe(initialPaths);
+  });
+
+  test('should create shape with sufficient movement above threshold', async ({ page }) => {
+    await page.goto('/');
+    await waitForLoad(page);
+
+    // Get SVG canvas element
+    const canvas = getCanvas(page);
+    const canvasBox = await canvas.boundingBox();
+    if (!canvasBox) throw new Error('SVG canvas not found');
+
+    // Switch to shape mode
+    await getToolButton(page, 'Shape').click();
+    await page.locator('[aria-label="Rectangle"]').click();
+
+    // Count initial elements
+    const initialPaths = await getCanvasPaths(page).count();
+
+    // Perform a drag above the threshold (>5 pixels)
+    const startX = canvasBox.x + canvasBox.width * 0.5;
+    const startY = canvasBox.y + canvasBox.height * 0.5;
+    
+    await page.mouse.move(startX, startY);
+    await page.mouse.down();
+    
+    // Move 10 pixels (above the MIN_SHAPE_CREATION_DISTANCE of 5)
+    await page.mouse.move(startX + 10, startY + 10, { steps: 3 });
+    await page.mouse.up();
+
+    // Wait for shape creation
+    await page.waitForTimeout(200);
+
+    // Verify a new shape WAS created
+    const pathsAfterSufficientDrag = await getCanvasPaths(page).count();
+    expect(pathsAfterSufficientDrag).toBeGreaterThan(initialPaths);
+  });
 });

@@ -1,4 +1,5 @@
 import type { Point } from '../../types';
+import { MIN_SHAPE_CREATION_DISTANCE } from '../../plugins/shape/config';
 
 export interface ShapeFeedback {
   width: number;
@@ -24,6 +25,17 @@ export class ShapeCreationController {
 
   constructor(callbacks: ShapeCreationCallbacks) {
     this.callbacks = callbacks;
+  }
+
+  /**
+   * Check if the movement between two points is sufficient to create a shape
+   * Returns true if the distance is greater than the minimum threshold
+   */
+  private isMovementSufficient(start: Point, end: Point): boolean {
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    return distance >= MIN_SHAPE_CREATION_DISTANCE;
   }
 
   /**
@@ -113,9 +125,19 @@ export class ShapeCreationController {
 
   /**
    * Complete shape creation
+   * Only creates a shape if the movement is sufficient (above minimum threshold)
+   * @returns true if the shape was created, false if it was cancelled
    */
-  completeShapeCreation(shapeStart: Point, shapeEnd: Point): void {
+  completeShapeCreation(shapeStart: Point, shapeEnd: Point): boolean {
+    // Check if the movement is sufficient to create a shape
+    if (!this.isMovementSufficient(shapeStart, shapeEnd)) {
+      // Movement is too small, cancel shape creation
+      return false;
+    }
+
+    // Movement is sufficient, create the shape
     this.callbacks.createShape(shapeStart, shapeEnd);
+    return true;
   }
 
   /**
