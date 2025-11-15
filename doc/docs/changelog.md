@@ -47,6 +47,13 @@ All notable changes to VectorNest will be documented here.
 - **Enhanced Group Thumbnails**: Select Panel group thumbnails now include visual previews of all paths within nested groups, providing better visual representation of complex group structures
 - **Improved Element Deletion**: Enhanced deletion logic for groups that recursively removes all descendants and automatically ungroups when deletion results in a group with only one child
 - **Performance Optimizations**: Added @tanstack/react-virtual library for virtualized rendering and implemented useFrozenElementsDuringDrag hook to prevent unnecessary re-renders during drag operations
+- **Object Snap (OSNAP)**: New precision positioning system for enhanced editing accuracy
+  - Snap to path endpoints, midpoints, and intersections during point editing and selection dragging
+  - Configurable snap threshold (4-20px) for fine-tuning sensitivity
+  - Visual feedback with snap point indicators during drag operations
+  - Toggle controls for enabling/disabling specific snap types
+  - Integrated into Edit mode with expandable panel for settings
+  - Improves precision in complex path editing and alignment tasks
 - **Trim Path Plugin**: New interactive tool for trimming path segments at intersections
   - Added Trim Path plugin with activation/deactivation logic and state management
   - Implemented hover and drag states for precise trimming interactions

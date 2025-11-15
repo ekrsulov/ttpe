@@ -99,6 +99,7 @@ const sidebars = {
             'plugins/catalog/guidelines',
             'plugins/catalog/minimap',
             'plugins/catalog/optical-alignment',
+            'plugins/catalog/object-snap',
             'plugins/catalog/path',
             'plugins/catalog/pencil',
             'plugins/catalog/shape',
