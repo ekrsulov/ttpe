@@ -632,9 +632,95 @@ export function reconstructPathsFromSegments(
       }
     }
 
-    return reconstructedPaths;
+    // Run a sanitation pass to remove stray duplicates and insignificant fragments
+    return sanitizeReconstructedPaths(reconstructedPaths);
   } catch (_error) {
     return [];
+  }
+}
+
+/**
+ * Cleans an array of ReconstructedPath by removing insignificant or duplicate ones and
+ * merging tiny fragments that likely represent noise or duplicated geometry.
+ */
+export function sanitizeReconstructedPaths(paths: ReconstructedPath[]): ReconstructedPath[] {
+  try {
+    const cleaned: ReconstructedPath[] = [];
+    const seen = new Set<string>();
+
+    // Helper: compute a normalized signature for path (rounded pathData)
+    function signature(pathData: string): string {
+      try {
+        const p = new paper.Path(pathData);
+        // Round coordinates to 2 decimals for safe comparison
+        const rounded = p.pathData.replace(/(\d+\.\d{2})\d*/g, '$1');
+        p.remove();
+        return rounded;
+      } catch {
+        return pathData;
+      }
+    }
+
+    // Helper: whether a path is too small / degenerate to keep
+    function isInsignificant(rp: ReconstructedPath): boolean {
+      try {
+        const p = new paper.Path(rp.pathData);
+        const length = p.length || 0;
+        const area = p.bounds ? p.bounds.width * p.bounds.height : 0;
+        const segments = p.segments ? p.segments.length : 0;
+        p.remove();
+        // If path has one or fewer segments or length is nearly zero => discard
+        return segments <= 1 || length < 0.5 || area < 0.5;
+      } catch {
+        return true;
+      }
+    }
+
+    // Build cleaned list, remove duplicates and small paths
+    for (const rp of paths) {
+      if (!rp || !rp.pathData) continue;
+
+      if (isInsignificant(rp)) {
+        continue;
+      }
+
+      const sig = signature(rp.pathData);
+      if (seen.has(sig)) continue;
+
+      // check duplicates via simple bounding box inclusion test: if a later path is wholly inside an earlier path, drop the later
+      let isContained = false;
+      try {
+        const curPath = new paper.Path(rp.pathData);
+        for (const kept of cleaned) {
+          const keptPath = new paper.Path(kept.pathData);
+          // if current bounding box is inside kept bounding box and its length is much smaller => consider it noise
+          if (
+            curPath.bounds.x >= keptPath.bounds.x - 0.01 &&
+            curPath.bounds.y >= keptPath.bounds.y - 0.01 &&
+            curPath.bounds.x + curPath.bounds.width <= keptPath.bounds.x + keptPath.bounds.width + 0.01 &&
+            curPath.bounds.y + curPath.bounds.height <= keptPath.bounds.y + keptPath.bounds.height + 0.01 &&
+            curPath.length < keptPath.length * 0.1
+          ) {
+            isContained = true;
+            keptPath.remove();
+            break;
+          }
+          keptPath.remove();
+        }
+        curPath.remove();
+      } catch {
+        /* noop */
+      }
+
+      if (isContained) continue;
+
+      seen.add(sig);
+      cleaned.push(rp);
+    }
+
+    return cleaned;
+  } catch (_err) {
+    return paths;
   }
 }
 

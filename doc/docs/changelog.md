@@ -144,6 +144,9 @@ All notable changes to VectorNest will be documented here.
 - Zoom behavior on mobile
 - Keyboard shortcut conflicts
 
+### Fixed
+- **Trim Path: Remove duplicate/degenerate reconstructed paths (2025-11-16)**: After trimming segments, the path reconstruction pass now sanitizes reconstructed paths to remove duplicate 'd' values, tiny degenerate fragments (single-point or near-zero length paths), and small fragments contained within larger paths. This prevents stray point elements or duplicate visual geometry from being added after trim operations.
+
 ## [0.0.0] - Initial Version
 
 **Assumption**: This is the first documented version.

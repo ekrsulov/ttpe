@@ -129,6 +129,17 @@ Located in `src/utils/trimPathGeometry.ts`:
 - `splitPathsByIntersections()`: Splits paths into segments at intersection points
 - `findSegmentsAlongPath()`: Finds segments intersected by a cursor path
 - `reconstructPathsFromSegments()`: Rebuilds paths after segment removal
+- `sanitizeReconstructedPaths()`: Cleans reconstructed paths to remove duplicates, degenerate point-only fragments, and tiny overlays created during splits and merges
+
+### Cleanup and Sanitization
+
+When reconstructing paths after segment removal, the system may accidentally create duplicated paths, tiny fragments, or single-point paths due to numerical precision and path-splitting edge cases. To ensure a clean canvas result, the trim path utilities now run a sanitization pass using Paper.js to:
+
+- Remove degenerate fragments — very small or single-segment paths that are likely artifacts of splitting and offer no visual value.
+- Deduplicate reconstructed geometry — normalize path data and remove identical path results to prevent element duplication in the store.
+- Filter contained tiny fragments — drop tiny reconstructed pieces that are fully contained inside a larger reconstructed path and represent noise.
+
+This sanitization helps prevent the creation of stray 'point' elements or duplicate paths after trim operations, improving the reliability of trim workflows and undo/redo behavior. Note: the sanitation is conservative to avoid accidentally removing intentionally small elements; thresholds are small and tuned to preserve user-created geometry.
 
 ## Usage Examples
 
