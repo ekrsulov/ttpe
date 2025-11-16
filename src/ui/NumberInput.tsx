@@ -106,6 +106,7 @@ export const NumberInput: React.FC<NumberInputProps> = ({
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         type="text"
+        textAlign="right"
         fontSize="12px"
         h="20px"
         w={inputWidth}
