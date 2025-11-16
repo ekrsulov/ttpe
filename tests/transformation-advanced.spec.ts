@@ -91,6 +91,15 @@ test.describe('Transformation Advanced Controls', () => {
     expect(dAfterDistort).not.toEqual(dAfterSkew);
     await expect(distTlX).toHaveValue('0');
 
+    // Type in distort br-x and check path updated again (others corners included)
+    const distBrX = page.locator('[data-testid="distort-br-x-input"]');
+    await distBrX.fill('10');
+    await distBrX.press('Enter');
+    await page.waitForTimeout(100);
+    const dAfterDistortBr = await path.getAttribute('d');
+    expect(dAfterDistortBr).not.toEqual(dAfterDistort);
+    await expect(distBrX).toHaveValue('0');
+
     // Apply perspective: top edge X delta
     const persTopX = page.locator('[data-testid="perspective-top-x-input"]');
     await persTopX.fill('8');

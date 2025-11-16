@@ -23,29 +23,105 @@ export function createPerspectiveMatrix(
   srcCorners: { tl: Point; tr: Point; bl: Point; br: Point },
   dstCorners: { tl: Point; tr: Point; bl: Point; br: Point }
 ): number[][] {
-  // This is a simplified perspective transform
-  // For a full implementation, we'd need to solve a system of linear equations
-  // For now, we'll use a basic approach that works for moderate perspective changes
-  
-  const srcTL = srcCorners.tl;
-  const srcTR = srcCorners.tr;
-  const srcBL = srcCorners.bl;
-  
-  const dstTL = dstCorners.tl;
-  const dstTR = dstCorners.tr;
-  const dstBL = dstCorners.bl;
-  
-  // Calculate transformation using bilinear interpolation approximation
-  // This is a simplified version that works for small perspective changes
-  const scaleX = (dstTR.x - dstTL.x) / (srcTR.x - srcTL.x);
-  const scaleY = (dstBL.y - dstTL.y) / (srcBL.y - srcTL.y);
-  const skewX = (dstTR.y - dstTL.y) / (srcTR.x - srcTL.x);
-  const skewY = (dstBL.x - dstTL.x) / (srcBL.y - srcTL.y);
-  
+  // Use full homography (projective transform) mapping from 4 source corners to 4 destination corners.
+  // The simplified (bilinear) method used previously ignored the bottom-right corner and produced
+  // unchanged transforms when only the BR corner moved. Implementing a true homography ensures the
+  // transform depends on all four corners.
+
+  // Build the linear system A * h = b, where h = [h11, h12, h13, h21, h22, h23, h31, h32]
+  // (h33 is assumed to be 1). Each point correspondence provides two equations:
+  // u = (h11*x + h12*y + h13)/(h31*x + h32*y + 1)
+  // v = (h21*x + h22*y + h23)/(h31*x + h32*y + 1)
+  // Rearranged to linear form for the unknowns h.
+
+  const src = [srcCorners.tl, srcCorners.tr, srcCorners.br, srcCorners.bl];
+  const dst = [dstCorners.tl, dstCorners.tr, dstCorners.br, dstCorners.bl];
+
+  const A: number[][] = [];
+  const b: number[] = [];
+
+  for (let i = 0; i < 4; i++) {
+    const { x, y } = src[i];
+    const { x: u, y: v } = dst[i];
+
+    // u * (h31*x + h32*y + 1) = h11*x + h12*y + h13
+    // v * (h31*x + h32*y + 1) = h21*x + h22*y + h23
+    A.push([x, y, 1, 0, 0, 0, -u * x, -u * y]);
+    b.push(u);
+    A.push([0, 0, 0, x, y, 1, -v * x, -v * y]);
+    b.push(v);
+  }
+
+  // Solve the linear system using Gaussian elimination with partial pivoting
+  const solve = (M: number[][], rhs: number[]): number[] | null => {
+    // Convert M to augmented matrix
+    const n = M.length;
+    const Aaug = M.map((row, i) => row.concat(rhs[i] ?? 0));
+
+    for (let i = 0; i < n; i++) {
+      // Partial pivot
+      let maxRow = i;
+      for (let k = i + 1; k < n; k++) {
+        if (Math.abs(Aaug[k][i]) > Math.abs(Aaug[maxRow][i])) maxRow = k;
+      }
+      if (Math.abs(Aaug[maxRow][i]) < 1e-12) return null; // singular
+      // Swap rows
+      if (maxRow !== i) {
+        const temp = Aaug[i];
+        Aaug[i] = Aaug[maxRow];
+        Aaug[maxRow] = temp;
+      }
+
+      // Normalize pivot row
+      const pivot = Aaug[i][i];
+      for (let j = i; j <= n; j++) Aaug[i][j] /= pivot;
+
+      // Eliminate below
+      for (let k = i + 1; k < n; k++) {
+        const factor = Aaug[k][i];
+        if (Math.abs(factor) < 1e-15) continue;
+        for (let j = i; j <= n; j++) Aaug[k][j] -= factor * Aaug[i][j];
+      }
+    }
+
+    // Back substitution
+    const xsol = new Array(n).fill(0);
+    for (let i = n - 1; i >= 0; i--) {
+      let sum = Aaug[i][n];
+      for (let j = i + 1; j < n; j++) sum -= Aaug[i][j] * xsol[j];
+      xsol[i] = sum / (Aaug[i][i] || 1);
+    }
+    return xsol;
+  };
+
+  const h = solve(A, b);
+  if (!h) {
+    // Fallback to previous simplified approach if the system is singular
+    // NB: This means for degenerate cases the transform may not be perfect, but we avoid breaking.
+    const srcTL = srcCorners.tl;
+    const srcTR = srcCorners.tr;
+    const srcBL = srcCorners.bl;
+    const dstTL = dstCorners.tl;
+    const dstTR = dstCorners.tr;
+    const dstBL = dstCorners.bl;
+    const scaleX = (dstTR.x - dstTL.x) / (srcTR.x - srcTL.x || 1);
+    const scaleY = (dstBL.y - dstTL.y) / (srcBL.y - srcTL.y || 1);
+    const skewX = (dstTR.y - dstTL.y) / (srcTR.x - srcTL.x || 1);
+    const skewY = (dstBL.x - dstTL.x) / (srcBL.y - srcTL.y || 1);
+
+    return [
+      [scaleX, skewY, dstTL.x - srcTL.x * scaleX - srcTL.y * skewY],
+      [skewX, scaleY, dstTL.y - srcTL.x * skewX - srcTL.y * scaleY],
+      [0, 0, 1]
+    ];
+  }
+
+  // h includes [h11, h12, h13, h21, h22, h23, h31, h32]
+  const [h11, h12, h13, h21, h22, h23, h31, h32] = h;
   return [
-    [scaleX, skewY, dstTL.x - srcTL.x * scaleX - srcTL.y * skewY],
-    [skewX, scaleY, dstTL.y - srcTL.x * skewX - srcTL.y * scaleY],
-    [0, 0, 1]
+    [h11, h12, h13],
+    [h21, h22, h23],
+    [h31, h32, 1]
   ];
 }
 
