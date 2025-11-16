@@ -12,7 +12,7 @@ The `createApi` function is the mechanism by which plugins expose **public metho
 
 Plugins often implement functionality that other plugins or UI components need to access:
 
-- **Subpath plugin** exposes `performPathSimplify()` to simplify paths programmatically
+- **Subpath plugin** exposes `performPathSimplify()`, `performSubPathJoin()` and `performSubPathReverse()` to simplify, join, or reverse subpaths programmatically
 - **GridFill plugin** exposes `fillGridCell()` for scripted grid filling
 - **Shape plugin** exposes `createShape()` to generate shapes from code
 
@@ -129,6 +129,7 @@ Always define TypeScript interfaces for your APIs:
 export interface SubpathPluginAPI {
   performPathSimplify: () => void;
   performSubPathReverse: () => void;
+  performSubPathJoin: () => void;
 }
 
 // Implement the interface
@@ -147,6 +148,9 @@ export const subpathPlugin: PluginDefinition<CanvasStore> = {
     performSubPathReverse: () => {
       performSubPathReverse(context.store.getState);
     },
+    performSubPathJoin: () => {
+      performSubPathJoin(context.store.getState);
+    },
   }),
 };
 ```
@@ -161,6 +165,8 @@ const api = pluginManager.getPluginApi<SubpathPluginAPI>('subpath');
 
 if (api) {
   api.performPathSimplify(); // ✓ Type-checked
+  api.performSubPathReverse(); // ✓ Type-checked
+  api.performSubPathJoin?.(); // ✓ Type-checked (optional chaining)
   api.invalidMethod();       // ✗ TypeScript error
 }
 ```
@@ -268,6 +274,10 @@ export const subpathPlugin: PluginDefinition<CanvasStore> = {
     
     performSubPathReverse: () => {
       performSubPathReverse(store.getState);
+    },
+    
+    performSubPathJoin: () => {
+      performSubPathJoin(store.getState);
     },
   }),
 };

@@ -85,6 +85,8 @@ No plugin-specific shortcuts.
 **PathOperationsPanel**: Conditionally displayed panel with path operation buttons
 - **Visibility**: Only shown when selection meets operation requirements
 - **Split Subpaths**: Available when a selected path has multiple subpaths
+- **Join Subpaths**: Available when a selected path has multiple subpaths - joins selected subpaths into one (delegates to `subpath` plugin API)
+  - **Split/Join Subpaths**: When a selected path has multiple subpaths, the PathOperationsPanel exposes Split controls and delegates the split/join operations to the `subpath` plugin via `pluginManager.callPluginApi`.
 - **Boolean Operations**: Available when 2+ paths/subpaths are selected
   - Union (Simple): Concatenates subpaths without boolean logic
   - Union (Paper.js): True boolean union using Paper.js

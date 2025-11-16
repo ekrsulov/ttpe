@@ -17,6 +17,7 @@ sidebar_label: Subpath
 - Align and distribute subpaths
 - Split subpaths into separate paths
 - Reverse subpath direction
+- Join selected subpaths into a single subpath
 
 ## Plugin Interaction Flow
 
@@ -92,6 +93,16 @@ Reverses the direction of the current subpath.
 ```typescript
 const api = useCanvasStore.getState().getPluginApi('subpath');
 api.performSubPathReverse();
+```
+
+### `performSubPathJoin()`
+
+Joins selected subpaths together into a single subpath (within their element) or joins eligible adjacent subpaths inside a path element.
+
+**Usage**:
+```typescript
+const api = useCanvasStore.getState().getPluginApi('subpath');
+api.performSubPathJoin();
 ```
 
 ## Usage Examples

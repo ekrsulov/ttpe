@@ -311,6 +311,7 @@ The floating context menu provides different actions based on the current select
   - Union, Union (PaperJS)
   - Subtract, Intersect, Exclude, Divide (for exactly 2 paths)
 - **Optical Alignment** (for exactly 2 paths)
+- **Apply Visual Center**: Calculates and applies optical center alignment to selected elements (if supported)
 - **Group**: Create group from selection
 - **Ungroup**: Ungroup selected groups (if any)
 - **Lock**: Lock all selected elements
@@ -340,6 +341,7 @@ The floating context menu provides different actions based on the current select
 - **Arrange** submenu: Alignment, matching, distribution
 - **Path Operations** submenu (when combined with other paths)
 - **Split Subpaths** (if path has multiple subpaths)
+- **Join Subpaths** (if path has multiple subpaths selected) - merges selected subpaths within a path
 - **Group**: Create group from selection
 - **Lock/Unlock**: Toggle path editing lock
 - **Show/Hide**: Toggle path visibility
@@ -351,6 +353,7 @@ The floating context menu provides different actions based on the current select
 
 - **Arrange** submenu: Alignment, matching, distribution
 - **Reverse Direction**: Reverse subpath drawing direction
+- **Join**: Join selected subpaths within the same path into a single subpath
 - **Duplicate**: Create independent copy
 - **Copy to Clipboard**: Copy subpath to clipboard
 - **Delete**: Remove selected subpaths

@@ -57,6 +57,11 @@ All notable changes to VectorNest will be documented here.
   - Integrated into Edit mode with expandable panel for settings
   - Improves precision in complex path editing and alignment tasks
 - **Trim Path Plugin**: New interactive tool for trimming path segments at intersections
+
+- **Subpath Join & Public API (2025-11-16)**: Added 'Join' subpath capability to both Subpath and Path Operations panels and exposed the method via Subpath plugin public API (`performSubPathJoin`).
+  - `Subpath` panel now supports joining multiple selected subpaths within the same path
+  - `PathOperationsPanel` now delegates split/join actions to the Subpath plugin for consistent behavior
+  - Added `performSubPathJoin` to the plugin `createApi` for programmatic access
   - Added Trim Path plugin with activation/deactivation logic and state management
   - Implemented hover and drag states for precise trimming interactions
   - Created utility functions for path validation, intersection computation, and path splitting

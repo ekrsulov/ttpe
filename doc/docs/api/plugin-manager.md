@@ -176,6 +176,7 @@ const api = pluginManager.getPluginApi<SubpathPluginAPI>('subpath');
 if (api) {
   api.performPathSimplify();     // ✓ Type-checked
   api.performSubPathReverse();   // ✓ Type-checked
+  api.performSubPathJoin?.();     // ✓ Type-checked (optional chaining in case older plugin versions don't expose it)
 }
 ```
 
