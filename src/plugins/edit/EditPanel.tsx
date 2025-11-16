@@ -174,7 +174,7 @@ export const EditPanel: React.FC<EditPanelProps> = ({
           onChange={(value) => updateSmoothBrush({ strength: value })}
           labelWidth="60px"
           valueWidth="40px"
-          marginBottom='0'
+          marginBottom={smoothBrush.isActive || smoothBrush.simplifyPoints ? '2px' : '0'}
         />
 
         {/* Radius Slider - only show when brush mode is active */}
@@ -188,7 +188,7 @@ export const EditPanel: React.FC<EditPanelProps> = ({
             onChange={(value) => updateSmoothBrush({ radius: value })}
             labelWidth="60px"
             valueWidth="40px"
-            marginBottom='0'
+            marginBottom='2px'
           />
         )}
 
@@ -205,7 +205,7 @@ export const EditPanel: React.FC<EditPanelProps> = ({
             formatter={(value) => value.toFixed(1)}
             labelWidth="60px"
             valueWidth="40px"
-            marginBottom='0'
+            marginBottom='2px'
           />
         )}
 
