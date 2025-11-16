@@ -7,7 +7,7 @@ import { SubPathOperationsPanel } from './SubPathOperationsPanel';
 import { EditorPanel } from '../../sidebar/panels/EditorPanel';
 import { SubpathOverlay } from './SubpathOverlay';
 import type { PathData } from '../../types';
-import { performPathSimplify, performSubPathReverse } from './actions';
+import { performPathSimplify, performSubPathReverse, performSubPathJoin } from './actions';
 
 const subpathSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -88,6 +88,9 @@ export const subpathPlugin: PluginDefinition<CanvasStore> = {
     },
     performSubPathReverse: () => {
       performSubPathReverse(store.getState);
+    },
+    performSubPathJoin: () => {
+      performSubPathJoin(store.getState);
     },
   }),
 };

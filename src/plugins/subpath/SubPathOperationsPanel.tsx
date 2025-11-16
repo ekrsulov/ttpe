@@ -9,8 +9,8 @@ const SubPathOperationsPanelComponent: React.FC = () => {
   const activePlugin = useCanvasStore(state => state.activePlugin);
   const selectedSubpathsCount = useCanvasStore(state => state.selectedSubpaths?.length || 0);
 
-  // Show only when subpath plugin is active and exactly 1 subpath is selected
-  if (activePlugin !== 'subpath' || selectedSubpathsCount !== 1) {
+  // Show only when subpath plugin is active and at least one subpath is selected
+  if (activePlugin !== 'subpath' || selectedSubpathsCount < 1) {
     return null;
   }
 
@@ -19,15 +19,30 @@ const SubPathOperationsPanelComponent: React.FC = () => {
     pluginManager.callPluginApi('subpath', 'performSubPathReverse');
   };
 
+  const performJoin = () => {
+    pluginManager.callPluginApi('subpath', 'performSubPathJoin');
+  };
+
   return (
     <Panel title="SubPath Operations">
-      <PanelStyledButton
-        aria-label="Reverse subpath direction"
-        onClick={performReverse}
-        w="full"
-      >
-        Reverse
-      </PanelStyledButton>
+      {selectedSubpathsCount === 1 && (
+        <PanelStyledButton
+          aria-label="Reverse subpath direction"
+          onClick={performReverse}
+          w="full"
+        >
+          Reverse
+        </PanelStyledButton>
+      )}
+      {selectedSubpathsCount > 1 && (
+        <PanelStyledButton
+          aria-label="Join subpaths"
+          onClick={performJoin}
+          w="full"
+        >
+          Join
+        </PanelStyledButton>
+      )}
     </Panel>
   );
 };

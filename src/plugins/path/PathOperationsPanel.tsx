@@ -57,6 +57,10 @@ const PathOperationsPanelComponent: React.FC = () => {
     pluginManager.callPluginApi('subpath', 'performPathSimplify');
   };
 
+  const performPathJoin = () => {
+    pluginManager.callPluginApi('subpath', 'performSubPathJoin');
+  };
+
   const { totalSelectedItems, hasPathWithMultipleSubpaths } = selectionInfo;
 
   return (
@@ -69,6 +73,16 @@ const PathOperationsPanelComponent: React.FC = () => {
             onClick={performPathSimplify}
           >
             Subpath Split
+          </PanelStyledButton>
+        )}
+
+        {/* Join subpaths operation - available only if a selected path has multiple subpaths */}
+        {hasPathWithMultipleSubpaths && (
+          <PanelStyledButton
+            aria-label="Join subpaths"
+            onClick={performPathJoin}
+          >
+            Subpath Join
           </PanelStyledButton>
         )}
 

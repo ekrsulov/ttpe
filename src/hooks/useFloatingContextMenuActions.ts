@@ -462,6 +462,19 @@ export function useFloatingContextMenuActions(
     };
   }, [hasPathWithMultipleSubpaths]);
 
+  const getSubpathJoinAction = useCallback((): FloatingContextMenuAction | null => {
+    if (!hasPathWithMultipleSubpaths()) return null;
+    
+    return {
+      id: 'subpath-join',
+      label: 'Subpath Join',
+      icon: Combine,
+      onClick: () => {
+        pluginManager.callPluginApi('subpath', 'performSubPathJoin');
+      }
+    };
+  }, [hasPathWithMultipleSubpaths]);
+
   // Helper to get Apply Visual Center action
   const getApplyVisualCenterAction = useCallback((): FloatingContextMenuAction | null => {
     const canAlign = canPerformOpticalAlignment?.() ?? false;
@@ -760,6 +773,7 @@ export function useFloatingContextMenuActions(
         const arrangeActions = getArrangeActions();
         const pathOpsActions = getPathOperationActions();
         const subpathSplitAction = getSubpathSplitAction();
+        const subpathJoinAction = getSubpathJoinAction();
         
         return [
           // Arrange actions
@@ -768,6 +782,7 @@ export function useFloatingContextMenuActions(
           ...pathOpsActions,
           // Subpath split (if path has multiple subpaths)
           ...(subpathSplitAction ? [subpathSplitAction] : []),
+          ...(subpathJoinAction ? [subpathJoinAction] : []),
           // Standard actions
           {
             id: 'group',
@@ -1117,6 +1132,7 @@ export function useFloatingContextMenuActions(
     getPathOperationActions,
     getSubpathOperationActions,
     getSubpathSplitAction,
+    getSubpathJoinAction,
     getApplyVisualCenterAction,
     hasGroupsInSelection,
     handleHideSelected,

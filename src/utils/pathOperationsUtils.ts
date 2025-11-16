@@ -1,4 +1,4 @@
-import type { PathData, SubPath, Command } from '../types';
+import type { PathData, SubPath, Command, Point } from '../types';
 import paper from 'paper';
 import { logger } from './logger';
 
@@ -165,6 +165,70 @@ export function reverseSubPath(subPath: SubPath): SubPath {
   }
 
   return newCommands;
+}
+
+/**
+ * Join subpaths that have their end and start points matching (with tolerance)
+ * Returns a new array of subPaths with joined segments merged into longer single subpaths
+ */
+export function joinSubPaths(subPaths: SubPath[], tolerance = 0.001): SubPath[] {
+  const getStart = (sp: SubPath): Point | null => {
+    for (const cmd of sp) {
+      if (cmd.type === 'M') return cmd.position;
+    }
+    return null;
+  };
+
+  const getEnd = (sp: SubPath): Point | null => {
+    if (sp.length === 0) return null;
+    const last = sp[sp.length - 1];
+    if (last.type === 'Z') return getStart(sp);
+    return (last as Exclude<Command, { type: 'Z' }>).position;
+  };
+
+  const posEqual = (a: Point, b: Point) => Math.abs(a.x - b.x) <= tolerance && Math.abs(a.y - b.y) <= tolerance;
+
+  const mergeTwo = (a: SubPath, b: SubPath): SubPath => {
+    const newB: SubPath = b.map((cmd, idx) => {
+      if (idx === 0 && cmd.type === 'M') {
+        return { type: 'L', position: cmd.position } as Command;
+      }
+      return { ...cmd } as Command;
+    });
+
+    const aLast = a[a.length - 1];
+    const bFirst = newB[0];
+    if (aLast && bFirst && (aLast.type === 'L' || aLast.type === 'C' || aLast.type === 'M') && bFirst.type === 'L') {
+      const aPos = aLast.type === 'C' ? aLast.position : (aLast as Exclude<Command, { type: 'Z' }>).position;
+      const bPos = bFirst.position;
+      if (aPos && posEqual(aPos, bPos)) {
+        newB.shift();
+      }
+    }
+    return [...a, ...newB];
+  };
+
+  const working: SubPath[] = subPaths.map(sp => sp.map(cmd => ({ ...cmd })));
+  let changed = true;
+  while (changed) {
+    changed = false;
+    outer: for (let i = 0; i < working.length; i++) {
+      for (let j = 0; j < working.length; j++) {
+        if (i === j) continue;
+        const endI = getEnd(working[i]);
+        const startJ = getStart(working[j]);
+        if (!endI || !startJ) continue;
+        if (posEqual(endI, startJ)) {
+          working[i] = mergeTwo(working[i], working[j]);
+          working.splice(j, 1);
+          changed = true;
+          break outer;
+        }
+      }
+    }
+  }
+
+  return working;
 }
 
 export function convertPathDataToPaperPath(pathData: PathData): paper.Path | paper.CompoundPath {
