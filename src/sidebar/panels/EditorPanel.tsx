@@ -164,10 +164,10 @@ export const EditorPanel: React.FC = () => {
   const presetColumns = Math.min(presets.length, useBreakpointValue({ base: 8, md: 10 }) || 10);
 
   return (
-    <Box pb={1} mt={1} position="relative">
+    <Box mb={1} mt={1} position="relative">
       <RenderCountBadgeWrapper componentName="EditorPanel" position="top-right" />
       {/* Pencil Properties Section */}
-      <VStack spacing={1} align="stretch">
+      <VStack spacing={0} align="stretch">
         {/* Color Presets */}
         <HStack minH="24px">
           {/* Style Eyedropper Button */}
@@ -225,7 +225,7 @@ export const EditorPanel: React.FC = () => {
 
         {/* Color Controls */}
         <Collapse in={isColorControlsOpen} animateOpacity>
-          <VStack spacing={1} align="stretch">
+          <VStack spacing={0} align="stretch">
             {/* Fill Color & Opacity */}
             <VStack spacing={1} align="stretch">
               <HStack justify="flex-start" minH="24px" spacing={1.5}>
@@ -395,7 +395,7 @@ export const EditorPanel: React.FC = () => {
 
             {/* Advanced Stroke Properties */}
             <Collapse in={isAdvancedStrokeOpen} animateOpacity>
-              <VStack spacing={1} align="stretch">
+              <VStack spacing={0} align="stretch">
                 {/* Linecap */}
                 <HStack justify="flex-start" minH="24px" spacing={1} width="100%">
                   <Text fontSize="11px" fontWeight="600" color={labelColor} minW="80px" h="24px" display="flex" alignItems="center" title="Stroke Linecap">

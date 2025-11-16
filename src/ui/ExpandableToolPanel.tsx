@@ -39,7 +39,7 @@ export const ExpandableToolPanel: React.FC<ExpandableToolPanelProps> = ({ active
   return (
     <Box
       position="fixed"
-      bottom={{ base: isExpanded ? "54px" : "46px", md: isExpanded ? "66px" : "54px" }}
+      bottom={{ base: isExpanded ? "48px" : "38px", md: isExpanded ? "60px" : "50px" }}
       left={leftPosition}
       transform="translateX(-50%)"
       zIndex={998}
@@ -50,10 +50,10 @@ export const ExpandableToolPanel: React.FC<ExpandableToolPanelProps> = ({ active
       <VStack spacing={0} align="stretch">
         <Box
           bg={bg}
-          borderRadius={isExpanded ? "12px 12px 0 0" : "full"}
+          borderRadius={isExpanded ? "16px 16px 0 0" : "full"}
           borderWidth="1px"
           borderColor={borderColor}
-          borderBottom="none"
+          borderBottom={isExpanded ? "0.5" : "mone"}
           display="flex"
           justifyContent="center"
           px={isExpanded ? "2" : "0.5"}
@@ -81,7 +81,6 @@ export const ExpandableToolPanel: React.FC<ExpandableToolPanelProps> = ({ active
         <Collapse in={isExpanded} animateOpacity>
           <Box
             bg={bg}
-            borderRadius="0 0 12px 12px"
             borderWidth="1px"
             borderColor={borderColor}
             borderTop="none"
