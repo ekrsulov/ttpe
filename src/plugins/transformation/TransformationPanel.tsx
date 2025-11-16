@@ -7,6 +7,7 @@ import { Panel } from '../../ui/Panel';
 import { PanelToggle } from '../../ui/PanelToggle';
 import { NumberInput } from '../../ui/NumberInput';
 import { usePanelToggleHandlers } from '../../hooks/usePanelToggleHandlers';
+// PanelStyledButton removed - Reset button is intentionally removed as distortion/skew are now transient.
 
 interface TransformationPanelProps { hideTitle?: boolean }
 
@@ -21,6 +22,8 @@ export const TransformationPanel: React.FC<TransformationPanelProps> = ({ hideTi
   const getTransformationBounds = useCanvasStore(state => state.getTransformationBounds);
   const applyResizeTransform = useCanvasStore(state => state.applyResizeTransform);
   const applyRotationTransform = useCanvasStore(state => state.applyRotationTransform);
+  const applyAdvancedDistortTransform = useCanvasStore(state => state.applyAdvancedDistortTransform);
+  const applyAdvancedSkewTransform = useCanvasStore(state => state.applyAdvancedSkewTransform);
   
   const { createToggleHandler } = usePanelToggleHandlers(updateTransformationState ?? (() => {}));
   
@@ -100,6 +103,123 @@ export const TransformationPanel: React.FC<TransformationPanelProps> = ({ hideTi
     }
   };
 
+  // Advanced transforms: Skew and Distort (corner offsets)
+  // Inputs used as transient deltas (like Rotation). UI value always resets to 0 after apply.
+  const [tlOffset, setTlOffset] = useState({ x: 0, y: 0 });
+  const [trOffset, setTrOffset] = useState({ x: 0, y: 0 });
+  const [blOffset, setBlOffset] = useState({ x: 0, y: 0 });
+  const [brOffset, setBrOffset] = useState({ x: 0, y: 0 });
+
+  const handleSkewXChange = (degrees: number) => {
+    // Apply a transient skew delta, UI value will reset to 0
+    updateTransformationState?.( { activeHandler: 'skew' } );
+    applyAdvancedSkewTransform?.('x', degrees);
+    setUpdateTrigger(prev => prev + 1);
+  };
+
+  const handleSkewYChange = (degrees: number) => {
+    // Apply a transient skew delta, UI value will reset to 0
+    updateTransformationState?.( { activeHandler: 'skew' } );
+    applyAdvancedSkewTransform?.('y', degrees);
+    setUpdateTrigger(prev => prev + 1);
+  };
+
+
+  const handleDistortOffsetChange = (corner: 'tl' | 'tr' | 'bl' | 'br', axis: 'x' | 'y', delta: number) => {
+    const bounds = getTransformationBounds?.();
+    if (!bounds) return;
+
+    // Source corners of the selection before offsets
+    const srcCorners = {
+      tl: { x: bounds.minX, y: bounds.minY },
+      tr: { x: bounds.maxX, y: bounds.minY },
+      bl: { x: bounds.minX, y: bounds.maxY },
+      br: { x: bounds.maxX, y: bounds.maxY }
+    };
+
+    // Build current offsets while applying delta to the requested corner
+    const currentOffsets = {
+      tl: { ...tlOffset },
+      tr: { ...trOffset },
+      bl: { ...blOffset },
+      br: { ...brOffset }
+    };
+
+    // delta is applied as a relative offset (like rotation), so add it on top of stored offsets
+    currentOffsets[corner][axis] += delta;
+
+    // Compose transformed corners from source corners + offsets
+    const newTl = { x: srcCorners.tl.x + currentOffsets.tl.x, y: srcCorners.tl.y + currentOffsets.tl.y };
+    const newTr = { x: srcCorners.tr.x + currentOffsets.tr.x, y: srcCorners.tr.y + currentOffsets.tr.y };
+    const newBl = { x: srcCorners.bl.x + currentOffsets.bl.x, y: srcCorners.bl.y + currentOffsets.bl.y };
+    const newBr = { x: srcCorners.br.x + currentOffsets.br.x, y: srcCorners.br.y + currentOffsets.br.y };
+
+    // Persist the updated offsets
+    setTlOffset(currentOffsets.tl);
+    setTrOffset(currentOffsets.tr);
+    setBlOffset(currentOffsets.bl);
+    setBrOffset(currentOffsets.br);
+
+    updateTransformationState?.( { activeHandler: 'distort' } );
+    applyAdvancedDistortTransform?.({ tl: newTl, tr: newTr, bl: newBl, br: newBr });
+    setUpdateTrigger(prev => prev + 1);
+  };
+
+  // Perspective edge change: apply delta to both corners of an edge
+  const handlePerspectiveEdgeChange = (edge: 'top' | 'bottom' | 'left' | 'right', axis: 'x' | 'y', delta: number) => {
+    const bounds = getTransformationBounds?.();
+    if (!bounds) return;
+
+    const srcCorners = {
+      tl: { x: bounds.minX, y: bounds.minY },
+      tr: { x: bounds.maxX, y: bounds.minY },
+      bl: { x: bounds.minX, y: bounds.maxY },
+      br: { x: bounds.maxX, y: bounds.maxY }
+    };
+
+    const currentOffsets = {
+      tl: { ...tlOffset },
+      tr: { ...trOffset },
+      bl: { ...blOffset },
+      br: { ...brOffset }
+    };
+
+    switch (edge) {
+      case 'top':
+        currentOffsets.tl[axis] += delta;
+        currentOffsets.tr[axis] += delta;
+        break;
+      case 'bottom':
+        currentOffsets.bl[axis] += delta;
+        currentOffsets.br[axis] += delta;
+        break;
+      case 'left':
+        currentOffsets.tl[axis] += delta;
+        currentOffsets.bl[axis] += delta;
+        break;
+      case 'right':
+        currentOffsets.tr[axis] += delta;
+        currentOffsets.br[axis] += delta;
+        break;
+    }
+
+    // Compose new corners
+    const newTl = { x: srcCorners.tl.x + currentOffsets.tl.x, y: srcCorners.tl.y + currentOffsets.tl.y };
+    const newTr = { x: srcCorners.tr.x + currentOffsets.tr.x, y: srcCorners.tr.y + currentOffsets.tr.y };
+    const newBl = { x: srcCorners.bl.x + currentOffsets.bl.x, y: srcCorners.bl.y + currentOffsets.bl.y };
+    const newBr = { x: srcCorners.br.x + currentOffsets.br.x, y: srcCorners.br.y + currentOffsets.br.y };
+
+    // Persist offsets
+    setTlOffset(currentOffsets.tl);
+    setTrOffset(currentOffsets.tr);
+    setBlOffset(currentOffsets.bl);
+    setBrOffset(currentOffsets.br);
+
+    updateTransformationState?.({ activeHandler: 'distort' });
+    applyAdvancedDistortTransform?.({ tl: newTl, tr: newTr, bl: newBl, br: newBr });
+    setUpdateTrigger(prev => prev + 1);
+  };
+
   return (
     <Panel 
       title="Transform"
@@ -143,8 +263,9 @@ export const TransformationPanel: React.FC<TransformationPanelProps> = ({ hideTi
 
         {selectedCount > 0 && (
           <VStack spacing={1.5} align="stretch">
-            {/* Size controls with lock */}
-            <Box position="relative">
+            {/* Size controls with lock (hidden in Advanced Mode) */}
+            {!advancedMode && (
+              <Box position="relative">
               <HStack spacing={0} align="stretch">
                 <VStack spacing={1.5} align="stretch" flex={1}>
                   <HStack spacing={2} position="relative">
@@ -157,6 +278,7 @@ export const TransformationPanel: React.FC<TransformationPanelProps> = ({ hideTi
                       suffix="px"
                       labelWidth="50px"
                       inputWidth="65px"
+                      testId="width-input"
                     />
                     {/* Horizontal line from Width to lock */}
                     <Box 
@@ -184,6 +306,7 @@ export const TransformationPanel: React.FC<TransformationPanelProps> = ({ hideTi
                       suffix="px"
                       labelWidth="50px"
                       inputWidth="65px"
+                      testId="height-input"
                     />
                     {/* Horizontal line from Height to lock */}
                     <Box 
@@ -259,21 +382,270 @@ export const TransformationPanel: React.FC<TransformationPanelProps> = ({ hideTi
                   </ConditionalTooltip>
                 </Box>
               </HStack>
-            </Box>
+              </Box>
+            )}
 
-            {/* Rotation control */}
-            <NumberInput
-              label="Rotation"
-              value={0}
-              onChange={handleRotationChange}
-              min={0}
-              max={360}
-              step={1}
-              suffix="deg"
-              labelWidth="50px"
-              inputWidth="65px"
-              resetAfterChange={true}
-            />
+            {/* Rotation control (hidden in Advanced Mode) */}
+            {!advancedMode && (
+              <NumberInput
+                label="Rotation"
+                value={0}
+                onChange={handleRotationChange}
+                min={0}
+                max={360}
+                step={1}
+                suffix="deg"
+                labelWidth="50px"
+                inputWidth="65px"
+                testId="rotation-input"
+                resetAfterChange={true}
+              />
+            )}
+            {advancedMode && (
+              <VStack spacing={1.5} align="stretch">
+                {/* Skew controls - new horizontal row (Skew X [__] Y [__]) */}
+                <HStack spacing={2} align="center" data-testid="skew-row">
+                  <Text fontSize="12px" color="gray.600" minW="42px" flexShrink={0}>Skew</Text>
+                  <Text fontSize="12px" color="gray.600" minW="8px" flexShrink={0}>X</Text>
+                  <NumberInput
+                    testId="skew-x-input"
+                    label=""
+                    value={0}
+                    onChange={handleSkewXChange}
+                    min={-89}
+                    max={89}
+                    step={0.1}
+                    labelWidth="0px"
+                    inputWidth="56px"
+                    resetAfterChange={true}
+                  />
+                  <Text fontSize="12px" color="gray.600" minW="8px" flexShrink={0}>Y</Text>
+                  <NumberInput
+                    testId="skew-y-input"
+                    label=""
+                    value={0}
+                    onChange={handleSkewYChange}
+                    min={-89}
+                    max={89}
+                    step={0.1}
+                    labelWidth="0px"
+                    inputWidth="56px"
+                    resetAfterChange={true}
+                  />
+                  </HStack>
+
+                  {/* Perspective edge controls - Top/Bottom/Left/Right with X/Y deltas */}
+                  <Text fontSize="xs" color="gray.600">Perspective (edge deltas):</Text>
+                  <VStack spacing={1} align="stretch">
+                    <HStack spacing={2} align="center" data-testid="perspective-row-top">
+                      <Text fontSize="12px" color="gray.600" minW="42px" flexShrink={0}>Top</Text>
+                      <Text fontSize="12px" color="gray.600" minW="8px" flexShrink={0}>X</Text>
+                      <NumberInput
+                        testId="perspective-top-x-input"
+                        label=""
+                        value={0}
+                        onChange={(v) => handlePerspectiveEdgeChange('top', 'x', v)}
+                        step={1}
+                        labelWidth="0px"
+                        inputWidth="56px"
+                        resetAfterChange={true}
+                      />
+                      <Text fontSize="12px" color="gray.600" minW="8px" flexShrink={0}>Y</Text>
+                      <NumberInput
+                        testId="perspective-top-y-input"
+                        label=""
+                        value={0}
+                        onChange={(v) => handlePerspectiveEdgeChange('top', 'y', v)}
+                        step={1}
+                        labelWidth="0px"
+                        inputWidth="56px"
+                        resetAfterChange={true}
+                      />
+                    </HStack>
+                    <HStack spacing={2} align="center" data-testid="perspective-row-bottom">
+                      <Text fontSize="12px" color="gray.600" minW="42px" flexShrink={0}>Bottom</Text>
+                      <Text fontSize="12px" color="gray.600" minW="8px" flexShrink={0}>X</Text>
+                      <NumberInput
+                        testId="perspective-bottom-x-input"
+                        label=""
+                        value={0}
+                        onChange={(v) => handlePerspectiveEdgeChange('bottom', 'x', v)}
+                        step={1}
+                        labelWidth="0px"
+                        inputWidth="56px"
+                        resetAfterChange={true}
+                      />
+                      <Text fontSize="12px" color="gray.600" minW="8px" flexShrink={0}>Y</Text>
+                      <NumberInput
+                        testId="perspective-bottom-y-input"
+                        label=""
+                        value={0}
+                        onChange={(v) => handlePerspectiveEdgeChange('bottom', 'y', v)}
+                        step={1}
+                        labelWidth="0px"
+                        inputWidth="56px"
+                        resetAfterChange={true}
+                      />
+                    </HStack>
+                    <HStack spacing={2} align="center" data-testid="perspective-row-left">
+                      <Text fontSize="12px" color="gray.600" minW="42px" flexShrink={0}>Left</Text>
+                      <Text fontSize="12px" color="gray.600" minW="8px" flexShrink={0}>X</Text>
+                      <NumberInput
+                        testId="perspective-left-x-input"
+                        label=""
+                        value={0}
+                        onChange={(v) => handlePerspectiveEdgeChange('left', 'x', v)}
+                        step={1}
+                        labelWidth="0px"
+                        inputWidth="56px"
+                        resetAfterChange={true}
+                      />
+                      <Text fontSize="12px" color="gray.600" minW="8px" flexShrink={0}>Y</Text>
+                      <NumberInput
+                        testId="perspective-left-y-input"
+                        label=""
+                        value={0}
+                        onChange={(v) => handlePerspectiveEdgeChange('left', 'y', v)}
+                        step={1}
+                        labelWidth="0px"
+                        inputWidth="56px"
+                        resetAfterChange={true}
+                      />
+                    </HStack>
+                    <HStack spacing={2} align="center" data-testid="perspective-row-right">
+                      <Text fontSize="12px" color="gray.600" minW="42px" flexShrink={0}>Right</Text>
+                      <Text fontSize="12px" color="gray.600" minW="8px" flexShrink={0}>X</Text>
+                      <NumberInput
+                        testId="perspective-right-x-input"
+                        label=""
+                        value={0}
+                        onChange={(v) => handlePerspectiveEdgeChange('right', 'x', v)}
+                        step={1}
+                        labelWidth="0px"
+                        inputWidth="56px"
+                        resetAfterChange={true}
+                      />
+                      <Text fontSize="12px" color="gray.600" minW="8px" flexShrink={0}>Y</Text>
+                      <NumberInput
+                        testId="perspective-right-y-input"
+                        label=""
+                        value={0}
+                        onChange={(v) => handlePerspectiveEdgeChange('right', 'y', v)}
+                        step={1}
+                        labelWidth="0px"
+                        inputWidth="56px"
+                        resetAfterChange={true}
+                      />
+                    </HStack>
+                  </VStack>
+
+                {/* Distort corner offsets (px) - Each corner: X/Y offset */}
+                <Text fontSize="xs" color="gray.600">Distort (corner offsets):</Text>
+                <VStack spacing={1} align="stretch">
+                  <HStack spacing={2} align="center" data-testid="distort-row-tl">
+                    <Text fontSize="12px" color="gray.600" minW="42px" flexShrink={0}>TL</Text>
+                    <Text fontSize="12px" color="gray.600" minW="8px" flexShrink={0}>X</Text>
+                    <NumberInput
+                      testId="distort-tl-x-input"
+                      label=""
+                      value={0}
+                      onChange={(v) => handleDistortOffsetChange('tl', 'x', v)}
+                      step={1}
+                      labelWidth="0px"
+                      inputWidth="56px"
+                      resetAfterChange={true}
+                    />
+                    <Text fontSize="12px" color="gray.600" minW="8px" flexShrink={0}>Y</Text>
+                    <NumberInput
+                      testId="distort-tl-y-input"
+                      label=""
+                      value={0}
+                      onChange={(v) => handleDistortOffsetChange('tl', 'y', v)}
+                      step={1}
+                      labelWidth="0px"
+                      inputWidth="56px"
+                      resetAfterChange={true}
+                    />
+                  </HStack>
+                  <HStack spacing={2} align="center" data-testid="distort-row-tr">
+                    <Text fontSize="12px" color="gray.600" minW="42px" flexShrink={0}>TR</Text>
+                    <Text fontSize="12px" color="gray.600" minW="8px" flexShrink={0}>X</Text>
+                    <NumberInput
+                      testId="distort-tr-x-input"
+                      label=""
+                      value={0}
+                      onChange={(v) => handleDistortOffsetChange('tr', 'x', v)}
+                      step={1}
+                      labelWidth="0px"
+                      inputWidth="56px"
+                      resetAfterChange={true}
+                    />
+                    <Text fontSize="12px" color="gray.600" minW="8px" flexShrink={0}>Y</Text>
+                    <NumberInput
+                      testId="distort-tr-y-input"
+                      label=""
+                      value={0}
+                      onChange={(v) => handleDistortOffsetChange('tr', 'y', v)}
+                      step={1}
+                      labelWidth="0px"
+                      inputWidth="56px"
+                      resetAfterChange={true}
+                    />
+                  </HStack>
+                  <HStack spacing={2} align="center" data-testid="distort-row-bl">
+                    <Text fontSize="12px" color="gray.600" minW="42px" flexShrink={0}>BL</Text>
+                    <Text fontSize="12px" color="gray.600" minW="8px" flexShrink={0}>X</Text>
+                    <NumberInput
+                      testId="distort-bl-x-input"
+                      label=""
+                      value={0}
+                      onChange={(v) => handleDistortOffsetChange('bl', 'x', v)}
+                      step={1}
+                      labelWidth="0px"
+                      inputWidth="56px"
+                      resetAfterChange={true}
+                    />
+                    <Text fontSize="12px" color="gray.600" minW="8px" flexShrink={0}>Y</Text>
+                    <NumberInput
+                      testId="distort-bl-y-input"
+                      label=""
+                      value={0}
+                      onChange={(v) => handleDistortOffsetChange('bl', 'y', v)}
+                      step={1}
+                      labelWidth="0px"
+                      inputWidth="56px"
+                      resetAfterChange={true}
+                    />
+                  </HStack>
+                  <HStack spacing={2} align="center" data-testid="distort-row-br">
+                    <Text fontSize="12px" color="gray.600" minW="42px" flexShrink={0}>BR</Text>
+                    <Text fontSize="12px" color="gray.600" minW="8px" flexShrink={0}>X</Text>
+                    <NumberInput
+                      testId="distort-br-x-input"
+                      label=""
+                      value={0}
+                      onChange={(v) => handleDistortOffsetChange('br', 'x', v)}
+                      step={1}
+                      labelWidth="0px"
+                      inputWidth="56px"
+                      resetAfterChange={true}
+                    />
+                    <Text fontSize="12px" color="gray.600" minW="8px" flexShrink={0}>Y</Text>
+                    <NumberInput
+                      testId="distort-br-y-input"
+                      label=""
+                      value={0}
+                      onChange={(v) => handleDistortOffsetChange('br', 'y', v)}
+                      step={1}
+                      labelWidth="0px"
+                      inputWidth="56px"
+                      resetAfterChange={true}
+                    />
+                  </HStack>
+                  {/* Reset button removed; distort inputs act as relative deltas and persist offsets (similar UX to Rotation). */}
+                </VStack>
+              </VStack>
+            )}
           </VStack>
         )}
       </VStack>

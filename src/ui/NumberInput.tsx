@@ -18,6 +18,7 @@ interface NumberInputProps {
   labelWidth?: string;
   inputWidth?: string;
   resetAfterChange?: boolean; // New prop to reset value after onChange is called
+  testId?: string;
 }
 
 export const NumberInput: React.FC<NumberInputProps> = ({
@@ -32,6 +33,7 @@ export const NumberInput: React.FC<NumberInputProps> = ({
   labelWidth = '40px',
   inputWidth = '60px',
   resetAfterChange = false
+  , testId
 }) => {
   const [inputValue, setInputValue] = useState(value.toString());
 
@@ -101,6 +103,7 @@ export const NumberInput: React.FC<NumberInputProps> = ({
         {label}
       </Text>
       <Input
+        data-testid={testId}
         value={inputValue}
         onChange={handleInputChange}
         onBlur={handleBlur}
