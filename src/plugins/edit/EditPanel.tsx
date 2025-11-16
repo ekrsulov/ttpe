@@ -220,7 +220,7 @@ export const EditPanel: React.FC<EditPanelProps> = ({
             onChange={(value) => updateSmoothBrush({ minDistance: value })}
             formatter={(value) => value.toFixed(1)}
             labelWidth="60px"
-            valueWidth="35px"
+            valueWidth="40px"
             marginBottom='0'
           />
         )}
