@@ -9,6 +9,7 @@ import {
 import { useCanvasStore } from '../../store/canvasStore';
 import { logger, LogLevel } from '../../utils';
 import { Panel } from '../../ui/Panel';
+// No icon button here - we show text label instead
 import { PanelToggle } from '../../ui/PanelToggle';
 import { SliderControl } from '../../ui/SliderControl';
 import { JoinedButtonGroup } from '../../ui/JoinedButtonGroup';
@@ -30,6 +31,26 @@ export const SettingsPanel: React.FC = () => {
   const [logLevel, setLogLevel] = useState<LogLevel>(LogLevel.WARN); // Default log level
   const [showCallerInfo, setShowCallerInfo] = useState(false);
   const [keyboardPrecision, setKeyboardPrecision] = useState(settings.keyboardMovementPrecision);
+  interface DocumentWithFullscreen extends Document {
+    webkitFullscreenElement?: Element | null;
+    mozFullScreenElement?: Element | null;
+    msFullscreenElement?: Element | null;
+    webkitExitFullscreen?: () => void;
+    mozCancelFullScreen?: () => void;
+    msExitFullscreen?: () => void;
+  }
+
+  interface HTMLElementWithFullscreen extends HTMLElement {
+    webkitRequestFullscreen?: () => void;
+    mozRequestFullScreen?: () => void;
+    msRequestFullscreen?: () => void;
+  }
+
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(() => {
+    if (typeof document === 'undefined') { return false; }
+    const d = document as DocumentWithFullscreen;
+    return !!(d.fullscreenElement || d.webkitFullscreenElement || d.mozFullScreenElement || d.msFullscreenElement);
+  });
 
   // Sync selected theme with Chakra color mode
   useEffect(() => {
@@ -78,6 +99,66 @@ export const SettingsPanel: React.FC = () => {
       case LogLevel.WARN: return 'WARN';
       case LogLevel.ERROR: return 'ERROR';
       default: return 'WARN';
+    }
+  };
+
+  const handleFullscreenChange = React.useCallback(() => {
+    if (typeof document === 'undefined') { return; }
+    const d = document as DocumentWithFullscreen;
+    const fs = !!(d.fullscreenElement || d.webkitFullscreenElement || d.mozFullScreenElement || d.msFullscreenElement);
+    setIsFullscreen(fs);
+  }, []);
+
+  useEffect(() => {
+    // Add vendor-prefixed event listeners for older browsers
+    if (typeof document === 'undefined') return;
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange as EventListener);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange as EventListener);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange as EventListener);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange as EventListener);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange as EventListener);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange as EventListener);
+    };
+  }, [handleFullscreenChange]);
+
+  const requestFullscreen = async () => {
+    try {
+      const el = document.documentElement as HTMLElementWithFullscreen;
+
+      if (el.requestFullscreen) {
+        await el.requestFullscreen();
+      } else if (el.webkitRequestFullscreen) {
+        el.webkitRequestFullscreen();
+      } else if (el.mozRequestFullScreen) {
+        el.mozRequestFullScreen();
+      } else if (el.msRequestFullscreen) {
+        el.msRequestFullscreen();
+      }
+    } catch (e) {
+      // Not critical - log the error in dev
+      logger.error('Failed to enter fullscreen', e);
+    }
+  };
+
+  const exitFullscreen = async () => {
+    try {
+      if (document.exitFullscreen) {
+        await document.exitFullscreen();
+      } else {
+        const d = document as DocumentWithFullscreen;
+        if (d.webkitExitFullscreen) {
+          d.webkitExitFullscreen();
+        } else if (d.mozCancelFullScreen) {
+          d.mozCancelFullScreen();
+        } else if (d.msExitFullscreen) {
+          d.msExitFullscreen();
+        }
+      }
+    } catch (e) {
+      logger.error('Failed to exit fullscreen', e);
     }
   };
 
@@ -180,6 +261,21 @@ export const SettingsPanel: React.FC = () => {
             Show tooltips
           </PanelToggle>
         )}
+
+        {/* Fullscreen toggle */}
+        <PanelToggle
+          isChecked={isFullscreen}
+          onChange={(e) => {
+            const checked = e.target.checked;
+            if (checked) {
+              requestFullscreen();
+            } else {
+              exitFullscreen();
+            }
+          }}
+        >
+          Full Screen
+        </PanelToggle>
       </VStack>
     </Panel>
   );
