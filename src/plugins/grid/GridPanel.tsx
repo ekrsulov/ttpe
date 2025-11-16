@@ -118,7 +118,7 @@ const GridPanelComponent: React.FC = () => {
 
   return (
     <Panel title="Grid">
-      <VStack spacing={2} align="stretch">
+      <VStack spacing={0.5} align="stretch">
         {/* Grid Type Selector */}
         <VStack spacing={1} align="stretch">
           <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }} fontWeight="500">
@@ -167,6 +167,7 @@ const GridPanelComponent: React.FC = () => {
           formatter={(value) => `${value}px`}
           title="Grid spacing in pixels"
           valueWidth="55px"
+          marginBottom='0'
         />
 
         {/* Polar-specific settings */}
@@ -181,6 +182,7 @@ const GridPanelComponent: React.FC = () => {
             formatter={(value) => value.toString()}
             title="Number of radial divisions"
             valueWidth="55px"
+            marginBottom='0'
           />
         )}
 
@@ -209,6 +211,7 @@ const GridPanelComponent: React.FC = () => {
           onChange={handleOpacityChange}
           title="Grid opacity"
           valueWidth="55px"
+          marginBottom='0'
         />
 
         {/* Emphasize Every N Lines */}
@@ -223,6 +226,7 @@ const GridPanelComponent: React.FC = () => {
             formatter={(value) => value === 0 ? 'Off' : `Every ${value}`}
             title="Emphasize every Nth line (0 = disabled)"
             valueWidth="55px"
+            marginBottom='0'
           />
         )}
 
@@ -255,6 +259,8 @@ const GridPanelComponent: React.FC = () => {
               formatter={(value) => `${value}px`}
               title="Vertical grid spacing"
               valueWidth="55px"
+              marginBottom='0'
+
             />
 
             <SliderControl
@@ -267,6 +273,7 @@ const GridPanelComponent: React.FC = () => {
               formatter={(value) => `${value}px`}
               title="Horizontal warp amplitude"
               valueWidth="55px"
+              marginBottom='0'
             />
 
             <SliderControl
@@ -279,6 +286,7 @@ const GridPanelComponent: React.FC = () => {
               formatter={(value) => `${value}px`}
               title="Vertical warp amplitude"
               valueWidth="55px"
+              marginBottom='0'
             />
 
             <SliderControl
@@ -291,6 +299,7 @@ const GridPanelComponent: React.FC = () => {
               formatter={(value) => value.toString()}
               title="Horizontal warp frequency"
               valueWidth="55px"
+              marginBottom='0'
             />
 
             <SliderControl
@@ -303,6 +312,7 @@ const GridPanelComponent: React.FC = () => {
               formatter={(value) => value.toString()}
               title="Vertical warp frequency"
               valueWidth="55px"
+              marginBottom='0'
             />
           </>
         )}

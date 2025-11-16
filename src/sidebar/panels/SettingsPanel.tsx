@@ -171,7 +171,7 @@ export const SettingsPanel: React.FC = () => {
 
   return (
     <Panel>
-      <VStack spacing={3} align="stretch" pt={2}>
+      <VStack spacing={1} align="stretch" pt={2}>
         <FormControl>
           <FormLabel fontSize="12px" fontWeight="medium" color="gray.600" _dark={{ color: 'gray.400' }} mb={1}>
             Theme
