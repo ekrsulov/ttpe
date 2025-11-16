@@ -26,7 +26,9 @@ All notable changes to VectorNest will be documented here.
   - Click on the value text to open an inline input field for direct numeric entry
   - Enter or blur to confirm changes, Escape to cancel
   - Automatic percentage conversion for percentage-based sliders (enter "50" for 50%, not "0.5")
-  - Values are clamped to min/max range and respect step constraints
+  - **Behavior Change:** Values typed in via the slider's inline text editor now behave differently depending on the slider type:
+    - **Percent-based sliders** continue to be clamped to the declared min/max (e.g., 0–100%) and respect step precision.
+    - **Non-percent sliders** (for example, pixel-based controls like stroke width, radius, or width/height numeric inputs) allow typed entries that exceed the slider's `max` value. The slider thumb itself is visually clamped to `min`/`max`, but the `onChange` handler receives the full typed number and the value is quantized according to `step` or `stepFunction` when present.
   - Consistent with group name editing in selection panel
   - Added `expandablePanel` property to `PluginDefinition` for optional tool-specific UI
   - Implemented `ExpandableToolPanel` component with smooth expand/collapse animation

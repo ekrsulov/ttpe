@@ -174,6 +174,8 @@ Distance between major grid lines in canvas units.
 
 **Visual effect**: Larger spacing = fewer, wider-spaced grid lines
 
+**Note**: You can click the numeric value next to the slider to edit it directly. For non-percent based sliders (such as pixel-based values like `Grid Spacing`), typing a value that exceeds the configured slider `max` is now allowed and will be passed through to the `onChange` handler. The slider thumb will remain visually clamped to the configured `min`/`max`, so visual feedback may show the thumb at the max while the actual numeric value is higher.
+
 ---
 
 #### Grid Subdivisions

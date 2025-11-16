@@ -618,8 +618,27 @@ Click on the value text next to the slider to edit it directly. This opens an in
 
 - **Enter** or **blur** (clicking outside) confirms the change
 - **Escape** cancels the edit and reverts to the original value
-- For percentage sliders, enter the percentage value (e.g., "50" for 50%, not "0.5")
-- Values are automatically clamped to the min/max range
+- For percentage sliders, enter the percentage value (e.g., "50" for 50%, not "0.5"). Values are clamped to the slider's min/max range.
+- For non-percentage sliders (e.g., pixel-based widths like stroke width, radius), direct text editing now allows entering values larger than the slider's configured max. The slider thumb itself remains visually clamped to min/max for consistency, but the value passed to `onChange` will reflect the typed number. The control still respects step/stepFunction quantization when applicable.
+
+**Example (non-percent exceed max):**
+
+```tsx
+// A stroke width slider that has a visible max of 8px, but allows entering 10px via the edit box.
+<SliderControl
+  label="Stroke Width"
+  value={strokeWidth}
+  min={0}
+  max={8}
+  stepFunction={(v) => v < 1 ? 0.1 : 1}
+  onChange={(v) => setStrokeWidth(v)}
+  formatter={(v) => `${v < 1 ? v.toFixed(1) : Math.round(v)}px`}
+ />
+
+// If the user types "10" in the inline edit, `onChange` receives 10. The slider thumb will still render at 8.
+```
+
+**Note:** If your plugin or control needs to prevent very large values from direct text edits, consider explicitly checking the value in your `onChange` handler or adding a wrapper prop (e.g., `allowExceedMaxOnEdit`) to control behavior.
 
 ```tsx
 // Example: Click "50%" to edit directly
@@ -663,6 +682,8 @@ import { PercentSliderControl } from '@/ui/PercentSliderControl';
 ```
 
 **Direct Editing:** Click the percentage value (e.g., "50%") to edit directly. Enter values like "75" for 75%.
+
+**Note:** Percent-based sliders are clamped to their declared min/max (typically 0–100%).
 
 ---
 

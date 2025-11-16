@@ -89,7 +89,13 @@ test.describe('Edit Functionality', () => {
     await expect(page.getByRole('heading', { name: 'Smooth Brush' })).toBeVisible();
 
     // Test toggling brush mode - find the smooth brush switch
-    const smoothBrushSection = page.locator('text=Smooth Brush').locator('xpath=ancestor::div[1]');
+    const allSmoothBrushs = page.locator('//div[contains(., "Smooth Brush")]');
+    const count = await allSmoothBrushs.count();
+    for (let i = 0; i < count; i++) {
+      // Read HTML to ensure the element exists; no further action required here
+      await allSmoothBrushs.nth(i).innerHTML();
+    }
+    const smoothBrushSection = page.locator('//div[contains(., "Smooth Brush") and contains(., "Strength:")]').last();
     const brushModeSwitch = smoothBrushSection.locator('.chakra-switch').first();
     await expect(brushModeSwitch).toBeVisible();
     const checkbox = brushModeSwitch.locator('input[type="checkbox"]');
@@ -146,7 +152,7 @@ test.describe('Edit Functionality', () => {
     await editButton.click();
 
     // Activate brush mode
-    const smoothBrushSection = page.locator('text=Smooth Brush').locator('xpath=ancestor::div[1]');
+    const smoothBrushSection = page.locator('//div[contains(., "Smooth Brush") and contains(., "Strength:")]').last();
     const brushModeSwitch = smoothBrushSection.locator('.chakra-switch').first();
     const checkbox = brushModeSwitch.locator('input[type="checkbox"]');
     const isCheckedInitially = await checkbox.isChecked();
@@ -272,6 +278,116 @@ test.describe('Edit Functionality', () => {
 
     // Wait for the rounding operation to complete
     await page.waitForTimeout(500);
+  });
+
+  test('should allow typing values above slider max for non-percent sliders', async ({ page }) => {
+    await page.goto('/');
+    await waitForLoad(page);
+
+    // Create a path using pencil tool
+    await getToolButton(page, 'Pencil').click();
+
+    const canvas = getCanvas(page);
+    const canvasBox = await canvas.boundingBox();
+    if (!canvasBox) throw new Error('SVG canvas not found');
+
+    // Draw a simple line path
+    await page.mouse.move(canvasBox.x + canvasBox.width * 0.2, canvasBox.y + canvasBox.height * 0.4);
+    await page.mouse.down();
+    await page.mouse.move(canvasBox.x + canvasBox.width * 0.8, canvasBox.y + canvasBox.height * 0.6);
+    await page.mouse.up();
+
+    // Switch to select mode and select path
+    await getToolButton(page, 'Select').click();
+    await page.mouse.click(canvasBox.x + canvasBox.width * 0.5, canvasBox.y + canvasBox.height * 0.5);
+    await page.waitForTimeout(100);
+
+    // Go to Edit mode
+    const editButton = getToolButton(page, 'Edit');
+    await expect(editButton).toBeEnabled();
+    await editButton.click();
+
+    // Find the Round Path section and the Radius label/value
+      const roundPathSection = page.locator('//div[contains(., "Round Path") and contains(., "Radius:")]').last();
+    await expect(roundPathSection).toBeVisible();
+
+    // Ensure the Radius label is visible and click its value to start editing
+    // Click the editable value box (it uses aria-hidden="true" when not editing)
+      const radiusValue = roundPathSection.locator('div[aria-hidden="true"]').first();
+    // If value element wasn't found, fail the test with a helpful message
+    if (!(await radiusValue.count())) {
+      throw new Error('Radius value box not found in Round Path panel');
+    }
+    await expect(radiusValue).toBeVisible();
+    await radiusValue.click();
+
+    // The control should be editable now - type a value greater than max (e.g., 60 > max 50)
+      const editInput = roundPathSection.locator('input:not([type="hidden"])').first();
+    await editInput.fill('60');
+    await editInput.press('Enter');
+    // Confirm change applied by checking formatted value appears in the Round Path panel
+
+    // The displayed value should now reflect the new value (not clamped) - formatter shows one decimal
+    // Wait for the new formatted value to appear (1 decimal place formatter)
+    await expect(roundPathSection.locator('text=60.0')).toBeVisible();
+  });
+
+  test('should clamp percent sliders when editing their text input to max', async ({ page }) => {
+    await page.goto('/');
+    await waitForLoad(page);
+
+    // Create a path using pencil tool
+    await getToolButton(page, 'Pencil').click();
+
+    const canvas = getCanvas(page);
+    const canvasBox = await canvas.boundingBox();
+    if (!canvasBox) throw new Error('SVG canvas not found');
+
+    // Draw a simple line path
+    await page.mouse.move(canvasBox.x + canvasBox.width * 0.2, canvasBox.y + canvasBox.height * 0.4);
+    await page.mouse.down();
+    await page.mouse.move(canvasBox.x + canvasBox.width * 0.8, canvasBox.y + canvasBox.height * 0.6);
+    await page.mouse.up();
+
+    // Switch to select mode and select path
+    await getToolButton(page, 'Select').click();
+    await page.mouse.click(canvasBox.x + canvasBox.width * 0.5, canvasBox.y + canvasBox.height * 0.5);
+    await page.waitForTimeout(100);
+
+    // Go to Edit mode
+    const editButton = getToolButton(page, 'Edit');
+    await expect(editButton).toBeEnabled();
+    await editButton.click();
+
+    // Activate Smooth Brush Mode (if needed) using the switch
+    const smoothBrushSection = page.locator('text=Smooth Brush').locator('xpath=ancestor::div[1]');
+    const brushModeSwitch = smoothBrushSection.locator('.chakra-switch').first();
+    await brushModeSwitch.click();
+
+    // Find the Strength percent control and click its visible value box to edit
+    const strengths = page.locator('text=Strength:');
+    const strengthCount = await strengths.count();
+    for (let i = 0; i < strengthCount; i++) {
+      const v = strengths.nth(i).locator('xpath=following::div[@aria-hidden="true"][1]');
+      if (!(await v.count())) {
+        throw new Error(`Strength value box not found for candidate ${i}`);
+      }
+    }
+    const strengthLabel = strengths.first();
+    const strengthValueBox = strengthLabel.locator('xpath=following::div[@aria-hidden="true"][1]');
+    if (!(await strengthValueBox.count())) {
+      throw new Error('Strength value box not found in Smooth Brush panel');
+    }
+    await expect(strengthValueBox).toBeVisible();
+    await strengthValueBox.click();
+
+    // Fill with an excessive value and press Enter
+    const strengthInput = strengthLabel.locator('xpath=following::input[not(@type="hidden")][1]');
+    await strengthInput.fill('200');
+    await strengthInput.press('Enter');
+
+    // The value should be clamped to 100% (formatter uses rounded percent)
+    await expect(page.locator('text=100%').first()).toBeVisible();
   });
 
   test('should auto-select next point after deleting single selected point', async ({ page }) => {

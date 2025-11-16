@@ -64,6 +64,7 @@ export const SliderControl: React.FC<SliderControlProps> = ({
     if (stepFunction) {
       const dynamicStep = stepFunction(newValue);
       const quantizedValue = Math.round(newValue / dynamicStep) * dynamicStep;
+      // For slider drag updates, keep behavior unchanged and clamp to min/max
       onChange(Math.max(min, Math.min(max, quantizedValue)));
     } else {
       onChange(newValue);
@@ -74,7 +75,24 @@ export const SliderControl: React.FC<SliderControlProps> = ({
     const parsed = parseFloat(editValue);
     if (!isNaN(parsed)) {
       const actualValue = isPercent ? parsed / 100 : parsed;
-      handleChange(Math.max(min, Math.min(max, actualValue)));
+
+      // If a step function is provided, quantize input to that step
+      let valueToSet = actualValue;
+      if (stepFunction) {
+        const dynamicStep = stepFunction(actualValue);
+        valueToSet = Math.round(actualValue / dynamicStep) * dynamicStep;
+      }
+
+      // Percent sliders must remain within min/max; non-percent sliders should allow exceeding max.
+      // Rationale: typed text is an explicit user entry and may reflect values outside the slider's visible range (e.g., some stroke widths).
+      // The slider thumb itself will still be rendered at the clamped value so the visual control doesn't break layout.
+      if (isPercent) {
+        handleChange(Math.max(min, Math.min(max, valueToSet)));
+      } else {
+        // Allow passing the max limit when editing the text input for non-percent sliders
+        // Call onChange directly to avoid any further clamping by handleChange (used by slider drags)
+        onChange(Math.max(min, valueToSet));
+      }
     }
     setIsEditing(false);
   };
@@ -83,6 +101,9 @@ export const SliderControl: React.FC<SliderControlProps> = ({
     setEditValue(isPercent ? (value * 100).toString() : value.toString());
     setIsEditing(false);
   };
+
+  // When the actual value is outside the slider min/max, show the slider thumb at the clamped value
+  const sliderValue = Math.min(Math.max(value, min), max);
 
   return (
     <HStack
@@ -111,7 +132,7 @@ export const SliderControl: React.FC<SliderControlProps> = ({
         min={min}
         max={max}
         step={stepFunction ? 0.01 : step} // Use very small step when stepFunction is provided
-        value={value}
+        value={sliderValue}
         onChange={handleChange}
         minW={minWidth}
         title={title}

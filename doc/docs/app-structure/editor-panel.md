@@ -45,6 +45,8 @@ When expanded, provides detailed control over fill and stroke:
   - Slider control (0-20px)
   - Direct value input
 
+**Note:** For stroke width and similar non-percent sliders, directly editing the numeric value now accepts numbers above the configured slider `max` and passes the typed value to the underlying `onChange` handler. The slider thumb remains visually clamped to `min`/`max` while the numeric value can be higher — this is useful for larger stroke widths or other cases where typing an exact out-of-range value is required.
+
 ### 3. Advanced Stroke Properties (Collapsible)
 
 Expand/collapse via chevron button next to stroke width:
