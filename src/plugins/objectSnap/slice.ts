@@ -50,7 +50,7 @@ export const createObjectSnapPluginSlice: StateCreator<
       snapToBBoxCorners: true,
       snapToBBoxCenter: true,
       snapToIntersections: true,
-      showSnapPoints: true,
+      showSnapPoints: false,
       snapPointsOpacity: 50,
       cachedSnapPoints: null,
       cacheKey: null,

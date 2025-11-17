@@ -5,6 +5,7 @@ import type { Bounds } from '../utils/boundsUtils';
 import type { ElementMap } from '../canvas/geometry/CanvasGeometryService';
 import { getGroupBounds } from '../canvas/geometry/CanvasGeometryService';
 import { getToolMetadata } from './toolMetadata';
+import { debugLog } from '../utils/debugUtils';
 
 import { pencilPlugin } from './pencil';
 import { textPlugin } from './text';
@@ -564,8 +565,9 @@ export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   offsetPathPlugin,
 ];
 
-console.log('[CORE_PLUGINS] Total plugins:', CORE_PLUGINS.length);
-console.log('[CORE_PLUGINS] Measure plugin included:', CORE_PLUGINS.some(p => p.id === 'measure'));
+// Debug info about core plugins (only in development builds)
+debugLog('[CORE_PLUGINS] Total plugins:', CORE_PLUGINS.length);
+debugLog('[CORE_PLUGINS] Measure plugin included:', CORE_PLUGINS.some(p => p.id === 'measure'));
 
 export * from './pencil';
 export * from './text';

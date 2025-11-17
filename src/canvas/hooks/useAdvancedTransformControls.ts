@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { debugLog } from '../../utils/debugUtils';
 import { useCanvasStore } from '../../store/canvasStore';
 import type { Point, CanvasElement } from '../../types';
 import { calculateSkewAngleFromDelta } from '../../utils/advancedTransformUtils';
@@ -82,15 +83,15 @@ export const useAdvancedTransformControls = () => {
     if (handler.startsWith('advanced-edge-')) {
       if (isModifierPressed) {
         transformType = 'distort'; // Perspective mode (edge + modifier = distort with 2 corners)
-        console.log('🔷 Advanced Transform Mode: PERSPECTIVE (edge + modifier)');
+          debugLog('🔷 Advanced Transform Mode: PERSPECTIVE (edge + modifier)');
       } else {
         transformType = 'skew';
         skewAxis = handler.includes('top') || handler.includes('bottom') ? 'x' : 'y';
-        console.log('🔷 Advanced Transform Mode: SKEW', { axis: skewAxis });
+        debugLog('🔷 Advanced Transform Mode: SKEW', { axis: skewAxis });
       }
     } else if (handler.startsWith('advanced-corner-')) {
       transformType = 'distort';
-      console.log('🔷 Advanced Transform Mode: DISTORT (corner)');
+      debugLog('🔷 Advanced Transform Mode: DISTORT (corner)');
     }
 
     // Save original state of all affected elements
@@ -169,34 +170,34 @@ export const useAdvancedTransformControls = () => {
       // Handle corner movements (standard distort)
       if (state.handler === 'advanced-corner-tl') {
         newCorners.tl = { x: state.corners.tl.x + dx, y: state.corners.tl.y + dy };
-        console.log('🔷 Applying DISTORT: top-left corner');
+        debugLog('🔷 Applying DISTORT: top-left corner');
       } else if (state.handler === 'advanced-corner-tr') {
         newCorners.tr = { x: state.corners.tr.x + dx, y: state.corners.tr.y + dy };
-        console.log('🔷 Applying DISTORT: top-right corner');
+        debugLog('🔷 Applying DISTORT: top-right corner');
       } else if (state.handler === 'advanced-corner-bl') {
         newCorners.bl = { x: state.corners.bl.x + dx, y: state.corners.bl.y + dy };
-        console.log('🔷 Applying DISTORT: bottom-left corner');
+        debugLog('🔷 Applying DISTORT: bottom-left corner');
       } else if (state.handler === 'advanced-corner-br') {
         newCorners.br = { x: state.corners.br.x + dx, y: state.corners.br.y + dy };
-        console.log('🔷 Applying DISTORT: bottom-right corner');
+        debugLog('🔷 Applying DISTORT: bottom-right corner');
       }
       // Handle edge movements with modifier (perspective)
       else if (state.handler === 'advanced-edge-top') {
         newCorners.tl = { x: state.corners.tl.x + dx, y: state.corners.tl.y + dy };
         newCorners.tr = { x: state.corners.tr.x + dx, y: state.corners.tr.y + dy };
-        console.log('🔷 Applying PERSPECTIVE: top edge (both corners)');
+        debugLog('🔷 Applying PERSPECTIVE: top edge (both corners)');
       } else if (state.handler === 'advanced-edge-bottom') {
         newCorners.bl = { x: state.corners.bl.x + dx, y: state.corners.bl.y + dy };
         newCorners.br = { x: state.corners.br.x + dx, y: state.corners.br.y + dy };
-        console.log('🔷 Applying PERSPECTIVE: bottom edge (both corners)');
+        debugLog('🔷 Applying PERSPECTIVE: bottom edge (both corners)');
       } else if (state.handler === 'advanced-edge-left') {
         newCorners.tl = { x: state.corners.tl.x + dx, y: state.corners.tl.y + dy };
         newCorners.bl = { x: state.corners.bl.x + dx, y: state.corners.bl.y + dy };
-        console.log('🔷 Applying PERSPECTIVE: left edge (both corners)');
+        debugLog('🔷 Applying PERSPECTIVE: left edge (both corners)');
       } else if (state.handler === 'advanced-edge-right') {
         newCorners.tr = { x: state.corners.tr.x + dx, y: state.corners.tr.y + dy };
         newCorners.br = { x: state.corners.br.x + dx, y: state.corners.br.y + dy };
-        console.log('🔷 Applying PERSPECTIVE: right edge (both corners)');
+        debugLog('🔷 Applying PERSPECTIVE: right edge (both corners)');
       }
 
       // Apply distort transformation from original state
@@ -221,7 +222,7 @@ export const useAdvancedTransformControls = () => {
       // Limit skew angle to prevent extreme distortion
       angle = Math.max(-75, Math.min(75, angle));
 
-      console.log('🔷 Applying SKEW:', { axis: state.skewAxis, angle: angle.toFixed(2) });
+      debugLog('🔷 Applying SKEW:', { axis: state.skewAxis, angle: angle.toFixed(2) });
 
       // Apply skew transformation from original state
       if (applyAdvancedSkewTransform) {

@@ -91,7 +91,7 @@ export const createMeasurePluginSlice: StateCreator<
     units: 'px',
     snapThreshold: 10,
     enableSnapping: true,
-    showSnapPoints: true,
+    showSnapPoints: false,
     snapPointsOpacity: 50,
     // Snap types: control visibility/behavior for different snap categories
     snapToAnchors: true,

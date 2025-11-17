@@ -360,7 +360,7 @@ export const measurePlugin: PluginDefinition<CanvasStore> = {
           return null;
         }
 
-        const showSnapPoints = measureState.showSnapPoints ?? true;
+        const showSnapPoints = measureState.showSnapPoints ?? false;
         const snapPointsOpacity = measureState.snapPointsOpacity ?? 50;
 
         // Render snap points cache component and overlay

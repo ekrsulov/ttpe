@@ -83,8 +83,22 @@ test.describe('Measure Plugin - Basic Interaction', () => {
     expect(stateAfterSecondStart.startPoint).toBeTruthy();
 
     // Clear measurement using Escape key
+    // Ensure canvas has focus to avoid ESC being consumed by other UI controls
+    await page.mouse.click(canvasBox.x + 4, canvasBox.y + 4);
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(50);
+    // Wait for store to clear measurement to avoid flaky timing issues
+    // Debugging: capture state right after Escape to inspect why clear didn't fire if necessary
+    // (Removed console.log output to keep test logs clean)
+    await page.evaluate(() => {
+      const store = (window as any).useCanvasStore;
+      return store.getState();
+    });
+
+    await page.waitForFunction(() => {
+      const store = (window as any).useCanvasStore;
+      const state = store.getState();
+      return state.measure.measurement.startPoint === null && state.measure.measurement.isActive === false;
+    }, { timeout: 5000 });
 
     const stateAfterClear = await page.evaluate(() => {
       const store = (window as any).useCanvasStore;

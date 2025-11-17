@@ -57,7 +57,7 @@ const ObjectSnapPanelComponent: React.FC = () => {
         {/* Show Snap Points Toggle (always visible) */}
         {isEnabled && (
           <PanelToggle
-            isChecked={objectSnap?.showSnapPoints ?? true}
+            isChecked={objectSnap?.showSnapPoints ?? false}
             onChange={handleToggleShowSnapPoints}
           >
             Show Snap Points
@@ -65,7 +65,7 @@ const ObjectSnapPanelComponent: React.FC = () => {
         )}
 
         {/* Opacity Slider */}
-        {isEnabled && objectSnap?.showSnapPoints && (
+            {isEnabled && objectSnap?.showSnapPoints && (
           <>
             {/* Snap Type Toggles - First row */}
             {isEnabled && (

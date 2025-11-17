@@ -64,7 +64,7 @@ const SnapPointsControls: React.FC<SnapPointsControlsProps> = ({
   return (
     <VStack spacing={1} align="stretch">
       <PanelToggle
-        isChecked={showSnapPoints ?? true}
+        isChecked={showSnapPoints ?? false}
         onChange={onToggleSnapPoints}
       >
         Show Snap Points
@@ -193,6 +193,18 @@ export const MeasureInfoPanel: React.FC<MeasureInfoPanelProps> = ({ hideTitle = 
           snapPointsOpacity={snapPointsOpacity}
           onToggleSnapPoints={handleToggleSnapPoints}
           updateMeasureState={updateMeasureState}
+          snapToAnchors={snapToAnchors}
+          snapToMidpoints={snapToMidpoints}
+          snapToEdges={snapToEdges}
+          snapToBBoxCorners={snapToBBoxCorners}
+          snapToBBoxCenter={snapToBBoxCenter}
+          snapToIntersections={snapToIntersections}
+          onToggleAnchors={handleToggleAnchors}
+          onToggleMidpoints={handleToggleMidpoints}
+          onToggleEdges={handleToggleEdges}
+          onToggleBBoxCorners={handleToggleBBoxCorners}
+          onToggleBBoxCenter={handleToggleBBoxCenter}
+          onToggleIntersections={handleToggleIntersections}
         />
 
         {/* Info about coordinates */}
