@@ -25,6 +25,8 @@ All notable changes to VectorNest will be documented here.
   - Expandable information panel showing Distance, ΔX, ΔY, Angle, and coordinates
   - Keyboard shortcut: `M` to activate measure tool
   - Toggle to show/hide snap point crosses
+  - Toggle specific snap point types (Anchor, Midpoint, Edge, Corner, Center, Intersection) to control which geometric features are considered for snapping
+  - Hold Shift to constrain measurement to exact horizontal, vertical, or diagonal (±45°); on mobile, enable the Virtual Shift button to emulate the same modifier
   - Opacity slider for adjusting snap point visibility
   - Performance optimizations: snap point caching, threshold-based search, viewport-aware rendering
 - **Text Vectorization Limits**: Implemented adaptive canvas sizing for potrace to prevent memory errors with long text

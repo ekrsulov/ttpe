@@ -15,6 +15,7 @@ The Measure plugin provides a comprehensive measurement system that enables user
 - Click-to-start and click-to-finish measurement interface (no need to hold mouse)
   - Snap Points controls at the top of the panel with a percent opacity slider (debounced)
 - Intelligent snapping to anchor points, edges, midpoints, bounding box corners, and centers
+- Ability to toggle snapping by point type (Anchor, Midpoint, Edge, Corner, Center, Intersection) in the Measure panel
 - Real-time distance, ΔX, ΔY, and angle calculations
 - Visual measurement line with perpendicular extensions
 - Configurable snap point visualization with opacity control
@@ -48,6 +49,8 @@ When entering measure mode, the plugin:
 During measurement:
 - **Start point**: Click to begin; the start point snaps to the nearest point within the threshold
 - **End point**: Move the mouse (no need to keep the button pressed) — the end point snaps in real-time to nearby features
+- **Hold Shift**: Hold the physical Shift key to constrain the measurement to exactly horizontal, vertical, or diagonal (±45°) directions.
+- **Virtual Shift for Mobile**: On mobile devices, use the Virtual Shift button (bottom-right action bar) to emulate holding Shift — the constraint behavior is identical.
 - **Visual feedback**: Shows measurement line with perpendicular extensions
 - **Live calculations**: Updates distance, ΔX, ΔY, and angle in real-time
 - **Snap type indicator**: Displays snap type (Anchor, Corner, Path, etc.) via feedback overlay
@@ -59,6 +62,18 @@ During measurement:
 Toggle to display/hide the snap point crosses. When enabled, all available snap points are marked with subtle crosses on the canvas.
 
 The Snap Points control is available at the top of the Measure side panel for quick access; the `Opacity` control is a percentage slider and uses debounced updates to avoid excessive redraws while dragging.
+
+### Snap Type Toggles
+In addition to showing/hiding snap point crosses, the Measure panel allows toggling specific snap point categories individually:
+
+- **Anchor** — Path control points and vertices
+- **Mid** — Midpoints of path segments and bounding box edges
+- **Edge** — Closest point on a path edge (computed dynamic per position)
+- **Corner** — Bounding box corner points
+- **Center** — Bounding box center point
+- **Inter** — Intersection points between paths
+
+Turning off a snap type prevents the tool from considering that geometric feature when detecting the nearest snap point.
 
 ### Opacity
 Adjustable opacity (10-100%) for snap point visibility:
@@ -108,7 +123,7 @@ sequenceDiagram
     Note over User,Canvas: 2. Start Measurement
     User->>Canvas: Pointer down on canvas
     Canvas->>MP: handler(pointerdown, point)
-    MP->>MP: findSnapPoint(point, threshold=10px)
+    MP->>MP: findSnapPoint(point, threshold=10px)  %% considers configured snap type toggles
     
     alt Snap point found
         MP->>Store: startMeasurement(point, snapInfo)
@@ -125,7 +140,10 @@ sequenceDiagram
     User->>Canvas: Pointer move (mouse move)
     Canvas->>MP: handlePointerMove(event)
     MP->>MP: screenToCanvas(event.clientX, event.clientY)
-    MP->>MP: findSnapPoint(currentPoint, threshold)
+    MP->>MP: findSnapPoint(currentPoint, threshold)  %% considers configured snap type toggles
+    alt Shift/Virtual Shift held
+      MP->>MP: Constrain current endpoint to nearest horizontal/vertical/diagonal
+    end
     
     alt Snap point found
         MP->>Store: updateMeasurement(snappedPoint, snapInfo)
@@ -306,6 +324,13 @@ measure: {
   enableSnapping: true;            // Enable snap system
   showSnapPoints: boolean;         // Show snap crosses
   snapPointsOpacity: number;       // Cross opacity (0-100). The UI presents this as a percent slider; changes are debounced to prevent redraw storms.
+  // Snap type toggles
+  snapToAnchors?: boolean;
+  snapToMidpoints?: boolean;
+  snapToEdges?: boolean;
+  snapToBBoxCorners?: boolean;
+  snapToBBoxCenter?: boolean;
+  snapToIntersections?: boolean;
 }
 ```
 
@@ -351,6 +376,7 @@ The plugin uses three canvas layers for optimal rendering:
 5. **Minimize visual clutter**: Lower snap point opacity or hide them entirely
 6. **Snap feedback**: Watch the bottom-left corner for snap type confirmation
 7. **Multiple measurements**: After a measurement is finalized (second click), the next click starts a new measurement
+8. **Mobile constraint**: On mobile devices without a physical keyboard, use the Virtual Shift action (bottom-right toggle) to constrain the measure to cardinal and diagonal angles.
 
 ## Keyboard Shortcuts
 
@@ -359,6 +385,7 @@ The plugin uses three canvas layers for optimal rendering:
 | `M` | Activate measure tool |
 | `Esc` | Return to select mode |
 | `Shift+M` | Toggle measure info panel / showInfo |
+| `Hold Shift` | Constrain measurement to horizontal / vertical / diagonal |
 
 ## Related Features
 

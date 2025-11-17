@@ -114,6 +114,7 @@ Virtual Shift affects behavior in:
 - **Subpath Plugin**: Subpath multi-selection
 - **Transformation Plugin**: Constrained scaling/rotation
 - **Canvas Events**: General pointer interactions
+ - **Measure Plugin**: Constrain measurements to horizontal, vertical or diagonal directions when active
 
 ---
 
