@@ -11,6 +11,22 @@ All notable changes to VectorNest will be documented here.
 ## [Unreleased]
 
 ### Added
+- **Measure Plugin**: Professional measurement tool with intelligent snapping and visual feedback
+  - Click-and-drag interface for measuring distances, angles, and deltas between points
+  - Intelligent snapping to anchor points, edges, midpoints, bounding box corners, and centers
+  - Real-time distance, ΔX, ΔY, and angle calculations
+  - Visual measurement line with perpendicular extensions
+  - Configurable snap point visualization with opacity control (10-100%)
+  - Unit support: pixels (px), millimeters (mm), inches (in)
+  - Precision control based on global settings (decimal places)
+  - Theme-aware snap point indicators (darker in light mode, lighter in dark mode)
+  - Three-layer rendering system: snap points (background), measurement overlay (foreground), feedback (foreground)
+  - Snap type feedback via FeedbackOverlay (Anchor, Corner, Path, Midpoint, Center)
+  - Expandable information panel showing Distance, ΔX, ΔY, Angle, and coordinates
+  - Keyboard shortcut: `M` to activate measure tool
+  - Toggle to show/hide snap point crosses
+  - Opacity slider for adjusting snap point visibility
+  - Performance optimizations: snap point caching, threshold-based search, viewport-aware rendering
 - **Text Vectorization Limits**: Implemented adaptive canvas sizing for potrace to prevent memory errors with long text
   - Added triple constraint system: max width (2048px), max height (768px), and max pixel count (1.5M pixels)
   - Intelligent scale calculation considers all three limits to find optimal rendering scale
