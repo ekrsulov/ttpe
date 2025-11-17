@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import type { MeasurePluginSlice, MeasurePluginActions } from './slice';
 import type { CanvasElement } from '../../types';
-import { getAllSnapPoints } from './snapUtils';
+import { getAllSnapPoints } from '../../utils/snapPointUtils';
 import { calculateBounds } from '../../utils/boundsUtils';
 
 /**
@@ -29,8 +29,15 @@ export const SnapPointsCache: React.FC = () => {
         return calculateBounds(pathData.subPaths, pathData.strokeWidth || 0, zoom);
       };
 
-      // Calculate all snap points
-      const snapPoints = getAllSnapPoints(elements, getElementBoundsFn);
+      // Calculate all snap points using unified utilities
+      // Note: edge snap is not included in cache as it's computed per-position
+      const snapPoints = getAllSnapPoints(elements, getElementBoundsFn, {
+        snapToAnchors: true,
+        snapToMidpoints: true,
+        snapToBBoxCorners: true,
+        snapToBBoxCenter: true,
+        snapToIntersections: true,
+      });
       
       // Store in cache
       state.refreshSnapPointsCache?.(snapPoints);

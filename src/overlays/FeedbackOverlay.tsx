@@ -40,6 +40,7 @@ interface FeedbackOverlayProps {
     message: string;
     visible: boolean;
   };
+  offsetY?: number; // Additional vertical offset in pixels
 }
 
 interface FeedbackBlockProps {
@@ -55,6 +56,7 @@ interface FeedbackBlockProps {
   width: number;
   isHighlighted?: boolean;
   content: string;
+  offsetY?: number;
 }
 
 const FeedbackBlock: React.FC<FeedbackBlockProps> = ({
@@ -63,8 +65,10 @@ const FeedbackBlock: React.FC<FeedbackBlockProps> = ({
   width,
   isHighlighted = false,
   content,
+  offsetY = 0,
 }) => {
-  const transform = `translate(${-viewport.panX / viewport.zoom + 5 / viewport.zoom} ${-viewport.panY / viewport.zoom + canvasSize.height / viewport.zoom - 33 / viewport.zoom}) scale(${1 / viewport.zoom})`;
+  const yPosition = -viewport.panY / viewport.zoom + canvasSize.height / viewport.zoom - 33 / viewport.zoom + offsetY / viewport.zoom;
+  const transform = `translate(${-viewport.panX / viewport.zoom + 5 / viewport.zoom} ${yPosition}) scale(${1 / viewport.zoom})`;
   const baseFill = useColorModeValue('#1f2937', '#f1f5f9');
   const baseStroke = useColorModeValue('#374151', '#94a3b8');
   const highlightFill = useColorModeValue('#6b7280', '#4b5563');
@@ -107,7 +111,8 @@ export const FeedbackOverlay: React.FC<FeedbackOverlayProps> = ({
   resizeFeedback,
   shapeFeedback,
   pointPositionFeedback,
-  customFeedback
+  customFeedback,
+  offsetY = 0,
 }) => {
   return (
     <>
@@ -119,6 +124,7 @@ export const FeedbackOverlay: React.FC<FeedbackOverlayProps> = ({
           width={rotationFeedback.isShiftPressed ? 75 : 55}
           isHighlighted={rotationFeedback.isMultipleOf15}
           content={`${rotationFeedback.degrees}°${rotationFeedback.isShiftPressed ? " ⇧" : ""}`}
+          offsetY={offsetY}
         />
       )}
 
@@ -130,6 +136,7 @@ export const FeedbackOverlay: React.FC<FeedbackOverlayProps> = ({
           width={resizeFeedback.isShiftPressed ? 95 : 85}
           isHighlighted={resizeFeedback.isMultipleOf10}
           content={`x${resizeFeedback.deltaX >= 0 ? '+' : ''}${resizeFeedback.deltaX}, y${resizeFeedback.deltaY >= 0 ? '+' : ''}${resizeFeedback.deltaY}${resizeFeedback.isShiftPressed ? " ⇧" : ""}`}
+          offsetY={offsetY}
         />
       )}
 
@@ -141,6 +148,7 @@ export const FeedbackOverlay: React.FC<FeedbackOverlayProps> = ({
           width={shapeFeedback.isShiftPressed ? 85 : 75}
           isHighlighted={shapeFeedback.isMultipleOf10}
           content={`${shapeFeedback.width} × ${shapeFeedback.height}${shapeFeedback.isShiftPressed ? " ⇧" : ""}`}
+          offsetY={offsetY}
         />
       )}
 
@@ -151,6 +159,7 @@ export const FeedbackOverlay: React.FC<FeedbackOverlayProps> = ({
           canvasSize={canvasSize}
           width={75}
           content={`${pointPositionFeedback?.x}, ${pointPositionFeedback?.y}`}
+          offsetY={offsetY}
         />
       )}
 
@@ -161,6 +170,7 @@ export const FeedbackOverlay: React.FC<FeedbackOverlayProps> = ({
           canvasSize={canvasSize}
           width={Math.max(60, customFeedback.message.length * 8)}
           content={customFeedback.message}
+          offsetY={offsetY}
         />
       )}
     </>

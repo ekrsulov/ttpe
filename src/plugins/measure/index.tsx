@@ -9,9 +9,9 @@ import { createMeasurePluginSlice } from './slice';
 import type { MeasurePluginSlice, MeasurePluginActions, SnapInfo } from './slice';
 import { MeasureOverlay } from './MeasureOverlay';
 import { MeasureInfoPanel } from './MeasureInfoPanel';
-import { findSnapPoint } from './snapUtils';
+import { getAllSnapPoints, findClosestSnapPoint, findEdgeSnapPoint, screenDistance } from '../../utils/snapPointUtils';
 import { SnapPointsCache } from './SnapPointsCache';
-import { SnapPointsOverlay } from './SnapPointsOverlay';
+import { SnapPointCrossOverlay } from '../../overlays/SnapPointOverlay';
 import { FeedbackOverlay } from '../../overlays/FeedbackOverlay';
 
 import type { SnapPointCache } from './slice';
@@ -53,20 +53,56 @@ const installListeners = (context: PluginHandlerContext<CanvasStore>, api: Measu
     };
 
     // Try to snap
-    const moveSnapInfo = currentState.measure.enableSnapping
-      ? findSnapPoint(
-          canvasPoint,
-          currentState.elements,
-          (element: CanvasElement) => {
-            if (element.type !== 'path') return null;
-            const pathData = element.data;
-            if (!pathData?.subPaths) return null;
-            return calculateBounds(pathData.subPaths, pathData.strokeWidth || 0, currentState.viewport.zoom);
-          },
-          currentState.measure.snapThreshold,
-          currentState.viewport.zoom
-        )
-      : null;
+    // Apply snap with priority: high-priority points first, then edge snap
+    let moveSnapInfo: SnapInfo | null = null;
+    if (currentState.measure.enableSnapping) {
+      const getElementBoundsFn = (element: CanvasElement) => {
+        if (element.type !== 'path') return null;
+        const pathData = element.data;
+        if (!pathData?.subPaths) return null;
+        return calculateBounds(pathData.subPaths, pathData.strokeWidth || 0, currentState.viewport.zoom);
+      };
+      
+      // Get high-priority snap points (anchors, midpoints, bbox, intersections)
+      const highPriorityPoints = getAllSnapPoints(
+        currentState.elements,
+        getElementBoundsFn,
+        {
+          snapToAnchors: true,
+          snapToMidpoints: true,
+          snapToBBoxCorners: true,
+          snapToBBoxCenter: true,
+          snapToIntersections: true,
+        }
+      );
+      
+      // Find closest high-priority snap
+      moveSnapInfo = findClosestSnapPoint(
+        canvasPoint,
+        highPriorityPoints,
+        currentState.measure.snapThreshold,
+        currentState.viewport.zoom
+      );
+      
+      // Only check edge snap if no high-priority snap found
+      if (!moveSnapInfo) {
+        for (const element of currentState.elements) {
+          const edgeSnap = findEdgeSnapPoint(
+            canvasPoint,
+            element,
+            currentState.measure.snapThreshold,
+            currentState.viewport.zoom
+          );
+          if (edgeSnap) {
+            const dist = screenDistance(canvasPoint, edgeSnap.point, currentState.viewport.zoom);
+            if (dist < currentState.measure.snapThreshold) {
+              moveSnapInfo = edgeSnap;
+              break;
+            }
+          }
+        }
+      }
+    }
 
       // Only update while measurement is active (not frozen)
       if (currentState.measure?.measurement?.isActive) {
@@ -87,20 +123,56 @@ const installListeners = (context: PluginHandlerContext<CanvasStore>, api: Measu
       y: (upEvent.clientY - rect.top - currentState.viewport.panY) / currentState.viewport.zoom,
     };
 
-    const upSnapInfo = currentState.measure.enableSnapping
-      ? findSnapPoint(
-          canvasPoint,
-          currentState.elements,
-          (element: CanvasElement) => {
-            if (element.type !== 'path') return null;
-            const pathData = element.data;
-            if (!pathData?.subPaths) return null;
-            return calculateBounds(pathData.subPaths, pathData.strokeWidth || 0, currentState.viewport.zoom);
-          },
-          currentState.measure.snapThreshold,
-          currentState.viewport.zoom
-        )
-      : null;
+    // Apply snap with priority: high-priority points first, then edge snap
+    let upSnapInfo: SnapInfo | null = null;
+    if (currentState.measure.enableSnapping) {
+      const getElementBoundsFn = (element: CanvasElement) => {
+        if (element.type !== 'path') return null;
+        const pathData = element.data;
+        if (!pathData?.subPaths) return null;
+        return calculateBounds(pathData.subPaths, pathData.strokeWidth || 0, currentState.viewport.zoom);
+      };
+      
+      // Get high-priority snap points
+      const highPriorityPoints = getAllSnapPoints(
+        currentState.elements,
+        getElementBoundsFn,
+        {
+          snapToAnchors: true,
+          snapToMidpoints: true,
+          snapToBBoxCorners: true,
+          snapToBBoxCenter: true,
+          snapToIntersections: true,
+        }
+      );
+      
+      // Find closest high-priority snap
+      upSnapInfo = findClosestSnapPoint(
+        canvasPoint,
+        highPriorityPoints,
+        currentState.measure.snapThreshold,
+        currentState.viewport.zoom
+      );
+      
+      // Only check edge snap if no high-priority snap found
+      if (!upSnapInfo) {
+        for (const element of currentState.elements) {
+          const edgeSnap = findEdgeSnapPoint(
+            canvasPoint,
+            element,
+            currentState.measure.snapThreshold,
+            currentState.viewport.zoom
+          );
+          if (edgeSnap) {
+            const dist = screenDistance(canvasPoint, edgeSnap.point, currentState.viewport.zoom);
+            if (dist < currentState.measure.snapThreshold) {
+              upSnapInfo = edgeSnap;
+              break;
+            }
+          }
+        }
+      }
+    }
 
     const finalUpPoint = upSnapInfo?.point ?? canvasPoint;
     // Commit the final location but DO NOT finalize (we keep the measurement visible)
@@ -147,16 +219,49 @@ export const measurePlugin: PluginDefinition<CanvasStore> = {
     };
     
     // Handler is called on pointerdown by the plugin manager
-    // Try to snap to nearby elements
-    const snapInfo = state.measure.enableSnapping
-      ? findSnapPoint(
-          point,
-          state.elements,
-          getElementBoundsFn,
-          state.measure.snapThreshold,
-          state.viewport.zoom
-        )
-      : null;
+    // Try to snap to nearby elements with priority
+    let snapInfo: SnapInfo | null = null;
+    if (state.measure.enableSnapping) {
+      // Get high-priority snap points
+      const highPriorityPoints = getAllSnapPoints(
+        state.elements,
+        getElementBoundsFn,
+        {
+          snapToAnchors: true,
+          snapToMidpoints: true,
+          snapToBBoxCorners: true,
+          snapToBBoxCenter: true,
+          snapToIntersections: true,
+        }
+      );
+      
+      // Find closest high-priority snap
+      snapInfo = findClosestSnapPoint(
+        point,
+        highPriorityPoints,
+        state.measure.snapThreshold,
+        state.viewport.zoom
+      );
+      
+      // Only check edge snap if no high-priority snap found
+      if (!snapInfo) {
+        for (const element of state.elements) {
+          const edgeSnap = findEdgeSnapPoint(
+            point,
+            element,
+            state.measure.snapThreshold,
+            state.viewport.zoom
+          );
+          if (edgeSnap) {
+            const dist = screenDistance(point, edgeSnap.point, state.viewport.zoom);
+            if (dist < state.measure.snapThreshold) {
+              snapInfo = edgeSnap;
+              break;
+            }
+          }
+        }
+      }
+    }
 
     const finalPoint = snapInfo?.point ?? point;
 
@@ -208,10 +313,11 @@ export const measurePlugin: PluginDefinition<CanvasStore> = {
           <>
             <SnapPointsCache />
             {showSnapPoints && (
-              <SnapPointsOverlay
+              <SnapPointCrossOverlay
                 snapPoints={measureState.cachedSnapPoints}
                 viewport={context.viewport}
-                opacity={snapPointsOpacity}
+                opacity={snapPointsOpacity / 100}
+                showAllPoints={true}
               />
             )}
           </>
@@ -275,13 +381,12 @@ export const measurePlugin: PluginDefinition<CanvasStore> = {
         }
 
         // Create custom feedback message for snap type
-        const snapTypeMap: Record<SnapInfo['type'], string> = {
+        const snapTypeMap: { [K in SnapInfo['type']]: string } = {
           anchor: 'Anchor',
-          edge: 'Path',
           midpoint: 'Midpoint',
+          edge: 'Path',
           'bbox-corner': 'Corner',
           'bbox-center': 'Center',
-          tangent: 'Tangent',
           intersection: 'Intersection',
         };
         const snapMessage = snapTypeMap[currentSnapInfo.type as SnapInfo['type']];

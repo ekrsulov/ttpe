@@ -11,17 +11,11 @@ export interface MeasurementData {
   isActive: boolean;
 }
 
-export interface SnapInfo {
-  point: Point;
-  type: 'anchor' | 'edge' | 'midpoint' | 'bbox-corner' | 'bbox-center' | 'tangent' | 'intersection';
-  elementId?: string;
-}
+// Now using unified snap point types
+import type { SnapPoint } from '../../utils/snapPointUtils';
 
-export interface SnapPointCache {
-  point: Point;
-  type: SnapInfo['type'];
-  elementId?: string;
-}
+export type SnapInfo = SnapPoint;
+export type SnapPointCache = SnapPoint;
 
 export interface MeasurePluginSlice {
   // State

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useColorMode } from '@chakra-ui/react';
+import { BEZIER_CIRCLE_KAPPA } from '../../utils/bezierCircle';
 import type { Point } from '../../types';
 
 interface ShapePreviewProps {
@@ -41,7 +42,7 @@ export const ShapePreview: React.FC<ShapePreviewProps> = ({
     }
     case 'circle': {
       const radius = Math.min(width, height) / 2;
-      const kappa = 0.552284749831;
+      const kappa = BEZIER_CIRCLE_KAPPA;
       pathData = `M ${centerX - radius} ${centerY} C ${centerX - radius} ${centerY - radius * kappa} ${centerX - radius * kappa} ${centerY - radius} ${centerX} ${centerY - radius} C ${centerX + radius * kappa} ${centerY - radius} ${centerX + radius} ${centerY - radius * kappa} ${centerX + radius} ${centerY} C ${centerX + radius} ${centerY + radius * kappa} ${centerX + radius * kappa} ${centerY + radius} ${centerX} ${centerY + radius} C ${centerX - radius * kappa} ${centerY + radius} ${centerX - radius} ${centerY + radius * kappa} ${centerX - radius} ${centerY}`;
       break;
     }

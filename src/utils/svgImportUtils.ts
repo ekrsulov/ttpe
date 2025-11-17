@@ -6,6 +6,7 @@
  */
 
 import { parsePath, absolutize, normalize } from 'path-data-parser';
+import { BEZIER_CIRCLE_KAPPA } from './bezierCircle';
 import { parsePathD } from './pathParserUtils';
 import type { Command, PathData, SubPath } from '../types';
 
@@ -223,7 +224,7 @@ function shapeToPath(element: Element): string | null {
       const r = parseFloat(element.getAttribute('r') || '0');
       
       // Use cubic bezier to approximate circle
-      const k = 0.5522847498; // 4/3 * tan(π/8)
+      const k = BEZIER_CIRCLE_KAPPA; // Improved constant from bezier-circle approximation
       const kr = k * r;
       
       return `M ${cx} ${cy - r} ` +
@@ -239,7 +240,7 @@ function shapeToPath(element: Element): string | null {
       const rx = parseFloat(element.getAttribute('rx') || '0');
       const ry = parseFloat(element.getAttribute('ry') || '0');
       
-      const k = 0.5522847498;
+      const k = BEZIER_CIRCLE_KAPPA;
       const krx = k * rx;
       const kry = k * ry;
       

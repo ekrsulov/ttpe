@@ -1,5 +1,6 @@
 import type { PathData, SubPath, Command, Point } from '../types';
 import paper from 'paper';
+import { BEZIER_CIRCLE_KAPPA } from './bezierCircle';
 import { logger } from './logger';
 
 // Setup Paper.js for in-memory operations
@@ -592,7 +593,7 @@ export function performPathRound(pathData: PathData, radius: number = 5): PathDa
           }
           
           // Create a smooth curve through the corner
-          const controlDistance = effectiveRadius * 0.5522847498; // Magic number for circle approximation
+          const controlDistance = effectiveRadius * BEZIER_CIRCLE_KAPPA; // Improved constant for circle approximation
           const prevControl = pointToPrev.add(toPrev.multiply(-controlDistance));
           const nextControl = pointToNext.add(toNext.multiply(-controlDistance));
           

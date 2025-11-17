@@ -1,6 +1,7 @@
 import type { Point, Command, SubPath, ControlPoint } from '../types';
 import { PATH_DECIMAL_PRECISION } from '../types';
 import { formatToPrecision } from './index';
+import { BEZIER_CIRCLE_KAPPA } from './bezierCircle';
 
 /**
  * Parse SVG path d string into commands and points
@@ -390,7 +391,7 @@ export function normalizePathCommands(commands: Command[]): Command[] {
   }
 
   return normalized;
-}
+    }
 
 /**
  * Calculate the distance from a point to a line segment
@@ -1020,8 +1021,9 @@ export function createHeartCommands(centerX: number, centerY: number, width: num
       position: scaledPoint(105, 65)
     },
   ];
-}export function createCircleCommands(centerX: number, centerY: number, radius: number): Command[] {
-  const kappa = 0.552284749831; // Control point constant for circle approximation
+  }
+export function createCircleCommands(centerX: number, centerY: number, radius: number): Command[] {
+  const kappa = BEZIER_CIRCLE_KAPPA; // Improved control point constant for circle approximation
   const precision = PATH_DECIMAL_PRECISION;
 
   return [
