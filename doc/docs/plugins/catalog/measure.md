@@ -12,8 +12,8 @@ sidebar_label: Measure
 
 The Measure plugin provides a comprehensive measurement system that enables users to precisely measure distances, angles, and deltas between points on the canvas. It features intelligent snapping to geometric features, real-time visual feedback, and configurable precision settings.
 
-**Key Features:**
-- Click-and-drag measurement interface
+- Click-to-start and click-to-finish measurement interface (no need to hold mouse)
+  - Snap Points controls at the top of the panel with a percent opacity slider (debounced)
 - Intelligent snapping to anchor points, edges, midpoints, bounding box corners, and centers
 - Real-time distance, ΔX, ΔY, and angle calculations
 - Visual measurement line with perpendicular extensions
@@ -41,17 +41,19 @@ When entering measure mode, the plugin:
 
 ### 2. Measurement Interaction
 During measurement:
-- **Start point**: Click to begin, automatically snaps to nearest point within threshold
-- **End point**: Drag to measure, continuously snaps during movement
+- **Start point**: Click to begin; the start point snaps to the nearest point within the threshold
+- **End point**: Move the mouse (no need to keep the button pressed) — the end point snaps in real-time to nearby features
 - **Visual feedback**: Shows measurement line with perpendicular extensions
 - **Live calculations**: Updates distance, ΔX, ΔY, and angle in real-time
 - **Snap type indicator**: Displays snap type (Anchor, Corner, Path, etc.) via feedback overlay
-- **Release**: Finalizes measurement, data remains visible until next measurement
+- **Finalize**: Click again to fix (freeze) the measurement at the current end point; the measurement remains visible until the next click which starts a new measurement
 
 ## Configuration Options
 
 ### Show Snap Points
 Toggle to display/hide the snap point crosses. When enabled, all available snap points are marked with subtle crosses on the canvas.
+
+The Snap Points control is available at the top of the Measure side panel for quick access; the `Opacity` control is a percentage slider and uses debounced updates to avoid excessive redraws while dragging.
 
 ### Opacity
 Adjustable opacity (10-100%) for snap point visibility:
@@ -60,6 +62,8 @@ Adjustable opacity (10-100%) for snap point visibility:
 - **High opacity (70-100%)**: Maximum visibility
   - Light mode: Nearly black crosses
   - Dark mode: Nearly white crosses
+
+The Opacity slider is a percentage control (0.0 - 1.0 internally) and updates are debounced to avoid excessive redraws while the user adjusts the slider.
 
 ### Precision
 Number of decimal places for measurements, controlled by global keyboard movement precision setting:
@@ -112,8 +116,8 @@ sequenceDiagram
     MP->>Canvas: Attach window pointermove listener
     MP->>Canvas: Attach window pointerup listener
     
-    Note over User,Canvas: 3. Drag to Measure
-    User->>Canvas: Pointer move (drag)
+    Note over User,Canvas: 3. Move to Measure (no button hold needed)
+    User->>Canvas: Pointer move (mouse move)
     Canvas->>MP: handlePointerMove(event)
     MP->>MP: screenToCanvas(event.clientX, event.clientY)
     MP->>MP: findSnapPoint(currentPoint, threshold)
@@ -133,11 +137,11 @@ sequenceDiagram
     MO->>MO: Display distance label
     MO->>Canvas: Update foreground layer
     
-    Note over User,Canvas: 4. Complete Measurement
-    User->>Canvas: Pointer up (release)
-    Canvas->>MP: handlePointerUp(event)
-    MP->>Canvas: Remove window listeners
-    MP->>Store: finalizeMeasurement()
+    Note over User,Canvas: 4. Finalize Measurement
+    User->>Canvas: Click again to finalize (freeze) measurement
+    Canvas->>MP: handler(pointerdown, point)  ;; second click will set endpoint and finalize
+    MP->>Store: updateMeasurement(finalPoint, snapInfo)
+    MP->>Store: finalizeMeasurement() ;; measurement remains visible/frozen
     MP->>FO: Hide feedback message
     Store->>UI: Update info panel with final values
     
@@ -149,6 +153,7 @@ sequenceDiagram
     Note over UI: Angle: 42.7°
     Note over UI: From: (100, 150)
     Note over UI: To: (280, 315.8)
+      Note over UI: Coordinates are formatted using the selected units and the global keyboard movement precision setting
     
     Note over User,Canvas: 6. Configure Snap Points
     User->>UI: Toggle "Show Snap Points"
@@ -295,7 +300,7 @@ measure: {
   snapThreshold: 10;               // Snap distance (px)
   enableSnapping: true;            // Enable snap system
   showSnapPoints: boolean;         // Show snap crosses
-  snapPointsOpacity: number;       // Cross opacity (0-100)
+  snapPointsOpacity: number;       // Cross opacity (0-100). The UI presents this as a percent slider; changes are debounced to prevent redraw storms.
 }
 ```
 
@@ -328,17 +333,18 @@ The plugin uses three canvas layers for optimal rendering:
 - **Priority filtering**: Anchors checked first, then bbox, then edges
 - **Viewport-aware rendering**: Only visible elements contribute snap points
 - **Debounced updates**: Measurement calculations throttled during drag
+- **Slider updates debounced**: UI controls like the snap opacity slider use debounce to prevent excessive redraws while the user adjusts values
 - **Lazy calculation**: Snap points only computed when needed
 
 ## Usage Tips
 
-1. **Quick measurements**: Press `M` to activate, click-drag-release for instant measurement
+1. **Quick measurements**: Press `M` to activate, click once to start, move the mouse to update, click again to fix the measurement (no need to hold the mouse)
 2. **Precise alignment**: Use snap points to measure exact distances between features
 3. **Angle checking**: View angle in degrees for rotation analysis
 4. **Technical drawings**: Set precision to 2-3 decimals and use mm/in units
 5. **Minimize visual clutter**: Lower snap point opacity or hide them entirely
 6. **Snap feedback**: Watch the bottom-left corner for snap type confirmation
-7. **Multiple measurements**: Each new click-drag starts fresh measurement
+7. **Multiple measurements**: After a measurement is finalized (second click), the next click starts a new measurement
 
 ## Keyboard Shortcuts
 
