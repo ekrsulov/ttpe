@@ -2,13 +2,15 @@ import React from 'react';
 import {
   VStack,
   FormControl,
-  FormLabel,
+  HStack,
+  Text,
+  useColorModeValue,
 } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Panel } from '../../ui/Panel';
 import { PanelStyledButton } from '../../ui/PanelStyledButton';
 import { SliderControl } from '../../ui/SliderControl';
-import { PanelToggleGroup } from '../../ui/PanelToggleGroup';
+import { LinejoinSelector } from '../../ui/LinejoinSelector';
 
 /**
  * Offset Path Panel
@@ -37,6 +39,7 @@ const OffsetPathPanelComponent: React.FC = () => {
   
   // Force re-render when selection changes
   useCanvasStore(state => state.selectedIds);
+  const labelColor = useColorModeValue('gray.600', 'gray.400');
   
   // Get actions
   const state = useCanvasStore.getState() as typeof useCanvasStore extends { getState: () => infer S } ? S : never;
@@ -68,8 +71,11 @@ const OffsetPathPanelComponent: React.FC = () => {
   if (!canApply) return null;
 
   return (
-    <Panel title="Offset Path">
-      <VStack align="stretch" spacing={2}>
+    <Panel
+      title="Offset Path"
+      headerActions={<PanelStyledButton onClick={handleApply} isDisabled={!canApply || isApplyingOffset} isLoading={isApplyingOffset} size="xs">Apply</PanelStyledButton>}
+    >
+      <VStack align="stretch" spacing={0.5}>
         {/* Distance */}
         <FormControl>
           <SliderControl
@@ -85,20 +91,14 @@ const OffsetPathPanelComponent: React.FC = () => {
           />
         </FormControl>
 
-        {/* Join Type Selection (single choice) */}
+        {/* Corner Join selection (inline) */}
         <FormControl>
-          <FormLabel fontSize="sm" mb={2}>
-            Corner Join Type
-          </FormLabel>
-          <PanelToggleGroup
-            toggles={[
-              { label: 'Round', isChecked: offsetJoinType === 'round', onChange: () => setOffsetJoinType?.('round') },
-              { label: 'Miter', isChecked: offsetJoinType === 'miter', onChange: () => setOffsetJoinType?.('miter') },
-              { label: 'Bevel', isChecked: offsetJoinType === 'bevel', onChange: () => setOffsetJoinType?.('bevel') },
-            ]}
-            direction="horizontal"
-            spacing={2}
-          />
+          <HStack justify="flex-start" minH="24px" spacing={1} width="100%">
+            <Text fontSize="12px" minW="72px" h="24px" display="flex" alignItems="center" title="Corner Join" color={labelColor}>
+              Corner Join
+            </Text>
+            <LinejoinSelector value={offsetJoinType} onChange={(v) => setOffsetJoinType?.(v)} title="Corner Join" />
+          </HStack>
         </FormControl>
 
         {/* Miter Limit (only show if miter is selected) */}
@@ -118,16 +118,7 @@ const OffsetPathPanelComponent: React.FC = () => {
           </FormControl>
         )}
 
-        {/* Apply Button */}
-        <PanelStyledButton
-          onClick={handleApply}
-          isDisabled={!canApply || isApplyingOffset}
-          isLoading={isApplyingOffset}
-          loadingText="Applying..."
-          mt={1}
-        >
-          Apply Offset Path
-        </PanelStyledButton>
+        {/* Apply Button is now part of the header (headerActions) */}
 
         {/* nothing to show when there is no selection - panel is hidden */}
       </VStack>

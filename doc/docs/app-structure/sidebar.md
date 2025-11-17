@@ -59,7 +59,7 @@ The sidebar **displays multiple panels** based on the active plugin. Most modes 
 
 | Mode | Panels Displayed | Purpose |
 |------|-----------------|---------|
-| `select` | Editor Panel, Path Operations, SubPath Operations, Optical Alignment (conditional) | General editing, path operations, alignment |
+| `select` | Editor Panel, Path Operations, SubPath Operations, Optical Alignment (conditional), Offset Path (conditional) | General editing, path operations, alignment |
 | `pencil` | Editor Panel, Pencil Panel | Drawing settings, stroke/fill properties |
 | `text` | Editor Panel, Text Panel | Text editing, typography, stroke/fill |
 | `shape` | Editor Panel, Shape Panel | Shape creation, stroke/fill properties |

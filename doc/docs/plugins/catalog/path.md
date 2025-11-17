@@ -324,3 +324,4 @@ convertPaperPathToPathData(paperPath: paper.PathItem): PathData
 - [Plugin System Overview](../overview)
 - [Canvas Store API](../../api/canvas-store) - Where path operation actions are defined
 - [Paper.js Documentation](http://paperjs.org/reference/path/) - Underlying library reference
+ - [Offset Path Plugin](./offset-path) - Offset or outline paths to create outlines, strokes, or margins from existing geometry

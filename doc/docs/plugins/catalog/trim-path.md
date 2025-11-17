@@ -172,6 +172,10 @@ This sanitization helps prevent the creation of stray 'point' elements or duplic
 - **History System**: All trim operations are undoable
 - **Selection System**: Works with currently selected path elements
 
+## Related Tools
+
+- [Offset Path Plugin](./offset-path) - Use Offset Path to expand or contract paths prior to trimming. Offsetting before trimming can help create clearly distinguishable stroke margins or prepare paths for precise boolean/trim operations.
+
 ## Error Handling
 
 - Automatically deactivates if selection changes to non-path elements

@@ -391,6 +391,7 @@ interface PencilPluginSlice {
 - `curves` - Curves tool state
 - `guidelines` - Guidelines plugin state
 - `grid` - Grid plugin state
+ - `offsetPath` - Offset Path plugin state (offsetDistance, offsetJoinType, offsetMiterLimit, isApplyingOffset)
 
 **Note**: The `select` plugin does not have its own slice. Selection state is managed globally by SelectionSlice.
 

@@ -58,6 +58,12 @@ All notable changes to VectorNest will be documented here.
   - Improves precision in complex path editing and alignment tasks
 - **Trim Path Plugin**: New interactive tool for trimming path segments at intersections
 
+- **Offset Path Plugin**: New tool for expanding or contracting selected path or group geometry
+  - Add distance slider (-100 → 100 px), join type (round/miter/bevel), and miter limit controls
+  - Uses Paper.js with `paperjs-offset` for robust offsets and curve preservation
+  - Adds context menu action and a dedicated Offset Path panel
+  - Preserves closed/implicitly-closed paths and supports group offsets
+
 - **Subpath Join & Public API (2025-11-16)**: Added 'Join' subpath capability to both Subpath and Path Operations panels and exposed the method via Subpath plugin public API (`performSubPathJoin`).
   - `Subpath` panel now supports joining multiple selected subpaths within the same path
   - `PathOperationsPanel` now delegates split/join actions to the Subpath plugin for consistent behavior

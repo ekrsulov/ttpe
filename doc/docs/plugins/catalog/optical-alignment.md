@@ -117,5 +117,6 @@ This ensures accurate visual center calculation regardless of color combinations
 
 - [Plugin System Overview](../overview)
 - [Event Bus](../../event-bus/overview)
+ - [Offset Path Plugin](./offset-path) - Generate offset outlines from selected paths to create consistent margins or stroke-like outlines; works well in combination with optical alignment for visual balancing of outlines.
 
 

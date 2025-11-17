@@ -101,6 +101,7 @@ const sidebars = {
             'plugins/catalog/optical-alignment',
             'plugins/catalog/object-snap',
             'plugins/catalog/path',
+            'plugins/catalog/offset-path',
             'plugins/catalog/pencil',
             'plugins/catalog/shape',
             'plugins/catalog/subpath',

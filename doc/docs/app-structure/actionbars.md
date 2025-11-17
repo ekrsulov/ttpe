@@ -311,8 +311,10 @@ The floating context menu provides different actions based on the current select
   - Union, Union (PaperJS)
   - Subtract, Intersect, Exclude, Divide (for exactly 2 paths)
 - **Optical Alignment** (for exactly 2 paths)
+- **Offset Path** (applies to selected path(s) or groups)
 - **Apply Visual Center**: Calculates and applies optical center alignment to selected elements (if supported)
 - **Group**: Create group from selection
+ 
 - **Ungroup**: Ungroup selected groups (if any)
 - **Lock**: Lock all selected elements
   - For elements that belong to groups, locks the topmost parent group
@@ -335,11 +337,13 @@ The floating context menu provides different actions based on the current select
 - **Duplicate**: Create independent copy
 - **Copy to Clipboard**: Copy group to clipboard
 - **Delete**: Remove the group
+- **Offset Path**: Create expanded/contracted outlines for each path inside the group
 
 ##### Single Path
 
 - **Arrange** submenu: Alignment, matching, distribution
 - **Path Operations** submenu (when combined with other paths)
+- **Offset Path** (when path(s) selected) - create expanded/contracted outlines
 - **Split Subpaths** (if path has multiple subpaths)
 - **Join Subpaths** (if path has multiple subpaths selected) - merges selected subpaths within a path
 - **Group**: Create group from selection
