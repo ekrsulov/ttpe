@@ -9,7 +9,8 @@ import { createMeasurePluginSlice } from './slice';
 import type { MeasurePluginSlice, MeasurePluginActions, SnapInfo } from './slice';
 import { MeasureOverlay } from './MeasureOverlay';
 import { MeasureInfoPanel } from './MeasureInfoPanel';
-import { getAllSnapPoints, findClosestSnapPoint, findEdgeSnapPoint, screenDistance } from '../../utils/snapPointUtils';
+import { getAllSnapPoints, findClosestSnapPoint, findEdgeSnapPoint, screenDistance, getSnapPointLabel } from '../../utils/snapPointUtils';
+import { getEffectiveShift } from '../../utils/effectiveShift';
 import { SnapPointsCache } from './SnapPointsCache';
 import { SnapPointCrossOverlay } from '../../overlays/SnapPointOverlay';
 import { FeedbackOverlay } from '../../overlays/FeedbackOverlay';
@@ -23,6 +24,45 @@ type MeasurePluginApi = {
   clearMeasurement: () => void;
   refreshSnapPointsCache: (snapPoints: SnapPointCache[]) => void;
 };
+
+/**
+ * Constrain a point relative to a start point to the closest of 8 directions
+ * (horizontal, vertical, or diagonal 45deg steps) while preserving distance.
+ */
+function constrainToCardinalAndDiagonal(start: Point, point: Point): Point {
+  const dx = point.x - start.x;
+  const dy = point.y - start.y;
+  const length = Math.sqrt(dx * dx + dy * dy);
+  if (length === 0) return point;
+
+  // Candidate directions in radians
+  const dirs = [0, Math.PI / 4, Math.PI / 2, (3 * Math.PI) / 4, Math.PI, -(3 * Math.PI) / 4, -Math.PI / 2, -Math.PI / 4];
+  const angle = Math.atan2(dy, dx);
+  let best = dirs[0];
+  let bestDiff = Math.abs(normalizeAngle(angle - dirs[0]));
+
+  for (let i = 1; i < dirs.length; i++) {
+    const d = dirs[i];
+    const diff = Math.abs(normalizeAngle(angle - d));
+    if (diff < bestDiff) {
+      bestDiff = diff;
+      best = d;
+    }
+  }
+
+  return {
+    x: start.x + Math.cos(best) * length,
+    y: start.y + Math.sin(best) * length,
+  };
+}
+
+function normalizeAngle(angle: number): number {
+  // Normalize angle between -PI and PI
+  let a = angle;
+  while (a <= -Math.PI) a += 2 * Math.PI;
+  while (a > Math.PI) a -= 2 * Math.PI;
+  return a;
+}
 
 const measureSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -63,16 +103,16 @@ const installListeners = (context: PluginHandlerContext<CanvasStore>, api: Measu
         return calculateBounds(pathData.subPaths, pathData.strokeWidth || 0, currentState.viewport.zoom);
       };
       
-      // Get high-priority snap points (anchors, midpoints, bbox, intersections)
+      // Get high-priority snap points (using configured snap options)
       const highPriorityPoints = getAllSnapPoints(
         currentState.elements,
         getElementBoundsFn,
         {
-          snapToAnchors: true,
-          snapToMidpoints: true,
-          snapToBBoxCorners: true,
-          snapToBBoxCenter: true,
-          snapToIntersections: true,
+          snapToAnchors: currentState.measure.snapToAnchors,
+          snapToMidpoints: currentState.measure.snapToMidpoints,
+          snapToBBoxCorners: currentState.measure.snapToBBoxCorners,
+          snapToBBoxCenter: currentState.measure.snapToBBoxCenter,
+          snapToIntersections: currentState.measure.snapToIntersections,
         }
       );
       
@@ -84,8 +124,8 @@ const installListeners = (context: PluginHandlerContext<CanvasStore>, api: Measu
         currentState.viewport.zoom
       );
       
-      // Only check edge snap if no high-priority snap found
-      if (!moveSnapInfo) {
+      // Only check edge snap if no high-priority snap found and edge snap is enabled
+      if (!moveSnapInfo && currentState.measure.snapToEdges) {
         for (const element of currentState.elements) {
           const edgeSnap = findEdgeSnapPoint(
             canvasPoint,
@@ -107,7 +147,12 @@ const installListeners = (context: PluginHandlerContext<CanvasStore>, api: Measu
       // Only update while measurement is active (not frozen)
       if (currentState.measure?.measurement?.isActive) {
         const finalMovePoint = moveSnapInfo?.point ?? canvasPoint;
-        api.updateMeasurement(finalMovePoint, moveSnapInfo);
+        // If shift is pressed, constrain to horizontal/vertical/diagonal
+        const effectiveShift = getEffectiveShift(moveEvent.shiftKey, currentState.isVirtualShiftActive);
+        const pointToSet = (effectiveShift && currentState.measure?.measurement?.startPoint)
+          ? constrainToCardinalAndDiagonal(currentState.measure.measurement.startPoint, finalMovePoint)
+          : finalMovePoint;
+        api.updateMeasurement(pointToSet, moveSnapInfo);
       }
   };
 
@@ -133,16 +178,16 @@ const installListeners = (context: PluginHandlerContext<CanvasStore>, api: Measu
         return calculateBounds(pathData.subPaths, pathData.strokeWidth || 0, currentState.viewport.zoom);
       };
       
-      // Get high-priority snap points
+      // Get high-priority snap points (using configured snap options)
       const highPriorityPoints = getAllSnapPoints(
         currentState.elements,
         getElementBoundsFn,
         {
-          snapToAnchors: true,
-          snapToMidpoints: true,
-          snapToBBoxCorners: true,
-          snapToBBoxCenter: true,
-          snapToIntersections: true,
+          snapToAnchors: currentState.measure.snapToAnchors,
+          snapToMidpoints: currentState.measure.snapToMidpoints,
+          snapToBBoxCorners: currentState.measure.snapToBBoxCorners,
+          snapToBBoxCenter: currentState.measure.snapToBBoxCenter,
+          snapToIntersections: currentState.measure.snapToIntersections,
         }
       );
       
@@ -154,8 +199,8 @@ const installListeners = (context: PluginHandlerContext<CanvasStore>, api: Measu
         currentState.viewport.zoom
       );
       
-      // Only check edge snap if no high-priority snap found
-      if (!upSnapInfo) {
+      // Only check edge snap if no high-priority snap found and edge snap is enabled
+      if (!upSnapInfo && currentState.measure.snapToEdges) {
         for (const element of currentState.elements) {
           const edgeSnap = findEdgeSnapPoint(
             canvasPoint,
@@ -174,7 +219,12 @@ const installListeners = (context: PluginHandlerContext<CanvasStore>, api: Measu
       }
     }
 
-    const finalUpPoint = upSnapInfo?.point ?? canvasPoint;
+    let finalUpPoint = upSnapInfo?.point ?? canvasPoint;
+    // If shift is pressed, constrain final position
+    const effectiveShiftUp = getEffectiveShift(upEvent.shiftKey, currentState.isVirtualShiftActive);
+    if (effectiveShiftUp && currentState.measure?.measurement?.startPoint) {
+      finalUpPoint = constrainToCardinalAndDiagonal(currentState.measure.measurement.startPoint, finalUpPoint);
+    }
     // Commit the final location but DO NOT finalize (we keep the measurement visible)
     if (currentState.measure?.measurement?.isActive) {
       api.updateMeasurement(finalUpPoint, upSnapInfo);
@@ -204,7 +254,7 @@ export const measurePlugin: PluginDefinition<CanvasStore> = {
   metadata: getToolMetadata('measure'),
   // (Listeners are installed in module scope via `installListeners`)
 
-  handler: (_event: ReactPointerEvent, point: Point, _target: Element, context: PluginHandlerContext<CanvasStore>) => {
+  handler: (event: ReactPointerEvent, point: Point, _target: Element, context: PluginHandlerContext<CanvasStore>) => {
     const api = context.api as MeasurePluginApi;
     const state = context.store.getState() as unknown as MeasurePluginSlice & CanvasStore;
     
@@ -275,7 +325,12 @@ export const measurePlugin: PluginDefinition<CanvasStore> = {
     // If a measurement is already active, treat this pointerdown as intent to finalize (freeze)
     // the measurement at the clicked point. Update & finalize then listeners will be removed
     // via the store subscription in installListeners when `isActive` becomes false.
-    api.updateMeasurement(finalPoint, snapInfo);
+    // If shift is held during finalization (physical OR virtual), constrain to axis/diagonals
+    const handlerEffectiveShift = getEffectiveShift(event.shiftKey, state.isVirtualShiftActive);
+    const finalPointToSet = handlerEffectiveShift && state.measure?.measurement?.startPoint
+      ? constrainToCardinalAndDiagonal(state.measure.measurement.startPoint, finalPoint)
+      : finalPoint;
+    api.updateMeasurement(finalPointToSet, snapInfo);
     api.finalizeMeasurement();
   },
   keyboardShortcuts: {
@@ -380,16 +435,8 @@ export const measurePlugin: PluginDefinition<CanvasStore> = {
           return null;
         }
 
-        // Create custom feedback message for snap type
-        const snapTypeMap: { [K in SnapInfo['type']]: string } = {
-          anchor: 'Anchor',
-          midpoint: 'Midpoint',
-          edge: 'Path',
-          'bbox-corner': 'Corner',
-          'bbox-center': 'Center',
-          intersection: 'Intersection',
-        };
-        const snapMessage = snapTypeMap[currentSnapInfo.type as SnapInfo['type']];
+        // Create custom feedback message for snap type using helper
+        const snapMessage = getSnapPointLabel(currentSnapInfo.type);
 
         return (
           <FeedbackOverlay

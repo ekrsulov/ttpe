@@ -13,6 +13,7 @@ export const SnapPointsCache: React.FC = () => {
   const activePlugin = useCanvasStore((state) => state.activePlugin);
   const elements = useCanvasStore((state) => state.elements);
   const zoom = useCanvasStore((state) => state.viewport.zoom);
+  const measureState = useCanvasStore((state) => state.measure);
 
   useEffect(() => {
     // Only refresh cache when entering measure mode
@@ -32,17 +33,17 @@ export const SnapPointsCache: React.FC = () => {
       // Calculate all snap points using unified utilities
       // Note: edge snap is not included in cache as it's computed per-position
       const snapPoints = getAllSnapPoints(elements, getElementBoundsFn, {
-        snapToAnchors: true,
-        snapToMidpoints: true,
-        snapToBBoxCorners: true,
-        snapToBBoxCenter: true,
-        snapToIntersections: true,
+        snapToAnchors: measureState?.snapToAnchors ?? true,
+        snapToMidpoints: measureState?.snapToMidpoints ?? true,
+        snapToBBoxCorners: measureState?.snapToBBoxCorners ?? true,
+        snapToBBoxCenter: measureState?.snapToBBoxCenter ?? true,
+        snapToIntersections: measureState?.snapToIntersections ?? true,
       });
       
       // Store in cache
       state.refreshSnapPointsCache?.(snapPoints);
     }
-  }, [activePlugin, elements, zoom]);
+  }, [activePlugin, elements, zoom, measureState?.snapToAnchors, measureState?.snapToMidpoints, measureState?.snapToBBoxCorners, measureState?.snapToBBoxCenter, measureState?.snapToIntersections]);
 
   return null;
 };

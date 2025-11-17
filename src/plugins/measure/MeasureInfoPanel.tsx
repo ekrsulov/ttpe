@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { VStack, HStack, Text, Box } from '@chakra-ui/react';
+import { PanelToggleGroup } from '../../ui/PanelToggleGroup';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Panel } from '../../ui/Panel';
 import { PanelToggle } from '../../ui/PanelToggle';
@@ -13,9 +14,38 @@ interface SnapPointsControlsProps {
   snapPointsOpacity?: number;
   onToggleSnapPoints: (e: React.ChangeEvent<HTMLInputElement>) => void;
   updateMeasureState?: (state: Partial<MeasurePluginSlice['measure']>) => void;
+  snapToAnchors?: boolean;
+  snapToMidpoints?: boolean;
+  snapToEdges?: boolean;
+  snapToBBoxCorners?: boolean;
+  snapToBBoxCenter?: boolean;
+  snapToIntersections?: boolean;
+  onToggleAnchors?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onToggleMidpoints?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onToggleEdges?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onToggleBBoxCorners?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onToggleBBoxCenter?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onToggleIntersections?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-const SnapPointsControls: React.FC<SnapPointsControlsProps> = ({ showSnapPoints, snapPointsOpacity, onToggleSnapPoints, updateMeasureState }) => {
+const SnapPointsControls: React.FC<SnapPointsControlsProps> = ({
+  showSnapPoints,
+  snapPointsOpacity,
+  onToggleSnapPoints,
+  updateMeasureState,
+  snapToAnchors,
+  snapToMidpoints,
+  snapToEdges,
+  snapToBBoxCorners,
+  snapToBBoxCenter,
+  snapToIntersections,
+  onToggleAnchors,
+  onToggleMidpoints,
+  onToggleEdges,
+  onToggleBBoxCorners,
+  onToggleBBoxCenter,
+  onToggleIntersections,
+}) => {
   const [localOpacity, setLocalOpacity] = useState((snapPointsOpacity ?? 50) / 100);
 
   useEffect(() => {
@@ -42,6 +72,23 @@ const SnapPointsControls: React.FC<SnapPointsControlsProps> = ({ showSnapPoints,
 
       {showSnapPoints && (
         <Box>
+          {/* Snap type toggles */}
+          <PanelToggleGroup
+            toggles={[
+              { label: 'Anchor', isChecked: snapToAnchors ?? true, onChange: onToggleAnchors ?? (() => {}) },
+              { label: 'Mid', isChecked: snapToMidpoints ?? true, onChange: onToggleMidpoints ?? (() => {}) },
+              { label: 'Edge', isChecked: snapToEdges ?? true, onChange: onToggleEdges ?? (() => {}) },
+            ]}
+            spacing={3}
+          />
+          <PanelToggleGroup
+            toggles={[
+              { label: 'Corner', isChecked: snapToBBoxCorners ?? true, onChange: onToggleBBoxCorners ?? (() => {}) },
+              { label: 'Center', isChecked: snapToBBoxCenter ?? true, onChange: onToggleBBoxCenter ?? (() => {}) },
+              { label: 'Inter', isChecked: snapToIntersections ?? true, onChange: onToggleIntersections ?? (() => {}) },
+            ]}
+            spacing={3}
+          />
           <PercentSliderControl
             label="Opacity:"
             value={localOpacity}
@@ -57,6 +104,7 @@ const SnapPointsControls: React.FC<SnapPointsControlsProps> = ({ showSnapPoints,
     </VStack>
   );
 };
+
 
 interface MeasureInfoPanelProps {
   hideTitle?: boolean;
@@ -91,8 +139,14 @@ export const MeasureInfoPanel: React.FC<MeasureInfoPanelProps> = ({ hideTitle = 
 
   const { createToggleHandler } = usePanelToggleHandlers(updateMeasureState ?? (() => {}));
   const handleToggleSnapPoints = createToggleHandler('showSnapPoints');
+  const handleToggleAnchors = createToggleHandler('snapToAnchors');
+  const handleToggleMidpoints = createToggleHandler('snapToMidpoints');
+  const handleToggleEdges = createToggleHandler('snapToEdges');
+  const handleToggleBBoxCorners = createToggleHandler('snapToBBoxCorners');
+  const handleToggleBBoxCenter = createToggleHandler('snapToBBoxCenter');
+  const handleToggleIntersections = createToggleHandler('snapToIntersections');
 
-  const { measurement, units, showSnapPoints, snapPointsOpacity } = measure || {};
+  const { measurement, units, showSnapPoints, snapPointsOpacity, snapToAnchors, snapToMidpoints, snapToEdges, snapToBBoxCorners, snapToBBoxCenter, snapToIntersections } = measure || {};
   const { distance, deltaX, deltaY, angle, isActive } = measurement || {};
   const startPoint = measurement?.startPoint;
   const endPoint = measurement?.endPoint;
@@ -110,6 +164,18 @@ export const MeasureInfoPanel: React.FC<MeasureInfoPanelProps> = ({ hideTitle = 
             snapPointsOpacity={snapPointsOpacity}
             onToggleSnapPoints={handleToggleSnapPoints}
             updateMeasureState={updateMeasureState}
+            snapToAnchors={snapToAnchors}
+            snapToMidpoints={snapToMidpoints}
+            snapToEdges={snapToEdges}
+            snapToBBoxCorners={snapToBBoxCorners}
+            snapToBBoxCenter={snapToBBoxCenter}
+            snapToIntersections={snapToIntersections}
+            onToggleAnchors={handleToggleAnchors}
+            onToggleMidpoints={handleToggleMidpoints}
+            onToggleEdges={handleToggleEdges}
+            onToggleBBoxCorners={handleToggleBBoxCorners}
+            onToggleBBoxCenter={handleToggleBBoxCenter}
+            onToggleIntersections={handleToggleIntersections}
           />
           <Text fontSize="12px" color="gray.500" _dark={{ color: 'gray.500' }} textAlign="center">
             Click and drag to measure

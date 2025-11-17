@@ -30,6 +30,13 @@ export interface MeasurePluginSlice {
     enableSnapping: boolean;
     showSnapPoints: boolean; // Show snap point crosses
     snapPointsOpacity: number; // Opacity of snap points (0-100)
+    // Snap types
+    snapToAnchors?: boolean;
+    snapToMidpoints?: boolean;
+    snapToEdges?: boolean;
+    snapToBBoxCorners?: boolean;
+    snapToBBoxCenter?: boolean;
+    snapToIntersections?: boolean;
   };
 
   // Actions
@@ -86,6 +93,13 @@ export const createMeasurePluginSlice: StateCreator<
     enableSnapping: true,
     showSnapPoints: true,
     snapPointsOpacity: 50,
+    // Snap types: control visibility/behavior for different snap categories
+    snapToAnchors: true,
+    snapToMidpoints: true,
+    snapToEdges: true,
+    snapToBBoxCorners: true,
+    snapToBBoxCenter: true,
+    snapToIntersections: true,
   },
 
   updateMeasureState: (newState) => {
