@@ -52,7 +52,9 @@ Click cells to fill with current shape/color
 
 ## Keyboard Shortcuts
 
-No plugin-specific shortcuts.
+| Key | Action |
+| --- | ------ |
+| `Delete` | Delete the currently selected elements while Grid Fill mode is active |
 
 ## UI Contributions
 

@@ -358,6 +358,7 @@ The plugin uses three canvas layers for optimal rendering:
 |----------|--------|
 | `M` | Activate measure tool |
 | `Esc` | Return to select mode |
+| `Shift+M` | Toggle measure info panel / showInfo |
 
 ## Related Features
 

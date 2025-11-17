@@ -58,6 +58,7 @@ Use `canvasLayers` in plugin definition. See [Plugin Overview](./plugins/overvie
 - `Shift`: Hold while clicking to toggle element selection, or while drawing to constrain proportions
 - `Delete` or `Backspace`: Delete selected elements/points/subpaths
 - `Arrow Keys`: Move selected elements by 1px (hold Shift for 10px)
+ - `M`: Activate the Measure tool (global)
 
 **Plugin-Specific Shortcuts:**
 - **Curves Plugin**: `Enter` to finish curve, `Escape` to cancel, `Delete` to remove selected point

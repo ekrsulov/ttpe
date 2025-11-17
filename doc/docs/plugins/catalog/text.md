@@ -179,7 +179,9 @@ Responds to pointer events when text content is available and creates text paths
 
 ## Keyboard Shortcuts
 
-No plugin-specific shortcuts.
+| Key | Action |
+|-----|--------|
+| `Enter` | Reserved for text tool interactions (e.g., committing text input when editing) |
 
 ## UI Contributions
 

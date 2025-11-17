@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { ToolMode } from '../config/toolDefinitions';
 
 // Tools that can be dynamically shown/hidden based on usage
-export const DYNAMIC_TOOLS: ToolMode[] = ['pencil', 'curves', 'text', 'shape', 'gridFill', 'trimPath'];
+export const DYNAMIC_TOOLS: ToolMode[] = ['pencil', 'curves', 'text', 'shape', 'gridFill', 'trimPath', 'measure'];
 
 // Tools that are always shown regardless of usage patterns or device
 export const ALWAYS_SHOWN_TOOLS: ToolMode[] = ['select', 'subpath', 'transformation', 'edit', 'pan'];

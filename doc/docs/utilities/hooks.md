@@ -852,6 +852,151 @@ const ArrangePanelComponent: React.FC = () => {
 
 ---
 
+### useFloatingContextMenuActions
+
+**Purpose**: Determine the selection context and provide the actions used by the floating context menu. The hook builds appropriate menu entries for elements, groups, subpaths, points and multi-selections, including submenus for align/match/order and path operations.
+
+**Location**: `/src/hooks/useFloatingContextMenuActions.ts`
+
+**Use Cases**:
+- Building Floating Context Menu items for: duplication, copy-to-clipboard, hide/lock, group/ungroup, alignment, distribution, ordering and path boolean operations.
+- Context-aware actions depending on active plugin and selection type (element, group, path, subpath, control point).
+
+**Interface**:
+
+```typescript
+type SelectionContextInfo = {
+  type: 'multiselection' | 'group' | 'path' | 'subpath' | 'point-anchor-m' | 'point-anchor-l' | 'point-anchor-c' | 'point-control';
+  elementId?: string;
+  elementIds?: string[];
+  groupId?: string;
+  subpathInfo?: { elementId: string; subpathIndex: number };
+  pointInfo?: SelectedCommand;
+}
+
+function useFloatingContextMenuActions(context: SelectionContextInfo | null): FloatingContextMenuAction[];
+```
+
+**Usage**:
+
+```tsx
+import { useFloatingContextMenuActions } from '@/hooks/useFloatingContextMenuActions';
+
+function FloatingContextMenu({ context }) {
+  const actions = useFloatingContextMenuActions(context);
+  return <FloatingContextMenuComponent actions={actions} />;
+}
+```
+
+**Notes**:
+- The hook composes actions via store operations and helpers such as `useArrangeHandlers` and `duplicateElements`.
+- It returns an array of `FloatingContextMenuAction`, including submenus for grouped operations.
+
+---
+
+### useDebouncedCallback
+
+**Purpose**: Return a stable debounced callback to delay invocation of the provided function until the specified delay has passed. Useful for input change handlers and expensive updates.
+
+**Location**: `/src/hooks/useDebouncedCallback.ts`
+
+**Interface**:
+
+```typescript
+function useDebouncedCallback<T extends (...args: any[]) => void>(fn: T, delay: number): (...args: Parameters<T>) => void;
+```
+
+**Usage**:
+
+```tsx
+import useDebouncedCallback from '@/hooks/useDebouncedCallback';
+
+function SearchInput({ onChange }) {
+  const debouncedOnChange = useDebouncedCallback(onChange, 300);
+  return <input onChange={(e) => debouncedOnChange(e.target.value)} />;
+}
+```
+
+**Notes**:
+- The hook ensures a stable function identity and cleans up the timer on unmount. It forwards all arguments to the wrapped function.
+
+---
+
+### useFrozenElementsDuringDrag
+
+**Purpose**: Subscribe to the canvas store and return the elements list, but prevent updates while a drag operation is active. This avoids frequent re-renders of components that list elements (like the Select Panel) during drag operations.
+
+**Location**: `/src/hooks/useFrozenElementsDuringDrag.ts`
+
+**Use Cases**:
+- Select Panel rendering optimization during element movement
+- Any component that needs a stable list of elements while dragging
+
+**Interface**:
+
+```typescript
+function useFrozenElementsDuringDrag(): CanvasElement[];
+```
+
+**Usage**:
+
+```tsx
+import { useFrozenElementsDuringDrag } from '@/hooks/useFrozenElementsDuringDrag';
+
+function SelectPanel() {
+  const elements = useFrozenElementsDuringDrag();
+  return <ElementList items={elements} />;
+}
+```
+
+**Notes**:
+- The hook subscribes to the global store once and updates local state only when `isDraggingElements` is false, or when elements are added/removed.
+- This is an important performance optimization; it is referenced in `architecture/overview` and the changelog.
+
+---
+
+### useDynamicTools
+
+**Purpose**: Manage which tools are shown dynamically on mobile or constrained UIs by tracking usage and exposing utilities to retrieve the most used tools and toggle extra tool visibility.
+
+**Location**: `/src/hooks/useDynamicTools.ts`
+
+**Use Cases**:
+- Mobile toolbar where only a subset of tools are visible by default
+- Tracking and persistently storing tool usage to prioritize more frequently used tools
+
+**Interface**:
+
+```typescript
+function useDynamicTools(activeMode: string | null, gridEnabled?: boolean): {
+  trackToolUsage: (toolId: ToolMode) => void;
+  getMobileVisibleTools: () => ToolMode[];
+  getExtraTools: () => ToolMode[];
+  toggleExtraTools: () => void;
+  showExtraTools: boolean;
+  resetToolUsage: () => void;
+  alwaysShownTools: ToolMode[];
+  dynamicTools: ToolMode[];
+}
+```
+
+**Usage**:
+
+```tsx
+import { useDynamicTools } from '@/hooks/useDynamicTools';
+
+function MobileToolbar({ activeMode, gridEnabled }) {
+  const { getMobileVisibleTools, trackToolUsage } = useDynamicTools(activeMode, gridEnabled);
+  const tools = getMobileVisibleTools();
+  return <Toolbar tools={tools} onToolUse={trackToolUsage} />;
+}
+```
+
+**Notes**:
+- Tool usage is persisted in `localStorage` under `ttpe_tool_usage` and updated whenever `trackToolUsage` is called.
+- The hook exposes `ALWAYS_SHOWN_TOOLS` and `DYNAMIC_TOOLS` arrays and has helper methods for mobile prioritization.
+
+
 ## Best Practices
 
 ### For Hook Consumers
@@ -889,13 +1034,18 @@ const ArrangePanelComponent: React.FC = () => {
 
 ```
 src/hooks/
-├── useDeletionActions.ts         # Centralized deletion logic
-├── useDragResize.ts              # Drag-to-resize functionality
-├── useRenderCount.ts             # Performance profiling
-├── useSelectionBounds.ts         # Selection overlay calculations
-├── useSelectPanelActions.ts      # Select Panel store actions
-├── usePanelToggleHandlers.ts    # Generic toggle handler factory
-└── useSidebarFooterHeight.ts    # Footer height CSS variable management
+├── useArrangeHandlers.ts                 # Arrange (align/distribute/order) handlers
+├── useDebouncedCallback.ts               # Generic debounced callbacks
+├── useDeletionActions.ts                 # Centralized deletion logic
+├── useDynamicTools.ts                    # Dynamic tools visibility and usage tracking
+├── useDragResize.ts                      # Drag-to-resize functionality
+├── useFloatingContextMenuActions.ts      # Actions & menu generation for floating context menus
+├── useFrozenElementsDuringDrag.ts        # Freeze element updates while dragging (performance)
+├── usePanelToggleHandlers.ts             # Generic toggle handler factory
+├── useRenderCount.ts                     # Performance profiling
+├── useSelectionBounds.ts                 # Selection overlay calculations
+├── useSelectPanelActions.ts              # Select Panel store actions
+└── useSidebarFooterHeight.ts             # Footer height CSS variable management
 ```
 
 ---

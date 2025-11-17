@@ -237,7 +237,9 @@ Two-point shape creation with preview
 
 ## Keyboard Shortcuts
 
-No plugin-specific shortcuts.
+| Key | Action |
+| --- | ------ |
+| `Esc` | Cancel shape creation / return to Select tool |
 
 ### Modifier Keys
 

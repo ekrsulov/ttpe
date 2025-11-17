@@ -55,7 +55,9 @@ Select subpaths within paths
 
 ## Keyboard Shortcuts
 
-No plugin-specific shortcuts.
+| Key | Action |
+| --- | ------ |
+| `Delete` | Delete selected subpath(s) |
 
 ## UI Contributions
 

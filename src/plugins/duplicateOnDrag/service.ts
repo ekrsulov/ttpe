@@ -33,8 +33,9 @@ class DuplicateOnDragListenerService implements CanvasService<DuplicateOnDragSer
       const state = getState();
       if (!state) return;
 
-      // Only trigger on Command/Meta key + left click
-      if (!event.metaKey || event.button !== 0) return;
+      // Only trigger on Command/Meta OR Control key + left click
+      // Accept both so feature works across macOS and Windows/Linux.
+      if (!(event.metaKey || event.ctrlKey) || event.button !== 0) return;
 
       // Only work when select tool is active
       if (state.activePlugin !== 'select') return;

@@ -80,6 +80,13 @@ export const useCanvasShortcuts = (
           handleEscapeShortcut(state);
         },
       },
+      m: {
+        handler: (_event, context) => {
+          const store = context.store.getState() as CanvasStore;
+          // Activate Measure tool when pressing M (global behaviour)
+          store.setActivePlugin('measure');
+        },
+      },
     });
 
     return () => {
