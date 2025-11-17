@@ -1,21 +1,65 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { VStack, HStack, Text, Box } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Panel } from '../../ui/Panel';
 import { PanelToggle } from '../../ui/PanelToggle';
-import { SliderControl } from '../../ui/SliderControl';
+import { PercentSliderControl } from '../../ui/PercentSliderControl';
 import { usePanelToggleHandlers } from '../../hooks/usePanelToggleHandlers';
+import useDebouncedCallback from '../../hooks/useDebouncedCallback';
 import type { MeasurePluginSlice } from './slice';
+
+interface SnapPointsControlsProps {
+  showSnapPoints?: boolean;
+  snapPointsOpacity?: number;
+  onToggleSnapPoints: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  updateMeasureState?: (state: Partial<MeasurePluginSlice['measure']>) => void;
+}
+
+const SnapPointsControls: React.FC<SnapPointsControlsProps> = ({ showSnapPoints, snapPointsOpacity, onToggleSnapPoints, updateMeasureState }) => {
+  const [localOpacity, setLocalOpacity] = useState((snapPointsOpacity ?? 50) / 100);
+
+  useEffect(() => {
+    setLocalOpacity((snapPointsOpacity ?? 50) / 100);
+  }, [snapPointsOpacity]);
+
+  const debouncedCommit = useDebouncedCallback((value: number) => {
+    updateMeasureState?.({ snapPointsOpacity: Math.round(value * 100) });
+  }, 200);
+
+  const handleOpacityChange = (value: number) => {
+    setLocalOpacity(value);
+    debouncedCommit(value);
+  };
+
+  return (
+    <VStack spacing={1} align="stretch">
+      <PanelToggle
+        isChecked={showSnapPoints ?? true}
+        onChange={onToggleSnapPoints}
+      >
+        Show Snap Points
+      </PanelToggle>
+
+      {showSnapPoints && (
+        <Box>
+          <PercentSliderControl
+            label="Opacity:"
+            value={localOpacity}
+            step={0.1}
+            decimals={0}
+            onChange={handleOpacityChange}
+            labelWidth="50px"
+            valueWidth="40px"
+            marginBottom="0"
+          />
+        </Box>
+      )}
+    </VStack>
+  );
+};
 
 interface MeasureInfoPanelProps {
   hideTitle?: boolean;
-}
-
-/**
- * Format a numeric value to a fixed number of decimal places
- */
-function formatValue(value: number, decimals: number = 1): string {
-  return value.toFixed(decimals);
 }
 
 /**
@@ -50,40 +94,26 @@ export const MeasureInfoPanel: React.FC<MeasureInfoPanelProps> = ({ hideTitle = 
 
   const { measurement, units, showSnapPoints, snapPointsOpacity } = measure || {};
   const { distance, deltaX, deltaY, angle, isActive } = measurement || {};
+  const startPoint = measurement?.startPoint;
+  const endPoint = measurement?.endPoint;
 
-  if (!isActive) {
+  // We will provide a top-level SnapPointsControls component (see below) that
+  // receives the necessary props from the MeasureInfoPanel - this avoids
+  // nested hooks and related lint warnings.
+
+  if (!isActive && !(startPoint && endPoint)) {
     return (
       <Panel title="Measure" hideHeader={hideTitle}>
-        <VStack spacing={2} align="stretch">
+        <VStack spacing={1} align="stretch">
+          <SnapPointsControls
+            showSnapPoints={showSnapPoints}
+            snapPointsOpacity={snapPointsOpacity}
+            onToggleSnapPoints={handleToggleSnapPoints}
+            updateMeasureState={updateMeasureState}
+          />
           <Text fontSize="12px" color="gray.500" _dark={{ color: 'gray.500' }} textAlign="center">
             Click and drag to measure
           </Text>
-
-          {/* Snap Points Configuration */}
-          <Box height="1px" bg="gray.200" _dark={{ bg: 'gray.700' }} my={1} />
-          
-          <PanelToggle
-            isChecked={showSnapPoints ?? true}
-            onChange={handleToggleSnapPoints}
-          >
-            Show Snap Points
-          </PanelToggle>
-
-          {showSnapPoints && (
-            <Box>
-              <SliderControl
-                label="Opacity:"
-                value={snapPointsOpacity ?? 50}
-                min={10}
-                max={100}
-                step={5}
-                onChange={(value) => updateMeasureState?.({ snapPointsOpacity: value })}
-                labelWidth="70px"
-                valueWidth="40px"
-                marginBottom="0"
-              />
-            </Box>
-          )}
         </VStack>
       </Panel>
     );
@@ -91,13 +121,43 @@ export const MeasureInfoPanel: React.FC<MeasureInfoPanelProps> = ({ hideTitle = 
 
   return (
     <Panel title="Measure" hideHeader={hideTitle}>
-      <VStack spacing={2} align="stretch">
+      <VStack spacing={0} align="stretch">
+        <SnapPointsControls
+          showSnapPoints={showSnapPoints}
+          snapPointsOpacity={snapPointsOpacity}
+          onToggleSnapPoints={handleToggleSnapPoints}
+          updateMeasureState={updateMeasureState}
+        />
+
+        {/* Info about coordinates */}
+        {startPoint && endPoint && (
+          <>
+            <HStack justify="space-between">
+              <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>
+                From:
+              </Text>
+              <Text fontSize="11px" color="gray.900" _dark={{ color: 'gray.100' }} fontFamily="mono">
+                ({formatDistance(startPoint.x, units || 'px', precision)}, {formatDistance(startPoint.y, units || 'px', precision)})
+              </Text>
+            </HStack>
+
+            <HStack justify="space-between">
+              <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>
+                To:
+              </Text>
+              <Text fontSize="11px" color="gray.900" _dark={{ color: 'gray.100' }} fontFamily="mono">
+                ({formatDistance(endPoint.x, units || 'px', precision)}, {formatDistance(endPoint.y, units || 'px', precision)})
+              </Text>
+            </HStack>
+          </>
+        )}
+
         {/* Distance */}
         <HStack justify="space-between">
-          <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }} fontWeight="600">
+          <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>
             Distance:
           </Text>
-          <Text fontSize="12px" color="gray.900" _dark={{ color: 'gray.100' }} fontFamily="mono">
+          <Text fontSize="11px" color="gray.900" _dark={{ color: 'gray.100' }} fontFamily="mono">
             {formatDistance(distance || 0, units || 'px', precision)}
           </Text>
         </HStack>
@@ -107,7 +167,7 @@ export const MeasureInfoPanel: React.FC<MeasureInfoPanelProps> = ({ hideTitle = 
           <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>
             ΔX:
           </Text>
-          <Text fontSize="12px" color="gray.900" _dark={{ color: 'gray.100' }} fontFamily="mono">
+          <Text fontSize="11px" color="gray.900" _dark={{ color: 'gray.100' }} fontFamily="mono">
             {formatDistance(Math.abs(deltaX || 0), units || 'px', precision)}
           </Text>
         </HStack>
@@ -117,7 +177,7 @@ export const MeasureInfoPanel: React.FC<MeasureInfoPanelProps> = ({ hideTitle = 
           <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>
             ΔY:
           </Text>
-          <Text fontSize="12px" color="gray.900" _dark={{ color: 'gray.100' }} fontFamily="mono">
+          <Text fontSize="11px" color="gray.900" _dark={{ color: 'gray.100' }} fontFamily="mono">
             {formatDistance(Math.abs(deltaY || 0), units || 'px', precision)}
           </Text>
         </HStack>
@@ -127,51 +187,11 @@ export const MeasureInfoPanel: React.FC<MeasureInfoPanelProps> = ({ hideTitle = 
           <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>
             Angle:
           </Text>
-          <Text fontSize="12px" color="gray.900" _dark={{ color: 'gray.100' }} fontFamily="mono">
+          <Text fontSize="11px" color="gray.900" _dark={{ color: 'gray.100' }} fontFamily="mono">
             {formatAngle(angle || 0, precision)}
           </Text>
         </HStack>
 
-        {/* Divider */}
-        <Box height="1px" bg="gray.200" _dark={{ bg: 'gray.700' }} my={1} />
-
-        {/* Info about coordinates */}
-        {measurement?.startPoint && measurement?.endPoint && (
-          <VStack spacing={1} align="stretch" fontSize="11px" color="gray.500" _dark={{ color: 'gray.500' }}>
-            <Text>
-              From: ({formatValue(measurement.startPoint.x)}, {formatValue(measurement.startPoint.y)})
-            </Text>
-            <Text>
-              To: ({formatValue(measurement.endPoint.x)}, {formatValue(measurement.endPoint.y)})
-            </Text>
-          </VStack>
-        )}
-
-        {/* Snap Points Configuration */}
-        <Box height="1px" bg="gray.200" _dark={{ bg: 'gray.700' }} my={1} />
-        
-        <PanelToggle
-          isChecked={showSnapPoints ?? true}
-          onChange={handleToggleSnapPoints}
-        >
-          Show Snap Points
-        </PanelToggle>
-
-        {showSnapPoints && (
-          <Box>
-            <SliderControl
-              label="Opacity:"
-              value={snapPointsOpacity ?? 50}
-              min={10}
-              max={100}
-              step={5}
-              onChange={(value) => updateMeasureState?.({ snapPointsOpacity: value })}
-              labelWidth="70px"
-              valueWidth="40px"
-              marginBottom="0"
-            />
-          </Box>
-        )}
       </VStack>
     </Panel>
   );

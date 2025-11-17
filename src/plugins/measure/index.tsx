@@ -1,5 +1,6 @@
 import React from 'react';
-import type { PluginDefinition, PluginSliceFactory } from '../../types/plugins';
+import type { PluginDefinition, PluginSliceFactory, PluginHandlerContext } from '../../types/plugins';
+import type { PointerEvent as ReactPointerEvent } from 'react';
 import type { CanvasStore } from '../../store/canvasStore';
 import type { Point, CanvasElement } from '../../types';
 import { getToolMetadata } from '../toolMetadata';
@@ -31,11 +32,107 @@ const measureSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => 
   };
 };
 
+// Global listener flags and cleanup handles (kept in the module scope)
+let listenersInstalled = false;
+let stopStoreSubscription: (() => void) | null = null;
+
+const installListeners = (context: PluginHandlerContext<CanvasStore>, api: MeasurePluginApi) => {
+  if (listenersInstalled) return;
+  listenersInstalled = true;
+
+    const handlePointerMove = (moveEvent: PointerEvent) => {
+    const svg = document.querySelector('svg');
+    if (!svg) return;
+
+    const rect = svg.getBoundingClientRect();
+    const currentState = context.store.getState() as unknown as MeasurePluginSlice & CanvasStore;
+
+    const canvasPoint = {
+      x: (moveEvent.clientX - rect.left - currentState.viewport.panX) / currentState.viewport.zoom,
+      y: (moveEvent.clientY - rect.top - currentState.viewport.panY) / currentState.viewport.zoom,
+    };
+
+    // Try to snap
+    const moveSnapInfo = currentState.measure.enableSnapping
+      ? findSnapPoint(
+          canvasPoint,
+          currentState.elements,
+          (element: CanvasElement) => {
+            if (element.type !== 'path') return null;
+            const pathData = element.data;
+            if (!pathData?.subPaths) return null;
+            return calculateBounds(pathData.subPaths, pathData.strokeWidth || 0, currentState.viewport.zoom);
+          },
+          currentState.measure.snapThreshold,
+          currentState.viewport.zoom
+        )
+      : null;
+
+      // Only update while measurement is active (not frozen)
+      if (currentState.measure?.measurement?.isActive) {
+        const finalMovePoint = moveSnapInfo?.point ?? canvasPoint;
+        api.updateMeasurement(finalMovePoint, moveSnapInfo);
+      }
+  };
+
+    const handlePointerUp = (upEvent: PointerEvent) => {
+    const svg = document.querySelector('svg');
+    if (!svg) return;
+
+    const rect = svg.getBoundingClientRect();
+    const currentState = context.store.getState() as unknown as MeasurePluginSlice & CanvasStore;
+
+    const canvasPoint = {
+      x: (upEvent.clientX - rect.left - currentState.viewport.panX) / currentState.viewport.zoom,
+      y: (upEvent.clientY - rect.top - currentState.viewport.panY) / currentState.viewport.zoom,
+    };
+
+    const upSnapInfo = currentState.measure.enableSnapping
+      ? findSnapPoint(
+          canvasPoint,
+          currentState.elements,
+          (element: CanvasElement) => {
+            if (element.type !== 'path') return null;
+            const pathData = element.data;
+            if (!pathData?.subPaths) return null;
+            return calculateBounds(pathData.subPaths, pathData.strokeWidth || 0, currentState.viewport.zoom);
+          },
+          currentState.measure.snapThreshold,
+          currentState.viewport.zoom
+        )
+      : null;
+
+    const finalUpPoint = upSnapInfo?.point ?? canvasPoint;
+    // Commit the final location but DO NOT finalize (we keep the measurement visible)
+    if (currentState.measure?.measurement?.isActive) {
+      api.updateMeasurement(finalUpPoint, upSnapInfo);
+    }
+  };
+
+  window.addEventListener('pointermove', handlePointerMove);
+  window.addEventListener('pointerup', handlePointerUp);
+
+  // Subscribe to store to remove listeners when the active plugin changes away from measure
+  stopStoreSubscription = context.store.subscribe((s) => {
+    const state = s as unknown as MeasurePluginSlice & CanvasStore;
+    // Remove listeners when plugin is no longer 'measure' or when measurement was cleared
+    if (state.activePlugin !== 'measure' || !(state.measure?.measurement?.isActive)) {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+      if (stopStoreSubscription) stopStoreSubscription();
+      listenersInstalled = false;
+      stopStoreSubscription = null;
+    }
+  });
+};
+
 // eslint-disable-next-line react-refresh/only-export-components
 export const measurePlugin: PluginDefinition<CanvasStore> = {
   id: 'measure',
   metadata: getToolMetadata('measure'),
-  handler: (_event, point, _target, context) => {
+  // (Listeners are installed in module scope via `installListeners`)
+
+  handler: (_event: ReactPointerEvent, point: Point, _target: Element, context: PluginHandlerContext<CanvasStore>) => {
     const api = context.api as MeasurePluginApi;
     const state = context.store.getState() as unknown as MeasurePluginSlice & CanvasStore;
     
@@ -62,44 +159,19 @@ export const measurePlugin: PluginDefinition<CanvasStore> = {
       : null;
 
     const finalPoint = snapInfo?.point ?? point;
-    api.startMeasurement(finalPoint, snapInfo);
 
-    // Set up pointer move and up handlers
-    const handlePointerMove = (moveEvent: PointerEvent) => {
-      const svg = document.querySelector('svg');
-      if (!svg) return;
+    // If there is no active measurement, start a new one and ensure we have global listeners
+    if (!state.measure.measurement.isActive) {
+      api.startMeasurement(finalPoint, snapInfo);
+      installListeners(context, api);
+      return;
+    }
 
-      const rect = svg.getBoundingClientRect();
-      const currentState = context.store.getState() as unknown as MeasurePluginSlice & CanvasStore;
-      
-      const canvasPoint = {
-        x: (moveEvent.clientX - rect.left - currentState.viewport.panX) / currentState.viewport.zoom,
-        y: (moveEvent.clientY - rect.top - currentState.viewport.panY) / currentState.viewport.zoom,
-      };
-
-      // Try to snap
-      const moveSnapInfo = currentState.measure.enableSnapping
-        ? findSnapPoint(
-            canvasPoint,
-            currentState.elements,
-            getElementBoundsFn,
-            currentState.measure.snapThreshold,
-            currentState.viewport.zoom
-          )
-        : null;
-
-      const finalMovePoint = moveSnapInfo?.point ?? canvasPoint;
-      api.updateMeasurement(finalMovePoint, moveSnapInfo);
-    };
-
-    const handlePointerUp = () => {
-      api.finalizeMeasurement();
-      window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('pointerup', handlePointerUp);
-    };
-
-    window.addEventListener('pointermove', handlePointerMove);
-    window.addEventListener('pointerup', handlePointerUp);
+    // If a measurement is already active, treat this pointerdown as intent to finalize (freeze)
+    // the measurement at the clicked point. Update & finalize then listeners will be removed
+    // via the store subscription in installListeners when `isActive` becomes false.
+    api.updateMeasurement(finalPoint, snapInfo);
+    api.finalizeMeasurement();
   },
   keyboardShortcuts: {
     Escape: (_event, { store }) => {
@@ -164,7 +236,8 @@ export const measurePlugin: PluginDefinition<CanvasStore> = {
         const { settings } = context as any; // eslint-disable-line @typescript-eslint/no-explicit-any
         const precision = settings?.keyboardMovementPrecision ?? 1;
 
-        if (!measurement?.isActive) {
+        // Render measure overlay if there is an active measurement OR a frozen one with start/end points
+        if (!measurement?.isActive && !(measurement?.startPoint && measurement?.endPoint)) {
           return null;
         }
 

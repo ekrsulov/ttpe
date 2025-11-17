@@ -43,16 +43,20 @@ export const MeasureOverlay: React.FC<MeasureOverlayProps> = ({
 
   const { startPoint, endPoint, isActive } = measurement;
 
-  // Don't render if measurement is not active or points are missing
-  if (!isActive || !startPoint || !endPoint) {
+  // Don't render if points are missing. Allow rendering even when not active (frozen)
+  if (!startPoint || !endPoint) {
     return null;
   }
 
   const zoom = viewport.zoom;
 
   // Colors based on theme
-  const lineColor = colorMode === 'dark' ? '#3b82f6' : '#2563eb'; // blue.500 : blue.600
-  const extensionColor = colorMode === 'dark' ? '#60a5fa' : '#3b82f6'; // blue.400 : blue.500
+  const lineColor = isActive
+    ? (colorMode === 'dark' ? '#3b82f6' : '#2563eb') // blue.500 : blue.600
+    : (colorMode === 'dark' ? 'rgba(59,130,246,0.6)' : 'rgba(37,99,235,0.6)');
+  const extensionColor = isActive
+    ? (colorMode === 'dark' ? '#60a5fa' : '#3b82f6')
+    : (colorMode === 'dark' ? 'rgba(96,165,250,0.6)' : 'rgba(59,130,246,0.6)');
   const textColor = colorMode === 'dark' ? '#ffffff' : '#1e293b'; // white : slate.900
   const textBg = colorMode === 'dark' ? '#1e293bb3' : '#ffffffcc'; // slate.800 : white with transparency
   const snapColor = colorMode === 'dark' ? '#f59e0b' : '#d97706'; // amber.500 : amber.600
