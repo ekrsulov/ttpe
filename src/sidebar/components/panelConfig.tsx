@@ -22,6 +22,7 @@ const SubPathOperationsPanel = React.lazy(() => import('../../plugins/subpath/Su
 const GuidelinesPanel = React.lazy(() => import('../../plugins/guidelines/GuidelinesPanel').then(module => ({ default: module.GuidelinesPanel })));
 const GridPanel = React.lazy(() => import('../../plugins/grid/GridPanel').then(module => ({ default: module.default })));
 const DocumentationPanel = React.lazy(() => import('../panels/DocumentationPanel').then(module => ({ default: module.DocumentationPanel })));
+const OffsetPathPanel = React.lazy(() => import('../../plugins/offsetPath/OffsetPathPanel').then(module => ({ default: module.OffsetPathPanel })));
 
 export interface PathSimplification {
   tolerance: number;
@@ -148,6 +149,11 @@ export const PANEL_CONFIGS: PanelConfig[] = [
     key: 'optical-alignment',
     condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'select' && ctx.canPerformOpticalAlignment,
     component: OpticalAlignmentPanel,
+  },
+  {
+    key: 'offset-path',
+    condition: (ctx) => !ctx.isInSpecialPanelMode && (ctx.activePlugin === 'select' || ctx.activePlugin === 'subpath'),
+    component: OffsetPathPanel,
   },
   {
     key: 'guidelines',

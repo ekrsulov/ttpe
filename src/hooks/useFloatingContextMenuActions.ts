@@ -33,7 +33,8 @@ import {
   Scissors,
   Minimize,
   Undo,
-  Target
+  Target,
+  CircleDot
 } from 'lucide-react';
 import { commandsToString } from '../utils/path';
 import { logger } from '../utils';
@@ -491,6 +492,27 @@ export function useFloatingContextMenuActions(
     };
   }, [canPerformOpticalAlignment, calculateOpticalAlignment, applyOpticalAlignment]);
 
+  // Helper to get Offset Path action
+  const getOffsetPathAction = useCallback((): FloatingContextMenuAction | null => {
+    // Check if offsetPath plugin is available
+    const state = useCanvasStore.getState();
+    const stateWithOffset = state as typeof state & { canApplyOffset?: () => boolean };
+    const canApply = stateWithOffset.canApplyOffset?.() ?? false;
+    
+    if (!canApply) return null;
+    
+    return {
+      id: 'offset-path',
+      label: 'Offset Path',
+      icon: CircleDot,
+      onClick: () => {
+        const state = useCanvasStore.getState();
+        const stateWithActions = state as typeof state & { applyOffsetPath?: () => void };
+        stateWithActions.applyOffsetPath?.();
+      }
+    };
+  }, []);
+
   // Helper function to retrieve path commands with validation
   const withPathCommands = useCallback(<T,>(
     elementId: string,
@@ -658,6 +680,7 @@ export function useFloatingContextMenuActions(
         const arrangeActions = getArrangeActions();
         const pathOpsActions = getPathOperationActions();
         const visualCenterAction = getApplyVisualCenterAction();
+        const offsetPathAction = getOffsetPathAction();
         
         return [
           // Arrange actions (alignment, distribution, match, order)
@@ -666,6 +689,8 @@ export function useFloatingContextMenuActions(
           ...pathOpsActions,
           // Optical alignment (if 2 paths selected)
           ...(visualCenterAction ? [visualCenterAction] : []),
+          // Offset Path
+          ...(offsetPathAction ? [offsetPathAction] : []),
           // Standard actions
           {
             id: 'group',
@@ -720,10 +745,13 @@ export function useFloatingContextMenuActions(
         const isHidden = isGroupHidden(groupId);
         const isLocked = isGroupLocked(groupId);
         const arrangeActions = getArrangeActions();
+        const offsetPathAction = getOffsetPathAction();
         
         return [
           // Arrange actions
           ...arrangeActions,
+          // Offset Path
+          ...(offsetPathAction ? [offsetPathAction] : []),
           // Standard actions
           {
             id: 'ungroup',
@@ -774,6 +802,7 @@ export function useFloatingContextMenuActions(
         const pathOpsActions = getPathOperationActions();
         const subpathSplitAction = getSubpathSplitAction();
         const subpathJoinAction = getSubpathJoinAction();
+        const offsetPathAction = getOffsetPathAction();
         
         return [
           // Arrange actions
@@ -783,6 +812,8 @@ export function useFloatingContextMenuActions(
           // Subpath split (if path has multiple subpaths)
           ...(subpathSplitAction ? [subpathSplitAction] : []),
           ...(subpathJoinAction ? [subpathJoinAction] : []),
+          // Offset Path
+          ...(offsetPathAction ? [offsetPathAction] : []),
           // Standard actions
           {
             id: 'group',
@@ -828,12 +859,15 @@ export function useFloatingContextMenuActions(
       case 'subpath': {
         const arrangeActions = getArrangeActions();
         const subpathOpsActions = getSubpathOperationActions();
+        const offsetPathAction = getOffsetPathAction();
         
         return [
           // Arrange actions
           ...arrangeActions,
           // Subpath operations
           ...subpathOpsActions,
+          // Offset Path
+          ...(offsetPathAction ? [offsetPathAction] : []),
           // Standard actions
           {
             id: 'duplicate',
@@ -1134,6 +1168,7 @@ export function useFloatingContextMenuActions(
     getSubpathSplitAction,
     getSubpathJoinAction,
     getApplyVisualCenterAction,
+    getOffsetPathAction,
     hasGroupsInSelection,
     handleHideSelected,
     handleLockSelected,

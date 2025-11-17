@@ -29,6 +29,7 @@ import type { ObjectSnapPluginSlice } from '../plugins/objectSnap/slice';
 import type { GridPluginSlice } from '../plugins/grid/slice';
 import type { DuplicateOnDragPluginSlice } from '../plugins/duplicateOnDrag/slice';
 import type { TrimPathPluginSlice } from '../plugins/trimPath/slice';
+import type { OffsetPathSlice } from '../plugins/offsetPath/slice';
 
 // Debounce function to implement cool-off period
 function debounce<T extends (...args: never[]) => void>(
@@ -72,7 +73,8 @@ export type CanvasStore = CoreCanvasStore &
   Partial<ObjectSnapPluginSlice> &
   Partial<GridPluginSlice> &
   Partial<DuplicateOnDragPluginSlice> &
-  Partial<TrimPathPluginSlice>;
+  Partial<TrimPathPluginSlice> &
+  Partial<OffsetPathSlice>;
 
 // Create the store with core slices only - plugins will register dynamically
 export const useCanvasStore = create<CanvasStore>()(

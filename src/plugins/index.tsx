@@ -23,6 +23,7 @@ import { minimapPlugin } from './minimap';
 import { gridFillPlugin } from './gridFill';
 import { duplicateOnDragPlugin } from './duplicateOnDrag';
 import { trimPathPlugin } from './trimPath';
+import { offsetPathPlugin } from './offsetPath';
 import { SelectionOverlay, BlockingOverlay } from '../overlays';
 import { useColorMode } from '@chakra-ui/react';
 
@@ -558,6 +559,7 @@ export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   minimapPlugin,
   duplicateOnDragPlugin,
   trimPathPlugin,
+  offsetPathPlugin,
 ];
 
 export * from './pencil';
@@ -575,3 +577,4 @@ export * from './gridFill';
 export * from './minimap';
 export * from './duplicateOnDrag';
 export * from './trimPath';
+export * from './offsetPath';
