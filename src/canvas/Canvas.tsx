@@ -88,8 +88,10 @@ const CanvasContent: React.FC = () => {
   const controller = useCanvasController();
   const defaultStrokeColor = useCanvasStore(state => state.settings.defaultStrokeColor);
   const scaleStrokeWithZoom = useCanvasStore(state => state.settings.scaleStrokeWithZoom);
+  const settings = useCanvasStore(state => state.settings);
   const updateDraggingPoint = useCanvasStore(state => state.updateDraggingPoint);
   const objectSnap = useCanvasStore(state => state.objectSnap);
+  const measure = useCanvasStore(state => (state as any).measure); // eslint-disable-line @typescript-eslint/no-explicit-any
   const {
     currentMode,
     transition: transitionCanvasMode,
@@ -444,6 +446,8 @@ const CanvasContent: React.FC = () => {
       handleSubpathTouchEnd,
       setDragStart: setDragStartForLayers,
       objectSnap, // Add objectSnap state to context
+      measure, // Add measure state to context
+      settings, // Add settings to context
     };
 
     // Conditionally add plugin-specific context
@@ -482,6 +486,8 @@ const CanvasContent: React.FC = () => {
       handleSubpathTouchEnd,
       setDragStartForLayers,
       objectSnap,
+      measure,
+      settings,
       // Plugin-specific dependencies
       isCreatingShape,
       shapeStart,

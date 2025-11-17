@@ -23,6 +23,7 @@ const GuidelinesPanel = React.lazy(() => import('../../plugins/guidelines/Guidel
 const GridPanel = React.lazy(() => import('../../plugins/grid/GridPanel').then(module => ({ default: module.default })));
 const DocumentationPanel = React.lazy(() => import('../panels/DocumentationPanel').then(module => ({ default: module.DocumentationPanel })));
 const OffsetPathPanel = React.lazy(() => import('../../plugins/offsetPath/OffsetPathPanel').then(module => ({ default: module.OffsetPathPanel })));
+const MeasureInfoPanel = React.lazy(() => import('../../plugins/measure/MeasureInfoPanel').then(module => ({ default: module.MeasureInfoPanel })));
 
 export interface PathSimplification {
   tolerance: number;
@@ -199,5 +200,10 @@ export const PANEL_CONFIGS: PanelConfig[] = [
     key: 'shape',
     condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'shape',
     component: ShapePanel,
+  },
+  {
+    key: 'measure',
+    condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'measure',
+    component: MeasureInfoPanel,
   },
 ];

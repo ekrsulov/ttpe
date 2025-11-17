@@ -36,6 +36,10 @@ interface FeedbackOverlayProps {
     y: number;
     visible: boolean;
   };
+  customFeedback?: {
+    message: string;
+    visible: boolean;
+  };
 }
 
 interface FeedbackBlockProps {
@@ -102,7 +106,8 @@ export const FeedbackOverlay: React.FC<FeedbackOverlayProps> = ({
   rotationFeedback,
   resizeFeedback,
   shapeFeedback,
-  pointPositionFeedback
+  pointPositionFeedback,
+  customFeedback
 }) => {
   return (
     <>
@@ -146,6 +151,16 @@ export const FeedbackOverlay: React.FC<FeedbackOverlayProps> = ({
           canvasSize={canvasSize}
           width={75}
           content={`${pointPositionFeedback?.x}, ${pointPositionFeedback?.y}`}
+        />
+      )}
+
+      {/* Custom Feedback */}
+      {customFeedback?.visible && (
+        <FeedbackBlock
+          viewport={viewport}
+          canvasSize={canvasSize}
+          width={Math.max(60, customFeedback.message.length * 8)}
+          content={customFeedback.message}
         />
       )}
     </>

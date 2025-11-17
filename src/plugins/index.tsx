@@ -24,6 +24,7 @@ import { gridFillPlugin } from './gridFill';
 import { duplicateOnDragPlugin } from './duplicateOnDrag';
 import { trimPathPlugin } from './trimPath';
 import { offsetPathPlugin } from './offsetPath';
+import { measurePlugin } from './measure';
 import { SelectionOverlay, BlockingOverlay } from '../overlays';
 import { useColorMode } from '@chakra-ui/react';
 
@@ -552,6 +553,7 @@ export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   transformationPlugin,
   editPlugin,
   gridFillPlugin,
+  measurePlugin,
   opticalAlignmentPlugin,
   guidelinesPlugin,
   objectSnapPlugin,
@@ -561,6 +563,9 @@ export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   trimPathPlugin,
   offsetPathPlugin,
 ];
+
+console.log('[CORE_PLUGINS] Total plugins:', CORE_PLUGINS.length);
+console.log('[CORE_PLUGINS] Measure plugin included:', CORE_PLUGINS.some(p => p.id === 'measure'));
 
 export * from './pencil';
 export * from './text';
@@ -578,3 +583,4 @@ export * from './minimap';
 export * from './duplicateOnDrag';
 export * from './trimPath';
 export * from './offsetPath';
+export * from './measure';

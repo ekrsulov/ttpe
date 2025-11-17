@@ -9,14 +9,15 @@ import {
   MousePointerClick,
   Hand,
   PaintBucket,
-  Scissors
+  Scissors,
+  Ruler
 } from 'lucide-react';
 import type { ComponentType } from 'react';
 
 /**
  * Tool mode type definition
  */
-export type ToolMode = 'select' | 'pencil' | 'text' | 'shape' | 'curves' | 'subpath' | 'transformation' | 'edit' | 'pan' | 'gridFill' | 'trimPath';
+export type ToolMode = 'select' | 'pencil' | 'text' | 'shape' | 'curves' | 'subpath' | 'transformation' | 'edit' | 'pan' | 'gridFill' | 'trimPath' | 'measure';
 
 /**
  * Unified tool definition interface
@@ -112,5 +113,12 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     icon: Scissors,
     cursor: 'crosshair',
     order: 11,
+  },
+  {
+    mode: 'measure',
+    label: 'Measure',
+    icon: Ruler,
+    cursor: 'crosshair',
+    order: 12,
   },
 ];
