@@ -38,6 +38,11 @@ When entering measure mode, the plugin:
   - **Edge points**: Points along path segments
 - Caches snap points for performance optimization
 - Renders subtle crosses at all snap points (configurable)
+- Renders subtle crosses at all snap points (configurable)
+  
+> See the [Snap Point Utilities](../../utilities/snap-point-utils) documentation for function references and implementation details.
+  - Uses `SnapPointsCache` to pre-compute and cache high-priority snap points (anchors, midpoints, BBox corners/center and intersections)
+  - **Edge snapping** (closest point on path segments) is computed on-demand per cursor position and checked only if no higher-priority snap point is found within the threshold
 
 ### 2. Measurement Interaction
 During measurement:
@@ -313,6 +318,7 @@ The plugin uses three canvas layers for optimal rendering:
    - Conditionally visible based on `showSnapPoints`
    - Opacity controlled by `snapPointsOpacity`
    - Theme-aware colors
+  - Uses `SnapPointsCache` component to compute & refresh cached snap points for performance
 
 2. **measure-overlay** (foreground)
    - Main measurement line
@@ -366,13 +372,12 @@ The plugin uses three canvas layers for optimal rendering:
 
 ```typescript
 type SnapType = 
-  | 'anchor'        // Path control point
-  | 'edge'          // Point along path segment
-  | 'midpoint'      // Segment midpoint
-  | 'bbox-corner'   // Bounding box corner
-  | 'bbox-center'   // Bounding box center
-  | 'tangent'       // Curve tangent point (future)
-  | 'intersection'; // Path intersection (future)
+  | `anchor`        // Path control point
+  | `edge`          // Point along path segment
+  | `midpoint`      // Segment midpoint
+  | `bbox-corner`   // Bounding box corner
+  | `bbox-center`   // Bounding box center
+  | `intersection`  // Path intersection
 ```
 
 ### Unit Conversions
@@ -409,7 +414,6 @@ const color = colorMode === 'dark'
 Potential improvements under consideration:
 
 - [ ] Snap to curve tangents and normals
-- [ ] Snap to path intersections (complex geometry)
 - [ ] Measurement history/annotations
 - [ ] Multiple simultaneous measurements
 - [ ] Export measurements to CSV/JSON

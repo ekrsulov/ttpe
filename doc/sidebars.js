@@ -147,6 +147,8 @@ const sidebars = {
       collapsed: true,
       items: [
         'utilities/hooks',
+        'utilities/snap-point-utils',
+        'utilities/bezier-circle',
       ],
     },
     {

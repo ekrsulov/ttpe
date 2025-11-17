@@ -74,6 +74,9 @@ All notable changes to VectorNest will be documented here.
   - Improves precision in complex path editing and alignment tasks
 - **Trim Path Plugin**: New interactive tool for trimming path segments at intersections
 
+### Added (internal)
+- **Snap Point Overlay**: `SnapPointCrossOverlay` and `ActiveSnapPointOverlay` components for rendering snap points as crosses and active indicators across plugins.
+
 - **Offset Path Plugin**: New tool for expanding or contracting selected path or group geometry
   - Add distance slider (-100 → 100 px), join type (round/miter/bevel), and miter limit controls
   - Uses Paper.js with `paperjs-offset` for robust offsets and curve preservation
@@ -128,6 +131,9 @@ All notable changes to VectorNest will be documented here.
 - **Tool Panel Unification (2025-11-10)**: Removed duplicated `*ExpandablePanel.tsx` files for Pencil, Text, Shape, Curves, Transformation, and Edit tools. Plugins now reuse their sidebar panel component as the expandable variant with the header hidden via `hideHeader`/`hideTitle`. Select and Subpath modes use the transversal `EditorPanel` in the expandable area. Edit uses a wrapper component to map store state to `EditPanel` props.
 
 - **Shape creation threshold (2025-11-15)**: Prevented accidental tiny shapes from being created by requiring a minimum movement between pointerDown and pointerUp before creating a shape. This avoids generating tiny elements and unnecessary undo stack entries.
+
+### Changed (internal)
+- **Bezier circle constant refactor**: Replaced the previously used value with an improved cubic Bezier circle approximation constant exported as `BEZIER_CIRCLE_KAPPA` in `src/utils/bezierCircle.ts` to provide better visual results when generating circles and importing SVG arcs.
   - New constant: `MIN_SHAPE_CREATION_DISTANCE` (default: 5 pixels) in `src/plugins/shape/config.ts`
   - Behavior: Click-only or very small drags below the threshold will not create a shape; normal drag creation is unchanged.
 
