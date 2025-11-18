@@ -54,7 +54,8 @@ During measurement:
 - **Visual feedback**: Shows measurement line with perpendicular extensions
 - **Live calculations**: Updates distance, ΔX, ΔY, and angle in real-time
 - **Snap type indicator**: Displays snap type (Anchor, Corner, Path, etc.) via feedback overlay
-- **Finalize**: Click again to fix (freeze) the measurement at the current end point; the measurement remains visible until the next click which starts a new measurement
+- **Finalize**: Click again to fix (freeze) the measurement at the current end point; the measurement remains visible on screen
+- **Clear**: Click once more to clear the frozen measurement before starting a new one
 
 ## Configuration Options
 
@@ -168,7 +169,14 @@ sequenceDiagram
     MP->>FO: Hide feedback message
     Store->>UI: Update info panel with final values
     
-    Note over User,Canvas: 5. View Measurement Data
+    Note over User,Canvas: 5. Clear Measurement
+    User->>Canvas: Click again to clear frozen measurement
+    Canvas->>MP: handler(pointerdown, point)  ;; third click clears the frozen measurement
+    MP->>Store: clearMeasurement() ;; removes measurement from canvas
+    Store->>MO: Clear measurement overlay
+    MO->>Canvas: Remove measurement line
+    
+    Note over User,Canvas: 6. View Measurement Data
     UI->>UI: Display in info panel:
     Note over UI: Distance: 245.5 px
     Note over UI: ΔX: 180.0 px
@@ -178,7 +186,7 @@ sequenceDiagram
     Note over UI: To: (280, 315.8)
       Note over UI: Coordinates are formatted using the selected units and the global keyboard movement precision setting
     
-    Note over User,Canvas: 6. Configure Snap Points
+    Note over User,Canvas: 7. Configure Snap Points
     User->>UI: Toggle "Show Snap Points"
     UI->>MP: updateMeasureState({ showSnapPoints: false })
     MP->>Store: Update measure.showSnapPoints
@@ -194,7 +202,7 @@ sequenceDiagram
     Store->>SO: Update cross opacity
     SO->>Canvas: Redraw with new opacity
     
-    Note over User,Canvas: 7. Mode Exit
+    Note over User,Canvas: 8. Mode Exit
     User->>UI: Switch to another tool (Esc or click tool)
     UI->>Store: setActivePlugin('select')
     Store->>MP: Plugin becomes inactive
@@ -375,8 +383,9 @@ The plugin uses three canvas layers for optimal rendering:
 4. **Technical drawings**: Set precision to 2-3 decimals and use mm/in units
 5. **Minimize visual clutter**: Lower snap point opacity or hide them entirely
 6. **Snap feedback**: Watch the bottom-left corner for snap type confirmation
-7. **Multiple measurements**: After a measurement is finalized (second click), the next click starts a new measurement
-8. **Mobile constraint**: On mobile devices without a physical keyboard, use the Virtual Shift action (bottom-right toggle) to constrain the measure to cardinal and diagonal angles.
+7. **Multiple measurements**: After a measurement is finalized (second click), click once more to clear it, then start a new measurement with the next click
+8. **Clean workflow**: The three-click pattern (start → freeze → clear) ensures you can review each measurement before clearing the canvas
+9. **Mobile constraint**: On mobile devices without a physical keyboard, use the Virtual Shift action (bottom-right toggle) to constrain the measure to cardinal and diagonal angles.
 
 ## Keyboard Shortcuts
 
