@@ -341,64 +341,71 @@ export function splitPathsByIntersections(
           }
         }
 
+        // Collect segments for this subpath locally first to optimize them
+        const subPathSegments: TrimSegment[] = [];
+
         // If this sub-path has NO intersections, capture it as a single complete segment
         if (!subPathHasIntersections) {
           console.log(`    ⚠️ No intersections found for this subpath - creating single segment`);
           const segment = createTrimSegmentFromPath(paperPath, path, subPathIndex, null, null);
-          if (segment) segments.push(segment);
+          if (segment) subPathSegments.push(segment);
           paperPath.remove();
-          continue;
-        }
+        } else {
+          console.log(`    ✅ Subpath has intersections - processing curve by curve`);
 
-        console.log(`    ✅ Subpath has intersections - processing curve by curve`);
+          // This sub-path HAS intersections, process curve by curve
+          const curves = paperPath.curves;
 
+          for (let curveIndex = 0; curveIndex < curves.length; curveIndex++) {
+            const curve = curves[curveIndex];
 
-        // This sub-path HAS intersections, process curve by curve
-        const curves = paperPath.curves;
+            // Find intersections that reference this specific curve
+            // Need to check against the global curve index
+            const curveIntersections = pathIntersections
+              .map(inter => {
+                // Map the global curve index from intersection to local indices
+                const globalIdx1 = inter.pathId1 === path.id ? inter.segmentIndex1 : -1;
+                const globalIdx2 = inter.pathId2 === path.id ? inter.segmentIndex2 : -1;
 
-        for (let curveIndex = 0; curveIndex < curves.length; curveIndex++) {
-          const curve = curves[curveIndex];
+                const mapped1 = globalIdx1 >= 0 ? curveIndexMap.get(globalIdx1) : null;
+                const mapped2 = globalIdx2 >= 0 ? curveIndexMap.get(globalIdx2) : null;
 
-          // Find intersections that reference this specific curve
-          // Need to check against the global curve index
-          const curveIntersections = pathIntersections
-            .map(inter => {
-              // Map the global curve index from intersection to local indices
-              const globalIdx1 = inter.pathId1 === path.id ? inter.segmentIndex1 : -1;
-              const globalIdx2 = inter.pathId2 === path.id ? inter.segmentIndex2 : -1;
+                const isOnCurve =
+                  (mapped1 && mapped1.subPathIndex === subPathIndex && mapped1.localCurveIndex === curveIndex) ||
+                  (mapped2 && mapped2.subPathIndex === subPathIndex && mapped2.localCurveIndex === curveIndex);
 
-              const mapped1 = globalIdx1 >= 0 ? curveIndexMap.get(globalIdx1) : null;
-              const mapped2 = globalIdx2 >= 0 ? curveIndexMap.get(globalIdx2) : null;
+                if (!isOnCurve) return null;
 
-              const isOnCurve =
-                (mapped1 && mapped1.subPathIndex === subPathIndex && mapped1.localCurveIndex === curveIndex) ||
-                (mapped2 && mapped2.subPathIndex === subPathIndex && mapped2.localCurveIndex === curveIndex);
+                const time = (mapped1 && mapped1.subPathIndex === subPathIndex && mapped1.localCurveIndex === curveIndex)
+                  ? inter.parameter1
+                  : inter.parameter2;
 
-              if (!isOnCurve) return null;
+                return {
+                  intersection: inter,
+                  time,
+                  point: inter.point,
+                };
+              })
+              .filter((item): item is { intersection: TrimIntersection; time: number; point: Point } => item !== null)
+              .sort((a, b) => a.time - b.time);
 
-              const time = (mapped1 && mapped1.subPathIndex === subPathIndex && mapped1.localCurveIndex === curveIndex)
-                ? inter.parameter1
-                : inter.parameter2;
-
-              return {
-                intersection: inter,
-                time,
-                point: inter.point,
-              };
-            })
-            .filter((item): item is { intersection: TrimIntersection; time: number; point: Point } => item !== null)
-            .sort((a, b) => a.time - b.time);
-
-          if (curveIntersections.length === 0) {
-            const segment = createTrimSegmentFromCurve(curve, path, subPathIndex, curveIndex, null, null);
-            if (segment) segments.push(segment);
-          } else {
-            const subSegments = splitCurveAtIntersections(curve, curveIntersections, path, subPathIndex, curveIndex);
-            segments.push(...subSegments);
+            if (curveIntersections.length === 0) {
+              const segment = createTrimSegmentFromCurve(curve, path, subPathIndex, curveIndex, null, null);
+              if (segment) subPathSegments.push(segment);
+            } else {
+              const subSegments = splitCurveAtIntersections(curve, curveIntersections, path, subPathIndex, curveIndex);
+              subPathSegments.push(...subSegments);
+            }
           }
+          paperPath.remove();
         }
 
-        paperPath.remove();
+        // Optimize segments for this subpath
+        if (subPathSegments.length > 0) {
+          const optimized = concatenateConsecutiveSegments(subPathSegments);
+          console.log(`    🔧 Optimized SubPath ${subPathIndex}: ${subPathSegments.length} -> ${optimized.length} segments`);
+          segments.push(...optimized);
+        }
       }
     }
 
