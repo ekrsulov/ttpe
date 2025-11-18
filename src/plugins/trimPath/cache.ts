@@ -1,5 +1,5 @@
 import type { PathElement } from '../../types';
-import type { SplitPathResult } from '../../types/trimPath';
+import type { SplitPathResult, TrimSegment, TrimIntersection } from '../../types/trimPath';
 import {
   validatePathsForTrim,
   computePathIntersections,
@@ -27,11 +27,11 @@ class TrimPathCache {
   isValidFor(pathIds: string[]): boolean {
     if (this.cachedResult === null) return false;
     if (pathIds.length !== this.cachedPathIds.length) return false;
-    
+
     // Check if the same paths are cached (order-independent)
     const sortedCached = [...this.cachedPathIds].sort();
     const sortedProvided = [...pathIds].sort();
-    
+
     return sortedCached.every((id, index) => id === sortedProvided[index]);
   }
 
@@ -52,10 +52,10 @@ class TrimPathCache {
 
     if (intersections.length === 0) {
       // No intersections, but keep an empty result
-      this.cachedResult = { 
-        intersections: [], 
-        segments: [], 
-        originalPaths: new Map() 
+      this.cachedResult = {
+        intersections: [],
+        segments: [],
+        originalPaths: new Map()
       };
       this.cachedPathIds = paths.map(p => p.id);
       return this.cachedResult;
@@ -63,11 +63,40 @@ class TrimPathCache {
 
     // Split paths into trimmable segments
     const splitResult = splitPathsByIntersections(paths, intersections);
-    
+
     // Update cache
     this.cachedResult = splitResult;
     this.cachedPathIds = paths.map(p => p.id);
-    
+
+    return this.cachedResult;
+  }
+
+  /**
+   * Refreshes the cache using pre-computed segments from reconstruction.
+   * This avoids re-parsing paths and losing segment structure.
+   */
+  refreshWithSegments(
+    paths: PathElement[],
+    preComputedSegments: TrimSegment[],
+    intersections: TrimIntersection[]
+  ): SplitPathResult | null {
+    // Build originalPaths map
+    const originalPaths = new Map<string, PathElement>();
+    for (const path of paths) {
+      originalPaths.set(path.id, path);
+    }
+
+    // Create split result with provided segments
+    const splitResult: SplitPathResult = {
+      intersections,
+      segments: preComputedSegments,
+      originalPaths,
+    };
+
+    // Update cache
+    this.cachedResult = splitResult;
+    this.cachedPathIds = paths.map(p => p.id);
+
     return this.cachedResult;
   }
 

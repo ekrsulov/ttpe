@@ -85,14 +85,46 @@ export function computePathIntersections(paths: PathElement[]): TrimIntersection
       bounds: getPathBounds(p),
     }));
 
+    // Helper function to get global curve index for a curve in a CompoundPath
+    // Paper.js returns curve.index as the index within the child path,
+    // but we need the global index across all children
+    const getGlobalCurveIndex = (paperPath: paper.Path | paper.CompoundPath, curve: paper.Curve): number => {
+      if (paperPath instanceof paper.CompoundPath) {
+        // Find which child this curve belongs to
+        let globalIndex = 0;
+        for (const child of paperPath.children) {
+          if (child instanceof paper.Path) {
+            // Check if this curve belongs to this child
+            const curveInChild = child.curves.findIndex(c => c === curve);
+            if (curveInChild !== -1) {
+              return globalIndex + curveInChild;
+            }
+            // Not in this child, add this child's curve count and continue
+            globalIndex += child.curves.length;
+          }
+        }
+        // If we get here, something went wrong - return the local index as fallback
+        return curve.index;
+      } else {
+        // Single path, curve.index is already the global index
+        return curve.index;
+      }
+    };
+
     // First, check for self-intersections within each path (for compound paths with multiple subpaths)
     for (let i = 0; i < paperPaths.length; i++) {
       const path = paperPaths[i];
-      
+
       // Get self-intersections
       const selfIntersections = path.paperPath.getIntersections(path.paperPath);
-      
+
       for (const inter of selfIntersections) {
+        // Convert local curve indices to global indices
+        const globalIdx1 = getGlobalCurveIndex(path.paperPath, inter.curve);
+        const globalIdx2 = inter.intersection?.curve
+          ? getGlobalCurveIndex(path.paperPath, inter.intersection.curve)
+          : 0;
+
         // Extract intersection data
         const intersection: TrimIntersection = {
           id: generateId(),
@@ -102,8 +134,8 @@ export function computePathIntersections(paths: PathElement[]): TrimIntersection
           },
           pathId1: path.id,
           pathId2: path.id, // Same path - self-intersection
-          segmentIndex1: inter.curve.index,
-          segmentIndex2: inter.intersection?.curve?.index ?? 0,
+          segmentIndex1: globalIdx1,
+          segmentIndex2: globalIdx2,
           parameter1: inter.time,
           parameter2: inter.intersection?.time ?? 0,
         };
@@ -127,6 +159,12 @@ export function computePathIntersections(paths: PathElement[]): TrimIntersection
         const paperIntersections = path1.paperPath.getIntersections(path2.paperPath);
 
         for (const inter of paperIntersections) {
+          // Convert local curve indices to global indices
+          const globalIdx1 = getGlobalCurveIndex(path1.paperPath, inter.curve);
+          const globalIdx2 = inter.intersection?.curve
+            ? getGlobalCurveIndex(path2.paperPath, inter.intersection.curve)
+            : 0;
+
           // Extract intersection data
           const intersection: TrimIntersection = {
             id: generateId(),
@@ -136,8 +174,8 @@ export function computePathIntersections(paths: PathElement[]): TrimIntersection
             },
             pathId1: path1.id,
             pathId2: path2.id,
-            segmentIndex1: inter.curve.index,
-            segmentIndex2: inter.intersection?.curve?.index ?? 0,
+            segmentIndex1: globalIdx1,
+            segmentIndex2: globalIdx2,
             parameter1: inter.time, // Parameter along the curve [0, 1]
             parameter2: inter.intersection?.time ?? 0,
           };
@@ -153,24 +191,24 @@ export function computePathIntersections(paths: PathElement[]): TrimIntersection
       if (intersection.pathId1 !== intersection.pathId2) {
         return true; // Keep intersections between different paths
       }
-      
+
       const threshold = 1; // pixels - reduced threshold
-      
+
       // Find the path
       const path = paperPaths.find(p => p.id === intersection.pathId1);
-      
+
       if (!path) return false;
-      
+
       // Get start and end points of the path
       const pathStart = path.paperPath.firstSegment.point;
       const pathEnd = path.paperPath.lastSegment.point;
-      
+
       const interPoint = new paper.Point(intersection.point.x, intersection.point.y);
-      
+
       // Check distance to endpoints
       const distanceToStart = interPoint.getDistance(pathStart);
       const distanceToEnd = interPoint.getDistance(pathEnd);
-      
+
       // Keep self-intersection if it's not too close to any endpoint
       return distanceToStart > threshold && distanceToEnd > threshold;
     });
@@ -222,42 +260,125 @@ export function splitPathsByIntersections(
 
       // Convert to Paper.js path
       const paperPathOriginal = convertPathDataToPaperPath(path.data);
-      
+
+      // Build a map from global curve index to {subPathIndex, localCurveIndex}
+      const curveIndexMap = new Map<number, { subPathIndex: number; localCurveIndex: number }>();
+      let globalCurveIndex = 0;
+
+      console.log(`\n🔨 Processing path ${path.id}:`);
+      console.log(`  Path has ${path.data.subPaths.length} subpaths`);
+
       // Handle CompoundPath by processing each child separately
       const subpathsToProcess: paper.Path[] = [];
       if (paperPathOriginal instanceof paper.CompoundPath) {
-        for (const child of paperPathOriginal.children) {
+        console.log(`  ✅ Is CompoundPath with ${paperPathOriginal.children.length} children`);
+        // Build the map using the ORIGINAL CompoundPath (not clones)
+        for (let childIndex = 0; childIndex < paperPathOriginal.children.length; childIndex++) {
+          const child = paperPathOriginal.children[childIndex];
           if (child instanceof paper.Path) {
+            console.log(`    Child ${childIndex}: ${child.curves.length} curves (global indices ${globalCurveIndex} to ${globalCurveIndex + child.curves.length - 1})`);
+            // Map using the original child's curves
+            for (let localCurve = 0; localCurve < child.curves.length; localCurve++) {
+              curveIndexMap.set(globalCurveIndex++, {
+                subPathIndex: childIndex,
+                localCurveIndex: localCurve,
+              });
+            }
+            // Then clone for processing
             subpathsToProcess.push(child.clone());
           }
         }
       } else if (paperPathOriginal instanceof paper.Path) {
+        console.log(`  ⚠️ Is single Path with ${paperPathOriginal.curves.length} curves`);
         subpathsToProcess.push(paperPathOriginal);
+        // For single path, map is 1:1
+        for (let i = 0; i < paperPathOriginal.curves.length; i++) {
+          curveIndexMap.set(i, { subPathIndex: 0, localCurveIndex: i });
+        }
       } else {
+        console.log(`  ❌ Unknown path type, skipping`);
         continue;
       }
-      
-      for (const paperPath of subpathsToProcess) {
+
+      for (let subPathIndex = 0; subPathIndex < subpathsToProcess.length; subPathIndex++) {
+        const paperPath = subpathsToProcess[subPathIndex];
+
+        // If the ENTIRE path has no intersections, capture all sub-paths as complete segments
         if (pathIntersections.length === 0) {
-          const segment = createTrimSegmentFromPath(paperPath, path, null, null);
+          const segment = createTrimSegmentFromPath(paperPath, path, subPathIndex, null, null);
           if (segment) segments.push(segment);
+          paperPath.remove();
           continue;
         }
 
+        // Check if THIS specific sub-path has intersections by checking each of its curves
+        // We need to find the global curve indices for this sub-path's curves and check if 
+        // any intersection references them
+        let subPathHasIntersections = false;
+
+        console.log(`\n  📍 Processing SubPath ${subPathIndex}:`);
+
+        // Build reverse map: find which global indices belong to this subPath
+        const globalIndicesForThisSubPath: number[] = [];
+        for (const [globalIdx, mapping] of curveIndexMap.entries()) {
+          if (mapping.subPathIndex === subPathIndex) {
+            globalIndicesForThisSubPath.push(globalIdx);
+          }
+        }
+        console.log(`    Global curve indices for this subpath: [${globalIndicesForThisSubPath.join(', ')}]`);
+
+        // Check if any intersection references these global indices
+        console.log(`    Checking ${pathIntersections.length} intersection(s):`);
+        for (const inter of pathIntersections) {
+          const idx1 = inter.pathId1 === path.id ? inter.segmentIndex1 : -1;
+          const idx2 = inter.pathId2 === path.id ? inter.segmentIndex2 : -1;
+          console.log(`      Intersection at (${inter.point.x.toFixed(1)}, ${inter.point.y.toFixed(1)}): idx1=${idx1}, idx2=${idx2}`);
+
+          if (globalIndicesForThisSubPath.includes(idx1) || globalIndicesForThisSubPath.includes(idx2)) {
+            console.log(`        ✅ Matches this subpath!`);
+            subPathHasIntersections = true;
+            break;
+          }
+        }
+
+        // If this sub-path has NO intersections, capture it as a single complete segment
+        if (!subPathHasIntersections) {
+          console.log(`    ⚠️ No intersections found for this subpath - creating single segment`);
+          const segment = createTrimSegmentFromPath(paperPath, path, subPathIndex, null, null);
+          if (segment) segments.push(segment);
+          paperPath.remove();
+          continue;
+        }
+
+        console.log(`    ✅ Subpath has intersections - processing curve by curve`);
+
+
+        // This sub-path HAS intersections, process curve by curve
         const curves = paperPath.curves;
 
         for (let curveIndex = 0; curveIndex < curves.length; curveIndex++) {
           const curve = curves[curveIndex];
 
+          // Find intersections that reference this specific curve
+          // Need to check against the global curve index
           const curveIntersections = pathIntersections
             .map(inter => {
+              // Map the global curve index from intersection to local indices
+              const globalIdx1 = inter.pathId1 === path.id ? inter.segmentIndex1 : -1;
+              const globalIdx2 = inter.pathId2 === path.id ? inter.segmentIndex2 : -1;
+
+              const mapped1 = globalIdx1 >= 0 ? curveIndexMap.get(globalIdx1) : null;
+              const mapped2 = globalIdx2 >= 0 ? curveIndexMap.get(globalIdx2) : null;
+
               const isOnCurve =
-                (inter.pathId1 === path.id && inter.segmentIndex1 === curveIndex) ||
-                (inter.pathId2 === path.id && inter.segmentIndex2 === curveIndex);
+                (mapped1 && mapped1.subPathIndex === subPathIndex && mapped1.localCurveIndex === curveIndex) ||
+                (mapped2 && mapped2.subPathIndex === subPathIndex && mapped2.localCurveIndex === curveIndex);
 
               if (!isOnCurve) return null;
 
-              const time = inter.pathId1 === path.id ? inter.parameter1 : inter.parameter2;
+              const time = (mapped1 && mapped1.subPathIndex === subPathIndex && mapped1.localCurveIndex === curveIndex)
+                ? inter.parameter1
+                : inter.parameter2;
 
               return {
                 intersection: inter,
@@ -269,10 +390,10 @@ export function splitPathsByIntersections(
             .sort((a, b) => a.time - b.time);
 
           if (curveIntersections.length === 0) {
-            const segment = createTrimSegmentFromCurve(curve, path, curveIndex, null, null);
+            const segment = createTrimSegmentFromCurve(curve, path, subPathIndex, curveIndex, null, null);
             if (segment) segments.push(segment);
           } else {
-            const subSegments = splitCurveAtIntersections(curve, curveIntersections, path, curveIndex);
+            const subSegments = splitCurveAtIntersections(curve, curveIntersections, path, subPathIndex, curveIndex);
             segments.push(...subSegments);
           }
         }
@@ -301,6 +422,7 @@ export function splitPathsByIntersections(
 function createTrimSegmentFromPath(
   paperPath: paper.Path,
   originalPath: PathElement,
+  subPathIndex: number,
   startIntersectionId: string | null,
   endIntersectionId: string | null
 ): TrimSegment | null {
@@ -313,6 +435,7 @@ function createTrimSegmentFromPath(
     return {
       id: generateId(),
       pathId: originalPath.id,
+      subPathIndex,
       startIntersectionId,
       endIntersectionId,
       startPoint: { x: firstPoint.x, y: firstPoint.y },
@@ -342,27 +465,28 @@ function createTrimSegmentFromPath(
 function createTrimSegmentFromCurve(
   curve: paper.Curve,
   originalPath: PathElement,
+  subPathIndex: number,
   curveIndex: number,
   startIntersectionId: string | null,
   endIntersectionId: string | null
 ): TrimSegment | null {
   try {
     const tempPath = new paper.Path();
-    
+
     // Clone segments and explicitly preserve handles from the curve
     const seg1 = curve.segment1.clone();
     const seg2 = curve.segment2.clone();
-    
+
     // Ensure handles are preserved from the curve
     if (curve.hasHandles()) {
       seg1.handleOut = curve.handle1.clone();
       seg2.handleIn = curve.handle2.clone();
     }
-    
+
     tempPath.add(seg1);
     tempPath.add(seg2);
 
-    const segment = createTrimSegmentFromPath(tempPath, originalPath, startIntersectionId, endIntersectionId);
+    const segment = createTrimSegmentFromPath(tempPath, originalPath, subPathIndex, startIntersectionId, endIntersectionId);
     tempPath.remove();
 
     if (segment) {
@@ -379,6 +503,7 @@ function splitCurveAtIntersections(
   curve: paper.Curve,
   curveIntersections: Array<{ intersection: TrimIntersection; time: number; point: Point }>,
   originalPath: PathElement,
+  subPathIndex: number,
   curveIndex: number
 ): TrimSegment[] {
   const segments: TrimSegment[] = [];
@@ -386,18 +511,18 @@ function splitCurveAtIntersections(
   try {
     // Create a path from the curve, preserving all handle information
     const workingPath = new paper.Path();
-    
+
     // Clone segments properly with all their handle information
     const seg1 = curve.segment1.clone();
     const seg2 = curve.segment2.clone();
-    
+
     // Ensure handles are preserved from the curve
     if (curve.hasHandles()) {
       // For cubic Bézier curves, preserve the control points
       seg1.handleOut = curve.handle1.clone();
       seg2.handleIn = curve.handle2.clone();
     }
-    
+
     workingPath.add(seg1);
     workingPath.add(seg2);
 
@@ -422,7 +547,7 @@ function splitCurveAtIntersections(
       .sort((a, b) => a.offset - b.offset);
 
     if (intersectionsWithOffsets.length === 0) {
-      const wholeSegment = createTrimSegmentFromCurve(curve, originalPath, curveIndex, null, null);
+      const wholeSegment = createTrimSegmentFromCurve(curve, originalPath, subPathIndex, curveIndex, null, null);
       workingPath.remove();
       return wholeSegment ? [wholeSegment] : [];
     }
@@ -456,15 +581,15 @@ function splitCurveAtIntersections(
 
       if (seamHead && seamTail) {
         const merged = new paper.Path();
-        
+
         // Add all segments from seamTail
         seamTail.segments.forEach((seg) => merged.add(seg.clone()));
-        
+
         // Merge with seamHead, preserving curve geometry at the connection point
         if (merged.segments.length > 0 && seamHead.segments.length > 0) {
           const lastMerged = merged.segments[merged.segments.length - 1];
           const firstHead = seamHead.segments[0];
-          
+
           // If these points are close, we're connecting them
           if (lastMerged.point.isClose(firstHead.point, EPS)) {
             // Update the handleOut of the last segment to match the connection
@@ -483,7 +608,7 @@ function splitCurveAtIntersections(
           // Fallback: add all segments
           seamHead.segments.forEach((seg) => merged.add(seg.clone()));
         }
-        
+
         partPaths.unshift(merged);
         seamHead.remove();
         seamTail.remove();
@@ -515,6 +640,7 @@ function splitCurveAtIntersections(
       const segment = createTrimSegmentFromPath(
         partPath,
         originalPath,
+        subPathIndex,
         startIntersectionId,
         endIntersectionId
       );
@@ -560,7 +686,7 @@ export function findSegmentAtPoint(
     // Quick bounding box check first
     const bbox = segment.boundingBox;
     const margin = threshold;
-    
+
     if (
       cursorPosition.x < bbox.minX - margin ||
       cursorPosition.x > bbox.maxX + margin ||
@@ -569,13 +695,13 @@ export function findSegmentAtPoint(
     ) {
       continue;
     }
-    
+
 
     // More precise check: distance to the path
     try {
       const tempPath = new paper.Path(segment.pathData);
       const nearestPoint = tempPath.getNearestPoint(new paper.Point(cursorPosition.x, cursorPosition.y));
-      
+
       if (nearestPoint) {
         const distance = Math.sqrt(
           Math.pow(nearestPoint.x - cursorPosition.x, 2) +
@@ -587,7 +713,7 @@ export function findSegmentAtPoint(
           closestSegment = segment;
         }
       }
-      
+
       tempPath.remove();
     } catch (_error) {
       // Silently continue if error occurs
@@ -623,6 +749,87 @@ export function findSegmentsAlongPath(
 }
 
 /**
+ * Concatenates consecutive segments that share endpoints and don't have intersections between them.
+ * This optimization reduces the total number of segments while preserving geometry.
+ * 
+ * @param segments - Array of segments in a continuous sequence
+ * @returns Optimized array with consecutive segments merged
+ */
+function concatenateConsecutiveSegments(segments: TrimSegment[]): TrimSegment[] {
+  if (segments.length <= 1) return segments;
+
+  const result: TrimSegment[] = [];
+  let currentGroup: TrimSegment[] = [segments[0]];
+
+  for (let i = 1; i < segments.length; i++) {
+    const prev = currentGroup[currentGroup.length - 1];
+    const curr = segments[i];
+
+    // Check if current segment connects to the previous (endpoint matches startpoint)
+    const connects =
+      Math.abs(prev.endPoint.x - curr.startPoint.x) < 0.01 &&
+      Math.abs(prev.endPoint.y - curr.startPoint.y) < 0.01;
+
+    // Check if either segment has intersections at the connection point
+    // If prev has endIntersectionId or curr has startIntersectionId, we can't merge
+    const hasIntersectionAtJoin = prev.endIntersectionId || curr.startIntersectionId;
+
+    if (connects && !hasIntersectionAtJoin) {
+      // Can merge - add to current group
+      currentGroup.push(curr);
+    } else {
+      // Can't merge - finalize current group and start new one
+      if (currentGroup.length > 1) {
+        // Merge the group into a single segment
+        const merged = mergeSegments(currentGroup);
+        result.push(merged);
+      } else {
+        // Single segment, keep as-is  
+        result.push(currentGroup[0]);
+      }
+      currentGroup = [curr];
+    }
+  }
+
+  // Handle the last group
+  if (currentGroup.length > 1) {
+    const merged = mergeSegments(currentGroup);
+    result.push(merged);
+  } else if (currentGroup.length === 1) {
+    result.push(currentGroup[0]);
+  }
+
+  return result;
+}
+
+/**
+ * Merges multiple consecutive segments into a single segment.
+ */
+function mergeSegments(segments: TrimSegment[]): TrimSegment {
+  // Concatenate all path data
+  const pathData = concatenateSegmentPathData(segments) || segments[0].pathData;
+
+  return {
+    id: segments[0].id, // Keep the first segment's ID
+    pathId: segments[0].pathId,
+    subPathIndex: segments[0].subPathIndex,
+    startPoint: segments[0].startPoint,
+    endPoint: segments[segments.length - 1].endPoint,
+    startIntersectionId: segments[0].startIntersectionId,
+    endIntersectionId: segments[segments.length - 1].endIntersectionId,
+    pathData,
+    boundingBox: {
+      minX: Math.min(...segments.map(s => s.boundingBox.minX)),
+      minY: Math.min(...segments.map(s => s.boundingBox.minY)),
+      maxX: Math.max(...segments.map(s => s.boundingBox.maxX)),
+      maxY: Math.max(...segments.map(s => s.boundingBox.maxY)),
+    },
+    originalSegmentIndices: segments.flatMap(s => s.originalSegmentIndices),
+    style: segments[0].style,
+  };
+}
+
+/**
  * Reconstructs paths from remaining segments after trimming.
  * 
  * @param allSegments - All segments after splitting
@@ -638,61 +845,147 @@ export function reconstructPathsFromSegments(
   const reconstructedPaths: ReconstructedPath[] = [];
 
   try {
+    // DEBUG: Log what we're removing
+    console.group('🔧 reconstructPathsFromSegments DEBUG');
+    console.log('Total segments:', allSegments.length);
+    console.log('Segments to remove:', segmentIdsToRemove.length, segmentIdsToRemove);
+
+    // Show which segments are being removed and from which paths
+    const removedSegments = allSegments.filter(s => segmentIdsToRemove.includes(s.id));
+    console.log('\n📍 Segments being removed:');
+    removedSegments.forEach(seg => {
+      console.log(`  - ${seg.id.substring(0, 20)}... from pathId: ${seg.pathId.substring(0, 20)}..., subPath: ${seg.subPathIndex}`);
+    });
+
     // Filter out removed segments
     const remainingSegments = allSegments.filter(s => !segmentIdsToRemove.includes(s.id));
+    console.log('\n✅ Remaining segments:', remainingSegments.length);
 
-    // Group remaining segments by original path
+    // Group remaining segments by original path ONLY (not by subpath)
     const segmentsByPath = new Map<string, TrimSegment[]>();
     for (const segment of remainingSegments) {
-      if (!segmentsByPath.has(segment.pathId)) {
-        segmentsByPath.set(segment.pathId, []);
+      const pathId = segment.pathId;
+      if (!segmentsByPath.has(pathId)) {
+        segmentsByPath.set(pathId, []);
       }
-      segmentsByPath.get(segment.pathId)!.push(segment);
+      segmentsByPath.get(pathId)!.push(segment);
     }
 
-    // Process each group
-    for (const [pathId, segments] of segmentsByPath.entries()) {
+    console.log('\n📊 Grouped by pathId:');
+    segmentsByPath.forEach((segments, pathId) => {
+      console.log(`  ${pathId}: ${segments.length} segments`);
+    });
+
+    // Process each path
+    for (const [pathId, pathSegments] of segmentsByPath.entries()) {
       const originalPath = originalPaths.get(pathId);
       if (!originalPath) continue;
 
-      // Find continuous sequences of segments
-      const sequences = findContinuousSequences(segments);
+      console.log(`\n🔨 Processing path ${pathId}:`);
 
-      for (const sequence of sequences) {
-        // Concatenate path data
-        const concatenatedPathData = concatenateSegmentPathData(sequence);
-        
-        if (!concatenatedPathData) continue;
-
-        const isClosed = isSequenceClosed(sequence);
-
-        const reconstructed: ReconstructedPath = {
-          id: generateId(),
-          pathData: concatenatedPathData,
-          style: {
-            strokeWidth: originalPath.data.strokeWidth,
-            strokeColor: originalPath.data.strokeColor,
-            strokeOpacity: originalPath.data.strokeOpacity,
-            fillColor: isClosed ? originalPath.data.fillColor : 'none',
-            fillOpacity: isClosed ? originalPath.data.fillOpacity : 0,
-            strokeLinecap: originalPath.data.strokeLinecap,
-            strokeLinejoin: originalPath.data.strokeLinejoin,
-            fillRule: originalPath.data.fillRule,
-            strokeDasharray: originalPath.data.strokeDasharray,
-          },
-          isClosed,
-          sourcePathId: pathId,
-          containsSegmentIds: sequence.map(s => s.id),
-          transform: originalPath.data.transform,
-        };
-
-        reconstructedPaths.push(reconstructed);
+      // Group segments by subPathIndex within this path
+      const segmentsBySubPath = new Map<number, TrimSegment[]>();
+      for (const segment of pathSegments) {
+        const subPathIndex = segment.subPathIndex;
+        if (!segmentsBySubPath.has(subPathIndex)) {
+          segmentsBySubPath.set(subPathIndex, []);
+        }
+        segmentsBySubPath.get(subPathIndex)!.push(segment);
       }
+
+      console.log(`  Has ${segmentsBySubPath.size} subpath(s)`);
+
+      // Reconstruct each subpath separately
+      const subPathDataArray: string[] = [];
+      const allSegmentIds: string[] = [];
+      const allSegments: TrimSegment[] = []; // Preserve actual segments
+
+      // Process subpaths in order
+      const sortedSubPathIndices = Array.from(segmentsBySubPath.keys()).sort((a, b) => a - b);
+
+      for (const subPathIndex of sortedSubPathIndices) {
+        const subPathSegments = segmentsBySubPath.get(subPathIndex)!;
+        console.log(`  SubPath ${subPathIndex}: ${subPathSegments.length} segment(s)`);
+
+        // Log details about the segments in this subpath
+        console.group(`    Segments in subpath ${subPathIndex}:`);
+        subPathSegments.forEach((seg, idx) => {
+          console.log(`      ${idx}: ${seg.id.substring(0, 20)}... start:(${seg.startPoint.x.toFixed(1)}, ${seg.startPoint.y.toFixed(1)}) end:(${seg.endPoint.x.toFixed(1)}, ${seg.endPoint.y.toFixed(1)})`);
+        });
+        console.groupEnd();
+
+        // Find continuous sequences within this subpath
+        const sequences = findContinuousSequences(subPathSegments);
+        console.log(`    Found ${sequences.length} continuous sequence(s)`);
+
+        // Log details about each sequence
+        sequences.forEach((seq, seqIdx) => {
+          console.log(`      Sequence ${seqIdx}: ${seq.length} segments`);
+        });
+
+        for (const sequence of sequences) {
+          // OPTIMIZATION: Concatenate consecutive segments that don't have intersections between them
+          const optimizedSequence = concatenateConsecutiveSegments(sequence);
+          if (optimizedSequence.length < sequence.length) {
+            console.log(`      🔧 Optimized from ${sequence.length} to ${optimizedSequence.length} segments`);
+          }
+
+          const pathData = concatenateSegmentPathData(optimizedSequence);
+          if (pathData) {
+            console.log(`      ✅ Generated path data (${pathData.length} chars): ${pathData.substring(0, 80)}...`);
+            subPathDataArray.push(pathData);
+            allSegmentIds.push(...optimizedSequence.map(s => s.id));
+            allSegments.push(...optimizedSequence); // Keep the actual segments
+          } else {
+            console.warn(`      ⚠️ Failed to generate path data for sequence`);
+          }
+        }
+      }
+
+      if (subPathDataArray.length === 0) continue;
+
+      // Combine all subpath data into a single path string
+      // Each subpath already starts with M (moveto), so joining them preserves separation
+      const combinedPathData = subPathDataArray.join(' ');
+
+      // Determine if the overall path is closed (if any subpath is closed)
+      const hasClosedSubPath = sortedSubPathIndices.some(idx => {
+        const segs = segmentsBySubPath.get(idx)!;
+        const sequences = findContinuousSequences(segs);
+        return sequences.some(seq => isSequenceClosed(seq));
+      });
+
+      const reconstructed: ReconstructedPath = {
+        id: generateId(),
+        pathData: combinedPathData,
+        style: {
+          strokeWidth: originalPath.data.strokeWidth,
+          strokeColor: originalPath.data.strokeColor,
+          strokeOpacity: originalPath.data.strokeOpacity,
+          fillColor: hasClosedSubPath ? originalPath.data.fillColor : 'none',
+          fillOpacity: hasClosedSubPath ? originalPath.data.fillOpacity : 0,
+          strokeLinecap: originalPath.data.strokeLinecap,
+          strokeLinejoin: originalPath.data.strokeLinejoin,
+          fillRule: originalPath.data.fillRule,
+          strokeDasharray: originalPath.data.strokeDasharray,
+        },
+        isClosed: hasClosedSubPath,
+        sourcePathId: pathId,
+        containsSegmentIds: allSegmentIds,
+        reconstructedSegments: allSegments, // Include the actual segments
+        transform: originalPath.data.transform,
+      };
+
+      reconstructedPaths.push(reconstructed);
     }
+
+    console.log(`\n✨ Created ${reconstructedPaths.length} reconstructed path(s)`);
+    console.groupEnd();
 
     // Run a sanitation pass to remove stray duplicates and insignificant fragments
     return sanitizeReconstructedPaths(reconstructedPaths);
   } catch (_error) {
+    console.groupEnd();
     return [];
   }
 }
@@ -726,7 +1019,7 @@ export function sanitizeReconstructedPaths(paths: ReconstructedPath[]): Reconstr
         const length = p.length || 0;
         const segments = p.segments ? p.segments.length : 0;
         p.remove();
-        
+
         // Only consider insignificant if:
         // - Has less than 2 segments (degenerate - just a point)
         // - Or has nearly zero length (< 0.1 pixels)
@@ -812,7 +1105,10 @@ function findContinuousSequences(segments: TrimSegment[]): TrimSegment[][] {
       foundNext = false;
       for (const candidate of segments) {
         if (used.has(candidate.id)) continue;
-        
+        // CRITICAL: Only connect segments from the same original path AND sub-path
+        if (candidate.pathId !== startSegment.pathId) continue;
+        if (candidate.subPathIndex !== startSegment.subPathIndex) continue;
+
         if (pointsMatch(candidate.startPoint, currentEnd)) {
           sequence.push(candidate);
           used.add(candidate.id);
@@ -834,7 +1130,7 @@ function findContinuousSequences(segments: TrimSegment[]): TrimSegment[][] {
  */
 function isSequenceClosed(segments: TrimSegment[]): boolean {
   if (segments.length === 0) return false;
-  
+
   const TOLERANCE = 0.1;
   const first = segments[0];
   const last = segments[segments.length - 1];
@@ -855,6 +1151,13 @@ function concatenateSegmentPathData(segments: TrimSegment[]): string | null {
   if (segments.length === 0) return null;
 
   try {
+    // CRITICAL FIX: If there's only one segment, return its pathData directly
+    // without processing through Paper.js. Paper.js can truncate complex closed paths
+    // during pathData re-serialization, especially for paths with many curves.
+    if (segments.length === 1) {
+      return segments[0].pathData;
+    }
+
     const combinedPath = new paper.Path();
     const tolerance = 0.05;
 
@@ -873,17 +1176,17 @@ function concatenateSegmentPathData(segments: TrimSegment[]): string | null {
 
       // Check if segments connect (within tolerance)
       const pointsConnect = targetLast.point.isClose(sourceFirst.point, tolerance);
-      
+
       if (pointsConnect) {
         // Points connect: merge the overlapping point while preserving all handles
         // The key insight: targetLast already has the correct handleOut from its original curve
         // We just need to update it with sourceFirst's handleOut if it exists
-        
+
         if (sourceFirst.handleOut && !sourceFirst.handleOut.isZero()) {
           // If the source has a handleOut, use it (this is the start of a curve)
           targetLast.handleOut = sourceFirst.handleOut.clone();
         }
-        
+
         // Add remaining segments from source (skip the first one as it's merged)
         for (let j = 1; j < segPath.segments.length; j++) {
           combinedPath.add(segPath.segments[j].clone());
@@ -895,11 +1198,11 @@ function concatenateSegmentPathData(segments: TrimSegment[]): string | null {
           // Source is reversed, reverse it
           segPath.reverse();
           sourceFirst = segPath.segments[0];
-          
+
           if (sourceFirst.handleOut && !sourceFirst.handleOut.isZero()) {
             targetLast.handleOut = sourceFirst.handleOut.clone();
           }
-          
+
           for (let j = 1; j < segPath.segments.length; j++) {
             combinedPath.add(segPath.segments[j].clone());
           }
@@ -914,7 +1217,7 @@ function concatenateSegmentPathData(segments: TrimSegment[]): string | null {
 
     // Check if this forms a closed loop
     const isClosed = isSequenceClosed(segments);
-    
+
     // CRITICAL FIX for closed paths:
     // When we have a closed path, the last segment's endpoint matches the first segment's startpoint.
     // Paper.js, when marking a path as closed, will automatically connect these points.
@@ -924,26 +1227,37 @@ function concatenateSegmentPathData(segments: TrimSegment[]): string | null {
     // Solution: For closed paths, we need to update the FIRST segment's handleIn
     // with the closing curve's handles, then mark the path as closed.
     // This way, Paper.js will create the closing curve with the correct handles.
-    
+
     if (isClosed && combinedPath.segments.length > 0) {
       const firstSegment = combinedPath.segments[0];
       const lastSegment = combinedPath.segments[combinedPath.segments.length - 1];
-      
+
       // If the last point matches the first point, we need to update the first segment's
       // handleIn to preserve the closing curve geometry
       if (firstSegment.point.isClose(lastSegment.point, 0.5)) { // Increased tolerance for closing paths
         // The last segment was the closing segment going back to the first point
-        // We need to preserve its handleOut as the first segment's handleIn
+        // We need to preserve its handleIn as the first segment's handleIn
         if (lastSegment.handleIn && !lastSegment.handleIn.isZero()) {
           firstSegment.handleIn = lastSegment.handleIn.clone();
         }
-        // Remove the duplicate endpoint
-        combinedPath.removeSegment(combinedPath.segments.length - 1);
+
+        // CRITICAL FIX: Only remove the duplicate endpoint if it's truly just a duplicate point
+        // with no curve information (both handleIn and handleOut are zero).
+        // If the last segment has curve handles, it represents the closing curve and must be kept!
+        const hasNoCurveData =
+          (!lastSegment.handleIn || lastSegment.handleIn.isZero()) &&
+          (!lastSegment.handleOut || lastSegment.handleOut.isZero());
+
+        if (hasNoCurveData) {
+          // Safe to remove - it's just a duplicate endpoint with no curve info
+          combinedPath.removeSegment(combinedPath.segments.length - 1);
+        }
+        // Otherwise, keep the last segment as it contains the closing curve
       }
-      
+
       combinedPath.closed = true;
     }
-    
+
     const pathData = combinedPath.pathData;
     combinedPath.remove();
 

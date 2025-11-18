@@ -6,6 +6,7 @@ import paper from 'paper';
 import {
   findSegmentsAlongPath,
   reconstructPathsFromSegments,
+  computePathIntersections,
 } from '../../utils/trimPathGeometry';
 import { trimPathCache } from './cache';
 
@@ -36,50 +37,50 @@ export interface TrimPathPluginSlice {
   trimPath: {
     /** Whether the trim tool is currently active */
     isActive: boolean;
-    
+
     /** Result of splitting paths by intersections (when tool is active) */
     splitResult: SplitPathResult | null;
-    
+
     /** ID of the segment currently under the cursor */
     hoveredSegmentId: string | null;
-    
+
     /** IDs of segments marked for removal (during drag) */
     markedSegmentIds: string[];
-    
+
     /** Whether the user is currently dragging to mark multiple segments */
     isDragging: boolean;
-    
+
     /** Path traced by cursor during drag operation */
     cursorPath: Point[];
   };
 
   /** Activates the trim tool with currently selected paths */
   activateTrimTool: () => void;
-  
+
   /** Deactivates the trim tool and clears state */
   deactivateTrimTool: () => void;
-  
+
   /** Refreshes the cache when selection or paths change */
   refreshTrimCache: () => void;
-  
+
   /** Updates which segment is hovered */
   setHoveredSegment: (segmentId: string | null) => void;
-  
+
   /** Starts a drag operation to mark multiple segments */
   startTrimDrag: (startPoint: Point) => void;
-  
+
   /** Updates the drag path and marks intersected segments */
   updateTrimDrag: (currentPoint: Point) => void;
-  
+
   /** Completes the drag operation and applies trim to marked segments */
   finishTrimDrag: () => void;
-  
+
   /** Cancels the drag operation without applying changes */
   cancelTrimDrag: () => void;
-  
+
   /** Trims a single segment (click operation) */
   trimSegment: (segmentId: string) => void;
-  
+
   /** Debug method: Logs detailed information about paths and segments */
   debugTrimState: () => void;
 }
@@ -106,16 +107,16 @@ export const createTrimPathPluginSlice: StateCreator<
   // Actions
   activateTrimTool: () => {
     const selectedIds = (get() as CanvasStore & TrimPathPluginSlice).selectedIds || [];
-    
+
     // Use the helper function to calculate trim state
     recalculateTrimState(selectedIds, get as () => CanvasStore & TrimPathPluginSlice, set as (partial: Partial<CanvasStore & TrimPathPluginSlice>) => void);
   },
 
   deactivateTrimTool: () => {
-     
+
     // Clear the cache when deactivating
     trimPathCache.clear();
-    
+
     set({
       trimPath: {
         isActive: false,
@@ -130,7 +131,7 @@ export const createTrimPathPluginSlice: StateCreator<
 
   refreshTrimCache: () => {
     const state = get() as CanvasStore & TrimPathPluginSlice;
-    
+
     // Only refresh if trim tool is active
     if (!state.trimPath?.isActive) {
       return;
@@ -138,7 +139,7 @@ export const createTrimPathPluginSlice: StateCreator<
 
     const selectedIds = state.selectedIds || [];
     const elements = state.elements || [];
-    
+
     // Get the path elements by IDs
     const currentPaths = elements.filter(
       (el) => selectedIds.includes(el.id) && el.type === 'path'
@@ -165,7 +166,7 @@ export const createTrimPathPluginSlice: StateCreator<
   },
 
   setHoveredSegment: (segmentId: string | null) => {
-     
+
     set({
       trimPath: {
         ...get().trimPath,
@@ -175,7 +176,7 @@ export const createTrimPathPluginSlice: StateCreator<
   },
 
   startTrimDrag: (startPoint: Point) => {
-     
+
     set({
       trimPath: {
         ...get().trimPath,
@@ -188,14 +189,14 @@ export const createTrimPathPluginSlice: StateCreator<
 
   updateTrimDrag: (currentPoint: Point) => {
     const currentTrimPath = get().trimPath;
-    
+
     if (!currentTrimPath.isDragging) {
       return;
     }
 
     // Get splitResult from cache or state
     const splitResult = currentTrimPath.splitResult || trimPathCache.get();
-    
+
     if (!splitResult) {
       return;
     }
@@ -218,7 +219,7 @@ export const createTrimPathPluginSlice: StateCreator<
 
   finishTrimDrag: () => {
     const currentTrimPath = get().trimPath;
-     
+
     if (!currentTrimPath.isDragging || currentTrimPath.markedSegmentIds.length === 0) {
       // Cancel if no segments marked
       get().cancelTrimDrag();
@@ -243,7 +244,7 @@ export const createTrimPathPluginSlice: StateCreator<
   },
 
   cancelTrimDrag: () => {
-     
+
     set({
       trimPath: {
         ...get().trimPath,
@@ -255,10 +256,10 @@ export const createTrimPathPluginSlice: StateCreator<
   },
 
   trimSegment: (segmentId: string) => {
-     
+
     // Apply trim to single segment
     applyTrim([segmentId], get as () => CanvasStore & TrimPathPluginSlice, set as (partial: Partial<CanvasStore & TrimPathPluginSlice>) => void);
-    
+
     // Recompute intersections with new paths
     get().activateTrimTool();
   },
@@ -270,7 +271,7 @@ export const createTrimPathPluginSlice: StateCreator<
     const elements = state.elements || [];
 
     console.group('🔍 Trim Path Debug Info');
-    
+
     // 1. Tool State
     console.log('\n📌 Tool State:');
     console.log('  - Active:', trimPath.isActive);
@@ -287,12 +288,12 @@ export const createTrimPathPluginSlice: StateCreator<
     selectedPaths.forEach((path, index) => {
       console.group(`  Path ${index + 1}: ${path.id}`);
       console.log('    SubPaths:', path.data.subPaths.length);
-      
+
       path.data.subPaths.forEach((subPath, spIndex) => {
         const pathData = convertSubPathToSVGPathData(subPath);
         console.log(`    SubPath ${spIndex + 1}:`, pathData);
       });
-      
+
       console.log('    Style:', {
         strokeWidth: path.data.strokeWidth,
         strokeColor: path.data.strokeColor,
@@ -324,7 +325,7 @@ export const createTrimPathPluginSlice: StateCreator<
         param2: inter.parameter2.toFixed(3),
       });
     });
-    
+
     // 4.5 Group intersections by path and curve for better analysis
     console.log('\n🔗 Intersections by Path and Curve:');
     const intersByPathAndCurve = new Map<string, Map<number, TrimIntersection[]>>();
@@ -338,7 +339,7 @@ export const createTrimPathPluginSlice: StateCreator<
         curvesMap1.set(inter.segmentIndex1, []);
       }
       curvesMap1.get(inter.segmentIndex1)!.push(inter);
-      
+
       // Process path2
       if (!intersByPathAndCurve.has(inter.pathId2)) {
         intersByPathAndCurve.set(inter.pathId2, new Map());
@@ -349,23 +350,23 @@ export const createTrimPathPluginSlice: StateCreator<
       }
       curvesMap2.get(inter.segmentIndex2)!.push(inter);
     });
-    
+
     intersByPathAndCurve.forEach((curvesMap, pathId) => {
       const pathElement = selectedPaths.find(p => p.id === pathId);
       const pathLabel = pathElement ? `${pathId.substring(0, 20)}...` : pathId;
       console.group(`  Path: ${pathLabel}`);
-      
+
       curvesMap.forEach((inters, curveIndex) => {
-        console.log(`    Curve ${curveIndex}: ${inters.length} intersection(s)`, 
+        console.log(`    Curve ${curveIndex}: ${inters.length} intersection(s)`,
           inters.map(i => `(${i.point.x.toFixed(1)}, ${i.point.y.toFixed(1)})`));
       });
-      
+
       console.groupEnd();
     });
 
     // 5. Segments
     console.log('\n✂️ Trim Segments:', segments.length);
-    
+
     // Group segments by pathId
     const segmentsByPath = new Map<string, typeof segments>();
     segments.forEach(seg => {
@@ -377,12 +378,12 @@ export const createTrimPathPluginSlice: StateCreator<
 
     segmentsByPath.forEach((segs, pathId) => {
       console.group(`  📍 Path: ${pathId} (${segs.length} segments)`);
-      
+
       segs.forEach((seg, index) => {
         const isHovered = seg.id === trimPath.hoveredSegmentId;
         const isMarked = trimPath.markedSegmentIds.includes(seg.id);
         const status = isMarked ? '🔴 MARKED' : isHovered ? '🟡 HOVERED' : '⚪️';
-        
+
         console.group(`    ${status} Segment ${index + 1}: ${seg.id}`);
         console.log('      Start:', `(${seg.startPoint.x.toFixed(2)}, ${seg.startPoint.y.toFixed(2)})`);
         console.log('      End:', `(${seg.endPoint.x.toFixed(2)}, ${seg.endPoint.y.toFixed(2)})`);
@@ -395,7 +396,7 @@ export const createTrimPathPluginSlice: StateCreator<
         });
         console.groupEnd();
       });
-      
+
       console.groupEnd();
     });
 
@@ -419,7 +420,7 @@ function applyTrim(
   set: (partial: Partial<CanvasStore & TrimPathPluginSlice>) => void
 ) {
   const currentTrimPath = get().trimPath;
-  
+
   if (!currentTrimPath.splitResult) {
     console.error('Cannot apply trim: no split result');
     return;
@@ -442,7 +443,7 @@ function applyTrim(
     (el) => !originalPathIds.includes(el.id)
   );
 
-  // Add reconstructed paths
+  // Add reconstructed paths  
   const newElements = [
     ...elementsWithoutOriginals,
     ...reconstructedPaths.map((rp, index) => ({
@@ -475,8 +476,38 @@ function applyTrim(
     state.selectElements(newPathIds);
   }
 
-  // Recalculate intersections with filtered validation to avoid false intersections
-  recalculateTrimState(newPathIds, get as () => CanvasStore & TrimPathPluginSlice, set as (partial: Partial<CanvasStore & TrimPathPluginSlice>) => void);
+  // Get the new path elements
+  const newPathElements = newElements.filter(
+    (el) => newPathIds.includes(el.id) && el.type === 'path'
+  ) as PathElement[];
+
+  // Collect all reconstructed segments (preserving structure!)
+  const allReconstructedSegments = reconstructedPaths.flatMap(rp => rp.reconstructedSegments);
+
+  // Recompute intersections (we need to do this with the new paths)
+  const newIntersections = computePathIntersections(newPathElements);
+
+  // Use refreshWithSegments instead of refresh to preserve segment structure
+  const splitResult = trimPathCache.refreshWithSegments(
+    newPathElements,
+    allReconstructedSegments,
+    newIntersections
+  );
+
+  if (splitResult) {
+    // Update trim state with new split result
+    set({
+      trimPath: {
+        ...get().trimPath,
+        isActive: true,
+        splitResult,
+        hoveredSegmentId: null,
+        markedSegmentIds: [],
+        isDragging: false,
+        cursorPath: [],
+      },
+    });
+  }
 }
 
 /**
@@ -529,119 +560,192 @@ function recalculateTrimState(
 }
 
 /**
- * Parses SVG path data string into SubPath array using Paper.js.
+ * Parses SVG path data string into SubPath array by splitting on M commands.
+ * This avoids the data loss that occurs with Paper.js importSVG round-trips.
  */
 function parsePathDataToSubPaths(pathData: string): SubPath[] {
   try {
-    const paperPath = new paper.Path(pathData);
-    const subPaths: SubPath[] = [];
-    const commands: Command[] = [];
+    console.group('🔍 parsePathDataToSubPaths DEBUG');
+    console.log('Input path data:', pathData);
+    console.log('Input length:', pathData.length);
 
-    // Helper function to round with precision
-    const roundToPrecision = (value: number, precision = 2): number => {
-      const multiplier = Math.pow(10, precision);
-      return Math.round(value * multiplier) / multiplier;
-    };
+    // Split path data by M commands (case insensitive)
+    // This regex captures M/m and the rest of the path data until the next M/m
+    const pathDataTrimmed = pathData.trim();
+    const subPathStrings: string[] = [];
 
-    // Convert Paper.js segments to our Command format
-    for (let i = 0; i < paperPath.segments.length; i++) {
-      const segment = paperPath.segments[i];
-      const point = segment.point;
+    // Find all M or m commands and split there
+    const mCommandRegex = /[Mm]/g;
+    let match;
+    const mPositions: number[] = [0]; // Start position
 
-      if (i === 0) {
-        // First segment is always a MoveTo
-        commands.push({
-          type: 'M',
-          position: { x: roundToPrecision(point.x), y: roundToPrecision(point.y) },
-        });
-      } else {
-        const prevSegment = paperPath.segments[i - 1];
-        
-        // Check if this is a curve or a line
-        if (prevSegment.handleOut.isZero() && segment.handleIn.isZero()) {
-          // Straight line
-          commands.push({
-            type: 'L',
-            position: { x: roundToPrecision(point.x), y: roundToPrecision(point.y) },
-          });
-        } else {
-          // Cubic Bezier curve
-          const cp1 = prevSegment.point.add(prevSegment.handleOut);
-          const cp2 = point.add(segment.handleIn);
-          
-          const anchorPoint = { x: roundToPrecision(point.x), y: roundToPrecision(point.y) };
-          
-          commands.push({
-            type: 'C',
-            controlPoint1: {
-              x: roundToPrecision(cp1.x),
-              y: roundToPrecision(cp1.y),
-              commandIndex: i,
-              pointIndex: 0,
-              anchor: { x: roundToPrecision(prevSegment.point.x), y: roundToPrecision(prevSegment.point.y) },
-              isControl: true,
-            },
-            controlPoint2: {
-              x: roundToPrecision(cp2.x),
-              y: roundToPrecision(cp2.y),
-              commandIndex: i,
-              pointIndex: 1,
-              anchor: anchorPoint,
-              isControl: true,
-            },
-            position: anchorPoint,
-          });
-        }
+    while ((match = mCommandRegex.exec(pathDataTrimmed)) !== null) {
+      if (match.index > 0) { // Skip the first M at position 0
+        mPositions.push(match.index);
       }
     }
 
-    // Add close path command if the path is closed
-    if (paperPath.closed && commands.length > 0) {
-      // Check if there's a closing curve (from last segment back to first)
-      const lastSegment = paperPath.segments[paperPath.segments.length - 1];
-      const firstSegment = paperPath.segments[0];
-      
-      // If the first segment has handleIn, we need to create the closing curve command
-      if (!firstSegment.handleIn.isZero() || !lastSegment.handleOut.isZero()) {
-        const cp1 = lastSegment.point.add(lastSegment.handleOut);
-        const cp2 = firstSegment.point.add(firstSegment.handleIn);
-        
+    console.log('M command positions found:', mPositions);
+
+    // Extract subpath strings
+    for (let i = 0; i < mPositions.length; i++) {
+      const start = mPositions[i];
+      const end = i < mPositions.length - 1 ? mPositions[i + 1] : pathDataTrimmed.length;
+      const subPathStr = pathDataTrimmed.substring(start, end).trim();
+      if (subPathStr) {
+        console.log(`SubPath ${i} string (chars ${start}-${end}):`, subPathStr.substring(0, 100) + (subPathStr.length > 100 ? '...' : ''));
+        subPathStrings.push(subPathStr);
+      }
+    }
+
+    console.log(`Total subpath strings extracted: ${subPathStrings.length}`);
+
+    // If no M commands found, treat entire string as one subpath
+    if (subPathStrings.length === 0 && pathDataTrimmed) {
+      console.warn('No M commands found, using entire string as one subpath');
+      subPathStrings.push(pathDataTrimmed);
+    }
+
+    // Parse each subpath string using Paper.js
+    const subPaths: SubPath[] = [];
+
+    for (let i = 0; i < subPathStrings.length; i++) {
+      const subPathStr = subPathStrings[i];
+      console.group(`Parsing subpath ${i}:`);
+      try {
+        // Use Paper.js to parse this single subpath
+        const paperPath = new paper.Path(subPathStr);
+        console.log('Paper.js path created:');
+        console.log('  - Segments:', paperPath.segments.length);
+        console.log('  - Length:', paperPath.length);
+        console.log('  - Closed:', paperPath.closed);
+        console.log('  - Path data:', paperPath.pathData.substring(0, 100) + (paperPath.pathData.length > 100 ? '...' : ''));
+
+        const commands = pathToCommands(paperPath);
+        console.log('  - Commands generated:', commands.length);
+        paperPath.remove();
+
+        if (commands.length > 0) {
+          subPaths.push(commands);
+          console.log('  ✅ SubPath added successfully');
+        } else {
+          console.warn('  ⚠️ No commands generated from Paper.js path');
+        }
+      } catch (error) {
+        console.error(`  ❌ Error parsing subpath ${i}:`, error);
+      }
+      console.groupEnd();
+    }
+
+    console.log(`Total subpaths parsed: ${subPaths.length}`);
+    console.groupEnd();
+
+    return subPaths.length > 0 ? subPaths : [[{ type: 'M', position: { x: 0, y: 0 } }]];
+  } catch (error) {
+    console.error('Error parsing path data to subpaths:', error);
+    console.groupEnd();
+    // Return minimal fallback
+    return [[{ type: 'M', position: { x: 0, y: 0 } }]];
+  }
+}
+
+// Helper function to round with precision
+function roundToPrecision(value: number, precision = 2): number {
+  const multiplier = Math.pow(10, precision);
+  return Math.round(value * multiplier) / multiplier;
+}
+
+// Helper to convert a single Paper.js Path to Command array
+function pathToCommands(paperPath: paper.Path): Command[] {
+  const commands: Command[] = [];
+
+  // Convert Paper.js segments to our Command format
+  for (let i = 0; i < paperPath.segments.length; i++) {
+    const segment = paperPath.segments[i];
+    const point = segment.point;
+
+    if (i === 0) {
+      // First segment is always a MoveTo
+      commands.push({
+        type: 'M',
+        position: { x: roundToPrecision(point.x), y: roundToPrecision(point.y) },
+      });
+    } else {
+      const prevSegment = paperPath.segments[i - 1];
+
+      // Check if this is a curve or a line
+      if (prevSegment.handleOut.isZero() && segment.handleIn.isZero()) {
+        // Straight line
+        commands.push({
+          type: 'L',
+          position: { x: roundToPrecision(point.x), y: roundToPrecision(point.y) },
+        });
+      } else {
+        // Cubic Bezier curve
+        const cp1 = prevSegment.point.add(prevSegment.handleOut);
+        const cp2 = point.add(segment.handleIn);
+
+        const anchorPoint = { x: roundToPrecision(point.x), y: roundToPrecision(point.y) };
+
         commands.push({
           type: 'C',
           controlPoint1: {
             x: roundToPrecision(cp1.x),
             y: roundToPrecision(cp1.y),
-            commandIndex: paperPath.segments.length,
+            commandIndex: i,
             pointIndex: 0,
-            anchor: { x: roundToPrecision(lastSegment.point.x), y: roundToPrecision(lastSegment.point.y) },
+            anchor: { x: roundToPrecision(prevSegment.point.x), y: roundToPrecision(prevSegment.point.y) },
             isControl: true,
           },
           controlPoint2: {
             x: roundToPrecision(cp2.x),
             y: roundToPrecision(cp2.y),
-            commandIndex: paperPath.segments.length,
+            commandIndex: i,
             pointIndex: 1,
-            anchor: { x: roundToPrecision(firstSegment.point.x), y: roundToPrecision(firstSegment.point.y) },
+            anchor: anchorPoint,
             isControl: true,
           },
-          position: { x: roundToPrecision(firstSegment.point.x), y: roundToPrecision(firstSegment.point.y) },
+          position: anchorPoint,
         });
       }
-      
-      commands.push({ type: 'Z' });
     }
-
-    paperPath.remove();
-
-    // For MVP, treat the entire path as a single subpath
-    if (commands.length > 0) {
-      subPaths.push(commands);
-    }
-
-    return subPaths;
-  } catch (error) {
-    console.error('Error parsing path data to subpaths:', error);
-    // Return minimal fallback
-    return [[{ type: 'M', position: { x: 0, y: 0 } }]];
   }
+
+  // Add close path command if the path is closed
+  if (paperPath.closed && commands.length > 0) {
+    // Check if there's a closing curve (from last segment back to first)
+    const lastSegment = paperPath.segments[paperPath.segments.length - 1];
+    const firstSegment = paperPath.segments[0];
+
+    // If the first segment has handleIn, we need to create the closing curve command
+    if (!firstSegment.handleIn.isZero() || !lastSegment.handleOut.isZero()) {
+      const cp1 = lastSegment.point.add(lastSegment.handleOut);
+      const cp2 = firstSegment.point.add(firstSegment.handleIn);
+
+      commands.push({
+        type: 'C',
+        controlPoint1: {
+          x: roundToPrecision(cp1.x),
+          y: roundToPrecision(cp1.y),
+          commandIndex: paperPath.segments.length,
+          pointIndex: 0,
+          anchor: { x: roundToPrecision(lastSegment.point.x), y: roundToPrecision(lastSegment.point.y) },
+          isControl: true,
+        },
+        controlPoint2: {
+          x: roundToPrecision(cp2.x),
+          y: roundToPrecision(cp2.y),
+          commandIndex: paperPath.segments.length,
+          pointIndex: 1,
+          anchor: { x: roundToPrecision(firstSegment.point.x), y: roundToPrecision(firstSegment.point.y) },
+          isControl: true,
+        },
+        position: { x: roundToPrecision(firstSegment.point.x), y: roundToPrecision(firstSegment.point.y) },
+      });
+    }
+
+    commands.push({ type: 'Z' });
+  }
+
+  return commands;
 }
