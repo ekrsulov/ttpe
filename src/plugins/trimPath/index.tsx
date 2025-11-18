@@ -132,6 +132,18 @@ export const trimPathPlugin: PluginDefinition<CanvasStore> = {
   // Trim Path no longer exposes a persistent panel in the UI.
   // Panels removed per UX decision; the overlay and handler remain active.
   slices: [trimPathSliceFactory],
+  
+  // Create API for external access
+  createApi: (context) => ({
+    /**
+     * Debug method: Logs detailed information about selected paths and segments.
+     * Usage from console: window.useCanvasStore.getState().debugTrimState()
+     */
+    debugTrimState: () => {
+      const state = context.store.getState() as CanvasStore & TrimPathPluginSlice;
+      state.debugTrimState?.();
+    },
+  }),
 };
 
 

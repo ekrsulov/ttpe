@@ -183,6 +183,8 @@ export function computePathIntersections(paths: PathElement[]): TrimIntersection
 
 /**
  * Splits paths into segments at their intersection points.
+ * NEW APPROACH: Works at the curve (geometric segment) level for fine-grained control.
+ * Each curve becomes an independent TrimSegment, allowing precise trimming.
  * 
  * @param paths - Original PathElements
  * @param intersections - Previously computed intersections
@@ -217,12 +219,6 @@ export function splitPathsByIntersections(
     // Process each path
     for (const path of paths) {
       const pathIntersections = intersectionsByPath.get(path.id) || [];
-      
-      if (pathIntersections.length === 0) {
-        // No intersections, treat entire path as one segment
-        // (not trimmable, but we'll include it for completeness)
-        continue;
-      }
 
       // Convert to Paper.js path
       const paperPathOriginal = convertPathDataToPaperPath(path.data);
@@ -230,7 +226,6 @@ export function splitPathsByIntersections(
       // Handle CompoundPath by processing each child separately
       const subpathsToProcess: paper.Path[] = [];
       if (paperPathOriginal instanceof paper.CompoundPath) {
-        // Extract all child paths
         for (const child of paperPathOriginal.children) {
           if (child instanceof paper.Path) {
             subpathsToProcess.push(child.clone());
@@ -242,225 +237,49 @@ export function splitPathsByIntersections(
         continue;
       }
       
-      // Process each path/subpath
-      for (let subpathIndex = 0; subpathIndex < subpathsToProcess.length; subpathIndex++) {
-        const paperPath = subpathsToProcess[subpathIndex];
-
-      // For closed paths, we DON'T open them
-      // Paper.js handles closed paths correctly when splitting
-      // The closing segment is implicit and will be part of the splits
-
-      // Sort intersections by their offset along the path
-      const sortedIntersections = pathIntersections
-        .map(inter => {
-          const point = new paper.Point(inter.point.x, inter.point.y);
-          const location = paperPath.getNearestLocation(point);
-          
-          // Store original curve information from intersection for more precision
-          const curveIndex = inter.pathId1 === path.id ? inter.segmentIndex1 : inter.segmentIndex2;
-          const curveTime = inter.pathId1 === path.id ? inter.parameter1 : inter.parameter2;
-          
-          return {
-            intersection: inter,
-            offset: location ? location.offset : 0,
-            location,
-            point: inter.point,
-            curveIndex,
-            curveTime,
-          };
-        })
-        .sort((a, b) => a.offset - b.offset);
-
-      // Remove duplicate intersections at the same point
-      // This can happen with self-intersections or when multiple paths meet at one point
-      const uniqueIntersections = sortedIntersections.filter((inter, index) => {
-        if (index === 0) return true;
-        const prev = sortedIntersections[index - 1];
-        const distance = Math.sqrt(
-          Math.pow(inter.point.x - prev.point.x, 2) + 
-          Math.pow(inter.point.y - prev.point.y, 2)
-        );
-        return distance > 0.01; // Keep only if points are different
-      });
-
-      // Use unique intersections for splitting
-      const intersectionsToUse = uniqueIntersections;
-
-      if (intersectionsToUse.length === 0) {
-        // No intersections, treat whole path as one segment
-        const firstPoint = paperPath.segments[0].point;
-        const lastPoint = paperPath.segments[paperPath.segments.length - 1].point;
-        
-        const segment: TrimSegment = {
-          id: generateId(),
-          pathId: path.id,
-          startIntersectionId: null,
-          endIntersectionId: null,
-          startPoint: { x: firstPoint.x, y: firstPoint.y },
-          endPoint: { x: lastPoint.x, y: lastPoint.y },
-          pathData: paperPath.pathData,
-          boundingBox: {
-            minX: paperPath.bounds.x,
-            minY: paperPath.bounds.y,
-            maxX: paperPath.bounds.x + paperPath.bounds.width,
-            maxY: paperPath.bounds.y + paperPath.bounds.height,
-          },
-          originalSegmentIndices: [0],
-          style: {
-            strokeWidth: path.data.strokeWidth,
-            strokeColor: path.data.strokeColor,
-            strokeOpacity: path.data.strokeOpacity,
-            strokeLinecap: path.data.strokeLinecap,
-            strokeLinejoin: path.data.strokeLinejoin,
-            strokeDasharray: path.data.strokeDasharray,
-          },
-        };
-        
-        segments.push(segment);
-        continue;
-      }
-
-      // Split the path at each intersection
-      // We need to split the path at each intersection
-      const splitSegments: Array<{
-        path: paper.Path;
-        startIntersectionId: string | null;
-        endIntersectionId: string | null;
-      }> = [];
-
-      // Strategy: Split from last intersection to first
-      // This way offsets remain stable as we work backwards
-      // Note: splitAt mutates workingPath, so we need let
-      // eslint-disable-next-line prefer-const
-      let workingPath = paperPath.clone();
-      
-      // Sort intersections by offset (ascending)
-      const intersectionsSorted = [...intersectionsToUse].sort((a, b) => {
-        const aOffset = a.location?.offset || 0;
-        const bOffset = b.location?.offset || 0;
-        return aOffset - bOffset;
-      });
-      
-
-      
-      // Split from last to first to keep offsets stable
-      for (let i = intersectionsSorted.length - 1; i >= 0; i--) {
-        const inter = intersectionsSorted[i];
-        
-        if (!inter.location) continue;
-        
-        // Get the location on the current working path
-        const intersectionPoint = new paper.Point(inter.point.x, inter.point.y);
-        const location = workingPath.getNearestLocation(intersectionPoint);
-        
-        if (!location) {
+      for (const paperPath of subpathsToProcess) {
+        if (pathIntersections.length === 0) {
+          const segment = createTrimSegmentFromPath(paperPath, path, null, null);
+          if (segment) segments.push(segment);
           continue;
         }
-        
-        // Divide the curve at this point if needed (to ensure clean split)
-        if (location.curve && location.time !== undefined) {
-          const time = location.time;
-          if (time > 0.0001 && time < 0.9999) {
-            try {
-              location.curve.divideAtTime(time);
-              // Get updated location after divide
-              const updatedLocation = workingPath.getNearestLocation(intersectionPoint);
-              if (updatedLocation) {
-                // Now split at the updated location
-                const afterPart = workingPath.splitAt(updatedLocation);
-                
-                if (afterPart && afterPart.segments.length > 0) {
-                  const nextInter = intersectionsSorted[i + 1];
-                  splitSegments.unshift({
-                    path: afterPart,
-                    startIntersectionId: inter.intersection.id,
-                    endIntersectionId: nextInter ? nextInter.intersection.id : null,
-                  });
-                }
-              }
-            } catch {
-              // Silently continue if divideAtTime fails
-            }
+
+        const curves = paperPath.curves;
+
+        for (let curveIndex = 0; curveIndex < curves.length; curveIndex++) {
+          const curve = curves[curveIndex];
+
+          const curveIntersections = pathIntersections
+            .map(inter => {
+              const isOnCurve =
+                (inter.pathId1 === path.id && inter.segmentIndex1 === curveIndex) ||
+                (inter.pathId2 === path.id && inter.segmentIndex2 === curveIndex);
+
+              if (!isOnCurve) return null;
+
+              const time = inter.pathId1 === path.id ? inter.parameter1 : inter.parameter2;
+
+              return {
+                intersection: inter,
+                time,
+                point: inter.point,
+              };
+            })
+            .filter((item): item is { intersection: TrimIntersection; time: number; point: Point } => item !== null)
+            .sort((a, b) => a.time - b.time);
+
+          if (curveIntersections.length === 0) {
+            const segment = createTrimSegmentFromCurve(curve, path, curveIndex, null, null);
+            if (segment) segments.push(segment);
           } else {
-            // At endpoint, just split directly
-            const afterPart = workingPath.splitAt(location);
-            
-            if (afterPart && afterPart.segments.length > 0) {
-              const nextInter = intersectionsSorted[i + 1];
-              splitSegments.unshift({
-                path: afterPart,
-                startIntersectionId: inter.intersection.id,
-                endIntersectionId: nextInter ? nextInter.intersection.id : null,
-              });
-            }
-          }
-        } else {
-          // No curve, just split
-          const afterPart = workingPath.splitAt(location);
-          
-          if (afterPart && afterPart.segments.length > 0) {
-            const nextInter = intersectionsSorted[i + 1];
-            splitSegments.unshift({
-              path: afterPart,
-              startIntersectionId: inter.intersection.id,
-              endIntersectionId: nextInter ? nextInter.intersection.id : null,
-            });
+            const subSegments = splitCurveAtIntersections(curve, curveIntersections, path, curveIndex);
+            segments.push(...subSegments);
           }
         }
+
+        paperPath.remove();
       }
-      
-      // Add the first segment (before the first intersection)
-      // workingPath now contains everything before the first intersection
-      if (workingPath && workingPath.segments && workingPath.segments.length > 0) {
-        splitSegments.unshift({
-          path: workingPath,
-          startIntersectionId: null,
-          endIntersectionId: intersectionsSorted[0].intersection.id,
-        });
-      }
-
-      // Create trim segments from the split parts
-      for (const { path: splitPath, startIntersectionId, endIntersectionId } of splitSegments) {
-        if (!splitPath || !splitPath.segments || splitPath.segments.length === 0) {
-          continue;
-        }
-
-        const firstPoint = splitPath.segments[0].point;
-        const lastPoint = splitPath.segments[splitPath.segments.length - 1].point;
-
-        const segment: TrimSegment = {
-          id: generateId(),
-          pathId: path.id,
-          startIntersectionId,
-          endIntersectionId,
-          startPoint: { x: firstPoint.x, y: firstPoint.y },
-          endPoint: { x: lastPoint.x, y: lastPoint.y },
-          pathData: splitPath.pathData,
-          boundingBox: {
-            minX: splitPath.bounds.x,
-            minY: splitPath.bounds.y,
-            maxX: splitPath.bounds.x + splitPath.bounds.width,
-            maxY: splitPath.bounds.y + splitPath.bounds.height,
-          },
-          originalSegmentIndices: [segments.length],
-          style: {
-            strokeWidth: path.data.strokeWidth,
-            strokeColor: path.data.strokeColor,
-            strokeOpacity: path.data.strokeOpacity,
-            strokeLinecap: path.data.strokeLinecap,
-            strokeLinejoin: path.data.strokeLinejoin,
-            strokeDasharray: path.data.strokeDasharray,
-          },
-        };
-
-        segments.push(segment);
-      }
-
-      // Clean up
-      splitSegments.forEach(p => p.path?.remove());
-      } // End of subpath loop
-    } // End of path loop
-
+    }
 
     return {
       intersections,
@@ -475,6 +294,197 @@ export function splitPathsByIntersections(
     };
   }
 }
+
+/**
+ * Creates a TrimSegment from an entire Paper.js path.
+ */
+function createTrimSegmentFromPath(
+  paperPath: paper.Path,
+  originalPath: PathElement,
+  startIntersectionId: string | null,
+  endIntersectionId: string | null
+): TrimSegment | null {
+  try {
+    if (!paperPath.segments || paperPath.segments.length === 0) return null;
+
+    const firstPoint = paperPath.segments[0].point;
+    const lastPoint = paperPath.segments[paperPath.segments.length - 1].point;
+
+    return {
+      id: generateId(),
+      pathId: originalPath.id,
+      startIntersectionId,
+      endIntersectionId,
+      startPoint: { x: firstPoint.x, y: firstPoint.y },
+      endPoint: { x: lastPoint.x, y: lastPoint.y },
+      pathData: paperPath.pathData,
+      boundingBox: {
+        minX: paperPath.bounds.x,
+        minY: paperPath.bounds.y,
+        maxX: paperPath.bounds.x + paperPath.bounds.width,
+        maxY: paperPath.bounds.y + paperPath.bounds.height,
+      },
+      originalSegmentIndices: [0],
+      style: {
+        strokeWidth: originalPath.data.strokeWidth,
+        strokeColor: originalPath.data.strokeColor,
+        strokeOpacity: originalPath.data.strokeOpacity,
+        strokeLinecap: originalPath.data.strokeLinecap,
+        strokeLinejoin: originalPath.data.strokeLinejoin,
+        strokeDasharray: originalPath.data.strokeDasharray,
+      },
+    };
+  } catch {
+    return null;
+  }
+}
+
+function createTrimSegmentFromCurve(
+  curve: paper.Curve,
+  originalPath: PathElement,
+  curveIndex: number,
+  startIntersectionId: string | null,
+  endIntersectionId: string | null
+): TrimSegment | null {
+  try {
+    const tempPath = new paper.Path();
+    tempPath.add(curve.segment1.clone());
+    tempPath.add(curve.segment2.clone());
+
+    const segment = createTrimSegmentFromPath(tempPath, originalPath, startIntersectionId, endIntersectionId);
+    tempPath.remove();
+
+    if (segment) {
+      segment.originalSegmentIndices = [curveIndex];
+    }
+
+    return segment;
+  } catch {
+    return null;
+  }
+}
+
+function splitCurveAtIntersections(
+  curve: paper.Curve,
+  curveIntersections: Array<{ intersection: TrimIntersection; time: number; point: Point }>,
+  originalPath: PathElement,
+  curveIndex: number
+): TrimSegment[] {
+  const segments: TrimSegment[] = [];
+
+  try {
+    const workingPath = new paper.Path();
+    workingPath.add(curve.segment1.clone());
+    workingPath.add(curve.segment2.clone());
+
+    const EPS = 1e-4;
+
+    const isClosedSegment =
+      (curve.path?.closed ?? false) &&
+      workingPath.firstSegment.point.getDistance(workingPath.lastSegment.point) < EPS;
+
+    const intersectionsWithOffsets = curveIntersections
+      .map(({ intersection, point }) => {
+        const location = workingPath.getLocationOf(new paper.Point(point.x, point.y));
+        if (!location || typeof location.offset !== 'number') {
+          return null;
+        }
+        return {
+          intersection,
+          offset: location.offset,
+        };
+      })
+      .filter((entry): entry is { intersection: TrimIntersection; offset: number } => entry !== null)
+      .sort((a, b) => a.offset - b.offset);
+
+    if (intersectionsWithOffsets.length === 0) {
+      const wholeSegment = createTrimSegmentFromCurve(curve, originalPath, curveIndex, null, null);
+      workingPath.remove();
+      return wholeSegment ? [wholeSegment] : [];
+    }
+
+    const dedupedOffsets: typeof intersectionsWithOffsets = [];
+    for (const entry of intersectionsWithOffsets) {
+      const last = dedupedOffsets[dedupedOffsets.length - 1];
+      if (last && Math.abs(last.offset - entry.offset) < EPS) {
+        continue;
+      }
+      dedupedOffsets.push(entry);
+    }
+
+    const partPaths: paper.Path[] = [];
+    for (let i = dedupedOffsets.length - 1; i >= 0; i--) {
+      const offset = dedupedOffsets[i].offset;
+      try {
+        const splitResult = workingPath.splitAt(offset);
+        if (splitResult) {
+          partPaths.unshift(splitResult);
+        }
+      } catch {
+        /* ignore divide errors */
+      }
+    }
+    partPaths.unshift(workingPath);
+
+    if (isClosedSegment && partPaths.length > dedupedOffsets.length) {
+      const seamHead = partPaths.shift();
+      const seamTail = partPaths.pop();
+
+      if (seamHead && seamTail) {
+        const merged = new paper.Path();
+        seamTail.segments.forEach((seg) => merged.add(seg.clone()));
+        for (let i = 1; i < seamHead.segments.length; i++) {
+          merged.add(seamHead.segments[i].clone());
+        }
+        partPaths.unshift(merged);
+        seamHead.remove();
+        seamTail.remove();
+      } else {
+        seamHead?.remove();
+        seamTail?.remove();
+      }
+    }
+
+    const entryCount = dedupedOffsets.length;
+
+    for (let i = 0; i < partPaths.length; i++) {
+      const partPath = partPaths[i];
+      if (!partPath || partPath.length < 0.01 || partPath.segments.length < 2) {
+        partPath?.remove();
+        continue;
+      }
+
+      const startIntersectionId = isClosedSegment
+        ? dedupedOffsets[(i - 1 + entryCount) % entryCount]?.intersection.id ?? null
+        : i === 0
+          ? null
+          : dedupedOffsets[i - 1]?.intersection.id ?? null;
+
+      const endIntersectionId = isClosedSegment
+        ? dedupedOffsets[i % entryCount]?.intersection.id ?? null
+        : dedupedOffsets[i]?.intersection.id ?? null;
+
+      const segment = createTrimSegmentFromPath(
+        partPath,
+        originalPath,
+        startIntersectionId,
+        endIntersectionId
+      );
+
+      partPath.remove();
+
+      if (segment) {
+        segment.originalSegmentIndices = [curveIndex];
+        segments.push(segment);
+      }
+    }
+  } catch {
+    /* noop */
+  }
+
+  return segments;
+}
+
 
 /**
  * Extracts a portion of a Paper.js path between two points.
@@ -666,11 +676,14 @@ export function sanitizeReconstructedPaths(paths: ReconstructedPath[]): Reconstr
       try {
         const p = new paper.Path(rp.pathData);
         const length = p.length || 0;
-        const area = p.bounds ? p.bounds.width * p.bounds.height : 0;
         const segments = p.segments ? p.segments.length : 0;
         p.remove();
-        // If path has one or fewer segments or length is nearly zero => discard
-        return segments <= 1 || length < 0.5 || area < 0.5;
+        
+        // Only consider insignificant if:
+        // - Has less than 2 segments (degenerate - just a point)
+        // - Or has nearly zero length (< 0.1 pixels)
+        // Note: We removed the 'area' check because a line segment has area=0 but is valid
+        return segments < 2 || length < 0.1;
       } catch {
         return true;
       }
@@ -796,58 +809,27 @@ function concatenateSegmentPathData(segments: TrimSegment[]): string | null {
   if (segments.length === 0) return null;
 
   try {
-    // Create a new path and add all segment paths to it
     const combinedPath = new paper.Path();
-    
+    const tolerance = 0.05;
+
     for (let i = 0; i < segments.length; i++) {
-      const segment = segments[i];
-      const segPath = new paper.Path(segment.pathData);
-      
-      if (segPath && segPath.segments) {
-        // For the first segment, add all segments
-        if (i === 0) {
-          for (const seg of segPath.segments) {
-            combinedPath.add(seg.clone());
-          }
-        } else {
-          // For subsequent segments, check if first point matches last point of combined path
-          const shouldMerge = combinedPath.segments.length > 0 &&
-            segPath.segments.length > 0 &&
-            combinedPath.segments[combinedPath.segments.length - 1].point.isClose(
-              segPath.segments[0].point,
-              0.01
-            );
-          
-          if (shouldMerge) {
-            // Merge the handles of the coincident point
-            // The last segment of combinedPath should get the handleOut from first segment of segPath
-            const lastSeg = combinedPath.segments[combinedPath.segments.length - 1];
-            const firstSeg = segPath.segments[0];
-            
-            // Preserve the handleOut from the new segment if it has one
-            if (!firstSeg.handleOut.isZero()) {
-              lastSeg.handleOut = firstSeg.handleOut.clone();
-            }
-            
-            // Now add the rest of the segments (skipping the first one)
-            for (let j = 1; j < segPath.segments.length; j++) {
-              combinedPath.add(segPath.segments[j].clone());
-            }
-          } else {
-            // Points don't match, add all segments
-            for (let j = 0; j < segPath.segments.length; j++) {
-              combinedPath.add(segPath.segments[j].clone());
-            }
-          }
-        }
+      const segPath = new paper.Path(segments[i].pathData);
+
+      if (combinedPath.segments.length === 0) {
+        segPath.segments.forEach(seg => combinedPath.add(seg.clone()));
+        segPath.remove();
+        continue;
       }
+
+      const merged = mergeSequentialPath(combinedPath, segPath, tolerance);
+      if (!merged) {
+        segPath.segments.forEach(seg => combinedPath.add(seg.clone()));
+      }
+
       segPath.remove();
     }
 
-    const isClosed = isSequenceClosed(segments);
-    if (isClosed) {
-      combinedPath.closePath();
-    }
+    combinedPath.closed = isSequenceClosed(segments);
 
     const pathData = combinedPath.pathData;
     combinedPath.remove();
@@ -856,4 +838,43 @@ function concatenateSegmentPathData(segments: TrimSegment[]): string | null {
   } catch (_error) {
     return null;
   }
+}
+
+function mergeSequentialPath(target: paper.Path, source: paper.Path, tolerance: number): boolean {
+  if (
+    !target.segments ||
+    target.segments.length === 0 ||
+    !source.segments ||
+    source.segments.length === 0
+  ) {
+    return false;
+  }
+
+  const targetLast = target.segments[target.segments.length - 1];
+  let sourceFirst = source.segments[0];
+
+  if (!targetLast.point.isClose(sourceFirst.point, tolerance)) {
+    const sourceLast = source.segments[source.segments.length - 1];
+    if (targetLast.point.isClose(sourceLast.point, tolerance)) {
+      source.reverse();
+      sourceFirst = source.segments[0];
+    } else {
+      return false;
+    }
+  }
+
+  const mergedSegment = new paper.Segment(
+    targetLast.point.clone(),
+    targetLast.handleIn ? targetLast.handleIn.clone() : undefined,
+    sourceFirst.handleOut ? sourceFirst.handleOut.clone() : undefined
+  );
+
+  target.removeSegment(target.segments.length - 1);
+  target.add(mergedSegment);
+
+  for (let i = 1; i < source.segments.length; i++) {
+    target.add(source.segments[i].clone());
+  }
+
+  return true;
 }
