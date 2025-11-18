@@ -169,7 +169,12 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => {
     // Clear trim cache when leaving trim mode
     if (currentMode === 'trimPath' && result.mode !== 'trimPath') {
       if ('deactivateTrimTool' in updatedState) {
-        (updatedState as any).deactivateTrimTool();
+        // Narrow the type to only include the optional method to avoid using `any`
+        type MaybeDeactivateTrim = { deactivateTrimTool?: () => void };
+        const shutdown = (updatedState as MaybeDeactivateTrim).deactivateTrimTool;
+        if (shutdown) {
+          shutdown();
+        }
       }
     }
     

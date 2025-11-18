@@ -4,13 +4,15 @@ import {
   FormControl,
   FormLabel,
   useBreakpointValue,
-  useColorMode
+  useColorMode,
+  Flex,
+  Text,
 } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { logger, LogLevel } from '../../utils';
 import { Panel } from '../../ui/Panel';
 // No icon button here - we show text label instead
-import { PanelToggle } from '../../ui/PanelToggle';
+import { PanelSwitch } from '../../ui/PanelSwitch';
 import { SliderControl } from '../../ui/SliderControl';
 import { JoinedButtonGroup } from '../../ui/JoinedButtonGroup';
 import { CustomSelect } from '../../ui/CustomSelect';
@@ -188,6 +190,17 @@ export const SettingsPanel: React.FC = () => {
           />
         </FormControl>
 
+        {/* Keyboard Movement Precision (moved after Theme) */}
+        <SliderControl
+          label="Precision:"
+          value={keyboardPrecision}
+          min={0}
+          max={4}
+          step={1}
+          onChange={handleKeyboardPrecisionChange}
+          title="Number of decimal places for keyboard movement (0 = integers only)"
+        />
+
         {/* Log Level Selector - Only in development */}
         {import.meta.env.DEV && (
           <FormControl>
@@ -203,79 +216,100 @@ export const SettingsPanel: React.FC = () => {
           </FormControl>
         )}
 
-        {/* Show Caller Info Checkbox - Only in development */}
+        {/* Show Caller Info Switch - Only in development */}
         {import.meta.env.DEV && (
-          <PanelToggle
-            isChecked={showCallerInfo}
-            onChange={(e) => handleCallerInfoToggle(e.target.checked)}
-          >
-            Show caller info in logs
-          </PanelToggle>
+          <Flex justify="space-between" align="center">
+            <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>
+              Show caller info in logs
+            </Text>
+            <PanelSwitch
+              isChecked={showCallerInfo}
+              onChange={(e) => handleCallerInfoToggle(e.target.checked)}
+              title="Show caller info in logs"
+              aria-label="Show caller info in logs"
+            />
+          </Flex>
         )}
 
         {/* Show Render Count Badges */}
         {import.meta.env.DEV && (
-          <PanelToggle
-            isChecked={settings.showRenderCountBadges}
-            onChange={(e) => updateSettings({ showRenderCountBadges: e.target.checked })}
-          >
-            Show render count badges (debug)
-          </PanelToggle>
+          <Flex justify="space-between" align="center">
+            <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>
+              Show render count badges (debug)
+            </Text>
+            <PanelSwitch
+              isChecked={settings.showRenderCountBadges}
+              onChange={(e) => updateSettings({ showRenderCountBadges: e.target.checked })}
+              title="Show render count badges"
+              aria-label="Show render count badges"
+            />
+          </Flex>
         )}
 
         {/* Show Minimap */}
         {!isMobile && (
-          <PanelToggle
-            isChecked={settings.showMinimap}
-            onChange={(e) => updateSettings({ showMinimap: e.target.checked })}
-          >
-            Show minimap
-          </PanelToggle>
+          <Flex justify="space-between" align="center">
+            <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>
+              Show minimap
+            </Text>
+            <PanelSwitch
+              isChecked={settings.showMinimap}
+              onChange={(e) => updateSettings({ showMinimap: e.target.checked })}
+              title="Show minimap"
+              aria-label="Show minimap"
+            />
+          </Flex>
         )}
 
         {/* Scale Stroke With Zoom */}
-        <PanelToggle
-          isChecked={settings.scaleStrokeWithZoom}
-          onChange={(e) => updateSettings({ scaleStrokeWithZoom: e.target.checked })}
-        >
-          Scale stroke with zoom
-        </PanelToggle>
+        <Flex justify="space-between" align="center">
+          <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>
+            Scale stroke with zoom
+          </Text>
+          <PanelSwitch
+            isChecked={settings.scaleStrokeWithZoom}
+            onChange={(e) => updateSettings({ scaleStrokeWithZoom: e.target.checked })}
+            title="Scale stroke with zoom"
+            aria-label="Scale stroke with zoom"
+          />
+        </Flex>
 
-        {/* Keyboard Movement Precision */}
-        <SliderControl
-          label="Precision:"
-          value={keyboardPrecision}
-          min={0}
-          max={4}
-          step={1}
-          onChange={handleKeyboardPrecisionChange}
-          title="Number of decimal places for keyboard movement (0 = integers only)"
-        />
+        {/* Keyboard Movement Precision (moved after Theme) */}
 
         {/* Show Tooltips - Only on desktop */}
         {!isMobile && (
-          <PanelToggle
-            isChecked={settings.showTooltips}
-            onChange={(e) => updateSettings({ showTooltips: e.target.checked })}
-          >
-            Show tooltips
-          </PanelToggle>
+          <Flex justify="space-between" align="center">
+            <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>
+              Show tooltips
+            </Text>
+            <PanelSwitch
+              isChecked={settings.showTooltips}
+              onChange={(e) => updateSettings({ showTooltips: e.target.checked })}
+              title="Show tooltips"
+              aria-label="Show tooltips"
+            />
+          </Flex>
         )}
 
         {/* Fullscreen toggle */}
-        <PanelToggle
-          isChecked={isFullscreen}
-          onChange={(e) => {
-            const checked = e.target.checked;
-            if (checked) {
-              requestFullscreen();
-            } else {
-              exitFullscreen();
-            }
-          }}
-        >
-          Full Screen
-        </PanelToggle>
+        <Flex justify="space-between" align="center">
+          <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>
+            Full Screen
+          </Text>
+          <PanelSwitch
+            isChecked={isFullscreen}
+            onChange={(e) => {
+              const checked = e.target.checked;
+              if (checked) {
+                requestFullscreen();
+              } else {
+                exitFullscreen();
+              }
+            }}
+            title="Full Screen"
+            aria-label="Full Screen"
+          />
+        </Flex>
       </VStack>
     </Panel>
   );

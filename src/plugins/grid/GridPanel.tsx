@@ -2,6 +2,7 @@ import React from 'react';
 import { VStack, Text } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Panel } from '../../ui/Panel';
+import { PanelSwitch } from '../../ui/PanelSwitch';
 import { PanelToggleGroup } from '../../ui/PanelToggleGroup';
 import { SliderControl } from '../../ui/SliderControl';
 import { PercentSliderControl } from '../../ui/PercentSliderControl';
@@ -117,13 +118,12 @@ const GridPanelComponent: React.FC = () => {
   const showParametricSettings = gridType === 'parametric';
 
   return (
-    <Panel title="Grid">
+    <Panel title="Grid" headerActions={<PanelSwitch isChecked={grid?.enabled ?? false} onChange={handleToggleGrid} title="Show Grid" aria-label="Show Grid" />}>
+      {/* Hide all internal controls when grid is disabled */}
+      {grid?.enabled ? (
       <VStack spacing={0.5} align="stretch">
         {/* Grid Type Selector */}
         <VStack spacing={1} align="stretch">
-          <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }} fontWeight="500">
-            Type
-          </Text>
           <CustomSelect
             value={gridType}
             onChange={(value) => updateGridState?.({ type: value as GridType })}
@@ -133,14 +133,9 @@ const GridPanelComponent: React.FC = () => {
           />
         </VStack>
 
-        {/* Grid toggles */}
+        {/* Grid toggles (Show moved to header) */}
         <PanelToggleGroup
           toggles={[
-            {
-              label: 'Show',
-              isChecked: grid?.enabled ?? false,
-              onChange: handleToggleGrid,
-            },
             {
               label: 'Snap',
               isChecked: grid?.snapEnabled ?? false,
@@ -317,6 +312,7 @@ const GridPanelComponent: React.FC = () => {
           </>
         )}
       </VStack>
+      ) : null}
     </Panel>
   );
 };

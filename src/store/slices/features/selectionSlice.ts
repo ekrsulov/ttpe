@@ -71,7 +71,9 @@ export const createSelectionSlice: StateCreator<CanvasStore, [], [], SelectionSl
       setTimeout(() => {
         const currentState = get() as CanvasStore;
         if ('refreshTrimCache' in currentState) {
-          (currentState as any).refreshTrimCache();
+          type MaybeRefresh = { refreshTrimCache?: () => void };
+          const refresher = (currentState as MaybeRefresh).refreshTrimCache;
+          if (refresher) refresher();
         }
       }, 0);
     }
@@ -100,7 +102,9 @@ export const createSelectionSlice: StateCreator<CanvasStore, [], [], SelectionSl
       setTimeout(() => {
         const currentState = get() as CanvasStore;
         if ('refreshTrimCache' in currentState) {
-          (currentState as any).refreshTrimCache();
+          type MaybeRefresh = { refreshTrimCache?: () => void };
+          const refresher = (currentState as MaybeRefresh).refreshTrimCache;
+          if (refresher) refresher();
         }
       }, 0);
     }

@@ -4,7 +4,6 @@ import {
   HStack,
   Box,
   Divider,
-  Switch,
   Flex,
   Heading
 } from '@chakra-ui/react';
@@ -13,6 +12,7 @@ import { PercentSliderControl } from '../../ui/PercentSliderControl';
 import { SectionHeader } from '../../ui/SectionHeader';
 import { PanelToggle } from '../../ui/PanelToggle';
 import { PanelStyledButton } from '../../ui/PanelStyledButton';
+import { PanelSwitch } from '../../ui/PanelSwitch';
 import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
 import { ObjectSnapPanel } from '../objectSnap';
 
@@ -102,7 +102,7 @@ export const EditPanel: React.FC<EditPanelProps> = ({
       <Box>
         <Flex justify="space-between" align="center">
           <Heading size="xs" fontWeight="extrabold">Add Point</Heading>
-          <Switch
+          <PanelSwitch
             isChecked={addPointMode?.isActive || false}
             onChange={(e) => {
               if (e.target.checked) {
@@ -135,7 +135,7 @@ export const EditPanel: React.FC<EditPanelProps> = ({
                 Apply
               </PanelStyledButton>
             )}
-            <Switch
+            <PanelSwitch
               isChecked={smoothBrush.isActive}
               onChange={(e) => {
                 if (e.target.checked) {

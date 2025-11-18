@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { VStack, Box } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Panel } from '../../ui/Panel';
+import { PanelSwitch } from '../../ui/PanelSwitch';
 import { PanelToggle } from '../../ui/PanelToggle';
 import { PanelToggleGroup } from '../../ui/PanelToggleGroup';
 import { SliderControl } from '../../ui/SliderControl';
@@ -44,15 +45,9 @@ const ObjectSnapPanelComponent: React.FC = () => {
   const isEnabled = objectSnap?.enabled ?? false;
 
   return (
-    <Panel title="Object Snap">
+    <Panel title="Object Snap" headerActions={<PanelSwitch isChecked={isEnabled} onChange={handleToggleObjectSnap} title="Enable OSNAP" aria-label="Enable OSNAP" />}>
       <VStack spacing={2} align="stretch">
-        {/* Enable/Disable Object Snap Toggle */}
-        <PanelToggle
-          isChecked={isEnabled}
-          onChange={handleToggleObjectSnap}
-        >
-          Enable OSNAP
-        </PanelToggle>
+        {/* Enable/Disable Object Snap Toggle (moved to header) */}
         
         {/* Show Snap Points Toggle (always visible) */}
         {isEnabled && (
