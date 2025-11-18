@@ -315,6 +315,12 @@ export const measurePlugin: PluginDefinition<CanvasStore> = {
 
     const finalPoint = snapInfo?.point ?? point;
 
+    // If there is a frozen measurement (not active but has points), clear it on click
+    if (!state.measure.measurement.isActive && state.measure.measurement.startPoint && state.measure.measurement.endPoint) {
+      api.clearMeasurement();
+      return;
+    }
+
     // If there is no active measurement, start a new one and ensure we have global listeners
     if (!state.measure.measurement.isActive) {
       api.startMeasurement(finalPoint, snapInfo);
