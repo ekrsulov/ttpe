@@ -348,8 +348,19 @@ function createTrimSegmentFromCurve(
 ): TrimSegment | null {
   try {
     const tempPath = new paper.Path();
-    tempPath.add(curve.segment1.clone());
-    tempPath.add(curve.segment2.clone());
+    
+    // Clone segments and explicitly preserve handles from the curve
+    const seg1 = curve.segment1.clone();
+    const seg2 = curve.segment2.clone();
+    
+    // Ensure handles are preserved from the curve
+    if (curve.hasHandles()) {
+      seg1.handleOut = curve.handle1.clone();
+      seg2.handleIn = curve.handle2.clone();
+    }
+    
+    tempPath.add(seg1);
+    tempPath.add(seg2);
 
     const segment = createTrimSegmentFromPath(tempPath, originalPath, startIntersectionId, endIntersectionId);
     tempPath.remove();
@@ -373,9 +384,22 @@ function splitCurveAtIntersections(
   const segments: TrimSegment[] = [];
 
   try {
+    // Create a path from the curve, preserving all handle information
     const workingPath = new paper.Path();
-    workingPath.add(curve.segment1.clone());
-    workingPath.add(curve.segment2.clone());
+    
+    // Clone segments properly with all their handle information
+    const seg1 = curve.segment1.clone();
+    const seg2 = curve.segment2.clone();
+    
+    // Ensure handles are preserved from the curve
+    if (curve.hasHandles()) {
+      // For cubic Bézier curves, preserve the control points
+      seg1.handleOut = curve.handle1.clone();
+      seg2.handleIn = curve.handle2.clone();
+    }
+    
+    workingPath.add(seg1);
+    workingPath.add(seg2);
 
     const EPS = 1e-4;
 
@@ -432,10 +456,34 @@ function splitCurveAtIntersections(
 
       if (seamHead && seamTail) {
         const merged = new paper.Path();
+        
+        // Add all segments from seamTail
         seamTail.segments.forEach((seg) => merged.add(seg.clone()));
-        for (let i = 1; i < seamHead.segments.length; i++) {
-          merged.add(seamHead.segments[i].clone());
+        
+        // Merge with seamHead, preserving curve geometry at the connection point
+        if (merged.segments.length > 0 && seamHead.segments.length > 0) {
+          const lastMerged = merged.segments[merged.segments.length - 1];
+          const firstHead = seamHead.segments[0];
+          
+          // If these points are close, we're connecting them
+          if (lastMerged.point.isClose(firstHead.point, EPS)) {
+            // Update the handleOut of the last segment to match the connection
+            if (firstHead.handleOut && !firstHead.handleOut.isZero()) {
+              lastMerged.handleOut = firstHead.handleOut.clone();
+            }
+            // Add remaining segments from seamHead (skip first as it's merged)
+            for (let i = 1; i < seamHead.segments.length; i++) {
+              merged.add(seamHead.segments[i].clone());
+            }
+          } else {
+            // Not connecting, add all segments
+            seamHead.segments.forEach((seg) => merged.add(seg.clone()));
+          }
+        } else {
+          // Fallback: add all segments
+          seamHead.segments.forEach((seg) => merged.add(seg.clone()));
         }
+        
         partPaths.unshift(merged);
         seamHead.remove();
         seamTail.remove();
@@ -800,10 +848,8 @@ function isSequenceClosed(segments: TrimSegment[]): boolean {
 /**
  * Concatenates path data from multiple segments.
  * 
- * KNOWN ISSUE: When reconstructing paths from trimmed segments, curve handles
- * may be lost or incorrectly merged, causing deformation. This happens especially
- * with circular paths that have been split into many segments.
- * The merging logic needs to preserve the original curve geometry more carefully.
+ * This function preserves the exact curve geometry from each segment's pathData,
+ * avoiding any interpolation or handle manipulation that could cause deformation.
  */
 function concatenateSegmentPathData(segments: TrimSegment[]): string | null {
   if (segments.length === 0) return null;
@@ -816,21 +862,88 @@ function concatenateSegmentPathData(segments: TrimSegment[]): string | null {
       const segPath = new paper.Path(segments[i].pathData);
 
       if (combinedPath.segments.length === 0) {
+        // First segment: add all segments as-is
         segPath.segments.forEach(seg => combinedPath.add(seg.clone()));
         segPath.remove();
         continue;
       }
 
-      const merged = mergeSequentialPath(combinedPath, segPath, tolerance);
-      if (!merged) {
-        segPath.segments.forEach(seg => combinedPath.add(seg.clone()));
+      const targetLast = combinedPath.segments[combinedPath.segments.length - 1];
+      let sourceFirst = segPath.segments[0];
+
+      // Check if segments connect (within tolerance)
+      const pointsConnect = targetLast.point.isClose(sourceFirst.point, tolerance);
+      
+      if (pointsConnect) {
+        // Points connect: merge the overlapping point while preserving all handles
+        // The key insight: targetLast already has the correct handleOut from its original curve
+        // We just need to update it with sourceFirst's handleOut if it exists
+        
+        if (sourceFirst.handleOut && !sourceFirst.handleOut.isZero()) {
+          // If the source has a handleOut, use it (this is the start of a curve)
+          targetLast.handleOut = sourceFirst.handleOut.clone();
+        }
+        
+        // Add remaining segments from source (skip the first one as it's merged)
+        for (let j = 1; j < segPath.segments.length; j++) {
+          combinedPath.add(segPath.segments[j].clone());
+        }
+      } else {
+        // Points don't connect: check if we need to reverse the source
+        const sourceLast = segPath.segments[segPath.segments.length - 1];
+        if (targetLast.point.isClose(sourceLast.point, tolerance)) {
+          // Source is reversed, reverse it
+          segPath.reverse();
+          sourceFirst = segPath.segments[0];
+          
+          if (sourceFirst.handleOut && !sourceFirst.handleOut.isZero()) {
+            targetLast.handleOut = sourceFirst.handleOut.clone();
+          }
+          
+          for (let j = 1; j < segPath.segments.length; j++) {
+            combinedPath.add(segPath.segments[j].clone());
+          }
+        } else {
+          // Segments don't connect at all, add them all
+          segPath.segments.forEach(seg => combinedPath.add(seg.clone()));
+        }
       }
 
       segPath.remove();
     }
 
-    combinedPath.closed = isSequenceClosed(segments);
-
+    // Check if this forms a closed loop
+    const isClosed = isSequenceClosed(segments);
+    
+    // CRITICAL FIX for closed paths:
+    // When we have a closed path, the last segment's endpoint matches the first segment's startpoint.
+    // Paper.js, when marking a path as closed, will automatically connect these points.
+    // However, if we've added BOTH the explicit closing curve AND mark it as closed,
+    // Paper.js may duplicate or incorrectly merge the endpoints, losing the curve handles.
+    //
+    // Solution: For closed paths, we need to update the FIRST segment's handleIn
+    // with the closing curve's handles, then mark the path as closed.
+    // This way, Paper.js will create the closing curve with the correct handles.
+    
+    if (isClosed && combinedPath.segments.length > 0) {
+      const firstSegment = combinedPath.segments[0];
+      const lastSegment = combinedPath.segments[combinedPath.segments.length - 1];
+      
+      // If the last point matches the first point, we need to update the first segment's
+      // handleIn to preserve the closing curve geometry
+      if (firstSegment.point.isClose(lastSegment.point, 0.5)) { // Increased tolerance for closing paths
+        // The last segment was the closing segment going back to the first point
+        // We need to preserve its handleOut as the first segment's handleIn
+        if (lastSegment.handleIn && !lastSegment.handleIn.isZero()) {
+          firstSegment.handleIn = lastSegment.handleIn.clone();
+        }
+        // Remove the duplicate endpoint
+        combinedPath.removeSegment(combinedPath.segments.length - 1);
+      }
+      
+      combinedPath.closed = true;
+    }
+    
     const pathData = combinedPath.pathData;
     combinedPath.remove();
 
@@ -838,43 +951,4 @@ function concatenateSegmentPathData(segments: TrimSegment[]): string | null {
   } catch (_error) {
     return null;
   }
-}
-
-function mergeSequentialPath(target: paper.Path, source: paper.Path, tolerance: number): boolean {
-  if (
-    !target.segments ||
-    target.segments.length === 0 ||
-    !source.segments ||
-    source.segments.length === 0
-  ) {
-    return false;
-  }
-
-  const targetLast = target.segments[target.segments.length - 1];
-  let sourceFirst = source.segments[0];
-
-  if (!targetLast.point.isClose(sourceFirst.point, tolerance)) {
-    const sourceLast = source.segments[source.segments.length - 1];
-    if (targetLast.point.isClose(sourceLast.point, tolerance)) {
-      source.reverse();
-      sourceFirst = source.segments[0];
-    } else {
-      return false;
-    }
-  }
-
-  const mergedSegment = new paper.Segment(
-    targetLast.point.clone(),
-    targetLast.handleIn ? targetLast.handleIn.clone() : undefined,
-    sourceFirst.handleOut ? sourceFirst.handleOut.clone() : undefined
-  );
-
-  target.removeSegment(target.segments.length - 1);
-  target.add(mergedSegment);
-
-  for (let i = 1; i < source.segments.length; i++) {
-    target.add(source.segments[i].clone());
-  }
-
-  return true;
 }

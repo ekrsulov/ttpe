@@ -597,6 +597,37 @@ function parsePathDataToSubPaths(pathData: string): SubPath[] {
 
     // Add close path command if the path is closed
     if (paperPath.closed && commands.length > 0) {
+      // Check if there's a closing curve (from last segment back to first)
+      const lastSegment = paperPath.segments[paperPath.segments.length - 1];
+      const firstSegment = paperPath.segments[0];
+      
+      // If the first segment has handleIn, we need to create the closing curve command
+      if (!firstSegment.handleIn.isZero() || !lastSegment.handleOut.isZero()) {
+        const cp1 = lastSegment.point.add(lastSegment.handleOut);
+        const cp2 = firstSegment.point.add(firstSegment.handleIn);
+        
+        commands.push({
+          type: 'C',
+          controlPoint1: {
+            x: roundToPrecision(cp1.x),
+            y: roundToPrecision(cp1.y),
+            commandIndex: paperPath.segments.length,
+            pointIndex: 0,
+            anchor: { x: roundToPrecision(lastSegment.point.x), y: roundToPrecision(lastSegment.point.y) },
+            isControl: true,
+          },
+          controlPoint2: {
+            x: roundToPrecision(cp2.x),
+            y: roundToPrecision(cp2.y),
+            commandIndex: paperPath.segments.length,
+            pointIndex: 1,
+            anchor: { x: roundToPrecision(firstSegment.point.x), y: roundToPrecision(firstSegment.point.y) },
+            isControl: true,
+          },
+          position: { x: roundToPrecision(firstSegment.point.x), y: roundToPrecision(firstSegment.point.y) },
+        });
+      }
+      
       commands.push({ type: 'Z' });
     }
 
