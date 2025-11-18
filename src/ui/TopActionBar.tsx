@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useLayoutEffect, useState } from 'react';
 import { HStack, Box, useColorModeValue, useBreakpointValue } from '@chakra-ui/react';
 import { Menu, MoreHorizontal } from 'lucide-react';
 import { RenderCountBadgeWrapper } from './RenderCountBadgeWrapper';
@@ -113,26 +113,6 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
     opacity: number;
   }>({ left: 0, width: 0, opacity: 0 });
 
-  // Update background position when active mode changes
-  useEffect(() => {
-    if (activeMode && buttonRefs.current.has(activeMode)) {
-      const buttonElement = buttonRefs.current.get(activeMode);
-      if (buttonElement) {
-        const rect = buttonElement.getBoundingClientRect();
-        const parentRect = buttonElement.parentElement?.getBoundingClientRect();
-        if (parentRect) {
-          setBackgroundStyle({
-            left: rect.left - parentRect.left,
-            width: rect.width,
-            opacity: 1,
-          });
-        }
-      }
-    } else {
-      setBackgroundStyle(prev => ({ ...prev, opacity: 0 }));
-    }
-  }, [activeMode]);
-
   const registeredTools = pluginManager
     .getRegisteredTools()
     .filter((plugin) => TOOL_DEFINITION_MAP.has(plugin.id as ToolMode))
@@ -199,6 +179,30 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
       })
       .filter(Boolean) as Array<{id: string, label: string, icon: React.ComponentType<{ size?: number }>}>;
   }, [isMobile, getExtraTools]);
+
+  // Create stable dependency from tool IDs
+  const toolIds = toolsToRender.map(t => t.id).join(',');
+
+  // Update background position when active mode changes or tools visibility changes
+  // Using useLayoutEffect to ensure buttons are in DOM before measuring
+  useLayoutEffect(() => {
+    if (activeMode && buttonRefs.current.has(activeMode)) {
+      const buttonElement = buttonRefs.current.get(activeMode);
+      if (buttonElement) {
+        const rect = buttonElement.getBoundingClientRect();
+        const parentRect = buttonElement.parentElement?.getBoundingClientRect();
+        if (parentRect) {
+          setBackgroundStyle({
+            left: rect.left - parentRect.left,
+            width: rect.width,
+            opacity: 1,
+          });
+        }
+      }
+    } else {
+      setBackgroundStyle(prev => ({ ...prev, opacity: 0 }));
+    }
+  }, [activeMode, showExtraTools, toolIds]);
 
   // Handle mode change with usage tracking
   const handleModeChange = React.useCallback((mode: string) => {
