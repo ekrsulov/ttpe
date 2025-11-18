@@ -166,6 +166,13 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => {
       updatedState.invalidateObjectSnapCache?.();
     }
     
+    // Clear trim cache when leaving trim mode
+    if (currentMode === 'trimPath' && result.mode !== 'trimPath') {
+      if ('deactivateTrimTool' in updatedState) {
+        (updatedState as any).deactivateTrimTool();
+      }
+    }
+    
     for (const action of result.actions) {
       switch (action) {
         case 'clearGuidelines':

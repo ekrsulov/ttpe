@@ -63,6 +63,18 @@ export const createSelectionSlice: StateCreator<CanvasStore, [], [], SelectionSl
           : [id],
       };
     });
+    
+    // Refresh trim cache if trim tool is active
+    const state = get() as CanvasStore;
+    if (state.activePlugin === 'trimPath' && 'refreshTrimCache' in state) {
+      // Use setTimeout to ensure state update completes first
+      setTimeout(() => {
+        const currentState = get() as CanvasStore;
+        if ('refreshTrimCache' in currentState) {
+          (currentState as any).refreshTrimCache();
+        }
+      }, 0);
+    }
   },
 
   selectElements: (ids) => {
@@ -81,6 +93,17 @@ export const createSelectionSlice: StateCreator<CanvasStore, [], [], SelectionSl
       return true;
     });
     set({ selectedIds: filteredIds });
+    
+    // Refresh trim cache if trim tool is active
+    if (state.activePlugin === 'trimPath' && 'refreshTrimCache' in state) {
+      // Use setTimeout to ensure state update completes first
+      setTimeout(() => {
+        const currentState = get() as CanvasStore;
+        if ('refreshTrimCache' in currentState) {
+          (currentState as any).refreshTrimCache();
+        }
+      }, 0);
+    }
   },
 
   clearSelection: () => {

@@ -4,12 +4,10 @@ import type { SplitPathResult, ReconstructedPath } from '../../types/trimPath';
 import type { CanvasStore } from '../../store/canvasStore';
 import paper from 'paper';
 import {
-  validatePathsForTrim,
-  computePathIntersections,
-  splitPathsByIntersections,
   findSegmentsAlongPath,
   reconstructPathsFromSegments,
 } from '../../utils/trimPathGeometry';
+import { trimPathCache } from './cache';
 
 /**
  * State slice for the Trim Path plugin.
@@ -40,6 +38,9 @@ export interface TrimPathPluginSlice {
   
   /** Deactivates the trim tool and clears state */
   deactivateTrimTool: () => void;
+  
+  /** Refreshes the cache when selection or paths change */
+  refreshTrimCache: () => void;
   
   /** Updates which segment is hovered */
   setHoveredSegment: (segmentId: string | null) => void;
@@ -89,6 +90,9 @@ export const createTrimPathPluginSlice: StateCreator<
 
   deactivateTrimTool: () => {
      
+    // Clear the cache when deactivating
+    trimPathCache.clear();
+    
     set({
       trimPath: {
         isActive: false,
@@ -97,6 +101,42 @@ export const createTrimPathPluginSlice: StateCreator<
         markedSegmentIds: [],
         isDragging: false,
         cursorPath: [],
+      },
+    });
+  },
+
+  refreshTrimCache: () => {
+    const state = get() as CanvasStore & TrimPathPluginSlice;
+    
+    // Only refresh if trim tool is active
+    if (!state.trimPath?.isActive) {
+      return;
+    }
+
+    const selectedIds = state.selectedIds || [];
+    const elements = state.elements || [];
+    
+    // Get the path elements by IDs
+    const currentPaths = elements.filter(
+      (el) => selectedIds.includes(el.id) && el.type === 'path'
+    ) as PathElement[];
+
+    // Refresh the cache
+    const splitResult = trimPathCache.refresh(currentPaths);
+
+    if (!splitResult) {
+      // If validation fails, deactivate
+      state.deactivateTrimTool?.();
+      return;
+    }
+
+    // Update state with refreshed cache
+    set({
+      trimPath: {
+        ...state.trimPath,
+        splitResult,
+        hoveredSegmentId: null,
+        markedSegmentIds: [],
       },
     });
   },
@@ -126,13 +166,20 @@ export const createTrimPathPluginSlice: StateCreator<
   updateTrimDrag: (currentPoint: Point) => {
     const currentTrimPath = get().trimPath;
     
-    if (!currentTrimPath.isDragging || !currentTrimPath.splitResult) {
+    if (!currentTrimPath.isDragging) {
+      return;
+    }
+
+    // Get splitResult from cache or state
+    const splitResult = currentTrimPath.splitResult || trimPathCache.get();
+    
+    if (!splitResult) {
       return;
     }
 
     const newCursorPath = [...currentTrimPath.cursorPath, currentPoint];
     const markedSegmentIds = findSegmentsAlongPath(
-      currentTrimPath.splitResult.segments,
+      splitResult.segments,
       newCursorPath,
       5 // threshold in pixels
     );
@@ -280,9 +327,10 @@ function recalculateTrimState(
     (el) => pathIds.includes(el.id) && el.type === 'path'
   ) as PathElement[];
 
-  // Validate paths for trim
-  const validation = validatePathsForTrim(currentPaths);
-  if (!validation.isValid || currentPaths.length < 2) {
+  // Refresh the cache with the current paths
+  const splitResult = trimPathCache.refresh(currentPaths);
+
+  if (!splitResult) {
     // If validation fails or not enough paths, deactivate trim mode
     set({
       trimPath: {
@@ -298,29 +346,7 @@ function recalculateTrimState(
     return;
   }
 
-  // Compute intersections
-  const intersections = computePathIntersections(currentPaths);
-
-  if (intersections.length === 0) {
-    // No intersections, but keep mode active with empty result
-    set({
-      trimPath: {
-        ...get().trimPath,
-        isActive: true,
-        splitResult: { intersections: [], segments: [], originalPaths: new Map() },
-        hoveredSegmentId: null,
-        markedSegmentIds: [],
-        isDragging: false,
-        cursorPath: [],
-      },
-    });
-    return;
-  }
-
-  // Split paths into trimmable segments
-  const splitResult = splitPathsByIntersections(currentPaths, intersections);
-
-  // Update trim state with new intersections
+  // Update trim state with new intersections from cache
   set({
     trimPath: {
       ...get().trimPath,
