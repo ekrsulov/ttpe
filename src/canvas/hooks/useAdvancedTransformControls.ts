@@ -101,7 +101,7 @@ export const useAdvancedTransformControls = () => {
 
     if (isSubpathMode && store.selectedSubpaths) {
       // Save selected subpath elements
-      store.selectedSubpaths.forEach(({ elementId }) => {
+      store.selectedSubpaths.forEach(({ elementId }: { elementId: string }) => {
         const element = store.elements.find(el => el.id === elementId);
         if (element) {
           originalElements.set(elementId, JSON.parse(JSON.stringify(element)));

@@ -21,7 +21,7 @@ const MAX_PANEL_HEIGHT = 360;
 // Helper to extract subpath data from an element (still needed for duplication translation)
 const getSubpathData = (element: CanvasElement, subpathIndex: number) => {
   if (element.type !== 'path') return null;
-  
+
   const commands = (element.data as PathData).subPaths.flat();
   const subpaths = extractSubpaths(commands);
   return subpaths[subpathIndex] || null;
@@ -41,14 +41,14 @@ const SelectPanelComponent: React.FC = () => {
   const isElementHidden = useCanvasStore(state => state.isElementHidden);
   const hiddenElementIds = useCanvasStore(state => state.hiddenElementIds);
   const lockedElementIds = useCanvasStore(state => state.lockedElementIds);
-  
+
   // Optimize subscriptions - only re-subscribe when selection IDs change
   const selectedIds = useCanvasStore(state => state.selectedIds);
-  
+
   // Use custom hook that freezes elements during drag operations
   // This prevents re-renders when element positions change during drag
   const elements = useFrozenElementsDuringDrag();
-  
+
   // Memoize the filtered selected elements to prevent unnecessary re-renders
   const selectedElements = useMemo(() =>
     elements.filter(el => selectedIds.includes(el.id)),
@@ -57,8 +57,8 @@ const SelectPanelComponent: React.FC = () => {
 
   const groups = useMemo(() => {
     return elements
-        .filter((el): el is GroupElement => el.type === 'group')
-        .sort((a, b) => a.data.name.localeCompare(b.data.name));
+      .filter((el): el is GroupElement => el.type === 'group')
+      .sort((a, b) => a.data.name.localeCompare(b.data.name));
   }, [elements]);
 
   const elementMap = useMemo(() => {
@@ -68,18 +68,18 @@ const SelectPanelComponent: React.FC = () => {
   const selectedIdSet = useMemo(() => {
     return new Set(selectedIds);
   }, [selectedIds]);
-  
+
   const hiddenIdSet = useMemo(() => {
     return new Set(hiddenElementIds);
   }, [hiddenElementIds]);
-  
+
   const lockedIdSet = useMemo(() => {
     return new Set(lockedElementIds);
   }, [lockedElementIds]);
 
   const selectedSubpathsByElement = useMemo(() => {
     const map = new Map<string, typeof selectedSubpaths>();
-    (selectedSubpaths ?? []).forEach(subpath => {
+    (selectedSubpaths ?? []).forEach((subpath: { elementId: string; subpathIndex: number }) => {
       if (!map.has(subpath.elementId)) {
         map.set(subpath.elementId, []);
       }
@@ -90,11 +90,11 @@ const SelectPanelComponent: React.FC = () => {
 
   const panelHeight = useCanvasStore((state) => state.selectPanelHeight);
   const setPanelHeight = useCanvasStore((state) => state.setSelectPanelHeight);
-  
-  const { 
-    isDragging: isResizing, 
-    handlePointerDown: handleResizeStart, 
-    handleDoubleClick: handleResetHeight 
+
+  const {
+    isDragging: isResizing,
+    handlePointerDown: handleResizeStart,
+    handleDoubleClick: handleResetHeight
   } = useDragResize({
     onResize: setPanelHeight,
     onReset: () => setPanelHeight(DEFAULT_PANEL_HEIGHT),
@@ -166,7 +166,7 @@ const SelectPanelComponent: React.FC = () => {
       if (selectedIdSet.has(element.id)) {
         const subpaths = extractSubpaths(commands);
         const subpathSelections = selectedSubpathsByElement.get(element.id) ?? [];
-        subpathSelections.forEach((selection) => {
+        subpathSelections.forEach((selection: { subpathIndex: number }) => {
           const subpathData = subpaths[selection.subpathIndex];
           if (!subpathData) {
             return;
@@ -189,14 +189,14 @@ const SelectPanelComponent: React.FC = () => {
     if (item.type === 'element') {
       // Duplicate the entire element
       const elementData = omitIdAndZIndex(item.element);
-      
+
       // If it's a path, translate it to make duplication visible
       if (elementData.type === 'path') {
         const pathData = elementData.data as PathData;
-        const translatedSubPaths = pathData.subPaths.map(subPath => 
+        const translatedSubPaths = pathData.subPaths.map(subPath =>
           translateCommands(subPath, 20, 20)
         );
-        
+
         addElement({
           ...elementData,
           data: {
@@ -213,7 +213,7 @@ const SelectPanelComponent: React.FC = () => {
       if (subpathData) {
         // Translate the subpath commands to make duplication visible
         const translatedCommands = translateCommands(subpathData.commands, 20, 20);
-        
+
         // Create new path element from subpath
         addElement({
           type: 'path',
@@ -229,7 +229,7 @@ const SelectPanelComponent: React.FC = () => {
   const copyPathToClipboard = async (item: SelectPanelItemData) => {
     // Use centralized command retrieval helper
     const commands = getCommandsForPanelItem(item);
-    
+
     if (commands) {
       const pathData = commandsToString(commands);
       try {
@@ -255,17 +255,17 @@ const SelectPanelComponent: React.FC = () => {
   // Combine groups and items into a single virtualized list
   const virtualizedItems = useMemo(() => {
     const allVirtualItems: Array<{ type: 'group', data: GroupElement } | { type: 'item', data: SelectPanelItemData }> = [];
-    
+
     // Add groups first
     orderedGroups.forEach(group => {
       allVirtualItems.push({ type: 'group', data: group });
     });
-    
+
     // Add items
     items.forEach(item => {
       allVirtualItems.push({ type: 'item', data: item });
     });
-    
+
     return allVirtualItems;
   }, [orderedGroups, items]);
 
@@ -273,7 +273,7 @@ const SelectPanelComponent: React.FC = () => {
   const estimateSize = useCallback((index: number) => {
     const item = virtualizedItems[index];
     if (!item) return 60;
-    
+
     if (item.type === 'group') {
       const group = item.data;
       // Base height + spacing + (children count * child height)
@@ -316,9 +316,9 @@ const SelectPanelComponent: React.FC = () => {
         title="Arrastra para redimensionar, doble clic para resetear"
         _hover={{ bg: resizeColor }}
       />
-      <Box 
+      <Box
         ref={scrollRef}
-        h={`${panelHeight}px`} 
+        h={`${panelHeight}px`}
         overflowY="auto"
       >
         {virtualizedItems.length > 0 ? (
@@ -328,7 +328,7 @@ const SelectPanelComponent: React.FC = () => {
           >
             {rowVirtualizer.getVirtualItems().map((virtualRow) => {
               const item = virtualizedItems[virtualRow.index];
-              
+
               if (item.type === 'group') {
                 const group = item.data;
                 return (
@@ -358,7 +358,7 @@ const SelectPanelComponent: React.FC = () => {
                 const isSelectedElement = selectedIdSet.has(elementId);
                 const directHidden = hiddenIdSet.has(elementId);
                 const directLocked = lockedIdSet.has(elementId);
-                
+
                 const itemKey = panelItem.type === 'subpath' && panelItem.subpathIndex !== undefined
                   ? `${panelItem.element.id}-${panelItem.type}-${panelItem.subpathIndex}`
                   : `${panelItem.element.id}-${panelItem.type}`;

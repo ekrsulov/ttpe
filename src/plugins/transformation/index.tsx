@@ -55,7 +55,7 @@ export const transformationPlugin: PluginDefinition<CanvasStore> = {
         if (isWorkingWithSubpaths?.() && (selectedSubpaths ?? []).length > 0) {
           return (
             <>
-              {selectedSubpaths!.map((selection) => {
+              {selectedSubpaths!.map((selection: { elementId: string; subpathIndex: number }) => {
                 const element = elementMap.get(selection.elementId);
 
                 if (!element || element.type !== 'path' || (isElementHidden && isElementHidden(selection.elementId))) {

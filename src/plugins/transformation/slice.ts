@@ -37,7 +37,7 @@ function transformGroupDescendants(
     } else if (child.type === 'path') {
       // Transform path element
       const pathData = child.data as PathData;
-      
+
       const newSubPaths = pathData.subPaths.map((subPath) =>
         transformCommands(subPath, transform)
       );
@@ -108,21 +108,21 @@ export const createTransformationPluginSlice: StateCreator<
 
     // Check if transformation should work with subpaths instead of full elements
     isWorkingWithSubpaths: () => {
-      const state = get() as CanvasStore;
+      const state = get() as unknown as CanvasStore;
       return (state.selectedSubpaths?.length ?? 0) > 0;
     },
 
     // Get bounds for transformation - either from selected subpaths or selected elements
     getTransformationBounds: () => {
-      const state = get() as CanvasStore;
-      const isSubpathMode = (get() as CanvasStore).isWorkingWithSubpaths?.() ?? false;
+      const state = get() as unknown as CanvasStore;
+      const isSubpathMode = (get() as unknown as CanvasStore).isWorkingWithSubpaths?.() ?? false;
 
       if (isSubpathMode && (state.selectedSubpaths?.length ?? 0) > 0) {
         // Calculate bounds for selected subpaths
         const subpathCommandsToMeasure: import('../../types').Command[][] = [];
         let strokeWidth = 1; // Default stroke width
 
-        (state.selectedSubpaths ?? []).forEach(({ elementId, subpathIndex }) => {
+        (state.selectedSubpaths ?? []).forEach(({ elementId, subpathIndex }: { elementId: string; subpathIndex: number }) => {
           const element = state.elements.find((el) => el.id === elementId);
           if (element && element.type === 'path') {
             const pathData = element.data as import('../../types').PathData;
@@ -179,20 +179,20 @@ export const createTransformationPluginSlice: StateCreator<
 
     // Apply resize transformation to selected elements or subpaths
     applyResizeTransform: (width: number, height: number) => {
-      const state = get() as CanvasStore;
-      const isSubpathMode = (get() as CanvasStore).isWorkingWithSubpaths?.() ?? false;
-      const bounds = (get() as CanvasStore).getTransformationBounds?.();
-      
+      const state = get() as unknown as CanvasStore;
+      const isSubpathMode = (get() as unknown as CanvasStore).isWorkingWithSubpaths?.() ?? false;
+      const bounds = (get() as unknown as CanvasStore).getTransformationBounds?.();
+
       if (!bounds) return;
 
       const currentWidth = bounds.maxX - bounds.minX;
       const currentHeight = bounds.maxY - bounds.minY;
-      
+
       if (currentWidth === 0 || currentHeight === 0) return;
 
       const scaleX = width / currentWidth;
       const scaleY = height / currentHeight;
-      
+
       const originX = (bounds.minX + bounds.maxX) / 2;
       const originY = (bounds.minY + bounds.maxY) / 2;
 
@@ -208,12 +208,12 @@ export const createTransformationPluginSlice: StateCreator<
 
       if (isSubpathMode && (state.selectedSubpaths?.length ?? 0) > 0) {
         // Apply transformation to selected subpaths
-        (state.selectedSubpaths ?? []).forEach(({ elementId, subpathIndex }) => {
+        (state.selectedSubpaths ?? []).forEach(({ elementId, subpathIndex }: { elementId: string; subpathIndex: number }) => {
           const element = state.elements.find((el) => el.id === elementId);
           if (element && element.type === 'path') {
             const pathData = element.data as import('../../types').PathData;
             const newSubPaths = [...pathData.subPaths];
-            
+
             newSubPaths[subpathIndex] = transformCommands(newSubPaths[subpathIndex], transform);
 
             state.updateElement(elementId, {
@@ -238,7 +238,7 @@ export const createTransformationPluginSlice: StateCreator<
           } else if (element.type === 'path') {
             // Transform path element
             const pathData = element.data as import('../../types').PathData;
-            
+
             const newSubPaths = pathData.subPaths.map((subPath) =>
               transformCommands(subPath, transform)
             );
@@ -259,10 +259,10 @@ export const createTransformationPluginSlice: StateCreator<
 
     // Apply rotation transformation to selected elements or subpaths
     applyRotationTransform: (degrees: number) => {
-      const state = get() as CanvasStore;
-      const isSubpathMode = (get() as CanvasStore).isWorkingWithSubpaths?.() ?? false;
-      const bounds = (get() as CanvasStore).getTransformationBounds?.();
-      
+      const state = get() as unknown as CanvasStore;
+      const isSubpathMode = (get() as unknown as CanvasStore).isWorkingWithSubpaths?.() ?? false;
+      const bounds = (get() as unknown as CanvasStore).getTransformationBounds?.();
+
       if (!bounds) return;
 
       const centerX = (bounds.minX + bounds.maxX) / 2;
@@ -280,12 +280,12 @@ export const createTransformationPluginSlice: StateCreator<
 
       if (isSubpathMode && (state.selectedSubpaths?.length ?? 0) > 0) {
         // Apply rotation to selected subpaths
-        (state.selectedSubpaths ?? []).forEach(({ elementId, subpathIndex }) => {
+        (state.selectedSubpaths ?? []).forEach(({ elementId, subpathIndex }: { elementId: string; subpathIndex: number }) => {
           const element = state.elements.find((el) => el.id === elementId);
           if (element && element.type === 'path') {
             const pathData = element.data as import('../../types').PathData;
             const newSubPaths = [...pathData.subPaths];
-            
+
             newSubPaths[subpathIndex] = transformCommands(newSubPaths[subpathIndex], transform);
 
             state.updateElement(elementId, {
@@ -315,7 +315,7 @@ export const createTransformationPluginSlice: StateCreator<
           } else if (element.type === 'path') {
             // Transform path element
             const pathData = element.data as import('../../types').PathData;
-            
+
             const newSubPaths = pathData.subPaths.map((subPath) =>
               transformCommands(subPath, transform)
             );
@@ -333,20 +333,20 @@ export const createTransformationPluginSlice: StateCreator<
 
     // Apply advanced distort transformation (free-form corner movement)
     applyAdvancedDistortTransform: (newCorners: { tl: Point; tr: Point; bl: Point; br: Point }) => {
-      const state = get() as CanvasStore;
-      const isSubpathMode = (get() as CanvasStore).isWorkingWithSubpaths?.() ?? false;
-      const bounds = (get() as CanvasStore).getTransformationBounds?.();
-      
+      const state = get() as unknown as CanvasStore;
+      const isSubpathMode = (get() as unknown as CanvasStore).isWorkingWithSubpaths?.() ?? false;
+      const bounds = (get() as unknown as CanvasStore).getTransformationBounds?.();
+
       if (!bounds) return;
 
       if (isSubpathMode && (state.selectedSubpaths?.length ?? 0) > 0) {
         // Apply transformation to selected subpaths
-        (state.selectedSubpaths ?? []).forEach(({ elementId, subpathIndex }) => {
+        (state.selectedSubpaths ?? []).forEach(({ elementId, subpathIndex }: { elementId: string; subpathIndex: number }) => {
           const element = state.elements.find((el) => el.id === elementId);
           if (element && element.type === 'path') {
             const pathData = element.data as import('../../types').PathData;
             const newSubPaths = [...pathData.subPaths];
-            
+
             newSubPaths[subpathIndex] = applyDistortTransform(newSubPaths[subpathIndex], bounds, newCorners);
 
             state.updateElement(elementId, {
@@ -369,7 +369,7 @@ export const createTransformationPluginSlice: StateCreator<
             // For groups, transform all descendants
             const group = element as GroupElement;
             const visited = new Set<string>();
-            
+
             const transformDescendantsDistort = (grp: GroupElement) => {
               if (visited.has(grp.id)) return;
               visited.add(grp.id);
@@ -400,7 +400,7 @@ export const createTransformationPluginSlice: StateCreator<
           } else if (element.type === 'path') {
             // Transform path element
             const pathData = element.data as import('../../types').PathData;
-            
+
             const newSubPaths = pathData.subPaths.map((subPath) =>
               applyDistortTransform(subPath, bounds, newCorners)
             );
@@ -418,10 +418,10 @@ export const createTransformationPluginSlice: StateCreator<
 
     // Apply advanced skew transformation
     applyAdvancedSkewTransform: (axis: 'x' | 'y', angle: number) => {
-      const state = get() as CanvasStore;
-      const isSubpathMode = (get() as CanvasStore).isWorkingWithSubpaths?.() ?? false;
-      const bounds = (get() as CanvasStore).getTransformationBounds?.();
-      
+      const state = get() as unknown as CanvasStore;
+      const isSubpathMode = (get() as unknown as CanvasStore).isWorkingWithSubpaths?.() ?? false;
+      const bounds = (get() as unknown as CanvasStore).getTransformationBounds?.();
+
       if (!bounds) return;
 
       const originX = (bounds.minX + bounds.maxX) / 2;
@@ -429,12 +429,12 @@ export const createTransformationPluginSlice: StateCreator<
 
       if (isSubpathMode && (state.selectedSubpaths?.length ?? 0) > 0) {
         // Apply transformation to selected subpaths
-        (state.selectedSubpaths ?? []).forEach(({ elementId, subpathIndex }) => {
+        (state.selectedSubpaths ?? []).forEach(({ elementId, subpathIndex }: { elementId: string; subpathIndex: number }) => {
           const element = state.elements.find((el) => el.id === elementId);
           if (element && element.type === 'path') {
             const pathData = element.data as import('../../types').PathData;
             const newSubPaths = [...pathData.subPaths];
-            
+
             newSubPaths[subpathIndex] = axis === 'x'
               ? applySkewXTransform(newSubPaths[subpathIndex], angle, originY)
               : applySkewYTransform(newSubPaths[subpathIndex], angle, originX);
@@ -459,7 +459,7 @@ export const createTransformationPluginSlice: StateCreator<
             // For groups, transform all descendants
             const group = element as GroupElement;
             const visited = new Set<string>();
-            
+
             const transformDescendantsSkew = (grp: GroupElement) => {
               if (visited.has(grp.id)) return;
               visited.add(grp.id);
@@ -492,7 +492,7 @@ export const createTransformationPluginSlice: StateCreator<
           } else if (element.type === 'path') {
             // Transform path element
             const pathData = element.data as import('../../types').PathData;
-            
+
             const newSubPaths = pathData.subPaths.map((subPath) =>
               axis === 'x'
                 ? applySkewXTransform(subPath, angle, originY)

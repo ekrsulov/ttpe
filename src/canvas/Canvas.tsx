@@ -89,7 +89,7 @@ const CanvasContent: React.FC = () => {
   const defaultStrokeColor = useCanvasStore(state => state.settings.defaultStrokeColor);
   const scaleStrokeWithZoom = useCanvasStore(state => state.settings.scaleStrokeWithZoom);
   const settings = useCanvasStore(state => state.settings);
-  const measure = useCanvasStore(state => (state as any).measure); // eslint-disable-line @typescript-eslint/no-explicit-any
+
   const {
     currentMode,
     transition: transitionCanvasMode,
@@ -440,7 +440,6 @@ const CanvasContent: React.FC = () => {
       handleSubpathDoubleClick,
       handleSubpathTouchEnd,
       setDragStart: setDragStartForLayers,
-      measure, // Add measure state to context
       settings, // Add settings to context
     };
 
@@ -479,7 +478,6 @@ const CanvasContent: React.FC = () => {
       handleSubpathDoubleClick,
       handleSubpathTouchEnd,
       setDragStartForLayers,
-      measure,
       settings,
       // Plugin-specific dependencies
       isCreatingShape,

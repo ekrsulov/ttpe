@@ -142,20 +142,20 @@ const distributeSubpathsAlongAxis = (
   if (subpathBounds.length < 3) return;
 
   const isHorizontal = axis === 'horizontal';
-  
+
   // Sort by current center position along the axis
-  subpathBounds.sort((a, b) => 
+  subpathBounds.sort((a, b) =>
     isHorizontal ? a.centerX - b.centerX : a.centerY - b.centerY
   );
 
   // Calculate distribution
   const firstBound = isHorizontal ? subpathBounds[0].bounds.minX : subpathBounds[0].bounds.minY;
-  const lastBound = isHorizontal 
-    ? subpathBounds[subpathBounds.length - 1].bounds.maxX 
+  const lastBound = isHorizontal
+    ? subpathBounds[subpathBounds.length - 1].bounds.maxX
     : subpathBounds[subpathBounds.length - 1].bounds.maxY;
-  
+
   const totalSpan = lastBound - firstBound;
-  const totalElementsSize = subpathBounds.reduce((sum, sb) => 
+  const totalElementsSize = subpathBounds.reduce((sum, sb) =>
     sum + (isHorizontal ? sb.width : sb.height), 0
   );
   const availableSpace = totalSpan - totalElementsSize;
@@ -211,7 +211,7 @@ const matchSubpathSizeToLargest = (
   if (subpathBounds.length < 2) return;
 
   // Find the largest dimension
-  const largestSize = Math.max(...subpathBounds.map(sb => 
+  const largestSize = Math.max(...subpathBounds.map(sb =>
     dimension === 'width' ? sb.width : sb.height
   ));
 
@@ -227,7 +227,7 @@ const matchSubpathSizeToLargest = (
     if (currentSize === 0) return; // Avoid division by zero
 
     const scaleFactor = largestSize / currentSize;
-    
+
     // Only scale if the element is not already the largest
     if (Math.abs(scaleFactor - 1) < 0.0001) return;
 
@@ -238,7 +238,7 @@ const matchSubpathSizeToLargest = (
       // Scale the subpath commands - scale only on the specified dimension
       const scaleX = dimension === 'width' ? scaleFactor : 1;
       const scaleY = dimension === 'height' ? scaleFactor : 1;
-      
+
       const scaledCommands = scaleCommands(
         subpathInfo.subpathCommands,
         scaleX,
@@ -391,13 +391,13 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
       }
 
       const isSelected = (state.selectedSubpaths ?? []).some(
-        s => s.elementId === elementId && s.subpathIndex === subpathIndex
+        (s: { elementId: string; subpathIndex: number }) => s.elementId === elementId && s.subpathIndex === subpathIndex
       );
 
       if (multiSelect) {
         return {
           selectedSubpaths: isSelected
-            ? (state.selectedSubpaths ?? []).filter(s => !(s.elementId === elementId && s.subpathIndex === subpathIndex))
+            ? (state.selectedSubpaths ?? []).filter((s: { elementId: string; subpathIndex: number }) => !(s.elementId === elementId && s.subpathIndex === subpathIndex))
             : [...(state.selectedSubpaths ?? []), { elementId, subpathIndex }]
         };
       } else {
@@ -473,9 +473,9 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
 
         subpathIndices.forEach(subpathIndex => {
           if (subpathIndex < newSubPaths.length) {
-            newSubPaths[subpathIndex] = translateCommands(newSubPaths[subpathIndex], deltaX, deltaY, { 
+            newSubPaths[subpathIndex] = translateCommands(newSubPaths[subpathIndex], deltaX, deltaY, {
               precision: precision,
-              roundToIntegers: precision === 0 
+              roundToIntegers: precision === 0
             });
           }
         });
@@ -622,7 +622,7 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
       originalCommands: Command[];
     }> = [];
 
-    selectedSubpaths.forEach(({ elementId, subpathIndex }) => {
+    selectedSubpaths.forEach(({ elementId, subpathIndex }: { elementId: string; subpathIndex: number }) => {
       const element = state.elements.find((el) => el.id === elementId);
       if (element && element.type === 'path') {
         const pathData = element.data as PathData;
@@ -692,7 +692,7 @@ export const createSubpathPluginSlice: StateCreator<CanvasStore, [], [], Subpath
     }>();
 
     // Collect all transformations by element
-    draggingSubpaths.initialPositions.forEach(({ elementId, subpathIndex, originalCommands }) => {
+    draggingSubpaths.initialPositions.forEach(({ elementId, subpathIndex, originalCommands }: { elementId: string; subpathIndex: number; originalCommands: Command[] }) => {
       const element = state.elements.find((el) => el.id === elementId);
       if (element && element.type === 'path') {
         const pathData = element.data as PathData;

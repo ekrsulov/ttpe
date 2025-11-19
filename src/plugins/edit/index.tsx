@@ -140,7 +140,7 @@ export const editPlugin: PluginDefinition<CanvasStore> = {
               )
               .map((element) => {
                 const isSelected = selectedIds.includes(element.id);
-                const hasSelectedSubpath = (selectedSubpaths ?? []).some((subpath) => subpath.elementId === element.id);
+                const hasSelectedSubpath = (selectedSubpaths ?? []).some((subpath: { elementId: string }) => subpath.elementId === element.id);
 
                 if (!isSelected && !hasSelectedSubpath) {
                   return null;

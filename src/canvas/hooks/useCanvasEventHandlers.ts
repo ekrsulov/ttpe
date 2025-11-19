@@ -50,7 +50,7 @@ interface EventHandlerDeps {
 export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
   const { handlePointerDown: handleCurvesPointerDown, handlePointerMove: handleCurvesPointerMove, handlePointerUp: handleCurvesPointerUp } = useCanvasCurves();
   const isVirtualShiftActive = useCanvasStore(state => state.isVirtualShiftActive);
-  
+
   const {
     svgRef,
     screenToCanvas,
@@ -93,17 +93,17 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
   const eventBus = useCanvasEventBus();
 
   // Double tap detection hook
-  const { 
-    handleElementTouchEnd: detectElementDoubleTap, 
+  const {
+    handleElementTouchEnd: detectElementDoubleTap,
     handleSubpathTouchEnd: detectSubpathDoubleTap,
-    handleCanvasTouchEnd: detectCanvasDoubleTap 
+    handleCanvasTouchEnd: detectCanvasDoubleTap
   } = useDoubleTap();
 
   // Apply snap to dragged elements or subpaths
   const applySnapToDraggedElements = useCallback(() => {
     // Apply snap to grid for selected elements or subpaths if snap is enabled
     if (((activePlugin === 'select' && selectedIds.length > 0 && !isWorkingWithSubpaths()) ||
-         (activePlugin === 'subpath' && selectedSubpaths.length > 0 && isWorkingWithSubpaths()))) {
+      (activePlugin === 'subpath' && selectedSubpaths.length > 0 && isWorkingWithSubpaths()))) {
       const state = useCanvasStore.getState();
       if (state.grid?.snapEnabled && state.snapToGrid) {
 
@@ -146,9 +146,9 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
         } else if (activePlugin === 'select' && selectedIds.length > 0) {
           // Snap selected elements using consolidated utility
           const selectedElements = state.elements.filter(el => selectedIds.includes(el.id));
-          const bounds = calculateMultiElementBounds(selectedElements, { 
-            includeStroke: true, 
-            zoom: state.viewport.zoom 
+          const bounds = calculateMultiElementBounds(selectedElements, {
+            includeStroke: true,
+            zoom: state.viewport.zoom
           });
 
           if (isFinite(bounds.minX) && state.snapToGrid) {
@@ -309,7 +309,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
   const handleElementTouchEnd = useCallback((elementId: string, e: React.TouchEvent<Element>) => {
     // Detect if this is a double tap
     const isDoubleTap = detectElementDoubleTap(elementId, e);
-    
+
     if (!isDoubleTap) {
       // Single tap - do nothing special
       return;
@@ -341,7 +341,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
   const handleCanvasTouchEnd = useCallback((e: React.TouchEvent<SVGSVGElement>) => {
     // Detect if this is a double tap on empty space
     const isDoubleTap = detectCanvasDoubleTap(e);
-    
+
     if (!isDoubleTap) {
       // Single tap - do nothing special
       return;
@@ -350,7 +350,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     // Double tap detected on empty space
     const target = e.target as Element;
     const isEmptySpace = target.tagName === 'svg' || target.classList.contains('canvas-background');
-    
+
     if (isEmptySpace && (activePlugin === 'subpath' || activePlugin === 'transformation' || activePlugin === 'edit')) {
       e.preventDefault();
       e.stopPropagation();
@@ -362,7 +362,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
   const handleSubpathTouchEnd = useCallback((elementId: string, subpathIndex: number, e: React.TouchEvent<SVGPathElement>) => {
     // Detect if this is a double tap on a subpath
     const isDoubleTap = detectSubpathDoubleTap(elementId, subpathIndex, e);
-    
+
     if (!isDoubleTap) {
       // Single tap - do nothing special
       return;
@@ -394,7 +394,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
   const handleElementPointerDown = useCallback((elementId: string, e: React.PointerEvent) => {
     if (activePlugin === 'select') {
       const state = useCanvasStore.getState();
-      
+
       // Check if element is locked - if so, treat it as empty space
       if (state.isElementLocked && state.isElementLocked(elementId)) {
         // Don't stop propagation - let it behave as empty space
@@ -402,7 +402,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       }
 
       e.stopPropagation(); // Prevent handlePointerDown from starting selection rectangle
-      
+
       // Check if style eyedropper is active
       if (state.styleEyedropper.isActive) {
         // Apply style to the clicked path
@@ -432,10 +432,10 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       if (!effectiveShiftKey) {
         const selectedIds = state.selectedIds;
         const hasMultiSelection = selectedIds.length > 1;
-        
+
         // Check if the clicked element or its root group is part of the current selection
         const isElementInSelection = selectedIds.includes(elementId) || selectedIds.includes(targetId);
-        
+
         // If there's a multiselection and the element is part of it, preserve the selection
         // Otherwise, select only the target (root group or element)
         if (hasMultiSelection && isElementInSelection) {
@@ -458,14 +458,14 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
   const handleTransformationHandlerPointerDown = useCallback((e: React.PointerEvent, elementId: string, handler: string) => {
     e.stopPropagation();
     const point = screenToCanvas(e.clientX, e.clientY);
-    
+
     // Check if this is an advanced transformation handler
     if (handler.startsWith('advanced-')) {
       const isModifierPressed = e.metaKey || e.ctrlKey || e.altKey;
       startAdvancedTransformation(handler, point, isModifierPressed);
       return;
     }
-    
+
     startTransformation(elementId, handler, point);
   }, [screenToCanvas, startTransformation, startAdvancedTransformation]);
 
@@ -598,7 +598,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       // Once dragging has started, move with any delta (no threshold) for smooth continuous movement
       const shouldStartDragging = !isDragging && (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3);
       const shouldContinueDragging = isDragging && (Math.abs(deltaX) > 0.001 || Math.abs(deltaY) > 0.001);
-      
+
       if (shouldStartDragging || shouldContinueDragging) {
         if (!isDragging) {
           setIsDragging(true); // Start dragging now
@@ -621,21 +621,21 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
           // Move entire selected elements
           let deltaX = point.x - dragStart.x;
           let deltaY = point.y - dragStart.y;
-          
+
           // Calculate guidelines for selected elements
           const state = useCanvasStore.getState();
           if (state.guidelines && state.guidelines.enabled && selectedIds.length > 0) {
             // Calculate bounds for the first selected element (for simplicity, we use the first one for snapping)
             const firstElementId = selectedIds[0];
             const element = state.elements.find(el => el.id === firstElementId);
-            
+
             if (element && element.type === 'path') {
               const pathData = element.data as import('../../types').PathData;
-              
+
               // Calculate current bounds using consolidated utility
               const commands = pathData.subPaths.flat();
               const bounds = calculateCommandsBounds(commands, pathData.strokeWidth || 0, state.viewport.zoom);
-              
+
               if (isFinite(bounds.minX)) {
                 // Apply the delta to get the "would-be" position
                 const projectedBounds = {
@@ -644,15 +644,15 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
                   maxX: bounds.maxX + deltaX,
                   maxY: bounds.maxY + deltaY,
                 };
-                
+
                 // Find alignment guidelines
                 const alignmentMatches = state.findAlignmentGuidelines?.(firstElementId, projectedBounds) ?? [];
-                
+
                 // Find distance guidelines if enabled (pass alignment matches for 2-element detection)
                 const distanceMatches = (state.guidelines?.distanceEnabled && state.findDistanceGuidelines)
                   ? state.findDistanceGuidelines(firstElementId, projectedBounds, alignmentMatches)
                   : [];
-                
+
                 // Update the guidelines state
                 if (state.updateGuidelinesState) {
                   state.updateGuidelinesState({
@@ -660,7 +660,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
                     currentDistanceMatches: distanceMatches,
                   });
                 }
-                
+
                 // Apply sticky snap
                 if (state.checkStickySnap) {
                   const snappedDelta = state.checkStickySnap(deltaX, deltaY, projectedBounds);
@@ -670,7 +670,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
               }
             }
           }
-          
+
           moveSelectedElements(deltaX, deltaY);
           setDragStart(point);
         }
@@ -808,11 +808,11 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
         state.clearGuidelines();
       }
     }
-    
+
     // Always clear global flag on pointer up (even if local isDragging is false)
     // This ensures the flag doesn't get stuck when clicking to add shapes, etc.
     useCanvasStore.getState().setIsDraggingElements(false);
-    
+
     setDragStart(null);
     setHasDragMoved(false);
 
@@ -884,7 +884,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     // Only handle double click if we're in specific modes and clicked on empty space
     const target = e.target as Element;
     const isEmptySpace = target.tagName === 'svg' || target.classList.contains('canvas-background');
-    
+
     if (isEmptySpace && (activePlugin === 'subpath' || activePlugin === 'transformation' || activePlugin === 'edit')) {
       e.preventDefault();
       e.stopPropagation();
@@ -897,8 +897,8 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
 
     // Create a synthetic mouse event
     const syntheticEvent = {
-      preventDefault: () => {},
-      stopPropagation: () => {},
+      preventDefault: () => { },
+      stopPropagation: () => { },
       target: null,
       currentTarget: null,
       clientX: 0,

@@ -114,7 +114,7 @@ import type { TrimPathPluginSlice } from '../trimPath/slice';
  * Container component that connects to the store.
  */
 export const TrimPathOverlayConnected: React.FC = () => {
-  const trimPath = useCanvasStore((state) => (state as TrimPathPluginSlice).trimPath);
+  const trimPath = useCanvasStore((state) => (state as unknown as TrimPathPluginSlice).trimPath);
   const viewport = useCanvasStore((state) => state.viewport);
   const activePlugin = useCanvasStore((state) => state.activePlugin);
 
@@ -123,7 +123,7 @@ export const TrimPathOverlayConnected: React.FC = () => {
     return null;
   }
 
-  
+
 
   return (
     <TrimPathOverlay

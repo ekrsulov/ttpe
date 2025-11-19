@@ -10,7 +10,7 @@ const PathOperationsPanelComponent: React.FC = () => {
   // Subscribe only to the keys we need to detect changes in selection
   const selectedIdsKey = useCanvasStore(state => state.selectedIds.join(','));
   const selectedSubpathsKey = useCanvasStore(state => 
-    (state.selectedSubpaths ?? []).map(sp => `${sp.elementId}-${sp.subpathIndex}`).join(',')
+    (state.selectedSubpaths ?? []).map((sp: { elementId: string; subpathIndex: number }) => `${sp.elementId}-${sp.subpathIndex}`).join(',')
   );
   
   // Memoize the calculation based on selection keys - only recalculates when selection actually changes

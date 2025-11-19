@@ -98,7 +98,7 @@ const performBooleanOperation = (
       // Remove other selected elements
       const idsToRemove = [
         ...state.selectedIds.filter(id => id !== firstSelectedId),
-        ...(state.selectedSubpaths ?? []).slice(1).map(sp => sp.elementId)
+        ...(state.selectedSubpaths ?? []).slice(1).map((sp: { elementId: string }) => sp.elementId)
       ].filter((id, index, arr) => arr.indexOf(id) === index); // Remove duplicates
 
       idsToRemove.forEach(id => {

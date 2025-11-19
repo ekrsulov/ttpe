@@ -28,6 +28,6 @@ export type CoreCanvasStore = BaseSlice &
  * Extended Canvas Store - includes plugin slices as optional (Partial<>)
  * Plugins are registered dynamically at runtime
  */
-export type CanvasStore = CoreCanvasStore & Record<string, any>;
+export type CanvasStore = CoreCanvasStore & Record<string, unknown>;
 
 

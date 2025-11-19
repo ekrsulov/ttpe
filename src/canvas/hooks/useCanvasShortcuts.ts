@@ -4,8 +4,6 @@ import { useCanvasEventBus } from '../CanvasEventBusContext';
 import { useCanvasController } from '../controller/CanvasControllerContext';
 import type { ShortcutRegistry } from '../shortcuts';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
-import type { MeasurePluginActions } from '../../plugins/measure/slice';
-import { getGlobalCurvesController } from '../../plugins/curves';
 
 const CORE_SHORTCUT_SOURCE = 'canvas:core';
 
@@ -22,22 +20,8 @@ const handleEscapeShortcut = (state: CanvasStore) => {
     return;
   }
 
-  if (state.activePlugin === 'curves' && state.curveState?.points && state.curveState.points.length > 0) {
-    const controller = getGlobalCurvesController();
-    if (controller) {
-      controller.cancel();
-    }
-    return;
-  }
+  // Plugin-specific escape handling moved to plugins
 
-  // If there's an active or frozen measurement, clear it on Escape regardless of which plugin is active
-  if (state.measure?.measurement?.isActive || state.measure?.measurement?.startPoint) {
-    // `clearMeasurement` lives in the measure plugin actions and isn't part of the core CanvasStore
-    // cast to include plugin-specific actions without using `any`.
-    const stateWithMeasureActions = state as CanvasStore & Partial<MeasurePluginActions>;
-    stateWithMeasureActions.clearMeasurement?.();
-    return;
-  }
 
   if (state.activePlugin === 'select' && state.selectedIds.length > 0) {
     state.clearSelection();
@@ -90,13 +74,7 @@ export const useCanvasShortcuts = (
           handleEscapeShortcut(state);
         },
       },
-      m: {
-        handler: (_event, context) => {
-          const store = context.store.getState() as CanvasStore;
-          // Activate Measure tool when pressing M (global behaviour)
-          store.setActivePlugin('measure');
-        },
-      },
+      // Plugin-specific shortcuts (like 'm' for measure) moved to PluginDefinition.keyboardShortcuts
     });
 
     return () => {

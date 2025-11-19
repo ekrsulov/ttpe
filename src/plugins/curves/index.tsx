@@ -6,6 +6,7 @@ import { CurvesRenderer } from './CurvesRenderer';
 import React from 'react';
 import { CurvesPanel } from './CurvesPanel';
 import { getGlobalCurvesController } from './globalController';
+import { getEffectiveShift } from '../../utils/effectiveShift';
 
 const curvesSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -73,6 +74,49 @@ export const curvesPlugin: PluginDefinition<CanvasStore> = {
     },
   },
   expandablePanel: () => React.createElement(CurvesPanel, { hideTitle: true }),
+  init: (context) => {
+    const { store } = context;
+    const eventBus = (store.getState() as any).eventBus; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    if (!eventBus) {
+      console.warn('EventBus not available for curves plugin');
+      return;
+    }
+
+    const unsubscribeDown = eventBus.subscribe('pointerdown', (payload: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+      if (payload.activePlugin !== 'curves') return;
+
+      const controller = getGlobalCurvesController();
+      if (controller) {
+        const effectiveShift = getEffectiveShift(payload.event.shiftKey, (store.getState() as any).isVirtualShiftActive); // eslint-disable-line @typescript-eslint/no-explicit-any
+        controller.handlePointerDown(payload.point, effectiveShift);
+      }
+    });
+
+    const unsubscribeMove = eventBus.subscribe('pointermove', (payload: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+      if (payload.activePlugin !== 'curves') return;
+
+      const controller = getGlobalCurvesController();
+      if (controller) {
+        controller.handlePointerMove(payload.point);
+      }
+    });
+
+    const unsubscribeUp = eventBus.subscribe('pointerup', (payload: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+      if (payload.activePlugin !== 'curves') return;
+
+      const controller = getGlobalCurvesController();
+      if (controller) {
+        controller.handlePointerUp();
+      }
+    });
+
+    return () => {
+      unsubscribeDown();
+      unsubscribeMove();
+      unsubscribeUp();
+    };
+  },
 };
 
 // Re-export from other files for external use

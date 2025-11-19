@@ -7,6 +7,7 @@ import { getToolMetadata } from '../toolMetadata';
 import { calculateBounds } from '../../utils/boundsUtils';
 import { createMeasurePluginSlice } from './slice';
 import type { MeasurePluginSlice, MeasurePluginActions, SnapInfo } from './slice';
+import { useCanvasStore } from '../../store/canvasStore';
 import { MeasureOverlay } from './MeasureOverlay';
 import { MeasureInfoPanel } from './MeasureInfoPanel';
 import { getAllSnapPoints, findClosestSnapPoint, findEdgeSnapPoint, screenDistance, getSnapPointLabel } from '../../utils/snapPointUtils';
@@ -360,107 +361,130 @@ export const measurePlugin: PluginDefinition<CanvasStore> = {
         showInfo: !state.measure?.showInfo,
       });
     },
+    'm': {
+      handler: (_event, { store }) => {
+        const state = store.getState() as unknown as MeasurePluginSlice & CanvasStore;
+        state.setActivePlugin('measure');
+      },
+      options: {
+        allowWhileTyping: false,
+      },
+    },
   },
   canvasLayers: [
     {
       id: 'measure-snap-points',
       placement: 'background',
       render: (context) => {
-        const { activePlugin, measure: measureState } = context as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+        const MeasureSnapPointsWrapper = () => {
+          const measureState = useCanvasStore(state => (state as CanvasStore & MeasurePluginSlice).measure);
+          const { activePlugin } = context;
 
-        if (activePlugin !== 'measure') {
-          return null;
-        }
+          if (activePlugin !== 'measure') {
+            return null;
+          }
 
-        if (!measureState?.cachedSnapPoints) {
-          return null;
-        }
+          if (!measureState?.cachedSnapPoints) {
+            return null;
+          }
 
-        const showSnapPoints = measureState.showSnapPoints ?? false;
-        const snapPointsOpacity = measureState.snapPointsOpacity ?? 50;
+          const showSnapPoints = measureState.showSnapPoints ?? false;
+          const snapPointsOpacity = measureState.snapPointsOpacity ?? 50;
 
-        // Render snap points cache component and overlay
-        return (
-          <>
-            <SnapPointsCache />
-            {showSnapPoints && (
-              <SnapPointCrossOverlay
-                snapPoints={measureState.cachedSnapPoints}
-                viewport={context.viewport}
-                opacity={snapPointsOpacity / 100}
-                showAllPoints={true}
-              />
-            )}
-          </>
-        );
+          // Render snap points cache component and overlay
+          return (
+            <>
+              <SnapPointsCache />
+              {showSnapPoints && (
+                <SnapPointCrossOverlay
+                  snapPoints={measureState.cachedSnapPoints}
+                  viewport={context.viewport}
+                  opacity={snapPointsOpacity / 100}
+                  showAllPoints={true}
+                />
+              )}
+            </>
+          );
+        };
+
+        return <MeasureSnapPointsWrapper />;
       },
     },
     {
       id: 'measure-overlay',
       placement: 'foreground',
       render: (context) => {
-        const { activePlugin, measure: measureState } = context as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+        const MeasureOverlayWrapper = () => {
+          const measureState = useCanvasStore(state => (state as CanvasStore & MeasurePluginSlice).measure);
+          const { activePlugin, settings } = context as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-        if (activePlugin !== 'measure') {
-          return null;
-        }
+          if (activePlugin !== 'measure') {
+            return null;
+          }
 
-        if (!measureState) {
-          return null;
-        }
+          if (!measureState) {
+            return null;
+          }
 
-        const { measurement, showInfo, units, startSnapInfo, currentSnapInfo } = measureState;
-        const { settings } = context as any; // eslint-disable-line @typescript-eslint/no-explicit-any
-        const precision = settings?.keyboardMovementPrecision ?? 1;
+          const { measurement, showInfo, units, startSnapInfo, currentSnapInfo } = measureState;
+          const precision = settings?.keyboardMovementPrecision ?? 1;
 
-        // Render measure overlay if there is an active measurement OR a frozen one with start/end points
-        if (!measurement?.isActive && !(measurement?.startPoint && measurement?.endPoint)) {
-          return null;
-        }
+          // Render measure overlay if there is an active measurement OR a frozen one with start/end points
+          if (!measurement?.isActive && !(measurement?.startPoint && measurement?.endPoint)) {
+            return null;
+          }
 
-        return (
-          <MeasureOverlay
-            measurement={measurement}
-            viewport={context.viewport}
-            startSnapInfo={startSnapInfo ?? null}
-            currentSnapInfo={currentSnapInfo ?? null}
-            units={units ?? 'px'}
-            showInfo={showInfo ?? true}
-            precision={precision}
-          />
-        );
+          return (
+            <MeasureOverlay
+              measurement={measurement}
+              viewport={context.viewport}
+              startSnapInfo={startSnapInfo ?? null}
+              currentSnapInfo={currentSnapInfo ?? null}
+              units={units ?? 'px'}
+              showInfo={showInfo ?? true}
+              precision={precision}
+            />
+          );
+        };
+
+        return <MeasureOverlayWrapper />;
       },
     },
     {
       id: 'measure-feedback',
       placement: 'foreground',
       render: (context) => {
-        const { activePlugin, measure: measureState, viewport, canvasSize } = context as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+        const MeasureFeedbackWrapper = () => {
+          const measureState = useCanvasStore(state => (state as CanvasStore & MeasurePluginSlice).measure);
+          const { activePlugin, viewport, canvasSize } = context as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-        if (activePlugin !== 'measure') {
-          return null;
-        }
+          if (activePlugin !== 'measure') {
+            return null;
+          }
 
-        if (!measureState) {
-          return null;
-        }
+          if (!measureState) {
+            return null;
+          }
 
-        const { measurement, currentSnapInfo } = measureState;
+          const { measurement, currentSnapInfo } = measureState;
 
-        if (!measurement?.isActive || !currentSnapInfo) {
-          return null;
-        }
+          if (!measurement?.isActive || !currentSnapInfo) {
+            return null;
+          }
 
-        // Create custom feedback message for snap type using helper
-        const snapMessage = getSnapPointLabel(currentSnapInfo.type);
+          // Create custom feedback message for snap type using helper
+          const snapMessage = getSnapPointLabel(currentSnapInfo.type);
 
-        return (
-          <FeedbackOverlay
-            viewport={viewport}
-            canvasSize={canvasSize}
-            customFeedback={{ message: snapMessage, visible: true }}
-          />
-        );
+          return (
+            <FeedbackOverlay
+              viewport={viewport}
+              canvasSize={canvasSize}
+              customFeedback={{ message: snapMessage, visible: true }}
+            />
+          );
+        };
+
+        return <MeasureFeedbackWrapper />;
       },
     },
   ],

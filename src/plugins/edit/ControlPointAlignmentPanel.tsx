@@ -41,7 +41,7 @@ export const ControlPointAlignmentPanel: React.FC = () => {
   const elements = useMemo(() => {
     if ((selectedCommands?.length ?? 0) === 0) return allElements;
     if (!selectedCommands) return allElements;
-    const selectedElementIds = [...new Set(selectedCommands.map(cmd => cmd.elementId))];
+    const selectedElementIds = [...new Set(selectedCommands.map((cmd: { elementId: string }) => cmd.elementId))];
     return allElements.filter(el => selectedElementIds.includes(el.id));
   }, [allElements, selectedCommands]);
   
