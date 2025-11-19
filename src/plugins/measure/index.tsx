@@ -80,7 +80,7 @@ const installListeners = (context: PluginHandlerContext<CanvasStore>, api: Measu
   if (listenersInstalled) return;
   listenersInstalled = true;
 
-    const handlePointerMove = (moveEvent: PointerEvent) => {
+  const handlePointerMove = (moveEvent: PointerEvent) => {
     const svg = document.querySelector('svg');
     if (!svg) return;
 
@@ -102,7 +102,7 @@ const installListeners = (context: PluginHandlerContext<CanvasStore>, api: Measu
         if (!pathData?.subPaths) return null;
         return calculateBounds(pathData.subPaths, pathData.strokeWidth || 0, currentState.viewport.zoom);
       };
-      
+
       // Get high-priority snap points (using configured snap options)
       const highPriorityPoints = getAllSnapPoints(
         currentState.elements,
@@ -115,7 +115,7 @@ const installListeners = (context: PluginHandlerContext<CanvasStore>, api: Measu
           snapToIntersections: currentState.measure.snapToIntersections,
         }
       );
-      
+
       // Find closest high-priority snap
       moveSnapInfo = findClosestSnapPoint(
         canvasPoint,
@@ -123,7 +123,7 @@ const installListeners = (context: PluginHandlerContext<CanvasStore>, api: Measu
         currentState.measure.snapThreshold,
         currentState.viewport.zoom
       );
-      
+
       // Only check edge snap if no high-priority snap found and edge snap is enabled
       if (!moveSnapInfo && currentState.measure.snapToEdges) {
         for (const element of currentState.elements) {
@@ -144,19 +144,19 @@ const installListeners = (context: PluginHandlerContext<CanvasStore>, api: Measu
       }
     }
 
-      // Only update while measurement is active (not frozen)
-      if (currentState.measure?.measurement?.isActive) {
-        const finalMovePoint = moveSnapInfo?.point ?? canvasPoint;
-        // If shift is pressed, constrain to horizontal/vertical/diagonal
-        const effectiveShift = getEffectiveShift(moveEvent.shiftKey, currentState.isVirtualShiftActive);
-        const pointToSet = (effectiveShift && currentState.measure?.measurement?.startPoint)
-          ? constrainToCardinalAndDiagonal(currentState.measure.measurement.startPoint, finalMovePoint)
-          : finalMovePoint;
-        api.updateMeasurement(pointToSet, moveSnapInfo);
-      }
+    // Only update while measurement is active (not frozen)
+    if (currentState.measure?.measurement?.isActive) {
+      const finalMovePoint = moveSnapInfo?.point ?? canvasPoint;
+      // If shift is pressed, constrain to horizontal/vertical/diagonal
+      const effectiveShift = getEffectiveShift(moveEvent.shiftKey, currentState.isVirtualShiftActive);
+      const pointToSet = (effectiveShift && currentState.measure?.measurement?.startPoint)
+        ? constrainToCardinalAndDiagonal(currentState.measure.measurement.startPoint, finalMovePoint)
+        : finalMovePoint;
+      api.updateMeasurement(pointToSet, moveSnapInfo);
+    }
   };
 
-    const handlePointerUp = (upEvent: PointerEvent) => {
+  const handlePointerUp = (upEvent: PointerEvent) => {
     const svg = document.querySelector('svg');
     if (!svg) return;
 
@@ -177,7 +177,7 @@ const installListeners = (context: PluginHandlerContext<CanvasStore>, api: Measu
         if (!pathData?.subPaths) return null;
         return calculateBounds(pathData.subPaths, pathData.strokeWidth || 0, currentState.viewport.zoom);
       };
-      
+
       // Get high-priority snap points (using configured snap options)
       const highPriorityPoints = getAllSnapPoints(
         currentState.elements,
@@ -190,7 +190,7 @@ const installListeners = (context: PluginHandlerContext<CanvasStore>, api: Measu
           snapToIntersections: currentState.measure.snapToIntersections,
         }
       );
-      
+
       // Find closest high-priority snap
       upSnapInfo = findClosestSnapPoint(
         canvasPoint,
@@ -198,7 +198,7 @@ const installListeners = (context: PluginHandlerContext<CanvasStore>, api: Measu
         currentState.measure.snapThreshold,
         currentState.viewport.zoom
       );
-      
+
       // Only check edge snap if no high-priority snap found and edge snap is enabled
       if (!upSnapInfo && currentState.measure.snapToEdges) {
         for (const element of currentState.elements) {
@@ -225,9 +225,19 @@ const installListeners = (context: PluginHandlerContext<CanvasStore>, api: Measu
     if (effectiveShiftUp && currentState.measure?.measurement?.startPoint) {
       finalUpPoint = constrainToCardinalAndDiagonal(currentState.measure.measurement.startPoint, finalUpPoint);
     }
-    // Commit the final location but DO NOT finalize (we keep the measurement visible)
+    // Commit the final location
     if (currentState.measure?.measurement?.isActive) {
       api.updateMeasurement(finalUpPoint, upSnapInfo);
+
+      // Check if we dragged (distance > 5px)
+      // If so, finalize (freeze) the measurement immediately
+      if (currentState.measure.measurement.startPoint) {
+        const dist = screenDistance(currentState.measure.measurement.startPoint, finalUpPoint, currentState.viewport.zoom);
+        // 5 screen pixels threshold for "drag"
+        if (dist > 5) {
+          api.finalizeMeasurement();
+        }
+      }
     }
   };
 
@@ -257,17 +267,17 @@ export const measurePlugin: PluginDefinition<CanvasStore> = {
   handler: (event: ReactPointerEvent, point: Point, _target: Element, context: PluginHandlerContext<CanvasStore>) => {
     const api = context.api as MeasurePluginApi;
     const state = context.store.getState() as unknown as MeasurePluginSlice & CanvasStore;
-    
+
     // Helper to get element bounds
     const getElementBoundsFn = (element: CanvasElement) => {
       if (element.type !== 'path') return null;
       const pathData = element.data;
       if (!pathData?.subPaths) return null;
-      
+
       // Calculate bounds manually using measurePath utility
       return calculateBounds(pathData.subPaths, pathData.strokeWidth || 0, state.viewport.zoom);
     };
-    
+
     // Handler is called on pointerdown by the plugin manager
     // Try to snap to nearby elements with priority
     let snapInfo: SnapInfo | null = null;
@@ -284,7 +294,7 @@ export const measurePlugin: PluginDefinition<CanvasStore> = {
           snapToIntersections: true,
         }
       );
-      
+
       // Find closest high-priority snap
       snapInfo = findClosestSnapPoint(
         point,
@@ -292,7 +302,7 @@ export const measurePlugin: PluginDefinition<CanvasStore> = {
         state.measure.snapThreshold,
         state.viewport.zoom
       );
-      
+
       // Only check edge snap if no high-priority snap found
       if (!snapInfo) {
         for (const element of state.elements) {
@@ -357,7 +367,7 @@ export const measurePlugin: PluginDefinition<CanvasStore> = {
       placement: 'background',
       render: (context) => {
         const { activePlugin, measure: measureState } = context as any; // eslint-disable-line @typescript-eslint/no-explicit-any
-        
+
         if (activePlugin !== 'measure') {
           return null;
         }
@@ -390,7 +400,7 @@ export const measurePlugin: PluginDefinition<CanvasStore> = {
       placement: 'foreground',
       render: (context) => {
         const { activePlugin, measure: measureState } = context as any; // eslint-disable-line @typescript-eslint/no-explicit-any
-        
+
         if (activePlugin !== 'measure') {
           return null;
         }
@@ -426,7 +436,7 @@ export const measurePlugin: PluginDefinition<CanvasStore> = {
       placement: 'foreground',
       render: (context) => {
         const { activePlugin, measure: measureState, viewport, canvasSize } = context as any; // eslint-disable-line @typescript-eslint/no-explicit-any
-        
+
         if (activePlugin !== 'measure') {
           return null;
         }

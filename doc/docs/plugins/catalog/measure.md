@@ -48,7 +48,9 @@ When entering measure mode, the plugin:
 ### 2. Measurement Interaction
 During measurement:
 - **Start point**: Click to begin; the start point snaps to the nearest point within the threshold
-- **End point**: Move the mouse (no need to keep the button pressed) — the end point snaps in real-time to nearby features
+- **End point**: 
+  - **Click and release**: Move the mouse to update the measurement, then click again to finalize.
+  - **Click and drag**: Drag to the desired end point and release to finalize immediately (freeze).
 - **Hold Shift**: Hold the physical Shift key to constrain the measurement to exactly horizontal, vertical, or diagonal (±45°) directions.
 - **Virtual Shift for Mobile**: On mobile devices, use the Virtual Shift button (bottom-right action bar) to emulate holding Shift — the constraint behavior is identical.
 - **Visual feedback**: Shows measurement line with perpendicular extensions
