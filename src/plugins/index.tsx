@@ -262,6 +262,25 @@ const selectPlugin: PluginDefinition<CanvasStore> = {
   id: 'select',
   metadata: getToolMetadata('select'),
   subscribedEvents: ['pointerdown', 'pointerup'],
+  onElementDoubleClick: (elementId, _event, context) => {
+    const state = context.store.getState();
+    const element = state.elements.find(el => el.id === elementId);
+
+    if (!element || element.type !== 'path') return;
+
+    const pathData = element.data as import('../types').PathData;
+
+    // Only proceed if this element is selected and it's the only one selected
+    if (state.selectedIds.length === 1 && state.selectedIds[0] === elementId) {
+      if (pathData.subPaths.length === 1) {
+        // Single subpath -> go to transformation mode
+        state.setActivePlugin('transformation');
+      } else if (pathData.subPaths.length > 1) {
+        // Multiple subpaths -> go to subpath mode
+        state.setActivePlugin('subpath');
+      }
+    }
+  },
   handler: (
     event,
     point,
@@ -344,15 +363,32 @@ const selectPlugin: PluginDefinition<CanvasStore> = {
         const fullState = state as any;
         if (fullState.grid?.snapEnabled && fullState.snapToGrid) {
              const selectedElements = state.elements.filter(el => state.selectedIds.includes(el.id));
-             const bounds = calculateMultiElementBounds(selectedElements, {
-                includeStroke: true,
-                zoom: state.viewport.zoom
+             
+             let minX = Infinity;
+             let minY = Infinity;
+             
+             // Create a temporary element map if needed (though store usually has it)
+             // We use a Map for O(1) lookups required by getGroupBounds
+             const elementMap = new Map(state.elements.map(e => [e.id, e]));
+
+             selectedElements.forEach(el => {
+                 let b: Bounds | null = null;
+                 if (el.type === 'path') {
+                     b = calculateMultiElementBounds([el], { includeStroke: true, zoom: state.viewport.zoom });
+                 } else if (el.type === 'group') {
+                     b = getGroupBounds(el as GroupElement, elementMap, state.viewport);
+                 }
+                 
+                 if (b && Number.isFinite(b.minX)) {
+                     minX = Math.min(minX, b.minX);
+                     minY = Math.min(minY, b.minY);
+                 }
              });
              
-             if (Number.isFinite(bounds.minX)) {
-                const snappedTopLeft = fullState.snapToGrid(bounds.minX, bounds.minY);
-                const snapOffsetX = snappedTopLeft.x - bounds.minX;
-                const snapOffsetY = snappedTopLeft.y - bounds.minY;
+             if (Number.isFinite(minX)) {
+                const snappedTopLeft = fullState.snapToGrid(minX, minY);
+                const snapOffsetX = snappedTopLeft.x - minX;
+                const snapOffsetY = snappedTopLeft.y - minY;
                 
                 if (snapOffsetX !== 0 || snapOffsetY !== 0) {
                     state.moveSelectedElements(snapOffsetX, snapOffsetY);

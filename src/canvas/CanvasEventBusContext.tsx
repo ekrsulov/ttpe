@@ -9,9 +9,6 @@ export interface CanvasPointerEventHelpers extends Record<string, any> { // esli
   beginSelectionRectangle?: (point: Point, shiftKey?: boolean, subpathMode?: boolean) => void;
   updateSelectionRectangle?: (point: Point) => void;
   completeSelectionRectangle?: () => void;
-  startShapeCreation?: (point: Point) => void;
-  updateShapeCreation?: (point: Point, shiftPressed: boolean) => void;
-  endShapeCreation?: () => void;
   isSmoothBrushActive?: boolean;
   setDragStart?: (point: Point | null) => void;
   setIsDragging?: (isDragging: boolean) => void;
@@ -20,7 +17,6 @@ export interface CanvasPointerEventHelpers extends Record<string, any> { // esli
 
 export interface CanvasPointerEventState {
   isSelecting?: boolean;
-  isCreatingShape?: boolean;
   isDragging?: boolean;
   dragStart?: Point | null;
   hasDragMoved?: boolean;
@@ -46,12 +42,33 @@ export interface CanvasWheelEventPayload {
   svg?: SVGSVGElement | null;
 }
 
+export interface CanvasElementDoubleClickEventPayload {
+  elementId: string;
+  event: React.MouseEvent<Element>;
+  activePlugin: string | null;
+}
+
+export interface CanvasSubpathDoubleClickEventPayload {
+  elementId: string;
+  subpathIndex: number;
+  event: React.MouseEvent<Element>;
+  activePlugin: string | null;
+}
+
+export interface CanvasDoubleClickEventPayload {
+  event: React.MouseEvent<Element>;
+  activePlugin: string | null;
+}
+
 export type CanvasEventMap = {
   pointerdown: CanvasPointerEventPayload;
   pointermove: CanvasPointerEventPayload;
   pointerup: CanvasPointerEventPayload;
   keyboard: CanvasKeyboardEventPayload;
   wheel: CanvasWheelEventPayload;
+  elementDoubleClick: CanvasElementDoubleClickEventPayload;
+  subpathDoubleClick: CanvasSubpathDoubleClickEventPayload;
+  canvasDoubleClick: CanvasDoubleClickEventPayload;
 };
 
 type CanvasEventHandler<TPayload> = (payload: TPayload) => void;

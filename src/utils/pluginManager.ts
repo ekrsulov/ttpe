@@ -18,6 +18,9 @@ import type {
   CanvasEventBus,
   CanvasEventMap,
   CanvasPointerEventPayload,
+  CanvasElementDoubleClickEventPayload,
+  CanvasSubpathDoubleClickEventPayload,
+  CanvasDoubleClickEventPayload,
 } from '../canvas/CanvasEventBusContext';
 import type { CanvasControllerValue } from '../canvas/controller/CanvasControllerContext';
 import { canvasShortcutRegistry } from '../canvas/shortcuts';
@@ -550,6 +553,75 @@ export class PluginManager {
 
         this.addInteractionSubscription(plugin.id, unsubscribe);
       });
+    }
+
+    if (plugin.onElementDoubleClick) {
+      const handler = plugin.onElementDoubleClick;
+      const unsubscribe = this.eventBus!.subscribe('elementDoubleClick', (payload: CanvasElementDoubleClickEventPayload) => {
+        if (payload.activePlugin !== plugin.id) {
+          return;
+        }
+
+        const api = this.pluginApis.get(plugin.id) ?? {};
+        const context: PluginHandlerContext<CanvasStore> = {
+          ...this.createPluginApiContext(),
+          api,
+          helpers: {}, // Double click doesn't provide helpers currently
+        };
+
+        handler(
+          payload.elementId,
+          payload.event,
+          context
+        );
+      });
+      this.addInteractionSubscription(plugin.id, unsubscribe);
+    }
+
+    if (plugin.onSubpathDoubleClick) {
+      const handler = plugin.onSubpathDoubleClick;
+      const unsubscribe = this.eventBus!.subscribe('subpathDoubleClick', (payload: CanvasSubpathDoubleClickEventPayload) => {
+        if (payload.activePlugin !== plugin.id) {
+          return;
+        }
+
+        const api = this.pluginApis.get(plugin.id) ?? {};
+        const context: PluginHandlerContext<CanvasStore> = {
+          ...this.createPluginApiContext(),
+          api,
+          helpers: {}, // Double click doesn't provide helpers currently
+        };
+
+        handler(
+          payload.elementId,
+          payload.subpathIndex,
+          payload.event,
+          context
+        );
+      });
+      this.addInteractionSubscription(plugin.id, unsubscribe);
+    }
+
+    if (plugin.onCanvasDoubleClick) {
+      const handler = plugin.onCanvasDoubleClick;
+      const unsubscribe = this.eventBus!.subscribe('canvasDoubleClick', (payload: CanvasDoubleClickEventPayload) => {
+        if (payload.activePlugin !== plugin.id) {
+          return;
+        }
+
+        const api = this.pluginApis.get(plugin.id) ?? {};
+        const context: PluginHandlerContext<CanvasStore> = {
+          ...this.createPluginApiContext(),
+          api,
+          helpers: {},
+        };
+
+        handler(
+          payload.event,
+          context
+        );
+      });
+      this.addInteractionSubscription(plugin.id, unsubscribe);
     }
   }
 

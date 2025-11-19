@@ -8,6 +8,7 @@ import { EditorPanel } from '../../sidebar/panels/EditorPanel';
 import { SubpathOverlay } from './SubpathOverlay';
 import type { PathData } from '../../types';
 import { performPathSimplify, performSubPathReverse, performSubPathJoin } from './actions';
+import { calculateSubpathsBounds } from '../../utils/selectionBoundsUtils';
 
 const subpathSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -23,9 +24,58 @@ export const subpathPlugin: PluginDefinition<CanvasStore> = {
     ...getToolMetadata('subpath'),
     disablePathInteraction: true,
   },
+  onSubpathDoubleClick: (elementId, subpathIndex, _event, context) => {
+    const state = context.store.getState();
+    const wasAlreadySelected = (state.selectedSubpaths?.length ?? 0) === 1 &&
+      state.selectedSubpaths?.[0].elementId === elementId &&
+      state.selectedSubpaths?.[0].subpathIndex === subpathIndex;
+
+    if (wasAlreadySelected) {
+      state.setActivePlugin('transformation');
+    }
+  },
+  onCanvasDoubleClick: (_event, context) => {
+    context.store.getState().setActivePlugin('select');
+  },
+  subscribedEvents: ['pointerdown', 'pointerup'],
   handler: (event, point, target, context) => {
-    if (target.tagName === 'svg') {
-      context.helpers.beginSelectionRectangle?.(point, false, !event.shiftKey);
+    const state = context.store.getState();
+    const { pointerState } = context;
+
+    if (event.type === 'pointerdown') {
+      if (target.tagName === 'svg') {
+        context.helpers.beginSelectionRectangle?.(point, false, !event.shiftKey);
+      }
+    } else if (event.type === 'pointerup') {
+      if (pointerState?.isDragging && pointerState?.hasDragMoved) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const fullState = state as any;
+        if (fullState.grid?.snapEnabled && fullState.snapToGrid) {
+          const selectedSubpaths = state.selectedSubpaths || [];
+          if (selectedSubpaths.length > 0) {
+            // Convert to Map<string, Set<number>>
+            const subpathMap = new Map<string, Set<number>>();
+            selectedSubpaths.forEach((sel: { elementId: string; subpathIndex: number }) => {
+              if (!subpathMap.has(sel.elementId)) {
+                subpathMap.set(sel.elementId, new Set());
+              }
+              subpathMap.get(sel.elementId)!.add(sel.subpathIndex);
+            });
+
+            const bounds = calculateSubpathsBounds(state.elements, subpathMap, state.viewport.zoom);
+
+            if (Number.isFinite(bounds.minX)) {
+              const snappedTopLeft = fullState.snapToGrid(bounds.minX, bounds.minY);
+              const snapOffsetX = snappedTopLeft.x - bounds.minX;
+              const snapOffsetY = snappedTopLeft.y - bounds.minY;
+
+              if (snapOffsetX !== 0 || snapOffsetY !== 0) {
+                state.moveSelectedSubpaths(snapOffsetX, snapOffsetY);
+              }
+            }
+          }
+        }
+      }
     }
   },
   keyboardShortcuts: {

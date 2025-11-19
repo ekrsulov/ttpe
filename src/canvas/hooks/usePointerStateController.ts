@@ -11,25 +11,15 @@ type UpdateSelectionRectangle = (point: Point) => void;
 
 type CompleteSelectionRectangle = () => void;
 
-type StartShapeCreation = (startPoint: Point) => void;
-
-type UpdateShapeCreation = (endPoint: Point, shiftPressed: boolean) => void;
-
-type EndShapeCreation = () => void;
-
 export interface PointerHelpersSnapshot {
   beginSelectionRectangle: BeginSelectionRectangle;
   updateSelectionRectangle: UpdateSelectionRectangle;
   completeSelectionRectangle: CompleteSelectionRectangle;
-  startShapeCreation: StartShapeCreation;
-  updateShapeCreation: UpdateShapeCreation;
-  endShapeCreation: EndShapeCreation;
   isSmoothBrushActive: boolean;
 }
 
 export interface PointerStateSnapshot {
   isSelecting: boolean;
-  isCreatingShape: boolean;
   isDragging: boolean;
   dragStart: Point | null;
   hasDragMoved: boolean;
@@ -41,25 +31,17 @@ export interface PointerStateRefs {
 
 interface UsePointerStateControllerParams {
   isSelecting: boolean;
-  isCreatingShape: boolean;
   beginSelectionRectangle: BeginSelectionRectangle;
   updateSelectionRectangle: UpdateSelectionRectangle;
   completeSelectionRectangle: CompleteSelectionRectangle;
-  startShapeCreation: StartShapeCreation;
-  updateShapeCreation: UpdateShapeCreation;
-  endShapeCreation: EndShapeCreation;
   isSmoothBrushActive: boolean;
 }
 
 export const usePointerStateController = ({
   isSelecting,
-  isCreatingShape,
   beginSelectionRectangle,
   updateSelectionRectangle,
   completeSelectionRectangle,
-  startShapeCreation,
-  updateShapeCreation,
-  endShapeCreation,
   isSmoothBrushActive,
 }: UsePointerStateControllerParams) => {
   const [isDragging, setIsDragging] = useState(false);
@@ -68,7 +50,6 @@ export const usePointerStateController = ({
 
   const pointerStateRef = useRef<PointerStateSnapshot>({
     isSelecting,
-    isCreatingShape,
     isDragging,
     dragStart,
     hasDragMoved,
@@ -78,43 +59,38 @@ export const usePointerStateController = ({
     beginSelectionRectangle,
     updateSelectionRectangle,
     completeSelectionRectangle,
-    startShapeCreation,
-    updateShapeCreation,
-    endShapeCreation,
     isSmoothBrushActive,
   });
 
   useEffect(() => {
     pointerStateRef.current = {
       isSelecting,
-      isCreatingShape,
       isDragging,
       dragStart,
       hasDragMoved,
     };
-  }, [isSelecting, isCreatingShape, isDragging, dragStart, hasDragMoved]);
+  }, [isSelecting, isDragging, dragStart, hasDragMoved]);
 
   useEffect(() => {
     helpersRef.current = {
       beginSelectionRectangle,
       updateSelectionRectangle,
       completeSelectionRectangle,
-      startShapeCreation,
-      updateShapeCreation,
-      endShapeCreation,
       isSmoothBrushActive,
     };
   }, [
     beginSelectionRectangle,
     updateSelectionRectangle,
     completeSelectionRectangle,
-    startShapeCreation,
-    updateShapeCreation,
-    endShapeCreation,
     isSmoothBrushActive,
   ]);
 
-  const stateRefs = useMemo<PointerStateRefs>(() => ({ pointer: pointerStateRef }), []);
+  const stateRefs = useMemo(
+    () => ({
+      pointer: pointerStateRef,
+    }),
+    []
+  );
 
   return {
     isDragging,

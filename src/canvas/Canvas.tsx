@@ -4,7 +4,6 @@ import { useCanvasKeyboardControls } from './hooks/useCanvasKeyboardControls';
 import { useSelectionController } from './hooks/useSelectionController';
 import { useCanvasTransformControls } from './hooks/useCanvasTransformControls';
 import { useAdvancedTransformControls } from './hooks/useAdvancedTransformControls';
-import { useCanvasShapeCreation } from './hooks/useCanvasShapeCreation';
 import { useCanvasEventHandlers } from './hooks/useCanvasEventHandlers';
 import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
 import type { Point, CanvasElement } from '../types';
@@ -63,16 +62,6 @@ const CanvasContent: React.FC = () => {
     updateAdvancedTransformation,
     endAdvancedTransformation
   } = useAdvancedTransformControls();
-  const {
-    isCreatingShape,
-    shapeStart,
-    shapeEnd,
-    feedback: shapeFeedback,
-    startShapeCreation,
-    updateShapeCreation,
-    endShapeCreation,
-    updatePointPositionFeedback
-  } = useCanvasShapeCreation();
 
   const controller = useCanvasController();
   const smoothBrush = useCanvasStore(state => state.smoothBrush);
@@ -163,13 +152,9 @@ const CanvasContent: React.FC = () => {
     helpers,
   } = usePointerStateController({
     isSelecting,
-    isCreatingShape,
     beginSelectionRectangle,
     updateSelectionRectangle,
     completeSelectionRectangle,
-    startShapeCreation,
-    updateShapeCreation,
-    endShapeCreation,
     isSmoothBrushActive: false,
   });
 
@@ -188,9 +173,6 @@ const CanvasContent: React.FC = () => {
           beginSelectionRectangle: helpersSnapshot.beginSelectionRectangle,
           updateSelectionRectangle: helpersSnapshot.updateSelectionRectangle,
           completeSelectionRectangle: helpersSnapshot.completeSelectionRectangle,
-          startShapeCreation: helpersSnapshot.startShapeCreation,
-          updateShapeCreation: helpersSnapshot.updateShapeCreation,
-          endShapeCreation: helpersSnapshot.endShapeCreation,
           isSmoothBrushActive: helpersSnapshot.isSmoothBrushActive,
           setDragStart,
           setIsDragging,
@@ -198,7 +180,6 @@ const CanvasContent: React.FC = () => {
         },
         state: {
           isSelecting: state.isSelecting,
-          isCreatingShape: state.isCreatingShape,
           isDragging: state.isDragging,
           dragStart: state.dragStart,
           hasDragMoved: state.hasDragMoved,
@@ -245,14 +226,11 @@ const CanvasContent: React.FC = () => {
     isDragging,
     dragStart,
     hasDragMoved,
-    isCreatingShape,
-    shapeStart,
     transformStateIsTransforming: transformState.isTransforming,
     advancedTransformStateIsTransforming: advancedTransformState.isTransforming,
     updateTransformation,
     updateAdvancedTransformation,
     beginSelectionRectangle,
-    startShapeCreation,
     isSmoothBrushActive: false,
     setIsDragging,
     setDragStart,
@@ -266,8 +244,6 @@ const CanvasContent: React.FC = () => {
     endAdvancedTransformation,
     completeSelectionRectangle,
     updateSelectionRectangle,
-    updateShapeCreation,
-    endShapeCreation,
     moveSelectedElements: handleMoveSelectedElements,
     moveSelectedSubpaths: handleMoveSelectedSubpaths,
     selectElement: handleSelectElement,
@@ -327,7 +303,6 @@ const CanvasContent: React.FC = () => {
     isElementSelected,
     isTransforming: transformState.isTransforming,
     isSelecting,
-    isCreatingShape,
     isPathInteractionDisabled,
     pathCursorMode,
     eventHandlers: {
@@ -345,7 +320,6 @@ const CanvasContent: React.FC = () => {
     isElementSelected,
     transformState.isTransforming,
     isSelecting,
-    isCreatingShape,
     isPathInteractionDisabled,
     pathCursorMode,
     handleElementDoubleClick,
@@ -379,12 +353,6 @@ const CanvasContent: React.FC = () => {
     const pluginSpecific: Partial<CanvasLayerContext> = {};
     if (currentMode === 'edit') {
       pluginSpecific.addPointMode = addPointMode;
-      pluginSpecific.pointPositionFeedback = shapeFeedback.pointPosition;
-    } else if (currentMode === 'shape') {
-      pluginSpecific.isCreatingShape = isCreatingShape;
-      pluginSpecific.shapeStart = shapeStart;
-      pluginSpecific.shapeEnd = shapeEnd;
-      pluginSpecific.shapeFeedback = shapeFeedback;
     } else if (currentMode === 'transformation') {
       pluginSpecific.transformFeedback = feedback;
     }
@@ -409,10 +377,6 @@ const CanvasContent: React.FC = () => {
       setDragStartForLayers,
       settings,
       // Plugin-specific dependencies
-      isCreatingShape,
-      shapeStart,
-      shapeEnd,
-      shapeFeedback,
       addPointMode,
       feedback,
     ]
@@ -423,7 +387,6 @@ const CanvasContent: React.FC = () => {
     currentMode,
     selectedCommands: selectedCommands ?? [],
     elements,
-    updatePointPositionFeedback,
     editingPoint: editingPoint ?? null,
     draggingSelection: draggingSelection ?? null,
     emergencyCleanupDrag: emergencyCleanupDrag ?? (() => { }),

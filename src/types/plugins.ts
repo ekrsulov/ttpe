@@ -1,10 +1,10 @@
-import type { ComponentType, PointerEvent, ReactNode } from 'react';
+import type { ComponentType, PointerEvent, MouseEvent, ReactNode } from 'react';
 import type { StoreApi } from 'zustand';
 import type { Point, CanvasElement } from '.';
 import type { CanvasControllerValue } from '../canvas/controller/CanvasControllerContext';
 import type { Bounds } from '../utils/boundsUtils';
 import type { CanvasEventBus, CanvasPointerEventState } from '../canvas/CanvasEventBusContext';
-import type { PointPositionFeedback } from '../canvas/hooks/useCanvasShapeCreation';
+import type { PointPositionFeedback } from '../canvas/interactions/ShapeCreationController';
 
 export type CanvasShortcutStoreApi = Pick<StoreApi<object>, 'getState' | 'subscribe'>;
 
@@ -113,6 +113,21 @@ export interface PluginDefinition<TStore extends object = object> {
     event: PointerEvent,
     point: Point,
     target: Element,
+    context: PluginHandlerContext<TStore>
+  ) => void;
+  onElementDoubleClick?: (
+    elementId: string,
+    event: MouseEvent<Element>,
+    context: PluginHandlerContext<TStore>
+  ) => void;
+  onSubpathDoubleClick?: (
+    elementId: string,
+    subpathIndex: number,
+    event: MouseEvent<Element>,
+    context: PluginHandlerContext<TStore>
+  ) => void;
+  onCanvasDoubleClick?: (
+    event: MouseEvent<Element>,
     context: PluginHandlerContext<TStore>
   ) => void;
   keyboardShortcuts?: CanvasShortcutMap;

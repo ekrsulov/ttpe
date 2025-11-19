@@ -31,6 +31,29 @@ export const transformationPlugin: PluginDefinition<CanvasStore> = {
       }
     },
   },
+  onElementDoubleClick: (elementId, _event, context) => {
+    const state = context.store.getState();
+    const wasAlreadySelected = state.selectedIds.length === 1 && state.selectedIds[0] === elementId;
+    if (wasAlreadySelected) {
+      state.setActivePlugin('edit');
+    }
+  },
+  onSubpathDoubleClick: (elementId, subpathIndex, _event, context) => {
+    const state = context.store.getState();
+    const wasAlreadySelected = (state.selectedSubpaths?.length ?? 0) === 1 &&
+      state.selectedSubpaths?.[0].elementId === elementId &&
+      state.selectedSubpaths?.[0].subpathIndex === subpathIndex;
+
+    if (wasAlreadySelected) {
+      state.setActivePlugin('edit');
+    } else {
+      const subpathSelection = [{ elementId, subpathIndex }];
+      state.setState({ selectedSubpaths: subpathSelection });
+    }
+  },
+  onCanvasDoubleClick: (_event, context) => {
+    context.store.getState().setActivePlugin('select');
+  },
   handler: (
     _event,
     _point,

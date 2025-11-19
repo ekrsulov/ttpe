@@ -4,6 +4,8 @@ import { createGridPluginSlice } from './slice';
 import type { GridPluginSlice } from './slice';
 import GridPanelComponent from './GridPanel';
 import { GridOverlay } from './GridOverlay';
+import { createGridSnapModifier } from './snapModifier';
+import { pluginManager } from '../../utils/pluginManager';
 
 const gridSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -29,6 +31,10 @@ export const gridPlugin: PluginDefinition<CanvasStore> = {
     },
   ],
   slices: [gridSliceFactory],
+  init: (context) => {
+    const modifier = createGridSnapModifier(context);
+    return pluginManager.registerDragModifier(modifier);
+  },
 };
 
 export type { GridPluginSlice };

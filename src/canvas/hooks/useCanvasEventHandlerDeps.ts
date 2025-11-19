@@ -11,15 +11,12 @@ export interface CanvasEventHandlerDepsInput {
   isDragging: boolean;
   dragStart: Point | null;
   hasDragMoved: boolean;
-  isCreatingShape: boolean;
-  shapeStart: Point | null;
   transformStateIsTransforming: boolean;
   advancedTransformStateIsTransforming: boolean;
   updateTransformation: (point: Point, isShiftPressed: boolean) => void;
   updateAdvancedTransformation: (point: Point) => void;
   // Note: applyBrush and updateCursorPosition removed as they were not propagated
   beginSelectionRectangle: (point: Point, shiftKey?: boolean, subpathMode?: boolean) => void;
-  startShapeCreation: (point: Point) => void;
   isSmoothBrushActive: boolean;
   setIsDragging: (value: boolean) => void;
   setDragStart: (point: Point | null) => void;
@@ -33,8 +30,6 @@ export interface CanvasEventHandlerDepsInput {
   endAdvancedTransformation: () => void;
   completeSelectionRectangle: () => void;
   updateSelectionRectangle: (point: Point) => void;
-  updateShapeCreation: (point: Point, shiftPressed: boolean) => void;
-  endShapeCreation: () => void;
   moveSelectedElements: (deltaX: number, deltaY: number, precisionOverride?: number) => void;
   moveSelectedSubpaths: (deltaX: number, deltaY: number) => void;
   selectElement: (elementId: string, toggle: boolean) => void;
@@ -51,14 +46,11 @@ export interface CanvasEventHandlerDeps {
   isDragging: boolean;
   dragStart: Point | null;
   hasDragMoved: boolean;
-  isCreatingShape: boolean;
-  shapeStart: Point | null;
   transformStateIsTransforming: boolean;
   advancedTransformStateIsTransforming: boolean;
   updateTransformation: (point: Point, isShiftPressed: boolean) => void;
   updateAdvancedTransformation: (point: Point) => void;
   beginSelectionRectangle: (point: Point, shiftKey?: boolean, subpathMode?: boolean) => void;
-  startShapeCreation: (point: Point) => void;
   isSmoothBrushActive: boolean;
   setIsDragging: (value: boolean) => void;
   setDragStart: (point: Point | null) => void;
@@ -72,8 +64,6 @@ export interface CanvasEventHandlerDeps {
   endAdvancedTransformation: () => void;
   completeSelectionRectangle: () => void;
   updateSelectionRectangle: (point: Point) => void;
-  updateShapeCreation: (point: Point, shiftPressed: boolean) => void;
-  endShapeCreation: () => void;
   moveSelectedElements: (deltaX: number, deltaY: number, precisionOverride?: number) => void;
   moveSelectedSubpaths: (deltaX: number, deltaY: number) => void;
   selectElement: (elementId: string, toggle: boolean) => void;
@@ -97,14 +87,11 @@ export function useCanvasEventHandlerDeps(
     isDragging: input.isDragging,
     dragStart: input.dragStart,
     hasDragMoved: input.hasDragMoved,
-    isCreatingShape: input.isCreatingShape,
-    shapeStart: input.shapeStart,
     transformStateIsTransforming: input.transformStateIsTransforming,
     advancedTransformStateIsTransforming: input.advancedTransformStateIsTransforming,
     updateTransformation: input.updateTransformation,
     updateAdvancedTransformation: input.updateAdvancedTransformation,
     beginSelectionRectangle: input.beginSelectionRectangle,
-    startShapeCreation: input.startShapeCreation,
     isSmoothBrushActive: input.isSmoothBrushActive,
     setIsDragging: input.setIsDragging,
     setDragStart: input.setDragStart,
@@ -118,8 +105,6 @@ export function useCanvasEventHandlerDeps(
     endAdvancedTransformation: input.endAdvancedTransformation,
     completeSelectionRectangle: input.completeSelectionRectangle,
     updateSelectionRectangle: input.updateSelectionRectangle,
-    updateShapeCreation: input.updateShapeCreation,
-    endShapeCreation: input.endShapeCreation,
     moveSelectedElements: input.moveSelectedElements,
     moveSelectedSubpaths: input.moveSelectedSubpaths,
     selectElement: input.selectElement,
@@ -134,14 +119,11 @@ export function useCanvasEventHandlerDeps(
     input.isDragging,
     input.dragStart,
     input.hasDragMoved,
-    input.isCreatingShape,
-    input.shapeStart,
     input.transformStateIsTransforming,
     input.advancedTransformStateIsTransforming,
     input.updateTransformation,
     input.updateAdvancedTransformation,
     input.beginSelectionRectangle,
-    input.startShapeCreation,
     input.isSmoothBrushActive,
     input.setIsDragging,
     input.setDragStart,
@@ -155,8 +137,6 @@ export function useCanvasEventHandlerDeps(
     input.endAdvancedTransformation,
     input.completeSelectionRectangle,
     input.updateSelectionRectangle,
-    input.updateShapeCreation,
-    input.endShapeCreation,
     input.moveSelectedElements,
     input.moveSelectedSubpaths,
     input.selectElement,

@@ -16,14 +16,11 @@ interface EventHandlerDeps {
   isDragging: boolean;
   dragStart: Point | null;
   hasDragMoved: boolean;
-  isCreatingShape: boolean;
-  shapeStart: Point | null;
   transformStateIsTransforming: boolean;
   advancedTransformStateIsTransforming: boolean;
   updateTransformation: (point: Point, shiftPressed: boolean) => void;
   updateAdvancedTransformation: (point: Point) => void;
   beginSelectionRectangle: (point: Point, shiftKey?: boolean, subpathMode?: boolean) => void;
-  startShapeCreation: (point: Point) => void;
   isSmoothBrushActive: boolean;
   setIsDragging: (dragging: boolean) => void;
   setDragStart: (point: Point | null) => void;
@@ -40,8 +37,6 @@ interface EventHandlerDeps {
   endAdvancedTransformation: () => void;
   completeSelectionRectangle: () => void;
   updateSelectionRectangle: (point: Point) => void;
-  updateShapeCreation: (point: Point, shiftPressed: boolean) => void;
-  endShapeCreation: () => void;
   setMode: (mode: string) => void;
 }
 
@@ -57,14 +52,11 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     selectionStart,
     isDragging,
     dragStart,
-    isCreatingShape,
-    shapeStart,
     transformStateIsTransforming,
     advancedTransformStateIsTransforming,
     updateTransformation,
     updateAdvancedTransformation,
     beginSelectionRectangle,
-    startShapeCreation,
     isSmoothBrushActive,
     setIsDragging,
     setDragStart,
@@ -80,9 +72,6 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     endAdvancedTransformation,
     completeSelectionRectangle,
     updateSelectionRectangle,
-    updateShapeCreation,
-    endShapeCreation,
-    setMode,
   } = deps;
 
   const eventBus = useCanvasEventBus();
@@ -94,94 +83,30 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     handleCanvasTouchEnd: detectCanvasDoubleTap
   } = useDoubleTap();
 
-  // Apply snap to dragged elements or subpaths
-  // applySnapToDraggedElements removed - logic moved to selectPlugin
-
-
-  // handleElementClick removed - logic moved to selectPlugin
-
-
   // Handle element double click
   const handleElementDoubleClick = useCallback((elementId: string, e: React.MouseEvent<Element>) => {
     e.stopPropagation();
     e.preventDefault();
 
-    const state = useCanvasStore.getState();
-    const element = state.elements.find(el => el.id === elementId);
-
-    if (!element || element.type !== 'path') return;
-
-    const pathData = element.data as import('../../types').PathData;
-
-    // Check if this element was already the only selected element
-    const wasAlreadySelected = state.selectedIds.length === 1 && state.selectedIds[0] === elementId;
-
-    // Ensure the element is selected
-    if (!state.selectedIds.includes(elementId)) {
-      state.selectElement(elementId, false);
-    }
-
-    if (activePlugin === 'select') {
-      // Only proceed if this element is selected and it's the only one selected
-      if (state.selectedIds.length === 1 && state.selectedIds[0] === elementId) {
-        if (pathData.subPaths.length === 1) {
-          // Single subpath -> go to transformation mode
-          state.setActivePlugin('transformation');
-        } else if (pathData.subPaths.length > 1) {
-          // Multiple subpaths -> go to subpath mode
-          state.setActivePlugin('subpath');
-        }
-      }
-    } else if (activePlugin === 'transformation') {
-      if (wasAlreadySelected) {
-        // Same element -> go to edit mode (existing cycle)
-        state.setActivePlugin('edit');
-      }
-      // If different element, selection changed but stay in transformation mode
-    } else if (activePlugin === 'edit') {
-      if (!wasAlreadySelected) {
-        // Different element -> selection changed, stay in edit mode
-      }
-      // If same element, do nothing
-    }
-  }, [activePlugin]);
+    eventBus.emit('elementDoubleClick', {
+      elementId,
+      event: e,
+      activePlugin
+    });
+  }, [activePlugin, eventBus]);
 
   // Handle subpath double click
   const handleSubpathDoubleClick = useCallback((elementId: string, subpathIndex: number, e: React.MouseEvent<Element>) => {
     e.stopPropagation();
     e.preventDefault();
 
-    const state = useCanvasStore.getState();
-
-    // Check if this subpath was already selected
-    const wasAlreadySelected = (state.selectedSubpaths?.length ?? 0) === 1 &&
-      state.selectedSubpaths?.[0].elementId === elementId &&
-      state.selectedSubpaths?.[0].subpathIndex === subpathIndex;
-
-    if (activePlugin === 'subpath') {
-      if (wasAlreadySelected) {
-        // Same subpath -> go to transformation mode
-        state.setActivePlugin('transformation');
-      }
-      // If different subpath, selection already changed but stay in subpath mode
-    } else if (activePlugin === 'transformation') {
-      if (wasAlreadySelected) {
-        // Same subpath -> go to edit mode (existing cycle)
-        state.setActivePlugin('edit');
-      } else {
-        // Different subpath -> select this specific subpath and stay in transformation mode
-        const subpathSelection = [{ elementId, subpathIndex }];
-        useCanvasStore.setState({ selectedSubpaths: subpathSelection });
-      }
-    } else if (activePlugin === 'edit') {
-      if (!wasAlreadySelected) {
-        // Different subpath -> select this specific subpath and stay in edit mode
-        const subpathSelection = [{ elementId, subpathIndex }];
-        useCanvasStore.setState({ selectedSubpaths: subpathSelection });
-      }
-      // If same subpath, do nothing
-    }
-  }, [activePlugin]);
+    eventBus.emit('subpathDoubleClick', {
+      elementId,
+      subpathIndex,
+      event: e,
+      activePlugin
+    });
+  }, [activePlugin, eventBus]);
 
   // Handle element touch end for double tap detection
   const handleElementTouchEnd = useCallback((elementId: string, e: React.TouchEvent<Element>) => {
@@ -229,12 +154,30 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     const target = e.target as Element;
     const isEmptySpace = target.tagName === 'svg' || target.classList.contains('canvas-background');
 
-    if (isEmptySpace && (activePlugin === 'subpath' || activePlugin === 'transformation' || activePlugin === 'edit')) {
+    if (isEmptySpace) {
       e.preventDefault();
       e.stopPropagation();
-      setMode('select');
+
+      const touch = e.changedTouches[0];
+      if (!touch) return;
+
+      const syntheticEvent = {
+        preventDefault: () => e.preventDefault(),
+        stopPropagation: () => e.stopPropagation(),
+        target: e.target,
+        currentTarget: e.currentTarget,
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+        button: 0,
+        type: 'dblclick',
+      } as unknown as React.MouseEvent<Element>;
+
+      eventBus.emit('canvasDoubleClick', {
+        event: syntheticEvent,
+        activePlugin
+      });
     }
-  }, [detectCanvasDoubleTap, activePlugin, setMode]);
+  }, [detectCanvasDoubleTap, activePlugin, eventBus]);
 
   // Handle subpath touch end for double tap detection
   const handleSubpathTouchEnd = useCallback((elementId: string, subpathIndex: number, e: React.TouchEvent<SVGPathElement>) => {
@@ -268,9 +211,6 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     handleSubpathDoubleClick(elementId, subpathIndex, syntheticEvent);
   }, [detectSubpathDoubleTap, handleSubpathDoubleClick]);
 
-  // handleElementPointerDown removed - logic moved to selectPlugin
-
-
   // Handle transformation handler pointer down
   const handleTransformationHandlerPointerDown = useCallback((e: React.PointerEvent, elementId: string, handler: string) => {
     e.stopPropagation();
@@ -301,9 +241,6 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       return;
     }
 
-    // Plugin handlers are now executed via the eventBus in pluginManager
-    // to avoid duplicate execution
-
     eventBus.emit('pointerdown', {
       event: e,
       point,
@@ -313,9 +250,6 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
         beginSelectionRectangle,
         updateSelectionRectangle,
         completeSelectionRectangle,
-        startShapeCreation,
-        updateShapeCreation,
-        endShapeCreation,
         isSmoothBrushActive,
         setIsDragging,
         setDragStart,
@@ -323,9 +257,9 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       },
       state: {
         isSelecting,
-        isCreatingShape,
         isDragging,
         dragStart,
+        hasDragMoved: deps.hasDragMoved,
       },
     });
   }, [
@@ -336,14 +270,11 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     beginSelectionRectangle,
     updateSelectionRectangle,
     completeSelectionRectangle,
-    startShapeCreation,
-    updateShapeCreation,
-    endShapeCreation,
     isSmoothBrushActive,
     isSelecting,
-    isCreatingShape,
     isDragging,
     dragStart,
+    deps.hasDragMoved,
     setIsDragging,
     setDragStart,
     setHasDragMoved,
@@ -363,9 +294,6 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
         beginSelectionRectangle,
         updateSelectionRectangle,
         completeSelectionRectangle,
-        startShapeCreation,
-        updateShapeCreation,
-        endShapeCreation,
         isSmoothBrushActive,
         setIsDragging,
         setDragStart,
@@ -373,9 +301,9 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       },
       state: {
         isSelecting,
-        isCreatingShape,
         isDragging,
         dragStart,
+        hasDragMoved: deps.hasDragMoved,
       },
     });
 
@@ -391,7 +319,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     // Use fresh state for dragStart to avoid race conditions
     const currentDragStart = dragStart;
 
-    if (currentDragStart && !transformStateIsTransforming && !isSelecting && !isCreatingShape) {
+    if (currentDragStart && !transformStateIsTransforming && !isSelecting) {
       const deltaX = point.x - currentDragStart.x;
       const deltaY = point.y - currentDragStart.y;
 
@@ -493,26 +421,8 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       return;
     }
 
-    // Handle selection rectangle update
-    // Skip React event handling for pencil to avoid conflicts
-    if (activePlugin === 'pencil') {
-      return;
-    }
-
-    // Smooth brush is handled by native DOM listeners in Canvas.tsx
-    // Skip React event handling for smooth brush to avoid conflicts
-    if (activePlugin === 'edit' && isSmoothBrushActive) {
-      return;
-    }
-
     if (isSelecting && selectionStart) {
       updateSelectionRectangle(point);
-    }
-
-    if (isCreatingShape && shapeStart) {
-      // Effective shift state (physical OR virtual)
-      const effectiveShiftKey = getEffectiveShift(e.shiftKey, isVirtualShiftActive);
-      updateShapeCreation(point, effectiveShiftKey);
     }
 
     // Handle subpath dragging
@@ -532,7 +442,6 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     dragStart,
     transformStateIsTransforming,
     isSelecting,
-    isCreatingShape,
     isDragging,
     setIsDragging,
     setHasDragMoved,
@@ -544,18 +453,15 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     updateTransformation,
     isSmoothBrushActive,
     selectionStart,
-    shapeStart,
-    updateShapeCreation,
     updateSelectionRectangle,
     isVirtualShiftActive,
     selectedIds,
     beginSelectionRectangle,
     completeSelectionRectangle,
-    endShapeCreation,
-    startShapeCreation,
     eventBus,
     advancedTransformStateIsTransforming,
     updateAdvancedTransformation,
+    deps.hasDragMoved,
   ]);
 
   // Handle pointer up
@@ -572,9 +478,6 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
         beginSelectionRectangle,
         updateSelectionRectangle,
         completeSelectionRectangle,
-        startShapeCreation,
-        updateShapeCreation,
-        endShapeCreation,
         isSmoothBrushActive,
         setIsDragging,
         setDragStart,
@@ -582,17 +485,14 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       },
       state: {
         isSelecting,
-        isCreatingShape,
         isDragging,
         dragStart,
+        hasDragMoved: deps.hasDragMoved,
       },
     });
 
-    // Subpath dragging functionality removed - will be reimplemented
-
     // Only handle dragging if it hasn't been handled by element click already
     if (isDragging) {
-      // applySnapToDraggedElements removed - logic moved to selectPlugin
       setIsDragging(false);
       // Clear guidelines when drag ends
       const state = useCanvasStore.getState();
@@ -612,10 +512,6 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       completeSelectionRectangle();
     }
 
-    if (isCreatingShape) {
-      endShapeCreation();
-    }
-
     if (transformStateIsTransforming) {
       endTransformation();
     }
@@ -631,20 +527,17 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     setHasDragMoved,
     isSelecting,
     completeSelectionRectangle,
-    isCreatingShape,
-    endShapeCreation,
     transformStateIsTransforming,
     endTransformation,
     advancedTransformStateIsTransforming,
     endAdvancedTransformation,
     screenToCanvas,
     updateSelectionRectangle,
-    updateShapeCreation,
     eventBus,
     dragStart,
     isSmoothBrushActive,
     beginSelectionRectangle,
-    startShapeCreation,
+    deps.hasDragMoved,
   ]);
 
   // Handle wheel
@@ -675,12 +568,15 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     const target = e.target as Element;
     const isEmptySpace = target.tagName === 'svg' || target.classList.contains('canvas-background');
 
-    if (isEmptySpace && (activePlugin === 'subpath' || activePlugin === 'transformation' || activePlugin === 'edit')) {
+    if (isEmptySpace) {
       e.preventDefault();
       e.stopPropagation();
-      setMode('select');
+      eventBus.emit('canvasDoubleClick', {
+        event: e,
+        activePlugin
+      });
     }
-  }, [activePlugin, setMode]);
+  }, [activePlugin, eventBus]);
 
   // Handle element double tap (combines element and subpath double tap logic)
   const handleElementDoubleTap = useCallback((elementId: string) => {

@@ -68,6 +68,27 @@ const editSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
 export const editPlugin: PluginDefinition<CanvasStore> = {
   id: 'edit',
   metadata: getToolMetadata('edit'),
+  onElementDoubleClick: (elementId, _event, context) => {
+    const state = context.store.getState();
+    const wasAlreadySelected = state.selectedIds.length === 1 && state.selectedIds[0] === elementId;
+    if (!wasAlreadySelected) {
+      // Different element -> selection changed, stay in edit mode
+    }
+  },
+  onSubpathDoubleClick: (elementId, subpathIndex, _event, context) => {
+    const state = context.store.getState();
+    const wasAlreadySelected = (state.selectedSubpaths?.length ?? 0) === 1 &&
+      state.selectedSubpaths?.[0].elementId === elementId &&
+      state.selectedSubpaths?.[0].subpathIndex === subpathIndex;
+
+    if (!wasAlreadySelected) {
+      const subpathSelection = [{ elementId, subpathIndex }];
+      state.setState({ selectedSubpaths: subpathSelection });
+    }
+  },
+  onCanvasDoubleClick: (_event, context) => {
+    context.store.getState().setActivePlugin('select');
+  },
   handler: (
     event,
     point,

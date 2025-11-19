@@ -34,7 +34,7 @@ export interface UseCanvasSideEffectsParams {
   currentMode: string | null;
   selectedCommands: SelectedCommand[];
   elements: CanvasElement[];
-  updatePointPositionFeedback: (x: number, y: number, visible: boolean) => void;
+  updatePointPositionFeedback?: (x: number, y: number, visible: boolean) => void;
   editingPoint: EditingPoint | null;
   draggingSelection: DraggingSelection | null;
   emergencyCleanupDrag: () => void;
@@ -63,6 +63,8 @@ export function useCanvasSideEffects(params: UseCanvasSideEffectsParams): void {
 
   // Update point position feedback when selection changes
   useEffect(() => {
+    if (!updatePointPositionFeedback) return;
+
     if (currentMode === 'edit' && selectedCommands.length === 1) {
       const selectedCommand = selectedCommands[0];
       const element = elements.find(el => el.id === selectedCommand.elementId);
