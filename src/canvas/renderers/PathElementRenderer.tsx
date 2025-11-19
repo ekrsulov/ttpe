@@ -25,15 +25,15 @@ export const PathElementRenderer: CanvasElementRenderer<PathElement> = (
   element,
   context: CanvasRenderContext
 ) => {
-  const { viewport, activePlugin, scaleStrokeWithZoom, eventHandlers, isElementSelected, isElementLocked, isTransforming, isSelecting, isCreatingShape } = context;
+  const { viewport, scaleStrokeWithZoom, eventHandlers, isElementSelected, isElementLocked, isTransforming, isCreatingShape, isPathInteractionDisabled, pathCursorMode } = context;
   const pathData = element.data;
 
   const effectiveStrokeColor = getEffectiveStrokeColor(pathData);
   const effectiveFillColor = getEffectiveFillColor(pathData);
 
   // Calculate stroke width based on scaleStrokeWithZoom setting
-  const effectiveStrokeWidth = scaleStrokeWithZoom 
-    ? pathData.strokeWidth 
+  const effectiveStrokeWidth = scaleStrokeWithZoom
+    ? pathData.strokeWidth
     : pathData.strokeWidth / viewport.zoom;
 
   const pathD = commandsToString(pathData.subPaths.flat());
@@ -82,14 +82,14 @@ export const PathElementRenderer: CanvasElementRenderer<PathElement> = (
         }
         style={{
           cursor:
-            activePlugin === 'select'
+            pathCursorMode === 'select'
               ? isLocked
                 ? 'default'
                 : isSelected
-                ? 'move'
-                : 'pointer'
+                  ? 'move'
+                  : 'pointer'
               : 'default',
-          pointerEvents: (activePlugin === 'subpath' || activePlugin === 'shape' || activePlugin === 'pencil' || activePlugin === 'curves' || activePlugin === 'trimPath' || isTransforming || isSelecting || isCreatingShape) ? 'none' : 'auto',
+          pointerEvents: (isPathInteractionDisabled || isTransforming || isCreatingShape) ? 'none' : 'auto',
         }}
       />
     </g>

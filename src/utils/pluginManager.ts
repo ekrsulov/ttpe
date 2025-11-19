@@ -518,93 +518,38 @@ export class PluginManager {
 
     if (plugin.handler) {
       const handler = plugin.handler;
+      // Default to pointerdown if not specified, but allow plugins to subscribe to others
+      const eventsToSubscribe = plugin.subscribedEvents ?? ['pointerdown'];
 
-      // Subscribe to pointerdown events (all plugins)
-      const unsubscribeDown = this.eventBus.subscribe('pointerdown', (payload: CanvasPointerEventPayload) => {
-        if (payload.activePlugin !== plugin.id) {
-          return;
-        }
+      eventsToSubscribe.forEach((eventType) => {
+        const unsubscribe = this.eventBus!.subscribe(eventType, (payload: CanvasPointerEventPayload) => {
+          if (payload.activePlugin !== plugin.id) {
+            return;
+          }
 
-        const target = payload.target as Element | null;
-        if (!target) {
-          return;
-        }
+          const target = payload.target as Element | null;
+          if (!target) {
+            return;
+          }
 
-        const api = this.pluginApis.get(plugin.id) ?? {};
-        const context: PluginHandlerContext<CanvasStore> = {
-          ...this.createPluginApiContext(),
-          api,
-          helpers: payload.helpers,
-        };
+          const api = this.pluginApis.get(plugin.id) ?? {};
+          const context: PluginHandlerContext<CanvasStore> = {
+            ...this.createPluginApiContext(),
+            api,
+            helpers: payload.helpers,
+            pointerState: payload.state,
+          };
 
-        handler(
-          payload.event as React.PointerEvent,
-          payload.point,
-          target,
-          context
-        );
+          handler(
+            payload.event as React.PointerEvent,
+            payload.point,
+            target,
+            context
+          );
+        });
+
+        this.addInteractionSubscription(plugin.id, unsubscribe);
       });
-
-      this.addInteractionSubscription(plugin.id, unsubscribeDown);
-
-      // Only subscribe to pointermove and pointerup for plugins that need them
-      // Currently only trimPath needs hover/drag detection via these events
-      if (plugin.id === 'trimPath') {
-        // Subscribe to pointermove events
-        const unsubscribeMove = this.eventBus.subscribe('pointermove', (payload: CanvasPointerEventPayload) => {
-          if (payload.activePlugin !== plugin.id) {
-            return;
-          }
-
-          const target = payload.target as Element | null;
-          if (!target) {
-            return;
-          }
-
-          const api = this.pluginApis.get(plugin.id) ?? {};
-          const context: PluginHandlerContext<CanvasStore> = {
-            ...this.createPluginApiContext(),
-            api,
-            helpers: payload.helpers,
-          };
-
-          handler(
-            payload.event as React.PointerEvent,
-            payload.point,
-            target,
-            context
-          );
-        });
-
-        // Subscribe to pointerup events
-        const unsubscribeUp = this.eventBus.subscribe('pointerup', (payload: CanvasPointerEventPayload) => {
-          if (payload.activePlugin !== plugin.id) {
-            return;
-          }
-
-          const target = payload.target as Element | null;
-          if (!target) {
-            return;
-          }
-
-          const api = this.pluginApis.get(plugin.id) ?? {};
-          const context: PluginHandlerContext<CanvasStore> = {
-            ...this.createPluginApiContext(),
-            api,
-            helpers: payload.helpers,
-          };
-
-          handler(
-            payload.event as React.PointerEvent,
-            payload.point,
-            target,
-            context
-          );
-        });
-
-        this.addInteractionSubscription(plugin.id, unsubscribeMove);
-        this.addInteractionSubscription(plugin.id, unsubscribeUp);
-      }
     }
   }
 

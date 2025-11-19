@@ -31,7 +31,9 @@ export const trimPathPlugin: PluginDefinition<CanvasStore> = {
     label: 'Trim Path',
     icon: Scissors,
     cursor: 'crosshair',
+    disablePathInteraction: true,
   },
+  subscribedEvents: ['pointerdown', 'pointermove', 'pointerup'],
   handler: (event, point, _target, context) => {
     const store = context.store;
     const state = store.getState() as CanvasStore & TrimPathPluginSlice;

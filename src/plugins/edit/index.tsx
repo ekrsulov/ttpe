@@ -6,6 +6,7 @@ import type { EditPluginSlice } from './slice';
 // no React import needed
 import { EditPanel } from './EditPanel';
 import { useCanvasStore } from '../../store/canvasStore';
+import { BlockingOverlay } from '../../overlays';
 
 const EditExpandablePanelWrapper: React.FC = () => {
   const activePlugin = useCanvasStore(s => s.activePlugin);
@@ -54,7 +55,7 @@ import { ControlPointAlignmentPanel } from './ControlPointAlignmentPanel';
 import { EditPointsOverlay } from './EditPointsOverlay';
 import { AddPointFeedbackOverlay } from './AddPointFeedbackOverlay';
 import { FeedbackOverlay } from '../../overlays';
-import { BlockingOverlay } from '../../overlays';
+import { SmoothBrushCursor } from './SmoothBrushCursor';
 
 const editSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -91,6 +92,16 @@ export const editPlugin: PluginDefinition<CanvasStore> = {
     Delete: (_event, context) => {
       const store = context.store as { deleteSelectedCommands?: () => void };
       store.deleteSelectedCommands?.();
+    },
+    Escape: (_event, { store }) => {
+      const state = store.getState() as CanvasStore;
+      if ((state.selectedCommands?.length ?? 0) > 0) {
+        state.clearSelectedCommands?.();
+      } else if ((state.selectedSubpaths?.length ?? 0) > 0) {
+        state.setActivePlugin('subpath');
+      } else {
+        state.setActivePlugin('select');
+      }
     },
   },
   canvasLayers: [
@@ -169,23 +180,11 @@ export const editPlugin: PluginDefinition<CanvasStore> = {
     {
       id: 'smooth-brush-cursor',
       placement: 'foreground',
-      render: ({ activePlugin, isSmoothBrushActive, smoothBrushCursor, smoothBrush }) => {
-        if (activePlugin !== 'edit' || !isSmoothBrushActive) {
+      render: ({ activePlugin }) => {
+        if (activePlugin !== 'edit') {
           return null;
         }
-
-        return (
-          <ellipse
-            cx={smoothBrushCursor?.x}
-            cy={smoothBrushCursor?.y}
-            rx={smoothBrush?.radius}
-            ry={smoothBrush?.radius}
-            fill="none"
-            stroke="#38bdf8"
-            strokeWidth="1.2"
-            style={{ pointerEvents: 'none' }}
-          />
-        );
+        return <SmoothBrushCursor />;
       },
     },
     {

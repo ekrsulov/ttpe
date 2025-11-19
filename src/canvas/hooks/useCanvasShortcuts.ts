@@ -22,27 +22,8 @@ const handleEscapeShortcut = (state: CanvasStore) => {
 
   // Plugin-specific escape handling moved to plugins
 
-
   if (state.activePlugin === 'select' && state.selectedIds.length > 0) {
     state.clearSelection();
-    return;
-  }
-
-  if (state.activePlugin === 'subpath' && (state.selectedSubpaths?.length ?? 0) > 0) {
-    state.clearSubpathSelection?.();
-    return;
-  }
-
-  if (state.activePlugin === 'edit' && (state.selectedCommands?.length ?? 0) > 0) {
-    state.clearSelectedCommands?.();
-    return;
-  }
-
-  if (
-    (state.activePlugin === 'transformation' || state.activePlugin === 'edit') &&
-    (state.selectedSubpaths?.length ?? 0) > 0
-  ) {
-    state.setActivePlugin('subpath');
     return;
   }
 

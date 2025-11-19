@@ -13,7 +13,7 @@ export interface SelectionSlice {
   clearSelection: () => void;
   getSelectedElements: () => CanvasElement[];
   getSelectedPathsCount: () => number;
-  moveSelectedElements: (deltaX: number, deltaY: number) => void;
+  moveSelectedElements: (deltaX: number, deltaY: number, precisionOverride?: number) => void;
   updateSelectedPaths: (properties: Partial<import('../../../types').PathData>) => void;
 }
 
@@ -124,14 +124,14 @@ export const createSelectionSlice: StateCreator<CanvasStore, [], [], SelectionSl
     return state.elements.filter((el: CanvasElement) => state.selectedIds.includes(el.id) && el.type === 'path').length;
   },
 
-  moveSelectedElements: (deltaX, deltaY) => {
+  moveSelectedElements: (deltaX, deltaY, precisionOverride) => {
     const state = get() as CanvasStore;
     const selectedIds = state.selectedIds;
     if (selectedIds.length === 0) {
       return;
     }
 
-    const precision = state.settings.keyboardMovementPrecision;
+    const precision = precisionOverride ?? state.settings.keyboardMovementPrecision;
     const setStore = set as (updater: (state: CanvasStore) => Partial<CanvasStore>) => void;
 
     const elementMap = new Map<string, CanvasElement>();

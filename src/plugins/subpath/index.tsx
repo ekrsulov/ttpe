@@ -19,13 +19,24 @@ const subpathSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => 
 
 export const subpathPlugin: PluginDefinition<CanvasStore> = {
   id: 'subpath',
-  metadata: getToolMetadata('subpath'),
+  metadata: {
+    ...getToolMetadata('subpath'),
+    disablePathInteraction: true,
+  },
   handler: (event, point, target, context) => {
     if (target.tagName === 'svg') {
       context.helpers.beginSelectionRectangle?.(point, false, !event.shiftKey);
     }
   },
   keyboardShortcuts: {
+    Escape: (_event, { store }) => {
+      const state = store.getState() as CanvasStore;
+      if ((state.selectedSubpaths?.length ?? 0) > 0) {
+        state.clearSubpathSelection?.();
+      } else {
+        state.setActivePlugin('select');
+      }
+    },
     Delete: () => {
       // Reserved for subpath deletion behaviour
     },

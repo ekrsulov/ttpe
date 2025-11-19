@@ -56,18 +56,9 @@ test.describe('Path Movement Tests', () => {
     const pathsAfterCreation = await getCanvasPaths(page).count();
     expect(pathsAfterCreation).toBeGreaterThan(initialPaths);
 
-    // Get initial path data from store
-    const initialPathData = await page.evaluate(() => {
-      const store = (window as any).useCanvasStore;
-      if (store) {
-        const state = store.getState();
-        const pathElement = state.elements.find((el: any) => el.type === 'path');
-        return pathElement ? pathElement.data : null;
-      }
-      return null;
-    });
-    expect(initialPathData).toBeTruthy();
-    expect(initialPathData.subPaths[0].length).toBeGreaterThan(1); // Should have more than just M command
+    // Get initial path d attribute
+    const initialPathD = await canvas.locator('path').first().getAttribute('d');
+    expect(initialPathD).toBeTruthy();
 
     // Switch to select mode
     await getToolButton(page, 'Select').click();
@@ -100,11 +91,11 @@ test.describe('Path Movement Tests', () => {
     await page.waitForTimeout(100);
 
     // Get final path data
-    const finalPathData = await canvas.locator('path').first().getAttribute('d');
+    const finalPathD = await canvas.locator('path').first().getAttribute('d');
     
     // Verify the path has moved (d attribute should be different)
-    expect(finalPathData).not.toBe(initialPathData);
-    expect(finalPathData).not.toBe('M 256 360'); // Should not be reduced to a single point
+    expect(finalPathD).not.toBe(initialPathD);
+    expect(finalPathD).not.toBe('M 256 360'); // Should not be reduced to a single point
 
     // Verify the path has moved (transform attribute should be different or path position changed)
     const finalPath = canvas.locator('path').first();
@@ -406,6 +397,10 @@ test.describe('Path Movement Tests', () => {
     const initialPaths = await getCanvasPaths(page).count();
     expect(initialPaths).toBeGreaterThanOrEqual(2);
 
+    // Capture initial d attributes
+    const path1InitialD = await canvas.locator('path').nth(0).getAttribute('d');
+    const path2InitialD = await canvas.locator('path').nth(1).getAttribute('d');
+
     // Switch to select mode
     await getToolButton(page, 'Select').click();
 
@@ -442,5 +437,11 @@ test.describe('Path Movement Tests', () => {
     // Verify both elements still exist and were moved
     const finalPaths = await getCanvasPaths(page).count();
     expect(finalPaths).toBeGreaterThanOrEqual(2);
+
+    const path1FinalD = await canvas.locator('path').nth(0).getAttribute('d');
+    const path2FinalD = await canvas.locator('path').nth(1).getAttribute('d');
+
+    expect(path1FinalD).not.toBe(path1InitialD);
+    expect(path2FinalD).not.toBe(path2InitialD);
   });
 });

@@ -32,6 +32,7 @@ export interface PointerStateSnapshot {
   isCreatingShape: boolean;
   isDragging: boolean;
   dragStart: Point | null;
+  hasDragMoved: boolean;
 }
 
 export interface PointerStateRefs {
@@ -70,6 +71,7 @@ export const usePointerStateController = ({
     isCreatingShape,
     isDragging,
     dragStart,
+    hasDragMoved,
   });
 
   const helpersRef = useRef<PointerHelpersSnapshot>({
@@ -88,8 +90,9 @@ export const usePointerStateController = ({
       isCreatingShape,
       isDragging,
       dragStart,
+      hasDragMoved,
     };
-  }, [isSelecting, isCreatingShape, isDragging, dragStart]);
+  }, [isSelecting, isCreatingShape, isDragging, dragStart, hasDragMoved]);
 
   useEffect(() => {
     helpersRef.current = {

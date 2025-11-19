@@ -1,11 +1,9 @@
 import { useCallback } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { useCanvasCurves } from '../../plugins/curves/useCanvasCurves';
 import { getEffectiveShift } from '../../utils/effectiveShift';
 import type { Point } from '../../types';
 import { useCanvasEventBus } from '../CanvasEventBusContext';
-import { pluginManager } from '../../utils/pluginManager';
-import { calculateCommandsBounds, calculateMultiElementBounds } from '../../utils/selectionBoundsUtils';
+import { calculateCommandsBounds } from '../../utils/selectionBoundsUtils';
 import { useDoubleTap } from './useDoubleTap';
 
 interface EventHandlerDeps {
@@ -30,7 +28,7 @@ interface EventHandlerDeps {
   setIsDragging: (dragging: boolean) => void;
   setDragStart: (point: Point | null) => void;
   setHasDragMoved: (moved: boolean) => void;
-  moveSelectedElements: (deltaX: number, deltaY: number) => void;
+  moveSelectedElements: (deltaX: number, deltaY: number, precisionOverride?: number) => void;
   moveSelectedSubpaths: (deltaX: number, deltaY: number) => void;
   isWorkingWithSubpaths: () => boolean;
   selectedSubpaths: Array<{ elementId: string; subpathIndex: number }>;
@@ -48,7 +46,6 @@ interface EventHandlerDeps {
 }
 
 export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
-  const { handlePointerDown: handleCurvesPointerDown, handlePointerMove: handleCurvesPointerMove, handlePointerUp: handleCurvesPointerUp } = useCanvasCurves();
   const isVirtualShiftActive = useCanvasStore(state => state.isVirtualShiftActive);
 
   const {
@@ -60,7 +57,6 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     selectionStart,
     isDragging,
     dragStart,
-    hasDragMoved,
     isCreatingShape,
     shapeStart,
     transformStateIsTransforming,
@@ -78,7 +74,6 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     isWorkingWithSubpaths,
     selectedSubpaths,
     selectedIds,
-    selectElement,
     startTransformation,
     endTransformation,
     startAdvancedTransformation,
@@ -100,128 +95,11 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
   } = useDoubleTap();
 
   // Apply snap to dragged elements or subpaths
-  const applySnapToDraggedElements = useCallback(() => {
-    // Apply snap to grid for selected elements or subpaths if snap is enabled
-    if (((activePlugin === 'select' && selectedIds.length > 0 && !isWorkingWithSubpaths()) ||
-      (activePlugin === 'subpath' && selectedSubpaths.length > 0 && isWorkingWithSubpaths()))) {
-      const state = useCanvasStore.getState();
-      if (state.grid?.snapEnabled && state.snapToGrid) {
+  // applySnapToDraggedElements removed - logic moved to selectPlugin
 
-        if (activePlugin === 'subpath' && selectedSubpaths.length > 0) {
-          // Snap subpaths using their bounds
-          selectedSubpaths.forEach(({ elementId, subpathIndex }) => {
-            const element = state.elements.find(el => el.id === elementId);
-            if (element && element.type === 'path') {
-              const pathData = element.data as import('../../types').PathData;
-              if (subpathIndex < pathData.subPaths.length) {
-                const subpath = pathData.subPaths[subpathIndex];
 
-                // Calculate bounds using consolidated utility
-                const bounds = calculateCommandsBounds(subpath, pathData.strokeWidth || 0, state.viewport.zoom);
+  // handleElementClick removed - logic moved to selectPlugin
 
-                if (isFinite(bounds.minX) && state.snapToGrid) {
-                  // Snap the top-left corner
-                  const snappedTopLeft = state.snapToGrid(bounds.minX, bounds.minY);
-
-                  // Calculate snap offset
-                  const snapOffsetX = snappedTopLeft.x - bounds.minX;
-                  const snapOffsetY = snappedTopLeft.y - bounds.minY;
-
-                  // Apply snap offset to this subpath
-                  if (snapOffsetX !== 0 || snapOffsetY !== 0) {
-                    // Use moveSelectedSubpaths to apply the snap
-                    // But we need to modify it to work with individual subpaths
-                    // For now, let's use the existing moveSelectedSubpaths but filter to only this subpath
-                    const originalSelectedSubpaths = state.selectedSubpaths;
-                    // Temporarily set selectedSubpaths to only this one
-                    useCanvasStore.setState({ selectedSubpaths: [{ elementId, subpathIndex }] });
-                    moveSelectedSubpaths(snapOffsetX, snapOffsetY);
-                    // Restore original selection
-                    useCanvasStore.setState({ selectedSubpaths: originalSelectedSubpaths });
-                  }
-                }
-              }
-            }
-          });
-        } else if (activePlugin === 'select' && selectedIds.length > 0) {
-          // Snap selected elements using consolidated utility
-          const selectedElements = state.elements.filter(el => selectedIds.includes(el.id));
-          const bounds = calculateMultiElementBounds(selectedElements, {
-            includeStroke: true,
-            zoom: state.viewport.zoom
-          });
-
-          if (isFinite(bounds.minX) && state.snapToGrid) {
-            // Snap the top-left corner
-            const snappedTopLeft = state.snapToGrid(bounds.minX, bounds.minY);
-
-            // Calculate snap offset
-            const snapOffsetX = snappedTopLeft.x - bounds.minX;
-            const snapOffsetY = snappedTopLeft.y - bounds.minY;
-
-            // Apply snap offset to selected elements
-            if (snapOffsetX !== 0 || snapOffsetY !== 0) {
-              moveSelectedElements(snapOffsetX, snapOffsetY);
-            }
-          }
-        }
-      }
-    }
-  }, [activePlugin, selectedIds, selectedSubpaths, isWorkingWithSubpaths, moveSelectedElements, moveSelectedSubpaths]);
-
-  // Handle element click
-  const handleElementClick = useCallback((elementId: string, e: React.PointerEvent) => {
-    e.stopPropagation();
-
-    // If we were dragging and moved, apply snap and end the drag
-    if (isDragging && hasDragMoved) {
-      applySnapToDraggedElements();
-      setIsDragging(false);
-      setDragStart(null);
-      setHasDragMoved(false);
-      return;
-    }
-
-    // If we have dragStart but no movement, it was just a click - clean up
-    if (dragStart && !hasDragMoved) {
-      setDragStart(null);
-      setIsDragging(false);
-    }
-
-    const state = useCanvasStore.getState();
-    if (state.isElementHidden && state.isElementHidden(elementId)) {
-      return;
-    }
-
-    if (state.isElementLocked && state.isElementLocked(elementId)) {
-      return;
-    }
-
-    // Effective shift state (physical OR virtual)
-    const effectiveShiftKey = getEffectiveShift(e.shiftKey, isVirtualShiftActive);
-
-    // Only process click if we're in select mode and either not dragging, or dragging but haven't moved
-    if (activePlugin === 'select' && (!isDragging || !hasDragMoved)) {
-      const isElementSelected = selectedIds.includes(elementId);
-      const hasMultipleSelection = selectedIds.length > 1;
-
-      // If clicking on an already selected element within a multi-selection and no shift, keep the multi-selection
-      if (isElementSelected && hasMultipleSelection && !effectiveShiftKey) {
-        // Don't change selection - this was already handled in pointerDown
-        return;
-      }
-
-      // Handle selection logic
-      if (effectiveShiftKey) {
-        // Shift+click: toggle selection (add/remove from selection)
-        selectElement(elementId, true);
-      } else if (!isElementSelected) {
-        // Normal click on unselected element: select it (clear others)
-        selectElement(elementId, false);
-      }
-      // If element is already selected and no shift, keep it selected (no action needed)
-    }
-  }, [activePlugin, isDragging, dragStart, selectedIds, selectElement, setIsDragging, setDragStart, setHasDragMoved, hasDragMoved, isVirtualShiftActive, applySnapToDraggedElements]);
 
   // Handle element double click
   const handleElementDoubleClick = useCallback((elementId: string, e: React.MouseEvent<Element>) => {
@@ -390,69 +268,8 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     handleSubpathDoubleClick(elementId, subpathIndex, syntheticEvent);
   }, [detectSubpathDoubleTap, handleSubpathDoubleClick]);
 
-  // Handle element pointer down for drag
-  const handleElementPointerDown = useCallback((elementId: string, e: React.PointerEvent) => {
-    if (activePlugin === 'select') {
-      const state = useCanvasStore.getState();
+  // handleElementPointerDown removed - logic moved to selectPlugin
 
-      // Check if element is locked - if so, treat it as empty space
-      if (state.isElementLocked && state.isElementLocked(elementId)) {
-        // Don't stop propagation - let it behave as empty space
-        return;
-      }
-
-      e.stopPropagation(); // Prevent handlePointerDown from starting selection rectangle
-
-      // Check if style eyedropper is active
-      if (state.styleEyedropper.isActive) {
-        // Apply style to the clicked path
-        state.applyStyleToPath(elementId);
-        return;
-      }
-
-      // Find the root group if this element is inside a group
-      const element = state.elements.find(el => el.id === elementId);
-      let targetId = elementId;
-      if (element && element.parentId) {
-        // Find the root group (group with no parent)
-        let currentElement = element;
-        while (currentElement.parentId) {
-          const parent = state.elements.find(el => el.id === currentElement.parentId);
-          if (!parent) break;
-          currentElement = parent;
-        }
-        targetId = currentElement.id;
-      }
-
-      // Effective shift state (physical OR virtual)
-      const effectiveShiftKey = getEffectiveShift(e.shiftKey, isVirtualShiftActive);
-
-      // Only handle selection and dragging when shift is NOT pressed
-      // When shift is pressed, let handleElementClick handle the toggle selection
-      if (!effectiveShiftKey) {
-        const selectedIds = state.selectedIds;
-        const hasMultiSelection = selectedIds.length > 1;
-
-        // Check if the clicked element or its root group is part of the current selection
-        const isElementInSelection = selectedIds.includes(elementId) || selectedIds.includes(targetId);
-
-        // If there's a multiselection and the element is part of it, preserve the selection
-        // Otherwise, select only the target (root group or element)
-        if (hasMultiSelection && isElementInSelection) {
-          // Keep the current multiselection - don't change it
-          // Just start dragging all selected elements
-        } else if (!isElementInSelection) {
-          // If element not selected, select it first (without multiselect)
-          state.selectElement(targetId, false);
-        }
-
-        // Prepare for dragging (but don't start yet - wait for movement threshold in handlePointerMove)
-        setDragStart(screenToCanvas(e.clientX, e.clientY));
-        setHasDragMoved(false);
-        // Note: isDragging and isDraggingElements will be set in handlePointerMove after threshold
-      }
-    }
-  }, [activePlugin, screenToCanvas, setDragStart, setHasDragMoved, isVirtualShiftActive]);
 
   // Handle transformation handler pointer down
   const handleTransformationHandlerPointerDown = useCallback((e: React.PointerEvent, elementId: string, handler: string) => {
@@ -484,16 +301,6 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       return;
     }
 
-    if (activePlugin === 'file' || activePlugin === 'settings') {
-      setMode('select');
-      return;
-    }
-
-    if (activePlugin === 'curves') {
-      const effectiveShift = getEffectiveShift(e.shiftKey, isVirtualShiftActive);
-      handleCurvesPointerDown(point, effectiveShift);
-    }
-
     // Plugin handlers are now executed via the eventBus in pluginManager
     // to avoid duplicate execution
 
@@ -510,6 +317,9 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
         updateShapeCreation,
         endShapeCreation,
         isSmoothBrushActive,
+        setIsDragging,
+        setDragStart,
+        setHasDragMoved,
       },
       state: {
         isSelecting,
@@ -522,8 +332,6 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     activePlugin,
     screenToCanvas,
     isSpacePressed,
-    setMode,
-    handleCurvesPointerDown,
     eventBus,
     beginSelectionRectangle,
     updateSelectionRectangle,
@@ -536,7 +344,9 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     isCreatingShape,
     isDragging,
     dragStart,
-    isVirtualShiftActive,
+    setIsDragging,
+    setDragStart,
+    setHasDragMoved,
   ]);
 
   // Handle pointer move
@@ -557,6 +367,9 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
         updateShapeCreation,
         endShapeCreation,
         isSmoothBrushActive,
+        setIsDragging,
+        setDragStart,
+        setHasDragMoved,
       },
       state: {
         isSelecting,
@@ -574,25 +387,13 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       return;
     }
 
-    if (activePlugin === 'pan' && e.buttons === 1) {
-      // Pan the canvas with pan tool + pointer button
-      const deltaX = e.movementX;
-      const deltaY = e.movementY;
-      useCanvasStore.getState().pan(deltaX, deltaY);
-      return;
-    }
-
-    // Handle pencil drawing
-    if (activePlugin === 'pencil' && e.buttons === 1) {
-      // Use plugin API instead of store action
-      pluginManager.callPluginApi('pencil', 'addPointToPath', point);
-      return;
-    }
-
     // Check for potential element dragging (when we have dragStart but may not be isDragging yet)
-    if (dragStart && !transformStateIsTransforming && !isSelecting && !isCreatingShape) {
-      const deltaX = point.x - dragStart.x;
-      const deltaY = point.y - dragStart.y;
+    // Use fresh state for dragStart to avoid race conditions
+    const currentDragStart = dragStart;
+
+    if (currentDragStart && !transformStateIsTransforming && !isSelecting && !isCreatingShape) {
+      const deltaX = point.x - currentDragStart.x;
+      const deltaY = point.y - currentDragStart.y;
 
       // Only start actual dragging if we've moved more than a threshold
       // Once dragging has started, move with any delta (no threshold) for smooth continuous movement
@@ -608,19 +409,19 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
         setHasDragMoved(true);
 
         // Check if we're working with subpaths
-        if (isWorkingWithSubpaths()) {
+        if (isWorkingWithSubpaths() && activePlugin !== 'select') {
           // Move selected subpaths if we have a drag start
-          if (dragStart && selectedSubpaths.length > 0) {
-            const deltaX = point.x - dragStart.x;
-            const deltaY = point.y - dragStart.y;
+          if (currentDragStart && selectedSubpaths.length > 0) {
+            const deltaX = point.x - currentDragStart.x;
+            const deltaY = point.y - currentDragStart.y;
             moveSelectedSubpaths(deltaX, deltaY);
             setDragStart(point);
           }
           return;
         } else {
           // Move entire selected elements
-          let deltaX = point.x - dragStart.x;
-          let deltaY = point.y - dragStart.y;
+          let deltaX = point.x - currentDragStart.x;
+          let deltaY = point.y - currentDragStart.y;
 
           // Calculate guidelines for selected elements
           const state = useCanvasStore.getState();
@@ -671,7 +472,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
             }
           }
 
-          moveSelectedElements(deltaX, deltaY);
+          moveSelectedElements(deltaX, deltaY, 3);
           setDragStart(point);
         }
       }
@@ -692,13 +493,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       return;
     }
 
-    // Handle curves tool
-    if (activePlugin === 'curves') {
-      handleCurvesPointerMove(point);
-      return;
-    }
-
-    // Pencil tool is handled by native DOM listeners in Canvas.tsx
+    // Handle selection rectangle update
     // Skip React event handling for pencil to avoid conflicts
     if (activePlugin === 'pencil') {
       return;
@@ -736,7 +531,6 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     isSpacePressed,
     dragStart,
     transformStateIsTransforming,
-    handleCurvesPointerMove,
     isSelecting,
     isCreatingShape,
     isDragging,
@@ -782,6 +576,9 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
         updateShapeCreation,
         endShapeCreation,
         isSmoothBrushActive,
+        setIsDragging,
+        setDragStart,
+        setHasDragMoved,
       },
       state: {
         isSelecting,
@@ -791,16 +588,11 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       },
     });
 
-    // Handle curves tool
-    if (activePlugin === 'curves') {
-      handleCurvesPointerUp();
-    }
-
     // Subpath dragging functionality removed - will be reimplemented
 
     // Only handle dragging if it hasn't been handled by element click already
     if (isDragging) {
-      applySnapToDraggedElements();
+      // applySnapToDraggedElements removed - logic moved to selectPlugin
       setIsDragging(false);
       // Clear guidelines when drag ends
       const state = useCanvasStore.getState();
@@ -833,9 +625,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     }
   }, [
     activePlugin,
-    handleCurvesPointerUp,
     isDragging,
-    applySnapToDraggedElements,
     setIsDragging,
     setDragStart,
     setHasDragMoved,
@@ -923,11 +713,9 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
   }, [handleElementDoubleClick, handleSubpathDoubleClick]);
 
   return {
-    handleElementClick,
     handleElementDoubleClick,
     handleSubpathDoubleClick,
     handleElementDoubleTap,
-    handleElementPointerDown,
     handleTransformationHandlerPointerDown,
     handleTransformationHandlerPointerUp,
     handlePointerDown,

@@ -10,6 +10,7 @@ import {
   transitionCanvasMode,
   type CanvasMode,
 } from '../../canvas/modes/CanvasModeMachine';
+import { pluginManager } from '../../utils/pluginManager';
 
 export interface BaseSlice {
   // State
@@ -19,6 +20,10 @@ export interface BaseSlice {
   showFilePanel: boolean;
   showSettingsPanel: boolean;
   isVirtualShiftActive: boolean; // Virtual shift mode for mobile/touch devices
+
+  // Generic renderer control flags
+  isPathInteractionDisabled: boolean; // Controls pointer events on path elements
+  pathCursorMode: 'select' | 'default' | 'pointer'; // Controls cursor style
 
   // Style eyedropper state
   styleEyedropper: {
@@ -59,6 +64,8 @@ export interface BaseSlice {
   setShowSettingsPanel: (show: boolean) => void;
   setVirtualShift: (active: boolean) => void;
   toggleVirtualShift: () => void;
+  setPathInteractionDisabled: (disabled: boolean) => void;
+  setPathCursorMode: (mode: 'select' | 'default' | 'pointer') => void;
   updateSettings: (updates: Partial<BaseSlice['settings']>) => void;
   saveDocument: () => void;
   loadDocument: (append?: boolean) => Promise<void>;
@@ -161,6 +168,18 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => {
 
     const updatedState = get() as CanvasStore;
 
+    // Auto-set renderer control flags based on plugin type
+    const pluginDef = pluginManager.getPlugin(result.mode);
+    const isPathInteractionDisabled = pluginDef?.metadata.disablePathInteraction ?? false;
+
+    // Set path cursor mode based on plugin
+    const pathCursorMode = pluginDef?.metadata.pathCursorMode ?? (result.mode === 'select' ? 'select' : 'default');
+
+    set({
+      isPathInteractionDisabled,
+      pathCursorMode,
+    });
+
     // Invalidate snap cache logic moved to plugin or handled by drag modifier context
 
 
@@ -196,11 +215,15 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => {
   return ({
     // Initial state
     elements: [],
-    activePlugin: 'pencil',
+    activePlugin: 'select', // Default mode
     documentName: 'Untitled Document',
     showFilePanel: false,
     showSettingsPanel: false,
     isVirtualShiftActive: false,
+
+    // Generic renderer control flags
+    isPathInteractionDisabled: false,
+    pathCursorMode: 'default',
 
     // Style eyedropper initial state
     styleEyedropper: {
@@ -423,6 +446,14 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => {
 
     toggleVirtualShift: () => {
       set((state) => ({ isVirtualShiftActive: !state.isVirtualShiftActive }));
+    },
+
+    setPathInteractionDisabled: (disabled) => {
+      set({ isPathInteractionDisabled: disabled });
+    },
+
+    setPathCursorMode: (mode) => {
+      set({ pathCursorMode: mode });
     },
 
     updateSettings: (updates) => {

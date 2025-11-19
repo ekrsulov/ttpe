@@ -13,6 +13,9 @@ export interface CanvasPointerEventHelpers extends Record<string, any> { // esli
   updateShapeCreation?: (point: Point, shiftPressed: boolean) => void;
   endShapeCreation?: () => void;
   isSmoothBrushActive?: boolean;
+  setDragStart?: (point: Point | null) => void;
+  setIsDragging?: (isDragging: boolean) => void;
+  setHasDragMoved?: (hasMoved: boolean) => void;
 }
 
 export interface CanvasPointerEventState {
@@ -20,6 +23,7 @@ export interface CanvasPointerEventState {
   isCreatingShape?: boolean;
   isDragging?: boolean;
   dragStart?: Point | null;
+  hasDragMoved?: boolean;
 }
 
 export interface CanvasPointerEventPayload {

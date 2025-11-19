@@ -25,6 +25,11 @@ export interface CanvasRenderContext {
   isTransforming?: boolean;
   isSelecting?: boolean;
   isCreatingShape?: boolean;
+
+  // Generic renderer control flags
+  isPathInteractionDisabled?: boolean;
+  pathCursorMode?: 'select' | 'default' | 'pointer';
+
   eventHandlers: CanvasElementEventHandlers;
 }
 

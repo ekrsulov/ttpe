@@ -10,7 +10,7 @@ import { canvasStoreApi } from './store/canvasStore'
 
 pluginManager.setStoreApi(canvasStoreApi)
 
-// Set initial mode to pencil if no elements
+// Set initial mode to select if no elements (default)
 const state = canvasStoreApi.getState();
 if (state.elements.length === 0) {
   canvasStoreApi.setState({ activePlugin: 'pencil' });

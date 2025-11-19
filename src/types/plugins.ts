@@ -3,7 +3,7 @@ import type { StoreApi } from 'zustand';
 import type { Point, CanvasElement } from '.';
 import type { CanvasControllerValue } from '../canvas/controller/CanvasControllerContext';
 import type { Bounds } from '../utils/boundsUtils';
-import type { CanvasEventBus } from '../canvas/CanvasEventBusContext';
+import type { CanvasEventBus, CanvasPointerEventState } from '../canvas/CanvasEventBusContext';
 import type { PointPositionFeedback } from '../canvas/hooks/useCanvasShapeCreation';
 
 export type CanvasShortcutStoreApi = Pick<StoreApi<object>, 'getState' | 'subscribe'>;
@@ -75,8 +75,8 @@ export type PluginHandlerHelpers = Record<string, any>; // eslint-disable-line @
 export interface PluginHandlerContext<TStore extends object> extends PluginApiContext<TStore> {
   api: Record<string, (...args: never[]) => unknown>;
   helpers: PluginHandlerHelpers;
+  pointerState?: CanvasPointerEventState;
 }
-
 
 export type PluginApiFactory<TStore extends object> = (
   context: PluginApiContext<TStore>
@@ -101,7 +101,14 @@ export interface PluginDefinition<TStore extends object = object> {
     label: string;
     icon?: ComponentType<{ size?: number }>;
     cursor?: string;
+    disablePathInteraction?: boolean;
+    pathCursorMode?: 'select' | 'default' | 'pointer';
   };
+  /**
+   * Events to subscribe to. Defaults to ['pointerdown'] if handler is present.
+   * Add 'pointermove' and 'pointerup' to receive those events.
+   */
+  subscribedEvents?: ('pointerdown' | 'pointermove' | 'pointerup')[];
   handler?: (
     event: PointerEvent,
     point: Point,

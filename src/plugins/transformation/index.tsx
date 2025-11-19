@@ -21,6 +21,16 @@ const transformationSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, a
 export const transformationPlugin: PluginDefinition<CanvasStore> = {
   id: 'transformation',
   metadata: getToolMetadata('transformation'),
+  keyboardShortcuts: {
+    Escape: (_event, { store }) => {
+      const state = store.getState() as CanvasStore;
+      if ((state.selectedSubpaths?.length ?? 0) > 0) {
+        state.setActivePlugin('subpath');
+      } else {
+        state.setActivePlugin('select');
+      }
+    },
+  },
   handler: (
     _event,
     _point,

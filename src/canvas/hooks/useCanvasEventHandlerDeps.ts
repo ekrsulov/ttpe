@@ -35,7 +35,7 @@ export interface CanvasEventHandlerDepsInput {
   updateSelectionRectangle: (point: Point) => void;
   updateShapeCreation: (point: Point, shiftPressed: boolean) => void;
   endShapeCreation: () => void;
-  moveSelectedElements: (deltaX: number, deltaY: number) => void;
+  moveSelectedElements: (deltaX: number, deltaY: number, precisionOverride?: number) => void;
   moveSelectedSubpaths: (deltaX: number, deltaY: number) => void;
   selectElement: (elementId: string, toggle: boolean) => void;
   setMode: (mode: string) => void;
@@ -74,7 +74,7 @@ export interface CanvasEventHandlerDeps {
   updateSelectionRectangle: (point: Point) => void;
   updateShapeCreation: (point: Point, shiftPressed: boolean) => void;
   endShapeCreation: () => void;
-  moveSelectedElements: (deltaX: number, deltaY: number) => void;
+  moveSelectedElements: (deltaX: number, deltaY: number, precisionOverride?: number) => void;
   moveSelectedSubpaths: (deltaX: number, deltaY: number) => void;
   selectElement: (elementId: string, toggle: boolean) => void;
   setMode: (mode: string) => void;

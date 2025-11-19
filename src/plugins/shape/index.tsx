@@ -20,7 +20,10 @@ const shapeSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
 
 export const shapePlugin: PluginDefinition<CanvasStore> = {
   id: 'shape',
-  metadata: getToolMetadata('shape'),
+  metadata: {
+    ...getToolMetadata('shape'),
+    disablePathInteraction: true,
+  },
   handler: (
     _event,
     point,

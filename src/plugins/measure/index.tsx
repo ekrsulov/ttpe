@@ -1,5 +1,5 @@
 import React from 'react';
-import type { PluginDefinition, PluginSliceFactory, PluginHandlerContext } from '../../types/plugins';
+import type { PluginDefinition, PluginSliceFactory, PluginHandlerContext, CanvasLayerContext } from '../../types/plugins';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import type { CanvasStore } from '../../store/canvasStore';
 import type { Point, CanvasElement } from '../../types';
@@ -259,6 +259,32 @@ const installListeners = (context: PluginHandlerContext<CanvasStore>, api: Measu
   });
 };
 
+const MeasureSnapPointsLayer = ({ context }: { context: CanvasLayerContext }) => {
+  const measureState = useCanvasStore(state => (state as CanvasStore & MeasurePluginSlice).measure);
+  const { activePlugin } = context;
+
+  if (activePlugin !== 'measure') {
+    return null;
+  }
+
+  const showSnapPoints = measureState?.showSnapPoints ?? false;
+  const snapPointsOpacity = measureState?.snapPointsOpacity ?? 50;
+
+  return (
+    <>
+      <SnapPointsCache />
+      {measureState?.cachedSnapPoints && showSnapPoints && (
+        <SnapPointCrossOverlay
+          snapPoints={measureState.cachedSnapPoints}
+          viewport={context.viewport}
+          opacity={snapPointsOpacity / 100}
+          showAllPoints={true}
+        />
+      )}
+    </>
+  );
+};
+
 // eslint-disable-next-line react-refresh/only-export-components
 export const measurePlugin: PluginDefinition<CanvasStore> = {
   id: 'measure',
@@ -375,40 +401,7 @@ export const measurePlugin: PluginDefinition<CanvasStore> = {
     {
       id: 'measure-snap-points',
       placement: 'background',
-      render: (context) => {
-        const MeasureSnapPointsWrapper = () => {
-          const measureState = useCanvasStore(state => (state as CanvasStore & MeasurePluginSlice).measure);
-          const { activePlugin } = context;
-
-          if (activePlugin !== 'measure') {
-            return null;
-          }
-
-          if (!measureState?.cachedSnapPoints) {
-            return null;
-          }
-
-          const showSnapPoints = measureState.showSnapPoints ?? false;
-          const snapPointsOpacity = measureState.snapPointsOpacity ?? 50;
-
-          // Render snap points cache component and overlay
-          return (
-            <>
-              <SnapPointsCache />
-              {showSnapPoints && (
-                <SnapPointCrossOverlay
-                  snapPoints={measureState.cachedSnapPoints}
-                  viewport={context.viewport}
-                  opacity={snapPointsOpacity / 100}
-                  showAllPoints={true}
-                />
-              )}
-            </>
-          );
-        };
-
-        return <MeasureSnapPointsWrapper />;
-      },
+      render: (context) => <MeasureSnapPointsLayer context={context} />,
     },
     {
       id: 'measure-overlay',

@@ -5,7 +5,6 @@ import { useSelectionController } from './hooks/useSelectionController';
 import { useCanvasTransformControls } from './hooks/useCanvasTransformControls';
 import { useAdvancedTransformControls } from './hooks/useAdvancedTransformControls';
 import { useCanvasShapeCreation } from './hooks/useCanvasShapeCreation';
-import { useCanvasSmoothBrush } from './hooks/useCanvasSmoothBrush';
 import { useCanvasEventHandlers } from './hooks/useCanvasEventHandlers';
 import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
 import type { Point, CanvasElement } from '../types';
@@ -19,11 +18,6 @@ import {
 import { useCanvasZoom } from './hooks/useCanvasZoom';
 import { useMobileTouchGestures } from './hooks/useMobileTouchGestures';
 import { useElementDoubleTap } from './hooks/useElementDoubleTap';
-import { CanvasServicesProvider } from './services/CanvasServicesProvider';
-import { useEditSmoothBrush } from './hooks/useEditSmoothBrush';
-import { usePencilDrawing } from './hooks/usePencilDrawing';
-import { useEditAddPoint } from './hooks/useEditAddPoint';
-import { useDuplicateOnDrag } from './hooks/useDuplicateOnDrag';
 import './listeners/AddPointListener';
 import { useDynamicCanvasSize } from './hooks/useDynamicCanvasSize';
 import { useCanvasSideEffects } from './hooks/useCanvasSideEffects';
@@ -42,6 +36,7 @@ import { canvasShortcutRegistry } from './shortcuts';
 import { useCanvasModeMachine } from './hooks/useCanvasModeMachine';
 import type { CanvasMode } from './modes/CanvasModeMachine';
 import { useCanvasStore } from '../store/canvasStore';
+import { PluginHooksRenderer } from './PluginHooks';
 
 const CanvasContent: React.FC = () => {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -78,16 +73,12 @@ const CanvasContent: React.FC = () => {
     endShapeCreation,
     updatePointPositionFeedback
   } = useCanvasShapeCreation();
-  const {
-    isActive: isSmoothBrushActive,
-    smoothBrush,
-    applyBrush: _applyBrush,
-    updateCursorPosition: _updateCursorPosition
-  } = useCanvasSmoothBrush();
 
   const controller = useCanvasController();
-  const defaultStrokeColor = useCanvasStore(state => state.settings.defaultStrokeColor);
+  const smoothBrush = useCanvasStore(state => state.smoothBrush);
   const scaleStrokeWithZoom = useCanvasStore(state => state.settings.scaleStrokeWithZoom);
+  const isPathInteractionDisabled = useCanvasStore(state => state.isPathInteractionDisabled);
+  const pathCursorMode = useCanvasStore(state => state.pathCursorMode);
   const settings = useCanvasStore(state => state.settings);
 
   const {
@@ -108,7 +99,6 @@ const CanvasContent: React.FC = () => {
     selectedCommands,
     selectedSubpaths,
     draggingSelection,
-    pencil,
     addPointMode,
     updateElement,
     stopDraggingPoint,
@@ -121,9 +111,6 @@ const CanvasContent: React.FC = () => {
     isElementLocked,
     moveSelectedElements,
     moveSelectedSubpaths,
-    startPath,
-    addPointToPath,
-    finalizePath,
   } = controller;
 
   const moveSelectedElementsRef = useRef(moveSelectedElements);
@@ -147,8 +134,8 @@ const CanvasContent: React.FC = () => {
     modeTransitionRef.current = transitionCanvasMode;
   }, [transitionCanvasMode]);
 
-  const handleMoveSelectedElements = useCallback((deltaX: number, deltaY: number) => {
-    moveSelectedElementsRef.current(deltaX, deltaY);
+  const handleMoveSelectedElements = useCallback((deltaX: number, deltaY: number, precisionOverride?: number) => {
+    moveSelectedElementsRef.current(deltaX, deltaY, precisionOverride);
   }, []);
 
   const handleMoveSelectedSubpaths = useCallback((deltaX: number, deltaY: number) => {
@@ -183,7 +170,7 @@ const CanvasContent: React.FC = () => {
     startShapeCreation,
     updateShapeCreation,
     endShapeCreation,
-    isSmoothBrushActive,
+    isSmoothBrushActive: false,
   });
 
   const emitPointerEvent = useCallback(
@@ -205,16 +192,20 @@ const CanvasContent: React.FC = () => {
           updateShapeCreation: helpersSnapshot.updateShapeCreation,
           endShapeCreation: helpersSnapshot.endShapeCreation,
           isSmoothBrushActive: helpersSnapshot.isSmoothBrushActive,
+          setDragStart,
+          setIsDragging,
+          setHasDragMoved,
         },
         state: {
           isSelecting: state.isSelecting,
           isCreatingShape: state.isCreatingShape,
           isDragging: state.isDragging,
           dragStart: state.dragStart,
+          hasDragMoved: state.hasDragMoved,
         },
       });
     },
-    [eventBus, currentMode, helpers, stateRefs]
+    [eventBus, currentMode, helpers, stateRefs, setDragStart, setIsDragging, setHasDragMoved]
   );
 
   const setDragStartForLayers = useCallback((point: Point | null) => {
@@ -243,65 +234,6 @@ const CanvasContent: React.FC = () => {
     isElementHidden,
   });
 
-  // Use edit smooth brush hook
-  const { smoothBrushCursor } = useEditSmoothBrush({
-    svgRef,
-    currentMode,
-    screenToCanvas,
-    emitPointerEvent,
-    isSmoothBrushActive,
-  });
-
-  // Use duplicate on drag service (always active)
-  useDuplicateOnDrag({
-    svgRef,
-    currentMode,
-    screenToCanvas,
-  });
-
-  // Use pencil drawing hook
-  const { pencilDrawingService, registerPencilDrawingService, resetPencilDrawingService } = usePencilDrawing({
-    svgRef,
-    currentMode,
-    pencil: pencil ?? {
-      strokeWidth: 4,
-      strokeColor: defaultStrokeColor,
-      strokeOpacity: 1,
-      fillColor: 'none',
-      fillOpacity: 1,
-      strokeLinecap: 'round' as const,
-      strokeLinejoin: 'round' as const,
-      fillRule: 'nonzero' as const,
-      strokeDasharray: 'none',
-      reusePath: false,
-      simplificationTolerance: 0,
-    },
-    viewportZoom: viewport.zoom,
-    scaleStrokeWithZoom,
-    screenToCanvas,
-    emitPointerEvent,
-    startPath,
-    addPointToPath,
-    finalizePath,
-  });
-
-  // Create canvas services value for provider
-  const canvasServicesValue = {
-    pencilDrawingService,
-    registerPencilDrawingService,
-    resetPencilDrawingService,
-  };
-
-  // Use edit add point
-  useEditAddPoint({
-    svgRef,
-    activePlugin: currentMode,
-    isAddPointModeActive: addPointMode?.isActive ?? false,
-    zoom: viewport.zoom,
-    screenToCanvas,
-    emitPointerEvent,
-  });
-
   // Use event handler deps hook
   const eventHandlerDeps = useCanvasEventHandlerDeps({
     svgRef,
@@ -321,7 +253,7 @@ const CanvasContent: React.FC = () => {
     updateAdvancedTransformation,
     beginSelectionRectangle,
     startShapeCreation,
-    isSmoothBrushActive,
+    isSmoothBrushActive: false,
     setIsDragging,
     setDragStart,
     setHasDragMoved,
@@ -343,11 +275,9 @@ const CanvasContent: React.FC = () => {
   });
 
   const {
-    handleElementClick,
     handleElementDoubleClick,
     handleSubpathDoubleClick,
     handleElementDoubleTap,
-    handleElementPointerDown,
     handleTransformationHandlerPointerDown,
     handleTransformationHandlerPointerUp,
     handlePointerDown,
@@ -398,9 +328,11 @@ const CanvasContent: React.FC = () => {
     isTransforming: transformState.isTransforming,
     isSelecting,
     isCreatingShape,
+    isPathInteractionDisabled,
+    pathCursorMode,
     eventHandlers: {
-      onPointerUp: handleElementClick,
-      onPointerDown: handleElementPointerDown,
+      onPointerUp: undefined,
+      onPointerDown: undefined,
       onDoubleClick: handleElementDoubleClick,
       onTouchEnd: handleElementTouchEnd,
     },
@@ -414,8 +346,8 @@ const CanvasContent: React.FC = () => {
     transformState.isTransforming,
     isSelecting,
     isCreatingShape,
-    handleElementClick,
-    handleElementPointerDown,
+    isPathInteractionDisabled,
+    pathCursorMode,
     handleElementDoubleClick,
     handleElementTouchEnd,
   ]);
@@ -446,9 +378,6 @@ const CanvasContent: React.FC = () => {
     // Conditionally add plugin-specific context
     const pluginSpecific: Partial<CanvasLayerContext> = {};
     if (currentMode === 'edit') {
-      pluginSpecific.isSmoothBrushActive = isSmoothBrushActive;
-      pluginSpecific.smoothBrush = smoothBrush;
-      pluginSpecific.smoothBrushCursor = smoothBrushCursor;
       pluginSpecific.addPointMode = addPointMode;
       pluginSpecific.pointPositionFeedback = shapeFeedback.pointPosition;
     } else if (currentMode === 'shape') {
@@ -484,9 +413,6 @@ const CanvasContent: React.FC = () => {
       shapeStart,
       shapeEnd,
       shapeFeedback,
-      isSmoothBrushActive,
-      smoothBrush,
-      smoothBrushCursor,
       addPointMode,
       feedback,
     ]
@@ -506,15 +432,19 @@ const CanvasContent: React.FC = () => {
   });
 
   return (
-    <CanvasServicesProvider value={canvasServicesValue}>
-      <>
-        <RenderCountBadgeWrapper
-          componentName="Canvas"
-          position="top-left"
-          wrapperStyle={{ position: 'fixed', top: 0, left: 0, zIndex: 10000 }}
-        />
-        <CanvasStage
-          svgRef={svgRef}
+    <>
+      <PluginHooksRenderer
+        svgRef={svgRef}
+        screenToCanvas={screenToCanvas}
+        emitPointerEvent={emitPointerEvent}
+      />
+      <RenderCountBadgeWrapper
+        componentName="Canvas"
+        position="top-left"
+        wrapperStyle={{ position: 'fixed', top: 0, left: 0, zIndex: 10000 }}
+      />
+      <CanvasStage
+        svgRef={svgRef}
           canvasSize={canvasSize}
           getViewBoxString={getViewBoxString}
           isSpacePressed={isSpacePressed}
@@ -528,8 +458,7 @@ const CanvasContent: React.FC = () => {
           {...(typeof window !== 'undefined' && !('ontouchstart' in window) && { handleCanvasDoubleClick })}
           {...(typeof window !== 'undefined' && 'ontouchstart' in window && { handleCanvasTouchEnd })}
         />
-      </>
-    </CanvasServicesProvider>
+    </>
   );
 };
 

@@ -4,6 +4,8 @@ import type { Point, CanvasElement, Viewport, GroupElement } from '../types';
 import type { Bounds } from '../utils/boundsUtils';
 import type { ElementMap } from '../canvas/geometry/CanvasGeometryService';
 import { getGroupBounds } from '../canvas/geometry/CanvasGeometryService';
+import { calculateMultiElementBounds } from '../utils/selectionBoundsUtils';
+import { getEffectiveShift } from '../utils/effectiveShift';
 import { getToolMetadata } from './toolMetadata';
 import { debugLog } from '../utils/debugUtils';
 
@@ -259,18 +261,131 @@ import { EditorPanel } from '../sidebar/panels/EditorPanel';
 const selectPlugin: PluginDefinition<CanvasStore> = {
   id: 'select',
   metadata: getToolMetadata('select'),
+  subscribedEvents: ['pointerdown', 'pointerup'],
   handler: (
     event,
     point,
     target,
     context
   ) => {
-    if (target.tagName === 'svg') {
-      if (!event.shiftKey) {
-        const state = context.store.getState();
-        state.clearSelection?.();
+    const state = context.store.getState();
+    const { helpers, pointerState } = context;
+
+    if (event.type === 'pointerdown') {
+      if (target.tagName === 'svg' || target.classList.contains('canvas-background')) {
+        if (!event.shiftKey) {
+          state.clearSelection?.();
+          state.clearSubpathSelection?.();
+        }
+        context.helpers.beginSelectionRectangle?.(point);
+        return;
       }
-      context.helpers.beginSelectionRectangle?.(point);
+
+      // Handle Element click
+      const elementId = target.getAttribute('data-element-id') || target.closest('[data-element-id]')?.getAttribute('data-element-id');
+
+      if (elementId) {
+        if (state.styleEyedropper.isActive) {
+          state.applyStyleToPath(elementId);
+          return;
+        }
+
+        // Find the root group if this element is inside a group
+        const element = state.elements.find(el => el.id === elementId);
+        let targetId = elementId;
+        if (element && element.parentId) {
+          let currentElement = element;
+          while (currentElement.parentId) {
+            const parent = state.elements.find(el => el.id === currentElement.parentId);
+            if (!parent) break;
+            currentElement = parent;
+          }
+          targetId = currentElement.id;
+        }
+
+        const effectiveShiftKey = getEffectiveShift(event.shiftKey, state.isVirtualShiftActive);
+
+        if (!effectiveShiftKey) {
+          const selectedIds = state.selectedIds;
+          const hasMultiSelection = selectedIds.length > 1;
+          const isElementInSelection = selectedIds.includes(elementId) || selectedIds.includes(targetId);
+
+          if (hasMultiSelection && isElementInSelection) {
+            // Keep the current multiselection - don't change it
+            // Just start dragging all selected elements
+          } else if (!isElementInSelection) {
+            state.selectElement(targetId, false);
+          }
+
+          helpers.setDragStart?.(point);
+          helpers.setHasDragMoved?.(false);
+          helpers.setIsDragging?.(false);
+          
+          // Ensure subpath selection is cleared when starting to drag in select mode
+          state.clearSubpathSelection?.();
+        }
+      }
+    } else if (event.type === 'pointerup') {
+      // Snap logic on drag end
+      if (pointerState?.isDragging && pointerState?.hasDragMoved) {
+        const state = context.store.getState();
+        if (state.settings.showMinimap && state.snapToGrid) { // Assuming snapToGrid checks enabled state internally or we check settings
+           // Wait, state.grid.snapEnabled is where?
+           // In useCanvasEventHandlers: if (state.grid?.snapEnabled && state.snapToGrid)
+           // Let's check state structure.
+           // It seems grid is a plugin slice?
+           // But snapToGrid is in BaseSlice or similar?
+           // Let's assume state has it if useCanvasEventHandlers used it.
+           // But TS might complain if I don't cast state.
+        }
+        
+        // Let's use a safer check
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const fullState = state as any;
+        if (fullState.grid?.snapEnabled && fullState.snapToGrid) {
+             const selectedElements = state.elements.filter(el => state.selectedIds.includes(el.id));
+             const bounds = calculateMultiElementBounds(selectedElements, {
+                includeStroke: true,
+                zoom: state.viewport.zoom
+             });
+             
+             if (Number.isFinite(bounds.minX)) {
+                const snappedTopLeft = fullState.snapToGrid(bounds.minX, bounds.minY);
+                const snapOffsetX = snappedTopLeft.x - bounds.minX;
+                const snapOffsetY = snappedTopLeft.y - bounds.minY;
+                
+                if (snapOffsetX !== 0 || snapOffsetY !== 0) {
+                    state.moveSelectedElements(snapOffsetX, snapOffsetY);
+                }
+             }
+        }
+
+        helpers.setIsDragging?.(false);
+        helpers.setDragStart?.(null);
+        helpers.setHasDragMoved?.(false);
+        return;
+      }
+
+      const elementId = target.getAttribute('data-element-id') || target.closest('[data-element-id]')?.getAttribute('data-element-id');
+
+      if (elementId && !pointerState?.hasDragMoved) {
+        const effectiveShiftKey = getEffectiveShift(event.shiftKey, state.isVirtualShiftActive);
+        if (effectiveShiftKey) {
+          // Find root group
+          const element = state.elements.find(el => el.id === elementId);
+          let targetId = elementId;
+          if (element && element.parentId) {
+            let currentElement = element;
+            while (currentElement.parentId) {
+              const parent = state.elements.find(el => el.id === currentElement.parentId);
+              if (!parent) break;
+              currentElement = parent;
+            }
+            targetId = currentElement.id;
+          }
+          state.selectElement(targetId, true);
+        }
+      }
     }
   },
   keyboardShortcuts: {
@@ -533,19 +648,44 @@ const selectPlugin: PluginDefinition<CanvasStore> = {
 const panPlugin: PluginDefinition<CanvasStore> = {
   id: 'pan',
   metadata: getToolMetadata('pan'),
+  subscribedEvents: ['pointermove'],
   handler: (
-    _event,
+    event,
     _point,
     _target,
-    _context
+    context
   ) => {
-    // Pan tool relies on pointer event listeners elsewhere
+    if (event.type === 'pointermove' && event.buttons === 1) {
+      const deltaX = (event as React.PointerEvent).movementX;
+      const deltaY = (event as React.PointerEvent).movementY;
+      context.store.getState().pan(deltaX, deltaY);
+    }
+  },
+};
+
+const filePlugin: PluginDefinition<CanvasStore> = {
+  id: 'file',
+  metadata: { label: 'File', cursor: 'default' },
+  subscribedEvents: ['pointerdown'],
+  handler: (_event, _point, _target, context) => {
+    context.store.getState().setMode('select');
+  },
+};
+
+const settingsPlugin: PluginDefinition<CanvasStore> = {
+  id: 'settings',
+  metadata: { label: 'Settings', cursor: 'default' },
+  subscribedEvents: ['pointerdown'],
+  handler: (_event, _point, _target, context) => {
+    context.store.getState().setMode('select');
   },
 };
 
 export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   selectPlugin,
   panPlugin,
+  filePlugin,
+  settingsPlugin,
   pencilPlugin,
   curvesPlugin,
   textPlugin,
