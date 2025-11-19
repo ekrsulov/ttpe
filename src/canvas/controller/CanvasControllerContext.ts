@@ -1,15 +1,14 @@
 import { createContext, useContext, useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
-import type { CanvasElement, Point } from '../../types';
-import { pluginManager } from '../../utils/pluginManager';
+import type { CanvasElement } from '../../types';
 import { buildElementMap } from '../../utils/coreHelpers';
 
 export interface CanvasControllerValue
   extends Pick<
     CanvasStore,
     |
-      'elements'
+    'elements'
     | 'viewport'
     | 'activePlugin'
     | 'transformation'
@@ -21,7 +20,6 @@ export interface CanvasControllerValue
     | 'draggingSelection'
     | 'guidelines'
     | 'grid'
-    | 'pencil'
     | 'addPointMode'
     | 'updateElement'
     | 'startDraggingPoint'
@@ -46,10 +44,6 @@ export interface CanvasControllerValue
   > {
   sortedElements: CanvasElement[];
   elementMap: Map<string, CanvasElement>;
-  // Compatibility functions that delegate to plugin APIs
-  startPath: (point: Point) => void;
-  addPointToPath: (point: Point) => void;
-  finalizePath: (points: Point[]) => void;
 }
 
 export const CanvasControllerContext = createContext<CanvasControllerValue | null>(null);
@@ -69,7 +63,6 @@ export const useCanvasControllerSource = (): CanvasControllerValue => {
       draggingSelection: store.draggingSelection,
       guidelines: store.guidelines,
       grid: store.grid,
-      pencil: store.pencil,
       addPointMode: store.addPointMode,
       updateElement: store.updateElement,
       startDraggingPoint: store.startDraggingPoint,
@@ -100,29 +93,13 @@ export const useCanvasControllerSource = (): CanvasControllerValue => {
 
   const elementMap = useMemo(() => buildElementMap(state.elements), [state.elements]);
 
-  // Compatibility functions that delegate to plugin APIs
-  const startPath = useMemo(() => (point: Point) => {
-    pluginManager.callPluginApi('pencil', 'startPath', point);
-  }, []);
-
-  const addPointToPath = useMemo(() => (point: Point) => {
-    pluginManager.callPluginApi('pencil', 'addPointToPath', point);
-  }, []);
-
-  const finalizePath = useMemo(() => (points: Point[]) => {
-    pluginManager.callPluginApi('pencil', 'finalizePath', points);
-  }, []);
-
   return useMemo(
     () => ({
       ...state,
       sortedElements,
       elementMap,
-      startPath,
-      addPointToPath,
-      finalizePath,
     }),
-    [state, sortedElements, elementMap, startPath, addPointToPath, finalizePath]
+    [state, sortedElements, elementMap]
   );
 };
 

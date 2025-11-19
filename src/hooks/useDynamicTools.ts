@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { ToolMode } from '../config/toolDefinitions';
 
 // Tools that can be dynamically shown/hidden based on usage
-export const DYNAMIC_TOOLS: ToolMode[] = ['pencil', 'curves', 'text', 'shape', 'gridFill', 'trimPath', 'measure'];
+export const DYNAMIC_TOOLS: ToolMode[] = ['pencil2', 'curves', 'text', 'shape', 'gridFill', 'trimPath', 'measure'];
 
 // Tools that are always shown regardless of usage patterns or device
 export const ALWAYS_SHOWN_TOOLS: ToolMode[] = ['select', 'subpath', 'transformation', 'edit', 'pan'];
@@ -28,7 +28,7 @@ export const useDynamicTools = (activeMode: string | null, gridEnabled: boolean 
   const [showExtraTools, setShowExtraTools] = useState(false);
 
   // Compute dynamic tools based on grid state
-  const dynamicTools = useMemo(() => 
+  const dynamicTools = useMemo(() =>
     DYNAMIC_TOOLS.filter(tool => tool !== 'gridFill' || gridEnabled),
     [gridEnabled]
   );

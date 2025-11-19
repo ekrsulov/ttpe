@@ -10,7 +10,7 @@ const EditPanel = React.lazy(() => import('../../plugins/edit/EditPanel').then(m
 const ControlPointAlignmentPanel = React.lazy(() => import('../../plugins/edit/ControlPointAlignmentPanel').then(module => ({ default: module.ControlPointAlignmentPanel })));
 const OpticalAlignmentPanel = React.lazy(() => import('../../plugins/opticalAlignment/OpticalAlignmentPanel').then(module => ({ default: module.OpticalAlignmentPanel })));
 const PanPanel = React.lazy(() => import('../panels/PanPanel').then(module => ({ default: module.PanPanel })));
-const PencilPanel = React.lazy(() => import('../../plugins/pencil/PencilPanel').then(module => ({ default: module.PencilPanel })));
+const PencilPanel = React.lazy(() => import('../../plugins/pencil2/PencilPanel').then(module => ({ default: module.PencilPanel })));
 const CurvesPanel = React.lazy(() => import('../../plugins/curves/CurvesPanel').then(module => ({ default: module.CurvesPanel })));
 const TransformationPanel = React.lazy(() => import('../../plugins/transformation/TransformationPanel').then(module => ({ default: module.TransformationPanel })));
 const TextPanel = React.lazy(() => import('../../plugins/text/TextPanel').then(module => ({ default: module.TextPanel })));
@@ -99,7 +99,7 @@ export const PANEL_CONFIGS: PanelConfig[] = [
     condition: (ctx) => ctx.showSettingsPanel,
     component: SettingsPanel,
   },
-  
+
   // Regular panels
   {
     key: 'editor',
@@ -177,8 +177,8 @@ export const PANEL_CONFIGS: PanelConfig[] = [
     component: PanPanel,
   },
   {
-    key: 'pencil',
-    condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'pencil',
+    key: 'pencil2',
+    condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'pencil2',
     component: PencilPanel,
   },
   {

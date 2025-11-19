@@ -8,7 +8,7 @@
 import type { StoreApi } from 'zustand';
 import type { CanvasStore } from '../../store/types';
 import type { TextPluginSlice } from './slice';
-import type { PencilPluginSlice } from '../pencil/slice';
+import type { PencilPluginSlice } from '../pencil2/slice';
 import { textToPathCommands } from '../../utils/canvas';
 import { extractSubpaths } from '../../utils/path';
 import { logger } from '../../utils';
@@ -24,10 +24,10 @@ export async function addText(
 ): Promise<void> {
   const state = getState();
   if (!state.text || !state.pencil) return;
-  
+
   const textState = state.text as TextPluginSlice['text'];
   const pencilState = state.pencil as PencilPluginSlice['pencil'];
-  
+
   const { fontSize, fontFamily, fontWeight, fontStyle } = textState;
   const { fillColor, fillOpacity, strokeColor, strokeWidth, strokeOpacity } = pencilState;
 

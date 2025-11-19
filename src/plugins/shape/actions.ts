@@ -9,11 +9,11 @@ import type { Point, Command } from '../../types';
 import type { StoreApi } from 'zustand';
 import type { CanvasStore } from '../../store/types';
 import type { ShapePluginSlice } from './slice';
-import type { PencilPluginSlice } from '../pencil/slice';
-import { 
-  createSquareCommands, 
-  createRectangleCommands, 
-  createCircleCommands, 
+import type { PencilPluginSlice } from '../pencil2/slice';
+import {
+  createSquareCommands,
+  createRectangleCommands,
+  createCircleCommands,
   createTriangleCommands,
   createLineCommands,
   createDiamondCommands,
@@ -34,7 +34,7 @@ export function createShape(
 
   const shapeState = state.shape as ShapePluginSlice['shape'];
   const pencilState = state.pencil as PencilPluginSlice['pencil'];
-  
+
   const { strokeWidth, strokeColor, strokeOpacity, fillColor, fillOpacity } = pencilState;
   const selectedShape = shapeState.selectedShape;
 

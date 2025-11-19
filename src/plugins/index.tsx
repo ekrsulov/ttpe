@@ -9,7 +9,7 @@ import { getEffectiveShift } from '../utils/effectiveShift';
 import { getToolMetadata } from './toolMetadata';
 import { debugLog } from '../utils/debugUtils';
 
-import { pencilPlugin } from './pencil';
+import { pencil2Plugin } from './pencil2';
 import { textPlugin } from './text';
 import { shapePlugin } from './shape';
 import { transformationPlugin } from './transformation';
@@ -154,7 +154,7 @@ const SelectionBboxComponent: React.FC<{
         return; // Skip adding the individual element
       }
     }
-    
+
     // Otherwise use the element itself
     const bounds = getElementBounds(element);
     if (bounds) {
@@ -224,13 +224,13 @@ const getAllElementsShareSameParentGroup = (
   elementMap: ElementMap
 ): string | null => {
   if (selectedIds.length === 0) return null;
-  
+
   let sharedParentId: string | null = null;
-  
+
   for (const selectedId of selectedIds) {
     // Find parent group of this element
     let parentId: string | null = null;
-    
+
     for (const [elementId, element] of elementMap) {
       if (element.type === 'group') {
         const childIds = (element.data as { childIds: string[] }).childIds;
@@ -240,7 +240,7 @@ const getAllElementsShareSameParentGroup = (
         }
       }
     }
-    
+
     // First iteration - set the shared parent
     if (sharedParentId === null) {
       sharedParentId = parentId;
@@ -251,7 +251,7 @@ const getAllElementsShareSameParentGroup = (
       }
     }
   }
-  
+
   return sharedParentId;
 };
 
@@ -339,7 +339,7 @@ const selectPlugin: PluginDefinition<CanvasStore> = {
           helpers.setDragStart?.(point);
           helpers.setHasDragMoved?.(false);
           helpers.setIsDragging?.(false);
-          
+
           // Ensure subpath selection is cleared when starting to drag in select mode
           state.clearSubpathSelection?.();
         }
@@ -349,51 +349,51 @@ const selectPlugin: PluginDefinition<CanvasStore> = {
       if (pointerState?.isDragging && pointerState?.hasDragMoved) {
         const state = context.store.getState();
         if (state.settings.showMinimap && state.snapToGrid) { // Assuming snapToGrid checks enabled state internally or we check settings
-           // Wait, state.grid.snapEnabled is where?
-           // In useCanvasEventHandlers: if (state.grid?.snapEnabled && state.snapToGrid)
-           // Let's check state structure.
-           // It seems grid is a plugin slice?
-           // But snapToGrid is in BaseSlice or similar?
-           // Let's assume state has it if useCanvasEventHandlers used it.
-           // But TS might complain if I don't cast state.
+          // Wait, state.grid.snapEnabled is where?
+          // In useCanvasEventHandlers: if (state.grid?.snapEnabled && state.snapToGrid)
+          // Let's check state structure.
+          // It seems grid is a plugin slice?
+          // But snapToGrid is in BaseSlice or similar?
+          // Let's assume state has it if useCanvasEventHandlers used it.
+          // But TS might complain if I don't cast state.
         }
-        
+
         // Let's use a safer check
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const fullState = state as any;
         if (fullState.grid?.snapEnabled && fullState.snapToGrid) {
-             const selectedElements = state.elements.filter(el => state.selectedIds.includes(el.id));
-             
-             let minX = Infinity;
-             let minY = Infinity;
-             
-             // Create a temporary element map if needed (though store usually has it)
-             // We use a Map for O(1) lookups required by getGroupBounds
-             const elementMap = new Map(state.elements.map(e => [e.id, e]));
+          const selectedElements = state.elements.filter(el => state.selectedIds.includes(el.id));
 
-             selectedElements.forEach(el => {
-                 let b: Bounds | null = null;
-                 if (el.type === 'path') {
-                     b = calculateMultiElementBounds([el], { includeStroke: true, zoom: state.viewport.zoom });
-                 } else if (el.type === 'group') {
-                     b = getGroupBounds(el as GroupElement, elementMap, state.viewport);
-                 }
-                 
-                 if (b && Number.isFinite(b.minX)) {
-                     minX = Math.min(minX, b.minX);
-                     minY = Math.min(minY, b.minY);
-                 }
-             });
-             
-             if (Number.isFinite(minX)) {
-                const snappedTopLeft = fullState.snapToGrid(minX, minY);
-                const snapOffsetX = snappedTopLeft.x - minX;
-                const snapOffsetY = snappedTopLeft.y - minY;
-                
-                if (snapOffsetX !== 0 || snapOffsetY !== 0) {
-                    state.moveSelectedElements(snapOffsetX, snapOffsetY);
-                }
-             }
+          let minX = Infinity;
+          let minY = Infinity;
+
+          // Create a temporary element map if needed (though store usually has it)
+          // We use a Map for O(1) lookups required by getGroupBounds
+          const elementMap = new Map(state.elements.map(e => [e.id, e]));
+
+          selectedElements.forEach(el => {
+            let b: Bounds | null = null;
+            if (el.type === 'path') {
+              b = calculateMultiElementBounds([el], { includeStroke: true, zoom: state.viewport.zoom });
+            } else if (el.type === 'group') {
+              b = getGroupBounds(el as GroupElement, elementMap, state.viewport);
+            }
+
+            if (b && Number.isFinite(b.minX)) {
+              minX = Math.min(minX, b.minX);
+              minY = Math.min(minY, b.minY);
+            }
+          });
+
+          if (Number.isFinite(minX)) {
+            const snappedTopLeft = fullState.snapToGrid(minX, minY);
+            const snapOffsetX = snappedTopLeft.x - minX;
+            const snapOffsetY = snappedTopLeft.y - minY;
+
+            if (snapOffsetX !== 0 || snapOffsetY !== 0) {
+              state.moveSelectedElements(snapOffsetX, snapOffsetY);
+            }
+          }
         }
 
         helpers.setIsDragging?.(false);
@@ -496,7 +496,7 @@ const selectPlugin: PluginDefinition<CanvasStore> = {
         if (activePlugin === 'transformation') {
           // In transformation mode, show feedback only for parent groups (not the directly selected group)
           // This provides visual context similar to edit mode
-          
+
           // If a single path is selected, show all parent group bounds as feedback
           if (selectedIds.length === 1) {
             const element = elementMap.get(selectedIds[0]);
@@ -510,11 +510,11 @@ const selectPlugin: PluginDefinition<CanvasStore> = {
               );
             }
           }
-          
+
           // For group selections or multi-selection, don't show feedback (handlers are shown instead)
           return null;
         }
-        
+
         // In select mode, always show group bounds feedback
         // Hide group bounds feedback in Trim Path mode (only show overall selection bbox)
         if (activePlugin === 'trimPath') {
@@ -536,7 +536,7 @@ const selectPlugin: PluginDefinition<CanvasStore> = {
         if (activePlugin === 'transformation') {
           return null;
         }
-        
+
         return (
           <SelectionBboxComponent
             selectedIds={selectedIds}
@@ -566,12 +566,12 @@ const selectPlugin: PluginDefinition<CanvasStore> = {
         }
 
         // Priority: Single group (including multiple elements from same group) > Multi-selection bbox > Single element (path/group handled individually)
-        
+
         // Check if all selected elements belong to the same parent group (only if multiple elements selected)
-        const sharedParentGroupId = selectedIds.length > 1 
+        const sharedParentGroupId = selectedIds.length > 1
           ? getAllElementsShareSameParentGroup(selectedIds, elementMap)
           : null;
-        
+
         // Case 1: Multiple elements all belonging to the same parent group - show group handlers
         if (sharedParentGroupId) {
           const groupElement = elementMap.get(sharedParentGroupId);
@@ -592,7 +592,7 @@ const selectPlugin: PluginDefinition<CanvasStore> = {
             }
           }
         }
-        
+
         // Case 2: Multiple selection (not all from same group) - show selection bbox handlers
         if (selectedIds.length > 1) {
           let minX = Infinity;
@@ -722,7 +722,7 @@ export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   panPlugin,
   filePlugin,
   settingsPlugin,
-  pencilPlugin,
+  pencil2Plugin,
   curvesPlugin,
   textPlugin,
   shapePlugin,
@@ -745,7 +745,6 @@ export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
 debugLog('[CORE_PLUGINS] Total plugins:', CORE_PLUGINS.length);
 debugLog('[CORE_PLUGINS] Measure plugin included:', CORE_PLUGINS.some(p => p.id === 'measure'));
 
-export * from './pencil';
 export * from './text';
 export * from './shape';
 export * from './transformation';
@@ -762,3 +761,8 @@ export * from './duplicateOnDrag';
 export * from './trimPath';
 export * from './offsetPath';
 export * from './measure';
+
+export { filePlugin };
+export { selectPlugin };
+export { settingsPlugin };
+export { panPlugin };

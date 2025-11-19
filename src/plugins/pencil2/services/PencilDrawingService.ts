@@ -1,8 +1,8 @@
 import type { RefObject } from 'react';
-import type { Point } from '../../types';
-import type { PencilPluginSlice } from '../../plugins/pencil/slice';
-import { createPathDataFromPoints, getPencilPathStyle, simplifyPathFromPoints, subPathsToPathString, type PathStyleLike } from '../../plugins/pencil/utils';
-import { getDefaultStrokeColorFromSettings } from '../../utils/defaultColors';
+import type { Point } from '../../../types';
+import type { PencilPluginSlice } from '../slice';
+import { createPathDataFromPoints, getPencilPathStyle, simplifyPathFromPoints, subPathsToPathString, type PathStyleLike } from '../utils';
+import { getDefaultStrokeColorFromSettings } from '../../../utils/defaultColors';
 
 type PencilSettings = PencilPluginSlice['pencil'];
 
@@ -14,7 +14,8 @@ export interface AttachPencilDrawingListenersOptions {
   viewportZoom: number;
   scaleStrokeWithZoom: boolean;
   screenToCanvas: (x: number, y: number) => Point;
-  emitPointerEvent: (type: PointerEventType, event: PointerEvent, point: Point) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  emitPointerEvent: (type: PointerEventType, event: any, point: Point) => void;
   startPath: (point: Point) => void;
   addPointToPath: (point: Point) => void;
   finalizePath: (points: Point[]) => void;
@@ -23,7 +24,7 @@ export interface AttachPencilDrawingListenersOptions {
 export class PencilDrawingService {
   private detachHandlers: (() => void) | null = null;
 
-  constructor() {}
+  constructor() { }
 
   attachPencilDrawingListeners(
     svgRef: RefObject<SVGSVGElement | null>,
@@ -34,9 +35,9 @@ export class PencilDrawingService {
     // Always cleanup any existing listeners before re-attaching
     this.detachHandlers?.();
 
-    if (!svgElement || options.activePlugin !== 'pencil') {
+    if (!svgElement || options.activePlugin !== 'pencil2') {
       this.detachHandlers = null;
-      return () => {};
+      return () => { };
     }
 
     // Remove orphaned temporary paths before attaching listeners
@@ -67,8 +68,8 @@ export class PencilDrawingService {
       const { strokeWidth, strokeColor, strokeOpacity } = options.pencil;
       const defaultStrokeColor = getDefaultStrokeColorFromSettings();
       const effectiveStrokeColor = strokeColor === 'none' ? defaultStrokeColor : strokeColor;
-      const strokeWidthForZoom = options.scaleStrokeWithZoom 
-        ? strokeWidth 
+      const strokeWidthForZoom = options.scaleStrokeWithZoom
+        ? strokeWidth
         : strokeWidth / options.viewportZoom;
 
       tempPath.setAttribute('fill', 'none');

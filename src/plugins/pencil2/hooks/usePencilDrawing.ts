@@ -1,8 +1,8 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import type React from 'react';
 import { PencilDrawingService } from '../services/PencilDrawingService';
-import type { Point } from '../../types';
-import type { PencilPluginSlice } from '../../plugins/pencil/slice';
+import type { Point } from '../../../types';
+import type { PencilPluginSlice } from '../slice';
 
 export interface UsePencilDrawingParams {
   svgRef: React.RefObject<SVGSVGElement | null>;
@@ -13,7 +13,8 @@ export interface UsePencilDrawingParams {
   screenToCanvas: (screenX: number, screenY: number) => Point;
   emitPointerEvent: (
     type: 'pointerdown' | 'pointermove' | 'pointerup',
-    event: PointerEvent,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    event: any,
     point: Point
   ) => void;
   startPath: (point: Point) => void;

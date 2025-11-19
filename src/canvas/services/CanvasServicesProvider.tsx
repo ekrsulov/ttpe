@@ -1,10 +1,11 @@
 import { createContext, type ReactNode } from 'react';
-import { PencilDrawingService } from './PencilDrawingService';
 
+// CanvasServicesProvider is kept for future service integration
+// but plugin-specific services have been moved to their respective plugins
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface CanvasServicesContextValue {
-  pencilDrawingService: PencilDrawingService;
-  registerPencilDrawingService: (service: PencilDrawingService) => void;
-  resetPencilDrawingService: () => void;
+  // Reserved for future generic canvas services
 }
 
 const CanvasServicesContext = createContext<CanvasServicesContextValue | null>(null);
@@ -17,6 +18,3 @@ interface CanvasServicesProviderProps {
 export const CanvasServicesProvider = ({ value, children }: CanvasServicesProviderProps) => (
   <CanvasServicesContext.Provider value={value}>{children}</CanvasServicesContext.Provider>
 );
-
-// Note: useCanvasServices and useSmoothBrushNativeService were removed as they were unused.
-// Consumers should directly use the context via useContext if needed in the future.

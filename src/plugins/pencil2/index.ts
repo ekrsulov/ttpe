@@ -7,6 +7,7 @@ import React from 'react';
 import { PencilPanel } from './PencilPanel';
 import { startPath, addPointToPath, finalizePath } from './actions';
 import type { Point } from '../../types';
+import { usePencilDrawingHook } from './hooks/usePencilDrawingHook';
 
 type PencilPluginApi = {
   startPath: (point: Point) => void;
@@ -58,9 +59,9 @@ const installListeners = (context: PluginHandlerContext<CanvasStore>, api: Penci
   window.addEventListener('pointermove', handlePointerMove);
   window.addEventListener('pointerup', handlePointerUp);
 
-  // Subscribe to store to remove listeners when the active plugin changes away from pencil
+  // Subscribe to store to remove listeners when the active plugin changes away from pencil2
   stopStoreSubscription = context.store.subscribe((state) => {
-    if (state.activePlugin !== 'pencil') {
+    if (state.activePlugin !== 'pencil2') {
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerup', handlePointerUp);
       if (stopStoreSubscription) stopStoreSubscription();
@@ -70,10 +71,10 @@ const installListeners = (context: PluginHandlerContext<CanvasStore>, api: Penci
   });
 };
 
-export const pencilPlugin: PluginDefinition<CanvasStore> = {
-  id: 'pencil',
+export const pencil2Plugin: PluginDefinition<CanvasStore> = {
+  id: 'pencil2',
   metadata: {
-    ...getToolMetadata('pencil'),
+    ...getToolMetadata('pencil2'),
     disablePathInteraction: true,
   },
   handler: (_event, point, _target, context) => {
@@ -99,6 +100,12 @@ export const pencilPlugin: PluginDefinition<CanvasStore> = {
       finalizePath(points, store.getState);
     },
   }),
+  hooks: [
+    {
+      id: 'pencil2-drawing',
+      hook: usePencilDrawingHook,
+    },
+  ],
   expandablePanel: () => React.createElement(PencilPanel, { hideTitle: true }),
 };
 

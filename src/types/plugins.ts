@@ -95,6 +95,25 @@ export type PluginSliceFactory<TStore extends object = object> = (
   ) => void;
 };
 
+export interface PluginHooksContext {
+  svgRef: React.RefObject<SVGSVGElement | null>;
+  screenToCanvas: (x: number, y: number) => Point;
+  emitPointerEvent: (
+    type: 'pointerdown' | 'pointermove' | 'pointerup',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    event: any,
+    point: Point
+  ) => void;
+  activePlugin: string | null;
+  viewportZoom: number;
+  scaleStrokeWithZoom: boolean;
+}
+
+export interface PluginHookContribution {
+  id: string;
+  hook: (context: PluginHooksContext) => void;
+};
+
 export interface PluginDefinition<TStore extends object = object> {
   id: string;
   metadata: {
@@ -141,6 +160,12 @@ export interface PluginDefinition<TStore extends object = object> {
    * This allows plugins to expose functionality without coupling to the store.
    */
   createApi?: PluginApiFactory<TStore>;
+  /**
+   * React hooks that should be mounted when this plugin is active.
+   * Hooks receive a context object with canvas utilities (SVG ref, viewport, etc).
+   * Use this for plugins that need to attach DOM listeners or manage complex state.
+   */
+  hooks?: PluginHookContribution[];
   /**
    * Expandable panel component shown at bottom when sidebar is not pinned.
    * This panel provides quick access to plugin-specific controls.

@@ -649,6 +649,12 @@ export class PluginManager {
   getDragModifiers(): DragModifier[] {
     return Array.from(this.dragModifiers.values()).sort((a, b) => a.priority - b.priority);
   }
+
+  getPluginHooks(pluginId: string | null): import('../types/plugins').PluginHookContribution[] {
+    if (!pluginId) return [];
+    const plugin = this.registry.get(pluginId);
+    return plugin?.hooks ?? [];
+  }
 }
 
 export const pluginManager = new PluginManager();

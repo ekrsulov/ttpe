@@ -55,7 +55,6 @@ export interface CanvasModeTransitionResult {
 const ALL_KNOWN_MODES: CanvasMode[] = [
   'select',
   'pan',
-  'pencil',
   'text',
   'shape',
   'curves',
@@ -87,7 +86,6 @@ export const CANVAS_MODE_MACHINE: CanvasModeMachineDefinition = {
         entry: ['clearSubpathSelection', 'clearSelectedCommands'],
         transitions: {
           pan: { description: 'Permite desplazarse por el lienzo.' },
-          pencil: { description: 'Activa el dibujo a mano alzada.' },
           text: { description: 'Inserta nuevas cajas de texto.' },
           shape: { description: 'Crea formas geométricas básicas.' },
           transformation: { description: 'Manipula elementos seleccionados.' },
@@ -129,15 +127,13 @@ export const CANVAS_MODE_MACHINE: CanvasModeMachineDefinition = {
       description:
         mode === 'pan'
           ? 'Modo para navegar el lienzo.'
-          : mode === 'pencil'
-            ? 'Dibuja trazos libres con el lápiz.'
-            : mode === 'text'
-              ? 'Inserta y edita texto.'
-              : mode === 'shape'
-                ? 'Crea formas básicas.'
-                : mode === 'curves'
-                  ? 'Define curvas mediante nodos maestros.'
-                  : 'Modo personalizado.',
+          : mode === 'text'
+            ? 'Inserta y edita texto.'
+            : mode === 'shape'
+              ? 'Crea formas geométricas básicas.'
+              : mode === 'curves'
+                ? 'Dibuja curvas paramétricas.'
+                : 'Modo definido externamente por un plugin.',
       transitions: baseTransitions,
       resources: { plugins: [mode] },
     };

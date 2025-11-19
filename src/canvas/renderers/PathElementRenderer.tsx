@@ -6,8 +6,9 @@ import type {
 } from './CanvasRendererRegistry';
 
 const getEffectiveStrokeColor = (path: PathElement['data']): string => {
+  // Treat all paths uniformly - use transparent color if no stroke
   if (path.strokeColor === 'none') {
-    return path.isPencilPath ? '#000000' : '#00000001';
+    return '#00000001';
   }
 
   return path.strokeColor;
