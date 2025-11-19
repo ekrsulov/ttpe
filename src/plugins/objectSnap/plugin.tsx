@@ -6,6 +6,9 @@ import type { ObjectSnapPluginSlice } from './slice';
 import { ObjectSnapOverlay } from './ObjectSnapOverlay';
 import { FeedbackOverlay } from '../../overlays/FeedbackOverlay';
 import { getSnapPointLabel } from '../../utils/snapPointUtils';
+import { createSnapModifier } from './snapModifier';
+import { pluginManager } from '../../utils/pluginManager';
+import { useCanvasStore } from '../../store/canvasStore';
 
 const objectSnapSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -25,59 +28,69 @@ export const objectSnapPlugin: PluginDefinition<CanvasStore> = {
     {
       id: 'object-snap-overlay',
       placement: 'foreground',
-      render: ({
-        activePlugin,
-        objectSnap,
-        editingPoint,
-        draggingSelection,
-        viewport,
-      }) => {
-        if (activePlugin !== 'edit' || !objectSnap) {
-          return null;
-        }
+      render: (context) => {
+        const SnapOverlayWrapper = () => {
+          const objectSnap = useCanvasStore(state => (state as CanvasStore & ObjectSnapPluginSlice).objectSnap);
+          const { activePlugin, editingPoint, draggingSelection, viewport } = context;
 
-        if (!editingPoint?.isDragging && !draggingSelection?.isDragging) {
-          return null;
-        }
+          if (activePlugin !== 'edit' || !objectSnap) {
+            return null;
+          }
 
-        return (
-          <ObjectSnapOverlay
-            objectSnap={objectSnap}
-            viewport={viewport}
-            activePlugin={activePlugin}
-            editingPoint={editingPoint ?? null}
-            draggingSelection={draggingSelection ?? null}
-          />
-        );
+          if (!editingPoint?.isDragging && !draggingSelection?.isDragging) {
+            return null;
+          }
+
+          return (
+            <ObjectSnapOverlay
+              objectSnap={objectSnap}
+              viewport={viewport}
+              activePlugin={activePlugin}
+              editingPoint={editingPoint ?? null}
+              draggingSelection={draggingSelection ?? null}
+            />
+          );
+        };
+
+        return <SnapOverlayWrapper />;
       },
     },
     {
       id: 'object-snap-feedback',
       placement: 'foreground',
       render: (context) => {
-        const { activePlugin, objectSnap, viewport, canvasSize, editingPoint, draggingSelection } = context as any; // eslint-disable-line @typescript-eslint/no-explicit-any
-        
-        if (activePlugin !== 'edit' || !objectSnap?.enabled) {
-          return null;
-        }
+        const SnapFeedbackWrapper = () => {
+          const objectSnap = useCanvasStore(state => (state as CanvasStore & ObjectSnapPluginSlice).objectSnap);
+          const { activePlugin, viewport, canvasSize, editingPoint, draggingSelection } = context as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-        const isDragging = editingPoint?.isDragging || draggingSelection?.isDragging;
-        if (!isDragging || !objectSnap.currentSnapPoint) {
-          return null;
-        }
+          if (activePlugin !== 'edit' || !objectSnap?.enabled) {
+            return null;
+          }
 
-        const snapMessage = getSnapPointLabel(objectSnap.currentSnapPoint.type);
+          const isDragging = editingPoint?.isDragging || draggingSelection?.isDragging;
+          if (!isDragging || !objectSnap.currentSnapPoint) {
+            return null;
+          }
 
-        return React.createElement(FeedbackOverlay, {
-          viewport,
-          canvasSize,
-          customFeedback: { message: snapMessage, visible: true },
-          offsetY: -26, // Subir 26px para no interferir con coordenadas del modo edit
-        });
+          const snapMessage = getSnapPointLabel(objectSnap.currentSnapPoint.type);
+
+          return React.createElement(FeedbackOverlay, {
+            viewport,
+            canvasSize,
+            customFeedback: { message: snapMessage, visible: true },
+            offsetY: -26, // Subir 26px para no interferir con coordenadas del modo edit
+          });
+        };
+
+        return <SnapFeedbackWrapper />;
       },
     },
   ],
   slices: [objectSnapSliceFactory],
+  init: (context) => {
+    const modifier = createSnapModifier(context);
+    return pluginManager.registerDragModifier(modifier);
+  },
 };
 
 export type { ObjectSnapPluginSlice };

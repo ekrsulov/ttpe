@@ -16,21 +16,9 @@ import { createUiSlice, type UiSlice } from './slices/uiSlice';
 
 // Plugin slices are now registered dynamically through PluginManager
 // Import plugin types for backwards compatibility
-import type { PencilPluginSlice } from '../plugins/pencil/slice';
-import type { TextPluginSlice } from '../plugins/text/slice';
-import type { ShapePluginSlice } from '../plugins/shape/slice';
-import type { TransformationPluginSlice } from '../plugins/transformation/slice';
-import type { EditPluginSlice } from '../plugins/edit/slice';
-import type { SubpathPluginSlice } from '../plugins/subpath/slice';
-import type { OpticalAlignmentSlice } from '../plugins/opticalAlignment/slice';
-import type { CurvesPluginSlice } from '../plugins/curves/slice';
-import type { GuidelinesPluginSlice } from '../plugins/guidelines/slice';
-import type { ObjectSnapPluginSlice } from '../plugins/objectSnap/slice';
-import type { MeasurePluginSlice } from '../plugins/measure/slice';
-import type { GridPluginSlice } from '../plugins/grid/slice';
-import type { DuplicateOnDragPluginSlice } from '../plugins/duplicateOnDrag/slice';
-import type { TrimPathPluginSlice } from '../plugins/trimPath/slice';
-import type { OffsetPathSlice } from '../plugins/offsetPath/slice';
+// Plugin slices are now registered dynamically through PluginManager
+// Static plugin imports have been removed to decouple the core store from specific plugins
+
 
 // Debounce function to implement cool-off period
 function debounce<T extends (...args: never[]) => void>(
@@ -61,22 +49,10 @@ export type CoreCanvasStore = BaseSlice &
 
 // Extended Canvas Store - includes plugin slices for type safety
 // Plugins will extend this dynamically at runtime
-export type CanvasStore = CoreCanvasStore &
-  Partial<PencilPluginSlice> &
-  Partial<TextPluginSlice> &
-  Partial<ShapePluginSlice> &
-  Partial<TransformationPluginSlice> &
-  Partial<EditPluginSlice> &
-  Partial<SubpathPluginSlice> &
-  Partial<OpticalAlignmentSlice> &
-  Partial<CurvesPluginSlice> &
-  Partial<GuidelinesPluginSlice> &
-  Partial<ObjectSnapPluginSlice> &
-  Partial<MeasurePluginSlice> &
-  Partial<GridPluginSlice> &
-  Partial<DuplicateOnDragPluginSlice> &
-  Partial<TrimPathPluginSlice> &
-  Partial<OffsetPathSlice>;
+// Extended Canvas Store - includes plugin slices for type safety
+// Plugins will extend this dynamically at runtime
+export type CanvasStore = CoreCanvasStore & Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
+
 
 // Create the store with core slices only - plugins will register dynamically
 export const useCanvasStore = create<CanvasStore>()(

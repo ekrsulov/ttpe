@@ -77,7 +77,7 @@ export interface PluginHandlerContext<TStore extends object> extends PluginApiCo
   helpers: PluginHandlerHelpers;
 }
 
- 
+
 export type PluginApiFactory<TStore extends object> = (
   context: PluginApiContext<TStore>
 ) => Record<string, (...args: never[]) => unknown>;
@@ -124,4 +124,10 @@ export interface PluginDefinition<TStore extends object = object> {
    * This panel provides quick access to plugin-specific controls.
    */
   expandablePanel?: ComponentType;
+  /**
+   * Lifecycle method called when the plugin is registered.
+   * Can be used to register global listeners, modifiers, etc.
+   * Returns a cleanup function called when the plugin is unregistered.
+   */
+  init?: (context: PluginHandlerContext<TStore>) => (() => void) | void;
 }

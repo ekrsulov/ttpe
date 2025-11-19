@@ -11,6 +11,7 @@ import type {
   PluginApiContext,
   PluginHandlerContext,
 } from '../types/plugins';
+import type { DragModifier } from '../types/interaction';
 import type { CanvasStore, CanvasStoreApi } from '../store/canvasStore';
 import { registerPluginSlices, unregisterPluginSlices } from '../store/canvasStore';
 import type {
@@ -52,8 +53,10 @@ export class PluginManager {
   private canvasServices = new Map<string, CanvasService<unknown>>();
   private activeCanvasServices = new Map<string, CanvasServiceInstance<unknown>>();
   private shortcutSubscriptions = new Map<string, () => void>();
+  private pluginCleanups = new Map<string, () => void>();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private pluginApis = new Map<string, Record<string, (...args: any[]) => any>>();
+  private dragModifiers = new Map<string, DragModifier>();
   private storeApi: CanvasStoreApi | null;
 
   constructor({ initialPlugins = [], storeApi = null }: PluginManagerOptions = {}) {
@@ -113,6 +116,15 @@ export class PluginManager {
       }
 
       this.initializePluginApi(plugin);
+
+      // Call init if present
+      if (plugin.init) {
+        const context = this.createPluginContext(plugin.id);
+        const cleanup = plugin.init(context);
+        if (cleanup) {
+          this.pluginCleanups.set(plugin.id, cleanup);
+        }
+      }
     }
 
     this.bindPluginInteractions(plugin);
@@ -200,6 +212,13 @@ export class PluginManager {
     const existing = this.registry.get(pluginId);
     if (!existing) {
       return;
+    }
+
+    // Run cleanup
+    const cleanup = this.pluginCleanups.get(pluginId);
+    if (cleanup) {
+      cleanup();
+      this.pluginCleanups.delete(pluginId);
     }
 
     this.registry.delete(pluginId);
@@ -499,7 +518,7 @@ export class PluginManager {
 
     if (plugin.handler) {
       const handler = plugin.handler;
-      
+
       // Subscribe to pointerdown events (all plugins)
       const unsubscribeDown = this.eventBus.subscribe('pointerdown', (payload: CanvasPointerEventPayload) => {
         if (payload.activePlugin !== plugin.id) {
@@ -589,9 +608,29 @@ export class PluginManager {
     }
   }
 
+  private createPluginContext(pluginId: string): PluginHandlerContext<CanvasStore> {
+    const api = this.pluginApis.get(pluginId) ?? {};
+    return {
+      ...this.createPluginApiContext(),
+      api,
+      helpers: {},
+    };
+  }
+
   getExpandablePanel(pluginId: string): React.ComponentType | null {
     const plugin = this.registry.get(pluginId);
     return plugin?.expandablePanel ?? null;
+  }
+
+  registerDragModifier(modifier: DragModifier): () => void {
+    this.dragModifiers.set(modifier.id, modifier);
+    return () => {
+      this.dragModifiers.delete(modifier.id);
+    };
+  }
+
+  getDragModifiers(): DragModifier[] {
+    return Array.from(this.dragModifiers.values()).sort((a, b) => a.priority - b.priority);
   }
 }
 

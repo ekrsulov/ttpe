@@ -2,15 +2,14 @@ import React from 'react';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../utils';
 import { extractEditablePoints, updateCommands, extractSubpaths, getControlPointAlignmentInfo } from '../../utils/pathParserUtils';
 import { mapSvgToCanvas } from '../../utils/geometry';
+import { pluginManager } from '../../utils/pluginManager';
 import type { CanvasElement, SubPath, Point, ControlPointInfo, Command, PathData } from '../../types';
 
 interface DragCallbacks {
   onStopDraggingPoint: () => void;
   onUpdateElement: (id: string, updates: Partial<CanvasElement>) => void;
   getControlPointInfo: (elementId: string, commandIndex: number, pointIndex: number) => ControlPointInfo | null;
-  snapToGrid?: (x: number, y: number) => { x: number; y: number };
   clearGuidelines?: () => void;
-  updateDraggingPoint?: (x: number, y: number) => { x: number; y: number };
 }
 
 interface DragState {
@@ -101,12 +100,39 @@ export const useCanvasDragInteractions = ({
           let canvasX = canvasPoint.x;
           let canvasY = canvasPoint.y;
 
-          // Apply object snap if available (this will modify canvasX/canvasY)
-          if (callbacks.updateDraggingPoint) {
-            const snapped = callbacks.updateDraggingPoint(canvasX, canvasY);
-            canvasX = snapped.x;
-            canvasY = snapped.y;
+          // Apply drag modifiers (e.g. object snap)
+          const modifiers = pluginManager.getDragModifiers();
+          let modifiedPoint = { x: canvasX, y: canvasY };
+
+          // Create context for modifiers
+          const excludeElementIds: string[] = [];
+          if (editingPoint) {
+            excludeElementIds.push(editingPoint.elementId);
+          } else if (draggingSelection) {
+            draggingSelection.initialPositions.forEach(pos => {
+              if (!excludeElementIds.includes(pos.elementId)) {
+                excludeElementIds.push(pos.elementId);
+              }
+            });
+          } else if (draggingSubpaths) {
+            draggingSubpaths.initialPositions.forEach(pos => {
+              if (!excludeElementIds.includes(pos.elementId)) {
+                excludeElementIds.push(pos.elementId);
+              }
+            });
           }
+
+          const dragContext = {
+            originalPoint: { x: canvasX, y: canvasY },
+            excludeElementIds
+          };
+
+          for (const modifier of modifiers) {
+            modifiedPoint = modifier.modify(modifiedPoint, dragContext);
+          }
+
+          canvasX = modifiedPoint.x;
+          canvasY = modifiedPoint.y;
 
           // Update local drag position for smooth visualization
           setDragPosition({
@@ -302,8 +328,36 @@ export const useCanvasDragInteractions = ({
 
       if (editingPoint?.isDragging || draggingSelection?.isDragging || draggingSubpaths?.isDragging) {
         // Apply snap to grid on pointer up if snap is enabled
-        if (callbacks.snapToGrid && dragPosition) {
-          const snapped = callbacks.snapToGrid(dragPosition.x, dragPosition.y);
+        // Apply snap to grid on pointer up if snap is enabled
+        if (dragPosition) {
+          const modifiers = pluginManager.getDragModifiers();
+          let snapped = { x: dragPosition.x, y: dragPosition.y };
+
+          const excludeElementIds: string[] = [];
+          if (editingPoint) {
+            excludeElementIds.push(editingPoint.elementId);
+          } else if (draggingSelection) {
+            draggingSelection.initialPositions.forEach(pos => {
+              if (!excludeElementIds.includes(pos.elementId)) {
+                excludeElementIds.push(pos.elementId);
+              }
+            });
+          } else if (draggingSubpaths) {
+            draggingSubpaths.initialPositions.forEach(pos => {
+              if (!excludeElementIds.includes(pos.elementId)) {
+                excludeElementIds.push(pos.elementId);
+              }
+            });
+          }
+
+          const dragContext = {
+            originalPoint: { x: dragPosition.x, y: dragPosition.y },
+            excludeElementIds
+          };
+
+          for (const modifier of modifiers) {
+            snapped = modifier.modify(snapped, dragContext);
+          }
 
           if (editingPoint?.isDragging) {
             // Apply snap to single point by updating the element directly
@@ -422,7 +476,24 @@ export const useCanvasDragInteractions = ({
               const currentCenterY = centerY + currentDeltaY;
 
               // Snap the center
-              const snappedCenter = callbacks.snapToGrid!(currentCenterX, currentCenterY);
+              const modifiers = pluginManager.getDragModifiers();
+              let snappedCenter = { x: currentCenterX, y: currentCenterY };
+
+              const excludeElementIds: string[] = [];
+              draggingSelection.initialPositions.forEach(pos => {
+                if (!excludeElementIds.includes(pos.elementId)) {
+                  excludeElementIds.push(pos.elementId);
+                }
+              });
+
+              const dragContext = {
+                originalPoint: { x: currentCenterX, y: currentCenterY },
+                excludeElementIds
+              };
+
+              for (const modifier of modifiers) {
+                snappedCenter = modifier.modify(snappedCenter, dragContext);
+              }
 
               // Calculate snap offset
               const snapOffsetX = snappedCenter.x - currentCenterX;
@@ -501,7 +572,24 @@ export const useCanvasDragInteractions = ({
                 const currentTopLeftY = bounds.minY + currentDeltaY;
 
                 // Snap the top-left corner
-                const snappedTopLeft = callbacks.snapToGrid!(currentTopLeftX, currentTopLeftY);
+                const modifiers = pluginManager.getDragModifiers();
+                let snappedTopLeft = { x: currentTopLeftX, y: currentTopLeftY };
+
+                const excludeElementIds: string[] = [];
+                draggingSubpaths.initialPositions.forEach(pos => {
+                  if (!excludeElementIds.includes(pos.elementId)) {
+                    excludeElementIds.push(pos.elementId);
+                  }
+                });
+
+                const dragContext = {
+                  originalPoint: { x: currentTopLeftX, y: currentTopLeftY },
+                  excludeElementIds
+                };
+
+                for (const modifier of modifiers) {
+                  snappedTopLeft = modifier.modify(snappedTopLeft, dragContext);
+                }
 
                 // Calculate snap offset
                 const snapOffsetX = snappedTopLeft.x - currentTopLeftX;

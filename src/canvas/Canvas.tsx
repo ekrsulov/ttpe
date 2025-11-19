@@ -89,8 +89,6 @@ const CanvasContent: React.FC = () => {
   const defaultStrokeColor = useCanvasStore(state => state.settings.defaultStrokeColor);
   const scaleStrokeWithZoom = useCanvasStore(state => state.settings.scaleStrokeWithZoom);
   const settings = useCanvasStore(state => state.settings);
-  const updateDraggingPoint = useCanvasStore(state => state.updateDraggingPoint);
-  const objectSnap = useCanvasStore(state => state.objectSnap);
   const measure = useCanvasStore(state => (state as any).measure); // eslint-disable-line @typescript-eslint/no-explicit-any
   const {
     currentMode,
@@ -118,7 +116,6 @@ const CanvasContent: React.FC = () => {
     isWorkingWithSubpaths,
     getControlPointInfo,
     saveAsPng,
-    snapToGrid,
     clearGuidelines,
     isElementHidden,
     isElementLocked,
@@ -167,7 +164,7 @@ const CanvasContent: React.FC = () => {
   const handleSetMode = useCallback((mode: string) => {
     modeTransitionRef.current(mode as CanvasMode);
   }, []);
-  
+
   const {
     isDragging,
     dragStart,
@@ -223,7 +220,7 @@ const CanvasContent: React.FC = () => {
   const setDragStartForLayers = useCallback((point: Point | null) => {
     setDragStart(point);
   }, [setDragStart]);
-  
+
   // Use dynamic canvas size hook
   const canvasSize = useDynamicCanvasSize();
 
@@ -378,12 +375,10 @@ const CanvasContent: React.FC = () => {
     elements: elements as CanvasElement[],
     smoothBrush,
     callbacks: {
-      onStopDraggingPoint: stopDraggingPoint ?? (() => {}),
+      onStopDraggingPoint: stopDraggingPoint ?? (() => { }),
       onUpdateElement: updateElement,
       getControlPointInfo: getControlPointInfo ?? (() => null),
-      snapToGrid,
       clearGuidelines,
-      updateDraggingPoint,
     }
   });
 
@@ -445,7 +440,6 @@ const CanvasContent: React.FC = () => {
       handleSubpathDoubleClick,
       handleSubpathTouchEnd,
       setDragStart: setDragStartForLayers,
-      objectSnap, // Add objectSnap state to context
       measure, // Add measure state to context
       settings, // Add settings to context
     };
@@ -485,7 +479,6 @@ const CanvasContent: React.FC = () => {
       handleSubpathDoubleClick,
       handleSubpathTouchEnd,
       setDragStartForLayers,
-      objectSnap,
       measure,
       settings,
       // Plugin-specific dependencies
@@ -509,7 +502,7 @@ const CanvasContent: React.FC = () => {
     updatePointPositionFeedback,
     editingPoint: editingPoint ?? null,
     draggingSelection: draggingSelection ?? null,
-    emergencyCleanupDrag: emergencyCleanupDrag ?? (() => {}),
+    emergencyCleanupDrag: emergencyCleanupDrag ?? (() => { }),
     saveAsPng,
     svgRef,
   });
