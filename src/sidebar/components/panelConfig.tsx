@@ -1,5 +1,5 @@
 import React from 'react';
-import type { SmoothBrush } from '../../plugins/edit/slice';
+import type { SmoothBrush } from '../../plugins/smoothBrush/slice';
 
 // Re-export SmoothBrush for backward compatibility
 export type { SmoothBrush };

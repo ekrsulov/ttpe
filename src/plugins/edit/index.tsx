@@ -10,46 +10,8 @@ import { BlockingOverlay } from '../../overlays';
 
 const EditExpandablePanelWrapper: React.FC = () => {
   const activePlugin = useCanvasStore(s => s.activePlugin);
-  const smoothBrush = useCanvasStore(s => s.smoothBrush)!;
-  const addPointMode = useCanvasStore(s => s.addPointMode);
-  const pathSimplification = useCanvasStore(s => s.pathSimplification)!;
-  const pathRounding = useCanvasStore(s => s.pathRounding)!;
-  const selectedCommands = useCanvasStore(s => s.selectedCommands ?? []);
-  const selectedSubpaths = useCanvasStore(s => s.selectedSubpaths ?? []);
-  const updateSmoothBrush = useCanvasStore(s => s.updateSmoothBrush ?? (() => {}));
-  const updatePathSimplification = useCanvasStore(s => s.updatePathSimplification ?? (() => {}));
-  const updatePathRounding = useCanvasStore(s => s.updatePathRounding ?? (() => {}));
-  const applySmoothBrush = useCanvasStore(s => s.applySmoothBrush ?? (() => {}));
-  const applyPathSimplification = useCanvasStore(s => s.applyPathSimplification ?? (() => {}));
-  const applyPathRounding = useCanvasStore(s => s.applyPathRounding ?? (() => {}));
-  const activateSmoothBrush = useCanvasStore(s => s.activateSmoothBrush ?? (() => {}));
-  const deactivateSmoothBrush = useCanvasStore(s => s.deactivateSmoothBrush ?? (() => {}));
-  const resetSmoothBrush = useCanvasStore(s => s.resetSmoothBrush ?? (() => {}));
-  const activateAddPointMode = useCanvasStore(s => s.activateAddPointMode ?? (() => {}));
-  const deactivateAddPointMode = useCanvasStore(s => s.deactivateAddPointMode ?? (() => {}));
 
-  return (
-    <EditPanel
-      activePlugin={activePlugin}
-      smoothBrush={smoothBrush}
-      addPointMode={addPointMode}
-      pathSimplification={pathSimplification}
-      pathRounding={pathRounding}
-      selectedCommands={selectedCommands}
-      selectedSubpaths={selectedSubpaths}
-      updateSmoothBrush={updateSmoothBrush}
-      updatePathSimplification={updatePathSimplification}
-      updatePathRounding={updatePathRounding}
-      applySmoothBrush={applySmoothBrush}
-      applyPathSimplification={applyPathSimplification}
-      applyPathRounding={applyPathRounding}
-      activateSmoothBrush={activateSmoothBrush}
-      deactivateSmoothBrush={deactivateSmoothBrush}
-      resetSmoothBrush={resetSmoothBrush}
-      activateAddPointMode={activateAddPointMode}
-      deactivateAddPointMode={deactivateAddPointMode}
-    />
-  );
+  return <EditPanel activePlugin={activePlugin} />;
 };
 import { ControlPointAlignmentPanel } from './ControlPointAlignmentPanel';
 import { EditPointsOverlay } from './EditPointsOverlay';
@@ -98,12 +60,12 @@ export const editPlugin: PluginDefinition<CanvasStore> = {
     // Check if add point mode is active
     const state = context.store.getState() as CanvasStore;
     const isAddPointModeActive = state.addPointMode?.isActive ?? false;
-    
+
     // Don't start selection rectangle if add point mode is active
     if (isAddPointModeActive) {
       return;
     }
-    
+
     // Allow selection rectangle to start on SVG or on path elements (but not on edit points)
     if ((target.tagName === 'svg' || target.tagName === 'path') && !context.helpers.isSmoothBrushActive) {
       context.helpers.beginSelectionRectangle?.(point, !event.shiftKey, false);
@@ -189,8 +151,8 @@ export const editPlugin: PluginDefinition<CanvasStore> = {
                     viewport={viewport}
                     smoothBrush={smoothBrush}
                     getFilteredEditablePoints={getFilteredEditablePoints ?? (() => [])}
-                    onStartDraggingPoint={startDraggingPoint ?? (() => {})}
-                    onSelectCommand={selectCommand ?? (() => {})}
+                    onStartDraggingPoint={startDraggingPoint ?? (() => { })}
+                    onSelectCommand={selectCommand ?? (() => { })}
                   />
                 );
               })}

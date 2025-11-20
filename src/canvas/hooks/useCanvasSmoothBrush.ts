@@ -2,12 +2,12 @@ import { useCallback, useState, useMemo } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { SmoothBrushController } from '../interactions/SmoothBrushController';
 import type { Point } from '../../types';
-import type { EditPluginSlice } from '../../plugins/edit/slice';
+import type { SmoothBrushPluginSlice } from '../../plugins/smoothBrush/slice';
 
 export interface SmoothBrushState {
   isActive: boolean;
   cursorPosition: Point | null;
-  smoothBrush: EditPluginSlice['smoothBrush'];
+  smoothBrush: SmoothBrushPluginSlice['smoothBrush'];
 }
 
 export interface SmoothBrushActions {
@@ -33,7 +33,7 @@ export const useCanvasSmoothBrush = (): UseCanvasSmoothBrushReturn => {
   const simplificationTolerance = useCanvasStore(state => state.smoothBrush?.simplificationTolerance ?? 1);
   const minDistance = useCanvasStore(state => state.smoothBrush?.minDistance ?? 5);
   const affectedPoints = useCanvasStore(state => state.smoothBrush?.affectedPoints ?? []);
-  
+
   // Reconstruct smoothBrush object with all necessary properties
   // cursorX/cursorY are managed locally in Canvas to avoid re-renders
   const smoothBrush = useMemo(() => ({
@@ -47,7 +47,7 @@ export const useCanvasSmoothBrush = (): UseCanvasSmoothBrushReturn => {
     minDistance,
     affectedPoints,
   }), [radius, strength, isActive, simplifyPoints, simplificationTolerance, minDistance, affectedPoints]);
-  
+
   const [cursorPosition, setCursorPosition] = useState<Point | null>(null);
 
   const controller = useMemo(() => new SmoothBrushController({

@@ -28,6 +28,10 @@ import { duplicateOnDragPlugin } from './duplicateOnDrag';
 import { trimPathPlugin } from './trimPath';
 import { offsetPathPlugin } from './offsetPath';
 import { measurePlugin } from './measure';
+import { addPointPlugin } from './addPoint';
+import { smoothBrushPlugin } from './smoothBrush';
+import { pathSimplificationPlugin } from './pathSimplification';
+import { roundPathPlugin } from './roundPath';
 import { SelectionOverlay, BlockingOverlay } from '../overlays';
 import { useColorMode } from '@chakra-ui/react';
 
@@ -739,6 +743,10 @@ export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   duplicateOnDragPlugin,
   trimPathPlugin,
   offsetPathPlugin,
+  addPointPlugin,
+  smoothBrushPlugin,
+  pathSimplificationPlugin,
+  roundPathPlugin,
 ];
 
 // Debug info about core plugins (only in development builds)
