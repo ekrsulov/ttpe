@@ -655,6 +655,26 @@ export class PluginManager {
     const plugin = this.registry.get(pluginId);
     return plugin?.hooks ?? [];
   }
+
+  /**
+   * Get all hooks marked as global from all registered plugins.
+   * Global hooks are executed regardless of which plugin is currently active.
+   */
+  getGlobalPluginHooks(): import('../types/plugins').PluginHookContribution[] {
+    const globalHooks: import('../types/plugins').PluginHookContribution[] = [];
+    
+    this.registry.forEach((plugin) => {
+      if (plugin.hooks) {
+        plugin.hooks.forEach((hook) => {
+          if (hook.global) {
+            globalHooks.push(hook);
+          }
+        });
+      }
+    });
+    
+    return globalHooks;
+  }
 }
 
 export const pluginManager = new PluginManager();

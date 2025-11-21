@@ -122,6 +122,12 @@ export interface PluginHooksContext {
 export interface PluginHookContribution {
   id: string;
   hook: (context: PluginHooksContext) => void;
+  /**
+   * If true, this hook will be executed regardless of which plugin is active.
+   * Use this for hooks that need to listen for global gestures or events.
+   * @default false
+   */
+  global?: boolean;
 };
 
 export interface PluginDefinition<TStore extends object = object> {

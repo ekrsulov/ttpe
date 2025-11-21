@@ -4,6 +4,7 @@ import { createDuplicateOnDragPluginSlice } from './slice';
 import type { DuplicateOnDragPluginSlice } from './slice';
 import { pluginManager } from '../../utils/pluginManager';
 import { duplicateOnDragService } from './service';
+import { useDuplicateOnDragHook } from './hooks/useDuplicateOnDragHook';
 
 const duplicateOnDragSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -22,6 +23,13 @@ export const duplicateOnDragPlugin: PluginDefinition<CanvasStore> = {
   // This plugin doesn't have a handler because it works via Canvas Service
   // It listens to events globally, not as an active tool
   slices: [duplicateOnDragSliceFactory],
+  hooks: [
+    {
+      id: 'duplicate-on-drag-hook',
+      hook: useDuplicateOnDragHook,
+      global: true, // This hook runs regardless of active plugin to listen for Cmd+Drag gestures
+    },
+  ],
   init: () => {
     pluginManager.registerCanvasService(duplicateOnDragService);
     return () => {

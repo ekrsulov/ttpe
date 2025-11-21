@@ -1,9 +1,9 @@
 import type React from 'react';
 import { useMemo } from 'react';
-import { useCanvasServiceActivation } from './useCanvasServiceActivation';
-import { useCanvasStore } from '../../store/canvasStore';
-import { DUPLICATE_ON_DRAG_SERVICE_ID, type DuplicateOnDragServiceState } from '../../plugins/duplicateOnDrag/service';
-import type { Point } from '../../types';
+import { useCanvasServiceActivation } from '../../../canvas/hooks/useCanvasServiceActivation';
+import { useCanvasStore } from '../../../store/canvasStore';
+import { DUPLICATE_ON_DRAG_SERVICE_ID, type DuplicateOnDragServiceState } from '../service';
+import type { Point } from '../../../types';
 
 export interface UseDuplicateOnDragParams {
   svgRef: React.RefObject<SVGSVGElement | null>;

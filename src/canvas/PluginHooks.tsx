@@ -1,7 +1,6 @@
 import React from 'react';
 import { useCanvasStore } from '../store/canvasStore';
 import { useEditSmoothBrush } from './hooks/useEditSmoothBrush';
-import { useDuplicateOnDrag } from './hooks/useDuplicateOnDrag';
 import { useEditAddPoint } from './hooks/useEditAddPoint';
 import type { Point } from '../types';
 import type { PluginHooksContext } from '../types/plugins';
@@ -41,18 +40,6 @@ const EditHooks = ({ svgRef, screenToCanvas, emitPointerEvent }: PluginHooksProp
   return null;
 };
 
-const DuplicateOnDragHooks = ({ svgRef, screenToCanvas }: Omit<PluginHooksProps, 'emitPointerEvent'>) => {
-  const currentMode = useCanvasStore(state => state.activePlugin);
-
-  useDuplicateOnDrag({
-    svgRef,
-    currentMode: currentMode || 'select',
-    screenToCanvas,
-  });
-
-  return null;
-};
-
 /**
  * Dynamic hook renderer for plugins
  * Creates a component wrapper for each plugin's hooks to avoid React hooks rules violations
@@ -63,6 +50,20 @@ const PluginHooksWrapper = ({ pluginId, hooksContext }: { pluginId: string; hook
   // Call all hooks registered by this plugin
   // This is safe because it's inside a component that renders conditionally
   pluginHooks.forEach(contribution => {
+    contribution.hook(hooksContext);
+  });
+
+  return null;
+};
+
+/**
+ * Global hooks renderer for plugins that need to run regardless of active tool
+ * Executes hooks marked with `global: true` in their plugin definition
+ */
+const GlobalPluginHooksWrapper = ({ hooksContext }: { hooksContext: PluginHooksContext }) => {
+  const globalPluginHooks = pluginManager.getGlobalPluginHooks();
+
+  globalPluginHooks.forEach(contribution => {
     contribution.hook(hooksContext);
   });
 
@@ -86,7 +87,7 @@ export const PluginHooksRenderer = ({ svgRef, screenToCanvas, emitPointerEvent }
 
   return (
     <>
-      <DuplicateOnDragHooks svgRef={svgRef} screenToCanvas={screenToCanvas} />
+      <GlobalPluginHooksWrapper hooksContext={hooksContext} />
       {activePlugin === 'edit' && (
         <EditHooks
           svgRef={svgRef}
