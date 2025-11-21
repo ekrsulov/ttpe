@@ -8,8 +8,6 @@ import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
 import { EditPanelContext } from '../../contexts/EditPanelContext';
 import type {
   SmoothBrush,
-  PathSimplification,
-  PathRounding,
   SelectedCommand
 } from '../../types/panel';
 
@@ -27,16 +25,10 @@ interface SidebarContentProps {
   addPointMode?: {
     isActive: boolean;
   };
-  pathSimplification: PathSimplification;
-  pathRounding: PathRounding;
   selectedCommands: SelectedCommand[];
   selectedSubpaths: Array<{ elementId: string; subpathIndex: number }>;
   updateSmoothBrush: (config: Partial<SmoothBrush>) => void;
-  updatePathSimplification: (config: Partial<PathSimplification>) => void;
-  updatePathRounding: (config: Partial<PathRounding>) => void;
   applySmoothBrush: () => void;
-  applyPathSimplification: () => void;
-  applyPathRounding: () => void;
   activateSmoothBrush: () => void;
   deactivateSmoothBrush: () => void;
   resetSmoothBrush: () => void;
@@ -61,16 +53,10 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
   isDesktop,
   smoothBrush,
   addPointMode,
-  pathSimplification,
-  pathRounding,
   selectedCommands,
   selectedSubpaths,
   updateSmoothBrush,
-  updatePathSimplification,
-  updatePathRounding,
   applySmoothBrush,
-  applyPathSimplification,
-  applyPathRounding,
   activateSmoothBrush,
   deactivateSmoothBrush,
   resetSmoothBrush,
@@ -86,16 +72,10 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
     () => ({
       smoothBrush,
       addPointMode,
-      pathSimplification,
-      pathRounding,
       selectedCommands,
       selectedSubpaths,
       updateSmoothBrush,
-      updatePathSimplification,
-      updatePathRounding,
       applySmoothBrush,
-      applyPathSimplification,
-      applyPathRounding,
       activateSmoothBrush,
       deactivateSmoothBrush,
       resetSmoothBrush,
@@ -105,16 +85,10 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
     [
       smoothBrush,
       addPointMode,
-      pathSimplification,
-      pathRounding,
       selectedCommands,
       selectedSubpaths,
       updateSmoothBrush,
-      updatePathSimplification,
-      updatePathRounding,
       applySmoothBrush,
-      applyPathSimplification,
-      applyPathRounding,
       activateSmoothBrush,
       deactivateSmoothBrush,
       resetSmoothBrush,

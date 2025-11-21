@@ -17,14 +17,6 @@ export interface SmoothBrush {
     }>;
 }
 
-export interface PathSimplification {
-    tolerance: number;
-}
-
-export interface PathRounding {
-    radius: number;
-}
-
 export interface SelectedCommand {
     elementId: string;
     commandIndex: number;
@@ -45,16 +37,10 @@ export interface PanelComponentProps {
     addPointMode?: {
         isActive: boolean;
     };
-    pathSimplification?: PathSimplification;
-    pathRounding?: PathRounding;
     selectedCommands?: SelectedCommand[];
     selectedSubpaths?: Array<{ elementId: string; subpathIndex: number }>;
     updateSmoothBrush?: (config: Partial<SmoothBrush>) => void;
-    updatePathSimplification?: (config: Partial<PathSimplification>) => void;
-    updatePathRounding?: (config: Partial<PathRounding>) => void;
     applySmoothBrush?: () => void;
-    applyPathSimplification?: () => void;
-    applyPathRounding?: () => void;
     activateSmoothBrush?: () => void;
     deactivateSmoothBrush?: () => void;
     resetSmoothBrush?: () => void;

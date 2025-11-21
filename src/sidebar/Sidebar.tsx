@@ -98,8 +98,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   // This way we only re-render when specific values change
   const activePlugin = useCanvasStore((state) => state.activePlugin);
   const setMode = useCanvasStore((state) => state.setMode);
-  const pathSimplification = useCanvasStore((state) => state.pathSimplification);
-  const pathRounding = useCanvasStore((state) => state.pathRounding);
   const selectedCommands = useCanvasStore((state) => state.selectedCommands);
   const selectedSubpaths = useCanvasStore((state) => state.selectedSubpaths);
   
@@ -117,11 +115,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   
   // Actions (these are stable references)
   const updateSmoothBrush = useCanvasStore((state) => state.updateSmoothBrush);
-  const updatePathSimplification = useCanvasStore((state) => state.updatePathSimplification);
-  const updatePathRounding = useCanvasStore((state) => state.updatePathRounding);
   const applySmoothBrush = useCanvasStore((state) => state.applySmoothBrush);
-  const applyPathSimplification = useCanvasStore((state) => state.applyPathSimplification);
-  const applyPathRounding = useCanvasStore((state) => state.applyPathRounding);
   const activateSmoothBrush = useCanvasStore((state) => state.activateSmoothBrush);
   const deactivateSmoothBrush = useCanvasStore((state) => state.deactivateSmoothBrush);
   const resetSmoothBrush = useCanvasStore((state) => state.resetSmoothBrush);
@@ -131,11 +125,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   // Create safe function wrappers for all actions
   const safeActions = useMemo(() => safeFunctions({
     updateSmoothBrush,
-    updatePathSimplification,
-    updatePathRounding,
     applySmoothBrush,
-    applyPathSimplification,
-    applyPathRounding,
     activateSmoothBrush,
     deactivateSmoothBrush,
     resetSmoothBrush,
@@ -143,11 +133,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     deactivateAddPointMode
   }), [
     updateSmoothBrush,
-    updatePathSimplification,
-    updatePathRounding,
     applySmoothBrush,
-    applyPathSimplification,
-    applyPathRounding,
     activateSmoothBrush,
     deactivateSmoothBrush,
     resetSmoothBrush,
@@ -273,8 +259,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           isDesktop={isDesktop}
           smoothBrush={smoothBrush}
           addPointMode={addPointMode}
-          pathSimplification={pathSimplification ?? { tolerance: 1 }}
-          pathRounding={pathRounding ?? { radius: 0 }}
           selectedCommands={selectedCommands ?? []}
           selectedSubpaths={selectedSubpaths ?? []}
           {...safeActions}
@@ -356,8 +340,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
               isDesktop={isDesktop}
               smoothBrush={smoothBrush}
               addPointMode={addPointMode}
-              pathSimplification={pathSimplification ?? { tolerance: 1 }}
-              pathRounding={pathRounding ?? { radius: 0 }}
               selectedCommands={selectedCommands ?? []}
               selectedSubpaths={selectedSubpaths ?? []}
               {...safeActions}
