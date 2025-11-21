@@ -209,10 +209,34 @@ interface CurvePoint {
 - **State persistence**: The curve-in-progress is lost if you switch to another tool
 - **Performance**: Complex curves with many points may impact rendering performance
 
+## Sidebar Configuration
+
+The Curves plugin uses **declarative sidebar panels**:
+
+```typescript
+sidebarPanels: [
+  {
+    key: 'curves',
+    condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'curves',
+    component: CurvesPanel,
+  },
+]
+```
+
+The **CurvesPanel** automatically appears when:
+- The curves tool is active
+- Not in a special panel mode
+
+**Panel Features:**
+- Current point count display
+- Selected point coordinates and handles
+- Delete/deselect buttons
+- "Finish Curve" button (≥2 points)  
+- "Cancel Curve" button
+- Usage instructions
+
 ## Related
 
 - [Plugin System Overview](../overview)
 - [Event Bus](../../event-bus/overview)
 - [Pencil Plugin](./pencil) - Alternative tool for freehand drawing
-
-

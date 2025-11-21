@@ -256,9 +256,33 @@ The system automatically calculates the optimal rendering scale (1x to 4x) based
 
 This ensures reliable text-to-path conversion regardless of text length or font size.
 
+## Sidebar Configuration
+
+The Text plugin uses **declarative sidebar panels**:
+
+```typescript
+sidebarPanels: [
+  {
+    key: 'text',
+    condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'text',
+    component: TextPanel,
+  },
+]
+```
+
+The **TextPanel** automatically appears when:
+- The text tool is active
+- Not in a special panel mode
+
+**Panel Features:**
+- Text content input field
+- Font family selector (with previews of 5 fonts)
+- Font size control
+- Font weight selection (normal, bold, etc.)
+- Font style selection (normal, italic, etc.)
+
 ## Related
 
 - [Plugin System Overview](../overview)
 - [Event Bus](../../event-bus/overview)
-
-
+```

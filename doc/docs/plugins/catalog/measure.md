@@ -448,6 +448,31 @@ const color = colorMode === 'dark'
   : `rgba(51, 65, 85, ${opacityValue})`;    // Slate-700
 ```
 
+## Sidebar Configuration
+
+The Measure plugin uses **declarative sidebar panels**:
+
+```typescript
+sidebarPanels: [
+  {
+    key: 'measure',
+    condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'measure',
+    component: MeasureInfoPanel,
+  },
+]
+```
+
+The **MeasureInfoPanel** automatically appears when:
+- The measure tool is active
+- Not in a special panel mode
+
+**Panel Features:**
+- Snap point configuration (show/hide, opacity, type toggles)
+- Measurement units selection (px, mm, in)
+- Real-time measurement display (distance, ΔX, ΔY, angle)
+- Start and end point coordinates
+- Snap type indicators
+
 ## Future Enhancements
 
 Potential improvements under consideration:

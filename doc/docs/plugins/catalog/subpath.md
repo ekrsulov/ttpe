@@ -136,6 +136,72 @@ const subpathState = useCanvasStore(state => state.subpath);
 - Performance considerations for large datasets
 - Browser compatibility notes (if any)
 
+## Init Lifecycle
+
+The Subpath plugin uses the **init** lifecycle method:
+
+```typescript
+init: (_context) => {
+  return () => { };
+},
+```
+
+Currently, the init method is a placeholder with no initialization or cleanup logic. This structure is in place for future enhancements that may require global setup when the plugin is registered.
+
+## Sidebar Configuration
+
+The Subpath plugin uses **declarative sidebar panels**:
+
+```typescript
+sidebarPanels: [
+  {
+    key: 'subpath-operations',
+    condition: (ctx) => !ctx.isInSpecialPanelMode,
+    component: SubPathOperationsPanel,
+  },
+]
+```
+
+The **SubPathOperationsPanel** automatically appears when:
+- Not in a special panel mode
+- Always visible (no plugin-specific condition)
+
+**Panel Features:**
+- Subpath list and management
+- Align and distribute controls
+- Reverse subpath direction
+- Split subpaths into separate paths
+- Join selectedsubpaths
+
+## Context Menu Actions
+
+The Subpath plugin contributes **context menu actions**:
+
+```typescript
+contextMenuActions: [
+  {
+    id: 'reverse-subpath',
+    action: (context) => {
+      if (context.type !== 'subpath') return null;
+      return {
+        id: 'reverse-subpath',
+        label: 'Reverse Direction',
+        icon: Undo,
+        onClick: () => { /* reverses subpath */ }
+      };
+    }
+  },
+  // ... split and join actions for paths with multiple subpaths
+]
+```
+
+**Available Actions:**
+- **Reverse Direction** (subpath context): Reverses the drawing direction of the selected subpath
+- **Subpath Split** (path context with multiple subpaths): Splits subpaths into separate path elements
+- **Subpath Join** (path context with multiple subpaths): Joins selected subpaths into a single subpath
+
+Actions are conditionally visible based on context (subpath vs path) and path structure (number of subpaths).
+
 ## Related
 
 - [Plugin System Overview](../overview)

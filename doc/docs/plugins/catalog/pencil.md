@@ -214,6 +214,46 @@ api?.addPointToPath({ x: 10, y: 10 });
 api?.finalizePath(collectedPoints);
 ```
 
+## Plugin Hooks
+
+The Pencil plugin uses the new **hooks** system to manage drawing interactions:
+
+```typescript
+hooks: [
+  {
+    id: 'pencil-drawing',
+    hook: usePencilDrawingHook,
+    global: false, // Only active when plugin is active
+  },
+]
+```
+
+**usePencilDrawingHook**: Manages pointer events for drawing:
+- Listens for `pointermove` events when primary button is pressed
+- Converts screen coordinates to canvas coordinates
+- Adds points to the drawing path via `emitPointerEvent`
+- Automatically cleans up listeners when plugin is deactivated
+
+This decouples drawing logic from the core canvas event system.
+
+## Sidebar Configuration
+
+The Pencil plugin uses **declarative sidebar panels**:
+
+```typescript
+sidebarPanels: [
+  {
+    key: 'pencil',
+    condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'pencil',
+    component: PencilPanel,
+  },
+]
+```
+
+This automatically shows the PencilPanel in the sidebar when:
+- The pencil tool is active
+- Not in a special panel mode (like transformation or edit)
+
 ## Usage Examples
 
 ```typescript

@@ -6,7 +6,7 @@ import { Divider } from '@chakra-ui/react';
 export const DocumentationPanel: React.FC = () => {
   return (
     <Panel>
-      <Divider mb={2} />
+      <Divider mt={2} mb={16} />
       <DocumentationCTA />
     </Panel>
   );

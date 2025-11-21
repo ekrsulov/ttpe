@@ -356,9 +356,30 @@ Adjust the value to increase or decrease the sensitivity (for example, set to 3 
 
 Note: Because the threshold validation happens before the element is added to the store, tiny clicks do not produce elements or create entries on the undo/redo stack.
 
+## Sidebar Configuration
+
+The Shape plugin uses **declarative sidebar panels**:
+
+```typescript
+sidebarPanels: [
+  {
+    key: 'shape',
+    condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'shape',
+    component: ShapePanel,
+  },
+]
+```
+
+The **ShapePanel** automatically appears when:
+- The shape tool is active
+- Not in a special panel mode
+
+**Panel Features:**
+- Shape type selector (circle, rectangle, triangle, line, diamond, heart, star)
+- "Keep shape mode" toggle to stay in shape mode after creation
+- Visual shape icons for intuitive selection
+
 ## Related
 
 - [Plugin System Overview](../overview)
 - [Event Bus](../../event-bus/overview)
-
-

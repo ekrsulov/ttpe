@@ -1256,6 +1256,58 @@ function TransformControls() {
 - Requires modern browser with Canvas API and SVG support
 - No known compatibility issues with modern browsers
 
+## Plugin Hooks
+
+The Transformation plugin uses a **global hook** that runs regardless of which plugin is active:
+
+```typescript
+hooks: [
+  {
+    id: 'transformation-controls',
+    hook: useTransformationHook,
+    global: true, // Execute regardless of active plugin
+  },
+]
+```
+
+**useTransformationHook** (Global Hook): Manages transformation interactions across all modes:
+- Listens for pointer events on transformation handles
+- Handles resize, rotate, and move operations
+- Manages advanced transformation mode (distort, skew, perspective)
+- Updates transformation state in real-time
+- Automatically cleans up listeners when component unmounts
+
+**Global Execution**: Unlike tool-scoped hooks, this hook runs continuously because transformation controls need to be available in both `select` and `transformation` modes. This allows users to:
+- See transformation handles when elements are selected (select mode)
+- Interact with handles when transformation mode is active
+- Switch seamlessly between select and transformation modes
+
+## Sidebar Configuration
+
+The Transformation plugin uses **declarative sidebar panels**:
+
+```typescript
+sidebarPanels: [
+  {
+    key: 'transformation',
+    condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'transformation',
+    component: TransformationPanel,
+  },
+]
+```
+
+The **TransformationPanel** automatically appears when:
+- The transformation tool is active
+- Not in a special panel mode (like edit or subpath)
+
+**Panel Features:**
+- Width and height numeric inputs
+- Rotation angle control
+- Aspect ratio lock toggle
+- Advanced mode checkbox (distort, skew, perspective)
+- Visual rulers and coordinate label toggles
+- Real-time value updates during transformations
+
 ## Related
 
 - [Plugin System Overview](../overview)
