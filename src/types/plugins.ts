@@ -37,6 +37,15 @@ export interface PluginUIContribution<TProps = Record<string, unknown>> {
   placement?: 'tool' | 'global';
 }
 
+export interface PluginPanelContribution<TProps = Record<string, unknown>> {
+  id: string;
+  /** Which plugin this panel should appear in (e.g., 'edit') */
+  targetPlugin: string;
+  component: ComponentType<TProps>;
+  /** Optional ordering hint - lower numbers appear first */
+  order?: number;
+}
+
 export type CanvasLayerPlacement = 'background' | 'midground' | 'foreground';
 
 export interface CanvasLayerContext extends CanvasControllerValue, Record<string, any> { // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -154,6 +163,11 @@ export interface PluginDefinition<TStore extends object = object> {
   canvasLayers?: CanvasLayerContribution[];
   panels?: PluginUIContribution[];
   actions?: PluginActionContribution[];
+  /**
+   * Panels contributed to other plugins.
+   * Example: smoothBrush plugin can contribute a panel to the 'edit' plugin.
+   */
+  relatedPluginPanels?: PluginPanelContribution[];
   slices?: PluginSliceFactory<TStore>[];
   /**
    * Public API factory exposed by the plugin for use by other parts of the application.

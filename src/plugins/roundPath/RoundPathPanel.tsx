@@ -3,25 +3,15 @@ import { Box } from '@chakra-ui/react';
 import { SliderControl } from '../../ui/SliderControl';
 import { SectionHeader } from '../../ui/SectionHeader';
 import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
+import { useCanvasStore } from '../../store/canvasStore';
+import type { RoundPathPluginSlice } from './slice';
 
-interface RoundPathPanelProps {
-    pathRounding: {
-        radius: number;
-    };
-    selectedSubpaths?: Array<{
-        elementId: string;
-        subpathIndex: number;
-    }>;
-    updatePathRounding: (settings: Partial<{ radius: number }>) => void;
-    applyPathRounding: () => void;
-}
+export const RoundPathPanel: React.FC = () => {
+    const pathRounding = useCanvasStore((state) => (state as unknown as RoundPathPluginSlice).pathRounding);
+    const selectedSubpaths = useCanvasStore((state) => (state as any).selectedSubpaths || []); // eslint-disable-line @typescript-eslint/no-explicit-any
+    const updatePathRounding = useCanvasStore((state) => (state as unknown as RoundPathPluginSlice).updatePathRounding);
+    const applyPathRounding = useCanvasStore((state) => (state as unknown as RoundPathPluginSlice).applyPathRounding);
 
-export const RoundPathPanel: React.FC<RoundPathPanelProps> = ({
-    pathRounding,
-    selectedSubpaths = [],
-    updatePathRounding,
-    applyPathRounding,
-}) => {
     const hasSelectedSubpaths = selectedSubpaths && selectedSubpaths.length > 0;
     const roundPathLabel = hasSelectedSubpaths ? 'Round Subpath' : 'Round Path';
 

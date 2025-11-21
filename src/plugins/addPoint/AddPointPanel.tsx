@@ -2,20 +2,14 @@ import React from 'react';
 import { Box, Flex, Heading } from '@chakra-ui/react';
 import { PanelSwitch } from '../../ui/PanelSwitch';
 import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
+import { useCanvasStore } from '../../store/canvasStore';
+import type { AddPointPluginSlice } from './slice';
 
-interface AddPointPanelProps {
-    addPointMode?: {
-        isActive: boolean;
-    };
-    activateAddPointMode?: () => void;
-    deactivateAddPointMode?: () => void;
-}
+export const AddPointPanel: React.FC = () => {
+    const addPointMode = useCanvasStore((state) => (state as unknown as AddPointPluginSlice).addPointMode);
+    const activateAddPointMode = useCanvasStore((state) => (state as unknown as AddPointPluginSlice).activateAddPointMode);
+    const deactivateAddPointMode = useCanvasStore((state) => (state as unknown as AddPointPluginSlice).deactivateAddPointMode);
 
-export const AddPointPanel: React.FC<AddPointPanelProps> = ({
-    addPointMode,
-    activateAddPointMode,
-    deactivateAddPointMode,
-}) => {
     return (
         <Box position="relative">
             <RenderCountBadgeWrapper componentName="AddPointPanel" position="top-left" />

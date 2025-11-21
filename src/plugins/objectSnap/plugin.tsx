@@ -4,6 +4,7 @@ import type { CanvasStore } from '../../store/canvasStore';
 import { createObjectSnapPluginSlice } from './slice';
 import type { ObjectSnapPluginSlice } from './slice';
 import { ObjectSnapOverlay } from './ObjectSnapOverlay';
+import { ObjectSnapPanel } from './ObjectSnapPanel';
 import { FeedbackOverlay } from '../../overlays/FeedbackOverlay';
 import { getSnapPointLabel } from '../../utils/snapPointUtils';
 import { createSnapModifier } from './snapModifier';
@@ -91,6 +92,14 @@ export const objectSnapPlugin: PluginDefinition<CanvasStore> = {
     const modifier = createSnapModifier(context);
     return pluginManager.registerDragModifier(modifier);
   },
+  relatedPluginPanels: [
+    {
+      id: 'objectSnap-edit-panel',
+      targetPlugin: 'edit',
+      component: ObjectSnapPanel,
+      order: 99, // Place at the end
+    },
+  ],
 };
 
 export type { ObjectSnapPluginSlice };

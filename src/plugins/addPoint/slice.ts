@@ -1,6 +1,7 @@
-import type { StateCreator } from 'zustand';
+import type { StoreApi } from 'zustand';
 import type { Point, CanvasElement, PathData } from '../../types';
 import { extractSubpaths, getCommandStartPoint } from '../../utils/pathParserUtils';
+import type { CanvasStore } from '../../store/canvasStore';
 
 export interface AddPointPluginSlice {
     addPointMode: {
@@ -21,27 +22,11 @@ export interface AddPointPluginSlice {
     insertPointOnPath: () => { elementId: string; commandIndex: number; pointIndex: number } | null;
 }
 
-// Type for accessing full canvas store
-type FullCanvasState = {
-    elements: CanvasElement[];
-    updateElement: (id: string, updates: Partial<CanvasElement>) => void;
-    addPointMode?: AddPointPluginSlice['addPointMode'];
-    selectedCommands?: Array<{ elementId: string; commandIndex: number; pointIndex: number }>;
-    editingPoint?: {
-        elementId: string;
-        commandIndex: number;
-        pointIndex: number;
-        isDragging: boolean;
-        offsetX: number;
-        offsetY: number;
-    } | null;
-    draggingSelection?: unknown;
-};
-
-export const createAddPointPluginSlice: StateCreator<AddPointPluginSlice, [], [], AddPointPluginSlice> = (
-    set,
-    get
-) => ({
+export const createAddPointPluginSlice = (
+    set: StoreApi<CanvasStore>['setState'],
+    get: StoreApi<CanvasStore>['getState'],
+    _api: StoreApi<CanvasStore>
+): AddPointPluginSlice => ({
     addPointMode: {
         isActive: false,
         hoverPosition: null,
@@ -50,38 +35,40 @@ export const createAddPointPluginSlice: StateCreator<AddPointPluginSlice, [], []
     },
 
     activateAddPointMode: () => {
-        set((state) => ({
+        const currentMode = get().addPointMode;
+        set({
             addPointMode: {
-                ...state.addPointMode,
+                ...currentMode,
                 isActive: true,
             },
-        }));
+        });
     },
 
     deactivateAddPointMode: () => {
-        set(() => ({
+        set({
             addPointMode: {
                 isActive: false,
                 hoverPosition: null,
                 targetElement: null,
                 targetSegment: null,
             },
-        }));
+        });
     },
 
     updateAddPointHover: (position, elementId, segmentInfo) => {
-        set((state) => ({
+        const currentMode = get().addPointMode;
+        set({
             addPointMode: {
-                ...state.addPointMode,
+                ...currentMode,
                 hoverPosition: position,
                 targetElement: elementId,
                 targetSegment: segmentInfo,
             },
-        }));
+        });
     },
 
     insertPointOnPath: () => {
-        const state = get() as unknown as FullCanvasState;
+        const state = get();
         const addPointMode = state.addPointMode;
 
         if (
@@ -170,43 +157,34 @@ export const createAddPointPluginSlice: StateCreator<AddPointPluginSlice, [], []
 
         // Select the newly created point and start dragging immediately
         if (newPointInfo) {
-            // Update global store state (selectedCommands, editingPoint, draggingSelection)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const globalState = state as any;
-            if (globalState.setState) {
-                globalState.setState({
-                    selectedCommands: [newPointInfo],
-                    editingPoint: {
-                        elementId: newPointInfo.elementId,
-                        commandIndex: newPointInfo.commandIndex,
-                        pointIndex: newPointInfo.pointIndex,
-                        isDragging: true,
-                        offsetX: insertPosition.x,
-                        offsetY: insertPosition.y,
-                    },
-                    draggingSelection: null,
-                });
-            }
-
-            // Update addPointMode state
-            set((state) => ({
+            set({
+                selectedCommands: [newPointInfo],
+                editingPoint: {
+                    elementId: newPointInfo.elementId,
+                    commandIndex: newPointInfo.commandIndex,
+                    pointIndex: newPointInfo.pointIndex,
+                    isDragging: true,
+                    offsetX: insertPosition.x,
+                    offsetY: insertPosition.y,
+                },
+                draggingSelection: null,
                 addPointMode: {
-                    ...state.addPointMode,
+                    ...addPointMode,
                     hoverPosition: null,
                     targetElement: null,
                     targetSegment: null,
                 },
-            }));
+            });
         } else {
             // Clear hover state after inserting if no point info
-            set((state) => ({
+            set({
                 addPointMode: {
-                    ...state.addPointMode,
+                    ...addPointMode,
                     hoverPosition: null,
                     targetElement: null,
                     targetSegment: null,
                 },
-            }));
+            });
         }
 
         return newPointInfo;

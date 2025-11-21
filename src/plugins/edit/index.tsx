@@ -15,9 +15,7 @@ const EditExpandablePanelWrapper: React.FC = () => {
 };
 import { ControlPointAlignmentPanel } from './ControlPointAlignmentPanel';
 import { EditPointsOverlay } from './EditPointsOverlay';
-import { AddPointFeedbackOverlay } from './AddPointFeedbackOverlay';
 import { FeedbackOverlay } from '../../overlays';
-import { SmoothBrushCursor } from './SmoothBrushCursor';
 
 const editSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -160,33 +158,7 @@ export const editPlugin: PluginDefinition<CanvasStore> = {
         );
       },
     },
-    {
-      id: 'smooth-brush-cursor',
-      placement: 'foreground',
-      render: ({ activePlugin }) => {
-        if (activePlugin !== 'edit') {
-          return null;
-        }
-        return <SmoothBrushCursor />;
-      },
-    },
-    {
-      id: 'add-point-feedback',
-      placement: 'foreground',
-      render: ({ activePlugin, viewport, addPointMode }) => {
-        if (activePlugin !== 'edit' || !addPointMode?.isActive) {
-          return null;
-        }
 
-        return (
-          <AddPointFeedbackOverlay
-            hoverPosition={addPointMode.hoverPosition}
-            isActive={addPointMode.isActive}
-            viewport={viewport}
-          />
-        );
-      },
-    },
     {
       id: 'point-position-feedback',
       placement: 'foreground',

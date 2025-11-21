@@ -1,10 +1,10 @@
-/* eslint-disable react-refresh/only-export-components */
+
 import type { PluginDefinition, PluginSliceFactory } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createRoundPathPluginSlice } from './slice';
 import type { RoundPathPluginSlice } from './slice';
 
-export { RoundPathPanel } from './RoundPathPanel';
+import { RoundPathPanel } from './RoundPathPanel';
 export type { RoundPathPluginSlice };
 
 const roundPathSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
@@ -22,4 +22,12 @@ export const roundPathPlugin: PluginDefinition<CanvasStore> = {
         cursor: 'default',
     },
     slices: [roundPathSliceFactory],
+    relatedPluginPanels: [
+        {
+            id: 'roundPath-edit-panel',
+            targetPlugin: 'edit',
+            component: RoundPathPanel,
+            order: 4,
+        },
+    ],
 };

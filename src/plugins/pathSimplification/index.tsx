@@ -1,10 +1,10 @@
-/* eslint-disable react-refresh/only-export-components */
+
 import type { PluginDefinition, PluginSliceFactory } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createPathSimplificationPluginSlice } from './slice';
 import type { PathSimplificationPluginSlice } from './slice';
 
-export { PathSimplificationPanel } from './PathSimplificationPanel';
+import { PathSimplificationPanel } from './PathSimplificationPanel';
 export type { PathSimplificationPluginSlice };
 
 const pathSimplificationSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
@@ -22,4 +22,12 @@ export const pathSimplificationPlugin: PluginDefinition<CanvasStore> = {
         cursor: 'default',
     },
     slices: [pathSimplificationSliceFactory],
+    relatedPluginPanels: [
+        {
+            id: 'pathSimplification-edit-panel',
+            targetPlugin: 'edit',
+            component: PathSimplificationPanel,
+            order: 3,
+        },
+    ],
 };

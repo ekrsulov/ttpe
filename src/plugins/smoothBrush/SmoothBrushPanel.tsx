@@ -6,31 +6,19 @@ import { PanelToggle } from '../../ui/PanelToggle';
 import { PanelStyledButton } from '../../ui/PanelStyledButton';
 import { PanelSwitch } from '../../ui/PanelSwitch';
 import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
-import type { SmoothBrush } from './slice';
+import { useCanvasStore } from '../../store/canvasStore';
+import type { SmoothBrushPluginSlice } from './slice';
 
-interface SmoothBrushPanelProps {
-    smoothBrush: SmoothBrush;
-    selectedCommands?: Array<{
-        elementId: string;
-        commandIndex: number;
-        pointIndex: number;
-    }>;
-    updateSmoothBrush: (brush: Partial<SmoothBrush>) => void;
-    applySmoothBrush: () => void;
-    activateSmoothBrush: () => void;
-    deactivateSmoothBrush: () => void;
-    resetSmoothBrush: () => void;
-}
 
-export const SmoothBrushPanel: React.FC<SmoothBrushPanelProps> = ({
-    smoothBrush,
-    selectedCommands = [],
-    updateSmoothBrush,
-    applySmoothBrush,
-    activateSmoothBrush,
-    deactivateSmoothBrush,
-    resetSmoothBrush,
-}) => {
+export const SmoothBrushPanel: React.FC = () => {
+    const smoothBrush = useCanvasStore((state) => (state as unknown as SmoothBrushPluginSlice).smoothBrush);
+    const selectedCommands = useCanvasStore((state) => (state as any).selectedCommands || []); // eslint-disable-line @typescript-eslint/no-explicit-any
+    const updateSmoothBrush = useCanvasStore((state) => (state as unknown as SmoothBrushPluginSlice).updateSmoothBrush);
+    const applySmoothBrush = useCanvasStore((state) => (state as unknown as SmoothBrushPluginSlice).applySmoothBrush);
+    const activateSmoothBrush = useCanvasStore((state) => (state as unknown as SmoothBrushPluginSlice).activateSmoothBrush);
+    const deactivateSmoothBrush = useCanvasStore((state) => (state as unknown as SmoothBrushPluginSlice).deactivateSmoothBrush);
+    const resetSmoothBrush = useCanvasStore((state) => (state as unknown as SmoothBrushPluginSlice).resetSmoothBrush);
+
     return (
         <Box position="relative">
             <RenderCountBadgeWrapper componentName="SmoothBrushPanel" position="top-left" />
@@ -41,7 +29,7 @@ export const SmoothBrushPanel: React.FC<SmoothBrushPanelProps> = ({
                 <HStack spacing={2}>
                     {!smoothBrush.isActive && (
                         <PanelStyledButton
-                            onClick={applySmoothBrush}
+                            onClick={() => applySmoothBrush()}
                             size="xs"
                             title={
                                 smoothBrush.isActive && selectedCommands.length > 0
