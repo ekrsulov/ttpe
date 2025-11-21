@@ -2,8 +2,6 @@ import React, { useRef, useCallback, useEffect, useMemo } from 'react';
 import { useCanvasDragInteractions } from './hooks/useCanvasDragInteractions';
 import { useCanvasKeyboardControls } from './hooks/useCanvasKeyboardControls';
 import { useSelectionController } from './hooks/useSelectionController';
-import { useCanvasTransformControls } from './hooks/useCanvasTransformControls';
-import { useAdvancedTransformControls } from './hooks/useAdvancedTransformControls';
 import { useCanvasEventHandlers } from './hooks/useCanvasEventHandlers';
 import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
 import type { Point, CanvasElement } from '../types';
@@ -48,19 +46,6 @@ const CanvasContent: React.FC = () => {
     completeSelectionRectangle,
     selectElement: applySelectionChange,
   } = useSelectionController();
-  const {
-    transformState,
-    feedback,
-    startTransformation,
-    updateTransformation,
-    endTransformation
-  } = useCanvasTransformControls();
-  const {
-    transformState: advancedTransformState,
-    startAdvancedTransformation,
-    updateAdvancedTransformation,
-    endAdvancedTransformation
-  } = useAdvancedTransformControls();
 
   const controller = useCanvasController();
   const scaleStrokeWithZoom = useCanvasStore(state => state.settings.scaleStrokeWithZoom);
@@ -221,10 +206,6 @@ const CanvasContent: React.FC = () => {
     isDragging,
     dragStart,
     hasDragMoved,
-    transformStateIsTransforming: transformState.isTransforming,
-    advancedTransformStateIsTransforming: advancedTransformState.isTransforming,
-    updateTransformation,
-    updateAdvancedTransformation,
     beginSelectionRectangle,
     setIsDragging,
     setDragStart,
@@ -232,10 +213,6 @@ const CanvasContent: React.FC = () => {
     isWorkingWithSubpaths: isWorkingWithSubpaths ?? (() => false),
     selectedSubpaths: selectedSubpaths ?? [],
     selectedIds,
-    startTransformation,
-    endTransformation,
-    startAdvancedTransformation,
-    endAdvancedTransformation,
     completeSelectionRectangle,
     updateSelectionRectangle,
     moveSelectedElements: handleMoveSelectedElements,
@@ -248,8 +225,6 @@ const CanvasContent: React.FC = () => {
     handleElementDoubleClick,
     handleSubpathDoubleClick,
     handleElementDoubleTap,
-    handleTransformationHandlerPointerDown,
-    handleTransformationHandlerPointerUp,
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
@@ -294,7 +269,6 @@ const CanvasContent: React.FC = () => {
     isElementHidden,
     isElementLocked,
     isElementSelected,
-    isTransforming: transformState.isTransforming,
     isSelecting,
     isPathInteractionDisabled,
     pathCursorMode,
@@ -311,7 +285,6 @@ const CanvasContent: React.FC = () => {
     isElementHidden,
     isElementLocked,
     isElementSelected,
-    transformState.isTransforming,
     isSelecting,
     isPathInteractionDisabled,
     pathCursorMode,
@@ -322,7 +295,7 @@ const CanvasContent: React.FC = () => {
   const renderElement = (element: typeof elements[0]) =>
     canvasRendererRegistry.render(element, renderContext);
 
-  const canvasLayerContext = useMemo(() => {
+  const canvasLayerContext: CanvasLayerContext = useMemo(() => {
     const baseContext = {
       ...controller,
       activePlugin: currentMode,
@@ -334,21 +307,13 @@ const CanvasContent: React.FC = () => {
       dragPosition,
       isDragging,
       getElementBounds,
-      handleTransformationHandlerPointerDown,
-      handleTransformationHandlerPointerUp,
       handleSubpathDoubleClick,
       handleSubpathTouchEnd,
       setDragStart: setDragStartForLayers,
       settings, // Add settings to context
     };
 
-    // Conditionally add plugin-specific context
-    const pluginSpecific: Partial<CanvasLayerContext> = {};
-    if (currentMode === 'transformation') {
-      pluginSpecific.transformFeedback = feedback;
-    }
-
-    return { ...baseContext, ...pluginSpecific };
+    return baseContext;
   },
     [
       controller,
@@ -361,14 +326,10 @@ const CanvasContent: React.FC = () => {
       dragPosition,
       isDragging,
       getElementBounds,
-      handleTransformationHandlerPointerDown,
-      handleTransformationHandlerPointerUp,
       handleSubpathDoubleClick,
       handleSubpathTouchEnd,
       setDragStartForLayers,
       settings,
-      // Plugin-specific dependencies
-      feedback,
     ]
   );
 

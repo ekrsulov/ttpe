@@ -5,7 +5,7 @@ import { pluginManager } from '../../utils/pluginManager';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import {
-  CANVAS_MODE_MACHINE,
+  getCanvasModeMachine,
   getCanvasModeDefinition,
   getCanvasModeResources,
   transitionCanvasMode,
@@ -36,7 +36,7 @@ export interface CanvasModeMachineHookResult {
 
 const normalizeMode = (mode: string | null | undefined): CanvasMode => {
   if (!mode) {
-    return CANVAS_MODE_MACHINE.initial;
+    return getCanvasModeMachine().initial;
   }
   return mode as CanvasMode;
 };

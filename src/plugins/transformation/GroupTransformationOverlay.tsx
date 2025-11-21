@@ -6,6 +6,8 @@ import { CenterMarker } from './CenterMarker';
 import { CornerCoordinateLabels } from './CornerCoordinateLabels';
 import { MeasurementRulers } from './MeasurementRulers';
 import { computeAdjustedBounds } from '../../utils/overlayHelpers';
+import { useCanvasStore } from '../../store/canvasStore';
+import type { TransformationPluginSlice } from './slice';
 import type { GroupElement } from '../../types';
 
 interface GroupTransformationOverlayProps {
@@ -34,10 +36,16 @@ export const GroupTransformationOverlay: React.FC<GroupTransformationOverlayProp
   bounds,
   viewport,
   activePlugin,
-  transformation,
+  transformation: transformationProp,
   onTransformationHandlerPointerDown,
   onTransformationHandlerPointerUp,
 }) => {
+  // Get transformation state from store (fallback if not in props)
+  const transformationFromStore = useCanvasStore(state =>
+    (state as unknown as TransformationPluginSlice).transformation
+  );
+  const transformation = transformationProp ?? transformationFromStore;
+
   // Colors that adapt to dark mode
   const coordinateBackgroundColor = useColorModeValue('#6b7280', '#4b5563');
   const coordinateTextColor = useColorModeValue('white', '#f9fafb');

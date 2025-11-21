@@ -4,7 +4,7 @@ import type { Point, CanvasElement } from '.';
 import type { CanvasControllerValue } from '../canvas/controller/CanvasControllerContext';
 import type { Bounds } from '../utils/boundsUtils';
 import type { CanvasEventBus, CanvasPointerEventState } from '../canvas/CanvasEventBusContext';
-import type { PointPositionFeedback } from '../canvas/interactions/ShapeCreationController';
+import type { PointPositionFeedback } from '../plugins/shape/ShapeCreationController';
 import type { PanelConfig } from './panel';
 
 export type CanvasShortcutStoreApi = Pick<StoreApi<object>, 'getState' | 'subscribe'>;
@@ -156,6 +156,17 @@ export interface PluginDefinition<TStore extends object = object> {
     pathCursorMode?: 'select' | 'default' | 'pointer';
   };
   /**
+   * Canvas mode configuration for this plugin.
+   * Defines how this mode behaves, what transitions are allowed, etc.
+   */
+  modeConfig?: {
+    description: string;
+    entry?: ('clearGuidelines' | 'clearSubpathSelection' | 'clearSelectedCommands')[];
+    exit?: ('clearGuidelines' | 'clearSubpathSelection' | 'clearSelectedCommands')[];
+    transitions?: Record<string, { description: string }>;
+    toggleTo?: string;
+  };
+  /**
    * Behavior flags that control how this plugin interacts with others.
    * These flags are checked dynamically based on plugin state.
    */
@@ -224,7 +235,13 @@ export interface PluginDefinition<TStore extends object = object> {
    */
   toolDefinition?: {
     order: number;
-    // icon and label are already in metadata, cursor too
+    /**
+     * Tool visibility mode:
+     * - 'always-shown': Tool is always visible in the toolbar
+     * - 'dynamic': Tool visibility is based on usage patterns (mobile)
+     * @default 'dynamic'
+     */
+    visibility?: 'always-shown' | 'dynamic';
   };
   /**
    * Lifecycle method called when the plugin is registered.

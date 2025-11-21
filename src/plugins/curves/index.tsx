@@ -70,6 +70,13 @@ export const curvesPlugin: PluginDefinition<CanvasStore> = {
     cursor: 'crosshair',
     disablePathInteraction: true,
   },
+  modeConfig: {
+    description: 'Draws parametric curves.',
+    transitions: {
+      select: { description: 'Returns to selection mode.' },
+      '*': { description: 'Allows transitioning to other modes.' },
+    },
+  },
   toolDefinition: { order: 7 },
   handler: (
     event,

@@ -26,6 +26,13 @@ export const textPlugin: PluginDefinition<CanvasStore> = {
     icon: Type,
     cursor: 'text',
   },
+  modeConfig: {
+    description: 'Inserts and edits text.',
+    transitions: {
+      select: { description: 'Returns to selection mode.' },
+      '*': { description: 'Allows transitioning to other modes.' },
+    },
+  },
   toolDefinition: { order: 8 },
   handler: (_event, point, _target, context) => {
     const state = context.store.getState();

@@ -1,3 +1,5 @@
+import type { PluginDefinition } from '../../types/plugins';
+
 // Tool modes are now defined per-plugin and aggregated via the Plugin Manager.
 // We treat canvas modes as plain strings to allow arbitrary plugin-defined modes.
 export type CanvasMode = string & {};
@@ -52,103 +54,90 @@ export interface CanvasModeTransitionResult {
   requested: CanvasMode;
 }
 
-const ALL_KNOWN_MODES: CanvasMode[] = [
-  'select',
-  'pan',
-  'text',
-  'shape',
-  'curves',
-  'subpath',
-  'transformation',
-  'edit',
-];
-
-const wildcardTransition = { description: 'Permite cambiar a modos registrados dinámicamente por plugins.' };
+const wildcardTransition = { description: 'Allows transitioning to modes dynamically registered by plugins.' };
 
 const defaultState: CanvasModeStateConfig = {
   id: 'select',
-  description: 'Modo definido por un plugin externo.',
+  description: 'Mode defined by an external plugin.',
   transitions: { '*': wildcardTransition },
   resources: { plugins: [], listeners: [], overlays: [] },
 };
 
-export const CANVAS_MODE_MACHINE: CanvasModeMachineDefinition = {
+/**
+ * Builds the canvas mode machine dynamically from registered plugins.
+ * This allows plugins to define their own modes with custom configurations.
+ */
+export function buildCanvasModeMachine(plugins: PluginDefinition[]): CanvasModeMachineDefinition {
+  const states: Record<string, CanvasModeStateConfig> = {};
+
+  // Add all plugin modes (including core modes like select, pan, text, curves)
+  plugins.forEach(plugin => {
+    if (plugin.modeConfig) {
+      const transitions = { ...plugin.modeConfig.transitions };
+      
+      // For 'select' mode, automatically add transitions to all other plugin modes
+      if (plugin.id === 'select') {
+        plugins.forEach(otherPlugin => {
+          if (otherPlugin.modeConfig && otherPlugin.id !== 'select') {
+            // Only add if not already defined
+            if (!transitions[otherPlugin.id]) {
+              transitions[otherPlugin.id] = { description: otherPlugin.modeConfig.description };
+            }
+          }
+        });
+      }
+
+      states[plugin.id] = {
+        id: plugin.id,
+        description: plugin.modeConfig.description,
+        entry: plugin.modeConfig.entry,
+        exit: plugin.modeConfig.exit,
+        transitions,
+        toggleTo: plugin.modeConfig.toggleTo,
+        resources: { plugins: [plugin.id] },
+      };
+    }
+  });
+
+  return {
+    initial: 'select',
+    states,
+    defaultState,
+    global: {
+      onTransition: ['clearGuidelines'],
+    },
+  };
+}
+
+// Default empty machine (will be replaced by buildCanvasModeMachine when plugins are registered)
+let CANVAS_MODE_MACHINE: CanvasModeMachineDefinition = {
   initial: 'select',
-  states: ALL_KNOWN_MODES.reduce<Record<string, CanvasModeStateConfig>>((acc, mode) => {
-    const baseTransitions: Record<string, { description: string }> = {
-      '*': wildcardTransition,
-    };
-
-    if (mode === 'select') {
-      acc[mode] = {
-        id: mode,
-        description: 'Herramienta por defecto para seleccionar y manipular elementos.',
-        entry: ['clearSubpathSelection', 'clearSelectedCommands'],
-        transitions: {
-          pan: { description: 'Permite desplazarse por el lienzo.' },
-          text: { description: 'Inserta nuevas cajas de texto.' },
-          shape: { description: 'Crea formas geométricas básicas.' },
-          transformation: { description: 'Manipula elementos seleccionados.' },
-          subpath: { description: 'Permite editar subtrazados individuales.' },
-          edit: { description: 'Modifica puntos y controladores de los trazos.' },
-          curves: { description: 'Crea curvas paramétricas.' },
-          '*': wildcardTransition,
-        },
-        resources: { plugins: [mode] },
-      };
-      return acc;
-    }
-
-    if (mode === 'transformation' || mode === 'edit' || mode === 'subpath') {
-      acc[mode] = {
-        id: mode,
-        description:
-          mode === 'transformation'
-            ? 'Manipulación de tamaño, rotación y posición.'
-            : mode === 'edit'
-              ? 'Edición precisa de nodos y manejadores.'
-              : 'Modo para elegir y trabajar con subtrazados.',
-        transitions: {
-          select: { description: 'Vuelve al modo de selección estándar.' },
-          transformation: { description: 'Se puede alternar de vuelta al modo de selección.' },
-          edit: { description: 'Intercambia hacia edición de nodos.' },
-          subpath: { description: 'Intercambia hacia edición de subtrazados.' },
-          pan: { description: 'Permite moverse por el lienzo sin perder el contexto.' },
-          '*': wildcardTransition,
-        },
-        toggleTo: 'select',
-        resources: { plugins: [mode] },
-      };
-      return acc;
-    }
-
-    acc[mode] = {
-      id: mode,
-      description:
-        mode === 'pan'
-          ? 'Modo para navegar el lienzo.'
-          : mode === 'text'
-            ? 'Inserta y edita texto.'
-            : mode === 'shape'
-              ? 'Crea formas geométricas básicas.'
-              : mode === 'curves'
-                ? 'Dibuja curvas paramétricas.'
-                : 'Modo definido externamente por un plugin.',
-      transitions: baseTransitions,
-      resources: { plugins: [mode] },
-    };
-
-    return acc;
-  }, {}),
+  states: {},
   defaultState,
   global: {
     onTransition: ['clearGuidelines'],
   },
 };
 
+/**
+ * Updates the canvas mode machine with plugin configurations.
+ * Should be called after plugins are registered.
+ */
+export function updateCanvasModeMachine(plugins: PluginDefinition[]): void {
+  CANVAS_MODE_MACHINE = buildCanvasModeMachine(plugins);
+}
+
+/**
+ * Gets the current canvas mode machine.
+ */
+export function getCanvasModeMachine(): CanvasModeMachineDefinition {
+  return CANVAS_MODE_MACHINE;
+}
+
 const getStateDefinition = (mode: CanvasMode): CanvasModeStateConfig => {
-  return CANVAS_MODE_MACHINE.states[mode] ?? {
-    ...CANVAS_MODE_MACHINE.defaultState,
+  const machine = getCanvasModeMachine();
+  return machine.states[mode] ?? {
+    ...machine.defaultState,
     id: mode,
   };
 };
@@ -173,7 +162,7 @@ const collectActions = (
 ): CanvasModeLifecycleAction[] => {
   const exitActions = from.exit ?? [];
   const entryActions = to.entry ?? [];
-  const globalActions = CANVAS_MODE_MACHINE.global?.onTransition ?? [];
+  const globalActions = getCanvasModeMachine().global?.onTransition ?? [];
 
   if (reason === 'noop') {
     return [];

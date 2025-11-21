@@ -1,10 +1,11 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { useCanvasStore } from '../../store/canvasStore';
-import { TransformController, type TransformState, type TransformFeedback } from '../interactions/TransformController';
-import { measurePath, measureSubpathBounds } from '../../utils/geometry';
-import { getGroupBounds } from '../geometry/CanvasGeometryService';
-import { transformCommands } from '../../utils/sharedTransformUtils';
-import type { Point, PathData, CanvasElement, GroupElement } from '../../types';
+import { useCanvasStore } from '../../../store/canvasStore';
+import { TransformController, type TransformState, type TransformFeedback } from '../TransformController';
+import { measurePath, measureSubpathBounds } from '../../../utils/geometry';
+import { getGroupBounds } from '../../../canvas/geometry/CanvasGeometryService';
+import { transformCommands } from '../../../utils/sharedTransformUtils';
+import type { Point, PathData, CanvasElement, GroupElement } from '../../../types';
+import type { TransformationPluginSlice } from '../slice';
 
 export const useCanvasTransformControls = () => {
   const [transformState, setTransformState] = useState<TransformState>({
@@ -30,6 +31,22 @@ export const useCanvasTransformControls = () => {
     shape: { width: 0, height: 0, visible: false, isShiftPressed: false, isMultipleOf10: false },
     pointPosition: { x: 0, y: 0, visible: false }
   });
+
+  // Sync local state to store so Canvas.tsx can read it
+  const setTransformStateInStore = useCanvasStore(state => 
+    (state as unknown as TransformationPluginSlice).setTransformState
+  );
+  const setTransformFeedbackInStore = useCanvasStore(state => 
+    (state as unknown as TransformationPluginSlice).setTransformFeedback
+  );
+
+  useEffect(() => {
+    setTransformStateInStore?.(transformState);
+  }, [transformState, setTransformStateInStore]);
+
+  useEffect(() => {
+    setTransformFeedbackInStore?.(feedback);
+  }, [feedback, setTransformFeedbackInStore]);
 
   const transformController = useMemo(() => new TransformController(), []);
 
@@ -115,7 +132,7 @@ export const useCanvasTransformControls = () => {
       const bounds = getGroupBounds(element as GroupElement, elementMap, viewport);
       if (bounds) {
         // Create a pseudo-element for transformation tracking with a rectangular path based on bounds
-        const rectPath: import('../../types').Command[] = [
+        const rectPath: import('../../../types').Command[] = [
           { type: 'M', position: { x: bounds.minX, y: bounds.minY } },
           { type: 'L', position: { x: bounds.maxX, y: bounds.minY } },
           { type: 'L', position: { x: bounds.maxX, y: bounds.maxY } },
@@ -202,7 +219,7 @@ export const useCanvasTransformControls = () => {
 
       if (isFinite(minX)) {
         // Create a pseudo-element for transformation tracking with a rectangular path based on bounds
-        const rectPath: import('../../types').Command[] = [
+        const rectPath: import('../../../types').Command[] = [
           { type: 'M', position: { x: minX, y: minY } },
           { type: 'L', position: { x: maxX, y: minY } },
           { type: 'L', position: { x: maxX, y: maxY } },

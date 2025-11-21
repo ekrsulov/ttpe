@@ -11,10 +11,6 @@ export interface CanvasEventHandlerDepsInput {
   isDragging: boolean;
   dragStart: Point | null;
   hasDragMoved: boolean;
-  transformStateIsTransforming: boolean;
-  advancedTransformStateIsTransforming: boolean;
-  updateTransformation: (point: Point, isShiftPressed: boolean) => void;
-  updateAdvancedTransformation: (point: Point) => void;
   // Note: applyBrush and updateCursorPosition removed as they were not propagated
   beginSelectionRectangle: (point: Point, shiftKey?: boolean, subpathMode?: boolean) => void;
   setIsDragging: (value: boolean) => void;
@@ -23,10 +19,6 @@ export interface CanvasEventHandlerDepsInput {
   isWorkingWithSubpaths: () => boolean;
   selectedSubpaths: Array<{ elementId: string; subpathIndex: number }>;
   selectedIds: string[];
-  startTransformation: (elementId: string, handler: string, point: Point) => void;
-  endTransformation: () => void;
-  startAdvancedTransformation: (handler: string, point: Point, isModifierPressed: boolean) => void;
-  endAdvancedTransformation: () => void;
   completeSelectionRectangle: () => void;
   updateSelectionRectangle: (point: Point) => void;
   moveSelectedElements: (deltaX: number, deltaY: number, precisionOverride?: number) => void;
@@ -45,10 +37,6 @@ export interface CanvasEventHandlerDeps {
   isDragging: boolean;
   dragStart: Point | null;
   hasDragMoved: boolean;
-  transformStateIsTransforming: boolean;
-  advancedTransformStateIsTransforming: boolean;
-  updateTransformation: (point: Point, isShiftPressed: boolean) => void;
-  updateAdvancedTransformation: (point: Point) => void;
   beginSelectionRectangle: (point: Point, shiftKey?: boolean, subpathMode?: boolean) => void;
   setIsDragging: (value: boolean) => void;
   setDragStart: (point: Point | null) => void;
@@ -56,10 +44,6 @@ export interface CanvasEventHandlerDeps {
   isWorkingWithSubpaths: () => boolean;
   selectedSubpaths: Array<{ elementId: string; subpathIndex: number }>;
   selectedIds: string[];
-  startTransformation: (elementId: string, handler: string, point: Point) => void;
-  endTransformation: () => void;
-  startAdvancedTransformation: (handler: string, point: Point, isModifierPressed: boolean) => void;
-  endAdvancedTransformation: () => void;
   completeSelectionRectangle: () => void;
   updateSelectionRectangle: (point: Point) => void;
   moveSelectedElements: (deltaX: number, deltaY: number, precisionOverride?: number) => void;
@@ -85,10 +69,6 @@ export function useCanvasEventHandlerDeps(
     isDragging: input.isDragging,
     dragStart: input.dragStart,
     hasDragMoved: input.hasDragMoved,
-    transformStateIsTransforming: input.transformStateIsTransforming,
-    advancedTransformStateIsTransforming: input.advancedTransformStateIsTransforming,
-    updateTransformation: input.updateTransformation,
-    updateAdvancedTransformation: input.updateAdvancedTransformation,
     beginSelectionRectangle: input.beginSelectionRectangle,
     setIsDragging: input.setIsDragging,
     setDragStart: input.setDragStart,
@@ -96,10 +76,6 @@ export function useCanvasEventHandlerDeps(
     isWorkingWithSubpaths: input.isWorkingWithSubpaths,
     selectedSubpaths: input.selectedSubpaths,
     selectedIds: input.selectedIds,
-    startTransformation: input.startTransformation,
-    endTransformation: input.endTransformation,
-    startAdvancedTransformation: input.startAdvancedTransformation,
-    endAdvancedTransformation: input.endAdvancedTransformation,
     completeSelectionRectangle: input.completeSelectionRectangle,
     updateSelectionRectangle: input.updateSelectionRectangle,
     moveSelectedElements: input.moveSelectedElements,
@@ -116,10 +92,6 @@ export function useCanvasEventHandlerDeps(
     input.isDragging,
     input.dragStart,
     input.hasDragMoved,
-    input.transformStateIsTransforming,
-    input.advancedTransformStateIsTransforming,
-    input.updateTransformation,
-    input.updateAdvancedTransformation,
     input.beginSelectionRectangle,
     input.setIsDragging,
     input.setDragStart,
@@ -127,10 +99,6 @@ export function useCanvasEventHandlerDeps(
     input.isWorkingWithSubpaths,
     input.selectedSubpaths,
     input.selectedIds,
-    input.startTransformation,
-    input.endTransformation,
-    input.startAdvancedTransformation,
-    input.endAdvancedTransformation,
     input.completeSelectionRectangle,
     input.updateSelectionRectangle,
     input.moveSelectedElements,

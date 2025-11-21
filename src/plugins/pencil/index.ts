@@ -59,9 +59,9 @@ const installListeners = (context: PluginHandlerContext<CanvasStore>, api: Penci
   window.addEventListener('pointermove', handlePointerMove);
   window.addEventListener('pointerup', handlePointerUp);
 
-  // Subscribe to store to remove listeners when the active plugin changes away from pencil2
+  // Subscribe to store to remove listeners when the active plugin changes away from pencil
   stopStoreSubscription = context.store.subscribe((state) => {
-    if (state.activePlugin !== 'pencil2') {
+    if (state.activePlugin !== 'pencil') {
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerup', handlePointerUp);
       if (stopStoreSubscription) stopStoreSubscription();
@@ -71,10 +71,10 @@ const installListeners = (context: PluginHandlerContext<CanvasStore>, api: Penci
   });
 };
 
-export const pencil2Plugin: PluginDefinition<CanvasStore> = {
-  id: 'pencil2',
+export const pencilPlugin: PluginDefinition<CanvasStore> = {
+  id: 'pencil',
   metadata: {
-    label: 'Pencil 2',
+    label: 'Pencil',
     icon: Pen,
     cursor: 'crosshair',
     disablePathInteraction: true,
@@ -105,15 +105,15 @@ export const pencil2Plugin: PluginDefinition<CanvasStore> = {
   }),
   hooks: [
     {
-      id: 'pencil2-drawing',
+      id: 'pencil-drawing',
       hook: usePencilDrawingHook,
     },
   ],
   expandablePanel: () => React.createElement(PencilPanel, { hideTitle: true }),
   sidebarPanels: [
     {
-      key: 'pencil2',
-      condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'pencil2',
+      key: 'pencil',
+      condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'pencil',
       component: PencilPanel,
     },
   ],

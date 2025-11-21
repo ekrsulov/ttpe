@@ -6,7 +6,7 @@ import { performPathUnion as performUnionOp, performPathSubtraction, performPath
 import { getSelectedPaths } from '../../utils/pluginSliceHelpers';
 import { exportSelection } from '../../utils/exportUtils';
 import {
-  CANVAS_MODE_MACHINE,
+  getCanvasModeMachine,
   transitionCanvasMode,
   type CanvasMode,
 } from '../../canvas/modes/CanvasModeMachine';
@@ -152,8 +152,8 @@ const performBinaryBooleanOperation = (
 export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => {
   const applyModeTransition = (requestedMode: string) => {
     const state = get() as CanvasStore;
-    const currentMode = (state.activePlugin ?? CANVAS_MODE_MACHINE.initial) as CanvasMode;
-    const targetMode = (requestedMode || CANVAS_MODE_MACHINE.initial) as CanvasMode;
+    const currentMode = (state.activePlugin ?? getCanvasModeMachine().initial) as CanvasMode;
+    const targetMode = (requestedMode || getCanvasModeMachine().initial) as CanvasMode;
 
     const result = transitionCanvasMode(currentMode, {
       type: 'ACTIVATE',

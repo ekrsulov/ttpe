@@ -1,4 +1,4 @@
-import { CurvesController } from '../../canvas/interactions/CurvesController';
+import { CurvesController } from './CurvesController';
 
 // Global controller instance for the plugin
 let globalCurvesController: CurvesController | null = null;

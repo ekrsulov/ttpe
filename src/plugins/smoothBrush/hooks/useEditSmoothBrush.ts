@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import type React from 'react';
 import { useCanvasServiceActivation } from '../../../canvas/hooks/useCanvasServiceActivation';
-import { useCanvasController } from '../../../canvas/controller/CanvasControllerContext';
+import { useCanvasStore } from '../../../store/canvasStore';
 import { SMOOTH_BRUSH_SERVICE_ID, type SmoothBrushServiceState } from '../listeners/SmoothBrushListener';
 import type { Point } from '../../../types';
+import type { SmoothBrushPluginSlice } from '../slice';
 
 export interface UseEditSmoothBrushParams {
   svgRef: React.RefObject<SVGSVGElement | null>;
@@ -40,8 +41,13 @@ export function useEditSmoothBrush(
   // Local state for smooth brush cursor position (not in store to avoid re-renders)
   const [smoothBrushCursor, setSmoothBrushCursor] = useState<Point>({ x: 0, y: 0 });
 
-  // Setup native listeners for smooth brush
-  const controller = useCanvasController();
+  // Get smooth brush methods from store
+  const applySmoothBrush = useCanvasStore(state => 
+    (state as unknown as SmoothBrushPluginSlice).applySmoothBrush
+  );
+  const updateAffectedPoints = useCanvasStore(state => 
+    (state as unknown as SmoothBrushPluginSlice).updateAffectedPoints
+  );
 
   useCanvasServiceActivation<SmoothBrushServiceState>({
     serviceId: SMOOTH_BRUSH_SERVICE_ID,
@@ -51,8 +57,8 @@ export function useEditSmoothBrush(
       isSmoothBrushActive,
       screenToCanvas,
       emitPointerEvent,
-      getApplySmoothBrush: () => controller.applySmoothBrush ?? (() => {}),
-      getUpdateAffectedPoints: () => controller.updateAffectedPoints ?? (() => {}),
+      getApplySmoothBrush: () => applySmoothBrush ?? (() => {}),
+      getUpdateAffectedPoints: () => updateAffectedPoints ?? (() => {}),
       setSmoothBrushCursor,
     }),
     // Only include dependencies that should trigger state update

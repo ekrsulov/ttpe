@@ -1,6 +1,5 @@
 import { useCallback } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { getEffectiveShift } from '../../utils/effectiveShift';
 import type { Point } from '../../types';
 import { useCanvasEventBus } from '../CanvasEventBusContext';
 import { calculateCommandsBounds } from '../../utils/selectionBoundsUtils';
@@ -16,10 +15,6 @@ interface EventHandlerDeps {
   isDragging: boolean;
   dragStart: Point | null;
   hasDragMoved: boolean;
-  transformStateIsTransforming: boolean;
-  advancedTransformStateIsTransforming: boolean;
-  updateTransformation: (point: Point, shiftPressed: boolean) => void;
-  updateAdvancedTransformation: (point: Point) => void;
   beginSelectionRectangle: (point: Point, shiftKey?: boolean, subpathMode?: boolean) => void;
   setIsDragging: (dragging: boolean) => void;
   setDragStart: (point: Point | null) => void;
@@ -30,18 +25,12 @@ interface EventHandlerDeps {
   selectedSubpaths: Array<{ elementId: string; subpathIndex: number }>;
   selectedIds: string[];
   selectElement: (elementId: string, toggle: boolean) => void;
-  startTransformation: (elementId: string, handler: string, point: Point) => void;
-  endTransformation: () => void;
-  startAdvancedTransformation: (handler: string, point: Point, isModifierPressed: boolean) => void;
-  endAdvancedTransformation: () => void;
   completeSelectionRectangle: () => void;
   updateSelectionRectangle: (point: Point) => void;
   setMode: (mode: string) => void;
 }
 
 export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
-  const isVirtualShiftActive = useCanvasStore(state => state.isVirtualShiftActive);
-
   const {
     svgRef,
     screenToCanvas,
@@ -51,10 +40,6 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     selectionStart,
     isDragging,
     dragStart,
-    transformStateIsTransforming,
-    advancedTransformStateIsTransforming,
-    updateTransformation,
-    updateAdvancedTransformation,
     beginSelectionRectangle,
     setIsDragging,
     setDragStart,
@@ -64,10 +49,6 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     isWorkingWithSubpaths,
     selectedSubpaths,
     selectedIds,
-    startTransformation,
-    endTransformation,
-    startAdvancedTransformation,
-    endAdvancedTransformation,
     completeSelectionRectangle,
     updateSelectionRectangle,
   } = deps;
@@ -209,27 +190,6 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     handleSubpathDoubleClick(elementId, subpathIndex, syntheticEvent);
   }, [detectSubpathDoubleTap, handleSubpathDoubleClick]);
 
-  // Handle transformation handler pointer down
-  const handleTransformationHandlerPointerDown = useCallback((e: React.PointerEvent, elementId: string, handler: string) => {
-    e.stopPropagation();
-    const point = screenToCanvas(e.clientX, e.clientY);
-
-    // Check if this is an advanced transformation handler
-    if (handler.startsWith('advanced-')) {
-      const isModifierPressed = e.metaKey || e.ctrlKey || e.altKey;
-      startAdvancedTransformation(handler, point, isModifierPressed);
-      return;
-    }
-
-    startTransformation(elementId, handler, point);
-  }, [screenToCanvas, startTransformation, startAdvancedTransformation]);
-
-  // Handle transformation handler pointer up
-  const handleTransformationHandlerPointerUp = useCallback((_e: React.PointerEvent) => {
-    endTransformation();
-    endAdvancedTransformation();
-  }, [endTransformation, endAdvancedTransformation]);
-
   // Handle pointer down
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     const point = screenToCanvas(e.clientX, e.clientY);
@@ -314,7 +274,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     // Use fresh state for dragStart to avoid race conditions
     const currentDragStart = dragStart;
 
-    if (currentDragStart && !transformStateIsTransforming && !isSelecting) {
+    if (currentDragStart && !isSelecting) {
       const deltaX = point.x - currentDragStart.x;
       const deltaY = point.y - currentDragStart.y;
 
@@ -402,20 +362,6 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       return;
     }
 
-    if (transformStateIsTransforming) {
-      // Effective shift state (physical OR virtual)
-      const effectiveShiftKey = getEffectiveShift(e.shiftKey, isVirtualShiftActive);
-      updateTransformation(point, effectiveShiftKey);
-      return;
-    }
-
-    if (advancedTransformStateIsTransforming) {
-      // Handle advanced transformations (distort, skew, perspective)
-      // Mode is already determined in startAdvancedTransformation
-      updateAdvancedTransformation(point);
-      return;
-    }
-
     if (isSelecting && selectionStart) {
       updateSelectionRectangle(point);
     }
@@ -435,7 +381,6 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     screenToCanvas,
     isSpacePressed,
     dragStart,
-    transformStateIsTransforming,
     isSelecting,
     isDragging,
     setIsDragging,
@@ -445,16 +390,12 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     moveSelectedSubpaths,
     moveSelectedElements,
     setDragStart,
-    updateTransformation,
     selectionStart,
     updateSelectionRectangle,
-    isVirtualShiftActive,
     selectedIds,
     beginSelectionRectangle,
     completeSelectionRectangle,
     eventBus,
-    advancedTransformStateIsTransforming,
-    updateAdvancedTransformation,
     deps.hasDragMoved,
   ]);
 
@@ -504,14 +445,6 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     if (isSelecting) {
       completeSelectionRectangle();
     }
-
-    if (transformStateIsTransforming) {
-      endTransformation();
-    }
-
-    if (advancedTransformStateIsTransforming) {
-      endAdvancedTransformation();
-    }
   }, [
     activePlugin,
     isDragging,
@@ -520,10 +453,6 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     setHasDragMoved,
     isSelecting,
     completeSelectionRectangle,
-    transformStateIsTransforming,
-    endTransformation,
-    advancedTransformStateIsTransforming,
-    endAdvancedTransformation,
     screenToCanvas,
     updateSelectionRectangle,
     eventBus,
@@ -604,8 +533,6 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     handleElementDoubleClick,
     handleSubpathDoubleClick,
     handleElementDoubleTap,
-    handleTransformationHandlerPointerDown,
-    handleTransformationHandlerPointerUp,
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,

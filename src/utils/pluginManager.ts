@@ -14,6 +14,7 @@ import type {
 import type { DragModifier } from '../types/interaction';
 import type { CanvasStore, CanvasStoreApi } from '../store/canvasStore';
 import { registerPluginSlices, unregisterPluginSlices } from '../store/canvasStore';
+import { updateCanvasModeMachine } from '../canvas/modes/CanvasModeMachine';
 import type {
   CanvasEventBus,
   CanvasEventMap,
@@ -143,6 +144,9 @@ export class PluginManager {
 
     this.bindPluginInteractions(plugin);
     this.bindPluginShortcuts(plugin);
+
+    // Update canvas mode machine with all registered plugins
+    updateCanvasModeMachine(Array.from(this.registry.values()) as PluginDefinition[]);
   }
 
   private createPluginApiContext(): PluginApiContext<CanvasStore> {
@@ -257,6 +261,48 @@ export class PluginManager {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getAllHelpers(): Record<string, any> {
     return Object.fromEntries(this.helpers);
+  }
+
+  /**
+   * Get list of tools that should always be shown in the toolbar
+   * @returns Array of plugin IDs that have toolDefinition with visibility='always-shown'
+   */
+  getAlwaysShownTools(): string[] {
+    const tools: string[] = [];
+    for (const [pluginId, plugin] of this.registry.entries()) {
+      if (plugin.toolDefinition && plugin.toolDefinition.visibility === 'always-shown') {
+        tools.push(pluginId);
+      }
+    }
+    return tools;
+  }
+
+  /**
+   * Get list of dynamic tools (tools that can be hidden based on usage)
+   * @returns Array of plugin IDs that have toolDefinition with visibility='dynamic' or no visibility specified
+   */
+  getDynamicTools(): string[] {
+    const tools: string[] = [];
+    for (const [pluginId, plugin] of this.registry.entries()) {
+      if (plugin.toolDefinition && (!plugin.toolDefinition.visibility || plugin.toolDefinition.visibility === 'dynamic')) {
+        tools.push(pluginId);
+      }
+    }
+    return tools;
+  }
+
+  /**
+   * Get all tools with toolDefinition (both always-shown and dynamic)
+   * @returns Array of plugin IDs that have a toolDefinition
+   */
+  getAllTools(): string[] {
+    const tools: string[] = [];
+    for (const [pluginId, plugin] of this.registry.entries()) {
+      if (plugin.toolDefinition) {
+        tools.push(pluginId);
+      }
+    }
+    return tools;
   }
 
   /**

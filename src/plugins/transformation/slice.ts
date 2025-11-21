@@ -6,6 +6,37 @@ import { applyDistortTransform, applySkewXTransform, applySkewYTransform } from 
 import { getGroupBounds } from '../../canvas/geometry/CanvasGeometryService';
 import type { GroupElement, PathData, CanvasElement, Point } from '../../types';
 
+// Import transformation types
+export interface TransformState {
+  isTransforming: boolean;
+  transformStart: Point | null;
+  transformElementId: string | null;
+  transformHandler: string | null;
+  originalBounds: { minX: number; minY: number; maxX: number; maxY: number } | null;
+  transformedBounds: { minX: number; minY: number; maxX: number; maxY: number } | null;
+  initialTransform: { scaleX: number; scaleY: number; rotation: number; translateX: number; translateY: number } | null;
+  originalElementData: PathData | null;
+  originalElementsData?: Map<string, CanvasElement>;
+}
+
+export interface TransformFeedback {
+  rotation: { degrees: number; visible: boolean; isShiftPressed: boolean; isMultipleOf15: boolean };
+  resize: { deltaX: number; deltaY: number; visible: boolean; isShiftPressed: boolean; isMultipleOf10: boolean };
+  shape: { width: number; height: number; visible: boolean; isShiftPressed: boolean; isMultipleOf10: boolean };
+  pointPosition: { x: number; y: number; visible: boolean };
+}
+
+export interface AdvancedTransformState {
+  isTransforming: boolean;
+  transformType: 'distort' | 'skew' | null;
+  handler: string | null;
+  startPoint: Point | null;
+  originalBounds: { minX: number; minY: number; maxX: number; maxY: number } | null;
+  corners: { tl: Point; tr: Point; bl: Point; br: Point } | null;
+  skewAxis: 'x' | 'y' | null;
+  originalElements: Map<string, CanvasElement> | null;
+}
+
 /**
  * Helper function to transform all descendants of a group recursively
  */
@@ -72,7 +103,28 @@ export interface TransformationPluginSlice {
     advancedMode: boolean;
   };
 
-  // Actions
+  // Runtime transformation state (updated by hooks)
+  transformState?: TransformState;
+  transformFeedback?: TransformFeedback;
+  advancedTransformState?: AdvancedTransformState;
+
+  // Transformation handlers (set by hooks, used by Canvas and event handlers)
+  transformationHandlers?: {
+    startTransformation: (elementId: string, handler: string, point: Point) => void;
+    updateTransformation: (point: Point, isShiftPressed: boolean) => void;
+    endTransformation: () => void;
+    startAdvancedTransformation: (handler: string, point: Point, isModifierPressed: boolean) => void;
+    updateAdvancedTransformation: (point: Point) => void;
+    endAdvancedTransformation: () => void;
+  };
+
+  // Actions to update runtime state and handlers
+  setTransformState: (state: TransformState) => void;
+  setTransformFeedback: (feedback: TransformFeedback) => void;
+  setAdvancedTransformState: (state: AdvancedTransformState) => void;
+  setTransformationHandlers: (handlers: TransformationPluginSlice['transformationHandlers']) => void;
+
+  // Existing actions
   updateTransformationState: (state: Partial<TransformationPluginSlice['transformation']>) => void;
   getTransformationBounds: () => { minX: number; minY: number; maxX: number; maxY: number } | null;
   isWorkingWithSubpaths: () => boolean;
@@ -97,6 +149,29 @@ export const createTransformationPluginSlice: StateCreator<
       showRulers: false,
       maintainAspectRatio: true,
       advancedMode: false,
+    },
+
+    // Runtime state (initially undefined, set by hooks)
+    transformState: undefined,
+    transformFeedback: undefined,
+    advancedTransformState: undefined,
+    transformationHandlers: undefined,
+
+    // Actions to update runtime state and handlers
+    setTransformState: (state) => {
+      set({ transformState: state });
+    },
+
+    setTransformFeedback: (feedback) => {
+      set({ transformFeedback: feedback });
+    },
+
+    setAdvancedTransformState: (state) => {
+      set({ advancedTransformState: state });
+    },
+
+    setTransformationHandlers: (handlers) => {
+      set({ transformationHandlers: handlers });
     },
 
     // Actions

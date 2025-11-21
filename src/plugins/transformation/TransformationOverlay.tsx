@@ -7,6 +7,8 @@ import { CenterMarker } from './CenterMarker';
 import { CornerCoordinateLabels } from './CornerCoordinateLabels';
 import { MeasurementRulers } from './MeasurementRulers';
 import { SelectionRects } from '../../overlays/SelectionRects';
+import { useCanvasStore } from '../../store/canvasStore';
+import type { TransformationPluginSlice } from './slice';
 
 interface TransformationOverlayProps {
   element: {
@@ -32,8 +34,6 @@ interface TransformationOverlayProps {
     advancedMode?: boolean;
   };
   isWorkingWithSubpaths: boolean;
-  onTransformationHandlerPointerDown: (e: React.PointerEvent, elementId: string, handler: string) => void;
-  onTransformationHandlerPointerUp: (e: React.PointerEvent) => void;
 }
 
 export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
@@ -42,11 +42,54 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
   selectedSubpaths,
   viewport,
   activePlugin,
-  transformation,
+  transformation: transformationProp,
   isWorkingWithSubpaths,
-  onTransformationHandlerPointerDown,
-  onTransformationHandlerPointerUp,
 }) => {
+  // Get transformation state from store (fallback if not in props)
+  const transformationFromStore = useCanvasStore(state =>
+    (state as unknown as TransformationPluginSlice).transformation
+  );
+  const transformation = transformationProp ?? transformationFromStore;
+
+  // Get transformation handlers from store
+  const transformationHandlers = useCanvasStore(state =>
+    (state as unknown as TransformationPluginSlice).transformationHandlers
+  );
+  
+  // Create screenToCanvas function using viewport prop
+  const screenToCanvas = React.useCallback((screenX: number, screenY: number) => {
+    return {
+      x: (screenX - viewport.panX) / viewport.zoom,
+      y: (screenY - viewport.panY) / viewport.zoom,
+    };
+  }, [viewport.panX, viewport.panY, viewport.zoom]);
+
+  // Create wrapper functions that adapt the handler signatures
+  const onTransformationHandlerPointerDown = React.useCallback((e: React.PointerEvent, targetId: string, handlerType: string) => {
+    if (!transformationHandlers?.startTransformation) return;
+    e.stopPropagation();
+    const point = screenToCanvas(e.clientX, e.clientY);
+    transformationHandlers.startTransformation(targetId, handlerType, point);
+  }, [transformationHandlers, screenToCanvas]);
+
+  const onTransformationHandlerPointerUp = React.useCallback((_e: React.PointerEvent) => {
+    if (!transformationHandlers?.endTransformation) return;
+    transformationHandlers.endTransformation();
+  }, [transformationHandlers]);
+
+  const onAdvancedTransformationHandlerPointerDown = React.useCallback((e: React.PointerEvent, _targetId: string, handlerType: string) => {
+    if (!transformationHandlers?.startAdvancedTransformation) return;
+    e.stopPropagation();
+    const point = screenToCanvas(e.clientX, e.clientY);
+    const isModifierPressed = e.metaKey || e.ctrlKey || e.altKey;
+    transformationHandlers.startAdvancedTransformation(handlerType, point, isModifierPressed);
+  }, [transformationHandlers, screenToCanvas]);
+
+  const onAdvancedTransformationHandlerPointerUp = React.useCallback((_e: React.PointerEvent) => {
+    if (!transformationHandlers?.endAdvancedTransformation) return;
+    transformationHandlers.endAdvancedTransformation();
+  }, [transformationHandlers]);
+
   // Colors that adapt to dark mode
   const coordinateBackgroundColor = useColorModeValue('#6b7280', '#4b5563');
   const coordinateTextColor = useColorModeValue('white', '#f9fafb');
@@ -111,8 +154,8 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
             bounds={adjustedElementBounds}
             elementId={element.id}
             viewport={viewport}
-            onPointerDown={onTransformationHandlerPointerDown}
-            onPointerUp={onTransformationHandlerPointerUp}
+            onPointerDown={onAdvancedTransformationHandlerPointerDown}
+            onPointerUp={onAdvancedTransformationHandlerPointerUp}
             selectionColor={selectionColor}
           />
         ) : (

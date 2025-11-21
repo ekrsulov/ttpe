@@ -11,8 +11,6 @@ export interface CanvasControllerValue
     'elements'
     | 'viewport'
     | 'activePlugin'
-    | 'transformation'
-    | 'shape'
     | 'selectedIds'
     | 'editingPoint'
     | 'selectedCommands'
@@ -52,8 +50,6 @@ export const useCanvasControllerSource = (): CanvasControllerValue => {
       elements: store.elements,
       viewport: store.viewport,
       activePlugin: store.activePlugin,
-      transformation: store.transformation,
-      shape: store.shape,
       selectedIds: store.selectedIds,
       editingPoint: store.editingPoint,
       selectedCommands: store.selectedCommands,

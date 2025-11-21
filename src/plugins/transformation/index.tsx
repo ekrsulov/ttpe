@@ -9,6 +9,34 @@ import { TransformationOverlay } from './TransformationOverlay';
 import { FeedbackOverlay, BlockingOverlay } from '../../overlays';
 import { measureSubpathBounds } from '../../utils/geometry';
 import type { PathData } from '../../types';
+import { useTransformationHook } from './hooks/useTransformationHook';
+import { useCanvasStore } from '../../store/canvasStore';
+
+// Helper component to read transformation state for BlockingOverlay
+const TransformationBlockingOverlay: React.FC<{
+  viewport: { panX: number; panY: number; zoom: number };
+  canvasSize: { width: number; height: number };
+}> = ({ viewport, canvasSize }) => {
+  const transformState = useCanvasStore(state => 
+    (state as unknown as TransformationPluginSlice).transformState
+  );
+  const advancedTransformState = useCanvasStore(state => 
+    (state as unknown as TransformationPluginSlice).advancedTransformState
+  );
+  const isTransforming = 
+    transformState?.isTransforming || 
+    advancedTransformState?.isTransforming || 
+    false;
+  
+  return (
+    <BlockingOverlay
+      viewport={viewport}
+      canvasSize={canvasSize}
+      isActive={isTransforming}
+      onPointerUp={undefined}
+    />
+  );
+};
 
 const transformationSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -25,7 +53,26 @@ export const transformationPlugin: PluginDefinition<CanvasStore> = {
     icon: SquareDashedMousePointer,
     cursor: 'move',
   },
-  toolDefinition: { order: 3 },
+  modeConfig: {
+    description: 'Manipulation of size, rotation and position.',
+    transitions: {
+      select: { description: 'Returns to standard selection mode.' },
+      transformation: { description: 'Can toggle back to selection mode.' },
+      edit: { description: 'Switches to node editing.' },
+      subpath: { description: 'Switches to subpath editing.' },
+      pan: { description: 'Allows moving around the canvas without losing context.' },
+      '*': { description: 'Allows transitioning to modes dynamically registered by plugins.' },
+    },
+    toggleTo: 'select',
+  },
+  toolDefinition: { order: 3, visibility: 'always-shown' },
+  hooks: [
+    {
+      id: 'transformation-controls',
+      hook: useTransformationHook,
+      global: true, // Execute regardless of active plugin
+    },
+  ],
   keyboardShortcuts: {
     Escape: (_event, { store }) => {
       const state = store.getState() as CanvasStore;
@@ -80,8 +127,6 @@ export const transformationPlugin: PluginDefinition<CanvasStore> = {
         transformation,
         isElementHidden,
         isWorkingWithSubpaths,
-        handleTransformationHandlerPointerDown,
-        handleTransformationHandlerPointerUp,
         getElementBounds,
       }) => {
         // This layer handles:
@@ -117,8 +162,6 @@ export const transformationPlugin: PluginDefinition<CanvasStore> = {
                     activePlugin={activePlugin}
                     transformation={transformation}
                     isWorkingWithSubpaths={true}
-                    onTransformationHandlerPointerDown={handleTransformationHandlerPointerDown}
-                    onTransformationHandlerPointerUp={handleTransformationHandlerPointerUp}
                   />
                 );
               })}
@@ -147,8 +190,6 @@ export const transformationPlugin: PluginDefinition<CanvasStore> = {
                   activePlugin={activePlugin}
                   transformation={transformation}
                   isWorkingWithSubpaths={false}
-                  onTransformationHandlerPointerDown={handleTransformationHandlerPointerDown}
-                  onTransformationHandlerPointerUp={handleTransformationHandlerPointerUp}
                 />
               );
             }
@@ -175,12 +216,10 @@ export const transformationPlugin: PluginDefinition<CanvasStore> = {
     {
       id: 'transformation-blocking-overlay',
       placement: 'foreground',
-      render: ({ viewport, canvasSize, transformation, handleTransformationHandlerPointerUp }) => (
-        <BlockingOverlay
+      render: ({ viewport, canvasSize }) => (
+        <TransformationBlockingOverlay
           viewport={viewport}
           canvasSize={canvasSize}
-          isActive={transformation?.isTransforming ?? false}
-          onPointerUp={handleTransformationHandlerPointerUp}
         />
       ),
     },
@@ -199,4 +238,4 @@ export const transformationPlugin: PluginDefinition<CanvasStore> = {
 export type { TransformationPluginSlice };
 export { TransformationPanel };
 export { TransformationOverlay } from './TransformationOverlay';
-export { useCanvasTransformControls } from '../../canvas/hooks/useCanvasTransformControls';
+export { useCanvasTransformControls } from './hooks/useCanvasTransformControls';

@@ -1,8 +1,9 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { debugLog } from '../../utils/debugUtils';
-import { useCanvasStore } from '../../store/canvasStore';
-import type { Point, CanvasElement } from '../../types';
-import { calculateSkewAngleFromDelta } from '../../utils/advancedTransformUtils';
+import { debugLog } from '../../../utils/debugUtils';
+import { useCanvasStore } from '../../../store/canvasStore';
+import type { Point, CanvasElement } from '../../../types';
+import { calculateSkewAngleFromDelta } from '../../../utils/advancedTransformUtils';
+import type { TransformationPluginSlice } from '../slice';
 
 interface AdvancedTransformState {
   isTransforming: boolean;
@@ -32,6 +33,15 @@ export const useAdvancedTransformControls = () => {
 
   const transformStateRef = useRef(transformState);
   transformStateRef.current = transformState;
+
+  // Sync local state to store so Canvas.tsx can read it
+  const setAdvancedTransformStateInStore = useCanvasStore(state => 
+    (state as unknown as TransformationPluginSlice).setAdvancedTransformState
+  );
+
+  useEffect(() => {
+    setAdvancedTransformStateInStore?.(transformState);
+  }, [transformState, setAdvancedTransformStateInStore]);
 
   const applyAdvancedDistortTransform = useCanvasStore(state => state.applyAdvancedDistortTransform);
   const applyAdvancedSkewTransform = useCanvasStore(state => state.applyAdvancedSkewTransform);

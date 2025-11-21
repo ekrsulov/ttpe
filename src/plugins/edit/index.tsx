@@ -41,7 +41,19 @@ export const editPlugin: PluginDefinition<CanvasStore> = {
     icon: MousePointerClick,
     cursor: 'pointer',
   },
-  toolDefinition: { order: 4 },
+  modeConfig: {
+    description: 'Precise editing of nodes and handlers.',
+    transitions: {
+      select: { description: 'Returns to standard selection mode.' },
+      transformation: { description: 'Switches to transformation mode.' },
+      edit: { description: 'Can toggle back to selection mode.' },
+      subpath: { description: 'Switches to subpath editing.' },
+      pan: { description: 'Allows moving around the canvas without losing context.' },
+      '*': { description: 'Allows transitioning to modes dynamically registered by plugins.' },
+    },
+    toggleTo: 'select',
+  },
+  toolDefinition: { order: 4, visibility: 'always-shown' },
   onElementDoubleClick: (elementId, _event, context) => {
     const state = context.store.getState();
     const wasAlreadySelected = state.selectedIds.length === 1 && state.selectedIds[0] === elementId;

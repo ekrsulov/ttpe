@@ -35,7 +35,7 @@ export class PencilDrawingService {
     // Always cleanup any existing listeners before re-attaching
     this.detachHandlers?.();
 
-    if (!svgElement || options.activePlugin !== 'pencil2') {
+    if (!svgElement || options.activePlugin !== 'pencil') {
       this.detachHandlers = null;
       return () => { };
     }

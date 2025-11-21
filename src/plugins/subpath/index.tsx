@@ -23,7 +23,7 @@ import { pluginManager } from '../../utils/pluginManager';
 
 export const subpathPlugin: PluginDefinition<CanvasStore> = {
   id: 'subpath',
-  toolDefinition: { order: 2 },
+  toolDefinition: { order: 2, visibility: 'always-shown' },
   init: (_context) => {
     return () => { };
   },
@@ -103,6 +103,18 @@ export const subpathPlugin: PluginDefinition<CanvasStore> = {
     icon: Route,
     cursor: 'pointer',
     disablePathInteraction: true,
+  },
+  modeConfig: {
+    description: 'Mode for choosing and working with subpaths.',
+    transitions: {
+      select: { description: 'Returns to standard selection mode.' },
+      transformation: { description: 'Switches to transformation mode.' },
+      edit: { description: 'Switches to node editing.' },
+      subpath: { description: 'Can toggle back to selection mode.' },
+      pan: { description: 'Allows moving around the canvas without losing context.' },
+      '*': { description: 'Allows transitioning to modes dynamically registered by plugins.' },
+    },
+    toggleTo: 'select',
   },
   onSubpathDoubleClick: (elementId, subpathIndex, _event, context) => {
     const state = context.store.getState();

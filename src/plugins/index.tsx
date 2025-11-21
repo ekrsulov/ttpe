@@ -3,7 +3,7 @@ import type { CanvasStore } from '../store/canvasStore';
 import { debugLog } from '../utils/debugUtils';
 
 import { selectPlugin, panPlugin, filePlugin, settingsPlugin } from './basePlugins';
-import { pencil2Plugin } from './pencil2';
+import { pencilPlugin } from './pencil';
 import { textPlugin } from './text';
 import { shapePlugin } from './shape';
 import { transformationPlugin } from './transformation';
@@ -31,7 +31,7 @@ export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   panPlugin,
   filePlugin,
   settingsPlugin,
-  pencil2Plugin,
+  pencilPlugin,
   curvesPlugin,
   textPlugin,
   shapePlugin,
@@ -54,6 +54,9 @@ export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   pathSimplificationPlugin,
   roundPathPlugin,
 ];
+
+// Plugin modes that should be registered in the mode machine
+export const PLUGIN_MODES = ['transformation', 'edit', 'subpath'];
 
 // Debug info about core plugins (only in development builds)
 debugLog('[CORE_PLUGINS] Total plugins:', CORE_PLUGINS.length);

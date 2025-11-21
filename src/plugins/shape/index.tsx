@@ -10,7 +10,7 @@ import { BlockingOverlay } from '../../overlays';
 import { createShape } from './actions';
 import type { Point, Viewport } from '../../types';
 import { getEffectiveShift } from '../../utils/effectiveShift';
-import { ShapeCreationController } from '../../canvas/interactions/ShapeCreationController';
+import { ShapeCreationController } from './ShapeCreationController';
 import { useCanvasStore } from '../../store/canvasStore';
 
 const shapeSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
@@ -63,6 +63,13 @@ export const shapePlugin: PluginDefinition<CanvasStore> = {
     icon: Shapes,
     cursor: 'crosshair',
     disablePathInteraction: true,
+  },
+  modeConfig: {
+    description: 'Creates basic geometric shapes.',
+    transitions: {
+      select: { description: 'Returns to selection mode.' },
+      '*': { description: 'Allows transitioning to other modes.' },
+    },
   },
   toolDefinition: { order: 9 },
   subscribedEvents: ['pointerdown', 'pointermove', 'pointerup'],

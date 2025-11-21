@@ -1,5 +1,5 @@
 import { createContext } from 'react';
-import type { CurvesController } from '../../canvas/interactions/CurvesController';
+import type { CurvesController } from './CurvesController';
 import type { CurveState } from '../../types';
 
 export interface CurvesControllerContextValue {

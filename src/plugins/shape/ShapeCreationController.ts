@@ -1,5 +1,5 @@
 import type { Point } from '../../types';
-import { MIN_SHAPE_CREATION_DISTANCE } from '../../plugins/shape/config';
+import { MIN_SHAPE_CREATION_DISTANCE } from './config';
 
 export interface ShapeFeedback {
   width: number;

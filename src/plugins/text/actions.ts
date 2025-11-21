@@ -8,7 +8,7 @@
 import type { StoreApi } from 'zustand';
 import type { CanvasStore } from '../../store/types';
 import type { TextPluginSlice } from './slice';
-import type { PencilPluginSlice } from '../pencil2/slice';
+import type { PencilPluginSlice } from '../pencil/slice';
 import { textToPathCommands } from '../../utils/canvas';
 import { extractSubpaths } from '../../utils/path';
 import { logger } from '../../utils';

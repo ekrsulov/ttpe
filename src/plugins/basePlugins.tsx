@@ -212,7 +212,14 @@ export const selectPlugin: PluginDefinition<CanvasStore> = {
     icon: MousePointer,
     cursor: 'default',
   },
-  toolDefinition: { order: 1 },
+  modeConfig: {
+    description: 'Default tool for selecting and manipulating elements.',
+    entry: ['clearSubpathSelection', 'clearSelectedCommands'],
+    transitions: {
+      '*': { description: 'Allows transitioning to any registered mode.' },
+    },
+  },
+  toolDefinition: { order: 1, visibility: 'always-shown' },
   subscribedEvents: ['pointerdown', 'pointerup'],
   sidebarPanels: [
     {

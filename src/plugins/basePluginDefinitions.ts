@@ -47,7 +47,14 @@ export const panPlugin: PluginDefinition<CanvasStore> = {
     icon: Hand,
     cursor: 'grab',
   },
-  toolDefinition: { order: 5 },
+  modeConfig: {
+    description: 'Mode for navigating the canvas.',
+    transitions: {
+      select: { description: 'Returns to selection mode.' },
+      '*': { description: 'Allows transitioning to other modes.' },
+    },
+  },
+  toolDefinition: { order: 5, visibility: 'always-shown' },
   subscribedEvents: ['pointermove'],
   handler: (
     event,

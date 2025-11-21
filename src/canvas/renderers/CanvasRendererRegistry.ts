@@ -22,9 +22,7 @@ export interface CanvasRenderContext {
   isElementHidden?: (elementId: string) => boolean;
   isElementLocked?: (elementId: string) => boolean;
   isElementSelected?: (elementId: string) => boolean;
-  isTransforming?: boolean;
   isSelecting?: boolean;
-  isCreatingShape?: boolean;
 
   // Generic renderer control flags
   isPathInteractionDisabled?: boolean;

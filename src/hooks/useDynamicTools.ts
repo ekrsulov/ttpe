@@ -1,16 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { pluginManager } from '../utils/pluginManager';
 
 // Tool mode type - any string representing a tool ID
 type ToolMode = string;
-
-// Tools that can be dynamically shown/hidden based on usage
-export const DYNAMIC_TOOLS: ToolMode[] = ['pencil2', 'curves', 'text', 'shape', 'gridFill', 'trimPath', 'measure'];
-
-// Tools that are always shown regardless of usage patterns or device
-export const ALWAYS_SHOWN_TOOLS: ToolMode[] = ['select', 'subpath', 'transformation', 'edit', 'pan'];
-
-// Tool that is always shown (legacy, kept for compatibility)
-export const ALWAYS_SHOWN_TOOL: ToolMode = 'text';
 
 // Number of dynamic tools to show in mobile
 const MOBILE_VISIBLE_TOOLS = 2;
@@ -29,10 +21,14 @@ export const useDynamicTools = (activeMode: string | null, gridEnabled: boolean 
   const [toolUsage, setToolUsage] = useState<ToolUsage>({});
   const [showExtraTools, setShowExtraTools] = useState(false);
 
+  // Get tools dynamically from registered plugins
+  const alwaysShownTools = useMemo(() => pluginManager.getAlwaysShownTools(), []);
+  const allDynamicTools = useMemo(() => pluginManager.getDynamicTools(), []);
+
   // Compute dynamic tools based on grid state
   const dynamicTools = useMemo(() =>
-    DYNAMIC_TOOLS.filter(tool => tool !== 'gridFill' || gridEnabled),
-    [gridEnabled]
+    allDynamicTools.filter(tool => tool !== 'gridFill' || gridEnabled),
+    [allDynamicTools, gridEnabled]
   );
 
   // Load tool usage from localStorage on mount
@@ -75,14 +71,14 @@ export const useDynamicTools = (activeMode: string | null, gridEnabled: boolean 
     let visibleDynamicTools = sortedTools;
 
     // Always include the active tool in the visible tools
-    if (activeMode && !ALWAYS_SHOWN_TOOLS.includes(activeMode as ToolMode) && !visibleDynamicTools.includes(activeMode as ToolMode)) {
+    if (activeMode && !alwaysShownTools.includes(activeMode as ToolMode) && !visibleDynamicTools.includes(activeMode as ToolMode)) {
       // Replace the second most used with the active tool
       visibleDynamicTools = visibleDynamicTools.slice();
       visibleDynamicTools[1] = activeMode as ToolMode;
     }
 
     return visibleDynamicTools;
-  }, [dynamicTools, toolUsage, activeMode]);
+  }, [dynamicTools, toolUsage, activeMode, alwaysShownTools]);
 
   // Get tools that should be shown in the extra tools bar
   const getExtraTools = useCallback((): ToolMode[] => {
@@ -107,7 +103,7 @@ export const useDynamicTools = (activeMode: string | null, gridEnabled: boolean 
     showExtraTools,
     toggleExtraTools,
     resetToolUsage,
-    alwaysShownTools: ALWAYS_SHOWN_TOOLS,
+    alwaysShownTools,
     dynamicTools,
   };
 };

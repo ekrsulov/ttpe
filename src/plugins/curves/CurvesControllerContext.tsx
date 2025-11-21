@@ -1,5 +1,5 @@
 import React, { useMemo, useEffect, useRef } from 'react';
-import { CurvesController } from '../../canvas/interactions/CurvesController';
+import { CurvesController } from './CurvesController';
 import { useCanvasStore } from '../../store/canvasStore';
 import { CurvesControllerContext } from './curvesContext';
 

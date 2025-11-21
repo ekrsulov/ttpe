@@ -26,7 +26,7 @@ export const PathElementRenderer: CanvasElementRenderer<PathElement> = (
   element,
   context: CanvasRenderContext
 ) => {
-  const { viewport, scaleStrokeWithZoom, eventHandlers, isElementSelected, isElementLocked, isTransforming, isCreatingShape, isPathInteractionDisabled, pathCursorMode } = context;
+  const { viewport, scaleStrokeWithZoom, eventHandlers, isElementSelected, isElementLocked, isPathInteractionDisabled, pathCursorMode } = context;
   const pathData = element.data;
 
   const effectiveStrokeColor = getEffectiveStrokeColor(pathData);
@@ -90,7 +90,7 @@ export const PathElementRenderer: CanvasElementRenderer<PathElement> = (
                   ? 'move'
                   : 'pointer'
               : 'default',
-          pointerEvents: (isPathInteractionDisabled || isTransforming || isCreatingShape) ? 'none' : 'auto',
+          pointerEvents: isPathInteractionDisabled ? 'none' : 'auto',
         }}
       />
     </g>

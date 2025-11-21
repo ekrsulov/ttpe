@@ -9,7 +9,7 @@ import type { Point, Command } from '../../types';
 import type { StoreApi } from 'zustand';
 import type { CanvasStore } from '../../store/types';
 import type { ShapePluginSlice } from './slice';
-import type { PencilPluginSlice } from '../pencil2/slice';
+import type { PencilPluginSlice } from '../pencil/slice';
 import {
   createSquareCommands,
   createRectangleCommands,
