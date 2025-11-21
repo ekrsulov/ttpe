@@ -1,24 +1,20 @@
 import React from 'react';
 import { useColorModeValue } from '@chakra-ui/react';
-import type { Point } from '../../types';
+import { useCanvasStore } from '../../store/canvasStore';
+import type { AddPointPluginSlice } from './slice';
 
-interface AddPointFeedbackOverlayProps {
-    hoverPosition: Point | null;
-    isActive: boolean;
-    viewport: {
-        zoom: number;
-        panX: number;
-        panY: number;
-    };
-}
-
-export const AddPointFeedbackOverlay: React.FC<AddPointFeedbackOverlayProps> = ({
-    hoverPosition,
-    isActive,
-    viewport,
-}) => {
+export const AddPointFeedbackOverlay: React.FC = () => {
     // Get canvas background color based on theme - MUST be called before early return
     const canvasBgColor = useColorModeValue('#f9fafb', '#111827'); // gray.50 and gray.900
+    
+    // Get state from store
+    const addPointMode = useCanvasStore(state => 
+        (state as unknown as AddPointPluginSlice).addPointMode
+    );
+    const zoom = useCanvasStore(state => state.viewport.zoom);
+    
+    const isActive = addPointMode?.isActive ?? false;
+    const hoverPosition = addPointMode?.hoverPosition ?? null;
 
     if (!isActive || !hoverPosition) {
         return null;
@@ -27,8 +23,8 @@ export const AddPointFeedbackOverlay: React.FC<AddPointFeedbackOverlayProps> = (
     // Calculate the size of the feedback circle based on zoom
     // We want it to maintain a consistent screen size
     const baseRadius = 6;
-    const strokeWidth = 2 / viewport.zoom;
-    const radius = baseRadius / viewport.zoom;
+    const strokeWidth = 2 / zoom;
+    const radius = baseRadius / zoom;
 
     return (
         <g>

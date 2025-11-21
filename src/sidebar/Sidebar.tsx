@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Drawer,
   DrawerBody,
@@ -12,7 +12,6 @@ import {
 import { useCanvasStore } from '../store/canvasStore';
 import { SidebarContent } from './components/SidebarContent';
 import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
-import { safeFunctions } from '../utils/functionHelpers';
 
 interface SidebarProps {
   onPinnedChange?: (isPinned: boolean) => void;
@@ -101,72 +100,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const selectedCommands = useCanvasStore((state) => state.selectedCommands);
   const selectedSubpaths = useCanvasStore((state) => state.selectedSubpaths);
   
-  // For smoothBrush, select only the properties we need (exclude affectedPoints)
-  const smoothBrushRadius = useCanvasStore((state) => state.smoothBrush?.radius ?? 50);
-  const smoothBrushStrength = useCanvasStore((state) => state.smoothBrush?.strength ?? 0.5);
-  const smoothBrushIsActive = useCanvasStore((state) => state.smoothBrush?.isActive ?? false);
-  // Don't subscribe to cursorX/cursorY - they update on every mouse move and aren't needed in Sidebar
-  const smoothBrushSimplifyPoints = useCanvasStore((state) => state.smoothBrush?.simplifyPoints ?? true);
-  const smoothBrushSimplificationTolerance = useCanvasStore((state) => state.smoothBrush?.simplificationTolerance ?? 1);
-  const smoothBrushMinDistance = useCanvasStore((state) => state.smoothBrush?.minDistance ?? 5);
-  
-  // Add Point Mode state
-  const addPointModeIsActive = useCanvasStore((state) => state.addPointMode?.isActive ?? false);
-  
-  // Actions (these are stable references)
-  const updateSmoothBrush = useCanvasStore((state) => state.updateSmoothBrush);
-  const applySmoothBrush = useCanvasStore((state) => state.applySmoothBrush);
-  const activateSmoothBrush = useCanvasStore((state) => state.activateSmoothBrush);
-  const deactivateSmoothBrush = useCanvasStore((state) => state.deactivateSmoothBrush);
-  const resetSmoothBrush = useCanvasStore((state) => state.resetSmoothBrush);
-  const activateAddPointMode = useCanvasStore((state) => state.activateAddPointMode);
-  const deactivateAddPointMode = useCanvasStore((state) => state.deactivateAddPointMode);
-  
-  // Create safe function wrappers for all actions
-  const safeActions = useMemo(() => safeFunctions({
-    updateSmoothBrush,
-    applySmoothBrush,
-    activateSmoothBrush,
-    deactivateSmoothBrush,
-    resetSmoothBrush,
-    activateAddPointMode,
-    deactivateAddPointMode
-  }), [
-    updateSmoothBrush,
-    applySmoothBrush,
-    activateSmoothBrush,
-    deactivateSmoothBrush,
-    resetSmoothBrush,
-    activateAddPointMode,
-    deactivateAddPointMode
-  ]);
-  
-  // Reconstruct smoothBrush object for child components (memoized to prevent re-creation)
-  // cursorX/cursorY are omitted - they're only needed in Canvas and cause unnecessary re-renders
-  const smoothBrush = useMemo(() => ({
-    radius: smoothBrushRadius,
-    strength: smoothBrushStrength,
-    isActive: smoothBrushIsActive,
-    cursorX: 0, // Not used in Sidebar
-    cursorY: 0, // Not used in Sidebar
-    simplifyPoints: smoothBrushSimplifyPoints,
-    simplificationTolerance: smoothBrushSimplificationTolerance,
-    minDistance: smoothBrushMinDistance,
-    affectedPoints: [], // Empty array - we don't need to track this in Sidebar
-  }), [
-    smoothBrushRadius,
-    smoothBrushStrength,
-    smoothBrushIsActive,
-    smoothBrushSimplifyPoints,
-    smoothBrushSimplificationTolerance,
-    smoothBrushMinDistance,
-  ]);
-
-  // Reconstruct addPointMode object for child components (memoized to prevent re-creation)
-  const addPointMode = useMemo(() => ({
-    isActive: addPointModeIsActive,
-  }), [addPointModeIsActive]);
-  
   // Panel state from store (single source of truth)
   const showFilePanel = useCanvasStore((state) => state.showFilePanel);
   const showSettingsPanel = useCanvasStore((state) => state.showSettingsPanel);
@@ -179,8 +112,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   // Close special panels when switching to tool modes
   useEffect(() => {
-    const toolModes = ['select', 'pan', 'pencil', 'text', 'shape', 'subpath', 'transformation', 'edit'];
-    if (toolModes.includes(activePlugin || '')) {
+    if (activePlugin && activePlugin !== 'file' && activePlugin !== 'settings') {
       setShowFilePanel(false);
       setShowSettingsPanel(false);
     }
@@ -257,11 +189,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           isPinned={isPinned}
           onTogglePin={() => setIsPinned(false)}
           isDesktop={isDesktop}
-          smoothBrush={smoothBrush}
-          addPointMode={addPointMode}
           selectedCommands={selectedCommands ?? []}
           selectedSubpaths={selectedSubpaths ?? []}
-          {...safeActions}
           isArrangeExpanded={isArrangeExpanded}
           setIsArrangeExpanded={setIsArrangeExpanded}
           onResize={handleResize}
@@ -338,11 +267,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
               isPinned={isPinned}
               onTogglePin={() => setIsPinned(true)}
               isDesktop={isDesktop}
-              smoothBrush={smoothBrush}
-              addPointMode={addPointMode}
               selectedCommands={selectedCommands ?? []}
               selectedSubpaths={selectedSubpaths ?? []}
-              {...safeActions}
               isArrangeExpanded={isArrangeExpanded}
               setIsArrangeExpanded={setIsArrangeExpanded}
             />

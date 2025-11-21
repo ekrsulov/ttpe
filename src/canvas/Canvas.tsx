@@ -17,7 +17,6 @@ import {
 import { useCanvasZoom } from './hooks/useCanvasZoom';
 import { useMobileTouchGestures } from './hooks/useMobileTouchGestures';
 import { useElementDoubleTap } from './hooks/useElementDoubleTap';
-import './listeners/AddPointListener';
 import { useDynamicCanvasSize } from './hooks/useDynamicCanvasSize';
 import { useCanvasSideEffects } from './hooks/useCanvasSideEffects';
 import { useCanvasEventHandlerDeps } from './hooks/useCanvasEventHandlerDeps';
@@ -64,7 +63,6 @@ const CanvasContent: React.FC = () => {
   } = useAdvancedTransformControls();
 
   const controller = useCanvasController();
-  const smoothBrush = useCanvasStore(state => state.smoothBrush);
   const scaleStrokeWithZoom = useCanvasStore(state => state.settings.scaleStrokeWithZoom);
   const isPathInteractionDisabled = useCanvasStore(state => state.isPathInteractionDisabled);
   const pathCursorMode = useCanvasStore(state => state.pathCursorMode);
@@ -88,7 +86,6 @@ const CanvasContent: React.FC = () => {
     selectedCommands,
     selectedSubpaths,
     draggingSelection,
-    addPointMode,
     updateElement,
     stopDraggingPoint,
     emergencyCleanupDrag,
@@ -155,7 +152,6 @@ const CanvasContent: React.FC = () => {
     beginSelectionRectangle,
     updateSelectionRectangle,
     completeSelectionRectangle,
-    isSmoothBrushActive: false,
   });
 
   const emitPointerEvent = useCallback(
@@ -173,7 +169,6 @@ const CanvasContent: React.FC = () => {
           beginSelectionRectangle: helpersSnapshot.beginSelectionRectangle,
           updateSelectionRectangle: helpersSnapshot.updateSelectionRectangle,
           completeSelectionRectangle: helpersSnapshot.completeSelectionRectangle,
-          isSmoothBrushActive: helpersSnapshot.isSmoothBrushActive,
           setDragStart,
           setIsDragging,
           setHasDragMoved,
@@ -231,7 +226,6 @@ const CanvasContent: React.FC = () => {
     updateTransformation,
     updateAdvancedTransformation,
     beginSelectionRectangle,
-    isSmoothBrushActive: false,
     setIsDragging,
     setDragStart,
     setHasDragMoved,
@@ -279,7 +273,6 @@ const CanvasContent: React.FC = () => {
     },
     viewport,
     elements: elements as CanvasElement[],
-    smoothBrush,
     callbacks: {
       onStopDraggingPoint: stopDraggingPoint ?? (() => { }),
       onUpdateElement: updateElement,
@@ -351,9 +344,7 @@ const CanvasContent: React.FC = () => {
 
     // Conditionally add plugin-specific context
     const pluginSpecific: Partial<CanvasLayerContext> = {};
-    if (currentMode === 'edit') {
-      pluginSpecific.addPointMode = addPointMode;
-    } else if (currentMode === 'transformation') {
+    if (currentMode === 'transformation') {
       pluginSpecific.transformFeedback = feedback;
     }
 
@@ -377,7 +368,6 @@ const CanvasContent: React.FC = () => {
       setDragStartForLayers,
       settings,
       // Plugin-specific dependencies
-      addPointMode,
       feedback,
     ]
   );

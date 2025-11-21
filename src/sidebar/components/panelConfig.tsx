@@ -1,10 +1,6 @@
 import React from 'react';
-import type { SmoothBrush } from '../../plugins/smoothBrush/slice';
 import { CORE_PLUGINS } from '../../plugins';
 import type { PanelConfig } from '../../types/panel';
-
-// Re-export SmoothBrush for backward compatibility
-export type { SmoothBrush };
 
 // Lazy load core panel components
 const EditorPanel = React.lazy(() => import('../panels/EditorPanel').then(module => ({ default: module.EditorPanel })));

@@ -59,9 +59,6 @@ interface UseCanvasDragInteractionsProps {
     panY: number;
   };
   elements: Array<CanvasElement>;
-  smoothBrush: {
-    isActive: boolean;
-  };
   callbacks: DragCallbacks;
 }
 
@@ -69,7 +66,6 @@ export const useCanvasDragInteractions = ({
   dragState,
   viewport,
   elements,
-  smoothBrush,
   callbacks
 }: UseCanvasDragInteractionsProps) => {
   const [dragPosition, setDragPosition] = React.useState<Point | null>(null);
@@ -79,10 +75,7 @@ export const useCanvasDragInteractions = ({
     let lastUpdateTime = 0;
     const UPDATE_THROTTLE = 16; // ~60fps
 
-    const handlePointerMove = (e: PointerEvent) => {
-      // Disable all dragging interactions when smooth brush is active
-      if (smoothBrush.isActive) return;
-
+    const handlePointerMove = (e: MouseEvent) => {
       const { editingPoint, draggingSelection, draggingSubpaths } = dragState;
 
       if (editingPoint?.isDragging || draggingSelection?.isDragging || draggingSubpaths?.isDragging) {
@@ -395,7 +388,6 @@ export const useCanvasDragInteractions = ({
     viewport,
     elements,
     callbacks,
-    smoothBrush.isActive,
     originalPathDataMap
   ]);
 

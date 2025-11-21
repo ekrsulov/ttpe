@@ -1,32 +1,18 @@
-import type { RefObject } from 'react';
-import { useCanvasServiceActivation } from './useCanvasServiceActivation';
-import { useCanvasController } from '../controller/CanvasControllerContext';
-import { canvasStoreApi } from '../../store/canvasStore';
+import type { PluginHooksContext } from '../../../types/plugins';
+import { useCanvasServiceActivation } from '../../../canvas/hooks/useCanvasServiceActivation';
+import { useCanvasStore, canvasStoreApi } from '../../../store/canvasStore';
 import { ADD_POINT_SERVICE_ID, type AddPointServiceState } from '../listeners/AddPointListener';
-import type { Point } from '../../types';
+import type { AddPointPluginSlice } from '../slice';
 
-interface UseEditAddPointParams {
-  svgRef: RefObject<SVGSVGElement | null>;
-  activePlugin: string | null;
-  isAddPointModeActive: boolean;
-  zoom: number;
-  screenToCanvas: (screenX: number, screenY: number) => Point;
-  emitPointerEvent: (
-    type: 'pointerdown' | 'pointermove' | 'pointerup',
-    event: PointerEvent,
-    point: Point
-  ) => void;
-}
-
-export const useEditAddPoint = ({
-  svgRef,
-  activePlugin,
-  isAddPointModeActive,
-  zoom,
-  screenToCanvas,
-  emitPointerEvent,
-}: UseEditAddPointParams): void => {
-  const controller = useCanvasController();
+export function useAddPointHook(context: PluginHooksContext): void {
+  const { svgRef, activePlugin, screenToCanvas, emitPointerEvent } = context;
+  
+  const isAddPointModeActive = useCanvasStore(state => 
+    (state as unknown as AddPointPluginSlice).addPointMode?.isActive ?? false
+  );
+  const elements = useCanvasStore(state => state.elements);
+  const selectedIds = useCanvasStore(state => state.selectedIds);
+  const zoom = useCanvasStore(state => state.viewport.zoom);
 
   useCanvasServiceActivation<AddPointServiceState>({
     serviceId: ADD_POINT_SERVICE_ID,
@@ -34,8 +20,8 @@ export const useEditAddPoint = ({
     selectState: () => ({
       activePlugin,
       isAddPointModeActive,
-      elements: controller.elements,
-      selectedIds: controller.selectedIds,
+      elements,
+      selectedIds,
       zoom,
       screenToCanvas,
       emitPointerEvent,
@@ -56,6 +42,8 @@ export const useEditAddPoint = ({
       activePlugin,
       isAddPointModeActive,
       zoom,
+      elements,
+      selectedIds,
     ],
   });
-};
+}

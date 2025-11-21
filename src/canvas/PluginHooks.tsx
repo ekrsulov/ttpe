@@ -1,7 +1,5 @@
 import React from 'react';
 import { useCanvasStore } from '../store/canvasStore';
-import { useEditSmoothBrush } from './hooks/useEditSmoothBrush';
-import { useEditAddPoint } from './hooks/useEditAddPoint';
 import type { Point } from '../types';
 import type { PluginHooksContext } from '../types/plugins';
 import { pluginManager } from '../utils/pluginManager';
@@ -12,33 +10,6 @@ interface PluginHooksProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   emitPointerEvent: (type: 'pointerdown' | 'pointermove' | 'pointerup', event: any, point: Point) => void;
 }
-
-const EditHooks = ({ svgRef, screenToCanvas, emitPointerEvent }: PluginHooksProps) => {
-  const currentMode = useCanvasStore(state => state.activePlugin);
-  const isSmoothBrushActive = useCanvasStore(state => state.smoothBrush?.isActive ?? false);
-
-  useEditSmoothBrush({
-    svgRef,
-    currentMode: currentMode || 'select',
-    screenToCanvas,
-    emitPointerEvent,
-    isSmoothBrushActive,
-  });
-
-  const addPointMode = useCanvasStore(state => state.addPointMode);
-  const zoom = useCanvasStore(state => state.viewport.zoom);
-
-  useEditAddPoint({
-    svgRef,
-    activePlugin: currentMode,
-    isAddPointModeActive: addPointMode?.isActive ?? false,
-    zoom,
-    screenToCanvas,
-    emitPointerEvent,
-  });
-
-  return null;
-};
 
 /**
  * Dynamic hook renderer for plugins
@@ -88,13 +59,6 @@ export const PluginHooksRenderer = ({ svgRef, screenToCanvas, emitPointerEvent }
   return (
     <>
       <GlobalPluginHooksWrapper hooksContext={hooksContext} />
-      {activePlugin === 'edit' && (
-        <EditHooks
-          svgRef={svgRef}
-          screenToCanvas={screenToCanvas}
-          emitPointerEvent={emitPointerEvent}
-        />
-      )}
       {activePlugin && (
         <PluginHooksWrapper
           key={activePlugin}

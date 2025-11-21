@@ -17,7 +17,6 @@ export interface CanvasEventHandlerDepsInput {
   updateAdvancedTransformation: (point: Point) => void;
   // Note: applyBrush and updateCursorPosition removed as they were not propagated
   beginSelectionRectangle: (point: Point, shiftKey?: boolean, subpathMode?: boolean) => void;
-  isSmoothBrushActive: boolean;
   setIsDragging: (value: boolean) => void;
   setDragStart: (point: Point | null) => void;
   setHasDragMoved: (value: boolean) => void;
@@ -51,7 +50,6 @@ export interface CanvasEventHandlerDeps {
   updateTransformation: (point: Point, isShiftPressed: boolean) => void;
   updateAdvancedTransformation: (point: Point) => void;
   beginSelectionRectangle: (point: Point, shiftKey?: boolean, subpathMode?: boolean) => void;
-  isSmoothBrushActive: boolean;
   setIsDragging: (value: boolean) => void;
   setDragStart: (point: Point | null) => void;
   setHasDragMoved: (value: boolean) => void;
@@ -92,7 +90,6 @@ export function useCanvasEventHandlerDeps(
     updateTransformation: input.updateTransformation,
     updateAdvancedTransformation: input.updateAdvancedTransformation,
     beginSelectionRectangle: input.beginSelectionRectangle,
-    isSmoothBrushActive: input.isSmoothBrushActive,
     setIsDragging: input.setIsDragging,
     setDragStart: input.setDragStart,
     setHasDragMoved: input.setHasDragMoved,
@@ -124,7 +121,6 @@ export function useCanvasEventHandlerDeps(
     input.updateTransformation,
     input.updateAdvancedTransformation,
     input.beginSelectionRectangle,
-    input.isSmoothBrushActive,
     input.setIsDragging,
     input.setDragStart,
     input.setHasDragMoved,

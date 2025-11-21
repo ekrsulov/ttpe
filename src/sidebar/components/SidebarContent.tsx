@@ -7,7 +7,6 @@ import { SidebarResizer } from './SidebarResizer';
 import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
 import { EditPanelContext } from '../../contexts/EditPanelContext';
 import type {
-  SmoothBrush,
   SelectedCommand
 } from '../../types/panel';
 
@@ -21,19 +20,8 @@ interface SidebarContentProps {
   isPinned: boolean;
   onTogglePin: () => void;
   isDesktop: boolean | undefined;
-  smoothBrush: SmoothBrush;
-  addPointMode?: {
-    isActive: boolean;
-  };
   selectedCommands: SelectedCommand[];
   selectedSubpaths: Array<{ elementId: string; subpathIndex: number }>;
-  updateSmoothBrush: (config: Partial<SmoothBrush>) => void;
-  applySmoothBrush: () => void;
-  activateSmoothBrush: () => void;
-  deactivateSmoothBrush: () => void;
-  resetSmoothBrush: () => void;
-  activateAddPointMode?: () => void;
-  deactivateAddPointMode?: () => void;
   isArrangeExpanded: boolean;
   setIsArrangeExpanded: (value: boolean) => void;
   // Resizer props (only for pinned variant)
@@ -51,17 +39,8 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
   isPinned,
   onTogglePin,
   isDesktop,
-  smoothBrush,
-  addPointMode,
   selectedCommands,
   selectedSubpaths,
-  updateSmoothBrush,
-  applySmoothBrush,
-  activateSmoothBrush,
-  deactivateSmoothBrush,
-  resetSmoothBrush,
-  activateAddPointMode,
-  deactivateAddPointMode,
   isArrangeExpanded,
   setIsArrangeExpanded,
   onResize,
@@ -70,30 +49,12 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
   // Memoize EditPanel context value to prevent unnecessary re-renders
   const editPanelContextValue = useMemo(
     () => ({
-      smoothBrush,
-      addPointMode,
       selectedCommands,
       selectedSubpaths,
-      updateSmoothBrush,
-      applySmoothBrush,
-      activateSmoothBrush,
-      deactivateSmoothBrush,
-      resetSmoothBrush,
-      activateAddPointMode,
-      deactivateAddPointMode,
     }),
     [
-      smoothBrush,
-      addPointMode,
       selectedCommands,
       selectedSubpaths,
-      updateSmoothBrush,
-      applySmoothBrush,
-      activateSmoothBrush,
-      deactivateSmoothBrush,
-      resetSmoothBrush,
-      activateAddPointMode,
-      deactivateAddPointMode,
     ]
   );
 

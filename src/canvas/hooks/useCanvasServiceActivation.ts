@@ -40,14 +40,14 @@ export interface CanvasServiceConfig<TState = unknown> {
  * @example
  * ```tsx
  * useCanvasServiceActivation({
- *   serviceId: SMOOTH_BRUSH_SERVICE_ID,
+ *   serviceId: PLUGIN_SERVICE_ID,
  *   svgRef,
  *   selectState: ({ controller }) => ({
  *     activePlugin,
- *     isSmoothBrushActive,
+ *     isPluginToolActive,
  *     screenToCanvas,
  *   }),
- *   stateDeps: [activePlugin, isSmoothBrushActive, screenToCanvas],
+ *   stateDeps: [activePlugin, isPluginToolActive, screenToCanvas],
  * });
  * ```
  */

@@ -1,11 +1,11 @@
-import { pluginManager } from '../../utils/pluginManager';
+import { pluginManager } from '../../../utils/pluginManager';
 import type {
   CanvasService,
   CanvasServiceContext,
   CanvasServiceInstance,
-} from '../../utils/pluginManager';
-import type { Point, PathData, CanvasElement } from '../../types';
-import { findClosestPathSegment } from '../../utils/pathProximityUtils';
+} from '../../../utils/pluginManager';
+import type { Point, PathData, CanvasElement } from '../../../types';
+import { findClosestPathSegment } from '../../../utils/pathProximityUtils';
 
 export const ADD_POINT_SERVICE_ID = 'add-point-listener';
 const BASE_POINT_THRESHOLD = 10;

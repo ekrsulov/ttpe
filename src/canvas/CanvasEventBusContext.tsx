@@ -9,7 +9,6 @@ export interface CanvasPointerEventHelpers extends Record<string, any> { // esli
   beginSelectionRectangle?: (point: Point, shiftKey?: boolean, subpathMode?: boolean) => void;
   updateSelectionRectangle?: (point: Point) => void;
   completeSelectionRectangle?: () => void;
-  isSmoothBrushActive?: boolean;
   setDragStart?: (point: Point | null) => void;
   setIsDragging?: (isDragging: boolean) => void;
   setHasDragMoved?: (hasMoved: boolean) => void;

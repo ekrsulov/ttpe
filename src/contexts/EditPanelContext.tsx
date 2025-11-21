@@ -1,6 +1,5 @@
 import { createContext, useContext } from 'react';
 import type {
-  SmoothBrush,
   SelectedCommand
 } from '../types/panel';
 
@@ -9,19 +8,8 @@ import type {
  * Eliminates prop tunneling through SidebarContent → SidebarPanels → EditPanel
  */
 export interface EditPanelContextValue {
-  smoothBrush: SmoothBrush;
-  addPointMode?: {
-    isActive: boolean;
-  };
   selectedCommands: SelectedCommand[];
   selectedSubpaths: Array<{ elementId: string; subpathIndex: number }>;
-  updateSmoothBrush: (config: Partial<SmoothBrush>) => void;
-  applySmoothBrush: () => void;
-  activateSmoothBrush: () => void;
-  deactivateSmoothBrush: () => void;
-  resetSmoothBrush: () => void;
-  activateAddPointMode?: () => void;
-  deactivateAddPointMode?: () => void;
 }
 
 export const EditPanelContext = createContext<EditPanelContextValue | null>(null);

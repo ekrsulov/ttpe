@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import type React from 'react';
-import { useCanvasServiceActivation } from './useCanvasServiceActivation';
-import { useCanvasController } from '../controller/CanvasControllerContext';
+import { useCanvasServiceActivation } from '../../../canvas/hooks/useCanvasServiceActivation';
+import { useCanvasController } from '../../../canvas/controller/CanvasControllerContext';
 import { SMOOTH_BRUSH_SERVICE_ID, type SmoothBrushServiceState } from '../listeners/SmoothBrushListener';
-import type { Point } from '../../types';
+import type { Point } from '../../../types';
 
 export interface UseEditSmoothBrushParams {
   svgRef: React.RefObject<SVGSVGElement | null>;

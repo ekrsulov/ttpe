@@ -4,6 +4,7 @@ import { commandsToString } from '../../utils/path';
 import { mapSvgToCanvas } from '../../utils/geometry';
 import { useCanvasStore } from '../../store/canvasStore';
 import { getEffectiveShift } from '../../utils/effectiveShift';
+import { pluginManager } from '../../utils/pluginManager';
 import type { PathData, SubPath, Point } from '../../types';
 
 interface SubpathOverlayProps {
@@ -22,9 +23,6 @@ interface SubpathOverlayProps {
     panX: number;
     panY: number;
   };
-  smoothBrush?: {
-    isActive: boolean;
-  };
   onSelectSubpath: (elementId: string, subpathIndex: number, multiSelect?: boolean) => void;
   onSetDragStart: (point: Point) => void;
   onSubpathDoubleClick: (elementId: string, subpathIndex: number, e: React.MouseEvent<SVGPathElement>) => void;
@@ -36,7 +34,6 @@ export const SubpathOverlay: React.FC<SubpathOverlayProps> = ({
   element,
   selectedSubpaths,
   viewport,
-  smoothBrush,
   onSelectSubpath,
   onSetDragStart,
   onSubpathDoubleClick,
@@ -87,8 +84,8 @@ export const SubpathOverlay: React.FC<SubpathOverlayProps> = ({
             onPointerDown={isVisible ? (e) => {
               // Don't stop propagation - let Canvas handlePointerDown also run to set dragStart
 
-              // Disable subpath interaction when smooth brush is active
-              if (smoothBrush?.isActive) {
+              // Check if active plugin prevents subpath interaction (e.g., drawing tools)
+              if (pluginManager.shouldPreventSubpathInteraction()) {
                 return;
               }
 

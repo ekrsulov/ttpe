@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { getCommandStartPoint } from '../../utils/path';
 import { mapSvgToCanvas } from '../../utils/geometry';
 import { useCanvasStore } from '../../store/canvasStore';
@@ -44,14 +44,6 @@ interface EditPointsOverlayProps {
     panX: number;
     panY: number;
   };
-  smoothBrush?: {
-    radius: number;
-    strength: number;
-    isActive: boolean;
-    cursorX: number;
-    cursorY: number;
-    affectedPoints: { commandIndex: number; pointIndex: number; x: number; y: number; }[];
-  };
   getFilteredEditablePoints: (elementId: string) => Array<{
     commandIndex: number;
     pointIndex: number;
@@ -70,11 +62,37 @@ export const EditPointsOverlay: React.FC<EditPointsOverlayProps> = ({
   draggingSelection,
   dragPosition,
   viewport,
-  smoothBrush,
   getFilteredEditablePoints,
   onStartDraggingPoint,
   onSelectCommand,
 }) => {
+  // Optional integration: Access tool-specific state for visual feedback
+  // EditPointsOverlay can show which points are being affected by active tools
+  // This is a data dependency for visual feedback, not a behavior dependency
+  
+  // Selector specifically for smoothBrush state - returns the same object reference
+  // when the relevant properties haven't changed to avoid infinite loops
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const smoothBrushState = useCanvasStore(state => (state as any).smoothBrush);
+  
+  // Use useMemo to create stable toolState only when smoothBrush actually changes
+  const toolState = useMemo((): {
+    isActive: boolean;
+    affectedPoints: Array<{ commandIndex: number; pointIndex: number; x: number; y: number }>;
+  } | null => {
+    if (
+      smoothBrushState &&
+      smoothBrushState.isActive &&
+      'affectedPoints' in smoothBrushState
+    ) {
+      return {
+        isActive: smoothBrushState.isActive,
+        affectedPoints: smoothBrushState.affectedPoints || []
+      };
+    }
+    return null;
+  }, [smoothBrushState]);
+
   // Get canvas background color based on theme - MUST be called before early return
   const canvasBgColor = useColorModeValue('#f8f9fa', '#212529'); // gray.50 and gray.900
   // Determine if we're in dark mode
@@ -131,7 +149,7 @@ export const EditPointsOverlay: React.FC<EditPointsOverlayProps> = ({
           }
         }
 
-        const pointStyle = getPointStyle(point, selectedCommands, element, commands, pathData, smoothBrush, canvasBgColor, isDarkMode);
+        const pointStyle = getPointStyle(point, selectedCommands, element, commands, pathData, toolState, canvasBgColor, isDarkMode);
         
         // Calculate larger hit area for better touch/mouse interaction
         // Use a minimum size in screen pixels (12px) regardless of zoom
@@ -150,7 +168,7 @@ export const EditPointsOverlay: React.FC<EditPointsOverlayProps> = ({
                 cursor: 'pointer',
                 WebkitTapHighlightColor: 'transparent',
               }}
-              onPointerDown={(e) => handlePointPointerDown(e, point, element, selectedCommands, viewport, onStartDraggingPoint, onSelectCommand, smoothBrush)}
+              onPointerDown={(e) => handlePointPointerDown(e, point, element, selectedCommands, viewport, onStartDraggingPoint, onSelectCommand, toolState)}
             />
             {/* Visible point */}
             {point.isControl ? (
@@ -220,7 +238,7 @@ const getPointStyle = (
   },
   commands: Command[],
   pathData: PathData,
-  smoothBrush?: {
+  toolState: {
     isActive: boolean;
     affectedPoints: Array<{
       commandIndex: number;
@@ -228,7 +246,7 @@ const getPointStyle = (
       x: number;
       y: number;
     }>;
-  },
+  } | null,
   canvasBgColor?: string,
   isDarkMode?: boolean
 ) => {
@@ -246,7 +264,7 @@ const getPointStyle = (
   );
 
   // Check if this point is affected by smooth brush
-  const isAffectedByBrush = smoothBrush?.isActive && smoothBrush.affectedPoints.some(
+  const isAffectedByBrush = toolState?.isActive && toolState.affectedPoints.some(
     (affected) => affected.commandIndex === point.commandIndex &&
       affected.pointIndex === point.pointIndex
   );
@@ -329,14 +347,15 @@ const handlePointPointerDown = (
   },
   onStartDraggingPoint: (elementId: string, commandIndex: number, pointIndex: number, offsetX: number, offsetY: number) => void,
   onSelectCommand: (command: { elementId: string; commandIndex: number; pointIndex: number }, multiSelect?: boolean) => void,
-  smoothBrush?: {
+  toolState: {
     isActive: boolean;
-  }
+    affectedPoints: Array<{ commandIndex: number; pointIndex: number; x: number; y: number }>;
+  } | null
 ) => {
   e.stopPropagation();
 
   // Disable point interaction when smooth brush is active
-  if (smoothBrush?.isActive) return;
+  if (toolState?.isActive) return;
 
   // Get virtual shift state
   const isVirtualShiftActive = useCanvasStore.getState().isVirtualShiftActive;

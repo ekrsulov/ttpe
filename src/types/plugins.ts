@@ -130,6 +130,22 @@ export interface PluginHookContribution {
   global?: boolean;
 };
 
+/**
+ * Plugin behavior flags that control interactions with other plugins
+ */
+export interface PluginBehaviorFlags {
+  /**
+   * When true, prevents selection rectangle from starting in edit mode
+   * Used by drawing tools that handle their own pointer interactions
+   */
+  preventsSelection?: boolean;
+  /**
+   * When true, disables subpath interaction overlays
+   * Used by tools that need exclusive pointer control
+   */
+  preventsSubpathInteraction?: boolean;
+}
+
 export interface PluginDefinition<TStore extends object = object> {
   id: string;
   metadata: {
@@ -139,6 +155,11 @@ export interface PluginDefinition<TStore extends object = object> {
     disablePathInteraction?: boolean;
     pathCursorMode?: 'select' | 'default' | 'pointer';
   };
+  /**
+   * Behavior flags that control how this plugin interacts with others.
+   * These flags are checked dynamically based on plugin state.
+   */
+  behaviorFlags?: (store: TStore) => PluginBehaviorFlags;
   /**
    * Events to subscribe to. Defaults to ['pointerdown'] if handler is present.
    * Add 'pointermove' and 'pointerup' to receive those events.
@@ -177,7 +198,7 @@ export interface PluginDefinition<TStore extends object = object> {
   actions?: PluginActionContribution[];
   /**
    * Panels contributed to other plugins.
-   * Example: smoothBrush plugin can contribute a panel to the 'edit' plugin.
+   * Example: A tool plugin can contribute a settings panel to another plugin.
    */
   relatedPluginPanels?: PluginPanelContribution[];
   slices?: PluginSliceFactory<TStore>[];
@@ -211,6 +232,13 @@ export interface PluginDefinition<TStore extends object = object> {
    * Returns a cleanup function called when the plugin is unregistered.
    */
   init?: (context: PluginHandlerContext<TStore>) => (() => void) | void;
+  /**
+   * Register helper functions that can be used by other plugins.
+   * These helpers are accessible via the plugin manager.
+   * Returns an object with helper names as keys and functions/values as values.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  registerHelpers?: (context: PluginHandlerContext<TStore>) => Record<string, any>;
   /**
    * Context menu actions contributed by this plugin.
    */

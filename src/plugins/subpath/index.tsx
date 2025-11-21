@@ -179,7 +179,6 @@ export const subpathPlugin: PluginDefinition<CanvasStore> = {
         elements,
         selectedSubpaths,
         activePlugin,
-        smoothBrush,
         selectSubpath,
         setDragStart,
         handleSubpathDoubleClick,
@@ -207,7 +206,6 @@ export const subpathPlugin: PluginDefinition<CanvasStore> = {
                   element={element}
                   selectedSubpaths={selectedSubpaths ?? []}
                   viewport={viewport}
-                  smoothBrush={smoothBrush}
                   onSelectSubpath={selectSubpath ?? (() => { })}
                   onSetDragStart={setDragStart}
                   onSubpathDoubleClick={handleSubpathDoubleClick}

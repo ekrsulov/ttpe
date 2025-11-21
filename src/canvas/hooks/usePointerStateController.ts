@@ -15,7 +15,6 @@ export interface PointerHelpersSnapshot {
   beginSelectionRectangle: BeginSelectionRectangle;
   updateSelectionRectangle: UpdateSelectionRectangle;
   completeSelectionRectangle: CompleteSelectionRectangle;
-  isSmoothBrushActive: boolean;
 }
 
 export interface PointerStateSnapshot {
@@ -34,7 +33,6 @@ interface UsePointerStateControllerParams {
   beginSelectionRectangle: BeginSelectionRectangle;
   updateSelectionRectangle: UpdateSelectionRectangle;
   completeSelectionRectangle: CompleteSelectionRectangle;
-  isSmoothBrushActive: boolean;
 }
 
 export const usePointerStateController = ({
@@ -42,7 +40,6 @@ export const usePointerStateController = ({
   beginSelectionRectangle,
   updateSelectionRectangle,
   completeSelectionRectangle,
-  isSmoothBrushActive,
 }: UsePointerStateControllerParams) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<Point | null>(null);
@@ -59,7 +56,6 @@ export const usePointerStateController = ({
     beginSelectionRectangle,
     updateSelectionRectangle,
     completeSelectionRectangle,
-    isSmoothBrushActive,
   });
 
   useEffect(() => {
@@ -76,13 +72,11 @@ export const usePointerStateController = ({
       beginSelectionRectangle,
       updateSelectionRectangle,
       completeSelectionRectangle,
-      isSmoothBrushActive,
     };
   }, [
     beginSelectionRectangle,
     updateSelectionRectangle,
     completeSelectionRectangle,
-    isSmoothBrushActive,
   ]);
 
   const stateRefs = useMemo(

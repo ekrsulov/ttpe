@@ -7,6 +7,7 @@ import type { EditPluginSlice } from './slice';
 import { EditPanel } from './EditPanel';
 import { useCanvasStore } from '../../store/canvasStore';
 import { BlockingOverlay } from '../../overlays';
+import { pluginManager } from '../../utils/pluginManager';
 
 const EditExpandablePanelWrapper: React.FC = () => {
   const activePlugin = useCanvasStore(s => s.activePlugin);
@@ -68,17 +69,16 @@ export const editPlugin: PluginDefinition<CanvasStore> = {
     target,
     context
   ) => {
-    // Check if add point mode is active
-    const state = context.store.getState() as CanvasStore;
-    const isAddPointModeActive = state.addPointMode?.isActive ?? false;
+    // Check if active plugin prevents selection (e.g., drawing tools, add point mode)
+    const shouldPreventSelection = pluginManager.shouldPreventSelection();
 
-    // Don't start selection rectangle if add point mode is active
-    if (isAddPointModeActive) {
+    // Don't start selection rectangle if any plugin prevents it
+    if (shouldPreventSelection) {
       return;
     }
 
     // Allow selection rectangle to start on SVG or on path elements (but not on edit points)
-    if ((target.tagName === 'svg' || target.tagName === 'path') && !context.helpers.isSmoothBrushActive) {
+    if (target.tagName === 'svg' || target.tagName === 'path') {
       context.helpers.beginSelectionRectangle?.(point, !event.shiftKey, false);
     }
   },
@@ -127,7 +127,6 @@ export const editPlugin: PluginDefinition<CanvasStore> = {
         draggingSelection,
         dragPosition,
         viewport,
-        smoothBrush,
         getFilteredEditablePoints,
         startDraggingPoint,
         selectCommand,
@@ -160,7 +159,6 @@ export const editPlugin: PluginDefinition<CanvasStore> = {
                     draggingSelection={draggingSelection ?? null}
                     dragPosition={dragPosition}
                     viewport={viewport}
-                    smoothBrush={smoothBrush}
                     getFilteredEditablePoints={getFilteredEditablePoints ?? (() => [])}
                     onStartDraggingPoint={startDraggingPoint ?? (() => { })}
                     onSelectCommand={selectCommand ?? (() => { })}
@@ -200,17 +198,6 @@ export const editPlugin: PluginDefinition<CanvasStore> = {
       component: EditPanel,
       getProps: (allProps) => ({
         activePlugin: allProps.activePlugin,
-        smoothBrush: allProps.smoothBrush,
-        addPointMode: allProps.addPointMode,
-        selectedCommands: allProps.selectedCommands,
-        selectedSubpaths: allProps.selectedSubpaths,
-        updateSmoothBrush: allProps.updateSmoothBrush,
-        applySmoothBrush: allProps.applySmoothBrush,
-        activateSmoothBrush: allProps.activateSmoothBrush,
-        deactivateSmoothBrush: allProps.deactivateSmoothBrush,
-        resetSmoothBrush: allProps.resetSmoothBrush,
-        activateAddPointMode: allProps.activateAddPointMode,
-        deactivateAddPointMode: allProps.deactivateAddPointMode,
       }),
     },
     {

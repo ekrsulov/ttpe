@@ -20,8 +20,6 @@ export interface CanvasControllerValue
     | 'draggingSelection'
     | 'guidelines'
     | 'grid'
-    | 'addPointMode'
-    | 'smoothBrush'
     | 'updateElement'
     | 'startDraggingPoint'
     | 'stopDraggingPoint'
@@ -40,8 +38,6 @@ export interface CanvasControllerValue
     | 'moveSelectedSubpaths'
     | 'selectElement'
     | 'setMode'
-    | 'applySmoothBrush'
-    | 'updateAffectedPoints'
     | 'zoom'
   > {
   sortedElements: CanvasElement[];
@@ -65,8 +61,6 @@ export const useCanvasControllerSource = (): CanvasControllerValue => {
       draggingSelection: store.draggingSelection,
       guidelines: store.guidelines,
       grid: store.grid,
-      addPointMode: store.addPointMode,
-      smoothBrush: store.smoothBrush,
       updateElement: store.updateElement,
       startDraggingPoint: store.startDraggingPoint,
       stopDraggingPoint: store.stopDraggingPoint,
@@ -85,8 +79,6 @@ export const useCanvasControllerSource = (): CanvasControllerValue => {
       moveSelectedSubpaths: store.moveSelectedSubpaths,
       selectElement: store.selectElement,
       setMode: store.setMode,
-      applySmoothBrush: store.applySmoothBrush,
-      updateAffectedPoints: store.updateAffectedPoints,
       zoom: store.zoom,
     }))
   );

@@ -61,6 +61,8 @@ export class PluginManager {
   private pluginApis = new Map<string, Record<string, (...args: any[]) => any>>();
   private dragModifiers = new Map<string, DragModifier>();
   private storeApi: CanvasStoreApi | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private helpers = new Map<string, any>();
 
   constructor({ initialPlugins = [], storeApi = null }: PluginManagerOptions = {}) {
     this.storeApi = storeApi;
@@ -119,6 +121,15 @@ export class PluginManager {
       }
 
       this.initializePluginApi(plugin);
+
+      // Register helpers if provided
+      if (plugin.registerHelpers) {
+        const context = this.createPluginContext(plugin.id);
+        const helpers = plugin.registerHelpers(context);
+        Object.entries(helpers).forEach(([name, helper]) => {
+          this.registerHelper(name, helper);
+        });
+      }
 
       // Call init if present
       if (plugin.init) {
@@ -209,6 +220,87 @@ export class PluginManager {
 
     instance.dispose();
     this.activeCanvasServices.delete(serviceId);
+  }
+
+  /**
+   * Register a helper function that can be accessed by other plugins
+   * @param name - Unique name for the helper
+   * @param helperFn - The helper function or value
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  registerHelper(name: string, helperFn: any): void {
+    this.helpers.set(name, helperFn);
+  }
+
+  /**
+   * Unregister a helper function
+   * @param name - Name of the helper to unregister
+   */
+  unregisterHelper(name: string): void {
+    this.helpers.delete(name);
+  }
+
+  /**
+   * Get a registered helper function
+   * @param name - Name of the helper to retrieve
+   * @returns The helper function or undefined if not found
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getHelper(name: string): any {
+    return this.helpers.get(name);
+  }
+
+  /**
+   * Get all registered helpers as an object
+   * @returns Object with all registered helpers
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getAllHelpers(): Record<string, any> {
+    return Object.fromEntries(this.helpers);
+  }
+
+  /**
+   * Check if the active plugin prevents selection
+   * @returns true if selection should be prevented
+   */
+  shouldPreventSelection(): boolean {
+    if (!this.storeApi) return false;
+    
+    const state = this.storeApi.getState();
+    
+    // Check ALL plugins, not just the active one
+    for (const [_pluginId, plugin] of this.registry.entries()) {
+      if (plugin.behaviorFlags) {
+        const flags = plugin.behaviorFlags(state);
+        if (flags.preventsSelection) {
+          return true;
+        }
+      }
+    }
+    
+    return false;
+  }
+
+  /**
+   * Check if the active plugin prevents subpath interaction
+   * @returns true if subpath interaction should be prevented
+   */
+  shouldPreventSubpathInteraction(): boolean {
+    if (!this.storeApi) return false;
+    
+    const state = this.storeApi.getState();
+    
+    // Check ALL plugins, not just the active one
+    for (const [_pluginId, plugin] of this.registry.entries()) {
+      if (plugin.behaviorFlags) {
+        const flags = plugin.behaviorFlags(state);
+        if (flags.preventsSubpathInteraction) {
+          return true;
+        }
+      }
+    }
+    
+    return false;
   }
 
   unregister(pluginId: string): void {
@@ -426,7 +518,8 @@ export class PluginManager {
     event: React.PointerEvent,
     point: import('../types').Point,
     target: Element,
-    helpers: { isSmoothBrushActive: boolean; beginSelectionRectangle: (point: import('../types').Point, shiftKey?: boolean, subpathMode?: boolean) => void; startShapeCreation: (point: import('../types').Point) => void }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    helpers: Record<string, any>
   ): void {
     const tool = this.registry.get(toolName);
     if (tool?.handler) {

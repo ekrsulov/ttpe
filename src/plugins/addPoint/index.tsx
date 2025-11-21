@@ -4,8 +4,12 @@ import type { CanvasStore } from '../../store/canvasStore';
 import { createAddPointPluginSlice } from './slice';
 import type { AddPointPluginSlice } from './slice';
 
+// Import listener to ensure it registers itself
+import './listeners/AddPointListener';
+
 import { AddPointPanel } from './AddPointPanel';
 import { AddPointFeedbackOverlay } from './AddPointFeedbackOverlay';
+import { useAddPointHook } from './hooks/useAddPointHook';
 export type { AddPointPluginSlice };
 
 const addPointSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
@@ -21,7 +25,22 @@ export const addPointPlugin: PluginDefinition<CanvasStore> = {
         label: 'Add Point',
         cursor: 'default',
     },
+    behaviorFlags: (state) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const addPointMode = (state as any).addPointMode;
+        return {
+            preventsSelection: addPointMode?.isActive ?? false,
+            preventsSubpathInteraction: addPointMode?.isActive ?? false,
+        };
+    },
     slices: [addPointSliceFactory],
+    hooks: [
+        {
+            id: 'add-point-interaction',
+            hook: useAddPointHook,
+            global: true, // Execute regardless of active plugin
+        },
+    ],
     relatedPluginPanels: [
         {
             id: 'addPoint-edit-panel',
@@ -34,20 +53,13 @@ export const addPointPlugin: PluginDefinition<CanvasStore> = {
         {
             id: 'add-point-feedback',
             placement: 'foreground',
-            render: ({ activePlugin, viewport, addPointMode }) => {
-                // Only show when in edit mode and add point mode is active
-                // Note: activePlugin check might need to be adjusted if we want this to work in other contexts
-                if (activePlugin !== 'edit' || !addPointMode?.isActive) {
+            render: ({ activePlugin }) => {
+                // Only show when in edit mode
+                if (activePlugin !== 'edit') {
                     return null;
                 }
 
-                return (
-                    <AddPointFeedbackOverlay
-                        hoverPosition={addPointMode.hoverPosition}
-                        isActive={addPointMode.isActive}
-                        viewport={viewport}
-                    />
-                );
+                return <AddPointFeedbackOverlay />;
             },
         },
     ],

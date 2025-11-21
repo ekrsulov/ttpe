@@ -21,7 +21,6 @@ interface EventHandlerDeps {
   updateTransformation: (point: Point, shiftPressed: boolean) => void;
   updateAdvancedTransformation: (point: Point) => void;
   beginSelectionRectangle: (point: Point, shiftKey?: boolean, subpathMode?: boolean) => void;
-  isSmoothBrushActive: boolean;
   setIsDragging: (dragging: boolean) => void;
   setDragStart: (point: Point | null) => void;
   setHasDragMoved: (moved: boolean) => void;
@@ -57,7 +56,6 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     updateTransformation,
     updateAdvancedTransformation,
     beginSelectionRectangle,
-    isSmoothBrushActive,
     setIsDragging,
     setDragStart,
     setHasDragMoved,
@@ -250,7 +248,6 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
         beginSelectionRectangle,
         updateSelectionRectangle,
         completeSelectionRectangle,
-        isSmoothBrushActive,
         setIsDragging,
         setDragStart,
         setHasDragMoved,
@@ -270,7 +267,6 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     beginSelectionRectangle,
     updateSelectionRectangle,
     completeSelectionRectangle,
-    isSmoothBrushActive,
     isSelecting,
     isDragging,
     dragStart,
@@ -294,7 +290,6 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
         beginSelectionRectangle,
         updateSelectionRectangle,
         completeSelectionRectangle,
-        isSmoothBrushActive,
         setIsDragging,
         setDragStart,
         setHasDragMoved,
@@ -451,7 +446,6 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     moveSelectedElements,
     setDragStart,
     updateTransformation,
-    isSmoothBrushActive,
     selectionStart,
     updateSelectionRectangle,
     isVirtualShiftActive,
@@ -478,7 +472,6 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
         beginSelectionRectangle,
         updateSelectionRectangle,
         completeSelectionRectangle,
-        isSmoothBrushActive,
         setIsDragging,
         setDragStart,
         setHasDragMoved,
@@ -535,7 +528,6 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     updateSelectionRectangle,
     eventBus,
     dragStart,
-    isSmoothBrushActive,
     beginSelectionRectangle,
     deps.hasDragMoved,
   ]);

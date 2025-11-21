@@ -1,8 +1,8 @@
 import { useCallback, useState, useMemo } from 'react';
-import { useCanvasStore } from '../../store/canvasStore';
+import { useCanvasStore } from '../../../store/canvasStore';
 import { SmoothBrushController } from '../interactions/SmoothBrushController';
-import type { Point } from '../../types';
-import type { SmoothBrushPluginSlice } from '../../plugins/smoothBrush/slice';
+import type { Point } from '../../../types';
+import type { SmoothBrushPluginSlice } from '../slice';
 
 export interface SmoothBrushState {
   isActive: boolean;

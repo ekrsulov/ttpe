@@ -1,10 +1,10 @@
-import { pluginManager } from '../../utils/pluginManager';
+import { pluginManager } from '../../../utils/pluginManager';
 import type {
   CanvasService,
   CanvasServiceContext,
   CanvasServiceInstance,
-} from '../../utils/pluginManager';
-import type { Point } from '../../types';
+} from '../../../utils/pluginManager';
+import type { Point } from '../../../types';
 
 export const SMOOTH_BRUSH_SERVICE_ID = 'smooth-brush-listener';
 
