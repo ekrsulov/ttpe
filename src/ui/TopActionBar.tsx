@@ -5,15 +5,9 @@ import { RenderCountBadgeWrapper } from './RenderCountBadgeWrapper';
 import { FloatingToolbarShell } from './FloatingToolbarShell';
 import { ToolbarIconButton } from './ToolbarIconButton';
 import type { CanvasElement } from '../types';
-import { TOOL_DEFINITIONS } from '../config/toolDefinitions';
-import type { ToolMode } from '../config/toolDefinitions';
 import { pluginManager } from '../utils/pluginManager';
 import { useCanvasStore } from '../store/canvasStore';
 import { useDynamicTools } from '../hooks/useDynamicTools';
-
-const TOOL_DEFINITION_MAP = new Map(
-  TOOL_DEFINITIONS.map((definition) => [definition.mode, definition])
-);
 
 interface TopActionBarProps {
   activeMode: string | null;
@@ -115,7 +109,7 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
 
   const registeredTools = pluginManager
     .getRegisteredTools()
-    .filter((plugin) => TOOL_DEFINITION_MAP.has(plugin.id as ToolMode))
+    .filter((plugin) => plugin.toolDefinition !== undefined)
     .filter((plugin) => {
       // Only show gridFill if grid is enabled
       if (plugin.id === 'gridFill') {
@@ -124,24 +118,23 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
       return true;
     })
     .map((plugin) => {
-      const fallbackDefinition = TOOL_DEFINITION_MAP.get(plugin.id as ToolMode);
-      const Icon = plugin.metadata.icon ?? fallbackDefinition?.icon ?? Menu;
+      const Icon = plugin.metadata.icon ?? Menu;
 
       return {
         id: plugin.id,
-        label: plugin.metadata.label ?? fallbackDefinition?.label ?? plugin.id,
+        label: plugin.metadata.label ?? plugin.id,
         icon: Icon,
-        order: fallbackDefinition?.order ?? 999,
+        order: plugin.toolDefinition?.order ?? 999,
       };
     })
     .sort((a, b) => a.order - b.order);
 
   // Filter tools based on mobile/desktop and usage patterns
   const toolsToRender = React.useMemo(() => {
-    // Get base tools list
+    // Get base tools list directly from plugins
     const baseTools = registeredTools.length
       ? registeredTools
-      : TOOL_DEFINITIONS
+      : pluginManager.getToolDefinitions()
           .filter((def) => def.mode !== 'gridFill' || gridEnabled)
           .sort((a, b) => a.order - b.order)
           .map(({ mode, label, icon }) => ({
@@ -155,7 +148,7 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
       const visibleDynamicTools = getMobileVisibleTools();
       const allowedTools = [...alwaysShownTools, ...visibleDynamicTools];
       
-      return baseTools.filter(tool => allowedTools.includes(tool.id as ToolMode));
+      return baseTools.filter(tool => allowedTools.includes(tool.id));
     }
 
     // On desktop, show all tools
@@ -166,15 +159,16 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
   const extraTools = React.useMemo(() => {
     if (!isMobile) return [];
     
+    const toolDefinitions = pluginManager.getToolDefinitions();
     return getExtraTools()
       .map(toolId => {
-        const toolDef = TOOL_DEFINITIONS.find(def => def.mode === toolId);
+        const toolDef = toolDefinitions.find(def => def.mode === toolId);
         if (!toolDef) return null;
         
         return {
           id: toolId,
           label: toolDef.label,
-          icon: toolDef.icon,
+          icon: toolDef.icon ?? Menu,
         };
       })
       .filter(Boolean) as Array<{id: string, label: string, icon: React.ComponentType<{ size?: number }>}>;
@@ -207,7 +201,7 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
   // Handle mode change with usage tracking
   const handleModeChange = React.useCallback((mode: string) => {
     // Track tool usage for dynamic selection
-    trackToolUsage(mode as ToolMode);
+    trackToolUsage(mode);
     
     // Close extra tools bar if a tool from it was selected
     const extraToolIds = extraTools.map(tool => tool.id);
@@ -297,7 +291,7 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
               zIndex={1}
             >
               <ToolbarIconButton
-                icon={Icon}
+                icon={Icon ?? Menu}
                 label={label}
                 onClick={() => handleModeChange(id)}
                 variant="ghost"

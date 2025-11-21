@@ -1,7 +1,7 @@
 import type { PluginDefinition, PluginSliceFactory, PluginHandlerContext } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createCurvesPluginSlice } from './slice';
-import { getToolMetadata } from '../toolMetadata';
+import { PenTool } from 'lucide-react';
 import { CurvesRenderer } from './CurvesRenderer';
 import React from 'react';
 import { CurvesPanel } from './CurvesPanel';
@@ -65,9 +65,12 @@ const installListeners = (context: PluginHandlerContext<CanvasStore>) => {
 export const curvesPlugin: PluginDefinition<CanvasStore> = {
   id: 'curves',
   metadata: {
-    ...getToolMetadata('curves'),
+    label: 'Curves',
+    icon: PenTool,
+    cursor: 'crosshair',
     disablePathInteraction: true,
   },
+  toolDefinition: { order: 7 },
   handler: (
     event,
     point,

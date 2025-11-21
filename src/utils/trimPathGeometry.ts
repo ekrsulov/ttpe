@@ -6,7 +6,7 @@ import type {
   SplitPathResult,
   ReconstructedPath,
   TrimValidationResult,
-} from '../types/trimPath';
+} from '../plugins/trimPath/trimPath';
 import { calculateBounds, type Bounds } from './boundsUtils';
 import { convertPathDataToPaperPath } from './pathOperationsUtils';
 

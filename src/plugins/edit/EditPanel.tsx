@@ -2,7 +2,7 @@ import React from 'react';
 import { VStack, Box, Divider } from '@chakra-ui/react';
 import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
 
-import { usePluginPanels } from '../usePluginPanels';
+import { usePluginPanels } from '../../hooks/usePluginPanels';
 
 interface EditPanelProps {
   activePlugin: string | null;

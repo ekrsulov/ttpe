@@ -1,7 +1,7 @@
 import type { PluginDefinition, PluginSliceFactory, PluginHandlerContext } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
-import { getToolMetadata } from '../toolMetadata';
 import { createPencilPluginSlice } from './slice';
+import { Pen } from 'lucide-react';
 import type { PencilPluginSlice } from './slice';
 import React from 'react';
 import { PencilPanel } from './PencilPanel';
@@ -74,9 +74,12 @@ const installListeners = (context: PluginHandlerContext<CanvasStore>, api: Penci
 export const pencil2Plugin: PluginDefinition<CanvasStore> = {
   id: 'pencil2',
   metadata: {
-    ...getToolMetadata('pencil2'),
+    label: 'Pencil 2',
+    icon: Pen,
+    cursor: 'crosshair',
     disablePathInteraction: true,
   },
+  toolDefinition: { order: 6 },
   handler: (_event, point, _target, context) => {
     const api = context.api as PencilPluginApi;
     api.startPath(point);

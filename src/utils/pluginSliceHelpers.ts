@@ -1,5 +1,5 @@
 import type { StateCreator } from 'zustand';
-import type { CanvasElement, PathData } from '../../types';
+import type { CanvasElement, PathData } from '../types';
 
 /**
  * Helper type for selected subpath elements

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useColorModeValue } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
-import type { TrimSegment, TrimIntersection } from '../../types/trimPath';
+import type { TrimSegment, TrimIntersection } from './trimPath';
 
 interface TrimPathOverlayProps {
   intersections: TrimIntersection[];

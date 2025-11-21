@@ -198,6 +198,14 @@ export interface PluginDefinition<TStore extends object = object> {
    */
   expandablePanel?: ComponentType;
   /**
+   * Tool definition for this plugin if it should appear in the toolbar.
+   * Defines the order, icon, label, and cursor for the tool button.
+   */
+  toolDefinition?: {
+    order: number;
+    // icon and label are already in metadata, cursor too
+  };
+  /**
    * Lifecycle method called when the plugin is registered.
    * Can be used to register global listeners, modifiers, etc.
    * Returns a cleanup function called when the plugin is unregistered.

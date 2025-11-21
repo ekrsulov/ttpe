@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { ComponentType } from 'react';
-import { CORE_PLUGINS } from './index';
+import { CORE_PLUGINS } from '../plugins/index';
 import type { PluginDefinition, PluginPanelContribution } from '../types/plugins';
 
 interface PluginPanel {

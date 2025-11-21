@@ -1,6 +1,6 @@
 import type { StateCreator } from 'zustand';
 import type { Point, SubPath, Command, PathElement } from '../../types';
-import type { SplitPathResult, ReconstructedPath, TrimIntersection } from '../../types/trimPath';
+import type { SplitPathResult, ReconstructedPath, TrimIntersection } from './trimPath';
 import type { CanvasStore } from '../../store/canvasStore';
 import paper from 'paper';
 import {

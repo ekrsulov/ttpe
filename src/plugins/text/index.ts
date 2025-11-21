@@ -1,6 +1,6 @@
 import type { PluginDefinition, PluginSliceFactory } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
-import { getToolMetadata } from '../toolMetadata';
+import { Type } from 'lucide-react';
 import { createTextPluginSlice } from './slice';
 import type { TextPluginSlice } from './slice';
 import React from 'react';
@@ -21,7 +21,12 @@ const textSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
 
 export const textPlugin: PluginDefinition<CanvasStore> = {
   id: 'text',
-  metadata: getToolMetadata('text'),
+  metadata: {
+    label: 'Text',
+    icon: Type,
+    cursor: 'text',
+  },
+  toolDefinition: { order: 8 },
   handler: (_event, point, _target, context) => {
     const state = context.store.getState();
     const api = context.api as TextPluginApi;

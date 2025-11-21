@@ -675,6 +675,28 @@ export class PluginManager {
     
     return globalHooks;
   }
+
+  /**
+   * Get all tool definitions from registered plugins, sorted by order.
+   * Returns an array of tool definitions with metadata from each plugin.
+   */
+  getToolDefinitions(): Array<{ mode: string; label: string; icon?: import('react').ComponentType<{ size?: number }>; cursor: string; order: number }> {
+    const tools: Array<{ mode: string; label: string; icon?: import('react').ComponentType<{ size?: number }>; cursor: string; order: number }> = [];
+    
+    this.registry.forEach((plugin) => {
+      if (plugin.toolDefinition) {
+        tools.push({
+          mode: plugin.id,
+          label: plugin.metadata.label,
+          icon: plugin.metadata.icon,
+          cursor: plugin.metadata.cursor ?? 'default',
+          order: plugin.toolDefinition.order,
+        });
+      }
+    });
+    
+    return tools.sort((a, b) => a.order - b.order);
+  }
 }
 
 export const pluginManager = new PluginManager();

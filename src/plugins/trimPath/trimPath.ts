@@ -1,5 +1,5 @@
-import type { Point, PathElement } from './index';
-import type { Bounds } from '../utils/boundsUtils';
+import type { Point, PathElement } from '../../types';
+import type { Bounds } from '../../utils/boundsUtils';
 
 /**
  * Represents an intersection point between two path segments.

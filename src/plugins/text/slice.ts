@@ -1,5 +1,5 @@
 import type { StateCreator } from 'zustand';
-import { createSimplePluginSlice } from '../../store/utils/pluginSliceHelpers';
+import { createSimplePluginSlice } from '../../utils/pluginSliceHelpers';
 
 export interface TextPluginSlice {
   // State

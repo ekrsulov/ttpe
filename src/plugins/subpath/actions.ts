@@ -10,7 +10,7 @@ import type { StoreApi } from 'zustand';
 import type { CanvasStore } from '../../store/types';
 import type { SubpathPluginSlice } from './slice';
 import { reverseSubPath, joinSubPaths } from '../../utils/path';
-import { getSelectedSubpathElements } from '../../store/utils/pluginSliceHelpers';
+import { getSelectedSubpathElements } from '../../utils/pluginSliceHelpers';
 
 /**
  * Split subpaths into separate path elements

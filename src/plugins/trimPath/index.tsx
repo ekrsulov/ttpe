@@ -33,6 +33,7 @@ export const trimPathPlugin: PluginDefinition<CanvasStore> = {
     cursor: 'crosshair',
     disablePathInteraction: true,
   },
+  toolDefinition: { order: 11 },
   subscribedEvents: ['pointerdown', 'pointermove', 'pointerup'],
   handler: (event, point, _target, context) => {
     const store = context.store;

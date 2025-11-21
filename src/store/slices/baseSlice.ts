@@ -3,7 +3,7 @@ import type { CanvasElement, GroupElement, PathData, PathElement } from '../../t
 import type { CanvasStore } from '../canvasStore';
 import { performPathUnion as performUnionOp, performPathSubtraction, performPathUnionPaperJS, performPathIntersect, performPathExclude, performPathDivide } from '../../utils/path';
 // Removed unused imports: commandsToString, measurePath (now in exportUtils), getSelectedSubpathElements (not used in this file)
-import { getSelectedPaths } from '../utils/pluginSliceHelpers';
+import { getSelectedPaths } from '../../utils/pluginSliceHelpers';
 import { exportSelection } from '../../utils/exportUtils';
 import {
   CANVAS_MODE_MACHINE,

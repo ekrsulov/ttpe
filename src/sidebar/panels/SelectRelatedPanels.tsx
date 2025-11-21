@@ -1,7 +1,7 @@
 import React from 'react';
 import { VStack, Divider, Box } from '@chakra-ui/react';
 import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
-import { usePluginPanels } from '../usePluginPanels';
+import { usePluginPanels } from '../../hooks/usePluginPanels';
 
 export const SelectRelatedPanels: React.FC = () => {
   const contributedPanels = usePluginPanels('select');

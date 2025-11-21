@@ -1,6 +1,6 @@
 import type { PluginDefinition, PluginSliceFactory } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
-import { getToolMetadata } from '../toolMetadata';
+import { Route } from 'lucide-react';
 import { createSubpathPluginSlice } from './slice';
 import type { SubpathPluginSlice } from './slice';
 import { SubPathOperationsPanel } from './SubPathOperationsPanel';
@@ -23,6 +23,7 @@ import { pluginManager } from '../../utils/pluginManager';
 
 export const subpathPlugin: PluginDefinition<CanvasStore> = {
   id: 'subpath',
+  toolDefinition: { order: 2 },
   init: (_context) => {
     return () => { };
   },
@@ -98,7 +99,9 @@ export const subpathPlugin: PluginDefinition<CanvasStore> = {
     }
   ],
   metadata: {
-    ...getToolMetadata('subpath'),
+    label: 'Subpath',
+    icon: Route,
+    cursor: 'pointer',
     disablePathInteraction: true,
   },
   onSubpathDoubleClick: (elementId, subpathIndex, _event, context) => {

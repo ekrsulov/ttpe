@@ -1,6 +1,6 @@
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
-import { getToolMetadata } from '../toolMetadata';
+import { PaintBucket } from 'lucide-react';
 import { fillGridCell } from './actions';
 import type { Point } from '../../types';
 
@@ -10,7 +10,12 @@ type GridFillPluginApi = {
 
 export const gridFillPlugin: PluginDefinition<CanvasStore> = {
   id: 'gridFill',
-  metadata: getToolMetadata('gridFill'),
+  metadata: {
+    label: 'Grid Fill',
+    icon: PaintBucket,
+    cursor: 'crosshair',
+  },
+  toolDefinition: { order: 10 },
   handler: (_event, point, _target, context) => {
     const api = context.api as GridFillPluginApi;
     api.fillGridCell(point);

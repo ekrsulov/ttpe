@@ -1,5 +1,5 @@
 import type { PathElement } from '../../types';
-import type { SplitPathResult, TrimSegment, TrimIntersection } from '../../types/trimPath';
+import type { SplitPathResult, TrimSegment, TrimIntersection } from './trimPath';
 import {
   validatePathsForTrim,
   computePathIntersections,

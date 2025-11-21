@@ -1,6 +1,6 @@
 import type { PluginDefinition, PluginSliceFactory } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
-import { getToolMetadata } from '../toolMetadata';
+import { Shapes } from 'lucide-react';
 import { createShapePluginSlice } from './slice';
 import type { ShapePluginSlice } from './slice';
 import React from 'react';
@@ -59,9 +59,12 @@ const ShapeBlockingOverlayWrapper: React.FC<{
 export const shapePlugin: PluginDefinition<CanvasStore> = {
   id: 'shape',
   metadata: {
-    ...getToolMetadata('shape'),
+    label: 'Shape',
+    icon: Shapes,
+    cursor: 'crosshair',
     disablePathInteraction: true,
   },
+  toolDefinition: { order: 9 },
   subscribedEvents: ['pointerdown', 'pointermove', 'pointerup'],
   handler: (event, point, target, context) => {
     const state = context.store.getState();

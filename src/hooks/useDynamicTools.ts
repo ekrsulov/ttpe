@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import type { ToolMode } from '../config/toolDefinitions';
+
+// Tool mode type - any string representing a tool ID
+type ToolMode = string;
 
 // Tools that can be dynamically shown/hidden based on usage
 export const DYNAMIC_TOOLS: ToolMode[] = ['pencil2', 'curves', 'text', 'shape', 'gridFill', 'trimPath', 'measure'];

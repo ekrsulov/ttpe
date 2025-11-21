@@ -1,6 +1,6 @@
 import type { PluginDefinition, PluginSliceFactory } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
-import { getToolMetadata } from '../toolMetadata';
+import { MousePointerClick } from 'lucide-react';
 import { createEditPluginSlice } from './slice';
 import type { EditPluginSlice } from './slice';
 // no React import needed
@@ -35,7 +35,12 @@ const editSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
 
 export const editPlugin: PluginDefinition<CanvasStore> = {
   id: 'edit',
-  metadata: getToolMetadata('edit'),
+  metadata: {
+    label: 'Edit',
+    icon: MousePointerClick,
+    cursor: 'pointer',
+  },
+  toolDefinition: { order: 4 },
   onElementDoubleClick: (elementId, _event, context) => {
     const state = context.store.getState();
     const wasAlreadySelected = state.selectedIds.length === 1 && state.selectedIds[0] === elementId;

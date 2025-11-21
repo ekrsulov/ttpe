@@ -1,6 +1,6 @@
 import type { PluginDefinition, PluginSliceFactory } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
-import { getToolMetadata } from '../toolMetadata';
+import { SquareDashedMousePointer } from 'lucide-react';
 import { createTransformationPluginSlice } from './slice';
 import type { TransformationPluginSlice } from './slice';
 import React from 'react';
@@ -20,7 +20,12 @@ const transformationSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, a
 
 export const transformationPlugin: PluginDefinition<CanvasStore> = {
   id: 'transformation',
-  metadata: getToolMetadata('transformation'),
+  metadata: {
+    label: 'Transform',
+    icon: SquareDashedMousePointer,
+    cursor: 'move',
+  },
+  toolDefinition: { order: 3 },
   keyboardShortcuts: {
     Escape: (_event, { store }) => {
       const state = store.getState() as CanvasStore;

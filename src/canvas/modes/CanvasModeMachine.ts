@@ -1,6 +1,6 @@
-import type { ToolMode } from '../../config/toolDefinitions';
-
-export type CanvasMode = ToolMode | (string & {});
+// Tool modes are now defined per-plugin and aggregated via the Plugin Manager.
+// We treat canvas modes as plain strings to allow arbitrary plugin-defined modes.
+export type CanvasMode = string & {};
 
 export type CanvasModeLifecycleAction = 'clearGuidelines' | 'clearSubpathSelection' | 'clearSelectedCommands';
 

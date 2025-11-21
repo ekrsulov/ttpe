@@ -3,7 +3,7 @@ import type { PluginDefinition, PluginSliceFactory, PluginHandlerContext, Canvas
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import type { CanvasStore } from '../../store/canvasStore';
 import type { Point, CanvasElement } from '../../types';
-import { getToolMetadata } from '../toolMetadata';
+import { Ruler } from 'lucide-react';
 import { calculateBounds } from '../../utils/boundsUtils';
 import { createMeasurePluginSlice } from './slice';
 import type { MeasurePluginSlice, MeasurePluginActions, SnapInfo } from './slice';
@@ -288,7 +288,12 @@ const MeasureSnapPointsLayer = ({ context }: { context: CanvasLayerContext }) =>
 // eslint-disable-next-line react-refresh/only-export-components
 export const measurePlugin: PluginDefinition<CanvasStore> = {
   id: 'measure',
-  metadata: getToolMetadata('measure'),
+  metadata: {
+    label: 'Measure',
+    icon: Ruler,
+    cursor: 'crosshair',
+  },
+  toolDefinition: { order: 12 },
   // (Listeners are installed in module scope via `installListeners`)
 
   handler: (event: ReactPointerEvent, point: Point, _target: Element, context: PluginHandlerContext<CanvasStore>) => {
