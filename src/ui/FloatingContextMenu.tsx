@@ -2,16 +2,7 @@ import React, { useState } from 'react';
 import { Box, VStack, Divider, useColorModeValue, Menu, MenuButton, MenuList, MenuItem, useBreakpointValue, HStack, Text, IconButton } from '@chakra-ui/react';
 import ConditionalTooltip from './ConditionalTooltip';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
-
-interface FloatingContextMenuAction {
-  id: string;
-  label: string;
-  icon: React.ElementType;
-  onClick?: () => void;
-  isDisabled?: boolean;
-  variant?: 'default' | 'danger';
-  submenu?: FloatingContextMenuAction[];
-}
+import type { FloatingContextMenuAction } from '../types/plugins';
 
 interface FloatingContextMenuProps {
   /** Array of actions to display in the menu */
@@ -36,18 +27,18 @@ export const FloatingContextMenu: React.FC<FloatingContextMenuProps> = ({
   const iconColor = useColorModeValue('gray.700', 'gray.300');
   const dangerColor = useColorModeValue('red.500', 'red.400');
   const dangerHoverBg = useColorModeValue('red.50', 'rgba(239, 68, 68, 0.1)');
-  
+
   // State for mobile submenu navigation
   const [activeSubmenu, setActiveSubmenu] = useState<FloatingContextMenuAction | null>(null);
-  
+
   // Check if we're on mobile
   const isMobile = useBreakpointValue({ base: true, md: false });
-  
+
   // Use left placement on mobile to prevent cutoff (for desktop)
   const submenuPlacement = useBreakpointValue({ base: 'left-start', md: 'right-start' }) as 'left-start' | 'right-start';
 
   if (!isOpen) return null;
-  
+
   // On mobile, show submenu if active
   if (isMobile && activeSubmenu) {
     return (
@@ -94,7 +85,7 @@ export const FloatingContextMenu: React.FC<FloatingContextMenuProps> = ({
             {activeSubmenu.label}
           </Text>
         </HStack>
-        
+
         {/* Submenu items */}
         {activeSubmenu.submenu?.map(subAction => {
           const iconElement = subAction.id === 'send-back' ? (
@@ -104,7 +95,7 @@ export const FloatingContextMenu: React.FC<FloatingContextMenuProps> = ({
           ) : (
             <subAction.icon size={16} />
           );
-          
+
           return (
             <Box
               key={subAction.id}
@@ -187,7 +178,7 @@ export const FloatingContextMenu: React.FC<FloatingContextMenuProps> = ({
           </Box>
         );
       }
-      
+
       // On desktop, use Chakra Menu with nested submenu
       return (
         <Menu key={action.id} placement={submenuPlacement} isLazy>
@@ -240,7 +231,7 @@ export const FloatingContextMenu: React.FC<FloatingContextMenuProps> = ({
               ) : (
                 <subAction.icon size={16} />
               );
-              
+
               return (
                 <MenuItem
                   key={subAction.id}
@@ -339,4 +330,4 @@ export const FloatingContextMenu: React.FC<FloatingContextMenuProps> = ({
   );
 };
 
-export { type FloatingContextMenuAction };
+

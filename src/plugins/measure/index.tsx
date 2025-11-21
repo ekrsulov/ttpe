@@ -505,6 +505,13 @@ export const measurePlugin: PluginDefinition<CanvasStore> = {
     },
   }),
   expandablePanel: () => React.createElement(MeasureInfoPanel, { hideTitle: true }),
+  sidebarPanels: [
+    {
+      key: 'measure',
+      condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'measure',
+      component: MeasureInfoPanel,
+    },
+  ],
 };
 
 export type { MeasurePluginSlice };

@@ -32,8 +32,10 @@ import { addPointPlugin } from './addPoint';
 import { smoothBrushPlugin } from './smoothBrush';
 import { pathSimplificationPlugin } from './pathSimplification';
 import { roundPathPlugin } from './roundPath';
+import { pathPlugin } from './path';
 import { SelectionOverlay, BlockingOverlay } from '../overlays';
 import { useColorMode } from '@chakra-ui/react';
+import { SelectRelatedPanels } from './select/SelectRelatedPanels';
 
 // Component for selection rectangle that can use hooks
 const SelectionRectangleComponent: React.FC<{
@@ -266,6 +268,13 @@ const selectPlugin: PluginDefinition<CanvasStore> = {
   id: 'select',
   metadata: getToolMetadata('select'),
   subscribedEvents: ['pointerdown', 'pointerup'],
+  sidebarPanels: [
+    {
+      key: 'select-related-panels',
+      condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'select',
+      component: SelectRelatedPanels,
+    },
+  ],
   onElementDoubleClick: (elementId, _event, context) => {
     const state = context.store.getState();
     const element = state.elements.find(el => el.id === elementId);
@@ -733,6 +742,7 @@ export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   subpathPlugin,
   transformationPlugin,
   editPlugin,
+  pathPlugin,
   gridFillPlugin,
   measurePlugin,
   opticalAlignmentPlugin,
@@ -769,6 +779,7 @@ export * from './duplicateOnDrag';
 export * from './trimPath';
 export * from './offsetPath';
 export * from './measure';
+export * from './path';
 
 export { filePlugin };
 export { selectPlugin };

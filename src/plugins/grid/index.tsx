@@ -35,6 +35,13 @@ export const gridPlugin: PluginDefinition<CanvasStore> = {
     const modifier = createGridSnapModifier(context);
     return pluginManager.registerDragModifier(modifier);
   },
+  sidebarPanels: [
+    {
+      key: 'grid',
+      condition: (ctx) => ctx.showSettingsPanel,
+      component: GridPanelComponent,
+    },
+  ],
 };
 
 export type { GridPluginSlice };

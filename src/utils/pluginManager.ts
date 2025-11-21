@@ -80,7 +80,7 @@ export class PluginManager {
     });
   }
 
-  private requireStoreApi(): CanvasStoreApi {
+  public requireStoreApi(): CanvasStoreApi {
     if (!this.storeApi) {
       throw new Error(
         'Canvas store API is not available. Ensure PluginManager.setStoreApi() is called before using store-dependent features.'

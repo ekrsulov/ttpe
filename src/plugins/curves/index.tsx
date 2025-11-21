@@ -127,6 +127,13 @@ export const curvesPlugin: PluginDefinition<CanvasStore> = {
     },
   },
   expandablePanel: () => React.createElement(CurvesPanel, { hideTitle: true }),
+  sidebarPanels: [
+    {
+      key: 'curves',
+      condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'curves',
+      component: CurvesPanel,
+    },
+  ],
 };
 
 // Re-export from other files for external use

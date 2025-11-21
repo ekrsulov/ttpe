@@ -182,6 +182,13 @@ export const transformationPlugin: PluginDefinition<CanvasStore> = {
   ],
   slices: [transformationSliceFactory],
   expandablePanel: () => React.createElement(TransformationPanel, { hideTitle: true }),
+  sidebarPanels: [
+    {
+      key: 'transformation',
+      condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'transformation',
+      component: TransformationPanel,
+    },
+  ],
 };
 
 export type { TransformationPluginSlice };

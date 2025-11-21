@@ -5,6 +5,7 @@ import type { CanvasControllerValue } from '../canvas/controller/CanvasControlle
 import type { Bounds } from '../utils/boundsUtils';
 import type { CanvasEventBus, CanvasPointerEventState } from '../canvas/CanvasEventBusContext';
 import type { PointPositionFeedback } from '../canvas/interactions/ShapeCreationController';
+import type { PanelConfig } from './panel';
 
 export type CanvasShortcutStoreApi = Pick<StoreApi<object>, 'getState' | 'subscribe'>;
 
@@ -162,6 +163,11 @@ export interface PluginDefinition<TStore extends object = object> {
   overlays?: PluginUIContribution[];
   canvasLayers?: CanvasLayerContribution[];
   panels?: PluginUIContribution[];
+  /**
+   * Sidebar panels contributed by this plugin.
+   * These panels are rendered in the main sidebar based on their condition.
+   */
+  sidebarPanels?: PanelConfig[];
   actions?: PluginActionContribution[];
   /**
    * Panels contributed to other plugins.
@@ -191,4 +197,25 @@ export interface PluginDefinition<TStore extends object = object> {
    * Returns a cleanup function called when the plugin is unregistered.
    */
   init?: (context: PluginHandlerContext<TStore>) => (() => void) | void;
+  /**
+   * Context menu actions contributed by this plugin.
+   */
+  contextMenuActions?: PluginContextMenuActionContribution[];
+}
+
+import type { SelectionContextInfo } from './selection';
+
+export interface FloatingContextMenuAction {
+  id: string;
+  label: string;
+  icon: React.ElementType;
+  onClick?: () => void;
+  isDisabled?: boolean;
+  variant?: 'default' | 'danger';
+  submenu?: FloatingContextMenuAction[];
+}
+
+export interface PluginContextMenuActionContribution {
+  id: string;
+  action: (context: SelectionContextInfo) => FloatingContextMenuAction | null;
 }

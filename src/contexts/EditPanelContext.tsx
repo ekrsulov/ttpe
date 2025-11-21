@@ -1,10 +1,10 @@
 import { createContext, useContext } from 'react';
-import type { 
-  SmoothBrush, 
-  PathSimplification, 
-  PathRounding, 
-  SelectedCommand 
-} from '../sidebar/components/panelConfig';
+import type {
+  SmoothBrush,
+  PathSimplification,
+  PathRounding,
+  SelectedCommand
+} from '../types/panel';
 
 /**
  * Context for EditPanel-related state and actions.

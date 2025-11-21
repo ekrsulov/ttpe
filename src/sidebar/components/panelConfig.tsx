@@ -1,83 +1,17 @@
 import React from 'react';
 import type { SmoothBrush } from '../../plugins/smoothBrush/slice';
+import { CORE_PLUGINS } from '../../plugins';
+import type { PanelConfig } from '../../types/panel';
 
 // Re-export SmoothBrush for backward compatibility
 export type { SmoothBrush };
 
-// Lazy load panel components
+// Lazy load core panel components
 const EditorPanel = React.lazy(() => import('../panels/EditorPanel').then(module => ({ default: module.EditorPanel })));
-const EditPanel = React.lazy(() => import('../../plugins/edit/EditPanel').then(module => ({ default: module.EditPanel })));
-const ControlPointAlignmentPanel = React.lazy(() => import('../../plugins/edit/ControlPointAlignmentPanel').then(module => ({ default: module.ControlPointAlignmentPanel })));
-const OpticalAlignmentPanel = React.lazy(() => import('../../plugins/opticalAlignment/OpticalAlignmentPanel').then(module => ({ default: module.OpticalAlignmentPanel })));
 const PanPanel = React.lazy(() => import('../panels/PanPanel').then(module => ({ default: module.PanPanel })));
-const PencilPanel = React.lazy(() => import('../../plugins/pencil2/PencilPanel').then(module => ({ default: module.PencilPanel })));
-const CurvesPanel = React.lazy(() => import('../../plugins/curves/CurvesPanel').then(module => ({ default: module.CurvesPanel })));
-const TransformationPanel = React.lazy(() => import('../../plugins/transformation/TransformationPanel').then(module => ({ default: module.TransformationPanel })));
-const TextPanel = React.lazy(() => import('../../plugins/text/TextPanel').then(module => ({ default: module.TextPanel })));
-const ShapePanel = React.lazy(() => import('../../plugins/shape/ShapePanel').then(module => ({ default: module.ShapePanel })));
 const FilePanel = React.lazy(() => import('../panels/FilePanel').then(module => ({ default: module.FilePanel })));
 const SettingsPanel = React.lazy(() => import('../panels/SettingsPanel').then(module => ({ default: module.SettingsPanel })));
-const PathOperationsPanel = React.lazy(() => import('../../plugins/path/PathOperationsPanel').then(module => ({ default: module.PathOperationsPanel })));
-const SubPathOperationsPanel = React.lazy(() => import('../../plugins/subpath/SubPathOperationsPanel').then(module => ({ default: module.SubPathOperationsPanel })));
-const GuidelinesPanel = React.lazy(() => import('../../plugins/guidelines/GuidelinesPanel').then(module => ({ default: module.GuidelinesPanel })));
-const GridPanel = React.lazy(() => import('../../plugins/grid/GridPanel').then(module => ({ default: module.default })));
 const DocumentationPanel = React.lazy(() => import('../panels/DocumentationPanel').then(module => ({ default: module.DocumentationPanel })));
-const OffsetPathPanel = React.lazy(() => import('../../plugins/offsetPath/OffsetPathPanel').then(module => ({ default: module.OffsetPathPanel })));
-const MeasureInfoPanel = React.lazy(() => import('../../plugins/measure/MeasureInfoPanel').then(module => ({ default: module.MeasureInfoPanel })));
-
-export interface PathSimplification {
-  tolerance: number;
-}
-
-export interface PathRounding {
-  radius: number;
-}
-
-export interface SelectedCommand {
-  elementId: string;
-  commandIndex: number;
-  pointIndex: number;
-}
-
-export interface PanelConditionContext {
-  activePlugin: string | null;
-  showFilePanel: boolean;
-  showSettingsPanel: boolean;
-  isInSpecialPanelMode: boolean;
-  canPerformOpticalAlignment: boolean;
-}
-
-export interface PanelComponentProps {
-  activePlugin?: string | null;
-  smoothBrush?: SmoothBrush;
-  addPointMode?: {
-    isActive: boolean;
-  };
-  pathSimplification?: PathSimplification;
-  pathRounding?: PathRounding;
-  selectedCommands?: SelectedCommand[];
-  selectedSubpaths?: Array<{ elementId: string; subpathIndex: number }>;
-  updateSmoothBrush?: (config: Partial<SmoothBrush>) => void;
-  updatePathSimplification?: (config: Partial<PathSimplification>) => void;
-  updatePathRounding?: (config: Partial<PathRounding>) => void;
-  applySmoothBrush?: () => void;
-  applyPathSimplification?: () => void;
-  applyPathRounding?: () => void;
-  activateSmoothBrush?: () => void;
-  deactivateSmoothBrush?: () => void;
-  resetSmoothBrush?: () => void;
-  activateAddPointMode?: () => void;
-  deactivateAddPointMode?: () => void;
-}
-
-export interface PanelConfig {
-  key: string;
-  condition: (ctx: PanelConditionContext) => boolean;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  component: React.LazyExoticComponent<React.ComponentType<any>>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getProps?: (allProps: PanelComponentProps) => any;
-}
 
 /**
  * Panel configuration array
@@ -107,103 +41,22 @@ export const PANEL_CONFIGS: PanelConfig[] = [
     component: EditorPanel,
   },
   {
-    key: 'path-operations',
-    condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'select',
-    component: PathOperationsPanel,
+    key: 'pan',
+    condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'pan',
+    component: PanPanel,
   },
-  {
-    key: 'subpath-operations',
-    condition: (ctx) => !ctx.isInSpecialPanelMode,
-    component: SubPathOperationsPanel,
-  },
-  {
-    key: 'edit',
-    condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'edit',
-    component: EditPanel,
-    getProps: (allProps) => ({
-      activePlugin: allProps.activePlugin,
-      smoothBrush: allProps.smoothBrush,
-      addPointMode: allProps.addPointMode,
-      pathSimplification: allProps.pathSimplification,
-      pathRounding: allProps.pathRounding,
-      selectedCommands: allProps.selectedCommands,
-      selectedSubpaths: allProps.selectedSubpaths,
-      updateSmoothBrush: allProps.updateSmoothBrush,
-      updatePathSimplification: allProps.updatePathSimplification,
-      updatePathRounding: allProps.updatePathRounding,
-      applySmoothBrush: allProps.applySmoothBrush,
-      applyPathSimplification: allProps.applyPathSimplification,
-      applyPathRounding: allProps.applyPathRounding,
-      activateSmoothBrush: allProps.activateSmoothBrush,
-      deactivateSmoothBrush: allProps.deactivateSmoothBrush,
-      resetSmoothBrush: allProps.resetSmoothBrush,
-      activateAddPointMode: allProps.activateAddPointMode,
-      deactivateAddPointMode: allProps.deactivateAddPointMode,
-    }),
-  },
-  {
-    key: 'control-point-alignment',
-    condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'edit',
-    component: ControlPointAlignmentPanel,
-  },
-  {
-    key: 'optical-alignment',
-    condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'select' && ctx.canPerformOpticalAlignment,
-    component: OpticalAlignmentPanel,
-  },
-  {
-    key: 'offset-path',
-    condition: (ctx) => !ctx.isInSpecialPanelMode && (ctx.activePlugin === 'select' || ctx.activePlugin === 'subpath'),
-    component: OffsetPathPanel,
-  },
-  {
-    key: 'guidelines',
-    condition: (ctx) => ctx.showSettingsPanel,
-    component: GuidelinesPanel,
-  },
-  {
-    key: 'grid',
-    condition: (ctx) => ctx.showSettingsPanel,
-    component: GridPanel,
-  },
+
   {
     key: 'documentation',
     condition: (ctx) => ctx.showSettingsPanel,
     component: DocumentationPanel,
   },
-  {
-    key: 'pan',
-    condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'pan',
-    component: PanPanel,
-  },
-  {
-    key: 'pencil2',
-    condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'pencil2',
-    component: PencilPanel,
-  },
-  {
-    key: 'curves',
-    condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'curves',
-    component: CurvesPanel,
-  },
-  {
-    key: 'transformation',
-    condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'transformation',
-    component: TransformationPanel,
-  },
-  {
-    key: 'text',
-    condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'text',
-    component: TextPanel,
-  },
-  {
-    key: 'shape',
-    condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'shape',
-    component: ShapePanel,
-  },
-  {
-    key: 'measure',
-    condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'measure',
-    component: MeasureInfoPanel,
-  },
 ];
+
+// Dynamically add panels from plugins
+CORE_PLUGINS.forEach(plugin => {
+  if (plugin.sidebarPanels) {
+    PANEL_CONFIGS.push(...plugin.sidebarPanels);
+  }
+});
+

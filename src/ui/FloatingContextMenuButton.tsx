@@ -3,7 +3,8 @@ import { Box, Popover, PopoverTrigger, PopoverContent } from '@chakra-ui/react';
 import { MoreVertical } from 'lucide-react';
 import { ToolbarIconButton } from './ToolbarIconButton';
 import { FloatingContextMenu } from './FloatingContextMenu';
-import { useFloatingContextMenuActions, type SelectionContextInfo } from '../hooks/useFloatingContextMenuActions';
+import { useFloatingContextMenuActions } from '../hooks/useFloatingContextMenuActions';
+import type { SelectionContextInfo } from '../types/selection';
 import { useCanvasStore } from '../store/canvasStore';
 import { extractEditablePoints } from '../utils/pathParserUtils';
 import type { PathData } from '../types';
@@ -37,7 +38,7 @@ export const FloatingContextMenuButton: React.FC = () => {
         const commands = pathData.subPaths.flat();
         const points = extractEditablePoints(commands);
         const point = points.find(p => p.commandIndex === cmd.commandIndex && p.pointIndex === cmd.pointIndex);
-        
+
         if (point) {
           if (point.isControl) {
             return { type: 'point-control', pointInfo: cmd };
@@ -147,8 +148,8 @@ export const FloatingContextMenuButton: React.FC = () => {
           '& *:focus-visible': { outline: 'none !important' },
         }}
       >
-        <FloatingContextMenu 
-          actions={wrappedActions} 
+        <FloatingContextMenu
+          actions={wrappedActions}
           isOpen={isOpen}
         />
       </PopoverContent>

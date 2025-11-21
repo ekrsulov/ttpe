@@ -4,8 +4,8 @@ import { useCanvasStore } from '../../store/canvasStore';
 import { useEditPanelContext } from '../../contexts/EditPanelContext';
 import {
   PANEL_CONFIGS,
-  type PanelComponentProps
 } from './panelConfig';
+import type { PanelComponentProps } from '../../types/panel';
 import type { PluginUIContribution } from '../../types/plugins';
 
 export interface SidebarPanelsProps {
@@ -31,10 +31,10 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
   const scrollbarThumbHover = useColorModeValue('#555', 'rgba(255, 255, 255, 0.45)');
   // Get EditPanel context for panels that need it
   const editPanelContext = useEditPanelContext();
-  
+
   // Check if we're in special panel mode (file or settings)
   const isInSpecialPanelMode = showFilePanel || showSettingsPanel;
-  
+
   // Use centralized optical alignment eligibility check from store
   const canPerformOpticalAlignment = useCanvasStore(state => state.canPerformOpticalAlignment?.() ?? false);
 

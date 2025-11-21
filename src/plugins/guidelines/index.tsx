@@ -53,6 +53,13 @@ export const guidelinesPlugin: PluginDefinition<CanvasStore> = {
     },
   ],
   slices: [guidelinesSliceFactory],
+  sidebarPanels: [
+    {
+      key: 'guidelines',
+      condition: (ctx) => ctx.showSettingsPanel,
+      component: GuidelinesPanel,
+    },
+  ],
 };
 
 export type { GuidelinesPluginSlice };

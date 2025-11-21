@@ -107,6 +107,13 @@ export const pencil2Plugin: PluginDefinition<CanvasStore> = {
     },
   ],
   expandablePanel: () => React.createElement(PencilPanel, { hideTitle: true }),
+  sidebarPanels: [
+    {
+      key: 'pencil2',
+      condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'pencil2',
+      component: PencilPanel,
+    },
+  ],
 };
 
 export type { PencilPluginSlice };

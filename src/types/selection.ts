@@ -32,3 +32,22 @@ export interface SelectedSubpath {
   elementId: string;
   subpathIndex: number;
 }
+
+export type SelectionContextType =
+  | 'multiselection'
+  | 'group'
+  | 'path'
+  | 'subpath'
+  | 'point-anchor-m'
+  | 'point-anchor-l'
+  | 'point-anchor-c'
+  | 'point-control';
+
+export interface SelectionContextInfo {
+  type: SelectionContextType;
+  elementId?: string;
+  elementIds?: string[];
+  groupId?: string;
+  subpathInfo?: { elementId: string; subpathIndex: number };
+  pointInfo?: SelectedCommand;
+}

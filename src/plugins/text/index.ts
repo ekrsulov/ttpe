@@ -39,6 +39,13 @@ export const textPlugin: PluginDefinition<CanvasStore> = {
     },
   }),
   expandablePanel: () => React.createElement(TextPanel, { hideTitle: true }),
+  sidebarPanels: [
+    {
+      key: 'text',
+      condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'text',
+      component: TextPanel,
+    },
+  ],
 };
 
 export type { TextPluginSlice };

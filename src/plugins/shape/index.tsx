@@ -24,13 +24,13 @@ const shapeSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
 const ShapePreviewWrapper: React.FC = () => {
   const shape = useCanvasStore(state => state.shape);
   const viewport = useCanvasStore(state => state.viewport);
-  
+
   const { interaction, selectedShape } = shape;
-  
+
   if (!interaction.isCreating || !interaction.startPoint || !interaction.endPoint) {
     return null;
   }
-  
+
   return (
     <ShapePreview
       selectedShape={selectedShape}
@@ -46,7 +46,7 @@ const ShapeBlockingOverlayWrapper: React.FC<{
   canvasSize: { width: number; height: number };
 }> = ({ viewport, canvasSize }) => {
   const isCreating = useCanvasStore(state => state.shape.interaction.isCreating);
-  
+
   return (
     <BlockingOverlay
       viewport={viewport}
@@ -67,16 +67,16 @@ export const shapePlugin: PluginDefinition<CanvasStore> = {
     const state = context.store.getState();
     const { interaction, selectedShape } = state.shape;
     const effectiveShiftKey = getEffectiveShift(event.shiftKey, state.isVirtualShiftActive);
-    
+
     const controller = new ShapeCreationController({
-        createShape: (start, end) => createShape(start, end, context.store.getState),
-        getSelectedShape: () => state.shape.selectedShape
+      createShape: (start, end) => createShape(start, end, context.store.getState),
+      getSelectedShape: () => state.shape.selectedShape
     });
 
     if (event.type === 'pointerdown') {
       if (target.tagName === 'svg' || target.classList.contains('canvas-background')) {
         const startPoint = state.grid?.snapEnabled ? state.snapToGrid?.(point.x, point.y) || point : point;
-        
+
         state.setShapeInteraction({
           isCreating: true,
           startPoint: startPoint,
@@ -86,19 +86,19 @@ export const shapePlugin: PluginDefinition<CanvasStore> = {
     } else if (event.type === 'pointermove') {
       if (interaction.isCreating && interaction.startPoint) {
         let endPoint = state.grid?.snapEnabled ? state.snapToGrid?.(point.x, point.y) || point : point;
-        
+
         if (selectedShape === 'line' && effectiveShiftKey) {
-             endPoint = controller.calculateConstrainedLineEnd(interaction.startPoint, endPoint);
+          endPoint = controller.calculateConstrainedLineEnd(interaction.startPoint, endPoint);
         } else if (effectiveShiftKey) {
-             // 10px snap for other shapes
-             const dx = endPoint.x - interaction.startPoint.x;
-             const dy = endPoint.y - interaction.startPoint.y;
-             const snappedDx = Math.round(dx / 10) * 10;
-             const snappedDy = Math.round(dy / 10) * 10;
-             endPoint = {
-                 x: interaction.startPoint.x + snappedDx,
-                 y: interaction.startPoint.y + snappedDy
-             };
+          // 10px snap for other shapes
+          const dx = endPoint.x - interaction.startPoint.x;
+          const dy = endPoint.y - interaction.startPoint.y;
+          const snappedDx = Math.round(dx / 10) * 10;
+          const snappedDy = Math.round(dy / 10) * 10;
+          endPoint = {
+            x: interaction.startPoint.x + snappedDx,
+            y: interaction.startPoint.y + snappedDy
+          };
         }
 
         state.setShapeInteraction({
@@ -106,19 +106,19 @@ export const shapePlugin: PluginDefinition<CanvasStore> = {
         });
       }
     } else if (event.type === 'pointerup') {
-       if (interaction.isCreating && interaction.startPoint && interaction.endPoint) {
-          controller.completeShapeCreation(interaction.startPoint, interaction.endPoint);
-          
-          state.setShapeInteraction({
-            isCreating: false,
-            startPoint: null,
-            endPoint: null,
-          });
-          
-          if (!state.shape.keepShapeMode) {
-            state.setActivePlugin('select');
-          }
-       }
+      if (interaction.isCreating && interaction.startPoint && interaction.endPoint) {
+        controller.completeShapeCreation(interaction.startPoint, interaction.endPoint);
+
+        state.setShapeInteraction({
+          isCreating: false,
+          startPoint: null,
+          endPoint: null,
+        });
+
+        if (!state.shape.keepShapeMode) {
+          state.setActivePlugin('select');
+        }
+      }
     }
   },
   keyboardShortcuts: {
@@ -155,6 +155,13 @@ export const shapePlugin: PluginDefinition<CanvasStore> = {
     },
   }),
   expandablePanel: () => React.createElement(ShapePanel, { hideTitle: true }),
+  sidebarPanels: [
+    {
+      key: 'shape',
+      condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'shape',
+      component: ShapePanel,
+    },
+  ],
 };
 
 export type { ShapePluginSlice };

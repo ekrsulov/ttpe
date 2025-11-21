@@ -18,8 +18,85 @@ const subpathSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => 
   };
 };
 
+import { Undo, SplitSquareVertical, Combine } from 'lucide-react';
+import { pluginManager } from '../../utils/pluginManager';
+
 export const subpathPlugin: PluginDefinition<CanvasStore> = {
   id: 'subpath',
+  init: (_context) => {
+    return () => { };
+  },
+  contextMenuActions: [
+    {
+      id: 'reverse-subpath',
+      action: (context) => {
+        if (context.type !== 'subpath') return null;
+
+        return {
+          id: 'reverse-subpath',
+          label: 'Reverse Direction',
+          icon: Undo,
+          onClick: () => {
+            pluginManager.callPluginApi('subpath', 'performSubPathReverse');
+          }
+        };
+      }
+    },
+    {
+      id: 'subpath-split',
+      action: (context) => {
+        if (context.type !== 'path') return null;
+
+        // Check if path has multiple subpaths
+        // We need to access the store state to check the element data
+        // For now, let's assume if we are in path context, we might show it if applicable
+        // But the original logic checked for multiple subpaths.
+        // We can access the element via context.elementId and store
+
+        const store = pluginManager.requireStoreApi();
+        const state = store.getState();
+        const element = state.elements.find(el => el.id === context.elementId);
+
+        if (!element || element.type !== 'path') return null;
+        const pathData = element.data as import('../../types').PathData;
+
+        if (pathData.subPaths.length <= 1) return null;
+
+        return {
+          id: 'subpath-split',
+          label: 'Subpath Split',
+          icon: SplitSquareVertical,
+          onClick: () => {
+            pluginManager.callPluginApi('subpath', 'performPathSimplify');
+          }
+        };
+      }
+    },
+    {
+      id: 'subpath-join',
+      action: (context) => {
+        if (context.type !== 'path') return null;
+
+        const store = pluginManager.requireStoreApi();
+        const state = store.getState();
+        const element = state.elements.find(el => el.id === context.elementId);
+
+        if (!element || element.type !== 'path') return null;
+        const pathData = element.data as import('../../types').PathData;
+
+        if (pathData.subPaths.length <= 1) return null;
+
+        return {
+          id: 'subpath-join',
+          label: 'Subpath Join',
+          icon: Combine,
+          onClick: () => {
+            pluginManager.callPluginApi('subpath', 'performSubPathJoin');
+          }
+        };
+      }
+    }
+  ],
   metadata: {
     ...getToolMetadata('subpath'),
     disablePathInteraction: true,
@@ -128,7 +205,7 @@ export const subpathPlugin: PluginDefinition<CanvasStore> = {
                   selectedSubpaths={selectedSubpaths ?? []}
                   viewport={viewport}
                   smoothBrush={smoothBrush}
-                  onSelectSubpath={selectSubpath ?? (() => {})}
+                  onSelectSubpath={selectSubpath ?? (() => { })}
                   onSetDragStart={setDragStart}
                   onSubpathDoubleClick={handleSubpathDoubleClick}
                   onSubpathTouchEnd={handleSubpathTouchEnd}
@@ -143,6 +220,13 @@ export const subpathPlugin: PluginDefinition<CanvasStore> = {
   slices: [subpathSliceFactory],
   // Reuse Editor styling controls for subpath editing in the bottom expandable panel
   expandablePanel: EditorPanel,
+  sidebarPanels: [
+    {
+      key: 'subpath-operations',
+      condition: (ctx) => !ctx.isInSpecialPanelMode,
+      component: SubPathOperationsPanel,
+    },
+  ],
   createApi: ({ store }) => ({
     performPathSimplify: () => {
       performPathSimplify(store.getState);
