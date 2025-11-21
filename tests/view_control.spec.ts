@@ -94,7 +94,7 @@ test.describe('View Control & Gestures Tests', () => {
     await expect(minimapText).toBeVisible();
 
     // Find the checkbox input that controls the minimap
-    const minimapToggle = page.locator('label').filter({ hasText: 'Show minimap' }).locator('input[type="checkbox"]');
+    const minimapToggle = page.getByLabel('Show minimap');
     await expect(minimapToggle).toBeVisible();
 
     // Check if minimap is initially enabled or disabled

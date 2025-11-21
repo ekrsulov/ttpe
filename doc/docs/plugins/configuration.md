@@ -189,6 +189,241 @@ canvasLayers: [
 ],
 ```
 
+## Plugin Hooks Configuration
+
+Hooks allow plugins to execute React hooks when active or globally.
+
+### Hook Definition
+
+```typescript
+import type { PluginHookContribution, PluginHooksContext } from '../../types/plugins';
+
+export const usePencilDrawing = (context: PluginHooksContext) => {
+  const { svgRef, emitPointerEvent, activePlugin, screenToCanvas } = context;
+  
+  useEffect(() => {
+    if (activePlugin !== 'pencil') return;
+    
+    const handlePointerMove = (e: PointerEvent) => {
+      if (e.buttons !== 1) return;
+      const point = screenToCanvas(e.clientX, e.clientY);
+      emitPointerEvent('pointermove', e, point);
+    };
+    
+    window.addEventListener('pointermove', handlePointerMove);
+    return () => window.removeEventListener('pointermove', handlePointerMove);
+  }, [activePlugin, screenToCanvas, emitPointerEvent]);
+};
+
+// In plugin definition
+export const pencilPlugin: PluginDefinition<CanvasStore> = {
+  id: 'pencil',
+  hooks: [
+    {
+      id: 'pencil-drawing',
+      hook: usePencilDrawing,
+      global: false, // Only when plugin is active
+    },
+  ],
+};
+```
+
+### Global vs Tool-Scoped Hooks
+
+```typescript
+hooks: [
+  {
+    id: 'tool-specific',
+    hook: useToolBehavior,
+    global: false, // Only when this plugin is active (default)
+  },
+  {
+    id: 'global-listener',
+    hook: useGlobalGesture,
+    global: true, // Always active, regardless of current plugin
+  },
+],
+```
+
+## Sidebar Panels Configuration
+
+Declaratively configure sidebar panels.
+
+### Basic Panel Configuration
+
+```typescript
+import type { PanelConfig } from '../../types/panel';
+import { MyToolPanel } from './MyToolPanel';
+
+export const myPlugin: PluginDefinition<CanvasStore> = {
+  id: 'my-tool',
+  sidebarPanels: [
+    {
+      key: 'my-tool',
+      condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'my-tool',
+      component: MyToolPanel,
+    },
+  ],
+};
+```
+
+### Panel Context
+
+```typescript
+interface PanelContext {
+  activePlugin: string | null;
+  isInSpecialPanelMode: boolean;
+  // Additional context properties
+}
+```
+
+## Behavior Flags Configuration
+
+Control plugin interactions dynamically.
+
+### Example: Preventing Selection
+
+```typescript
+export const drawingPlugin: PluginDefinition<CanvasStore> = {
+  id: 'drawing',
+  
+  behaviorFlags: (store) => ({
+    preventsSelection: store.drawing?.isActive ?? false,
+    preventsSubpathInteraction: store.drawing?.isActive ?? false,
+  }),
+};
+```
+
+### Available Flags
+
+```typescript
+interface PluginBehaviorFlags {
+  preventsSelection?: boolean;          // Prevents selection rectangle
+  preventsSubpathInteraction?: boolean; // Prevents subpath overlays
+}
+```
+
+## Subscribed Events Configuration
+
+Control which pointer events a plugin receives.
+
+### Default Behavior
+
+By default, plugins only receive `pointerdown` events:
+
+```typescript
+// Implicit default
+export const selectPlugin: PluginDefinition<CanvasStore> = {
+  id: 'select',
+  handler: (event, point, target, context) => {
+    // Only receives pointerdown
+  },
+};
+```
+
+### Subscribe to Multiple Events
+
+```typescript
+export const pencilPlugin: PluginDefinition<CanvasStore> = {
+  id: 'pencil',
+  subscribedEvents: ['pointerdown', 'pointermove', 'pointerup'],
+  
+  handler: (event, point, target, context) => {
+    switch (event.type) {
+      case 'pointerdown':
+        context.api.startPath(point);
+        break;
+      case 'pointermove':
+        context.api.addPoint(point);
+        break;
+      case 'pointerup':
+        context.api.finalizePath();
+        break;
+    }
+  },
+};
+```
+
+### Performance Considerations
+
+- `pointermove`: Fires very frequently, can impact performance
+- `pointerup`: Generally low frequency
+- Only subscribe to events you actively use
+
+## Context Menu Actions Configuration
+
+Contribute actions to the floating context menu.
+
+### Basic Action
+
+```typescript
+import { Copy } from 'lucide-react';
+
+export const editPlugin: PluginDefinition<CanvasStore> = {
+  id: 'edit',
+  
+  contextMenuActions: [
+    {
+      id: 'duplicate',
+      action: (context) => {
+        if (!context.hasSelection) return null;
+        
+        return {
+          id: 'duplicate',
+          label: 'Duplicate',
+          icon: Copy,
+          onClick: () => {
+            // Duplicate logic
+          },
+        };
+      },
+    },
+  ],
+};
+```
+
+### Conditional Visibility
+
+Return `null` to hide an action:
+
+```typescript
+contextMenuActions: [
+  {
+    id: 'advanced-action',
+    action: (context) => {
+      // Only show if certain conditions are met
+      if (!context.hasSelection || context.selectedIds.length < 2) {
+        return null;
+      }
+      
+      return {
+        id: 'advanced',
+        label: 'Advanced Action',
+        icon: Zap,
+        onClick: () => { /* ... */ },
+      };
+    },
+  },
+],
+```
+
+### Danger Variant
+
+```typescript
+contextMenuActions: [
+  {
+    id: 'delete',
+    action: (context) => ({
+      id: 'delete',
+      label: 'Delete',
+      icon: Trash,
+      variant: 'danger', // Red text/icon
+      onClick: () => { /* ... */ },
+    }),
+  },
+],
+```
+
 ## Feature Flags
 
 Conditional plugin features:

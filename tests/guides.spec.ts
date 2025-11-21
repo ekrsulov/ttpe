@@ -10,7 +10,7 @@ test.describe('Guides & Grid Snapping Tests', () => {
     await page.locator('[aria-label="Settings"]').click();
 
     // Toggle smart guides
-    await page.locator('text=Alignment').click();
+    await page.locator('label[title="Enable Guidelines"]').click();
 
     // Verify toggle was clickable
     expect(true).toBe(true);

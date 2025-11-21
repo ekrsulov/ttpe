@@ -41,12 +41,6 @@ export const PANEL_CONFIGS: PanelConfig[] = [
     condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'pan',
     component: PanPanel,
   },
-
-  {
-    key: 'documentation',
-    condition: (ctx) => ctx.showSettingsPanel,
-    component: DocumentationPanel,
-  },
 ];
 
 // Dynamically add panels from plugins
@@ -56,3 +50,10 @@ CORE_PLUGINS.forEach(plugin => {
   }
 });
 
+PANEL_CONFIGS.push(
+  {
+    key: 'documentation',
+    condition: (ctx) => ctx.showSettingsPanel,
+    component: DocumentationPanel,
+  }
+)

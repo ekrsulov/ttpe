@@ -12,7 +12,7 @@ test.describe('Measure Plugin - Snap Type Toggle Persistence', () => {
     // Ensure initial measure settings: disable Mid and Edge
     await page.evaluate(() => {
       const store = (window as any).useCanvasStore;
-      store.getState().updateMeasureState?.({ snapToMidpoints: false, snapToEdges: false, snapToAnchors: true });
+      store.getState().updateMeasureState?.({ snapToMidpoints: false, snapToEdges: false, snapToAnchors: true, showSnapPoints: true });
     });
 
     // Wait for UI to update
@@ -40,6 +40,6 @@ test.describe('Measure Plugin - Snap Type Toggle Persistence', () => {
     await midControl.click();
     await page.waitForTimeout(30);
     expect(await midCheckbox.isChecked()).toBe(true);
-    
+
   });
 });

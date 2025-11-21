@@ -457,6 +457,129 @@ slices: [
 ],
 ```
 
+## Init Lifecycle
+
+The `init` lifecycle method runs once when the plugin is registered and can return a cleanup function that runs when the plugin is unregistered.
+
+### Init Method Signature
+
+```typescript
+init?: (context: PluginHandlerContext<TStore>) => (() => void) | void;
+```
+
+### When Init Runs
+
+```mermaid
+sequenceDiagram
+    participant PM as PluginManager
+    participant Plugin
+    
+    PM->>Plugin: register()
+    Note over PM: Apply slices
+    Note over PM: Initialize API
+    PM->>Plugin: init(context)
+    Plugin->>Plugin: Setup global resources
+    Plugin-->>PM: Return cleanup function
+    Note over PM: Store cleanup function
+    
+    Note over PM: Time passes...
+    
+    PM->>Plugin: unregister()
+    PM->>Plugin: Call cleanup function
+    Plugin->>Plugin: Teardown resources
+```
+
+### Example: Registering Global Modifiers
+
+```typescript
+export const transformationPlugin: PluginDefinition<CanvasStore> = {
+  id: 'transformation',
+  metadata: { label: 'Transform', icon: Move },
+  
+  init: (context) => {
+    const { store } = context;
+    
+    // Register global object snap modifier
+    const modifier: CanvasModifier = {
+      name: 'transformation',
+      modify: (type, payload) => {
+        const state = store.getState();
+        if (!state.transformation?.isActive) return payload;
+        
+        // Apply transformation-specific modifications
+        return modifyPayload(payload);
+      },
+    };
+    
+    canvasModifierRegistry.register(modifier);
+    console.log(`[${this.id}] Modifier registered`);
+    
+    // Return cleanup function
+    return () => {
+      canvasModifierRegistry.unregister(modifier.name);
+      console.log(`[${this.id}] Modifier unregistered`);
+    };
+  },
+};
+```
+
+### Example: Initializing Services
+
+```typescript
+export const smoothBrushPlugin: PluginDefinition<CanvasStore> = {
+  id: 'smooth-brush',
+  metadata: { label: 'Smooth Brush', icon: Paintbrush },
+  
+  init: (context) => {
+    const service = new SmoothBrushService(context.store);
+    service.initialize();
+    
+    // Cleanup
+    return () => {
+      service.dispose();
+    };
+  },
+};
+```
+
+### Example: No Cleanup Needed
+
+```typescript
+export const myPlugin: PluginDefinition<CanvasStore> = {
+  id: 'my-plugin',
+  metadata: { label: 'My Plugin' },
+  
+  init: (context) => {
+    // One-time setup that doesn't need cleanup
+    console.log('My plugin initialized');
+    context.store.getState().setGlobalFlag?.(true);
+    
+    // No cleanup function returned
+  },
+};
+```
+
+### Best Practices for Init
+
+1. **Use for Global Setup**: Register modifiers, initialize services, set up global listeners
+2. **Always Return Cleanup**: If your init does any setup, return a cleanup function
+3. **Avoid Heavy Computation**: Init should be fast; defer heavy work to lazy initialization
+4. **Don't Block Registration**: Init is synchronous; don't use async operations
+5. **Handle Errors Gracefully**: Wrap risky operations in try-catch
+
+```typescript
+init: (context) => {
+  try {
+    const resource = setupResource();
+    return () => cleanupResource(resource);
+  } catch (error) {
+    console.error('Failed to initialize plugin:', error);
+    // Return empty cleanup if setup failed
+    return () => {};
+  }
+}
+```
+
 ## Lifecycle Hooks Pattern
 
 Proposed pattern for future enhancement:

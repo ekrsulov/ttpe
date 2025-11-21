@@ -66,6 +66,27 @@ interface PluginDefinition<TStore> {
   
   // Optional: Expandable panel for bottom toolbar
   expandablePanel?: ComponentType;
+  
+  // Optional: Plugin hooks for lifecycle management
+  hooks?: PluginHookContribution[];
+  
+  // Optional: Sidebar panels configuration
+  sidebarPanels?: PanelConfig[];
+  
+  // Optional: Initialization lifecycle with cleanup
+  init?: (context: PluginHandlerContext<TStore>) => (() => void) | void;
+  
+  // Optional: Register helper functions
+  registerHelpers?: (context: PluginHandlerContext<TStore>) => Record<string, any>;
+  
+  // Optional: Behavior flags for plugin interactions
+  behaviorFlags?: (store: TStore) => PluginBehaviorFlags;
+  
+  // Optional: Events to subscribe to
+  subscribedEvents?: ('pointerdown' | 'pointermove' | 'pointerup')[];
+  
+  // Optional: Context menu action contributions
+  contextMenuActions?: PluginContextMenuActionContribution[];
 }
 ```
 
@@ -648,6 +669,256 @@ canvasLayers: [
   },
 ],
 ```
+
+## New Plugin Capabilities (Decoupled Architecture)
+
+### Plugin Hooks
+
+Plugins can now register React hooks that execute when the plugin is active. These hooks receive a context with canvas utilities and are ideal for managing DOM listeners or complex lifecycle behavior.
+
+```typescript
+import type { PluginHookContribution } from '../../types/plugins';
+
+export const usePencilDrawingHook = (context: PluginHooksContext) => {
+  const { svgRef, emitPointerEvent, activePlugin } => context;
+  
+  useEffect(() => {
+    if (activePlugin !== 'pencil') return;
+    
+    const handlePointerMove = (e: PointerEvent) => {
+      if (e.buttons !== 1) return;
+      const point = screenToCanvas(e.clientX, e.clientY);
+      emitPointerEvent('pointermove', e, point);
+    };
+    
+    window.addEventListener('pointermove', handlePointerMove);
+    return () => window.removeEventListener('pointermove', handlePointerMove);
+  }, [activePlugin]);
+};
+
+// In plugin definition
+export const pencilPlugin: PluginDefinition<CanvasStore> = {
+  id: 'pencil',
+  metadata: { label: 'Pencil', icon: Pen },
+  hooks: [
+    {
+      id: 'pencil-drawing',
+      hook: usePencilDrawingHook,
+      global: false, // Only runs when plugin is active
+    },
+  ],
+};
+```
+
+**Global Hooks**: Set `global: true` to run hooks regardless of active plugin:
+
+```typescript
+hooks: [
+  {
+    id: 'global-gesture-detector',
+    hook: useGestureDetector,
+    global: true, // Always runs
+  },
+],
+```
+
+### Sidebar Panels
+
+Plugins can now declaratively configure sidebar panels without manual registration:
+
+```typescript
+import type { PanelConfig } from '../../types/panel';
+import { PencilPanel } from './PencilPanel';
+
+export const pencilPlugin: PluginDefinition<CanvasStore> = {
+  id: 'pencil',
+  metadata: { label: 'Pencil', icon: Pen },
+  sidebarPanels: [
+    {
+      key: 'pencil',
+      condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'pencil',
+      component: PencilPanel,
+    },
+  ],
+};
+```
+
+**PanelConfig Interface**:
+```typescript
+interface PanelConfig {
+  key: string;
+  condition: (context: PanelContext) => boolean;
+  component: ComponentType;
+}
+```
+
+### Init Lifecycle
+
+The `init` method runs once when the plugin is registered, and can return a cleanup function:
+
+```typescript
+export const transformationPlugin: PluginDefinition<CanvasStore> = {
+  id: 'transformation',
+  metadata: { label: 'Transform', icon: Move },
+  
+  init: (context) => {
+    // Register global modifiers, listeners, etc.
+    const modifier = {
+      name: 'transformation',
+      modify: () => { /* ... */ },
+    };
+    registerGlobalModifier(modifier);
+    
+    console.log('Transformation plugin initialized');
+    
+    // Return cleanup function
+    return () => {
+      unregisterGlobalModifier(modifier.name);
+      console.log('Transformation plugin cleaned up');
+    };
+  },
+};
+```
+
+**Use Cases**:
+- Register global event listeners
+- Initialize third-party libraries
+- Set up canvas modifiers
+- Configure external services
+
+### Register Helpers
+
+Plugins can expose helper functions that other plugins or core can use:
+
+```typescript
+export const shapePlugin: PluginDefinition<CanvasStore> = {
+  id: 'shape',
+  metadata: { label: 'Shape', icon: Square },
+  
+  registerHelpers: (context) => ({
+    startShapeCreation: (point: Point) => {
+      const state = context.store.getState();
+      state.shape?.startCreation(point);
+    },
+    updateShapeCreation: (point: Point, shiftPressed: boolean) => {
+      const state = context.store.getState();
+      state.shape?.updateCreation(point, shiftPressed);
+    },
+    endShapeCreation: () => {
+      const state = context.store.getState();
+      state.shape?.endCreation();
+    },
+  }),
+};
+```
+
+**Accessing Helpers**:
+```typescript
+// In another plugin's handler
+handler: (event, point, target, context) => {
+  if (context.helpers.startShapeCreation) {
+    context.helpers.startShapeCreation(point);
+  }
+}
+```
+
+### Behavior Flags
+
+Plugins can dynamically control interactions with other plugins:
+
+```typescript
+export interface PluginBehaviorFlags {
+  preventsSelection?: boolean;
+  preventsSubpathInteraction?: boolean;
+}
+
+export const measurePlugin: PluginDefinition<CanvasStore> = {
+  id: 'measure',
+  metadata: { label: 'Measure', icon: Ruler },
+  
+  behaviorFlags: (store) => ({
+    preventsSelection: store.measure?.isActive ?? false,
+    preventsSubpathInteraction: store.measure?.isActive ?? false,
+  }),
+};
+```
+
+**How It Works**: The core checks these flags before executing certain behaviors (e.g., starting a selection rectangle).
+
+### Subscribed Events
+
+By default, plugins only receive `pointerdown` events. Subscribe to additional events:
+
+```typescript
+export const pencilPlugin: PluginDefinition<CanvasStore> = {
+  id: 'pencil',
+  metadata: { label: 'Pencil', icon: Pen },
+  
+  subscribedEvents: ['pointerdown', 'pointermove', 'pointerup'],
+  
+  handler: (event, point, target, context) => {
+    if (event.type === 'pointerdown') {
+      context.api.startPath(point);
+    } else if (event.type === 'pointermove') {
+      context.api.addPointToPath(point);
+    } else if (event.type === 'pointerup') {
+      context.api.finalizePath();
+    }
+  },
+};
+```
+
+**Performance Note**: Only subscribe to events you need. `pointermove` can fire frequently.
+
+### Context Menu Actions
+
+Plugins can contribute actions to the floating context menu:
+
+```typescript
+import type { PluginContextMenuActionContribution } from '../../types/plugins';
+import { Copy, Trash } from 'lucide-react';
+
+export const editPlugin: PluginDefinition<CanvasStore> = {
+  id: 'edit',
+  metadata: { label: 'Edit', icon: Edit },
+  
+  contextMenuActions: [
+    {
+      id: 'duplicate-selection',
+      action: (context) => {
+        if (!context.hasSelection) return null;
+        
+        return {
+          id: 'duplicate',
+          label: 'Duplicate',
+          icon: Copy,
+          onClick: () => {
+            // Duplicate logic
+          },
+        };
+      },
+    },
+    {
+      id: 'delete-selection',
+      action: (context) => {
+        if (!context.hasSelection) return null;
+        
+        return {
+          id: 'delete',
+          label: 'Delete',
+          icon: Trash,
+          variant: 'danger',
+          onClick: () => {
+            // Delete logic
+          },
+        };
+      },
+    },
+  ],
+};
+```
+
+**Conditional Actions**: Return `null` from the action function to hide the action based on context.
 
 ## Pitfalls & Gotchas
 
