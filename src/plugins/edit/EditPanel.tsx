@@ -24,10 +24,6 @@ export const EditPanel: React.FC<EditPanelProps> = ({ activePlugin }) => {
             <panel.component />
           </React.Fragment>
         ))}
-
-        <Divider my={2} />
-
-
       </VStack>
     </Box>
   );
