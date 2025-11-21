@@ -10,8 +10,7 @@ export { SmoothBrushCursor };
 export type { SmoothBrushPluginSlice, SmoothBrush } from './slice';
 
 const smoothBrushSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const slice = createSmoothBrushPluginSlice(set as any, get as any, api as any);
+    const slice = createSmoothBrushPluginSlice(set, get, api);
     return {
         state: slice,
     };

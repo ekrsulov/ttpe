@@ -52,6 +52,7 @@ export function useEditSmoothBrush(
       screenToCanvas,
       emitPointerEvent,
       getApplySmoothBrush: () => controller.applySmoothBrush ?? (() => {}),
+      getUpdateAffectedPoints: () => controller.updateAffectedPoints ?? (() => {}),
       setSmoothBrushCursor,
     }),
     // Only include dependencies that should trigger state update

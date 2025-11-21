@@ -1,6 +1,7 @@
-import type { StateCreator } from 'zustand';
-import type { CanvasElement, PathData, Command, SubPath } from '../../types';
+import type { StoreApi } from 'zustand';
+import type { PathData, Command, SubPath } from '../../types';
 import { extractEditablePoints, updateCommands, extractSubpaths, simplifyPoints } from '../../utils/pathParserUtils';
+import type { CanvasStore } from '../../store/canvasStore';
 
 export interface SmoothBrush {
     radius: number;
@@ -29,23 +30,14 @@ export interface SmoothBrushPluginSlice {
     deactivateSmoothBrush: () => void;
     resetSmoothBrush: () => void;
     updateSmoothBrushCursor: (x: number, y: number) => void;
+    updateAffectedPoints: (centerX: number, centerY: number) => void;
 }
 
-// Type for accessing full canvas store
-type FullCanvasState = {
-    elements: CanvasElement[];
-    updateElement: (id: string, updates: Partial<CanvasElement>) => void;
-    smoothBrush?: SmoothBrush;
-    selectedCommands?: Array<{ elementId: string; commandIndex: number; pointIndex: number }>;
-    selectedIds?: string[];
-    editingPoint?: { elementId: string } | null;
-    selectedSubpaths?: Array<{ elementId: string; subpathIndex: number }>;
-};
-
-export const createSmoothBrushPluginSlice: StateCreator<SmoothBrushPluginSlice, [], [], SmoothBrushPluginSlice> = (
-    set,
-    get
-) => ({
+export const createSmoothBrushPluginSlice = (
+    set: StoreApi<CanvasStore>['setState'],
+    get: StoreApi<CanvasStore>['getState'],
+    _api: StoreApi<CanvasStore>
+): SmoothBrushPluginSlice => ({
     smoothBrush: {
         radius: 18,
         strength: 0.35,
@@ -59,13 +51,14 @@ export const createSmoothBrushPluginSlice: StateCreator<SmoothBrushPluginSlice, 
     },
 
     updateSmoothBrush: (brush) => {
-        set((state) => ({
-            smoothBrush: { ...state.smoothBrush, ...brush },
-        }));
+        const currentBrush = get().smoothBrush;
+        set({
+            smoothBrush: { ...currentBrush, ...brush },
+        });
     },
 
     applySmoothBrush: (centerX?: number, centerY?: number) => {
-        const state = get() as unknown as FullCanvasState;
+        const state = get();
         if (!state.smoothBrush) return;
 
         const { radius, strength, simplifyPoints: shouldSimplifyPoints, simplificationTolerance, minDistance } =
@@ -93,14 +86,14 @@ export const createSmoothBrushPluginSlice: StateCreator<SmoothBrushPluginSlice, 
         // Filter editable points for selected subpaths
         const hasSelectedSubpaths = (state.selectedSubpaths?.length ?? 0) > 0;
         const selectedSubpathsForElement = hasSelectedSubpaths
-            ? (state.selectedSubpaths ?? []).filter((sp) => sp.elementId === targetElementId)
+            ? (state.selectedSubpaths ?? []).filter((sp: { elementId: string; subpathIndex: number }) => sp.elementId === targetElementId)
             : [];
 
         if (selectedSubpathsForElement.length > 0) {
             const subpaths = extractSubpaths(commands);
             const filteredPoints: typeof editablePoints = [];
 
-            selectedSubpathsForElement.forEach((selected) => {
+            selectedSubpathsForElement.forEach((selected: { subpathIndex: number }) => {
                 const subpathData = subpaths[selected.subpathIndex];
                 if (subpathData) {
                     const pointsInSubpath = editablePoints.filter(
@@ -127,7 +120,7 @@ export const createSmoothBrushPluginSlice: StateCreator<SmoothBrushPluginSlice, 
 
         if ((state.selectedCommands?.length ?? 0) > 0) {
             // Apply smoothing only to selected commands
-            (state.selectedCommands ?? []).forEach((selectedCmd) => {
+            (state.selectedCommands ?? []).forEach((selectedCmd: { elementId: string; commandIndex: number; pointIndex: number }) => {
                 const point = editablePoints.find(
                     (p) => p.commandIndex === selectedCmd.commandIndex && p.pointIndex === selectedCmd.pointIndex
                 );
@@ -234,9 +227,10 @@ export const createSmoothBrushPluginSlice: StateCreator<SmoothBrushPluginSlice, 
         }
 
         // Update affected points for feedback
-        set((currentState) => ({
-            smoothBrush: { ...currentState.smoothBrush, affectedPoints },
-        }));
+        const currentBrush = get().smoothBrush;
+        set({
+            smoothBrush: { ...currentBrush, affectedPoints },
+        });
 
         // Update the path if points were affected
         if (updatedPoints.length > 0) {
@@ -351,19 +345,33 @@ export const createSmoothBrushPluginSlice: StateCreator<SmoothBrushPluginSlice, 
     },
 
     activateSmoothBrush: () => {
-        set((state) => ({
-            smoothBrush: { ...state.smoothBrush, isActive: true },
-        }));
+        const currentBrush = get().smoothBrush;
+        set({
+            smoothBrush: { ...currentBrush, isActive: true },
+        });
+        
+        // Disable path interaction to prevent selection while smooth brush is active
+        const state = get();
+        if (state.setPathInteractionDisabled) {
+            state.setPathInteractionDisabled(true);
+        }
     },
 
     deactivateSmoothBrush: () => {
-        set((state) => ({
-            smoothBrush: { ...state.smoothBrush, isActive: false, affectedPoints: [] },
-        }));
+        const currentBrush = get().smoothBrush;
+        set({
+            smoothBrush: { ...currentBrush, isActive: false, affectedPoints: [] },
+        });
+        
+        // Re-enable path interaction when smooth brush is deactivated
+        const state = get();
+        if (state.setPathInteractionDisabled) {
+            state.setPathInteractionDisabled(false);
+        }
     },
 
     resetSmoothBrush: () => {
-        set(() => ({
+        set({
             smoothBrush: {
                 radius: 18,
                 strength: 0.35,
@@ -375,12 +383,103 @@ export const createSmoothBrushPluginSlice: StateCreator<SmoothBrushPluginSlice, 
                 minDistance: 0.5,
                 affectedPoints: [],
             },
-        }));
+        });
     },
 
     updateSmoothBrushCursor: (x: number, y: number) => {
-        set((state) => ({
-            smoothBrush: { ...state.smoothBrush, cursorX: x, cursorY: y },
-        }));
+        const currentBrush = get().smoothBrush;
+        set({
+            smoothBrush: { ...currentBrush, cursorX: x, cursorY: y },
+        });
+    },
+
+    updateAffectedPoints: (centerX: number, centerY: number) => {
+        const state = get();
+        if (!state.smoothBrush) return;
+
+        const { radius } = state.smoothBrush;
+
+        // Find the active element
+        let targetElementId: string | null = null;
+        if ((state.selectedCommands?.length ?? 0) > 0 && state.selectedCommands) {
+            targetElementId = state.selectedCommands[0].elementId;
+        } else if (state.editingPoint) {
+            targetElementId = state.editingPoint.elementId;
+        } else if (state.selectedIds && state.selectedIds.length > 0) {
+            targetElementId = state.selectedIds[0];
+        }
+
+        if (!targetElementId) {
+            const currentBrush = get().smoothBrush;
+            set({
+                smoothBrush: { ...currentBrush, affectedPoints: [] },
+            });
+            return;
+        }
+
+        const element = state.elements.find((el) => el.id === targetElementId);
+        if (!element || element.type !== 'path') {
+            const currentBrush = get().smoothBrush;
+            set({
+                smoothBrush: { ...currentBrush, affectedPoints: [] },
+            });
+            return;
+        }
+
+        const pathData = element.data as PathData;
+        const commands = pathData.subPaths.flat();
+        let editablePoints = extractEditablePoints(commands);
+
+        // Filter editable points for selected subpaths
+        const hasSelectedSubpaths = (state.selectedSubpaths?.length ?? 0) > 0;
+        const selectedSubpathsForElement = hasSelectedSubpaths
+            ? (state.selectedSubpaths ?? []).filter((sp: { elementId: string; subpathIndex: number }) => sp.elementId === targetElementId)
+            : [];
+
+        if (selectedSubpathsForElement.length > 0) {
+            const subpaths = extractSubpaths(commands);
+            const filteredPoints: typeof editablePoints = [];
+
+            selectedSubpathsForElement.forEach((selected: { subpathIndex: number }) => {
+                const subpathData = subpaths[selected.subpathIndex];
+                if (subpathData) {
+                    const pointsInSubpath = editablePoints.filter(
+                        (point) => point.commandIndex >= subpathData.startIndex && point.commandIndex <= subpathData.endIndex
+                    );
+                    filteredPoints.push(...pointsInSubpath);
+                }
+            });
+
+            editablePoints = filteredPoints;
+        }
+
+        // Calculate affected points based on radius
+        const affectedPoints: Array<{
+            commandIndex: number;
+            pointIndex: number;
+            x: number;
+            y: number;
+        }> = [];
+
+        editablePoints.forEach((point, index) => {
+            // Skip start and end points
+            if (index === 0 || index === editablePoints.length - 1) return;
+
+            const distance = Math.sqrt((point.x - centerX) ** 2 + (point.y - centerY) ** 2);
+            if (distance <= radius) {
+                affectedPoints.push({
+                    commandIndex: point.commandIndex,
+                    pointIndex: point.pointIndex,
+                    x: point.x,
+                    y: point.y,
+                });
+            }
+        });
+
+        // Update affected points for feedback
+        const currentBrush = get().smoothBrush;
+        set({
+            smoothBrush: { ...currentBrush, affectedPoints },
+        });
     },
 });

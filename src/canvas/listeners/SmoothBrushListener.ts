@@ -18,6 +18,7 @@ export interface SmoothBrushServiceState {
     point: Point
   ) => void;
   getApplySmoothBrush: () => (x: number, y: number) => void;
+  getUpdateAffectedPoints: () => (x: number, y: number) => void;
   setSmoothBrushCursor: (point: Point) => void;
 }
 
@@ -45,6 +46,10 @@ class SmoothBrushListenerService implements CanvasService<SmoothBrushServiceStat
         return;
       }
 
+      // Prevent default behavior and stop propagation to block selection
+      event.preventDefault();
+      event.stopPropagation();
+
       const point = state.screenToCanvas(event.clientX, event.clientY);
       state.emitPointerEvent('pointerdown', event, point);
       
@@ -71,8 +76,23 @@ class SmoothBrushListenerService implements CanvasService<SmoothBrushServiceStat
       state.emitPointerEvent('pointermove', event, point);
       state.setSmoothBrushCursor(point);
 
+      // If smooth brush is not active, don't interfere
+      if (!state.isSmoothBrushActive) {
+        return;
+      }
+
+      // Prevent default and stop propagation when smooth brush is active
+      event.preventDefault();
+      event.stopPropagation();
+
+      // Update affected points for visual feedback when smooth brush is active
+      if (!isBrushing) {
+        const updateAffectedPoints = state.getUpdateAffectedPoints();
+        updateAffectedPoints(point.x, point.y);
+      }
+
       // When brushing is active and smooth brush is on, continuously apply brush while pointer moves
-      if (!isBrushing || !state.isSmoothBrushActive) {
+      if (!isBrushing) {
         return;
       }
 
@@ -93,6 +113,12 @@ class SmoothBrushListenerService implements CanvasService<SmoothBrushServiceStat
 
       const point = state.screenToCanvas(event.clientX, event.clientY);
       state.emitPointerEvent('pointerup', event, point);
+
+      // If smooth brush is active, prevent default and stop propagation
+      if (state.isSmoothBrushActive) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
 
       // Release pointer capture
       if (event.target && 'releasePointerCapture' in event.target) {
@@ -116,10 +142,11 @@ class SmoothBrushListenerService implements CanvasService<SmoothBrushServiceStat
         return;
       }
 
-      svg.addEventListener('pointerdown', handlePointerDown, { passive: true });
-      svg.addEventListener('pointermove', handlePointerMove, { passive: true });
-      svg.addEventListener('pointerup', handlePointerUp, { passive: true });
-      svg.addEventListener('pointercancel', handlePointerUp as EventListener, { passive: true });
+      // Don't use passive: true because we need to call preventDefault()
+      svg.addEventListener('pointerdown', handlePointerDown, { passive: false });
+      svg.addEventListener('pointermove', handlePointerMove, { passive: false });
+      svg.addEventListener('pointerup', handlePointerUp, { passive: false });
+      svg.addEventListener('pointercancel', handlePointerUp as EventListener, { passive: false });
       listenersAttached = true;
     };
 
