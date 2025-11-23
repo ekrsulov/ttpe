@@ -588,7 +588,7 @@ collaboration-server/
 
 - **Cursor Updates**: Throttled to 50ms (20 updates/second)
 - **State Sync**: Only sends changes, not entire state
-- **CRDT Overhead**: Minimal for typical canvas sizes (<1000 elements)
+- **CRDT Overhead**: Minimal for typical canvas sizes (&lt;1000 elements)
 - **WebSocket Bandwidth**: Efficient binary protocol via Yjs
 - **Memory**: Y.Doc stores full history (periodic cleanup may be needed)
 
@@ -618,8 +618,5 @@ Potential improvements:
 
 ## Related Documentation
 
-- [Plugin System Overview](/docs/plugins/overview)
-- [State Management](/docs/architecture/state-management)
-- [Event Bus](/docs/architecture/event-bus)
-- [WebSocket Setup Guide](/COLLABORATION.md)
-- [Quick Start Guide](/MULTIPLAYER_QUICK_START.md)
+- [Plugin System Overview](/ttpe/docs/docs/plugins/overview)
+- [Event Bus](/ttpe/docs/docs/event-bus/overview)
