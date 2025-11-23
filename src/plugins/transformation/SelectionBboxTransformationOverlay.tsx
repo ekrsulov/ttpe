@@ -35,8 +35,8 @@ export const SelectionBboxTransformationOverlay: React.FC<SelectionBboxTransform
   viewport,
   activePlugin,
   transformation: transformationProp,
-  onTransformationHandlerPointerDown,
-  onTransformationHandlerPointerUp,
+  onTransformationHandlerPointerDown: _onTransformationHandlerPointerDown,
+  onTransformationHandlerPointerUp: _onTransformationHandlerPointerUp,
 }) => {
   // Get transformation state from store (fallback if not in props)
   const transformationFromStore = useCanvasStore(state =>
