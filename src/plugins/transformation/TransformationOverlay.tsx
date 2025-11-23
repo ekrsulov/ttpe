@@ -179,8 +179,8 @@ export const TransformationOverlay: React.FC<TransformationOverlayProps> = ({
                 elementId={element.id}
                 subpathIndex={result.subpathIndex}
                 viewport={viewport}
-                onPointerDown={onTransformationHandlerPointerDown}
-                onPointerUp={onTransformationHandlerPointerUp}
+                onPointerDown={onAdvancedTransformationHandlerPointerDown}
+                onPointerUp={onAdvancedTransformationHandlerPointerUp}
                 selectionColor={subpathSelectionColor}
               />
             ) : (
