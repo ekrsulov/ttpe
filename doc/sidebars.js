@@ -91,6 +91,7 @@ const sidebars = {
           type: 'category',
           label: 'Plugin Catalog',
           items: [
+            'plugins/catalog/collaboration',
             'plugins/catalog/curves',
             'plugins/catalog/duplicate-on-drag',
             'plugins/catalog/edit',
