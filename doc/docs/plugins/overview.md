@@ -36,16 +36,50 @@ interface PluginDefinition<TStore> {
   
   // Required: Display metadata
   metadata: {
-    label: string;           // Human-readable name
-    icon?: ComponentType<{ size?: number }>;    // Icon component
-    cursor?: string;         // CSS cursor (e.g., 'crosshair')
+    label: string;
+    icon?: ComponentType<{ size?: number }>;
+    cursor?: string;
+    disablePathInteraction?: boolean;
+    pathCursorMode?: 'select' | 'default' | 'pointer';
   };
+  
+  // Optional: Canvas mode configuration
+  modeConfig?: {
+    description: string;
+    entry?: ('clearGuidelines' | 'clearSubpathSelection' | 'clearSelectedCommands')[];
+    exit?: ('clearGuidelines' | 'clearSubpathSelection' | 'clearSelectedCommands')[];
+    transitions?: Record<string, { description: string }>;
+    toggleTo?: string;
+  };
+  
+  // Optional: Behavior flags
+  behaviorFlags?: (store: TStore) => PluginBehaviorFlags;
+  
+  // Optional: Events to subscribe to
+  subscribedEvents?: ('pointerdown' | 'pointermove' | 'pointerup')[];
   
   // Optional: Pointer event handler
   handler?: (
     event: PointerEvent,
     point: Point,
     target: Element,
+    context: PluginHandlerContext<TStore>
+  ) => void;
+  
+  // Optional: Double-click handlers
+  onElementDoubleClick?: (
+    elementId: string,
+    event: MouseEvent<Element>,
+    context: PluginHandlerContext<TStore>
+  ) => void;
+  onSubpathDoubleClick?: (
+    elementId: string,
+    subpathIndex: number,
+    event: MouseEvent<Element>,
+    context: PluginHandlerContext<TStore>
+  ) => void;
+  onCanvasDoubleClick?: (
+    event: MouseEvent<Element>,
     context: PluginHandlerContext<TStore>
   ) => void;
   
@@ -56,7 +90,9 @@ interface PluginDefinition<TStore> {
   overlays?: PluginUIContribution[];
   canvasLayers?: CanvasLayerContribution[];
   panels?: PluginUIContribution[];
+  sidebarPanels?: PanelConfig[];
   actions?: PluginActionContribution[];
+  relatedPluginPanels?: PluginPanelContribution[];
   
   // Optional: State management
   slices?: PluginSliceFactory<TStore>[];
@@ -64,28 +100,25 @@ interface PluginDefinition<TStore> {
   // Optional: Public API
   createApi?: PluginApiFactory<TStore>;
   
-  // Optional: Expandable panel for bottom toolbar
-  expandablePanel?: ComponentType;
-  
-  // Optional: Plugin hooks for lifecycle management
+  // Optional: Hooks
   hooks?: PluginHookContribution[];
   
-  // Optional: Sidebar panels configuration
-  sidebarPanels?: PanelConfig[];
+  // Optional: Expandable panel
+  expandablePanel?: ComponentType;
   
-  // Optional: Initialization lifecycle with cleanup
+  // Optional: Tool definition
+  toolDefinition?: {
+    order: number;
+    visibility?: 'always-shown' | 'dynamic';
+  };
+  
+  // Optional: Initialization
   init?: (context: PluginHandlerContext<TStore>) => (() => void) | void;
   
-  // Optional: Register helper functions
+  // Optional: Helper functions
   registerHelpers?: (context: PluginHandlerContext<TStore>) => Record<string, any>;
   
-  // Optional: Behavior flags for plugin interactions
-  behaviorFlags?: (store: TStore) => PluginBehaviorFlags;
-  
-  // Optional: Events to subscribe to
-  subscribedEvents?: ('pointerdown' | 'pointermove' | 'pointerup')[];
-  
-  // Optional: Context menu action contributions
+  // Optional: Context menu actions
   contextMenuActions?: PluginContextMenuActionContribution[];
 }
 ```
@@ -98,8 +131,263 @@ interface PluginUIContribution<TProps = Record<string, unknown>> {
   id: string;                         // Required: Unique identifier
   component: ComponentType<TProps>;   // Required: React component
   placement?: 'tool' | 'global';      // Optional: When to show
+  props?: TProps;                     // Optional: Props to pass
 }
 
+// Toolbar Actions
+interface PluginActionContribution {
+  id: string;
+  component: ComponentType;
+  placement: 'top' | 'bottom';
+}
+
+// Canvas Layers
+interface CanvasLayerContribution {
+  id: string;
+  placement?: 'background' | 'midground' | 'foreground';
+  render: (context: CanvasLayerContext) => ReactNode;
+}
+```
+
+#### Overlays
+
+Plugins can contribute overlays that appear on top of the canvas:
+
+- **Tool Overlays**: Shown only when the plugin is active (`placement: 'tool'`)
+- **Global Overlays**: Always visible regardless of active plugin (`placement: 'global'`)
+
+Global overlays are useful for persistent UI elements like grids, guides, or status indicators that should remain visible across different tools.
+
+#### Panels
+
+Plugins can contribute panels to the sidebar or toolbar:
+
+- **Sidebar Panels**: Declarative configuration via `sidebarPanels`
+- **Toolbar Panels**: Via `panels` array with placement
+- **Related Plugin Panels**: Panels contributed to other specific plugins via `relatedPluginPanels`
+
+#### Actions
+
+Toolbar actions appear in the top or bottom toolbar areas.
+
+### Canvas Layers
+
+Plugins can render directly on the canvas at different depths:
+
+- **Background**: Behind all elements (grids, guides)
+- **Midground**: Between elements and foreground (selection indicators)
+- **Foreground**: On top of everything (cursors, tool previews)
+
+## State Management
+
+Plugins manage state through Zustand slices. Each plugin can define multiple slices that are dynamically added to the store.
+
+```typescript
+interface PluginSliceFactory<TStore> {
+  key: string;
+  factory: (set: SetState<TStore>, get: GetState<TStore>) => Record<string, unknown>;
+}
+```
+
+Slices are registered when the plugin loads and can be accessed via `useCanvasStore(state => state[sliceKey])`.
+
+## Plugin APIs
+
+Plugins can expose public APIs for other plugins to use:
+
+```typescript
+interface PluginApiFactory<TStore> {
+  (context: PluginHandlerContext<TStore>): Record<string, any>;
+}
+```
+
+APIs are accessible via `pluginManager.getPluginApi(pluginId)` after all plugins are registered and the store is set.
+
+## Lifecycle Management
+
+### Initialization
+
+The `init` method runs once when the plugin is registered:
+
+```typescript
+init: (context) => {
+  // Setup code
+  return () => {
+    // Cleanup code
+  };
+}
+```
+
+### Hooks
+
+Plugins can register React hooks that run during their lifecycle:
+
+```typescript
+interface PluginHookContribution {
+  id: string;
+  hook: (context: PluginHooksContext) => void;
+  global?: boolean; // Run regardless of active plugin
+}
+```
+
+Hooks receive canvas utilities and can manage DOM listeners or complex behavior.
+
+## Sidebar Panels
+
+Plugins can declaratively configure sidebar panels:
+
+```typescript
+interface PanelConfig {
+  key: string;
+  condition: (context: PanelContext) => boolean;
+  component: ComponentType;
+}
+```
+
+Panels appear when their condition is met, typically based on active plugin or mode.
+
+## Helper Functions
+
+Plugins can register helper functions accessible to other plugins:
+
+```typescript
+registerHelpers: (context) => ({
+  helperName: (args) => { /* implementation */ }
+})
+```
+
+Helpers are available in plugin contexts for cross-plugin communication.
+
+## Behavior Flags
+
+Plugins can control interactions with other systems:
+
+```typescript
+interface PluginBehaviorFlags {
+  preventsSelection?: boolean;
+  preventsSubpathInteraction?: boolean;
+}
+```
+
+Flags dynamically modify core behavior based on plugin state.
+
+## Event Subscription
+
+By default, plugins receive `pointerdown` events. Additional events can be subscribed to:
+
+```typescript
+subscribedEvents: ['pointerdown', 'pointermove', 'pointerup']
+```
+
+## Context Menu Actions
+
+Plugins can contribute actions to the floating context menu:
+
+```typescript
+interface PluginContextMenuActionContribution {
+  id: string;
+  action: (context: ContextMenuContext) => ContextMenuAction | null;
+}
+```
+
+Actions can be conditional based on current selection or state.
+
+## Mode Configuration
+
+Plugins can define canvas mode behavior and transitions:
+
+```typescript
+modeConfig: {
+  description: 'Drawing mode for creating shapes',
+  entry: ['clearGuidelines', 'clearSubpathSelection'], // Actions on mode entry
+  exit: ['clearGuidelines'], // Actions on mode exit
+  transitions: {
+    'select': { description: 'Switch to selection mode' }
+  },
+  toggleTo: 'select' // Mode to toggle to
+}
+```
+
+## Double-Click Handlers
+
+Plugins can handle double-click events at different levels:
+
+```typescript
+onElementDoubleClick: (elementId, event, context) => {
+  // Handle double-click on specific element
+},
+onSubpathDoubleClick: (elementId, subpathIndex, event, context) => {
+  // Handle double-click on subpath
+},
+onCanvasDoubleClick: (event, context) => {
+  // Handle double-click on empty canvas
+}
+```
+
+## Tool Definition
+
+Plugins that appear as tools in the toolbar define their properties:
+
+```typescript
+toolDefinition: {
+  order: 10, // Position in toolbar
+  visibility: 'always-shown' // or 'dynamic' for adaptive visibility
+}
+```
+
+## Keyboard Shortcuts
+
+Plugins define shortcuts that are active when the plugin is active:
+
+```typescript
+keyboardShortcuts: {
+  'KeyZ': {
+    handler: (event, context) => { /* undo */ },
+    options: { preventDefault: true }
+  }
+}
+```
+
+Shortcuts are scoped to the active plugin to avoid conflicts.
+
+## Pitfalls & Gotchas
+
+### 1. Handler Scope
+
+Handlers should check if the plugin is active, though the plugin manager handles this automatically when using the event bus.
+
+### 2. Store Access
+
+Always get fresh state from the store, not from closures:
+
+```typescript
+// ❌ Stale closure
+const elements = context.store.getState().elements;
+setTimeout(() => console.log(elements), 1000); // Stale!
+
+// ✅ Fresh state
+setTimeout(() => {
+  const elements = context.store.getState().elements;
+  console.log(elements);
+}, 1000);
+```
+
+### 3. Slice Registration Timing
+
+Slices are registered during plugin registration. Access state after registration.
+
+### 4. API Initialization
+
+APIs are available after `pluginManager.setStoreApi()` is called.
+
+## Next Steps
+
+- **[Plugin Lifecycle](./lifecycle)**: Detailed lifecycle states and transitions
+- **[Plugin Registration](./registration)**: How to register and discover plugins
+- **[Plugin Configuration](./configuration)**: Advanced configuration options
+- **[Plugin Catalog](./catalog/pencil)**: Reference for all built-in plugins
+
+```typescript
 // Actions (Toolbar buttons)
 interface PluginActionContribution<TProps = Record<string, unknown>> {
   id: string;                         // Required: Unique identifier
@@ -118,6 +406,7 @@ interface CanvasLayerContribution {
 // Provides quick access to tool controls at the bottom when sidebar is unpinned
 expandablePanel?: ComponentType;
 ```
+
 
 ### Expandable Panels
 
