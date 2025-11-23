@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { VStack, HStack, Tag, Text, Box } from '@chakra-ui/react';
+import { VStack, HStack, Tag, Text, Box, IconButton } from '@chakra-ui/react';
 import ConditionalTooltip from '../../ui/ConditionalTooltip';
-import { Lock, LockOpen } from 'lucide-react';
+import { Lock, LockOpen, ChevronDown, ChevronUp } from 'lucide-react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { Panel } from '../../ui/Panel';
 import { PanelToggle } from '../../ui/PanelToggle';
@@ -42,6 +42,10 @@ export const TransformationPanel: React.FC<TransformationPanelProps> = ({ hideTi
   
   // Update bounds whenever selection changes or when forced
   const [updateTrigger, setUpdateTrigger] = useState(0);
+  
+  // Collapsible states for advanced sections
+  const [showPerspective, setShowPerspective] = useState(false);
+  const [showDistort, setShowDistort] = useState(false);
   
   useEffect(() => {
     const bounds = getTransformationBounds?.();
@@ -405,8 +409,8 @@ export const TransformationPanel: React.FC<TransformationPanelProps> = ({ hideTi
               <VStack spacing={1.5} align="stretch">
                 {/* Skew controls - new horizontal row (Skew X [__] Y [__]) */}
                 <HStack spacing={2} align="center" data-testid="skew-row">
-                  <Text fontSize="12px" color="gray.600" minW="42px" flexShrink={0}>Skew</Text>
-                  <Text fontSize="12px" color="gray.600" minW="8px" flexShrink={0}>X</Text>
+                  <Text fontSize="12px" color="gray.600" _dark={{ color: "gray.400" }} minW="42px" flexShrink={0}>Skew</Text>
+                  <Text fontSize="12px" color="gray.600" _dark={{ color: "gray.400" }} minW="8px" flexShrink={0}>X</Text>
                   <NumberInput
                     testId="skew-x-input"
                     label=""
@@ -419,7 +423,7 @@ export const TransformationPanel: React.FC<TransformationPanelProps> = ({ hideTi
                     inputWidth="56px"
                     resetAfterChange={true}
                   />
-                  <Text fontSize="12px" color="gray.600" minW="8px" flexShrink={0}>Y</Text>
+                  <Text fontSize="12px" color="gray.600" _dark={{ color: "gray.400" }} minW="8px" flexShrink={0}>Y</Text>
                   <NumberInput
                     testId="skew-y-input"
                     label=""
@@ -435,11 +439,27 @@ export const TransformationPanel: React.FC<TransformationPanelProps> = ({ hideTi
                   </HStack>
 
                   {/* Perspective edge controls - Top/Bottom/Left/Right with X/Y deltas */}
-                  <Text fontSize="xs" color="gray.600">Perspective (edge deltas):</Text>
-                  <VStack spacing={1} align="stretch">
+                  <HStack spacing={2} align="center" justifyContent="space-between">
+                    <Text fontSize="sm" color="gray.600" _dark={{ color: "gray.400" }}>Perspective (edge deltas):</Text>
+                    <IconButton
+                      aria-label={showPerspective ? "Collapse Perspective" : "Expand Perspective"}
+                      icon={showPerspective ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                      onClick={() => setShowPerspective(!showPerspective)}
+                      variant="ghost"
+                      size="xs"
+                      h="20px"
+                      minW="20px"
+                      borderRadius="full"
+                      color="gray.600"
+                      _dark={{ color: "gray.400" }}
+                      _hover={{ color: "gray.800", _dark: { color: "gray.200" } }}
+                    />
+                  </HStack>
+                  {showPerspective && (
+                    <VStack spacing={1} align="stretch">
                     <HStack spacing={2} align="center" data-testid="perspective-row-top">
-                      <Text fontSize="12px" color="gray.600" minW="42px" flexShrink={0}>Top</Text>
-                      <Text fontSize="12px" color="gray.600" minW="8px" flexShrink={0}>X</Text>
+                      <Text fontSize="12px" color="gray.600" _dark={{ color: "gray.400" }} minW="42px" flexShrink={0}>Top</Text>
+                      <Text fontSize="12px" color="gray.600" _dark={{ color: "gray.400" }} minW="8px" flexShrink={0}>X</Text>
                       <NumberInput
                         testId="perspective-top-x-input"
                         label=""
@@ -450,7 +470,7 @@ export const TransformationPanel: React.FC<TransformationPanelProps> = ({ hideTi
                         inputWidth="56px"
                         resetAfterChange={true}
                       />
-                      <Text fontSize="12px" color="gray.600" minW="8px" flexShrink={0}>Y</Text>
+                      <Text fontSize="12px" color="gray.600" _dark={{ color: "gray.400" }} minW="8px" flexShrink={0}>Y</Text>
                       <NumberInput
                         testId="perspective-top-y-input"
                         label=""
@@ -463,8 +483,8 @@ export const TransformationPanel: React.FC<TransformationPanelProps> = ({ hideTi
                       />
                     </HStack>
                     <HStack spacing={2} align="center" data-testid="perspective-row-bottom">
-                      <Text fontSize="12px" color="gray.600" minW="42px" flexShrink={0}>Bottom</Text>
-                      <Text fontSize="12px" color="gray.600" minW="8px" flexShrink={0}>X</Text>
+                      <Text fontSize="12px" color="gray.600" _dark={{ color: "gray.400" }} minW="42px" flexShrink={0}>Bottom</Text>
+                      <Text fontSize="12px" color="gray.600" _dark={{ color: "gray.400" }} minW="8px" flexShrink={0}>X</Text>
                       <NumberInput
                         testId="perspective-bottom-x-input"
                         label=""
@@ -475,7 +495,7 @@ export const TransformationPanel: React.FC<TransformationPanelProps> = ({ hideTi
                         inputWidth="56px"
                         resetAfterChange={true}
                       />
-                      <Text fontSize="12px" color="gray.600" minW="8px" flexShrink={0}>Y</Text>
+                      <Text fontSize="12px" color="gray.600" _dark={{ color: "gray.400" }} minW="8px" flexShrink={0}>Y</Text>
                       <NumberInput
                         testId="perspective-bottom-y-input"
                         label=""
@@ -488,8 +508,8 @@ export const TransformationPanel: React.FC<TransformationPanelProps> = ({ hideTi
                       />
                     </HStack>
                     <HStack spacing={2} align="center" data-testid="perspective-row-left">
-                      <Text fontSize="12px" color="gray.600" minW="42px" flexShrink={0}>Left</Text>
-                      <Text fontSize="12px" color="gray.600" minW="8px" flexShrink={0}>X</Text>
+                      <Text fontSize="12px" color="gray.600" _dark={{ color: "gray.400" }} minW="42px" flexShrink={0}>Left</Text>
+                      <Text fontSize="12px" color="gray.600" _dark={{ color: "gray.400" }} minW="8px" flexShrink={0}>X</Text>
                       <NumberInput
                         testId="perspective-left-x-input"
                         label=""
@@ -500,7 +520,7 @@ export const TransformationPanel: React.FC<TransformationPanelProps> = ({ hideTi
                         inputWidth="56px"
                         resetAfterChange={true}
                       />
-                      <Text fontSize="12px" color="gray.600" minW="8px" flexShrink={0}>Y</Text>
+                      <Text fontSize="12px" color="gray.600" _dark={{ color: "gray.400" }} minW="8px" flexShrink={0}>Y</Text>
                       <NumberInput
                         testId="perspective-left-y-input"
                         label=""
@@ -513,8 +533,8 @@ export const TransformationPanel: React.FC<TransformationPanelProps> = ({ hideTi
                       />
                     </HStack>
                     <HStack spacing={2} align="center" data-testid="perspective-row-right">
-                      <Text fontSize="12px" color="gray.600" minW="42px" flexShrink={0}>Right</Text>
-                      <Text fontSize="12px" color="gray.600" minW="8px" flexShrink={0}>X</Text>
+                      <Text fontSize="12px" color="gray.600" _dark={{ color: "gray.400" }} minW="42px" flexShrink={0}>Right</Text>
+                      <Text fontSize="12px" color="gray.600" _dark={{ color: "gray.400" }} minW="8px" flexShrink={0}>X</Text>
                       <NumberInput
                         testId="perspective-right-x-input"
                         label=""
@@ -525,7 +545,7 @@ export const TransformationPanel: React.FC<TransformationPanelProps> = ({ hideTi
                         inputWidth="56px"
                         resetAfterChange={true}
                       />
-                      <Text fontSize="12px" color="gray.600" minW="8px" flexShrink={0}>Y</Text>
+                      <Text fontSize="12px" color="gray.600" _dark={{ color: "gray.400" }} minW="8px" flexShrink={0}>Y</Text>
                       <NumberInput
                         testId="perspective-right-y-input"
                         label=""
@@ -538,13 +558,30 @@ export const TransformationPanel: React.FC<TransformationPanelProps> = ({ hideTi
                       />
                     </HStack>
                   </VStack>
+                  )}
 
                 {/* Distort corner offsets (px) - Each corner: X/Y offset */}
-                <Text fontSize="xs" color="gray.600">Distort (corner offsets):</Text>
-                <VStack spacing={1} align="stretch">
+                <HStack spacing={2} align="center" justifyContent="space-between">
+                  <Text fontSize="sm" color="gray.600" _dark={{ color: "gray.400" }}>Distort (corner offsets):</Text>
+                  <IconButton
+                    aria-label={showDistort ? "Collapse Distort" : "Expand Distort"}
+                    icon={showDistort ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                    onClick={() => setShowDistort(!showDistort)}
+                    variant="ghost"
+                    size="xs"
+                    h="20px"
+                    minW="20px"
+                    borderRadius="full"
+                    color="gray.600"
+                    _dark={{ color: "gray.400" }}
+                    _hover={{ color: "gray.800", _dark: { color: "gray.200" } }}
+                  />
+                </HStack>
+                {showDistort && (
+                  <VStack spacing={1} align="stretch">
                   <HStack spacing={2} align="center" data-testid="distort-row-tl">
-                    <Text fontSize="12px" color="gray.600" minW="42px" flexShrink={0}>TL</Text>
-                    <Text fontSize="12px" color="gray.600" minW="8px" flexShrink={0}>X</Text>
+                    <Text fontSize="12px" color="gray.600" _dark={{ color: "gray.400" }} minW="42px" flexShrink={0}>TL</Text>
+                    <Text fontSize="12px" color="gray.600" _dark={{ color: "gray.400" }} minW="8px" flexShrink={0}>X</Text>
                     <NumberInput
                       testId="distort-tl-x-input"
                       label=""
@@ -555,7 +592,7 @@ export const TransformationPanel: React.FC<TransformationPanelProps> = ({ hideTi
                       inputWidth="56px"
                       resetAfterChange={true}
                     />
-                    <Text fontSize="12px" color="gray.600" minW="8px" flexShrink={0}>Y</Text>
+                    <Text fontSize="12px" color="gray.600" _dark={{ color: "gray.400" }} minW="8px" flexShrink={0}>Y</Text>
                     <NumberInput
                       testId="distort-tl-y-input"
                       label=""
@@ -568,8 +605,8 @@ export const TransformationPanel: React.FC<TransformationPanelProps> = ({ hideTi
                     />
                   </HStack>
                   <HStack spacing={2} align="center" data-testid="distort-row-tr">
-                    <Text fontSize="12px" color="gray.600" minW="42px" flexShrink={0}>TR</Text>
-                    <Text fontSize="12px" color="gray.600" minW="8px" flexShrink={0}>X</Text>
+                    <Text fontSize="12px" color="gray.600" _dark={{ color: "gray.400" }} minW="42px" flexShrink={0}>TR</Text>
+                    <Text fontSize="12px" color="gray.600" _dark={{ color: "gray.400" }} minW="8px" flexShrink={0}>X</Text>
                     <NumberInput
                       testId="distort-tr-x-input"
                       label=""
@@ -580,7 +617,7 @@ export const TransformationPanel: React.FC<TransformationPanelProps> = ({ hideTi
                       inputWidth="56px"
                       resetAfterChange={true}
                     />
-                    <Text fontSize="12px" color="gray.600" minW="8px" flexShrink={0}>Y</Text>
+                    <Text fontSize="12px" color="gray.600" _dark={{ color: "gray.400" }} minW="8px" flexShrink={0}>Y</Text>
                     <NumberInput
                       testId="distort-tr-y-input"
                       label=""
@@ -593,8 +630,8 @@ export const TransformationPanel: React.FC<TransformationPanelProps> = ({ hideTi
                     />
                   </HStack>
                   <HStack spacing={2} align="center" data-testid="distort-row-bl">
-                    <Text fontSize="12px" color="gray.600" minW="42px" flexShrink={0}>BL</Text>
-                    <Text fontSize="12px" color="gray.600" minW="8px" flexShrink={0}>X</Text>
+                    <Text fontSize="12px" color="gray.600" _dark={{ color: "gray.400" }} minW="42px" flexShrink={0}>BL</Text>
+                    <Text fontSize="12px" color="gray.600" _dark={{ color: "gray.400" }} minW="8px" flexShrink={0}>X</Text>
                     <NumberInput
                       testId="distort-bl-x-input"
                       label=""
@@ -605,7 +642,7 @@ export const TransformationPanel: React.FC<TransformationPanelProps> = ({ hideTi
                       inputWidth="56px"
                       resetAfterChange={true}
                     />
-                    <Text fontSize="12px" color="gray.600" minW="8px" flexShrink={0}>Y</Text>
+                    <Text fontSize="12px" color="gray.600" _dark={{ color: "gray.400" }} minW="8px" flexShrink={0}>Y</Text>
                     <NumberInput
                       testId="distort-bl-y-input"
                       label=""
@@ -618,8 +655,8 @@ export const TransformationPanel: React.FC<TransformationPanelProps> = ({ hideTi
                     />
                   </HStack>
                   <HStack spacing={2} align="center" data-testid="distort-row-br">
-                    <Text fontSize="12px" color="gray.600" minW="42px" flexShrink={0}>BR</Text>
-                    <Text fontSize="12px" color="gray.600" minW="8px" flexShrink={0}>X</Text>
+                    <Text fontSize="12px" color="gray.600" _dark={{ color: "gray.400" }} minW="42px" flexShrink={0}>BR</Text>
+                    <Text fontSize="12px" color="gray.600" _dark={{ color: "gray.400" }} minW="8px" flexShrink={0}>X</Text>
                     <NumberInput
                       testId="distort-br-x-input"
                       label=""
@@ -630,7 +667,7 @@ export const TransformationPanel: React.FC<TransformationPanelProps> = ({ hideTi
                       inputWidth="56px"
                       resetAfterChange={true}
                     />
-                    <Text fontSize="12px" color="gray.600" minW="8px" flexShrink={0}>Y</Text>
+                    <Text fontSize="12px" color="gray.600" _dark={{ color: "gray.400" }} minW="8px" flexShrink={0}>Y</Text>
                     <NumberInput
                       testId="distort-br-y-input"
                       label=""
@@ -644,6 +681,7 @@ export const TransformationPanel: React.FC<TransformationPanelProps> = ({ hideTi
                   </HStack>
                   {/* Reset button removed; distort inputs act as relative deltas and persist offsets (similar UX to Rotation). */}
                 </VStack>
+                )}
               </VStack>
             )}
           </VStack>
