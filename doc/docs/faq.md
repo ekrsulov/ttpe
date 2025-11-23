@@ -73,7 +73,7 @@ Not currently. Undo/Redo are available via buttons in the Bottom Action Bar.
 
 ### Can I customize keyboard shortcuts?
 
-Not in the UI, but plugins can register custom shortcuts. See [Keyboard Shortcuts Types](./types/shortcuts).
+Not in the UI, but plugins can register custom shortcuts. See [Plugin Types](./types/plugins) for shortcut configuration.
 
 ## Features
 

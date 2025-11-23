@@ -132,14 +132,11 @@ const sidebars = {
       items: [
         'types/index',
         'types/canvas-elements',
-        'types/curves',
-        'types/geometry',
-        'types/plugin-context',
-        'types/plugin-contributions',
-        'types/plugin-definition',
+        'types/collaboration',
+        'types/interaction',
+        'types/panel',
+        'types/plugins',
         'types/selection',
-        'types/shortcuts',
-        'types/viewport',
       ],
     },
     {

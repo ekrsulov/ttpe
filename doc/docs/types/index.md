@@ -5,21 +5,22 @@ This section documents all TypeScript type definitions used in the VectorNest ap
 ## Type Categories
 
 ### Core Types
-- **[Canvas Elements](./canvas-elements.md)**: Types for paths, groups, and canvas elements
-- **[Geometry](./geometry.md)**: Points, coordinates, control points, and path commands
-- **[Viewport](./viewport.md)**: Viewport and transformation types
+- **[Canvas Elements & Geometry](./canvas-elements)**: Points, coordinates, paths, and canvas elements
 
 ### Plugin System
-- **[Plugin Definition](./plugin-definition.md)**: Plugin registration and lifecycle types
-- **[Plugin Context](./plugin-context.md)**: Context and API types for plugin execution
-- **[Plugin Contributions](./plugin-contributions.md)**: UI, layer, and action contribution types
+- **[Plugin Types](./plugins)**: Plugin definitions, contributions, and context types
 
 ### State Management
-- **[Selection](./selection.md)**: Selection state types for elements, commands, and subpaths
-- **[Curves](./curves.md)**: Curve tool state and point types
+- **[Selection Types](./selection)**: Selection state types for elements, commands, and subpaths
 
-### Utilities
-- **[Shortcuts](./shortcuts.md)**: Keyboard shortcut handler types
+### UI Components
+- **[Panel Types](./panel)**: Panel configuration and component types
+
+### User Interaction
+- **[Interaction Types](./interaction)**: Drag operations and user interaction types
+
+### Collaboration
+- **[Collaboration Types](./collaboration)**: Multiplayer and real-time collaboration types
 
 ## Type System Philosophy
 
