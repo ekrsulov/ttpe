@@ -36,6 +36,24 @@ All plugin definitions are exported from `src/plugins/index.ts` as `CORE_PLUGINS
 * **Parametric Shapes**: generates squares, rectangles, circles (Bézier), and triangles from two points, registering them as editable paths with current styles.
 * **Grid Fill**: floods individual grid cells (square, isometric, triangular, hex, polar, diagonal, warped parametric, etc.) with shapes at the current fill color/opacity for rapid tessellation work.
 
+## Real-Time Collaboration
+
+VectorNest supports multiplayer editing through WebSocket-based real-time synchronization:
+
+* **Session Management**: Start a new collaborative session or join an existing one via a shareable link
+* **CRDT Synchronization**: Uses Yjs for conflict-free replicated data types, ensuring consistent state across all collaborators
+* **Presence Awareness**: See other users' cursors and active selections in real-time
+* **Automatic Conflict Resolution**: Changes are merged automatically without manual intervention
+* **Simple Setup**: Requires a y-websocket server (instructions in `collaboration-server/`)
+
+To enable collaboration:
+1. Start the collaboration server: `cd collaboration-server && npm install && npm start`
+2. Click the Collaboration panel in the sidebar
+3. Start a new session or join an existing one with a session ID
+4. Share the URL with collaborators
+
+See `collaboration-server/README.md` for deployment options.
+
 ## Selection, Transforms & Organization
 
 * **Selection**: multi-select, context-aware clearing by mode, precision-configurable moves, and bulk property updates (color, opacity, stroke).

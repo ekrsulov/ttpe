@@ -13,11 +13,16 @@ import { useColorMode } from '@chakra-ui/react';
 import type { CanvasElement, PathData } from './types';
 import { CurvesControllerProvider } from './plugins/curves/CurvesControllerContext';
 import { DEFAULT_STROKE_COLOR_DARK, DEFAULT_STROKE_COLOR_LIGHT } from './utils/defaultColors';
+import { pluginManager } from './utils/pluginManager';
+import { useMemo as useReactMemo } from 'react';
 
 function App() {
   const activePlugin = useCanvasStore(state => state.activePlugin);
   const setMode = useCanvasStore(state => state.setMode);
   const selectedIds = useCanvasStore(state => state.selectedIds);
+  
+  // Get global overlays from plugins
+  const globalOverlays = useReactMemo(() => pluginManager.getGlobalOverlays(), []);
   const grid = useCanvasStore(state => state.grid);
   const { colorMode } = useColorMode();
   const selectedPaths = useMemo(() => {
@@ -218,6 +223,10 @@ function App() {
         <MinimapPanel 
           sidebarWidth={sidebarWidth}
         />
+        {/* Render global overlays from plugins */}
+        {globalOverlays.map((OverlayComponent, index) => (
+          <OverlayComponent key={`global-overlay-${index}`} />
+        ))}
       </div>
     </CurvesControllerProvider>
   );

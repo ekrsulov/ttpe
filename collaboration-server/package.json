@@ -1,0 +1,15 @@
+{
+  "name": "canvas-collaboration-server",
+  "version": "1.0.0",
+  "description": "WebSocket server for real-time canvas collaboration",
+  "scripts": {
+    "start": "HOST=${HOST:-localhost} PORT=${PORT:-1234} npx y-websocket"
+  },
+  "dependencies": {
+    "y-websocket": "^1.5.0",
+    "yjs": "^13.6.10"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

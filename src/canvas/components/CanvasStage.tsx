@@ -43,6 +43,7 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
   return (
     <svg
       ref={svgRef}
+      data-canvas="true"
       width={canvasSize.width}
       height={canvasSize.height}
       viewBox={getViewBoxString(canvasSize)}

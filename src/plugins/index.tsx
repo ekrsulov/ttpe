@@ -25,6 +25,7 @@ import { smoothBrushPlugin } from './smoothBrush';
 import { pathSimplificationPlugin } from './pathSimplification';
 import { roundPathPlugin } from './roundPath';
 import { pathPlugin } from './path';
+import { collaborationPlugin } from './collaboration';
 
 export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   selectPlugin,
@@ -53,6 +54,7 @@ export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   smoothBrushPlugin,
   pathSimplificationPlugin,
   roundPathPlugin,
+  collaborationPlugin,
 ];
 
 // Plugin modes that should be registered in the mode machine
@@ -79,3 +81,4 @@ export * from './trimPath';
 export * from './offsetPath';
 export * from './measure';
 export * from './path';
+export * from './collaboration';
