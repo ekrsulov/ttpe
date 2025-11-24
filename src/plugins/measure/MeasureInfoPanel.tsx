@@ -177,7 +177,7 @@ export const MeasureInfoPanel: React.FC<MeasureInfoPanelProps> = ({ hideTitle = 
             onToggleBBoxCenter={handleToggleBBoxCenter}
             onToggleIntersections={handleToggleIntersections}
           />
-          <Text fontSize="12px" color="gray.500" _dark={{ color: 'gray.500' }} textAlign="center">
+          <Text fontSize="12px" color="gray.500" _dark={{ color: 'gray.500' }} textAlign="left">
             Click and drag to measure
           </Text>
         </VStack>
