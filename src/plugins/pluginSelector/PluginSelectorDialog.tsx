@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
     Modal,
     ModalOverlay,
@@ -24,6 +24,7 @@ export const PluginSelectorDialog: React.FC = () => {
     const borderColor = useColorModeValue('gray.200', 'gray.700');
 
     const [searchTerm, setSearchTerm] = useState('');
+    const dummyRef = useRef<HTMLDivElement>(null);
 
     const isDialogOpen = useCanvasStore(
         (state) => (state as unknown as PluginSelectorSlice).pluginSelector.isDialogOpen
@@ -78,10 +79,17 @@ export const PluginSelectorDialog: React.FC = () => {
     };
 
     return (
-        <Modal isOpen={isDialogOpen} onClose={handleClose} size="md" scrollBehavior="inside">
+        <Modal
+            isOpen={isDialogOpen}
+            onClose={handleClose}
+            size="md"
+            initialFocusRef={dummyRef}
+        >
             <ModalOverlay />
-            <ModalContent bg={bgColor}>
-                <ModalHeader borderBottom="1px" borderColor={borderColor} px={3} py={2}>
+            <ModalContent bg={bgColor} maxH="70vh" display="flex" flexDirection="column">
+                <ModalHeader borderBottom="1px" borderColor={borderColor} px={3} py={2} flexShrink={0}>
+                    {/* Hidden dummy div for initial focus to prevent keyboard on mobile */}
+                    <div ref={dummyRef} tabIndex={-1} style={{ position: 'absolute', opacity: 0 }} />
                     <HStack justify="space-between" align="center">
                         <Text>Select Plugins</Text>
                         <Badge colorScheme="gray" variant="subtle">
@@ -89,8 +97,17 @@ export const PluginSelectorDialog: React.FC = () => {
                         </Badge>
                     </HStack>
                 </ModalHeader>
-                <ModalBody px={3} py={2}>
-                    <VStack spacing={4} align="stretch">
+                <ModalBody
+                    px={3}
+                    py={2}
+                    flex="1"
+                    overflowY="auto"
+                    onTouchMove={(e) => {
+                        // Stop propagation to prevent canvas touch handlers from blocking scroll
+                        e.stopPropagation();
+                    }}
+                >
+                    <VStack spacing={4} align="stretch" pb={4}>
                         {/* Search Bar */}
                         <Input
                             placeholder="Search plugins..."
@@ -99,6 +116,7 @@ export const PluginSelectorDialog: React.FC = () => {
                             size="sm"
                             h="20px"
                             borderRadius="0"
+                            tabIndex={0}
                             _focus={{
                                 borderColor: 'gray.600',
                                 boxShadow: '0 0 0 1px var(--chakra-colors-gray-600)'
@@ -113,7 +131,13 @@ export const PluginSelectorDialog: React.FC = () => {
                                 borderBottom="1px"
                                 borderColor={borderColor}
                             >
-                                <Text fontWeight="bold">Enable/Disable All</Text>
+                                <Text
+                                    fontWeight="bold"
+                                    cursor="pointer"
+                                    onClick={() => handleToggleAll(!allNonCriticalEnabled)}
+                                >
+                                    Enable/Disable All
+                                </Text>
                                 <PanelSwitch
                                     isChecked={allNonCriticalEnabled}
                                     onChange={(e) => handleToggleAll(e.target.checked)}
@@ -126,7 +150,15 @@ export const PluginSelectorDialog: React.FC = () => {
 
                             return (
                                 <HStack key={plugin.id} justify="space-between">
-                                    <Text fontWeight="medium">
+                                    <Text
+                                        fontWeight="medium"
+                                        cursor={isCritical ? 'default' : 'pointer'}
+                                        onClick={() => {
+                                            if (!isCritical) {
+                                                handleToggle(plugin.id, !isPluginEnabled(plugin.id));
+                                            }
+                                        }}
+                                    >
                                         {index + 1}. {plugin.metadata.label}
                                         {isCritical && ' (Critical)'}
                                     </Text>
