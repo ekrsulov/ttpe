@@ -31,13 +31,13 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
   showGridRulers = false,
 }) => {
   const showMenuButton = !isSidebarPinned;
-  
+
   // Detect mobile breakpoint
   const isMobile = useBreakpointValue({ base: true, md: false }, { fallback: 'md' });
-  
+
   // Get grid state to conditionally show gridFill tool
   const gridEnabled = useCanvasStore(state => state.grid?.enabled ?? false);
-  
+
   // Dynamic tools hook
   const {
     trackToolUsage,
@@ -47,17 +47,21 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
     toggleExtraTools,
     alwaysShownTools,
   } = useDynamicTools(activeMode, gridEnabled);
-  
+
   // Colors for active buttons
   const activeBg = useColorModeValue('gray.800', 'gray.200');
   const activeColor = useColorModeValue('white', 'gray.900');
-  
+
   // Optimize subscriptions - only subscribe to length/count, not entire arrays
   // This prevents re-renders when elements data changes (e.g., during movement)
   const selectedIdsCount = useCanvasStore(state => state.selectedIds.length);
   const elementsCount = useCanvasStore(state => state.elements.length);
   const isDraggingElements = useCanvasStore(state => state.isDraggingElements);
-  
+
+  // Subscribe to enabledPlugins to trigger re-render when plugins are toggled
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  useCanvasStore(state => (state as any).pluginManager?.enabledPlugins ?? []);
+
   // Memoize element lookups to avoid recalculating on every render
   const disabledStates = React.useMemo(() => {
     // Skip expensive calculations during dragging
@@ -68,10 +72,10 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
         subpath: false,
       };
     }
-    
+
     const state = useCanvasStore.getState();
     const { selectedIds, elements } = state;
-    
+
     const transformationDisabled = (() => {
       if (selectedIds.length === 0) return true;
       if (selectedIds.length === 1) {
@@ -80,9 +84,9 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
       }
       return false;
     })();
-    
+
     const editDisabled = selectedPaths.length !== 1;
-    
+
     const subpathDisabled = (() => {
       if (selectedPaths.length !== 1) return true;
       const element = selectedPaths[0];
@@ -90,7 +94,7 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
       const pathData = element.data as import('../types').PathData;
       return pathData.subPaths.length <= 1;
     })();
-    
+
     return {
       transformation: transformationDisabled,
       edit: editDisabled,
@@ -135,19 +139,19 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
     const baseTools = registeredTools.length
       ? registeredTools
       : pluginManager.getToolDefinitions()
-          .filter((def) => def.mode !== 'gridFill' || gridEnabled)
-          .sort((a, b) => a.order - b.order)
-          .map(({ mode, label, icon }) => ({
-            id: mode,
-            label,
-            icon,
-          }));
+        .filter((def) => def.mode !== 'gridFill' || gridEnabled)
+        .sort((a, b) => a.order - b.order)
+        .map(({ mode, label, icon }) => ({
+          id: mode,
+          label,
+          icon,
+        }));
 
     if (isMobile) {
       // On mobile, show always shown tools + dynamic tools based on usage
       const visibleDynamicTools = getMobileVisibleTools();
       const allowedTools = [...alwaysShownTools, ...visibleDynamicTools];
-      
+
       return baseTools.filter(tool => allowedTools.includes(tool.id));
     }
 
@@ -158,20 +162,20 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
   // Get extra tools for mobile overflow menu
   const extraTools = React.useMemo(() => {
     if (!isMobile) return [];
-    
+
     const toolDefinitions = pluginManager.getToolDefinitions();
     return getExtraTools()
       .map(toolId => {
         const toolDef = toolDefinitions.find(def => def.mode === toolId);
         if (!toolDef) return null;
-        
+
         return {
           id: toolId,
           label: toolDef.label,
           icon: toolDef.icon ?? Menu,
         };
       })
-      .filter(Boolean) as Array<{id: string, label: string, icon: React.ComponentType<{ size?: number }>}>;
+      .filter(Boolean) as Array<{ id: string, label: string, icon: React.ComponentType<{ size?: number }> }>;
   }, [isMobile, getExtraTools]);
 
   // Create stable dependency from tool IDs
@@ -202,13 +206,13 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
   const handleModeChange = React.useCallback((mode: string) => {
     // Track tool usage for dynamic selection
     trackToolUsage(mode);
-    
+
     // Close extra tools bar if a tool from it was selected
     const extraToolIds = extraTools.map(tool => tool.id);
     if (extraToolIds.includes(mode)) {
       toggleExtraTools();
     }
-    
+
     onModeChange(mode);
   }, [onModeChange, trackToolUsage, extraTools, toggleExtraTools]);
 
@@ -242,151 +246,29 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
           transition: 'top 0.2s ease-in-out, left 0.3s ease-in-out, right 0.3s ease-in-out, transform 0.3s ease-in-out',
         }}
       >
-      <HStack 
-        spacing={{ base: 0, md: 0 }}
-        justify="center"
-        position="relative"
-      >
-        {/* Animated background */}
-        <Box
-          position="absolute"
-          top="50%"
-          transform="translateY(-50%)"
-          left={`${backgroundStyle.left}px`}
-          width={`${backgroundStyle.width}px`}
-          height="32px"
-          bg={activeBg}
-          borderRadius="full"
-          opacity={backgroundStyle.opacity}
-          transition="left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-in-out"
-          pointerEvents="none"
-          zIndex={0}
-        />
-        
-        {/* Tool buttons */}
-        {toolsToRender.map(({ id, icon: Icon, label }) => {
-          const isDisabled = (() => {
-            if (id === 'transformation') {
-              return disabledStates.transformation;
-            }
-            if (id === 'edit') {
-              return disabledStates.edit;
-            }
-            if (id === 'subpath') {
-              return disabledStates.subpath;
-            }
-            return false;
-          })();
-          return (
-            <Box
-              key={id}
-              ref={(el) => {
-                if (el) {
-                  buttonRefs.current.set(id, el);
-                } else {
-                  buttonRefs.current.delete(id);
-                }
-              }}
-              position="relative"
-              zIndex={1}
-            >
-              <ToolbarIconButton
-                icon={Icon ?? Menu}
-                label={label}
-                onClick={() => handleModeChange(id)}
-                variant="ghost"
-                colorScheme="gray"
-                bg={activeMode === id ? 'transparent' : undefined}
-                color={activeMode === id ? activeColor : undefined}
-                _hover={activeMode === id ? { bg: 'transparent' } : undefined}
-                tooltip={label}
-                isDisabled={isDisabled}
-                showTooltip={true}
-                title={label}
-              />
-            </Box>
-          );
-        })}
-        
-        {/* Three dots button for mobile extra tools */}
-        {isMobile && extraTools.length > 0 && (
-          <Box
-            ref={(el) => {
-              if (el) {
-                buttonRefs.current.set('more', el);
-              } else {
-                buttonRefs.current.delete('more');
-              }
-            }}
-            position="relative"
-            zIndex={1}
-          >
-            <ToolbarIconButton
-              icon={MoreHorizontal}
-              label="More tools"
-              onClick={toggleExtraTools}
-              variant="ghost"
-              colorScheme="gray"
-              bg={showExtraTools ? 'transparent' : undefined}
-              color={showExtraTools ? activeColor : undefined}
-              _hover={showExtraTools ? { bg: 'transparent' } : undefined}
-              tooltip="More tools"
-              showTooltip={true}
-              title="More tools"
-            />
-          </Box>
-        )}
-        
-        {/* Hamburger menu button - al final */}
-        {showMenuButton && (
-          <Box
-            ref={(el) => {
-              if (el) {
-                buttonRefs.current.set('menu', el);
-              } else {
-                buttonRefs.current.delete('menu');
-              }
-            }}
-            position="relative"
-            zIndex={1}
-          >
-            <ToolbarIconButton
-              icon={Menu}
-              label="Toggle sidebar"
-              onClick={onMenuClick}
-              variant="ghost"
-              colorScheme="gray"
-              bg={isSidebarOpen ? 'transparent' : undefined}
-              color={isSidebarOpen ? activeColor : undefined}
-              _hover={isSidebarOpen ? { bg: 'transparent' } : undefined}
-              tooltip="Toggle Menu"
-              showTooltip={true}
-              title="Toggle Menu"
-            />
-          </Box>
-        )}
-      </HStack>
-      <RenderCountBadgeWrapper componentName="TopActionBar" position="top-right" />
-    </FloatingToolbarShell>
-    
-    {/* Extra tools bar */}
-    {showExtraTools && extraTools.length > 0 && (
-      <Box ref={extraToolsBarRef}>
-        <FloatingToolbarShell
-          toolbarPosition="top"
-          sidebarWidth={sidebarWidth}
-          showGridRulers={showGridRulers}
-          sx={{
-            marginTop: '42px',
-            transition: 'all 0.2s ease-in-out',
-          }}
-        >
-        <HStack 
+        <HStack
           spacing={{ base: 0, md: 0 }}
           justify="center"
           position="relative"
         >
-          {extraTools.map(({ id, icon: Icon, label }) => {
+          {/* Animated background */}
+          <Box
+            position="absolute"
+            top="50%"
+            transform="translateY(-50%)"
+            left={`${backgroundStyle.left}px`}
+            width={`${backgroundStyle.width}px`}
+            height="32px"
+            bg={activeBg}
+            borderRadius="full"
+            opacity={backgroundStyle.opacity}
+            transition="left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-in-out"
+            pointerEvents="none"
+            zIndex={0}
+          />
+
+          {/* Tool buttons */}
+          {toolsToRender.map(({ id, icon: Icon, label }) => {
             const isDisabled = (() => {
               if (id === 'transformation') {
                 return disabledStates.transformation;
@@ -399,15 +281,21 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
               }
               return false;
             })();
-            
             return (
               <Box
                 key={id}
+                ref={(el) => {
+                  if (el) {
+                    buttonRefs.current.set(id, el);
+                  } else {
+                    buttonRefs.current.delete(id);
+                  }
+                }}
                 position="relative"
                 zIndex={1}
               >
                 <ToolbarIconButton
-                  icon={Icon}
+                  icon={Icon ?? Menu}
                   label={label}
                   onClick={() => handleModeChange(id)}
                   variant="ghost"
@@ -423,10 +311,126 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
               </Box>
             );
           })}
+
+          {/* Three dots button for mobile extra tools */}
+          {isMobile && extraTools.length > 0 && (
+            <Box
+              ref={(el) => {
+                if (el) {
+                  buttonRefs.current.set('more', el);
+                } else {
+                  buttonRefs.current.delete('more');
+                }
+              }}
+              position="relative"
+              zIndex={1}
+            >
+              <ToolbarIconButton
+                icon={MoreHorizontal}
+                label="More tools"
+                onClick={toggleExtraTools}
+                variant="ghost"
+                colorScheme="gray"
+                bg={showExtraTools ? 'transparent' : undefined}
+                color={showExtraTools ? activeColor : undefined}
+                _hover={showExtraTools ? { bg: 'transparent' } : undefined}
+                tooltip="More tools"
+                showTooltip={true}
+                title="More tools"
+              />
+            </Box>
+          )}
+
+          {/* Hamburger menu button - al final */}
+          {showMenuButton && (
+            <Box
+              ref={(el) => {
+                if (el) {
+                  buttonRefs.current.set('menu', el);
+                } else {
+                  buttonRefs.current.delete('menu');
+                }
+              }}
+              position="relative"
+              zIndex={1}
+            >
+              <ToolbarIconButton
+                icon={Menu}
+                label="Toggle sidebar"
+                onClick={onMenuClick}
+                variant="ghost"
+                colorScheme="gray"
+                bg={isSidebarOpen ? 'transparent' : undefined}
+                color={isSidebarOpen ? activeColor : undefined}
+                _hover={isSidebarOpen ? { bg: 'transparent' } : undefined}
+                tooltip="Toggle Menu"
+                showTooltip={true}
+                title="Toggle Menu"
+              />
+            </Box>
+          )}
         </HStack>
+        <RenderCountBadgeWrapper componentName="TopActionBar" position="top-right" />
       </FloatingToolbarShell>
-      </Box>
-    )}
+
+      {/* Extra tools bar */}
+      {showExtraTools && extraTools.length > 0 && (
+        <Box ref={extraToolsBarRef}>
+          <FloatingToolbarShell
+            toolbarPosition="top"
+            sidebarWidth={sidebarWidth}
+            showGridRulers={showGridRulers}
+            sx={{
+              marginTop: '42px',
+              transition: 'all 0.2s ease-in-out',
+            }}
+          >
+            <HStack
+              spacing={{ base: 0, md: 0 }}
+              justify="center"
+              position="relative"
+            >
+              {extraTools.map(({ id, icon: Icon, label }) => {
+                const isDisabled = (() => {
+                  if (id === 'transformation') {
+                    return disabledStates.transformation;
+                  }
+                  if (id === 'edit') {
+                    return disabledStates.edit;
+                  }
+                  if (id === 'subpath') {
+                    return disabledStates.subpath;
+                  }
+                  return false;
+                })();
+
+                return (
+                  <Box
+                    key={id}
+                    position="relative"
+                    zIndex={1}
+                  >
+                    <ToolbarIconButton
+                      icon={Icon}
+                      label={label}
+                      onClick={() => handleModeChange(id)}
+                      variant="ghost"
+                      colorScheme="gray"
+                      bg={activeMode === id ? 'transparent' : undefined}
+                      color={activeMode === id ? activeColor : undefined}
+                      _hover={activeMode === id ? { bg: 'transparent' } : undefined}
+                      tooltip={label}
+                      isDisabled={isDisabled}
+                      showTooltip={true}
+                      title={label}
+                    />
+                  </Box>
+                );
+              })}
+            </HStack>
+          </FloatingToolbarShell>
+        </Box>
+      )}
     </>
   );
 };

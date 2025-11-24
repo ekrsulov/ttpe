@@ -35,17 +35,21 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
 }) => {
   const zoom = useCanvasStore(state => state.zoom);
   const resetZoom = useCanvasStore(state => state.resetZoom);
-  
+
   // Optimize: Only subscribe to zoom value, not the entire viewport object
   const viewportZoom = useCanvasStore(state => state.viewport.zoom);
   const activePlugin = useCanvasStore(state => state.activePlugin);
 
   const { undo, redo, pastStates, futureStates } = useTemporalState();
-  
+
+  // Subscribe to enabledPlugins to trigger re-render when plugins are toggled
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  useCanvasStore(state => (state as any).pluginManager?.enabledPlugins ?? []);
+
   // Calculate current zoom percentage - memoize based only on zoom value
   const currentZoom = useMemo(() => Math.round((viewportZoom as number) * 100), [viewportZoom]);
   const isZoomDifferent = currentZoom !== 100;
-  
+
   const canUndo = useMemo(() => pastStates.length > 0, [pastStates.length]);
   const canRedo = useMemo(() => futureStates.length > 0, [futureStates.length]);
 

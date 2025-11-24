@@ -68,7 +68,9 @@ export const NumberInput: React.FC<NumberInputProps> = ({
     } else {
       // Normal mode: sync state and call onChange
       setInputValue(numValue.toString());
-      onChange(numValue);
+      if (numValue !== value) {
+        onChange(numValue);
+      }
     }
   };
 

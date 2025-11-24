@@ -7,6 +7,7 @@ import {
 } from './panelConfig';
 import type { PanelComponentProps } from '../../types/panel';
 import type { PluginUIContribution } from '../../types/plugins';
+import { pluginManager } from '../../utils/pluginManager';
 
 export interface SidebarPanelsProps {
   activePlugin: string | null;
@@ -28,6 +29,10 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
 }) => {
   const scrollbarTrack = useColorModeValue('#f1f1f1', 'rgba(255, 255, 255, 0.06)');
   const scrollbarThumb = useColorModeValue('#888', 'rgba(255, 255, 255, 0.3)');
+  // Subscribe to enabledPlugins to trigger re-render when plugins are toggled
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const enabledPlugins = useCanvasStore(state => (state as any).pluginManager?.enabledPlugins ?? []);
+
   const scrollbarThumbHover = useColorModeValue('#555', 'rgba(255, 255, 255, 0.45)');
   // Get EditPanel context for panels that need it
   const editPanelContext = useEditPanelContext();
@@ -35,8 +40,10 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
   // Check if we're in special panel mode (file or settings)
   const isInSpecialPanelMode = showFilePanel || showSettingsPanel;
 
-  // Use centralized optical alignment eligibility check from store
-  const canPerformOpticalAlignment = useCanvasStore(state => state.canPerformOpticalAlignment?.() ?? false);
+  const canPerformOpticalAlignment = useCanvasStore((state) => {
+    const selectedElements = state.elements.filter((el) => state.selectedIds.includes(el.id));
+    return selectedElements.length > 0;
+  });
 
   // Prepare the context for condition evaluation
   const conditionContext = useMemo(() => ({
@@ -55,6 +62,19 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
     activePlugin,
     editPanelContext,
   ]);
+
+  // Filter PANEL_CONFIGS to only include panels from enabled plugins
+  const filteredPanelConfigs = useMemo(() => {
+    return PANEL_CONFIGS.filter(panelConfig => {
+      // If panel has a pluginId property, check if that plugin is enabled
+      if ('pluginId' in panelConfig && typeof panelConfig.pluginId === 'string') {
+        return pluginManager.isPluginEnabled(panelConfig.pluginId);
+      }
+      // Built-in panels (file, settings, editor, pan, documentation) are always shown
+      return true;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabledPlugins]);
 
   return (
     <Box
@@ -86,7 +106,7 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
       }}
     >
       <Suspense fallback={<Box h="20px" bg="gray.100" />}>
-        {PANEL_CONFIGS.map((panelConfig) => {
+        {filteredPanelConfigs.map((panelConfig) => {
           const shouldShow = panelConfig.condition(conditionContext);
 
           if (!shouldShow) {

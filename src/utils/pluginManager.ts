@@ -311,9 +311,9 @@ export class PluginManager {
    */
   shouldPreventSelection(): boolean {
     if (!this.storeApi) return false;
-    
+
     const state = this.storeApi.getState();
-    
+
     // Check ALL plugins, not just the active one
     for (const [_pluginId, plugin] of this.registry.entries()) {
       if (plugin.behaviorFlags) {
@@ -323,7 +323,7 @@ export class PluginManager {
         }
       }
     }
-    
+
     return false;
   }
 
@@ -333,9 +333,9 @@ export class PluginManager {
    */
   shouldPreventSubpathInteraction(): boolean {
     if (!this.storeApi) return false;
-    
+
     const state = this.storeApi.getState();
-    
+
     // Check ALL plugins, not just the active one
     for (const [_pluginId, plugin] of this.registry.entries()) {
       if (plugin.behaviorFlags) {
@@ -345,7 +345,7 @@ export class PluginManager {
         }
       }
     }
-    
+
     return false;
   }
 
@@ -488,18 +488,46 @@ export class PluginManager {
       .map((overlay) => overlay.component as React.ComponentType<Record<string, unknown>>);
   }
 
+  isPluginEnabled(pluginId: string): boolean {
+    if (!this.storeApi) return true;
+
+    // Always enable pluginManager to prevent lockout
+    if (pluginId === 'pluginManager') return true;
+
+    const state = this.storeApi.getState();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pmState = (state as any).pluginManager;
+
+    // If slice not present or not initialized, default to true
+    if (!pmState || !pmState.enabledPlugins) return true;
+
+    // If list is empty, it might mean initialization hasn't happened yet,
+    // OR user disabled everything. 
+    // Given the init logic in pluginManager/index.ts, it populates on start.
+    // So if it's empty here, it's either pre-init or user disabled all.
+    // We'll trust the list if it exists.
+    // However, to be safe during boot, if length is 0, we might want to return true?
+    // No, that would prevent "disable all".
+    // Let's rely on the fact that 'pluginManager' is always enabled.
+
+    return pmState.enabledPlugins.includes(pluginId);
+  }
+
   getPanels(toolName: string): PluginUIContribution[] {
+    if (!this.isPluginEnabled(toolName)) return [];
     return this.registry.get(toolName)?.panels ?? [];
   }
 
   getActions(placement: PluginActionContribution['placement']): PluginActionContribution[] {
-    return this.getAll().flatMap((plugin) =>
-      plugin.actions?.filter((action) => action.placement === placement) ?? []
-    );
+    return this.getAll()
+      .filter(plugin => this.isPluginEnabled(plugin.id))
+      .flatMap((plugin) =>
+        plugin.actions?.filter((action) => action.placement === placement) ?? []
+      );
   }
 
   getRegisteredTools(): Array<PluginDefinition<CanvasStore>> {
-    return this.getAll();
+    return this.getAll().filter(plugin => this.isPluginEnabled(plugin.id));
   }
 
   /**
@@ -544,6 +572,8 @@ export class PluginManager {
     };
 
     for (const pluginId of this.canvasLayerOrder) {
+      if (!this.isPluginEnabled(pluginId)) continue;
+
       const layers = this.canvasLayers.get(pluginId);
       if (!layers?.length) {
         continue;
@@ -567,6 +597,8 @@ export class PluginManager {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     helpers: Record<string, any>
   ): void {
+    if (!this.isPluginEnabled(toolName)) return;
+
     const tool = this.registry.get(toolName);
     if (tool?.handler) {
       const api = this.pluginApis.get(toolName) ?? {};
@@ -585,6 +617,10 @@ export class PluginManager {
   }
 
   private composeCanvasLayers(plugin: PluginDefinition<CanvasStore>): CanvasLayerContribution[] {
+    // We don't filter layers here because they are registered once.
+    // Instead, we should filter in getCanvasLayers or let the renderer handle it?
+    // getCanvasLayers calls this.canvasLayers.get(pluginId).
+    // So we should filter in getCanvasLayers.
     const layers = [...(plugin.canvasLayers ?? [])];
 
     if (plugin.overlays?.length) {
@@ -666,6 +702,10 @@ export class PluginManager {
       eventsToSubscribe.forEach((eventType) => {
         const unsubscribe = this.eventBus!.subscribe(eventType, (payload: CanvasPointerEventPayload) => {
           if (payload.activePlugin !== plugin.id) {
+            return;
+          }
+
+          if (!this.isPluginEnabled(plugin.id)) {
             return;
           }
 
@@ -801,7 +841,7 @@ export class PluginManager {
    */
   getGlobalPluginHooks(): import('../types/plugins').PluginHookContribution[] {
     const globalHooks: import('../types/plugins').PluginHookContribution[] = [];
-    
+
     this.registry.forEach((plugin) => {
       if (plugin.hooks) {
         plugin.hooks.forEach((hook) => {
@@ -811,7 +851,7 @@ export class PluginManager {
         });
       }
     });
-    
+
     return globalHooks;
   }
 
@@ -821,7 +861,7 @@ export class PluginManager {
    */
   getToolDefinitions(): Array<{ mode: string; label: string; icon?: import('react').ComponentType<{ size?: number }>; cursor: string; order: number }> {
     const tools: Array<{ mode: string; label: string; icon?: import('react').ComponentType<{ size?: number }>; cursor: string; order: number }> = [];
-    
+
     this.registry.forEach((plugin) => {
       if (plugin.toolDefinition) {
         tools.push({
@@ -833,7 +873,7 @@ export class PluginManager {
         });
       }
     });
-    
+
     return tools.sort((a, b) => a.order - b.order);
   }
 }

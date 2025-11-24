@@ -71,7 +71,7 @@ export interface CanvasLayerContribution {
 export interface PluginActionContribution<TProps = Record<string, unknown>> {
   id: string;
   component: ComponentType<TProps>;
-  placement: 'top' | 'bottom';
+  placement: 'top' | 'bottom' | 'settings-panel';
 }
 
 export type PluginStoreApi<TStore extends object> = Pick<StoreApi<TStore>, 'getState' | 'setState' | 'subscribe'>;

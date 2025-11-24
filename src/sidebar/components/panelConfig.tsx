@@ -46,7 +46,12 @@ export const PANEL_CONFIGS: PanelConfig[] = [
 // Dynamically add panels from plugins
 CORE_PLUGINS.forEach(plugin => {
   if (plugin.sidebarPanels) {
-    PANEL_CONFIGS.push(...plugin.sidebarPanels);
+    // Add pluginId to each panel config so we can filter by enabled plugins
+    const panelsWithPluginId = plugin.sidebarPanels.map(panel => ({
+      ...panel,
+      pluginId: plugin.id
+    }));
+    PANEL_CONFIGS.push(...panelsWithPluginId);
   }
 });
 

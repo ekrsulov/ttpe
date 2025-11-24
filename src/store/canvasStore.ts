@@ -116,7 +116,52 @@ const applyPluginSlice = (
     previousValues[key] = storeApi.getState()[key];
   });
 
-  storeApi.setState(partial as Partial<CanvasStore>);
+  // Deep merge instead of replace to preserve persisted state
+  const currentState = storeApi.getState();
+  const merged: Partial<CanvasStore> = {};
+
+  keys.forEach((key) => {
+    const currentValue = currentState[key];
+    const newValue = partial[key];
+
+    // If both are objects (and not functions), deep merge them
+    if (
+      currentValue &&
+      typeof currentValue === 'object' &&
+      !Array.isArray(currentValue) &&
+      newValue &&
+      typeof newValue === 'object' &&
+      !Array.isArray(newValue)
+    ) {
+      // Deep merge object properties
+      const mergedObject: Record<string, unknown> = { ...currentValue };
+      const newObject = newValue as Record<string, unknown>;
+
+      Object.keys(newObject).forEach((prop) => {
+        const currentProp = (currentValue as Record<string, unknown>)[prop];
+        const newProp = newObject[prop];
+
+        // Special case: if new value is an empty array and current value is a non-empty array,
+        // keep the current value (this preserves persisted state)
+        if (
+          Array.isArray(newProp) &&
+          newProp.length === 0 &&
+          Array.isArray(currentProp) &&
+          currentProp.length > 0
+        ) {
+          mergedObject[prop] = currentProp;
+        } else {
+          mergedObject[prop] = newProp;
+        }
+      });
+
+      merged[key] = mergedObject as CanvasStore[keyof CanvasStore];
+    } else {
+      merged[key] = newValue;
+    }
+  });
+
+  storeApi.setState(merged as Partial<CanvasStore>);
 
   return () => {
     const restore: Partial<Record<keyof CanvasStore, CanvasStore[keyof CanvasStore] | null>> = {};

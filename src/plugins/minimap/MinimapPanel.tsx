@@ -5,6 +5,7 @@ import { calculateBounds } from '../../utils/boundsUtils';
 import type { PathElement } from '../../types';
 import { useCanvasStore } from '../../store/canvasStore';
 import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
+import type { PluginManagerSlice } from '../pluginManager/slice';
 
 interface MinimapPanelProps {
   sidebarWidth?: number;
@@ -173,6 +174,11 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) 
   const setViewport = useCanvasStore((state) => state.setViewport);
   const isElementHidden = useCanvasStore((state) => state.isElementHidden);
   const showMinimap = useCanvasStore((state) => state.settings.showMinimap);
+  const enabledPlugins = useCanvasStore(
+    (state) => (state as unknown as PluginManagerSlice).pluginManager.enabledPlugins
+  );
+  const isMinimapPluginEnabled = enabledPlugins.length === 0 || enabledPlugins.includes('minimap');
+  const shouldShowMinimap = showMinimap && isMinimapPluginEnabled;
   const selectedIds = useCanvasStore((state) => state.selectedIds);
 
   // Helper to calculate bounds for a path element
@@ -420,7 +426,7 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) 
     }
   }, [dragState, resetDragState]);
 
-  if (!showMinimap || !minimapMetrics) {
+  if (!shouldShowMinimap || !minimapMetrics) {
     return null;
   }
 

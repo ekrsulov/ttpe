@@ -32,7 +32,7 @@ import { useArrangeHandlers } from './useArrangeHandlers';
 import type { FloatingContextMenuAction } from '../types/plugins';
 import { duplicateElements } from '../utils/duplicationUtils';
 import type { SelectionContextInfo } from '../types/selection';
-import { CORE_PLUGINS } from '../plugins';
+import { pluginManager } from '../utils/pluginManager';
 
 /**
  * Hook to determine the selection context and provide appropriate actions
@@ -61,6 +61,10 @@ export function useFloatingContextMenuActions(
   const selectedCommands = useCanvasStore(state => state.selectedCommands);
   const hiddenElementIds = useCanvasStore(state => state.hiddenElementIds);
   const lockedElementIds = useCanvasStore(state => state.lockedElementIds);
+
+  // Subscribe to enabledPlugins to trigger re-render when plugins are toggled
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  useCanvasStore(state => (state as any).pluginManager?.enabledPlugins ?? []);
 
   // Get arrange handlers (context-aware)
   const arrangeHandlers = useArrangeHandlers();
@@ -347,7 +351,8 @@ export function useFloatingContextMenuActions(
 
     const actions: FloatingContextMenuAction[] = [];
 
-    CORE_PLUGINS.forEach(plugin => {
+    // Use getRegisteredTools() which filters by enabled/disabled state
+    pluginManager.getRegisteredTools().forEach(plugin => {
       if (plugin.contextMenuActions) {
         plugin.contextMenuActions.forEach(contribution => {
           const action = contribution.action(context);

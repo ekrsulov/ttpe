@@ -20,7 +20,7 @@ function App() {
   const activePlugin = useCanvasStore(state => state.activePlugin);
   const setMode = useCanvasStore(state => state.setMode);
   const selectedIds = useCanvasStore(state => state.selectedIds);
-  
+
   // Get global overlays from plugins
   const globalOverlays = useReactMemo(() => pluginManager.getGlobalOverlays(), []);
   const grid = useCanvasStore(state => state.grid);
@@ -29,19 +29,19 @@ function App() {
     const elements = useCanvasStore.getState().elements;
     return elements.filter((el: CanvasElement) => selectedIds.includes(el.id) && el.type === 'path');
   }, [selectedIds]);
-  
+
   // Detect iOS devices
   const isIOS = useMemo(() => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1), []);
-  
+
   // Track sidebar width when pinned (0 when not pinned)
   const [sidebarWidth, setSidebarWidth] = useState(0);
-  
+
   // Track if sidebar is pinned
   const [isSidebarPinned, setIsSidebarPinned] = useState(false);
-  
+
   // Track if sidebar is open
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  
+
   // Store reference to sidebar open handler
   const [sidebarOpenHandler, setSidebarOpenHandler] = useState<(() => void) | null>(null);
 
@@ -123,12 +123,12 @@ function App() {
       }
       return color;
     };
-    
+
     state.elements.forEach(element => {
       if (element.type === 'path') {
         const pathData = element.data as PathData;
         const updates: Partial<PathData> = {};
-        
+
         // Update stroke color if it matches the old default
         if (pathData.strokeColor === oldDefaultColor) {
           updates.strokeColor = targetStrokeColor;
@@ -136,12 +136,12 @@ function App() {
           // Transform white/black strokes
           updates.strokeColor = transformColor(pathData.strokeColor);
         }
-        
+
         // Update fill color if it's black/white
         if (pathData.fillColor === '#000000' || pathData.fillColor === '#ffffff') {
           updates.fillColor = transformColor(pathData.fillColor);
         }
-        
+
         // Apply updates if any
         if (Object.keys(updates).length > 0) {
           state.updateElement(element.id, {
@@ -157,10 +157,10 @@ function App() {
 
   return (
     <CurvesControllerProvider>
-      <div 
-        style={{ 
-          position: 'relative', 
-          width: '100vw', 
+      <div
+        style={{
+          position: 'relative',
+          width: '100vw',
           height: '100dvh', // Dynamic viewport height (adjusts with Safari toolbar)
           overflow: 'hidden',
           // Prevent overscroll/bounce on mobile
@@ -171,9 +171,9 @@ function App() {
           // NO padding here - let canvas use full height
         } as CSSProperties}
       >
-        <div 
-          style={{ 
-            width: '100%', 
+        <div
+          style={{
+            width: '100%',
             height: '100%',
             // Allow panning gestures on canvas only
             touchAction: 'pan-x pan-y',
@@ -197,14 +197,14 @@ function App() {
             }}
           />
         )}
-        <Sidebar 
+        <Sidebar
           onWidthChange={handleSidebarWidthChange}
           onPinnedChange={handleSidebarPinnedChange}
           onToggleOpen={handleSidebarToggleOpen}
           onRegisterOpenHandler={handleRegisterOpenHandler}
         />
-        <TopActionBar 
-          activeMode={activePlugin} 
+        <TopActionBar
+          activeMode={activePlugin}
           onModeChange={setMode}
           sidebarWidth={sidebarWidth}
           isSidebarPinned={isSidebarPinned}
@@ -213,14 +213,15 @@ function App() {
           selectedPaths={selectedPaths}
           showGridRulers={grid?.enabled && grid?.showRulers}
         />
-        <BottomActionBar 
+        <BottomActionBar
           sidebarWidth={sidebarWidth}
         />
         <ExpandableToolPanel activePlugin={activePlugin} sidebarWidth={sidebarWidth} />
-        <VirtualShiftButton 
+        <VirtualShiftButton
           sidebarWidth={sidebarWidth}
         />
-        <MinimapPanel 
+        {/* MinimapPanel handles its own visibility based on plugin state and settings */}
+        <MinimapPanel
           sidebarWidth={sidebarWidth}
         />
         {/* Render global overlays from plugins */}

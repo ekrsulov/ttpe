@@ -11,6 +11,7 @@ import {
 import { useCanvasStore } from '../../store/canvasStore';
 import { logger, LogLevel } from '../../utils';
 import { Panel } from '../../ui/Panel';
+import { pluginManager } from '../../utils/pluginManager';
 // No icon button here - we show text label instead
 import { PanelSwitch } from '../../ui/PanelSwitch';
 import { SliderControl } from '../../ui/SliderControl';
@@ -22,10 +23,10 @@ export const SettingsPanel: React.FC = () => {
   const settings = useCanvasStore(state => state.settings);
   const updateSettings = useCanvasStore(state => state.updateSettings);
   const { setColorMode } = useColorMode();
-  
+
   // Detect if we're on mobile (base breakpoint)
   const isMobile = useBreakpointValue({ base: true, md: false }) ?? false;
-  
+
   const [selectedTheme, setSelectedTheme] = useState<'light' | 'dark' | 'system'>(() => {
     const stored = localStorage.getItem('chakra-ui-color-mode');
     return (stored === 'light' || stored === 'dark' || stored === 'system') ? stored : 'light';
@@ -64,7 +65,7 @@ export const SettingsPanel: React.FC = () => {
   useEffect(() => {
     const currentLevel = logger.getLogLevel();
     setLogLevel(currentLevel);
-    
+
     const currentShowCallerInfo = logger.getShowCallerInfo();
     setShowCallerInfo(currentShowCallerInfo);
   }, []);
@@ -247,7 +248,7 @@ export const SettingsPanel: React.FC = () => {
         )}
 
         {/* Show Minimap */}
-        {!isMobile && (
+        {!isMobile && pluginManager.isPluginEnabled('minimap') && (
           <Flex justify="space-between" align="center">
             <Text fontSize="12px" color="gray.600" _dark={{ color: 'gray.400' }}>
               Show minimap
@@ -310,6 +311,12 @@ export const SettingsPanel: React.FC = () => {
             aria-label="Full Screen"
           />
         </Flex>
+
+        {/* Plugin Actions */}
+        {pluginManager.getActions('settings-panel').map((action) => {
+          const ActionComponent = action.component as React.ComponentType<Record<string, unknown>>;
+          return <ActionComponent key={action.id} />;
+        })}
       </VStack>
     </Panel>
   );
