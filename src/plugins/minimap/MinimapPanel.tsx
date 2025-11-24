@@ -26,7 +26,7 @@ interface MinimapMetrics {
 const MINIMAP_MAX_WIDTH = 200;
 const MINIMAP_MAX_HEIGHT = 150;
 const MINIMAP_MARGIN = 16; // Screen position margin
-const MINIMAP_INTERNAL_PADDING = 4; // Internal padding for content
+const MINIMAP_INTERNAL_PADDING = 1; // Internal padding for content
 
 const computeMinimapSize = (canvasWidth: number, canvasHeight: number) => {
   const aspectRatio = canvasWidth / canvasHeight;
@@ -108,8 +108,10 @@ const computeMinimapMetrics = (
   const availableWidth = width - padding;
   const availableHeight = height - padding;
   const scale = Math.min(availableWidth / boundsWidth, availableHeight / boundsHeight);
-  const offsetX = MINIMAP_INTERNAL_PADDING - bounds.minX * scale;
-  const offsetY = MINIMAP_INTERNAL_PADDING - bounds.minY * scale;
+  const contentWidth = boundsWidth * scale;
+  const contentHeight = boundsHeight * scale;
+  const offsetX = MINIMAP_INTERNAL_PADDING + (availableWidth - contentWidth) / 2 - bounds.minX * scale;
+  const offsetY = MINIMAP_INTERNAL_PADDING + (availableHeight - contentHeight) / 2 - bounds.minY * scale;
 
   return {
     bounds,
@@ -414,7 +416,7 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) 
       right={`${MINIMAP_MARGIN + sidebarWidth}px`}
       width={`${minimapSize.width}px`}
       height={`${minimapSize.height}px`}
-      borderRadius="xl"
+      borderRadius="0"
       borderWidth={borderWidth}
       borderColor={borderColor}
       boxShadow={containerShadow}
@@ -439,7 +441,7 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) 
       >
         <defs>
           <clipPath id={clipPathId}>
-            <rect x="0" y="0" width={minimapSize.width} height={minimapSize.height} rx="14" ry="14" />
+            <rect x="0" y="0" width={minimapSize.width} height={minimapSize.height} />
           </clipPath>
         </defs>
         <rect x="0" y="0" width={minimapSize.width} height={minimapSize.height} fill={canvasFill} />
@@ -464,8 +466,6 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) 
                 stroke={elementStroke}
                 strokeWidth={0.5}
                 vectorEffect="non-scaling-stroke"
-                rx={1}
-                ry={1}
                 style={{ cursor: 'pointer' }}
                 data-element-id={element.id}
                 onClick={(e) => {
@@ -489,8 +489,6 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) 
             height={Math.max(16, viewportRect.height)}
             fill={viewportFill}
             stroke="none"
-            rx={4}
-            ry={4}
             style={{ pointerEvents: 'none' }}
           />
           {/* Invisible thick stroke for drag interaction */}
@@ -502,8 +500,6 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) 
             fill="none"
             stroke="transparent"
             strokeWidth={12}
-            rx={4}
-            ry={4}
             data-role="minimap-viewport"
             style={{ cursor: 'move' }}
           />
@@ -516,8 +512,6 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) 
             fill="none"
             stroke={viewportStroke}
             strokeWidth={2}
-            rx={4}
-            ry={4}
             style={{ pointerEvents: 'none' }}
           />
         </g>
