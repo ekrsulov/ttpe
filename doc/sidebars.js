@@ -107,6 +107,7 @@ const sidebars = {
             'plugins/catalog/offset-path',
             'plugins/catalog/pencil',
             'plugins/catalog/shape',
+            'plugins/catalog/source',
             'plugins/catalog/subpath',
             'plugins/catalog/text',
             'plugins/catalog/transformation',
