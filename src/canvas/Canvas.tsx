@@ -1,5 +1,6 @@
-import React, { useRef, useCallback, useEffect, useMemo } from 'react';
-import { useCanvasDragInteractions } from './hooks/useCanvasDragInteractions';
+import React, { useRef, useCallback, useMemo } from 'react';
+import { useEventCallback } from '../hooks/useEventCallback';
+import { useCanvasDrag } from './hooks/useCanvasDrag';
 import { useCanvasKeyboardControls } from './hooks/useCanvasKeyboardControls';
 import { useSelectionController } from './hooks/useSelectionController';
 import { useCanvasEventHandlers } from './hooks/useCanvasEventHandlers';
@@ -14,17 +15,18 @@ import {
 } from './CanvasEventBusContext';
 import { useCanvasZoom } from './hooks/useCanvasZoom';
 import { useMobileTouchGestures } from './hooks/useMobileTouchGestures';
-import { useElementDoubleTap } from './hooks/useElementDoubleTap';
+
 import { useDynamicCanvasSize } from './hooks/useDynamicCanvasSize';
-import { useCanvasSideEffects } from './hooks/useCanvasSideEffects';
-import { useCanvasEventHandlerDeps } from './hooks/useCanvasEventHandlerDeps';
+import { useCanvasFeedback } from './hooks/useCanvasFeedback';
+import { useCanvasExport } from './hooks/useCanvasExport';
+
 import { CanvasStage } from './components/CanvasStage';
 import { useCanvasEventBusManager } from './hooks/useCanvasEventBusManager';
 import {
   canvasRendererRegistry,
   type CanvasRenderContext,
 } from './renderers';
-import { usePointerStateController } from './hooks/usePointerStateController';
+
 import { useCanvasGeometry } from './hooks/useCanvasGeometry';
 import { useViewportController } from './hooks/useViewportController';
 import { useCanvasShortcuts } from './hooks/useCanvasShortcuts';
@@ -73,7 +75,6 @@ const CanvasContent: React.FC = () => {
     draggingSelection,
     updateElement,
     stopDraggingPoint,
-    emergencyCleanupDrag,
     isWorkingWithSubpaths,
     getControlPointInfo,
     saveAsPng,
@@ -84,45 +85,25 @@ const CanvasContent: React.FC = () => {
     moveSelectedSubpaths,
   } = controller;
 
-  const moveSelectedElementsRef = useRef(moveSelectedElements);
-  const moveSelectedSubpathsRef = useRef(moveSelectedSubpaths);
-  const selectElementRef = useRef(applySelectionChange);
-  const modeTransitionRef = useRef(transitionCanvasMode);
+  const handleMoveSelectedElements = useEventCallback((deltaX: number, deltaY: number, precisionOverride?: number) => {
+    moveSelectedElements(deltaX, deltaY, precisionOverride);
+  });
 
-  useEffect(() => {
-    moveSelectedElementsRef.current = moveSelectedElements;
-  }, [moveSelectedElements]);
-
-  useEffect(() => {
-    moveSelectedSubpathsRef.current = moveSelectedSubpaths;
-  }, [moveSelectedSubpaths]);
-
-  useEffect(() => {
-    selectElementRef.current = applySelectionChange;
-  }, [applySelectionChange]);
-
-  useEffect(() => {
-    modeTransitionRef.current = transitionCanvasMode;
-  }, [transitionCanvasMode]);
-
-  const handleMoveSelectedElements = useCallback((deltaX: number, deltaY: number, precisionOverride?: number) => {
-    moveSelectedElementsRef.current(deltaX, deltaY, precisionOverride);
-  }, []);
-
-  const handleMoveSelectedSubpaths = useCallback((deltaX: number, deltaY: number) => {
-    if (moveSelectedSubpathsRef.current) {
-      moveSelectedSubpathsRef.current(deltaX, deltaY);
+  const handleMoveSelectedSubpaths = useEventCallback((deltaX: number, deltaY: number) => {
+    if (moveSelectedSubpaths) {
+      moveSelectedSubpaths(deltaX, deltaY);
     }
-  }, []);
+  });
 
-  const handleSelectElement = useCallback((elementId: string, toggle: boolean) => {
-    selectElementRef.current(elementId, toggle);
-  }, []);
+  const handleSelectElement = useEventCallback((elementId: string, toggle: boolean) => {
+    applySelectionChange(elementId, toggle);
+  });
 
-  const handleSetMode = useCallback((mode: string) => {
-    modeTransitionRef.current(mode as CanvasMode);
-  }, []);
+  const handleSetMode = useEventCallback((mode: string) => {
+    transitionCanvasMode(mode as CanvasMode);
+  });
 
+  // Use the custom hook for drag interactions and pointer state
   const {
     isDragging,
     dragStart,
@@ -132,11 +113,24 @@ const CanvasContent: React.FC = () => {
     setHasDragMoved,
     stateRefs,
     helpers,
-  } = usePointerStateController({
+    dragPosition
+  } = useCanvasDrag({
     isSelecting,
     beginSelectionRectangle,
     updateSelectionRectangle,
     completeSelectionRectangle,
+    dragState: {
+      editingPoint: editingPoint ?? null,
+      draggingSelection: draggingSelection ?? null
+    },
+    viewport,
+    elements: elements as CanvasElement[],
+    callbacks: {
+      onStopDraggingPoint: stopDraggingPoint ?? (() => { }),
+      onUpdateElement: updateElement,
+      getControlPointInfo: getControlPointInfo ?? (() => null),
+      clearGuidelines,
+    }
   });
 
   const emitPointerEvent = useCallback(
@@ -196,8 +190,7 @@ const CanvasContent: React.FC = () => {
   });
 
   // Use event handler deps hook
-  const eventHandlerDeps = useCanvasEventHandlerDeps({
-    svgRef,
+  const eventHandlers = useCanvasEventHandlers({
     screenToCanvas,
     isSpacePressed,
     activePlugin: currentMode,
@@ -224,7 +217,6 @@ const CanvasContent: React.FC = () => {
   const {
     handleElementDoubleClick,
     handleSubpathDoubleClick,
-    handleElementDoubleTap,
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
@@ -232,29 +224,7 @@ const CanvasContent: React.FC = () => {
     handleElementTouchEnd,
     handleSubpathTouchEnd,
     handleCanvasTouchEnd,
-  } = useCanvasEventHandlers(eventHandlerDeps);
-
-  // Handle double tap on elements using native DOM events
-  useElementDoubleTap({
-    svgRef,
-    onElementDoubleTap: handleElementDoubleTap,
-  });
-
-  // Use the custom hook for drag interactions
-  const { dragPosition } = useCanvasDragInteractions({
-    dragState: {
-      editingPoint: editingPoint ?? null,
-      draggingSelection: draggingSelection ?? null
-    },
-    viewport,
-    elements: elements as CanvasElement[],
-    callbacks: {
-      onStopDraggingPoint: stopDraggingPoint ?? (() => { }),
-      onUpdateElement: updateElement,
-      getControlPointInfo: getControlPointInfo ?? (() => null),
-      clearGuidelines,
-    }
-  });
+  } = eventHandlers;
 
   // Helper function to get transformed bounds
   const isElementSelected = useCallback(
@@ -334,13 +304,15 @@ const CanvasContent: React.FC = () => {
   );
 
   // Use side effects hook to manage feedback, cleanup, and save
-  useCanvasSideEffects({
+  // Use new focused hooks
+  useCanvasFeedback({
     currentMode,
     selectedCommands: selectedCommands ?? [],
     elements,
-    editingPoint: editingPoint ?? null,
-    draggingSelection: draggingSelection ?? null,
-    emergencyCleanupDrag: emergencyCleanupDrag ?? (() => { }),
+    updatePointPositionFeedback: undefined, // Add if needed, or remove if unused in original
+  });
+
+  useCanvasExport({
     saveAsPng,
     svgRef,
   });
@@ -359,19 +331,19 @@ const CanvasContent: React.FC = () => {
       />
       <CanvasStage
         svgRef={svgRef}
-          canvasSize={canvasSize}
-          getViewBoxString={getViewBoxString}
-          isSpacePressed={isSpacePressed}
-          currentMode={currentMode}
-          sortedElements={sortedElements}
-          renderElement={renderElement}
-          canvasLayerContext={canvasLayerContext}
-          handlePointerDown={handlePointerDown}
-          handlePointerMove={handlePointerMove}
-          handlePointerUp={handlePointerUp}
-          {...(typeof window !== 'undefined' && !('ontouchstart' in window) && { handleCanvasDoubleClick })}
-          {...(typeof window !== 'undefined' && 'ontouchstart' in window && { handleCanvasTouchEnd })}
-        />
+        canvasSize={canvasSize}
+        getViewBoxString={getViewBoxString}
+        isSpacePressed={isSpacePressed}
+        currentMode={currentMode}
+        sortedElements={sortedElements}
+        renderElement={renderElement}
+        canvasLayerContext={canvasLayerContext}
+        handlePointerDown={handlePointerDown}
+        handlePointerMove={handlePointerMove}
+        handlePointerUp={handlePointerUp}
+        {...(typeof window !== 'undefined' && !('ontouchstart' in window) && { handleCanvasDoubleClick })}
+        {...(typeof window !== 'undefined' && 'ontouchstart' in window && { handleCanvasTouchEnd })}
+      />
     </>
   );
 };

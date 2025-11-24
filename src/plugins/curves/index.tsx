@@ -135,6 +135,20 @@ export const curvesPlugin: PluginDefinition<CanvasStore> = {
         preventDefault: true,
       },
     },
+    'Escape': {
+      handler: () => {
+        const controller = getGlobalCurvesController();
+        if (controller) {
+          const state = controller.getState();
+          if (state.points && state.points.length > 0) {
+            controller.cancel();
+          }
+        }
+      },
+      options: {
+        preventDefault: true,
+      },
+    },
   },
   expandablePanel: () => React.createElement(CurvesPanel, { hideTitle: true }),
   sidebarPanels: [

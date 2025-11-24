@@ -1,4 +1,5 @@
 import { useRef, useCallback } from 'react';
+import { isDoubleTap } from '../../utils/tapUtils';
 
 interface DoubleTapState {
   time: number;
@@ -39,15 +40,14 @@ export const useDoubleTap = (options: DoubleTapOptions = {}): DoubleTapHandlers 
 
       const x = touch.clientX;
       const y = touch.clientY;
+      const currentTap = { time: now, x, y };
 
       // Check for double tap
       if (
         lastTapRef.current &&
         lastTapRef.current.elementId === elementId &&
         lastTapRef.current.subpathIndex === undefined &&
-        now - lastTapRef.current.time < timeThreshold &&
-        Math.abs(x - lastTapRef.current.x) < distanceThreshold &&
-        Math.abs(y - lastTapRef.current.y) < distanceThreshold
+        isDoubleTap(currentTap, lastTapRef.current, { timeThreshold, distanceThreshold })
       ) {
         // Double tap detected
         lastTapRef.current = null; // Reset to prevent triple tap
@@ -55,7 +55,7 @@ export const useDoubleTap = (options: DoubleTapOptions = {}): DoubleTapHandlers 
       }
 
       // Single tap - record it
-      lastTapRef.current = { time: now, x, y, elementId };
+      lastTapRef.current = { ...currentTap, elementId };
       return false;
     },
     [timeThreshold, distanceThreshold]
@@ -69,15 +69,14 @@ export const useDoubleTap = (options: DoubleTapOptions = {}): DoubleTapHandlers 
 
       const x = touch.clientX;
       const y = touch.clientY;
+      const currentTap = { time: now, x, y };
 
       // Check for double tap on same subpath
       if (
         lastTapRef.current &&
         lastTapRef.current.elementId === elementId &&
         lastTapRef.current.subpathIndex === subpathIndex &&
-        now - lastTapRef.current.time < timeThreshold &&
-        Math.abs(x - lastTapRef.current.x) < distanceThreshold &&
-        Math.abs(y - lastTapRef.current.y) < distanceThreshold
+        isDoubleTap(currentTap, lastTapRef.current, { timeThreshold, distanceThreshold })
       ) {
         // Double tap detected on subpath
         lastTapRef.current = null; // Reset to prevent triple tap
@@ -85,7 +84,7 @@ export const useDoubleTap = (options: DoubleTapOptions = {}): DoubleTapHandlers 
       }
 
       // Single tap on subpath - record it
-      lastTapRef.current = { time: now, x, y, elementId, subpathIndex };
+      lastTapRef.current = { ...currentTap, elementId, subpathIndex };
       return false;
     },
     [timeThreshold, distanceThreshold]
@@ -99,14 +98,13 @@ export const useDoubleTap = (options: DoubleTapOptions = {}): DoubleTapHandlers 
 
       const x = touch.clientX;
       const y = touch.clientY;
+      const currentTap = { time: now, x, y };
 
       // Check for double tap on empty space (no elementId)
       if (
         lastTapRef.current &&
         lastTapRef.current.elementId === null &&
-        now - lastTapRef.current.time < timeThreshold &&
-        Math.abs(x - lastTapRef.current.x) < distanceThreshold &&
-        Math.abs(y - lastTapRef.current.y) < distanceThreshold
+        isDoubleTap(currentTap, lastTapRef.current, { timeThreshold, distanceThreshold })
       ) {
         // Double tap detected on empty space
         lastTapRef.current = null; // Reset to prevent triple tap
@@ -114,7 +112,7 @@ export const useDoubleTap = (options: DoubleTapOptions = {}): DoubleTapHandlers 
       }
 
       // Single tap on empty space - record it
-      lastTapRef.current = { time: now, x, y, elementId: null };
+      lastTapRef.current = { ...currentTap, elementId: null };
       return false;
     },
     [timeThreshold, distanceThreshold]

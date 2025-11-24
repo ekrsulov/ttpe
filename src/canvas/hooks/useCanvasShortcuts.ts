@@ -4,6 +4,9 @@ import { useCanvasEventBus } from '../CanvasEventBusContext';
 import { useCanvasController } from '../controller/CanvasControllerContext';
 import type { ShortcutRegistry } from '../shortcuts';
 import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
+import { getDeletionScope, executeDeletion } from '../../utils/deletionScopeUtils';
+import { isTextFieldFocused } from '../../utils/domHelpers';
+import type { CanvasShortcutContext } from '../../types/plugins';
 
 const CORE_SHORTCUT_SOURCE = 'canvas:core';
 
@@ -28,6 +31,36 @@ const handleEscapeShortcut = (state: CanvasStore) => {
   }
 
   state.setActivePlugin('select');
+};
+
+const handleArrowKey = (event: KeyboardEvent, context: CanvasShortcutContext, dirX: number, dirY: number) => {
+  const state = context.store.getState() as CanvasStore;
+
+  // Don't move if typing
+  if (isTextFieldFocused()) return;
+
+  const { viewport, settings, selectedCommands, selectedSubpaths, selectedIds } = state;
+
+  // Calculate zoom-adjusted movement delta
+  const baseDelta = event.shiftKey ? 10 : 1;
+  const zoomAdjustedDelta = viewport.zoom > 1 ? baseDelta / viewport.zoom : baseDelta;
+
+  const deltaX = dirX * zoomAdjustedDelta;
+  const deltaY = dirY * zoomAdjustedDelta;
+
+  // Apply precision rounding
+  const precision = settings.keyboardMovementPrecision;
+  const roundedDeltaX = precision === 0 ? Math.round(deltaX) : parseFloat(deltaX.toFixed(precision));
+  const roundedDeltaY = precision === 0 ? Math.round(deltaY) : parseFloat(deltaY.toFixed(precision));
+
+  // Priority: points > subpaths > paths
+  if ((selectedCommands?.length ?? 0) > 0 && state.moveSelectedPoints) {
+    state.moveSelectedPoints(roundedDeltaX, roundedDeltaY);
+  } else if ((selectedSubpaths?.length ?? 0) > 0 && state.moveSelectedSubpaths) {
+    state.moveSelectedSubpaths(roundedDeltaX, roundedDeltaY);
+  } else if (selectedIds.length > 0) {
+    state.moveSelectedElements(roundedDeltaX, roundedDeltaY);
+  }
 };
 
 export const useCanvasShortcuts = (
@@ -55,7 +88,60 @@ export const useCanvasShortcuts = (
           handleEscapeShortcut(state);
         },
       },
-      // Plugin-specific shortcuts (like 'm' for measure) moved to PluginDefinition.keyboardShortcuts
+      Delete: {
+        handler: (_event, context) => {
+          const state = context.store.getState() as CanvasStore;
+          // Use priority-based deletion (commands > subpaths > elements)
+          const scope = getDeletionScope({
+            selectedCommandsCount: state.selectedCommands?.length ?? 0,
+            selectedSubpathsCount: state.selectedSubpaths?.length ?? 0,
+            selectedElementsCount: state.selectedIds.length,
+            activePlugin: state.activePlugin,
+          }, false); // false = priority strategy
+
+          executeDeletion(scope, {
+            deleteSelectedCommands: state.deleteSelectedCommands,
+            deleteSelectedSubpaths: state.deleteSelectedSubpaths,
+            deleteSelectedElements: state.deleteSelectedElements,
+          });
+        },
+        options: { preventDefault: true }
+      },
+      Backspace: {
+        handler: (_event, context) => {
+          const state = context.store.getState() as CanvasStore;
+          // Use priority-based deletion (commands > subpaths > elements)
+          const scope = getDeletionScope({
+            selectedCommandsCount: state.selectedCommands?.length ?? 0,
+            selectedSubpathsCount: state.selectedSubpaths?.length ?? 0,
+            selectedElementsCount: state.selectedIds.length,
+            activePlugin: state.activePlugin,
+          }, false); // false = priority strategy
+
+          executeDeletion(scope, {
+            deleteSelectedCommands: state.deleteSelectedCommands,
+            deleteSelectedSubpaths: state.deleteSelectedSubpaths,
+            deleteSelectedElements: state.deleteSelectedElements,
+          });
+        },
+        options: { preventDefault: true }
+      },
+      ArrowUp: {
+        handler: (event, context) => handleArrowKey(event, context, 0, -1),
+        options: { preventDefault: true }
+      },
+      ArrowDown: {
+        handler: (event, context) => handleArrowKey(event, context, 0, 1),
+        options: { preventDefault: true }
+      },
+      ArrowLeft: {
+        handler: (event, context) => handleArrowKey(event, context, -1, 0),
+        options: { preventDefault: true }
+      },
+      ArrowRight: {
+        handler: (event, context) => handleArrowKey(event, context, 1, 0),
+        options: { preventDefault: true }
+      },
     });
 
     return () => {

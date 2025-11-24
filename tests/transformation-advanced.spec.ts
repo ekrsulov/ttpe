@@ -40,6 +40,10 @@ test.describe('Transformation Advanced Controls', () => {
     // Enable Advanced Mode
     await page.locator('text=Advanced').click();
 
+    // Expand distort and perspective controls
+    await page.locator('[aria-label="Expand Distort"]').click();
+    await page.locator('[aria-label="Expand Perspective"]').click();
+
     // Ensure skew inputs exist and that they are in a skew-row
     const skewX = page.locator('[data-testid="skew-x-input"]');
     const skewY = page.locator('[data-testid="skew-y-input"]');

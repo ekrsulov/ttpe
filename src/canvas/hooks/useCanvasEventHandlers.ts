@@ -5,8 +5,7 @@ import { useCanvasEventBus } from '../CanvasEventBusContext';
 import { calculateCommandsBounds } from '../../utils/selectionBoundsUtils';
 import { useDoubleTap } from './useDoubleTap';
 
-interface EventHandlerDeps {
-  svgRef: React.RefObject<SVGSVGElement | null>;
+interface UseCanvasEventHandlersProps {
   screenToCanvas: (x: number, y: number) => Point;
   isSpacePressed: boolean;
   activePlugin: string | null;
@@ -30,9 +29,8 @@ interface EventHandlerDeps {
   setMode: (mode: string) => void;
 }
 
-export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
+export const useCanvasEventHandlers = (props: UseCanvasEventHandlersProps) => {
   const {
-    svgRef,
     screenToCanvas,
     isSpacePressed,
     activePlugin,
@@ -51,7 +49,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     selectedIds,
     completeSelectionRectangle,
     updateSelectionRectangle,
-  } = deps;
+  } = props;
 
   const eventBus = useCanvasEventBus();
 
@@ -184,7 +182,8 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
       clientY: touch.clientY,
       button: 0,
       type: 'dblclick',
-    } as React.MouseEvent<SVGPathElement>;
+      nativeEvent: e.nativeEvent // Pass native event if needed
+    } as unknown as React.MouseEvent<SVGPathElement>;
 
     // Call the subpath double click handler
     handleSubpathDoubleClick(elementId, subpathIndex, syntheticEvent);
@@ -216,7 +215,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
         isSelecting,
         isDragging,
         dragStart,
-        hasDragMoved: deps.hasDragMoved,
+        hasDragMoved: props.hasDragMoved,
       },
     });
   }, [
@@ -230,7 +229,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     isSelecting,
     isDragging,
     dragStart,
-    deps.hasDragMoved,
+    props.hasDragMoved,
     setIsDragging,
     setDragStart,
     setHasDragMoved,
@@ -258,7 +257,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
         isSelecting,
         isDragging,
         dragStart,
-        hasDragMoved: deps.hasDragMoved,
+        hasDragMoved: props.hasDragMoved,
       },
     });
 
@@ -396,7 +395,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     beginSelectionRectangle,
     completeSelectionRectangle,
     eventBus,
-    deps.hasDragMoved,
+    props.hasDragMoved,
   ]);
 
   // Handle pointer up
@@ -421,7 +420,7 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
         isSelecting,
         isDragging,
         dragStart,
-        hasDragMoved: deps.hasDragMoved,
+        hasDragMoved: props.hasDragMoved,
       },
     });
 
@@ -458,25 +457,10 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     eventBus,
     dragStart,
     beginSelectionRectangle,
-    deps.hasDragMoved,
+    props.hasDragMoved,
   ]);
 
-  // Handle wheel
-  const handleWheel = useCallback((e: React.WheelEvent<SVGSVGElement>) => {
-    e.preventDefault();
-    eventBus.emit('wheel', {
-      event: e,
-      activePlugin,
-      svg: svgRef.current,
-    });
-    const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
-    const rect = svgRef.current?.getBoundingClientRect();
-    if (rect) {
-      const centerX = e.clientX - rect.left;
-      const centerY = e.clientY - rect.top;
-      useCanvasStore.getState().zoom(zoomFactor, centerX, centerY);
-    }
-  }, [svgRef, eventBus, activePlugin]);
+
 
   // Handle double click on empty canvas to return to select mode
   const handleCanvasDoubleClick = useCallback((e: React.MouseEvent) => {
@@ -536,7 +520,6 @@ export const useCanvasEventHandlers = (deps: EventHandlerDeps) => {
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
-    handleWheel,
     handleCanvasDoubleClick,
     handleElementTouchEnd,
     handleSubpathTouchEnd,
