@@ -13,7 +13,13 @@ export interface CanvasServiceConfig<TState = unknown> {
   serviceId: string;
   /** SVG reference */
   svgRef: RefObject<SVGSVGElement | null>;
-  /** Optional state selector to compute service state */
+  /** 
+   * Optional state selector to compute service state.
+   * Only provide if the service registered via pluginManager.registerCanvasService 
+   * explicitly supports state updates (i.e., it has a state handler registered).
+   * If provided, this function will be called whenever stateDeps change,
+   * and the result will be passed to the service's state update handler.
+   */
   selectState?: (deps: {
     controller: CanvasControllerValue;
     eventBus: ReturnType<typeof useCanvasEventBus>;
@@ -59,7 +65,7 @@ export function useCanvasServiceActivation<TState = unknown>({
 }: CanvasServiceConfig<TState>): void {
   const controller = useCanvasController();
   const eventBus = useCanvasEventBus();
-  
+
   // Track if service is activated to prevent duplicate updates
   const isActivatedRef = useRef(false);
 

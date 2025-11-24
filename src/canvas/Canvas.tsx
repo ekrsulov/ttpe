@@ -31,7 +31,7 @@ import { useCanvasGeometry } from './hooks/useCanvasGeometry';
 import { useViewportController } from './hooks/useViewportController';
 import { useCanvasShortcuts } from './hooks/useCanvasShortcuts';
 import { canvasShortcutRegistry } from './shortcuts';
-import { useCanvasModeMachine } from './hooks/useCanvasModeMachine';
+import { useCanvasModeController } from './hooks/useCanvasModeController';
 import type { CanvasMode } from './modes/CanvasModeMachine';
 import { useCanvasStore } from '../store/canvasStore';
 import { PluginHooksRenderer } from './PluginHooks';
@@ -58,7 +58,7 @@ const CanvasContent: React.FC = () => {
   const {
     currentMode,
     transition: transitionCanvasMode,
-  } = useCanvasModeMachine();
+  } = useCanvasModeController();
   const { viewport, screenToCanvas: mapScreenPointToCanvas, getViewBoxString } = useViewportController();
   const eventBus = useCanvasEventBus();
 

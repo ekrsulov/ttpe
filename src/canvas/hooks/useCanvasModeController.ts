@@ -43,7 +43,7 @@ const normalizeMode = (mode: string | null | undefined): CanvasMode => {
 
 const dedupe = <T,>(items: T[]): T[] => Array.from(new Set(items));
 
-export const useCanvasModeMachine = (): CanvasModeMachineHookResult => {
+export const useCanvasModeController = (): CanvasModeMachineHookResult => {
   const activePlugin = useCanvasStore((state) => state.activePlugin);
 
   const currentMode = normalizeMode(activePlugin);

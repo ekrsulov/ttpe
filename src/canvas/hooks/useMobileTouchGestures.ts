@@ -3,6 +3,7 @@ import type { RefObject } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { formatToPrecision, PATH_DECIMAL_PRECISION } from '../../utils';
 import { MIN_ZOOM, MAX_ZOOM } from '../../store/slices/features/viewportSlice';
+import { calculatePinchZoom, calculateGesturePan } from '../utils/touchGestureUtils';
 
 interface TouchInfo {
   id: number;
@@ -110,65 +111,52 @@ export const useMobileTouchGestures = (svgRef: RefObject<SVGSVGElement | null>):
       const currentMidpoint = calculateMidpoint(touch1, touch2);
 
       const state = gestureStateRef.current;
-      
+
       if (!state.initialMidpoint || !state.initialDistance) {
         return;
       }
 
       // Calculate zoom based on pinch distance
-      const zoomFactor = currentDistance / state.initialDistance;
-      let newZoom = state.initialZoom * zoomFactor;
-
-      // Apply zoom limits
-      newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newZoom));
+      const newZoom = calculatePinchZoom(
+        currentDistance,
+        state.initialDistance,
+        state.initialZoom,
+        { min: MIN_ZOOM, max: MAX_ZOOM }
+      );
 
       // Calculate pan based on finger movement
-      // We want to keep the content under the midpoint stable
       const rect = svg.getBoundingClientRect();
-      const initialMidpointRelative = {
-        x: state.initialMidpoint.x - rect.left,
-        y: state.initialMidpoint.y - rect.top,
-      };
-      const currentMidpointRelative = {
-        x: currentMidpoint.x - rect.left,
-        y: currentMidpoint.y - rect.top,
-      };
-
-      // Calculate zoom ratio
       const zoomRatio = newZoom / state.initialZoom;
 
-      // Adjust pan to keep the midpoint stable during zoom
-      let newPanX = initialMidpointRelative.x - (initialMidpointRelative.x - state.initialPanX) * zoomRatio;
-      let newPanY = initialMidpointRelative.y - (initialMidpointRelative.y - state.initialPanY) * zoomRatio;
-
-      // Add the delta from finger movement
-      const midpointDeltaX = currentMidpointRelative.x - initialMidpointRelative.x;
-      const midpointDeltaY = currentMidpointRelative.y - initialMidpointRelative.y;
-
-      newPanX += midpointDeltaX;
-      newPanY += midpointDeltaY;
+      const newPan = calculateGesturePan({
+        initialMidpoint: state.initialMidpoint,
+        currentMidpoint,
+        initialPan: { x: state.initialPanX, y: state.initialPanY },
+        zoomRatio,
+        svgRect: rect,
+      });
 
       // Update viewport
       useCanvasStore.setState((currentState) => ({
         viewport: {
           ...currentState.viewport,
           zoom: formatToPrecision(newZoom, PATH_DECIMAL_PRECISION),
-          panX: formatToPrecision(newPanX, PATH_DECIMAL_PRECISION),
-          panY: formatToPrecision(newPanY, PATH_DECIMAL_PRECISION),
+          panX: newPan.x,
+          panY: newPan.y,
         },
       }));
     };
 
     const handleTouchEnd = (event: TouchEvent) => {
       const wasGestureActive = gestureStateRef.current.isGestureActive;
-      
+
       // Reset gesture state when fingers are lifted
       if (event.touches.length < 2) {
         gestureStateRef.current.touches = [];
         gestureStateRef.current.initialDistance = null;
         gestureStateRef.current.initialMidpoint = null;
         gestureStateRef.current.isGestureActive = false;
-        
+
         // IMPORTANT: Only prevent default if a multi-touch gesture was active
         // This allows single-tap events (including double-tap detection) to work normally
         if (wasGestureActive) {
