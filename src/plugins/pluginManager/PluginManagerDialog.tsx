@@ -115,13 +115,13 @@ export const PluginManagerDialog: React.FC = () => {
                             </HStack>
                         )}
 
-                        {filteredPlugins.map((plugin) => {
+                        {filteredPlugins.map((plugin, index) => {
                             const isCritical = criticalPluginIds.includes(plugin.id);
 
                             return (
                                 <HStack key={plugin.id} justify="space-between">
                                     <Text fontWeight="medium">
-                                        {plugin.metadata.label}
+                                        {index + 1}. {plugin.metadata.label}
                                         {isCritical && ' (Critical)'}
                                     </Text>
                                     <PanelSwitch

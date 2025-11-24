@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { pluginManager } from '../utils/pluginManager';
+import { useCanvasStore } from '../store/canvasStore';
+import type { PluginManagerSlice } from '../plugins/pluginManager/slice';
 
 // Tool mode type - any string representing a tool ID
 type ToolMode = string;
@@ -21,15 +23,37 @@ export const useDynamicTools = (activeMode: string | null, gridEnabled: boolean 
   const [toolUsage, setToolUsage] = useState<ToolUsage>({});
   const [showExtraTools, setShowExtraTools] = useState(false);
 
+  // Get enabled plugins from store
+  const enabledPlugins = useCanvasStore(
+    (state) => (state as unknown as PluginManagerSlice).pluginManager.enabledPlugins
+  );
+
   // Get tools dynamically from registered plugins
-  const alwaysShownTools = useMemo(() => pluginManager.getAlwaysShownTools(), []);
+  const allAlwaysShownTools = useMemo(() => pluginManager.getAlwaysShownTools(), []);
   const allDynamicTools = useMemo(() => pluginManager.getDynamicTools(), []);
 
-  // Compute dynamic tools based on grid state
-  const dynamicTools = useMemo(() =>
-    allDynamicTools.filter(tool => tool !== 'gridFill' || gridEnabled),
-    [allDynamicTools, gridEnabled]
-  );
+  // Filter tools based on enabled plugins
+  const alwaysShownTools = useMemo(() => {
+    const enabledPluginSet = new Set(enabledPlugins.length === 0 ? [] : enabledPlugins);
+    return allAlwaysShownTools.filter(tool => 
+      enabledPlugins.length === 0 || enabledPluginSet.has(tool)
+    );
+  }, [allAlwaysShownTools, enabledPlugins]);
+
+  // Filter dynamic tools based on enabled plugins
+  const dynamicTools = useMemo(() => {
+    const enabledPluginSet = new Set(enabledPlugins.length === 0 ? [] : enabledPlugins);
+    
+    return allDynamicTools.filter(tool => {
+      // Check if gridFill should be included based on grid state
+      if (tool === 'gridFill' && !gridEnabled) {
+        return false;
+      }
+      
+      // Check if plugin is enabled (empty enabledPlugins means all enabled)
+      return enabledPlugins.length === 0 || enabledPluginSet.has(tool);
+    });
+  }, [allDynamicTools, enabledPlugins, gridEnabled]);
 
   // Load tool usage from localStorage on mount
   useEffect(() => {
