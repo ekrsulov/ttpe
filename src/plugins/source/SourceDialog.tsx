@@ -6,13 +6,14 @@ import {
     ModalHeader,
     ModalBody,
     ModalFooter,
-    Button,
     Textarea,
     useToast,
     useColorModeValue,
 } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { serializePathsForExport } from '../../utils/exportUtils';
+import { PanelStyledButton } from '../../ui/PanelStyledButton';
+import { PanelToggle } from '../../ui/PanelToggle';
 import type { SourcePluginSlice } from './sourcePluginSlice';
 
 export const SourceDialog: React.FC = () => {
@@ -46,6 +47,7 @@ export const SourceDialog: React.FC = () => {
     // Local state
     const [localSvgContent, setLocalSvgContent] = useState('');
     const [isImporting, setIsImporting] = useState(false);
+    const [isWordWrapEnabled, setIsWordWrapEnabled] = useState(false);
 
     // Export on open
     useEffect(() => {
@@ -147,41 +149,69 @@ export const SourceDialog: React.FC = () => {
                 maxH="90vh"
                 bg={bgColor}
             >
-                <ModalHeader borderBottom="1px" borderColor={borderColor}>
+                <ModalHeader borderBottom="1px" borderColor={borderColor} p={2} fontSize="sm">
                     SVG Source
                 </ModalHeader>
-                <ModalBody py={4}>
+                <ModalBody p={2}>
                     <Textarea
                         value={localSvgContent}
                         onChange={handleTextChange}
                         fontFamily="monospace"
-                        fontSize="sm"
+                        fontSize="xs"
                         rows={15}
-                        whiteSpace="pre"
+                        whiteSpace={isWordWrapEnabled ? 'pre-wrap' : 'pre'}
                         overflowX="auto"
                         resize="vertical"
                         autoFocus
+                        borderRadius="0"
+                        borderColor="gray.300"
+                        bg="white"
+                        _dark={{
+                            borderColor: 'whiteAlpha.300',
+                            bg: 'gray.800'
+                        }}
+                        _focus={{
+                            borderColor: 'gray.600',
+                            boxShadow: '0 0 0 1px var(--chakra-colors-gray-600)'
+                        }}
+                        mb={2}
                     />
+                    <PanelToggle
+                        isChecked={isWordWrapEnabled}
+                        onChange={(e) => setIsWordWrapEnabled(e.target.checked)}
+                    >
+                        Wrap Text
+                    </PanelToggle>
                 </ModalBody>
-                <ModalFooter borderTop="1px" borderColor={borderColor} gap={2}>
-                    <Button onClick={handleClear} variant="ghost" mr="auto">
+                <ModalFooter borderTop="1px" borderColor={borderColor} gap={2} p={2}>
+                    <PanelStyledButton onClick={handleClear} mr="auto" h="28px">
                         Clear
-                    </Button>
-                    <Button onClick={handleCopy} variant="outline">
+                    </PanelStyledButton>
+                    <PanelStyledButton onClick={handleCopy} h="28px">
                         Copy
-                    </Button>
-                    <Button onClick={handleClose} variant="ghost">
+                    </PanelStyledButton>
+                    <PanelStyledButton onClick={handleClose} h="28px">
                         Close
-                    </Button>
-                    <Button
-                        colorScheme="blue"
+                    </PanelStyledButton>
+                    <PanelStyledButton
                         onClick={handleUpdateCanvas}
                         isDisabled={!hasUnsavedChanges}
                         isLoading={isImporting}
                         loadingText="Importing"
+                        h="28px"
+                        bg="gray.800"
+                        color="white"
+                        borderColor="gray.800"
+                        _hover={{ bg: 'gray.700' }}
+                        _dark={{
+                            bg: 'gray.100',
+                            color: 'gray.900',
+                            borderColor: 'gray.100',
+                            _hover: { bg: 'gray.200' }
+                        }}
                     >
                         Update Canvas
-                    </Button>
+                    </PanelStyledButton>
                 </ModalFooter>
             </ModalContent>
         </Modal>
