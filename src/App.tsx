@@ -15,11 +15,13 @@ import { CurvesControllerProvider } from './plugins/curves/CurvesControllerConte
 import { DEFAULT_STROKE_COLOR_DARK, DEFAULT_STROKE_COLOR_LIGHT } from './utils/defaultColors';
 import { pluginManager } from './utils/pluginManager';
 import { useMemo as useReactMemo } from 'react';
+import { useSvgImport } from './hooks/useSvgImport';
 
 function App() {
   const activePlugin = useCanvasStore(state => state.activePlugin);
   const setMode = useCanvasStore(state => state.setMode);
   const selectedIds = useCanvasStore(state => state.selectedIds);
+  const { importSvgFiles } = useSvgImport();
 
   // Get global overlays from plugins
   const globalOverlays = useReactMemo(() => pluginManager.getGlobalOverlays(), []);
@@ -71,6 +73,21 @@ function App() {
       sidebarOpenHandler();
     }
   }, [sidebarOpenHandler]);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      await importSvgFiles(files, { appendMode: true });
+    }
+  }, [importSvgFiles]);
 
   // Prevent iOS back swipe from left edge
   useEffect(() => {
@@ -158,6 +175,8 @@ function App() {
   return (
     <CurvesControllerProvider>
       <div
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
         style={{
           position: 'relative',
           width: '100vw',

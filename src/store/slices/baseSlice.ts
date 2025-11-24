@@ -50,6 +50,11 @@ export interface BaseSlice {
     defaultStrokeColor: string; // Default stroke color for new drawing operations
     scaleStrokeWithZoom: boolean; // Scale stroke width with zoom level
     exportPadding: number; // Padding in pixels when exporting SVG/PNG
+    importResize: boolean; // Whether to resize imported SVGs
+    importResizeWidth: number; // Target width for resized import
+    importResizeHeight: number; // Target height for resized import
+    importApplyUnion: boolean; // Whether to apply union to imported paths
+    importAddFrame: boolean; // Whether to add a frame around imported content
   };
 
   // Actions
@@ -240,6 +245,11 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => {
       defaultStrokeColor: '#000000',
       scaleStrokeWithZoom: true, // Default to false (strokes don't scale with zoom)
       exportPadding: 20, // Default padding for SVG/PNG export
+      importResize: false,
+      importResizeWidth: 64,
+      importResizeHeight: 64,
+      importApplyUnion: false,
+      importAddFrame: false,
     },
 
     // Actions

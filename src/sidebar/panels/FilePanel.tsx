@@ -1,143 +1,45 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { HStack, VStack, Input, useToast, FormControl, FormLabel, Text, Box, Collapse, useDisclosure, IconButton as ChakraIconButton } from '@chakra-ui/react';
+import { HStack, VStack, Input, FormControl, FormLabel, Text, Box, Collapse, useDisclosure, IconButton as ChakraIconButton } from '@chakra-ui/react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import ConditionalTooltip from '../../ui/ConditionalTooltip';
 import { useCanvasStore } from '../../store/canvasStore';
-import { getDefaultStrokeColorFromSettings } from '../../utils/defaultColors';
-import { logger, importSVGWithDimensions, measurePath, translateCommands, performPathUnion, transformCommands, calculateScaledStrokeWidth, flattenImportedElements } from '../../utils';
+
+import { logger } from '../../utils';
 import { Panel } from '../../ui/Panel';
 import { PanelToggle } from '../../ui/PanelToggle';
 import { PanelStyledButton } from '../../ui/PanelStyledButton';
 import { NumberInput } from '../../ui/NumberInput';
 import { SliderControl } from '../../ui/SliderControl';
-import type { PathData, CanvasElement } from '../../types';
-import type { ImportedElement } from '../../utils';
+import { useSvgImport } from '../../hooks/useSvgImport';
 
-type AddElementFn = (element: Omit<CanvasElement, 'id' | 'zIndex'>, explicitZIndex?: number) => string;
-type UpdateElementFn = (id: string, updates: Partial<CanvasElement>) => void;
 
-const mapImportedElements = (
-  elements: ImportedElement[],
-  mapFn: (pathData: PathData) => PathData,
-): ImportedElement[] => {
-  return elements.map(element => {
-    if (element.type === 'path') {
-      return {
-        ...element,
-        data: mapFn(element.data),
-      };
-    }
-
-    return {
-      ...element,
-      children: mapImportedElements(element.children, mapFn),
-    };
-  });
-};
-
-const translateImportedElements = (
-  elements: ImportedElement[],
-  deltaX: number,
-  deltaY: number,
-): ImportedElement[] => {
-  if (deltaX === 0 && deltaY === 0) {
-    return elements;
-  }
-
-  return mapImportedElements(elements, (pathData) => ({
-    ...pathData,
-    subPaths: pathData.subPaths.map(subPath => translateCommands(subPath, deltaX, deltaY)),
-  }));
-};
-
-const addImportedElementsToCanvas = (
-  elements: ImportedElement[],
-  addElement: AddElementFn,
-  updateElement: UpdateElementFn,
-  getNextGroupName: () => string,
-  parentId: string | null = null,
-  globalZIndexCounter: { value: number } = { value: 0 },
-): { createdIds: string[]; childIds: string[] } => {
-  const createdIds: string[] = [];
-  const childIds: string[] = [];
-
-  elements.forEach(element => {
-    if (element.type === 'group') {
-      const groupName = element.name?.trim().length ? element.name : getNextGroupName();
-      const groupZIndex = globalZIndexCounter.value++;
-      const groupId = addElement({
-        type: 'group',
-        parentId: parentId ?? undefined,
-        data: {
-          childIds: [],
-          name: groupName,
-          isLocked: false,
-          isHidden: false,
-          isExpanded: true,
-          transform: {
-            translateX: 0,
-            translateY: 0,
-            rotation: 0,
-            scaleX: 1,
-            scaleY: 1,
-          },
-        },
-      }, groupZIndex);
-
-      const { createdIds: nestedCreatedIds, childIds: nestedChildIds } = addImportedElementsToCanvas(
-        element.children,
-        addElement,
-        updateElement,
-        getNextGroupName,
-        groupId,
-        globalZIndexCounter, // Pass the counter to maintain global sequence
-      );
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      updateElement(groupId, { data: { childIds: nestedChildIds } } as any);
-
-      createdIds.push(groupId, ...nestedCreatedIds);
-      childIds.push(groupId);
-      return;
-    }
-
-    const pathZIndex = globalZIndexCounter.value++;
-    const pathId = addElement({
-      type: 'path',
-      parentId: parentId ?? undefined,
-      data: element.data,
-    }, pathZIndex);
-
-    createdIds.push(pathId);
-    childIds.push(pathId);
-  });
-
-  return { createdIds, childIds };
-};
 
 export const FilePanel: React.FC = () => {
   // Use individual selectors to prevent re-renders on unrelated changes
   const saveDocument = useCanvasStore(state => state.saveDocument);
   const loadDocument = useCanvasStore(state => state.loadDocument);
   const saveAsSvg = useCanvasStore(state => state.saveAsSvg);
-  const addElement = useCanvasStore(state => state.addElement);
-  const updateElement = useCanvasStore(state => state.updateElement);
-  const clearSelection = useCanvasStore(state => state.clearSelection);
-  const selectElements = useCanvasStore(state => state.selectElements);
-  const setActivePlugin = useCanvasStore(state => state.setActivePlugin);
   const settings = useCanvasStore(state => state.settings);
   const updateSettings = useCanvasStore(state => state.updateSettings);
 
-  const [appendMode, setAppendMode] = useState(false);
-  const [addFrame, setAddFrame] = useState(false);
-  const [applyUnion, setApplyUnion] = useState(false);
-  const [resizeImport, setResizeImport] = useState(false);
-  const [resizeWidth, setResizeWidth] = useState(64);
-  const [resizeHeight, setResizeHeight] = useState(64);
+  const {
+    importResize: resizeImport,
+    importResizeWidth: resizeWidth,
+    importResizeHeight: resizeHeight,
+    importApplyUnion: applyUnion,
+    importAddFrame: addFrame
+  } = settings;
+
+  const setResizeImport = (value: boolean) => updateSettings({ importResize: value });
+  const setResizeWidth = (value: number) => updateSettings({ importResizeWidth: value });
+  const setResizeHeight = (value: number) => updateSettings({ importResizeHeight: value });
+  const setApplyUnion = (value: boolean) => updateSettings({ importApplyUnion: value });
+  const setAddFrame = (value: boolean) => updateSettings({ importAddFrame: value });
+
   const [pngSelectedOnly, setPngSelectedOnly] = useState(true);
   const [svgSelectedOnly, setSvgSelectedOnly] = useState(false);
   const svgInputRef = useRef<HTMLInputElement>(null);
-  const toast = useToast();
+
 
   // Document name state
   const documentName = useCanvasStore(state => state.documentName);
@@ -183,27 +85,6 @@ export const FilePanel: React.FC = () => {
     };
   }, []);
 
-  // Helper function to create a frame rectangle
-  const createFrame = (width: number, height: number): PathData => {
-    const defaultStrokeColor = getDefaultStrokeColorFromSettings();
-    return {
-      subPaths: [[
-        { type: 'M', position: { x: 0, y: 0 } },
-        { type: 'L', position: { x: width, y: 0 } },
-        { type: 'L', position: { x: width, y: height } },
-        { type: 'L', position: { x: 0, y: height } },
-        { type: 'Z' }
-      ]],
-      strokeWidth: 1,
-      strokeColor: defaultStrokeColor,
-      strokeOpacity: 1,
-      fillColor: 'none',
-      fillOpacity: 1,
-      strokeLinecap: 'round',
-      strokeLinejoin: 'round'
-    };
-  };
-
   const handleSave = () => {
     saveDocument();
   };
@@ -223,7 +104,7 @@ export const FilePanel: React.FC = () => {
 
   const handleLoad = async () => {
     try {
-      await loadDocument(appendMode);
+      await loadDocument(true); // Always append for now
     } catch (error) {
       logger.error('Failed to load document', error);
       alert('Failed to load document. Please check the file format.');
@@ -234,193 +115,24 @@ export const FilePanel: React.FC = () => {
     svgInputRef.current?.click();
   };
 
+  const { importSvgFiles } = useSvgImport();
+
   const handleSVGFileSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
-    try {
-      logger.info('Importing SVG files', { fileCount: files.length });
+    await importSvgFiles(files, {
+      appendMode: true, // Always append in FilePanel for now, or we could add a toggle
+      resizeImport,
+      resizeWidth,
+      resizeHeight,
+      applyUnion,
+      addFrame
+    });
 
-      // Clear selection if not in append mode
-      if (!appendMode) {
-        clearSelection();
-      }
-
-      const selectionIds: string[] = [];
-      let importedPathCount = 0;
-
-      // Grid layout variables for organizing imported SVGs
-      let currentXOffset = 0;        // Current horizontal position in the row
-      let currentYOffset = 0;        // Current vertical position (row start)
-      let currentRowMaxHeight = 0;   // Maximum height in current row
-      const margin = 160;            // Margin between imported groups (4x increased for maximum spacing)
-      const maxRowWidth = 12288;     // Maximum horizontal width per row (3x 4096px for very wide rows)
-      let importedGroupCounter = 1;
-      const getNextGroupName = () => `Imported Group ${importedGroupCounter++}`;
-
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        logger.info('Processing SVG file', { fileName: file.name, index: i });
-
-        const { dimensions, elements: importedElements } = await importSVGWithDimensions(file);
-
-        if (!importedElements || importedElements.length === 0) {
-          logger.warn('No paths found in SVG file', { fileName: file.name });
-          continue;
-        }
-
-        let workingElements = importedElements;
-        let pathDataArray = flattenImportedElements(workingElements);
-
-        if (pathDataArray.length === 0) {
-          logger.warn('No paths found after parsing SVG elements', { fileName: file.name });
-          continue;
-        }
-
-        // Apply resize if requested
-        if (resizeImport && dimensions.width > 0 && dimensions.height > 0) {
-          const scaleX = resizeWidth / dimensions.width;
-          const scaleY = resizeHeight / dimensions.height;
-
-          workingElements = mapImportedElements(workingElements, (pathData) => {
-            const scaledSubPaths = pathData.subPaths.map(subPath =>
-              transformCommands(subPath, {
-                scaleX,
-                scaleY,
-                originX: 0,
-                originY: 0,
-                rotation: 0,
-                rotationCenterX: 0,
-                rotationCenterY: 0,
-              })
-            );
-
-            return {
-              ...pathData,
-              subPaths: scaledSubPaths,
-              strokeWidth: calculateScaledStrokeWidth(pathData.strokeWidth, scaleX, scaleY),
-            };
-          });
-
-          pathDataArray = flattenImportedElements(workingElements);
-        } else if (resizeImport) {
-          logger.warn('Resize requested but SVG dimensions are missing or zero', { fileName: file.name });
-        }
-
-        // Apply union if requested
-        if (applyUnion) {
-          const unionSource = flattenImportedElements(workingElements);
-          if (unionSource.length > 1) {
-            const unionResult = performPathUnion(unionSource);
-            if (unionResult) {
-              workingElements = [{ type: 'path', data: unionResult }];
-              pathDataArray = flattenImportedElements(workingElements);
-            }
-          }
-        }
-
-        // Recalculate bounds after resize and union operations
-        let finalGroupMinX = Infinity;
-        let finalGroupMaxX = -Infinity;
-        let finalGroupMinY = Infinity;
-        let finalGroupMaxY = -Infinity;
-
-        pathDataArray.forEach(pathData => {
-          const bounds = measurePath(pathData.subPaths, pathData.strokeWidth, 1);
-          finalGroupMinX = Math.min(finalGroupMinX, bounds.minX);
-          finalGroupMaxX = Math.max(finalGroupMaxX, bounds.maxX);
-          finalGroupMinY = Math.min(finalGroupMinY, bounds.minY);
-          finalGroupMaxY = Math.max(finalGroupMaxY, bounds.maxY);
-        });
-
-        const finalGroupWidth = finalGroupMaxX - finalGroupMinX;
-        const finalGroupHeight = finalGroupMaxY - finalGroupMinY;
-
-        // Grid layout: Check if current SVG fits in the current row
-        if (currentXOffset > 0 && currentXOffset + finalGroupWidth > maxRowWidth) {
-          currentXOffset = 0;
-          currentYOffset += currentRowMaxHeight + margin;
-          currentRowMaxHeight = 0;
-        }
-
-        // Apply translation to position this group in the grid
-        const translateX = currentXOffset - finalGroupMinX;
-        const translateY = currentYOffset - finalGroupMinY;
-
-        workingElements = translateImportedElements(workingElements, translateX, translateY);
-        pathDataArray = flattenImportedElements(workingElements);
-
-        // Add frame if requested (add it first so it appears "below" the SVG content)
-        if (addFrame) {
-          const frameWidth = resizeImport ? resizeWidth : (dimensions.width || finalGroupWidth);
-          const frameHeight = resizeImport ? resizeHeight : (dimensions.height || finalGroupHeight);
-          const frame = createFrame(frameWidth, frameHeight);
-          const translatedFrameSubPaths = frame.subPaths.map(subPath =>
-            translateCommands(subPath, translateX, translateY)
-          );
-          const translatedFrame = {
-            ...frame,
-            subPaths: translatedFrameSubPaths,
-          };
-
-          const frameId = addElement({
-            type: 'path',
-            data: translatedFrame,
-          });
-          selectionIds.push(frameId);
-          importedPathCount += 1;
-        }
-
-        const { createdIds, childIds } = addImportedElementsToCanvas(
-          workingElements,
-          addElement,
-          updateElement,
-          getNextGroupName,
-        );
-
-        selectionIds.push(...childIds);
-        importedPathCount += pathDataArray.length;
-
-        // Update grid position for next SVG
-        currentXOffset += finalGroupWidth + margin;
-        currentRowMaxHeight = Math.max(currentRowMaxHeight, finalGroupHeight);
-
-        logger.info('SVG file processed', {
-          fileName: file.name,
-          createdElementCount: createdIds.length,
-          pathCount: pathDataArray.length,
-          bounds: { width: finalGroupWidth, height: finalGroupHeight },
-          position: { x: currentXOffset - finalGroupWidth - margin, y: currentYOffset },
-          offset: currentXOffset,
-        });
-      }
-
-      if (selectionIds.length > 0) {
-        selectElements(selectionIds);
-        setActivePlugin('select');
-      }
-
-      toast({
-        title: 'SVGs Imported',
-        description: `Successfully imported ${importedPathCount} path${importedPathCount !== 1 ? 's' : ''} from ${files.length} file${files.length !== 1 ? 's' : ''}`,
-        status: 'success',
-        duration: 3000,
-        isClosable: true,
-      });
-
-      logger.info('All elements added to canvas', { totalPathCount: importedPathCount, selectionCount: selectionIds.length });
-    } catch (error) {
-      logger.error('Failed to import SVGs', error);
-      toast({
-        title: 'Import Failed',
-        description: error instanceof Error ? error.message : 'Failed to import SVG files',
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      });
-    } finally {
-      // Reset the input so the same files can be imported again
-      event.target.value = '';
+    // Reset file input
+    if (svgInputRef.current) {
+      svgInputRef.current.value = '';
     }
   };
 
@@ -566,12 +278,12 @@ export const FilePanel: React.FC = () => {
             <VStack spacing={2} align="stretch" mt={2}>
 
               <PanelToggle
-                isChecked={appendMode}
-                onChange={(e) => setAppendMode(e.target.checked)}
+                isChecked={true}
+                onChange={() => { }}
+                isDisabled={true}
               >
-                Append to current document
+                Append to existing
               </PanelToggle>
-
               <PanelToggle
                 isChecked={pngSelectedOnly}
                 onChange={(e) => setPngSelectedOnly(e.target.checked)}
