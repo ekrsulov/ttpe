@@ -316,7 +316,7 @@ The Transformation Plugin includes an **Advanced Mode** that unlocks sophisticat
 
 **Advanced Mode Features:**
 - **8 specialized handles**: 4 corner handles + 4 edge handles with modified behaviors
-- **Modifier key support**: Cmd/Alt keys enable perspective transformations
+- **Modifier key support**: Shift key (or virtual shift on touch devices) enables perspective transformations
 - **Real-time preview**: All transformations show live preview during drag
 - **Console logging**: Debug logs show transformation mode being applied (Distort/Skew/Perspective)
 - **Original state preservation**: Transformations apply from original element state to prevent accumulation
@@ -389,7 +389,7 @@ Parallel edge movement creating shear transformations along X or Y axis.
 Edge-based perspective transformation that moves both corners of an edge simultaneously, creating depth effects.
 
 **Handles**: Same 4 edge handles as Skew mode
-**Interaction**: Drag edge handle **while holding Cmd (Mac) or Alt (Windows)**
+**Interaction**: Drag edge handle **while holding Shift (or with virtual shift active on touch devices)**
 **Use Cases**:
 - Creating depth and 3D perspective effects
 - Simulating viewing angles
@@ -397,7 +397,7 @@ Edge-based perspective transformation that moves both corners of an edge simulta
 
 **How to Use:**
 1. Activate "Advanced" mode in Transformation Panel
-2. **Press and hold** Cmd (Mac) or Alt (Windows)
+2. **Press and hold** Shift (or activate virtual shift on touch devices)
 3. Drag an **edge handle**:
    - **Top edge**: Moves both top-left and top-right corners together
    - **Bottom edge**: Moves both bottom-left and bottom-right corners together
@@ -441,7 +441,7 @@ sequenceDiagram
     User->>Canvas: Pointer down on handle
     Canvas->>Handler: handleTransformationHandlerPointerDown(handler)
     Handler->>Handler: Detect "advanced-" prefix
-    Handler->>Handler: Check modifier keys (Cmd/Alt)
+    Handler->>Handler: Check modifier keys (Shift or virtual shift)
     
     alt Corner Handle
         Handler->>Transform: startAdvancedTransformation('advanced-corner-tl', point, false)
@@ -545,7 +545,7 @@ The Advanced Mode includes comprehensive console logging for debugging and under
 **Console Log Indicators:**
 - 🔷 `Advanced Transform Mode: DISTORT (corner)` - Corner handle selected
 - 🔷 `Advanced Transform Mode: SKEW { axis: 'x' }` - Edge handle without modifier
-- 🔷 `Advanced Transform Mode: PERSPECTIVE (edge + modifier)` - Edge handle with Cmd/Alt
+- 🔷 `Advanced Transform Mode: PERSPECTIVE (edge + modifier)` - Edge handle with Shift or virtual shift
 - 🔷 `Applying DISTORT: top-left corner` - Active distortion being applied
 - 🔷 `Applying SKEW: { axis: 'y', angle: '23.45' }` - Active skew with calculated angle
 - 🔷 `Applying PERSPECTIVE: left edge (both corners)` - Active perspective transformation
@@ -1174,7 +1174,7 @@ function TransformControls() {
       {advancedMode && (
         <p>
           Use corner handles for distort, edge handles for skew,
-          or edge handles + Cmd/Alt for perspective.
+          or edge handles + Shift (or virtual shift) for perspective.
         </p>
       )}
     </div>
