@@ -10,6 +10,7 @@ import {
     HStack,
     Text,
     Input,
+    Badge,
     useColorModeValue,
 } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
@@ -81,7 +82,12 @@ export const PluginSelectorDialog: React.FC = () => {
             <ModalOverlay />
             <ModalContent bg={bgColor}>
                 <ModalHeader borderBottom="1px" borderColor={borderColor} px={3} py={2}>
-                    Manage Plugins
+                    <HStack justify="space-between" align="center">
+                        <Text>Select Plugins</Text>
+                        <Badge colorScheme="gray" variant="subtle">
+                            {enabledPlugins.length}
+                        </Badge>
+                    </HStack>
                 </ModalHeader>
                 <ModalBody px={3} py={2}>
                     <VStack spacing={4} align="stretch">

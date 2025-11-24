@@ -29,7 +29,7 @@ sequenceDiagram
     participant Canvas as Canvas UI
 
     Note over User,Canvas: 1. Open Plugin Manager
-    User->>UI: Click "Manage Plugins" button
+    User->>UI: Click "Select Plugins" button
     UI->>Store: setPluginSelectorDialogOpen(true)
     Store->>PS: Dialog opens
     PS->>PM: getAll() - Get all registered plugins
@@ -103,6 +103,7 @@ flowchart TD
 ### PluginSelectorDialog
 
 Main modal dialog displaying:
+- Header with "Select Plugins" title and enabled plugins count badge
 - Search input for filtering plugins
 - Enable/Disable All toggle
 - Individual plugin switches

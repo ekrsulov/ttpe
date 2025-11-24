@@ -10,7 +10,7 @@ export const PluginSelectorAction: React.FC = () => {
 
     return (
         <PanelStyledButton onClick={() => setDialogOpen(true)} width="100%">
-            Manage Plugins
+            Select Plugins
         </PanelStyledButton>
     );
 };
