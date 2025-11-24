@@ -49,6 +49,8 @@ export const SelectionBboxTransformationOverlay: React.FC<SelectionBboxTransform
     (state as unknown as TransformationPluginSlice).transformationHandlers
   );
 
+  const isVirtualShiftActive = useCanvasStore(state => state.isVirtualShiftActive);
+
   // Create screenToCanvas function using viewport prop
   const screenToCanvas = React.useCallback((screenX: number, screenY: number) => {
     return {
@@ -75,9 +77,9 @@ export const SelectionBboxTransformationOverlay: React.FC<SelectionBboxTransform
     if (!transformationHandlers?.startAdvancedTransformation) return;
     e.stopPropagation();
     const point = screenToCanvas(e.clientX, e.clientY);
-    const isModifierPressed = e.metaKey || e.ctrlKey || e.altKey;
+    const isModifierPressed = e.shiftKey || isVirtualShiftActive;
     transformationHandlers.startAdvancedTransformation(handlerType, point, isModifierPressed);
-  }, [transformationHandlers, screenToCanvas]);
+  }, [transformationHandlers, screenToCanvas, isVirtualShiftActive]);
 
   const onAdvancedTransformationHandlerPointerUp = React.useCallback((_e: React.PointerEvent) => {
     if (!transformationHandlers?.endAdvancedTransformation) return;
