@@ -53,7 +53,7 @@ export interface BaseSlice {
   };
 
   // Actions
-  addElement: (element: Omit<CanvasElement, 'id' | 'zIndex'>) => string;
+  addElement: (element: Omit<CanvasElement, 'id' | 'zIndex'>, explicitZIndex?: number) => string;
   updateElement: (id: string, updates: Omit<Partial<CanvasElement>, 'data'> & { data?: unknown }) => void;
   deleteElement: (id: string) => void;
   deleteSelectedElements: () => void;
@@ -243,13 +243,16 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => {
     },
 
     // Actions
-    addElement: (element) => {
+    addElement: (element, explicitZIndex) => {
       const id = `element_${Date.now()}_${Math.random()}`;
       const parentId = element.parentId ?? null;
       const existingElements = get().elements;
-      const zIndex = parentId
-        ? existingElements.filter((el) => el.parentId === parentId).length
-        : existingElements.filter((el) => !el.parentId).length;
+      // Use explicit zIndex if provided, otherwise calculate based on sibling count
+      const zIndex = explicitZIndex !== undefined
+        ? explicitZIndex
+        : parentId
+          ? existingElements.filter((el) => el.parentId === parentId).length
+          : existingElements.filter((el) => !el.parentId).length;
 
       const newElement: CanvasElement = element.type === 'group'
         ? {

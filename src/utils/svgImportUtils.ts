@@ -40,7 +40,7 @@ interface Matrix {
  */
 function parseTransform(transformStr: string): Matrix {
   const matrix: Matrix = { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
-  
+
   if (!transformStr) return matrix;
 
   // Match transform functions
@@ -76,7 +76,7 @@ function parseTransform(transformStr: string): Matrix {
         const angle = (args[0] || 0) * Math.PI / 180;
         const cos = Math.cos(angle);
         const sin = Math.sin(angle);
-        
+
         if (args.length > 1) {
           // Rotate around a point
           const cx = args[1];
@@ -126,19 +126,19 @@ function multiplyMatrices(m1: Matrix, m2: Matrix): void {
  * Apply transformation matrix to a path
  */
 function transformPath(pathData: string, matrix: Matrix): string {
-  if (matrix.a === 1 && matrix.b === 0 && matrix.c === 0 && 
-      matrix.d === 1 && matrix.e === 0 && matrix.f === 0) {
+  if (matrix.a === 1 && matrix.b === 0 && matrix.c === 0 &&
+    matrix.d === 1 && matrix.e === 0 && matrix.f === 0) {
     return pathData; // Identity matrix, no transformation needed
   }
 
   const commands = parsePath(pathData);
   const transformedCommands = commands.map(cmd => {
     const data = [...cmd.data];
-    
+
     // Transform coordinates based on command type
     // For path-data-parser, coordinates are in the data array
     const key = cmd.key;
-    
+
     if (key === 'M' || key === 'L' || key === 'T') {
       // x, y at positions 0, 1
       const x = data[0];
@@ -170,7 +170,7 @@ function transformPath(pathData: string, matrix: Matrix): string {
       data[6] = matrix.b * x + matrix.d * y + matrix.f;
       // Note: Full arc transformation would require converting to curves
     }
-    
+
     return { key, data };
   });
 
@@ -202,16 +202,16 @@ function shapeToPath(element: Element): string | null {
         // Rounded rectangle
         const rxClamped = Math.min(rx, width / 2);
         const ryClamped = Math.min(ry, height / 2);
-        
+
         return `M ${x + rxClamped} ${y} ` +
-               `L ${x + width - rxClamped} ${y} ` +
-               `Q ${x + width} ${y} ${x + width} ${y + ryClamped} ` +
-               `L ${x + width} ${y + height - ryClamped} ` +
-               `Q ${x + width} ${y + height} ${x + width - rxClamped} ${y + height} ` +
-               `L ${x + rxClamped} ${y + height} ` +
-               `Q ${x} ${y + height} ${x} ${y + height - ryClamped} ` +
-               `L ${x} ${y + ryClamped} ` +
-               `Q ${x} ${y} ${x + rxClamped} ${y} Z`;
+          `L ${x + width - rxClamped} ${y} ` +
+          `Q ${x + width} ${y} ${x + width} ${y + ryClamped} ` +
+          `L ${x + width} ${y + height - ryClamped} ` +
+          `Q ${x + width} ${y + height} ${x + width - rxClamped} ${y + height} ` +
+          `L ${x + rxClamped} ${y + height} ` +
+          `Q ${x} ${y + height} ${x} ${y + height - ryClamped} ` +
+          `L ${x} ${y + ryClamped} ` +
+          `Q ${x} ${y} ${x + rxClamped} ${y} Z`;
       } else {
         // Regular rectangle
         return `M ${x} ${y} L ${x + width} ${y} L ${x + width} ${y + height} L ${x} ${y + height} Z`;
@@ -222,16 +222,16 @@ function shapeToPath(element: Element): string | null {
       const cx = parseFloat(element.getAttribute('cx') || '0');
       const cy = parseFloat(element.getAttribute('cy') || '0');
       const r = parseFloat(element.getAttribute('r') || '0');
-      
+
       // Use cubic bezier to approximate circle
       const k = BEZIER_CIRCLE_KAPPA; // Improved constant from bezier-circle approximation
       const kr = k * r;
-      
+
       return `M ${cx} ${cy - r} ` +
-             `C ${cx + kr} ${cy - r} ${cx + r} ${cy - kr} ${cx + r} ${cy} ` +
-             `C ${cx + r} ${cy + kr} ${cx + kr} ${cy + r} ${cx} ${cy + r} ` +
-             `C ${cx - kr} ${cy + r} ${cx - r} ${cy + kr} ${cx - r} ${cy} ` +
-             `C ${cx - r} ${cy - kr} ${cx - kr} ${cy - r} ${cx} ${cy - r} Z`;
+        `C ${cx + kr} ${cy - r} ${cx + r} ${cy - kr} ${cx + r} ${cy} ` +
+        `C ${cx + r} ${cy + kr} ${cx + kr} ${cy + r} ${cx} ${cy + r} ` +
+        `C ${cx - kr} ${cy + r} ${cx - r} ${cy + kr} ${cx - r} ${cy} ` +
+        `C ${cx - r} ${cy - kr} ${cx - kr} ${cy - r} ${cx} ${cy - r} Z`;
     }
 
     case 'ellipse': {
@@ -239,16 +239,16 @@ function shapeToPath(element: Element): string | null {
       const cy = parseFloat(element.getAttribute('cy') || '0');
       const rx = parseFloat(element.getAttribute('rx') || '0');
       const ry = parseFloat(element.getAttribute('ry') || '0');
-      
+
       const k = BEZIER_CIRCLE_KAPPA;
       const krx = k * rx;
       const kry = k * ry;
-      
+
       return `M ${cx} ${cy - ry} ` +
-             `C ${cx + krx} ${cy - ry} ${cx + rx} ${cy - kry} ${cx + rx} ${cy} ` +
-             `C ${cx + rx} ${cy + kry} ${cx + krx} ${cy + ry} ${cx} ${cy + ry} ` +
-             `C ${cx - krx} ${cy + ry} ${cx - rx} ${cy + kry} ${cx - rx} ${cy} ` +
-             `C ${cx - rx} ${cy - kry} ${cx - krx} ${cy - ry} ${cx} ${cy - ry} Z`;
+        `C ${cx + krx} ${cy - ry} ${cx + rx} ${cy - kry} ${cx + rx} ${cy} ` +
+        `C ${cx + rx} ${cy + kry} ${cx + krx} ${cy + ry} ${cx} ${cy + ry} ` +
+        `C ${cx - krx} ${cy + ry} ${cx - rx} ${cy + kry} ${cx - rx} ${cy} ` +
+        `C ${cx - rx} ${cy - kry} ${cx - krx} ${cy - ry} ${cx} ${cy - ry} Z`;
     }
 
     case 'line': {
@@ -256,7 +256,7 @@ function shapeToPath(element: Element): string | null {
       const y1 = parseFloat(element.getAttribute('y1') || '0');
       const x2 = parseFloat(element.getAttribute('x2') || '0');
       const y2 = parseFloat(element.getAttribute('y2') || '0');
-      
+
       return `M ${x1} ${y1} L ${x2} ${y2}`;
     }
 
@@ -264,19 +264,19 @@ function shapeToPath(element: Element): string | null {
     case 'polygon': {
       const points = element.getAttribute('points');
       if (!points) return null;
-      
+
       const coords = points.trim().split(/[\s,]+/).map(parseFloat);
       if (coords.length < 2) return null;
-      
+
       let path = `M ${coords[0]} ${coords[1]}`;
       for (let i = 2; i < coords.length; i += 2) {
         path += ` L ${coords[i]} ${coords[i + 1]}`;
       }
-      
+
       if (tagName === 'polygon') {
         path += ' Z';
       }
-      
+
       return path;
     }
 
@@ -383,13 +383,13 @@ function normalizeToMLCZ(pathData: string): string {
     const parsed = parsePath(pathData);
     const absolute = absolutize(parsed);
     const normalized = normalize(absolute);
-    
+
     // Convert to string with only M, L, C, Z
     const result: string[] = [];
-    
+
     normalized.forEach(cmd => {
       const type = cmd.key;
-      
+
       switch (type) {
         case 'M':
           // data: [x, y]
@@ -411,7 +411,7 @@ function normalizeToMLCZ(pathData: string): string {
           console.warn(`Unexpected command type after normalization: ${type}`);
       }
     });
-    
+
     return result.join(' ');
   } catch (error) {
     console.error('Error normalizing path:', error);
@@ -424,17 +424,17 @@ function normalizeToMLCZ(pathData: string): string {
  */
 function processElement(element: Element, parentTransform: Matrix = { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 }): ImportedElement[] {
   const results: ImportedElement[] = [];
-  
+
   // Get element's own transform
   const transformAttr = element.getAttribute('transform');
   const elementTransform = parseTransform(transformAttr || '');
-  
+
   // Combine with parent transform
   const combinedTransform: Matrix = { ...parentTransform };
   multiplyMatrices(combinedTransform, elementTransform);
-  
+
   const tagName = element.tagName.toLowerCase();
-  
+
   // Handle groups - recursively process children
   if (tagName === 'g') {
     const groupChildren: ImportedElement[] = [];
@@ -460,34 +460,34 @@ function processElement(element: Element, parentTransform: Matrix = { a: 1, b: 0
 
     return results;
   }
-  
+
   // Get path data
   let pathData: string | null = null;
-  
+
   if (tagName === 'path') {
     pathData = element.getAttribute('d');
   } else {
     pathData = shapeToPath(element);
   }
-  
+
   if (!pathData) return results;
-  
+
   // Apply transformations
   const transformedPath = transformPath(pathData, combinedTransform);
-  
+
   // Normalize to M, L, C, Z
   const normalizedPath = normalizeToMLCZ(transformedPath);
-  
+
   // Parse into our internal format
   const commands = parsePathD(normalizedPath);
-  
+
   // Extract style attributes
   const styleAttrs = extractStyleAttributes(element);
-  
+
   // Group commands into subpaths (split by M commands)
   const subPaths: SubPath[] = [];
   let currentSubPath: Command[] = [];
-  
+
   commands.forEach(cmd => {
     if (cmd.type === 'M') {
       if (currentSubPath.length > 0) {
@@ -498,18 +498,18 @@ function processElement(element: Element, parentTransform: Matrix = { a: 1, b: 0
       currentSubPath.push(cmd);
     }
   });
-  
+
   if (currentSubPath.length > 0) {
     subPaths.push(currentSubPath);
   }
-  
+
   if (subPaths.length === 0) return results;
-  
+
   // Create PathData object with defaults
   const pathDataObj: PathData = {
     subPaths,
     strokeWidth: styleAttrs.strokeWidth ?? 1,
-    strokeColor: styleAttrs.strokeColor ?? '#000000',
+    strokeColor: styleAttrs.strokeColor ?? 'none',
     strokeOpacity: styleAttrs.strokeOpacity ?? 1,
     fillColor: styleAttrs.fillColor ?? 'none',
     fillOpacity: styleAttrs.fillOpacity ?? 1,
@@ -518,7 +518,7 @@ function processElement(element: Element, parentTransform: Matrix = { a: 1, b: 0
     fillRule: styleAttrs.fillRule,
     strokeDasharray: styleAttrs.strokeDasharray,
   };
-  
+
   results.push({
     type: 'path',
     data: pathDataObj,
@@ -556,31 +556,31 @@ export interface SVGImportResult {
 export async function importSVGWithDimensions(file: File): Promise<SVGImportResult> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    
+
     reader.onload = (e) => {
       try {
         const svgContent = e.target?.result as string;
-        
+
         // Parse SVG
         const parser = new DOMParser();
         const doc = parser.parseFromString(svgContent, 'image/svg+xml');
-        
+
         // Check for parsing errors
         const parserError = doc.querySelector('parsererror');
         if (parserError) {
           reject(new Error('Invalid SVG file'));
           return;
         }
-        
+
         const svgElement = doc.querySelector('svg');
         if (!svgElement) {
           reject(new Error('No SVG element found'));
           return;
         }
-        
+
         // Extract dimensions
         const dimensions = extractSVGDimensions(svgElement);
-        
+
         // Process all elements
         const elements: ImportedElement[] = [];
         Array.from(svgElement.children).forEach(child => {
@@ -599,11 +599,11 @@ export async function importSVGWithDimensions(file: File): Promise<SVGImportResu
         reject(error);
       }
     };
-    
+
     reader.onerror = () => {
       reject(new Error('Failed to read file'));
     };
-    
+
     reader.readAsText(file);
   });
 }
@@ -628,7 +628,7 @@ export function flattenImportedElements(elements: ImportedElement[]): PathData[]
 function extractSVGDimensions(svgElement: Element): SVGDimensions {
   const width = parseFloat(svgElement.getAttribute('width') || '0');
   const height = parseFloat(svgElement.getAttribute('height') || '0');
-  
+
   let viewBox: SVGDimensions['viewBox'] | undefined;
   const viewBoxAttr = svgElement.getAttribute('viewBox');
   if (viewBoxAttr) {
@@ -642,7 +642,7 @@ function extractSVGDimensions(svgElement: Element): SVGDimensions {
       };
     }
   }
-  
+
   return {
     width: width || (viewBox ? viewBox.width : 0),
     height: height || (viewBox ? viewBox.height : 0),

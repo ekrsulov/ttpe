@@ -19,19 +19,19 @@ export interface SourcePluginSlice {
 const convertImportedToCanvasElement = (
     imported: ImportedElement,
     parentId: string | null,
-    zIndex: number
+    globalZIndexCounter: { value: number },
 ): CanvasElement[] => {
     const id = `element_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const elements: CanvasElement[] = [];
+    const zIndex = globalZIndexCounter.value++;
 
     if (imported.type === 'group') {
         const childIds: string[] = [];
-        let currentZIndex = 0;
 
         // Process children first to get their IDs
         const childrenElements: CanvasElement[] = [];
         imported.children.forEach((child) => {
-            const convertedChildren = convertImportedToCanvasElement(child, id, currentZIndex++);
+            const convertedChildren = convertImportedToCanvasElement(child, id, globalZIndexCounter);
             childrenElements.push(...convertedChildren);
             // The first element in the returned array is the direct child (root of the converted tree)
             if (convertedChildren.length > 0) {
@@ -104,10 +104,10 @@ export const createSourcePluginSlice: StateCreator<
             const { elements: importedElements } = await importSVGWithDimensions(file);
 
             const newCanvasElements: CanvasElement[] = [];
-            let zIndex = 0;
+            const globalZIndexCounter = { value: 0 };
 
             importedElements.forEach((imported) => {
-                const converted = convertImportedToCanvasElement(imported, null, zIndex++);
+                const converted = convertImportedToCanvasElement(imported, null, globalZIndexCounter);
                 newCanvasElements.push(...converted);
             });
 

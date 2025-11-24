@@ -13,7 +13,7 @@ import { SliderControl } from '../../ui/SliderControl';
 import type { PathData, CanvasElement } from '../../types';
 import type { ImportedElement } from '../../utils';
 
-type AddElementFn = (element: Omit<CanvasElement, 'id' | 'zIndex'>) => string;
+type AddElementFn = (element: Omit<CanvasElement, 'id' | 'zIndex'>, explicitZIndex?: number) => string;
 type UpdateElementFn = (id: string, updates: Partial<CanvasElement>) => void;
 
 const mapImportedElements = (
@@ -56,6 +56,7 @@ const addImportedElementsToCanvas = (
   updateElement: UpdateElementFn,
   getNextGroupName: () => string,
   parentId: string | null = null,
+  globalZIndexCounter: { value: number } = { value: 0 },
 ): { createdIds: string[]; childIds: string[] } => {
   const createdIds: string[] = [];
   const childIds: string[] = [];
@@ -63,6 +64,7 @@ const addImportedElementsToCanvas = (
   elements.forEach(element => {
     if (element.type === 'group') {
       const groupName = element.name?.trim().length ? element.name : getNextGroupName();
+      const groupZIndex = globalZIndexCounter.value++;
       const groupId = addElement({
         type: 'group',
         parentId: parentId ?? undefined,
@@ -80,7 +82,7 @@ const addImportedElementsToCanvas = (
             scaleY: 1,
           },
         },
-      });
+      }, groupZIndex);
 
       const { createdIds: nestedCreatedIds, childIds: nestedChildIds } = addImportedElementsToCanvas(
         element.children,
@@ -88,6 +90,7 @@ const addImportedElementsToCanvas = (
         updateElement,
         getNextGroupName,
         groupId,
+        globalZIndexCounter, // Pass the counter to maintain global sequence
       );
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -98,11 +101,12 @@ const addImportedElementsToCanvas = (
       return;
     }
 
+    const pathZIndex = globalZIndexCounter.value++;
     const pathId = addElement({
       type: 'path',
       parentId: parentId ?? undefined,
       data: element.data,
-    });
+    }, pathZIndex);
 
     createdIds.push(pathId);
     childIds.push(pathId);
@@ -123,7 +127,7 @@ export const FilePanel: React.FC = () => {
   const setActivePlugin = useCanvasStore(state => state.setActivePlugin);
   const settings = useCanvasStore(state => state.settings);
   const updateSettings = useCanvasStore(state => state.updateSettings);
-  
+
   const [appendMode, setAppendMode] = useState(false);
   const [addFrame, setAddFrame] = useState(false);
   const [applyUnion, setApplyUnion] = useState(false);
@@ -154,15 +158,15 @@ export const FilePanel: React.FC = () => {
   const handleDocumentNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const newName = e.target.value;
     setLocalDocumentName(newName);
-    
+
     // Clear any existing timeout
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
     }
-    
+
     // Set saving indicator immediately
     setIsSaving(true);
-    
+
     // Throttle the save operation
     saveTimeoutRef.current = setTimeout(() => {
       setDocumentName(newName);
@@ -211,8 +215,8 @@ export const FilePanel: React.FC = () => {
   const handleSaveAsPng = () => {
     // We need to get the SVG element from the Canvas component
     // For now, we'll dispatch a custom event that the Canvas can listen to
-    const event = new CustomEvent('saveAsPng', { 
-      detail: { selectedOnly: pngSelectedOnly } 
+    const event = new CustomEvent('saveAsPng', {
+      detail: { selectedOnly: pngSelectedOnly }
     });
     window.dispatchEvent(event);
   };
@@ -533,7 +537,7 @@ export const FilePanel: React.FC = () => {
             justify="space-between"
             py={1}
           >
-            <Text 
+            <Text
               color="gray.600"
               _dark={{ color: 'gray.400' }}
               cursor="pointer"
@@ -561,68 +565,68 @@ export const FilePanel: React.FC = () => {
           <Collapse in={isAdvancedOpen} animateOpacity>
             <VStack spacing={2} align="stretch" mt={2}>
 
-        <PanelToggle
-          isChecked={appendMode}
-          onChange={(e) => setAppendMode(e.target.checked)}
-        >
-          Append to current document
-        </PanelToggle>
+              <PanelToggle
+                isChecked={appendMode}
+                onChange={(e) => setAppendMode(e.target.checked)}
+              >
+                Append to current document
+              </PanelToggle>
 
-        <PanelToggle
-          isChecked={pngSelectedOnly}
-          onChange={(e) => setPngSelectedOnly(e.target.checked)}
-        >
-          Save selected elements only (PNG)
-        </PanelToggle>
+              <PanelToggle
+                isChecked={pngSelectedOnly}
+                onChange={(e) => setPngSelectedOnly(e.target.checked)}
+              >
+                Save selected elements only (PNG)
+              </PanelToggle>
 
-        <PanelToggle
-          isChecked={svgSelectedOnly}
-          onChange={(e) => setSvgSelectedOnly(e.target.checked)}
-        >
-          Save selected elements only (SVG)
-        </PanelToggle>
+              <PanelToggle
+                isChecked={svgSelectedOnly}
+                onChange={(e) => setSvgSelectedOnly(e.target.checked)}
+              >
+                Save selected elements only (SVG)
+              </PanelToggle>
 
-        <PanelToggle
-          isChecked={addFrame}
-          onChange={(e) => setAddFrame(e.target.checked)}
-        >
-          Add frame to imported SVG
-        </PanelToggle>
+              <PanelToggle
+                isChecked={addFrame}
+                onChange={(e) => setAddFrame(e.target.checked)}
+              >
+                Add frame to imported SVG
+              </PanelToggle>
 
-        <PanelToggle
-          isChecked={applyUnion}
-          onChange={(e) => setApplyUnion(e.target.checked)}
-        >
-          Apply union to imported paths
-        </PanelToggle>
+              <PanelToggle
+                isChecked={applyUnion}
+                onChange={(e) => setApplyUnion(e.target.checked)}
+              >
+                Apply union to imported paths
+              </PanelToggle>
 
-        <PanelToggle
-          isChecked={resizeImport}
-          onChange={(e) => setResizeImport(e.target.checked)}
-        >
-          Resize imported SVG
-        </PanelToggle>
+              <PanelToggle
+                isChecked={resizeImport}
+                onChange={(e) => setResizeImport(e.target.checked)}
+              >
+                Resize imported SVG
+              </PanelToggle>
 
-        {resizeImport && (
-          <VStack spacing={1} align="stretch">
-            <NumberInput
-              label="W"
-              value={resizeWidth}
-              onChange={setResizeWidth}
-              min={1}
-              max={1000}
-              inputWidth="50px"
-            />
-            <NumberInput
-              label="H"
-              value={resizeHeight}
-              onChange={setResizeHeight}
-              min={1}
-              max={1000}
-              inputWidth="50px"
-            />
-          </VStack>
-        )}
+              {resizeImport && (
+                <VStack spacing={1} align="stretch">
+                  <NumberInput
+                    label="W"
+                    value={resizeWidth}
+                    onChange={setResizeWidth}
+                    min={1}
+                    max={1000}
+                    inputWidth="50px"
+                  />
+                  <NumberInput
+                    label="H"
+                    value={resizeHeight}
+                    onChange={setResizeHeight}
+                    min={1}
+                    max={1000}
+                    inputWidth="50px"
+                  />
+                </VStack>
+              )}
 
             </VStack>
           </Collapse>
