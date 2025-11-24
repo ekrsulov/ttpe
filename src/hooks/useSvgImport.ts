@@ -37,7 +37,7 @@ export const useSvgImport = () => {
     const settings = useCanvasStore(state => state.settings);
 
     // Helper function to create a frame rectangle
-    const createFrame = (width: number, height: number): PathData => {
+    const createFrame = useCallback((width: number, height: number): PathData => {
         const defaultStrokeColor = settings.defaultStrokeColor;
         return {
             subPaths: [[
@@ -55,7 +55,7 @@ export const useSvgImport = () => {
             strokeLinecap: 'round',
             strokeLinejoin: 'round'
         };
-    };
+    }, [settings.defaultStrokeColor]);
 
     const importSvgFiles = useCallback(async (files: FileList | File[], options: ImportOptions = {}) => {
         if (!files || files.length === 0) return;
@@ -319,7 +319,7 @@ export const useSvgImport = () => {
                 isClosable: true,
             });
         }
-    }, [addElement, updateElement, clearSelection, selectElements, setActivePlugin, settings, toast]);
+    }, [addElement, updateElement, clearSelection, selectElements, setActivePlugin, settings, toast, createFrame]);
 
     return { importSvgFiles };
 };
