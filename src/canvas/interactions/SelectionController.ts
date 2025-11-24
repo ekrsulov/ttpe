@@ -1,6 +1,7 @@
 import { extractEditablePoints } from '../../utils/path';
 import { measurePath, measureSubpathBounds } from '../../utils/geometry';
-import type { Point, PathData, CanvasElement } from '../../types';
+import type { PathData, CanvasElement } from '../../types';
+import { selectionStrategyRegistry, type SelectionData } from '../selection/SelectionStrategy';
 
 export interface SelectionCallbacks {
   selectCommands: (commands: Array<{ elementId: string; commandIndex: number; pointIndex: number }>, isShiftPressed: boolean) => void;
@@ -16,11 +17,11 @@ export class SelectionController {
   }
 
   /**
-   * Complete the selection rectangle for the given plugin
+   * Complete the selection using the appropriate strategy
    */
   completeSelection(
-    selectionStart: Point,
-    selectionEnd: Point,
+    selectionData: SelectionData,
+    strategyId: string,
     activePlugin: string,
     elements: CanvasElement[],
     viewportZoom: number,
@@ -28,29 +29,24 @@ export class SelectionController {
     selectedIds?: string[],
     getFilteredEditablePoints?: (elementId: string) => Array<{ x: number; y: number; commandIndex: number; pointIndex: number }>
   ): void {
-    const minX = Math.min(selectionStart.x, selectionEnd.x);
-    const maxX = Math.max(selectionStart.x, selectionEnd.x);
-    const minY = Math.min(selectionStart.y, selectionEnd.y);
-    const maxY = Math.max(selectionStart.y, selectionEnd.y);
+    const strategy = selectionStrategyRegistry.get(strategyId);
 
     switch (activePlugin) {
       case 'edit':
-        this.completeEditSelection(minX, maxX, minY, maxY, elements, isShiftPressed, selectedIds, getFilteredEditablePoints);
+        this.completeEditSelection(strategy, selectionData, elements, isShiftPressed, selectedIds, getFilteredEditablePoints);
         break;
       case 'subpath':
-        this.completeSubpathSelection(minX, maxX, minY, maxY, elements, viewportZoom, isShiftPressed);
+        this.completeSubpathSelection(strategy, selectionData, elements, viewportZoom, isShiftPressed);
         break;
       case 'select':
-        this.completeElementSelection(minX, maxX, minY, maxY, elements, viewportZoom, isShiftPressed);
+        this.completeElementSelection(strategy, selectionData, elements, viewportZoom, isShiftPressed);
         break;
     }
   }
 
   private completeEditSelection(
-    minX: number,
-    maxX: number,
-    minY: number,
-    maxY: number,
+    strategy: import('../selection/SelectionStrategy').SelectionStrategy,
+    selectionData: SelectionData,
     elements: CanvasElement[],
     isShiftPressed: boolean,
     selectedIds?: string[],
@@ -71,7 +67,7 @@ export class SelectionController {
           : extractEditablePoints((el.data as PathData).subPaths.flat());
 
         points.forEach(point => {
-          if (point.x >= minX && point.x <= maxX && point.y >= minY && point.y <= maxY) {
+          if (strategy.containsPoint(point, selectionData)) {
             selectedCommands.push({
               elementId: el.id,
               commandIndex: point.commandIndex,
@@ -86,10 +82,8 @@ export class SelectionController {
   }
 
   private completeSubpathSelection(
-    minX: number,
-    maxX: number,
-    minY: number,
-    maxY: number,
+    strategy: import('../selection/SelectionStrategy').SelectionStrategy,
+    selectionData: SelectionData,
     elements: CanvasElement[],
     viewportZoom: number,
     isShiftPressed: boolean
@@ -103,12 +97,7 @@ export class SelectionController {
         pathData.subPaths.forEach((subpathData, index) => {
           const subpathBounds = measureSubpathBounds(subpathData, pathData.strokeWidth, viewportZoom);
 
-          const intersects = !(subpathBounds.maxX < minX ||
-            subpathBounds.minX > maxX ||
-            subpathBounds.maxY < minY ||
-            subpathBounds.minY > maxY);
-
-          if (intersects) {
+          if (strategy.intersectsBounds(subpathBounds, selectionData)) {
             selectedSubpathsList.push({
               elementId: el.id,
               subpathIndex: index
@@ -122,10 +111,8 @@ export class SelectionController {
   }
 
   private completeElementSelection(
-    minX: number,
-    maxX: number,
-    minY: number,
-    maxY: number,
+    strategy: import('../selection/SelectionStrategy').SelectionStrategy,
+    selectionData: SelectionData,
     elements: CanvasElement[],
     viewportZoom: number,
     isShiftPressed: boolean
@@ -136,12 +123,7 @@ export class SelectionController {
           const pathData = el.data as PathData;
           const pathBounds = measurePath(pathData.subPaths, pathData.strokeWidth, viewportZoom);
 
-          const intersects = !(pathBounds.maxX < minX ||
-            pathBounds.minX > maxX ||
-            pathBounds.maxY < minY ||
-            pathBounds.minY > maxY);
-
-          return intersects;
+          return strategy.intersectsBounds(pathBounds, selectionData);
         }
         return false;
       })

@@ -3,6 +3,7 @@ import { useCanvasStore } from '../../store/canvasStore';
 import { SelectionController, type SelectionCallbacks } from '../interactions/SelectionController';
 import type { Point } from '../../types';
 import { mergeUniqueByKey } from '../../utils/coreHelpers';
+import type { SelectionData } from '../selection/SelectionStrategy';
 
 export const useCanvasPointerSelection = (isShiftPressed: boolean = false) => {
   const [isSelecting, setIsSelecting] = useState(false);
@@ -13,7 +14,10 @@ export const useCanvasPointerSelection = (isShiftPressed: boolean = false) => {
   const {
     activePlugin,
     clearSelectedCommands,
-    clearSubpathSelection
+    clearSubpathSelection,
+    setSelectionPath,
+    clearSelectionPath,
+    selectionPath
   } = useCanvasStore();
 
   const callbacks: SelectionCallbacks = useMemo(() => ({
@@ -62,6 +66,7 @@ export const useCanvasPointerSelection = (isShiftPressed: boolean = false) => {
     setIsSelecting(true);
     setSelectionStart(point);
     setSelectionEnd(point);
+    setSelectionPath([point]);
 
     if (shouldClearCommands) {
       clearSelectedCommands?.();
@@ -69,13 +74,14 @@ export const useCanvasPointerSelection = (isShiftPressed: boolean = false) => {
     if (shouldClearSubpaths) {
       clearSubpathSelection?.();
     }
-  }, [clearSelectedCommands, clearSubpathSelection]);
+  }, [clearSelectedCommands, clearSubpathSelection, setSelectionPath]);
 
   const updateSelectionRectangle = useCallback((point: Point) => {
     if (isSelecting) {
       setSelectionEnd(point);
+      setSelectionPath([...selectionPath, point]);
     }
-  }, [isSelecting]);
+  }, [isSelecting, selectionPath, setSelectionPath]);
 
   const completeSelectionRectangle = useCallback(() => {
     if (!isSelecting || !selectionStart || !selectionEnd || !activePlugin) return;
@@ -83,13 +89,24 @@ export const useCanvasPointerSelection = (isShiftPressed: boolean = false) => {
     // Get current state
     const { elements, viewport, selectedIds, getFilteredEditablePoints } = useCanvasStore.getState();
 
-    // Handle selection using the controller
+    // Determine selection strategy ID (plugins can provide their own via store state)
+    const state = useCanvasStore.getState() as Record<string, unknown>;
+    const activeStrategyId = (state.activeSelectionStrategy as string | undefined) ?? 'rectangle';
+
+    // Build selection data
+    const selectionData: SelectionData = {
+      start: selectionStart,
+      end: selectionEnd,
+      path: selectionPath.length > 2 ? selectionPath : undefined,
+    };
+
+    // Handle selection using the controller with the active strategy
     selectionController.completeSelection(
-      selectionStart, 
-      selectionEnd, 
-      activePlugin, 
-      elements, 
-      viewport.zoom, 
+      selectionData,
+      activeStrategyId,
+      activePlugin,
+      elements,
+      viewport.zoom,
       isShiftPressed,
       selectedIds,
       getFilteredEditablePoints
@@ -99,9 +116,10 @@ export const useCanvasPointerSelection = (isShiftPressed: boolean = false) => {
     setIsSelecting(false);
     setSelectionStart(null);
     setSelectionEnd(null);
+    clearSelectionPath();
     setJustSelected(true);
     setTimeout(() => setJustSelected(false), 100);
-  }, [isSelecting, selectionStart, selectionEnd, activePlugin, isShiftPressed, selectionController]);
+  }, [isSelecting, selectionStart, selectionEnd, selectionPath, activePlugin, isShiftPressed, selectionController]);
 
   return {
     isSelecting,

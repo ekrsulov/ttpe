@@ -26,6 +26,7 @@ import { pathSimplificationPlugin } from './pathSimplification';
 import { roundPathPlugin } from './roundPath';
 import { pathPlugin } from './path';
 import { collaborationPlugin } from './collaboration';
+import { lassoPlugin } from './lasso';
 
 export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   selectPlugin,
@@ -55,6 +56,7 @@ export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   pathSimplificationPlugin,
   roundPathPlugin,
   collaborationPlugin,
+  lassoPlugin,
 ];
 
 // Plugin modes that should be registered in the mode machine
@@ -63,22 +65,4 @@ export const PLUGIN_MODES = ['transformation', 'edit', 'subpath'];
 // Debug info about core plugins (only in development builds)
 debugLog('[CORE_PLUGINS] Total plugins:', CORE_PLUGINS.length);
 
-export { selectPlugin, panPlugin, filePlugin, settingsPlugin } from './basePlugins';
-export * from './text';
-export * from './shape';
-export * from './transformation';
-export * from './edit';
-export * from './subpath';
-export * from './curves';
-export * from './opticalAlignment';
-export * from './guidelines';
-export * from './objectSnap';
-export * from './grid';
-export * from './gridFill';
-export * from './minimap';
-export * from './duplicateOnDrag';
-export * from './trimPath';
-export * from './offsetPath';
-export * from './measure';
-export * from './path';
-export * from './collaboration';
+

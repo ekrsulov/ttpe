@@ -8,14 +8,13 @@ import { getGroupBounds } from '../canvas/geometry/CanvasGeometryService';
 import { calculateMultiElementBounds } from '../utils/selectionBoundsUtils';
 import { getEffectiveShift } from '../utils/effectiveShift';
 import { SelectionOverlay, BlockingOverlay } from '../overlays';
+import { useCanvasStore } from '../store/canvasStore';
 import { MousePointer } from 'lucide-react';
 import { useColorMode } from '@chakra-ui/react';
 import { SelectRelatedPanels } from '../sidebar/panels/SelectRelatedPanels';
 import { EditorPanel } from '../sidebar/panels/EditorPanel';
 import { GroupTransformationOverlay } from './transformation/GroupTransformationOverlay';
 import { SelectionBboxTransformationOverlay } from './transformation/SelectionBboxTransformationOverlay';
-
-// Component for selection rectangle that can use hooks
 export const SelectionRectangleComponent: React.FC<{
   isSelecting: boolean;
   selectionStart: Point | null;
@@ -24,7 +23,11 @@ export const SelectionRectangleComponent: React.FC<{
 }> = ({ isSelecting, selectionStart, selectionEnd, viewport }) => {
   const { colorMode } = useColorMode();
 
-  if (!isSelecting || !selectionStart || !selectionEnd) {
+  // Check if a non-default selection strategy is active
+  const activeStrategy = useCanvasStore(s => (s as unknown as { activeSelectionStrategy?: string }).activeSelectionStrategy);
+
+  // Don't show selection rectangle when a custom strategy (non-rectangle) is active
+  if (!isSelecting || !selectionStart || !selectionEnd || (activeStrategy && activeStrategy !== 'rectangle')) {
     return null;
   }
 

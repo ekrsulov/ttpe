@@ -1,11 +1,12 @@
 import type { StateCreator } from 'zustand';
-import type { CanvasElement } from '../../../types';
+import type { CanvasElement, Point } from '../../../types';
 import type { CanvasStore } from '../../canvasStore';
 import { translatePathData } from '../../../utils/transformationUtils';
 
 export interface SelectionSlice {
   // State
   selectedIds: string[];
+  selectionPath: Point[];
 
   // Actions
   selectElement: (id: string, multiSelect?: boolean) => void;
@@ -15,11 +16,14 @@ export interface SelectionSlice {
   getSelectedPathsCount: () => number;
   moveSelectedElements: (deltaX: number, deltaY: number, precisionOverride?: number) => void;
   updateSelectedPaths: (properties: Partial<import('../../../types').PathData>) => void;
+  setSelectionPath: (path: Point[]) => void;
+  clearSelectionPath: () => void;
 }
 
 export const createSelectionSlice: StateCreator<CanvasStore, [], [], SelectionSlice> = (set, get, _api) => ({
   // Initial state
   selectedIds: [],
+  selectionPath: [],
 
   // Actions
   selectElement: (id, multiSelect = false) => {
@@ -247,5 +251,13 @@ export const createSelectionSlice: StateCreator<CanvasStore, [], [], SelectionSl
         return el;
       }),
     }));
+  },
+
+  setSelectionPath: (path) => {
+    set({ selectionPath: path });
+  },
+
+  clearSelectionPath: () => {
+    set({ selectionPath: [] });
   },
 });

@@ -1134,6 +1134,84 @@ export const measurePlugin: PluginDefinition<CanvasStore> = {
 
 **How It Works**: The core checks these flags before executing certain behaviors (e.g., starting a selection rectangle).
 
+### Selection Strategies
+
+Plugins can extend the selection system by registering custom selection strategies, enabling different selection behaviors like rectangular, lasso, or shape-based selection:
+
+```typescript
+import type { SelectionStrategy, SelectionData } from '../../canvas/selection/SelectionStrategy';
+
+export class LassoSelectionStrategy implements SelectionStrategy {
+  id = 'lasso';
+
+  containsPoint(point: Point, selectionData: SelectionData): boolean {
+    if (!selectionData.path || selectionData.path.length < 3) return false;
+    return isPointInPolygon(point, selectionData.path);
+  }
+
+  intersectsBounds(bounds: Bounds, selectionData: SelectionData): boolean {
+    if (!selectionData.path || selectionData.path.length < 3) return false;
+    return isBoundsIntersectingPolygon(bounds, selectionData.path);
+  }
+}
+
+export const lassoPlugin: PluginDefinition<CanvasStore> = {
+  id: 'lasso',
+  metadata: { label: 'Lasso', icon: Lasso },
+
+  init: () => {
+    // Register custom selection strategy
+    selectionStrategyRegistry.register(new LassoSelectionStrategy());
+
+    // Return cleanup function
+    return () => {
+      selectionStrategyRegistry.unregister('lasso');
+    };
+  },
+
+  // Plugin continues with other configuration...
+};
+```
+
+**SelectionStrategy Interface**:
+```typescript
+interface SelectionStrategy {
+  id: string;
+  containsPoint(point: Point, selectionData: SelectionData): boolean;
+  intersectsBounds(bounds: Bounds, selectionData: SelectionData): boolean;
+}
+
+interface SelectionData {
+  start: Point;
+  end: Point;
+  path?: Point[]; // For free-form selections
+}
+```
+
+**How It Works**:
+1. Plugins register strategies during `init()` lifecycle
+2. Core selection system uses `selectionStrategyRegistry.get(strategyId)` to resolve strategies
+3. Selection operations call strategy methods with `SelectionData`
+4. Strategies implement custom logic (rectangular bounds, polygon containment, etc.)
+
+**Use Cases**:
+- **Lasso Selection**: Free-form path selection using ray-casting
+- **Shape Selection**: Select elements within custom shapes
+- **Magnetic Selection**: Snap-to-grid or snap-to-element selection
+- **Color-based Selection**: Select elements by color properties
+
+**Registry Pattern**:
+```typescript
+// Core provides default rectangular strategy
+const selectionStrategyRegistry = new SelectionStrategyRegistry();
+
+// Plugins can register additional strategies
+selectionStrategyRegistry.register(new CustomSelectionStrategy());
+
+// Core resolves strategies by ID
+const strategy = selectionStrategyRegistry.get('lasso');
+```
+
 ### Subscribed Events
 
 By default, plugins only receive `pointerdown` events. Subscribe to additional events:

@@ -98,6 +98,7 @@ const sidebars = {
             'plugins/catalog/grid',
             'plugins/catalog/grid-fill',
             'plugins/catalog/guidelines',
+            'plugins/catalog/lasso',
             'plugins/catalog/measure',
             'plugins/catalog/minimap',
             'plugins/catalog/optical-alignment',
