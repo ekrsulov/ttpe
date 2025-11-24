@@ -21,7 +21,7 @@ interface PluginPanel {
 export function usePluginPanels(targetPluginId: string): PluginPanel[] {
     // Subscribe to enabledPlugins to trigger re-render when plugins are toggled
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const enabledPlugins = useCanvasStore(state => (state as any).pluginManager?.enabledPlugins ?? []);
+    const enabledPlugins = useCanvasStore(state => (state as any).pluginSelector?.enabledPlugins ?? []);
 
     return useMemo(() => {
         const panels: PluginPanel[] = [];

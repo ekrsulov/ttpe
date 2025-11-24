@@ -28,7 +28,7 @@ import { pathPlugin } from './path';
 import { collaborationPlugin } from './collaboration';
 import { lassoPlugin } from './lasso';
 import { sourcePlugin } from './source';
-import { pluginManagerPlugin } from './pluginManager';
+import { pluginSelectorPlugin } from './pluginSelector';
 
 export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   selectPlugin,
@@ -60,7 +60,7 @@ export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   collaborationPlugin,
   lassoPlugin,
   sourcePlugin,
-  pluginManagerPlugin,
+  pluginSelectorPlugin,
 ];
 
 // Plugin modes that should be registered in the mode machine

@@ -14,7 +14,7 @@ import { useCanvasStore } from '../../../store/canvasStore';
 export function useDuplicateOnDragHook(context: PluginHooksContext): void {
   // Subscribe to enabledPlugins to re-evaluate when plugins are toggled
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  useCanvasStore(state => (state as any).pluginManager?.enabledPlugins ?? []);
+  useCanvasStore(state => (state as any).pluginSelector?.enabledPlugins ?? []);
 
   const isEnabled = pluginManager.isPluginEnabled('duplicate-on-drag');
 

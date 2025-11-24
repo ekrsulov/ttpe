@@ -1,30 +1,30 @@
 import { Settings } from 'lucide-react';
 import type { PluginDefinition } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
-import { createPluginManagerSlice } from './slice';
-import { PluginManagerDialog } from './PluginManagerDialog';
-import { PluginManagerAction } from './PluginManagerAction';
+import { createPluginSelectorSlice } from './slice';
+import { PluginSelectorDialog } from './PluginSelectorDialog';
+import { PluginSelectorAction } from './PluginSelectorAction';
 import { pluginManager } from '../../utils/pluginManager';
 
-export const pluginManagerPlugin: PluginDefinition<CanvasStore> = {
-    id: 'pluginManager',
+export const pluginSelectorPlugin: PluginDefinition<CanvasStore> = {
+    id: 'pluginSelector',
     metadata: {
-        label: 'Plugin Manager',
+        label: 'Plugin Selector',
         icon: Settings,
         cursor: 'default',
     },
-    slices: [createPluginManagerSlice],
+    slices: [createPluginSelectorSlice],
     overlays: [
         {
-            id: 'pluginManager-dialog',
-            component: PluginManagerDialog,
+            id: 'pluginSelector-dialog',
+            component: PluginSelectorDialog,
             placement: 'global',
         },
     ],
     actions: [
         {
-            id: 'pluginManager-settings-action',
-            component: PluginManagerAction,
+            id: 'pluginSelector-settings-action',
+            component: PluginSelectorAction,
             placement: 'settings-panel',
         },
     ],
@@ -33,15 +33,15 @@ export const pluginManagerPlugin: PluginDefinition<CanvasStore> = {
         // Only if not already populated (first time use)
         const state = context.store.getState();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const pmState = (state as any).pluginManager;
+        const psState = (state as any).pluginSelector;
 
         // Only initialize if enabledPlugins is empty or doesn't exist
-        if (pmState && (!pmState.enabledPlugins || pmState.enabledPlugins.length === 0)) {
+        if (psState && (!psState.enabledPlugins || psState.enabledPlugins.length === 0)) {
             const allPluginIds = pluginManager.getAll().map(p => p.id);
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (context.store.setState as any)({
-                pluginManager: {
-                    ...pmState,
+                pluginSelector: {
+                    ...psState,
                     enabledPlugins: allPluginIds
                 }
             });

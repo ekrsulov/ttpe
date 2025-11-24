@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { pluginManager } from '../utils/pluginManager';
 import { useCanvasStore } from '../store/canvasStore';
-import type { PluginManagerSlice } from '../plugins/pluginManager/slice';
+import type { PluginSelectorSlice } from '../plugins/pluginSelector/slice';
 
 // Tool mode type - any string representing a tool ID
 type ToolMode = string;
@@ -25,7 +25,7 @@ export const useDynamicTools = (activeMode: string | null, gridEnabled: boolean 
 
   // Get enabled plugins from store
   const enabledPlugins = useCanvasStore(
-    (state) => (state as unknown as PluginManagerSlice).pluginManager.enabledPlugins
+    (state) => (state as unknown as PluginSelectorSlice).pluginSelector.enabledPlugins
   );
 
   // Get tools dynamically from registered plugins

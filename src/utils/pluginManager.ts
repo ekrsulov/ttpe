@@ -491,26 +491,26 @@ export class PluginManager {
   isPluginEnabled(pluginId: string): boolean {
     if (!this.storeApi) return true;
 
-    // Always enable pluginManager to prevent lockout
-    if (pluginId === 'pluginManager') return true;
+    // Always enable pluginSelector to prevent lockout
+    if (pluginId === 'pluginSelector') return true;
 
     const state = this.storeApi.getState();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const pmState = (state as any).pluginManager;
+    const psState = (state as any).pluginSelector;
 
     // If slice not present or not initialized, default to true
-    if (!pmState || !pmState.enabledPlugins) return true;
+    if (!psState || !psState.enabledPlugins) return true;
 
     // If list is empty, it might mean initialization hasn't happened yet,
     // OR user disabled everything. 
-    // Given the init logic in pluginManager/index.ts, it populates on start.
+    // Given the init logic in pluginSelector/index.ts, it populates on start.
     // So if it's empty here, it's either pre-init or user disabled all.
     // We'll trust the list if it exists.
     // However, to be safe during boot, if length is 0, we might want to return true?
     // No, that would prevent "disable all".
-    // Let's rely on the fact that 'pluginManager' is always enabled.
+    // Let's rely on the fact that 'pluginSelector' is always enabled.
 
-    return pmState.enabledPlugins.includes(pluginId);
+    return psState.enabledPlugins.includes(pluginId);
   }
 
   getPanels(toolName: string): PluginUIContribution[] {

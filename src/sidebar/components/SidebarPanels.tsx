@@ -31,7 +31,7 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
   const scrollbarThumb = useColorModeValue('#888', 'rgba(255, 255, 255, 0.3)');
   // Subscribe to enabledPlugins to trigger re-render when plugins are toggled
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const enabledPlugins = useCanvasStore(state => (state as any).pluginManager?.enabledPlugins ?? []);
+  const enabledPlugins = useCanvasStore(state => (state as any).pluginSelector?.enabledPlugins ?? []);
 
   const scrollbarThumbHover = useColorModeValue('#555', 'rgba(255, 255, 255, 0.45)');
   // Get EditPanel context for panels that need it

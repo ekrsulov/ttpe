@@ -5,7 +5,7 @@ import { calculateBounds } from '../../utils/boundsUtils';
 import type { PathElement } from '../../types';
 import { useCanvasStore } from '../../store/canvasStore';
 import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
-import type { PluginManagerSlice } from '../pluginManager/slice';
+import type { PluginSelectorSlice } from '../pluginSelector/slice';
 
 interface MinimapPanelProps {
   sidebarWidth?: number;
@@ -175,7 +175,7 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) 
   const isElementHidden = useCanvasStore((state) => state.isElementHidden);
   const showMinimap = useCanvasStore((state) => state.settings.showMinimap);
   const enabledPlugins = useCanvasStore(
-    (state) => (state as unknown as PluginManagerSlice).pluginManager.enabledPlugins
+    (state) => (state as unknown as PluginSelectorSlice).pluginSelector.enabledPlugins
   );
   const isMinimapPluginEnabled = enabledPlugins.length === 0 || enabledPlugins.includes('minimap');
   const shouldShowMinimap = showMinimap && isMinimapPluginEnabled;

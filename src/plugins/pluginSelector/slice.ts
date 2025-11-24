@@ -1,32 +1,32 @@
 import type { PluginSliceFactory } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 
-export interface PluginManagerSlice {
-    pluginManager: {
+export interface PluginSelectorSlice {
+    pluginSelector: {
         enabledPlugins: string[];
         isDialogOpen: boolean;
     };
     setPluginEnabled: (pluginId: string, enabled: boolean) => void;
-    setPluginManagerDialogOpen: (isOpen: boolean) => void;
+    setPluginSelectorDialogOpen: (isOpen: boolean) => void;
 }
 
-export const createPluginManagerSlice: PluginSliceFactory<CanvasStore> = (set) => ({
+export const createPluginSelectorSlice: PluginSliceFactory<CanvasStore> = (set) => ({
     state: {
-        pluginManager: {
+        pluginSelector: {
             enabledPlugins: [], // Empty means all enabled by default (logic handled in manager)
             isDialogOpen: false,
         },
         setPluginEnabled: (pluginId: string, enabled: boolean) =>
             set((state) => {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const currentEnabled = (state as any).pluginManager.enabledPlugins as string[];
+                const currentEnabled = (state as any).pluginSelector.enabledPlugins as string[];
                 if (enabled) {
                     // Add to enabled list if not already present
                     if (!currentEnabled.includes(pluginId)) {
                         return {
-                            pluginManager: {
+                            pluginSelector: {
                                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                ...(state as any).pluginManager,
+                                ...(state as any).pluginSelector,
                                 enabledPlugins: [...currentEnabled, pluginId],
                             },
                         } as Partial<CanvasStore>;
@@ -34,20 +34,20 @@ export const createPluginManagerSlice: PluginSliceFactory<CanvasStore> = (set) =
                 } else {
                     // Remove from enabled list
                     return {
-                        pluginManager: {
+                        pluginSelector: {
                             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            ...(state as any).pluginManager,
+                            ...(state as any).pluginSelector,
                             enabledPlugins: currentEnabled.filter((id) => id !== pluginId),
                         },
                     } as Partial<CanvasStore>;
                 }
                 return state;
             }),
-        setPluginManagerDialogOpen: (isOpen: boolean) =>
+        setPluginSelectorDialogOpen: (isOpen: boolean) =>
             set((state) => ({
-                pluginManager: {
+                pluginSelector: {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    ...(state as any).pluginManager,
+                    ...(state as any).pluginSelector,
                     isDialogOpen: isOpen
                 },
             } as Partial<CanvasStore>)),

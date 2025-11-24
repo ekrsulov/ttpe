@@ -16,25 +16,25 @@ import { useCanvasStore } from '../../store/canvasStore';
 import { pluginManager } from '../../utils/pluginManager';
 import { PanelSwitch } from '../../ui/PanelSwitch';
 import { PanelStyledButton } from '../../ui/PanelStyledButton';
-import type { PluginManagerSlice } from './slice';
+import type { PluginSelectorSlice } from './slice';
 
-export const PluginManagerDialog: React.FC = () => {
+export const PluginSelectorDialog: React.FC = () => {
     const bgColor = useColorModeValue('white', 'gray.800');
     const borderColor = useColorModeValue('gray.200', 'gray.700');
 
     const [searchTerm, setSearchTerm] = useState('');
 
     const isDialogOpen = useCanvasStore(
-        (state) => (state as unknown as PluginManagerSlice).pluginManager.isDialogOpen
+        (state) => (state as unknown as PluginSelectorSlice).pluginSelector.isDialogOpen
     );
     const setDialogOpen = useCanvasStore(
-        (state) => (state as unknown as PluginManagerSlice).setPluginManagerDialogOpen
+        (state) => (state as unknown as PluginSelectorSlice).setPluginSelectorDialogOpen
     );
     const enabledPlugins = useCanvasStore(
-        (state) => (state as unknown as PluginManagerSlice).pluginManager.enabledPlugins
+        (state) => (state as unknown as PluginSelectorSlice).pluginSelector.enabledPlugins
     );
     const setPluginEnabled = useCanvasStore(
-        (state) => (state as unknown as PluginManagerSlice).setPluginEnabled
+        (state) => (state as unknown as PluginSelectorSlice).setPluginEnabled
     );
 
     const handleClose = () => {
@@ -52,7 +52,7 @@ export const PluginManagerDialog: React.FC = () => {
     );
 
     // Critical plugins that cannot be disabled
-    const criticalPluginIds = ['pluginManager', 'select', 'pan', 'file', 'settings'];
+    const criticalPluginIds = ['pluginSelector', 'select', 'pan', 'file', 'settings'];
 
     // Non-critical plugins
     const nonCriticalPlugins = filteredPlugins.filter(p => !criticalPluginIds.includes(p.id));

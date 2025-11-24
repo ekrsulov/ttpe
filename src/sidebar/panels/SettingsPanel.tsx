@@ -24,6 +24,10 @@ export const SettingsPanel: React.FC = () => {
   const updateSettings = useCanvasStore(state => state.updateSettings);
   const { setColorMode } = useColorMode();
 
+  // Subscribe to enabledPlugins to trigger re-render when plugins are toggled
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  useCanvasStore(state => (state as any).pluginSelector?.enabledPlugins ?? []);
+
   // Detect if we're on mobile (base breakpoint)
   const isMobile = useBreakpointValue({ base: true, md: false }) ?? false;
 

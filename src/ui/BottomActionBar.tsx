@@ -44,7 +44,7 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
 
   // Subscribe to enabledPlugins to trigger re-render when plugins are toggled
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  useCanvasStore(state => (state as any).pluginManager?.enabledPlugins ?? []);
+  useCanvasStore(state => (state as any).pluginSelector?.enabledPlugins ?? []);
 
   // Calculate current zoom percentage - memoize based only on zoom value
   const currentZoom = useMemo(() => Math.round((viewportZoom as number) * 100), [viewportZoom]);
@@ -54,6 +54,10 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
   const canRedo = useMemo(() => futureStates.length > 0, [futureStates.length]);
 
   const zoomFactor = 1.2;
+
+  // Subscribe to enabledPlugins to trigger re-render when plugins are toggled
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  useCanvasStore(state => (state as any).pluginSelector?.enabledPlugins ?? []);
 
   const pluginBottomActions = pluginManager.getActions('bottom');
 

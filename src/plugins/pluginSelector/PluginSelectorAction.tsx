@@ -1,11 +1,11 @@
 import React from 'react';
 import { PanelStyledButton } from '../../ui/PanelStyledButton';
 import { useCanvasStore } from '../../store/canvasStore';
-import type { PluginManagerSlice } from './slice';
+import type { PluginSelectorSlice } from './slice';
 
-export const PluginManagerAction: React.FC = () => {
+export const PluginSelectorAction: React.FC = () => {
     const setDialogOpen = useCanvasStore(
-        (state) => (state as unknown as PluginManagerSlice).setPluginManagerDialogOpen
+        (state) => (state as unknown as PluginSelectorSlice).setPluginSelectorDialogOpen
     );
 
     return (

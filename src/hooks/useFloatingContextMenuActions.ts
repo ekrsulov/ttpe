@@ -64,7 +64,7 @@ export function useFloatingContextMenuActions(
 
   // Subscribe to enabledPlugins to trigger re-render when plugins are toggled
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  useCanvasStore(state => (state as any).pluginManager?.enabledPlugins ?? []);
+  useCanvasStore(state => (state as any).pluginSelector?.enabledPlugins ?? []);
 
   // Get arrange handlers (context-aware)
   const arrangeHandlers = useArrangeHandlers();
