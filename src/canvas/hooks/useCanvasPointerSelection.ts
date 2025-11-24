@@ -119,7 +119,7 @@ export const useCanvasPointerSelection = (isShiftPressed: boolean = false) => {
     clearSelectionPath();
     setJustSelected(true);
     setTimeout(() => setJustSelected(false), 100);
-  }, [isSelecting, selectionStart, selectionEnd, selectionPath, activePlugin, isShiftPressed, selectionController]);
+  }, [isSelecting, selectionStart, selectionEnd, selectionPath, activePlugin, isShiftPressed, selectionController, clearSelectionPath]);
 
   return {
     isSelecting,

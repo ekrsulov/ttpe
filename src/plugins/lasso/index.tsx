@@ -6,6 +6,7 @@ import { LassoPanel } from './LassoPanel';
 import { LassoOverlayWrapper } from './LassoOverlayWrapper';
 import { LassoSelectionStrategy } from './LassoSelectionStrategy';
 import { selectionStrategyRegistry } from '../../canvas/selection/SelectionStrategy';
+import { useCanvasStore } from '../../store/canvasStore';
 
 const lassoSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -51,6 +52,30 @@ export const lassoPlugin: PluginDefinition<CanvasStore> = {
       id: 'lasso-overlay',
       placement: 'midground',
       render: () => <LassoOverlayWrapper />,
+    },
+  ],
+  contextMenuActions: [
+    {
+      id: 'toggle-lasso',
+      action: (_context) => {
+        // Show action when in select, edit, or subpath modes
+        const allowedModes = ['select', 'edit', 'subpath'];
+        const currentPlugin = useCanvasStore.getState().activePlugin;
+        
+        if (!allowedModes.includes(currentPlugin || '')) return null;
+        
+        const lassoEnabled = useCanvasStore.getState().lassoEnabled ?? false;
+        
+        return {
+          id: 'toggle-lasso',
+          label: lassoEnabled ? 'Disable Lasso Selection' : 'Enable Lasso Selection',
+          icon: Lasso,
+          onClick: () => {
+            const setLassoEnabled = useCanvasStore.getState().setLassoEnabled;
+            setLassoEnabled?.(!lassoEnabled);
+          },
+        };
+      },
     },
   ],
 };

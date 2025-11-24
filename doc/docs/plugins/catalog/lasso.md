@@ -174,6 +174,17 @@ Master toggle in the sidebar panel to enable/disable lasso selection mode. When 
 - **Stroke Width**: 1 pixel (zoom-adjusted)
 - **Line Style**: Dotted pattern (2px dash, 2px gap, zoom-adjusted)
 
+## Context Menu Actions
+
+The lasso plugin contributes a context menu action for quick toggling of lasso mode:
+
+### Toggle Lasso Selection
+- **Available in**: Select, Edit, and Subpath modes
+- **Label**: "Enable Lasso Selection" / "Disable Lasso Selection" (contextual)
+- **Icon**: Lasso icon
+- **Function**: Toggles the lasso selection mode on/off
+
+
 ## SelectionStrategy Architecture
 
 The Lasso plugin demonstrates the extensibility of the selection system through the `SelectionStrategy` interface:
