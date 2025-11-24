@@ -1,4 +1,4 @@
-import { useCallback, useId, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Box, useColorModeValue } from '@chakra-ui/react';
 import type { Bounds } from '../../utils/boundsUtils';
 import { calculateBounds } from '../../utils/boundsUtils';
@@ -141,6 +141,26 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) 
   const viewportFill = useColorModeValue('rgba(113, 128, 150, 0.1)', 'rgba(203, 213, 224, 0.15)');
   const viewportStroke = useColorModeValue('rgba(113, 128, 150, 1)', 'rgba(237, 242, 247, 0.85)');
 
+  const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight });
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    };
+
+    const handleFullscreenChange = () => {
+      setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    };
+
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('fullscreenchange', handleFullscreenChange);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
   const [dragState, setDragState] = useState<DragState>({
     isActive: false,
     pointerId: null,
@@ -168,9 +188,9 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) 
 
   // Get canvas size from viewport, accounting for sidebar width
   const canvasSize = useMemo(() => ({
-    width: window.innerWidth - sidebarWidth,
-    height: window.innerHeight,
-  }), [sidebarWidth]);
+    width: windowSize.width - sidebarWidth,
+    height: windowSize.height,
+  }), [windowSize, sidebarWidth]);
 
   // Calculate minimap size proportional to canvas
   const minimapSize = useMemo(() => 
