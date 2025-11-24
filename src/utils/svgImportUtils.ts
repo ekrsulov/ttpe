@@ -505,11 +505,17 @@ function processElement(element: Element, parentTransform: Matrix = { a: 1, b: 0
 
   if (subPaths.length === 0) return results;
 
+  // Determine default stroke color based on fill
+  // If we have a visible fill, we don't need a default stroke
+  // If we don't have a visible fill, we add a black stroke so the path is visible
+  const hasFill = styleAttrs.fillColor && styleAttrs.fillColor !== 'none';
+  const defaultStrokeColor = hasFill ? 'none' : '#000000';
+
   // Create PathData object with defaults
   const pathDataObj: PathData = {
     subPaths,
     strokeWidth: styleAttrs.strokeWidth ?? 1,
-    strokeColor: styleAttrs.strokeColor ?? 'none',
+    strokeColor: styleAttrs.strokeColor ?? defaultStrokeColor,
     strokeOpacity: styleAttrs.strokeOpacity ?? 1,
     fillColor: styleAttrs.fillColor ?? 'none',
     fillOpacity: styleAttrs.fillOpacity ?? 1,
