@@ -105,3 +105,94 @@ function doLinesIntersect(
 
   return ua >= 0 && ua <= 1 && ub >= 0 && ub <= 1;
 }
+
+/**
+ * Check if a point is near a line segment (within a certain distance)
+ */
+export function isPointNearLine(
+  point: { x: number; y: number },
+  lineStart: { x: number; y: number },
+  lineEnd: { x: number; y: number },
+  threshold: number = 5
+): boolean {
+  const A = point.x - lineStart.x;
+  const B = point.y - lineStart.y;
+  const C = lineEnd.x - lineStart.x;
+  const D = lineEnd.y - lineStart.y;
+
+  const dot = A * C + B * D;
+  const lenSq = C * C + D * D;
+
+  if (lenSq === 0) {
+    // Line segment is a point
+    const distance = Math.sqrt(A * A + B * B);
+    return distance <= threshold;
+  }
+
+  const param = dot / lenSq;
+
+  let xx, yy;
+
+  if (param < 0) {
+    xx = lineStart.x;
+    yy = lineStart.y;
+  } else if (param > 1) {
+    xx = lineEnd.x;
+    yy = lineEnd.y;
+  } else {
+    xx = lineStart.x + param * C;
+    yy = lineStart.y + param * D;
+  }
+
+  const dx = point.x - xx;
+  const dy = point.y - yy;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+
+  return distance <= threshold;
+}
+
+/**
+ * Check if a point is near any segment of a polyline
+ */
+export function isPointNearPolyline(
+  point: { x: number; y: number },
+  polyline: Array<{ x: number; y: number }>,
+  threshold: number = 5
+): boolean {
+  for (let i = 0; i < polyline.length - 1; i++) {
+    if (isPointNearLine(point, polyline[i], polyline[i + 1], threshold)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Check if a bounding box intersects with a polyline
+ */
+export function isBoundsIntersectingPolyline(
+  bounds: { minX: number; minY: number; maxX: number; maxY: number },
+  polyline: Array<{ x: number; y: number }>
+): boolean {
+  if (polyline.length < 2) return false;
+
+  // Check if any point of the polyline is inside the bounds
+  for (const point of polyline) {
+    if (point.x >= bounds.minX && point.x <= bounds.maxX &&
+        point.y >= bounds.minY && point.y <= bounds.maxY) {
+      return true;
+    }
+  }
+
+  // Check if any line segment intersects with the bounds
+  for (let i = 0; i < polyline.length - 1; i++) {
+    const p1 = polyline[i];
+    const p2 = polyline[i + 1];
+
+    if (isLineIntersectingBounds(p1, p2, bounds)) {
+      return true;
+    }
+  }
+
+  return false;
+}

@@ -4,6 +4,7 @@ import { LassoOverlay } from './LassoOverlay';
 
 export const LassoOverlayWrapper: React.FC = () => {
   const selectionPath = useCanvasStore(s => s.selectionPath);
+  const lassoClosed = useCanvasStore(s => (s as unknown as { lassoClosed?: boolean }).lassoClosed ?? true);
   const viewport = useCanvasStore(s => s.viewport);
   const activeStrategy = useCanvasStore(s => (s as unknown as { activeSelectionStrategy?: string }).activeSelectionStrategy);
   
@@ -12,5 +13,5 @@ export const LassoOverlayWrapper: React.FC = () => {
     return null;
   }
   
-  return <LassoOverlay lassoPath={selectionPath} viewport={viewport} />;
+  return <LassoOverlay lassoPath={selectionPath} lassoClosed={lassoClosed} viewport={viewport} />;
 };

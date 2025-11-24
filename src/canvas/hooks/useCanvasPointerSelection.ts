@@ -88,6 +88,7 @@ export const useCanvasPointerSelection = (isShiftPressed: boolean = false) => {
 
     // Get current state
     const { elements, viewport, selectedIds, getFilteredEditablePoints } = useCanvasStore.getState();
+    const lassoClosed = useCanvasStore.getState().lassoClosed ?? true;
 
     // Determine selection strategy ID (plugins can provide their own via store state)
     const state = useCanvasStore.getState() as Record<string, unknown>;
@@ -98,6 +99,7 @@ export const useCanvasPointerSelection = (isShiftPressed: boolean = false) => {
       start: selectionStart,
       end: selectionEnd,
       path: selectionPath.length > 2 ? selectionPath : undefined,
+      closed: lassoClosed,
     };
 
     // Handle selection using the controller with the active strategy

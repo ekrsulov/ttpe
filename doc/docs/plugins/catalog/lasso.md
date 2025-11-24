@@ -14,10 +14,11 @@ The Lasso plugin provides an alternative selection method that allows users to d
 
 **Key Features:**
 - Free-form path drawing for element selection
+- Closed lasso (polygon) and open lasso (line) modes
 - Visual feedback with dotted line overlay during drawing
 - Automatic element detection within drawn path
 - Compatible with select, edit, and subpath modes
-- Toggle control in sidebar panel
+- Toggle controls in sidebar panel
 - Theme-aware visual styling matching selection rectangle
 - Conditional divider display in edit mode
 
@@ -26,11 +27,17 @@ The Lasso plugin provides an alternative selection method that allows users to d
 The Lasso plugin extends the core selection system by registering a custom `LassoSelectionStrategy` that implements point-in-polygon detection:
 
 1. **Activation**: Toggle the lasso mode in the sidebar panel
-2. **Drawing**: Click and drag to draw a free-form path
-3. **Selection**: Release to select all elements whose geometry intersects with the drawn path
-4. **Visual Feedback**: Dotted line follows cursor during drawing with same styling as selection rectangle
+2. **Mode Selection**: Choose between closed lasso (polygon) or open lasso (line) using the panel toggle
+3. **Drawing**: Click and drag to draw a free-form path
+4. **Selection**: Release to select all elements whose geometry intersects with the drawn path
+5. **Visual Feedback**: 
+   - Closed lasso: Dotted polygon with semi-transparent fill
+   - Open lasso: Dotted line without fill
 
-The plugin uses ray-casting algorithm to determine which elements fall within the drawn lasso path, providing intuitive free-form selection capabilities.
+The plugin uses different selection algorithms based on the lasso mode:
+
+- **Closed Lasso**: Point-in-polygon detection using ray-casting algorithm
+- **Open Lasso**: Line proximity detection that selects elements within 5 pixels of the drawn path
 
 ## Selection Flow
 
@@ -166,13 +173,18 @@ flowchart TD
 ## Configuration Options
 
 ### Enable Lasso
-Master toggle in the sidebar panel to enable/disable lasso selection mode. When enabled, replaces rectangular selection with free-form path drawing.
+Master toggle in the sidebar panel to enable/disable lasso selection mode. When enabled, replaces rectangular selection with free-form path drawing and reveals the closed/open lasso toggle.
 
 ### Visual Styling
 - **Stroke**: Gray tones matching selection rectangle (gray.300 in dark mode, gray.500 in light mode)
-- **Fill**: Semi-transparent gray fill (10% opacity)
+- **Fill**: Semi-transparent gray fill (10% opacity) - only for closed lasso
 - **Stroke Width**: 1 pixel (zoom-adjusted)
 - **Line Style**: Dotted pattern (2px dash, 2px gap, zoom-adjusted)
+
+### Closed vs Open Lasso
+- **Closed Lasso** (default): Forms a complete polygon that selects elements within the enclosed area
+- **Open Lasso**: Draws as a simple line that selects elements the line path crosses or touches
+- **Toggle**: Switch in panel content to change between closed and open modes
 
 ## Context Menu Actions
 

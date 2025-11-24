@@ -42,6 +42,11 @@ export interface SelectionData {
    * Optional path data for free-form selections (e.g., lasso)
    */
   path?: Point[];
+
+  /**
+   * Whether the lasso selection is closed (forms a polygon) or open (line selection)
+   */
+  closed?: boolean;
 }
 
 /**

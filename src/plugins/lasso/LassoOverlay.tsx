@@ -3,10 +3,11 @@ import { useColorMode } from '@chakra-ui/react';
 
 interface LassoOverlayProps {
   lassoPath: Array<{ x: number; y: number }>;
+  lassoClosed: boolean;
   viewport: { zoom: number };
 }
 
-export const LassoOverlay: React.FC<LassoOverlayProps> = ({ lassoPath, viewport }) => {
+export const LassoOverlay: React.FC<LassoOverlayProps> = ({ lassoPath, lassoClosed, viewport }) => {
   const { colorMode } = useColorMode();
 
   if (lassoPath.length < 2) {
@@ -21,16 +22,16 @@ export const LassoOverlay: React.FC<LassoOverlayProps> = ({ lassoPath, viewport 
     return `${acc} L ${point.x} ${point.y}`;
   }, '');
 
-  // Close the path
-  const closedPath = `${pathData} Z`;
+  // Close the path only if lasso is closed
+  const finalPath = lassoClosed ? `${pathData} Z` : pathData;
 
   // Use gray tones for lasso overlay (same as selection rectangle)
   const strokeColor = colorMode === 'dark' ? '#dee2e6' : '#6b7280'; // gray.300 : gray.500
-  const fillColor = colorMode === 'dark' ? 'rgba(222, 226, 230, 0.1)' : 'rgba(107, 114, 128, 0.1)';
+  const fillColor = lassoClosed ? (colorMode === 'dark' ? 'rgba(222, 226, 230, 0.1)' : 'rgba(107, 114, 128, 0.1)') : 'none';
 
   return (
     <path
-      d={closedPath}
+      d={finalPath}
       fill={fillColor}
       stroke={strokeColor}
       strokeWidth={1 / viewport.zoom}
