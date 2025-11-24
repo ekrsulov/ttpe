@@ -136,6 +136,8 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) 
   const borderColor = useColorModeValue('border.toolbar', 'border.toolbar');
   const elementFill = useColorModeValue('rgba(113, 128, 150, 0.2)', 'rgba(160, 174, 192, 0.35)');
   const elementStroke = useColorModeValue('rgba(113, 128, 150, 0.6)', 'rgba(203, 213, 224, 0.7)');
+  const selectedElementFill = useColorModeValue('rgba(200, 200, 200, 0.4)', 'rgba(220, 220, 220, 0.5)');
+  const selectedElementStroke = useColorModeValue('rgba(150, 150, 150, 0.8)', 'rgba(180, 180, 180, 0.9)');
   const viewportFill = useColorModeValue('rgba(113, 128, 150, 0.1)', 'rgba(203, 213, 224, 0.15)');
   const viewportStroke = useColorModeValue('rgba(113, 128, 150, 1)', 'rgba(237, 242, 247, 0.85)');
 
@@ -151,6 +153,7 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) 
   const setViewport = useCanvasStore((state) => state.setViewport);
   const isElementHidden = useCanvasStore((state) => state.isElementHidden);
   const showMinimap = useCanvasStore((state) => state.settings.showMinimap);
+  const selectedIds = useCanvasStore((state) => state.selectedIds);
 
   // Helper to calculate bounds for a path element
   const getElementBounds = useCallback((element: PathElement): Bounds | null => {
@@ -455,6 +458,8 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) 
             const width = (bounds.maxX - bounds.minX) * minimapMetrics.scale;
             const height = (bounds.maxY - bounds.minY) * minimapMetrics.scale;
 
+            const isSelected = selectedIds.includes(element.id);
+
             return (
               <rect
                 key={element.id}
@@ -462,8 +467,8 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) 
                 y={y}
                 width={width}
                 height={height}
-                fill={elementFill}
-                stroke={elementStroke}
+                fill={isSelected ? selectedElementFill : elementFill}
+                stroke={isSelected ? selectedElementStroke : elementStroke}
                 strokeWidth={0.5}
                 vectorEffect="non-scaling-stroke"
                 style={{ cursor: 'pointer' }}
