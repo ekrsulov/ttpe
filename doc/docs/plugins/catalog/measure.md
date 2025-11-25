@@ -165,16 +165,16 @@ sequenceDiagram
     
     Note over User,Canvas: 4. Finalize Measurement
     User->>Canvas: Click again to finalize (freeze) measurement
-    Canvas->>MP: handler(pointerdown, point)  ;; second click will set endpoint and finalize
+    Canvas->>MP: handler(pointerdown, point)  %% second click will set endpoint and finalize
     MP->>Store: updateMeasurement(finalPoint, snapInfo)
-    MP->>Store: finalizeMeasurement() ;; measurement remains visible/frozen
+    MP->>Store: finalizeMeasurement() %% measurement remains visible/frozen
     MP->>FO: Hide feedback message
     Store->>UI: Update info panel with final values
     
     Note over User,Canvas: 5. Clear Measurement
     User->>Canvas: Click again to clear frozen measurement
-    Canvas->>MP: handler(pointerdown, point)  ;; third click clears the frozen measurement
-    MP->>Store: clearMeasurement() ;; removes measurement from canvas
+    Canvas->>MP: handler(pointerdown, point)  %% third click clears the frozen measurement
+    MP->>Store: clearMeasurement() %% removes measurement from canvas
     Store->>MO: Clear measurement overlay
     MO->>Canvas: Remove measurement line
     

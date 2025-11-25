@@ -6,11 +6,11 @@ sidebar_label: Duplicate on Drag
 
 # Duplicate on Drag Plugin
 
-The **Duplicate on Drag** plugin provides an intuitive way to duplicate elements by holding down the Command (⌘) key while dragging. This is a common interaction pattern found in many design tools.
+The **Duplicate on Drag** plugin provides an intuitive way to duplicate elements by holding down the Shift key while dragging. This is a common interaction pattern found in many design tools.
 
 ## Overview
 
-This plugin implements a **Canvas Service** that listens to pointer events globally, regardless of the active tool. When it detects Command+Click+Drag on a selected element or group, it:
+This plugin implements a **Canvas Service** that listens to pointer events globally, regardless of the active tool. When it detects Shift+Click+Drag on a selected element or group, it:
 
 1. Creates a duplicate of all selected elements or entire group hierarchies
 2. Selects the new duplicates
@@ -34,9 +34,9 @@ sequenceDiagram
     participant Service as Duplicate Service
     participant Store
     
-    User->>Canvas: Command + Click on element
+    User->>Canvas: Shift + Click on element
     Canvas->>Service: pointerdown event
-    Service->>Service: Detect Command key
+    Service->>Service: Detect Shift key
     Service->>Store: Duplicate element
     Service->>Store: Select duplicate
     
@@ -76,8 +76,8 @@ svg.addEventListener('pointerup', handlePointerUp, { capture: true });
 
 ```typescript
 const handlePointerDown = (event: PointerEvent) => {
-  // Only trigger on Command/Meta key + left click
-  if (!event.metaKey || event.button !== 0) return;
+  // Only trigger on Shift key + left click
+  if (!event.shiftKey || event.button !== 0) return;
   
   // Only work when select tool is active
   if (state.activePlugin !== 'select') return;
@@ -149,15 +149,14 @@ The plugin is **always active** and doesn't require switching to a specific tool
 ### User Workflow
 
 1. **Select an element** with the Select tool
-2. **Hold Command (⌘)** key on Mac (or Ctrl on Windows)
+2. **Hold Shift** key
 3. **Click and drag** the selected element
 4. A **duplicate is created** and moves with the cursor
 5. **Release** to place the duplicate
 
 ### Keyboard Shortcuts
 
-- **⌘ + Drag** (Mac) - Duplicate and drag
-- **Ctrl + Drag** (Windows/Linux) - Duplicate and drag
+- **Shift + Drag** - Duplicate and drag
 
 ## Technical Highlights
 
@@ -214,7 +213,7 @@ useDuplicateOnDrag({
 ## Limitations
 
 - Currently only works in **Select mode**
-- Command key detection depends on browser event handling
+- Shift key detection depends on browser event handling
 
 ## Future Enhancements
 

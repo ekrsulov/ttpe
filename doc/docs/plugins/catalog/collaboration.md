@@ -85,9 +85,9 @@ sequenceDiagram
 ```mermaid
 graph TB
     subgraph "Zustand State (Local)"
-        A[elements: CanvasElement[]]
-        B[viewport: {zoom, pan}]
-        C[selectedIds: string[]]
+        A["elements: CanvasElement[]"]
+        B["viewport: zoom, pan"]
+        C["selectedIds: string[]"]
     end
     
     subgraph "CollaborationManager"
@@ -149,8 +149,8 @@ graph TB
     subgraph "CollaborationPresenceManager"
         C[useCollaborationCursor hook]
         D[Throttle 50ms]
-        E[Screen → Canvas coords]
-        F[updateCursor x, y]
+        E[Screen to Canvas coords]
+        F[updateCursor x y]
         G[updateSelection ids]
     end
     

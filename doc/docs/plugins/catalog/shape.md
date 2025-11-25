@@ -154,7 +154,6 @@ flowchart TD
     D6 --> G6[Heart Path]
     
     F1 --> H[Generate SVG Path]
-    note right of F1: Uses BEZIER_CIRCLE_KAPPA (0.551915024494) to compute control points for a more accurate Bezier approximation of a circle.
     F1b --> H
     F2 --> H
     F2b --> H
