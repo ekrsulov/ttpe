@@ -28,6 +28,7 @@ export interface UseSelectionControllerResult {
   selectElement: (elementId: string, toggle: boolean) => void;
   toggleSelection: (elementId: string) => void;
   clearSelection: () => void;
+  cancelSelection: () => void;
   modifiers: SelectionControllerState;
 }
 
@@ -249,6 +250,15 @@ export const useSelectionController = (): UseSelectionControllerResult => {
     clearSelectionPath();
   }, [isSelecting, selectionStart, selectionEnd, selectionPath, activePlugin, isShiftPressed, callbacks, clearSelectionPath]);
 
+  const cancelSelection = useCallback(() => {
+    if (!isSelecting) return;
+
+    setIsSelecting(false);
+    setSelectionStart(null);
+    setSelectionEnd(null);
+    clearSelectionPath();
+  }, [isSelecting, clearSelectionPath]);
+
   // --- Element Selection Actions ---
   const handleSelectElement = useCallback(
     (elementId: string, toggle: boolean) => {
@@ -280,6 +290,7 @@ export const useSelectionController = (): UseSelectionControllerResult => {
     selectElement: handleSelectElement,
     toggleSelection: handleToggleSelection,
     clearSelection: handleClearSelection,
+    cancelSelection,
     modifiers,
   };
 };

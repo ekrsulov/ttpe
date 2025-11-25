@@ -44,7 +44,10 @@ const calculateMidpoint = (touch1: TouchInfo, touch2: TouchInfo): { x: number; y
  * - Pinch-to-zoom with two fingers
  * - Two-finger pan
  */
-export const useMobileTouchGestures = (svgRef: RefObject<SVGSVGElement | null>): void => {
+export const useMobileTouchGestures = (
+  svgRef: RefObject<SVGSVGElement | null>,
+  cancelSelection?: () => void
+): void => {
   const gestureStateRef = useRef<GestureState>({
     touches: [],
     initialDistance: null,
@@ -54,6 +57,10 @@ export const useMobileTouchGestures = (svgRef: RefObject<SVGSVGElement | null>):
     initialMidpoint: null,
     isGestureActive: false,
   });
+
+  // Use a ref for cancelSelection to avoid re-attaching listeners when it changes
+  const cancelSelectionRef = useRef(cancelSelection);
+  cancelSelectionRef.current = cancelSelection;
 
   useEffect(() => {
     const svg = svgRef.current;
@@ -69,6 +76,11 @@ export const useMobileTouchGestures = (svgRef: RefObject<SVGSVGElement | null>):
         gestureStateRef.current.initialMidpoint = null;
         gestureStateRef.current.isGestureActive = false;
         return;
+      }
+
+      // Cancel any active selection when a gesture starts
+      if (cancelSelectionRef.current) {
+        cancelSelectionRef.current();
       }
 
       // Prevent default behavior for multi-touch

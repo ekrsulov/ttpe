@@ -46,6 +46,7 @@ const CanvasContent: React.FC = () => {
     beginSelectionRectangle,
     updateSelectionRectangle,
     completeSelectionRectangle,
+    cancelSelection,
     selectElement: applySelectionChange,
   } = useSelectionController();
 
@@ -179,7 +180,7 @@ const CanvasContent: React.FC = () => {
   );
 
   useCanvasZoom(svgRef);
-  useMobileTouchGestures(svgRef);
+  useMobileTouchGestures(svgRef, cancelSelection);
 
   //  Helper function to get element bounds considering current transform
   const { getElementBounds, selectedGroupBounds } = useCanvasGeometry({
