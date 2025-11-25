@@ -55,33 +55,59 @@ export const useCanvasTouchHandlers = (
         }
     }, [detectElementDoubleTap, handleElementDoubleClick]);
 
-    // Handle canvas touch end for double tap on empty space
+    // Handle canvas touch end - now handles BOTH empty space AND elements via delegation
     const handleCanvasTouchEnd = useCallback((e: React.TouchEvent<SVGSVGElement>) => {
-        // Detect if this is a double tap on empty space
-        const isDoubleTap = detectCanvasDoubleTap(e);
+        // Check if the touch target is an element (has data-element-id attribute)
+        const target = e.target as Element;
+        const elementId = target?.getAttribute?.('data-element-id');
 
-        if (!isDoubleTap) {
-            // Single tap - do nothing special
-            return;
-        }
+        if (elementId) {
+            // Touch on an element - detect double tap for element
+            const isDoubleTap = detectElementDoubleTap(elementId, e);
 
-        // Double tap detected on empty space
-        if (isCanvasEmptySpace(e.target)) {
+            if (!isDoubleTap) {
+                // Single tap on element - do nothing special
+                return;
+            }
+
+            // Double tap detected on element
             e.preventDefault();
             e.stopPropagation();
 
             try {
                 const syntheticEvent = createSyntheticMouseEvent(e);
-                eventBus.emit('canvasDoubleClick', {
-                    event: syntheticEvent,
-                    activePlugin
-                });
+                handleElementDoubleClick(elementId, syntheticEvent);
             } catch (_error) {
                 // Touch not found, ignore
                 return;
             }
+        } else {
+            // Touch on empty space - detect double tap for canvas
+            const isDoubleTap = detectCanvasDoubleTap(e);
+
+            if (!isDoubleTap) {
+                // Single tap on empty space - do nothing special
+                return;
+            }
+
+            // Double tap detected on empty space
+            if (isCanvasEmptySpace(e.target)) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                try {
+                    const syntheticEvent = createSyntheticMouseEvent(e);
+                    eventBus.emit('canvasDoubleClick', {
+                        event: syntheticEvent,
+                        activePlugin
+                    });
+                } catch (_error) {
+                    // Touch not found, ignore
+                    return;
+                }
+            }
         }
-    }, [detectCanvasDoubleTap, activePlugin, eventBus]);
+    }, [detectCanvasDoubleTap, detectElementDoubleTap, handleElementDoubleClick, activePlugin, eventBus]);
 
     // Handle subpath touch end for double tap detection
     const handleSubpathTouchEnd = useCallback((elementId: string, subpathIndex: number, e: React.TouchEvent<SVGPathElement>) => {

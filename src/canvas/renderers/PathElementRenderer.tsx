@@ -41,9 +41,11 @@ export const PathElementRenderer: CanvasElementRenderer<PathElement> = (
   const pointerDownHandler = eventHandlers.onPointerDown;
   const pointerUpHandler = eventHandlers.onPointerUp;
   const doubleClickHandler = eventHandlers.onDoubleClick;
-  const touchEndHandler = eventHandlers.onTouchEnd;
   const isSelected = isElementSelected?.(element.id) ?? false;
   const isLocked = isElementLocked?.(element.id) ?? false;
+
+  // Detect if this is a touch device
+  const isTouchDevice = typeof window !== 'undefined' && 'ontouchstart' in window;
 
   return (
     <g key={element.id}>
@@ -63,24 +65,17 @@ export const PathElementRenderer: CanvasElementRenderer<PathElement> = (
             ? pathData.strokeDasharray
             : undefined
         }
-        onPointerDown={
-          pointerDownHandler
-            ? (event) => pointerDownHandler(element.id, event)
-            : undefined
-        }
-        onPointerUp={
-          pointerUpHandler ? (event) => pointerUpHandler(element.id, event) : undefined
-        }
-        onDoubleClick={
-          doubleClickHandler
-            ? (event) => doubleClickHandler(element.id, event)
-            : undefined
-        }
-        onTouchEnd={
-          touchEndHandler
-            ? (event) => touchEndHandler(element.id, event)
-            : undefined
-        }
+        // On touch devices: don't add individual touch handlers, use canvas-level delegation
+        // On desktop: use pointer and mouse events
+        {...(!isTouchDevice && pointerDownHandler && {
+          onPointerDown: (event) => pointerDownHandler(element.id, event)
+        })}
+        {...(!isTouchDevice && pointerUpHandler && {
+          onPointerUp: (event) => pointerUpHandler(element.id, event)
+        })}
+        {...(!isTouchDevice && doubleClickHandler && {
+          onDoubleClick: (event) => doubleClickHandler(element.id, event)
+        })}
         style={{
           cursor:
             pathCursorMode === 'select'
