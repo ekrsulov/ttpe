@@ -4,6 +4,7 @@ import { debugLog } from '../utils/debugUtils';
 
 import { selectPlugin, panPlugin, filePlugin, settingsPlugin } from './basePlugins';
 import { pencilPlugin } from './pencil';
+import { penPlugin } from './pen';
 import { textPlugin } from './text';
 import { shapePlugin } from './shape';
 import { transformationPlugin } from './transformation';
@@ -36,6 +37,7 @@ export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   filePlugin,
   settingsPlugin,
   pencilPlugin,
+  penPlugin,
   curvesPlugin,
   textPlugin,
   shapePlugin,

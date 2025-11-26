@@ -1,7 +1,7 @@
 import type { PluginDefinition, PluginSliceFactory, PluginHandlerContext } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createCurvesPluginSlice } from './slice';
-import { PenTool } from 'lucide-react';
+import { SplinePointer } from 'lucide-react';
 import { CurvesRenderer } from './CurvesRenderer';
 import React from 'react';
 import { CurvesPanel } from './CurvesPanel';
@@ -66,7 +66,7 @@ export const curvesPlugin: PluginDefinition<CanvasStore> = {
   id: 'curves',
   metadata: {
     label: 'Curves',
-    icon: PenTool,
+    icon: SplinePointer,
     cursor: 'crosshair',
     disablePathInteraction: true,
   },

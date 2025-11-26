@@ -1,0 +1,217 @@
+import React from 'react';
+import type { CanvasLayerContext } from '../../../types/plugins';
+import { useCanvasStore } from '../../../store/canvasStore';
+import { pathDataToPenPath } from '../utils/pathConverter';
+import { deriveElementSelectionColors } from '../../../utils/canvasColorUtils';
+
+/**
+ * Render anchors and handles of the current path being drawn
+ */
+export const PenPathOverlay: React.FC<{ context: CanvasLayerContext }> = ({ context }) => {
+    const { viewport } = context;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const penState = useCanvasStore((state) => (state as any).pen);
+    const elements = useCanvasStore((state) => state.elements);
+
+
+    if (!penState) {
+        return null;
+    }
+
+    const strokeWidth = 1 / viewport.zoom;
+    const anchorRadius = 4 / viewport.zoom;
+    const handleRadius = 3 / viewport.zoom;
+
+    return (
+        <g>
+            {/* Render hover feedback for paths in idle/editing mode */}
+            {(penState.mode === 'idle' || penState.mode === 'editing') && penState.hoverTarget?.pathId && (
+                <>
+                    {(() => {
+                        const hoveredElement = elements.find(el => el.id === penState.hoverTarget.pathId);
+                        if (!hoveredElement || hoveredElement.type !== 'path') return null;
+
+                        const subPathIndex = penState.hoverTarget.subPathIndex ?? 0;
+                        const subPath = hoveredElement.data.subPaths?.[subPathIndex];
+                        if (!subPath) return null;
+
+                        const penPath = pathDataToPenPath(subPath, hoveredElement.id);
+                        if (!penPath || penPath.anchors.length === 0) return null;
+
+                        // Get contrasting color based on element's stroke/fill
+                        const { selectionColor } = deriveElementSelectionColors(hoveredElement);
+
+                        return (
+                            <g opacity={0.6}>
+                                {/* Render hovered path anchors */}
+                                {penPath.anchors.map((anchor: typeof penPath.anchors[0], index: number) => (
+                                    <circle
+                                        key={`hover-anchor-${index}`}
+                                        cx={anchor.position.x}
+                                        cy={anchor.position.y}
+                                        r={anchorRadius * 1.2}
+                                        fill={selectionColor}
+                                        stroke="#ffffff"
+                                        strokeWidth={strokeWidth}
+                                    />
+                                ))}
+                            </g>
+                        );
+                    })()}
+                </>
+            )}
+
+            {/* Visual indicator for close path */}
+            {penState.mode === 'drawing' && penState.cursorState === 'close' && penState.currentPath && penState.currentPath.anchors.length >= 3 && (
+                <>
+                    {/* Pulsing ring around first anchor to indicate close action */}
+                    <circle
+                        cx={penState.currentPath.anchors[0].position.x}
+                        cy={penState.currentPath.anchors[0].position.y}
+                        r={anchorRadius * 2.5}
+                        fill="none"
+                        stroke="#22c55e"
+                        strokeWidth={strokeWidth * 2}
+                        opacity={0.8}
+                    >
+                        <animate
+                            attributeName="r"
+                            values={`${anchorRadius * 2};${anchorRadius * 3};${anchorRadius * 2}`}
+                            dur="1s"
+                            repeatCount="indefinite"
+                        />
+                        <animate
+                            attributeName="opacity"
+                            values="0.8;0.4;0.8"
+                            dur="1s"
+                            repeatCount="indefinite"
+                        />
+                    </circle>
+                </>
+            )}
+
+            {/* Render current path being drawn/edited */}
+            {(penState.mode === 'drawing' || penState.mode === 'editing') && penState.currentPath && penState.currentPath.anchors && penState.currentPath.anchors.length > 0 && (
+                <>
+                    {/* Render anchors */}
+                    {penState.currentPath.anchors.map((anchor: typeof penState.currentPath.anchors[0], index: number) => {
+                        const isFirst = index === 0;
+                        const isLast = index === penState.currentPath.anchors.length - 1;
+
+                        return (
+                            <g key={anchor.id}>
+                                {/* Render handles for curved anchors */}
+                                {anchor.inHandle && (
+                                    <>
+                                        <line
+                                            x1={anchor.position.x}
+                                            y1={anchor.position.y}
+                                            x2={anchor.position.x + anchor.inHandle.x}
+                                            y2={anchor.position.y + anchor.inHandle.y}
+                                            stroke="#3b82f6"
+                                            strokeWidth={strokeWidth}
+                                            opacity={0.7}
+                                        />
+                                        <circle
+                                            cx={anchor.position.x + anchor.inHandle.x}
+                                            cy={anchor.position.y + anchor.inHandle.y}
+                                            r={handleRadius}
+                                            fill="#3b82f6"
+                                            stroke="#ffffff"
+                                            strokeWidth={strokeWidth}
+                                            opacity={0.7}
+                                        />
+                                    </>
+                                )}
+
+                                {anchor.outHandle && (
+                                    <>
+                                        <line
+                                            x1={anchor.position.x}
+                                            y1={anchor.position.y}
+                                            x2={anchor.position.x + anchor.outHandle.x}
+                                            y2={anchor.position.y + anchor.outHandle.y}
+                                            stroke="#3b82f6"
+                                            strokeWidth={strokeWidth}
+                                            opacity={0.7}
+                                        />
+                                        <circle
+                                            cx={anchor.position.x + anchor.outHandle.x}
+                                            cy={anchor.position.y + anchor.outHandle.y}
+                                            r={handleRadius}
+                                            fill="#3b82f6"
+                                            stroke="#ffffff"
+                                            strokeWidth={strokeWidth}
+                                            opacity={0.7}
+                                        />
+                                    </>
+                                )}
+
+                                {/* Render anchor point */}
+                                <circle
+                                    cx={anchor.position.x}
+                                    cy={anchor.position.y}
+                                    r={anchorRadius}
+                                    fill={index === penState.selectedAnchorIndex ? '#ef4444' : isFirst ? '#22c55e' : isLast ? '#3b82f6' : '#ffffff'}
+                                    stroke={index === penState.selectedAnchorIndex ? '#dc2626' : isFirst ? '#16a34a' : '#2563eb'}
+                                    strokeWidth={strokeWidth * 1.5}
+                                />
+                            </g>
+                        );
+                    })}
+
+                    {/* Render path segments */}
+                    {penState.currentPath.anchors.map((anchor: typeof penState.currentPath.anchors[0], index: number) => {
+                        if (index === 0) return null;
+
+                        const prevAnchor = penState.currentPath.anchors[index - 1];
+                        const hasCurve = prevAnchor.outHandle || anchor.inHandle;
+
+                        if (!hasCurve) {
+                            // Straight segment
+                            return (
+                                <line
+                                    key={`segment-${index}`}
+                                    x1={prevAnchor.position.x}
+                                    y1={prevAnchor.position.y}
+                                    x2={anchor.position.x}
+                                    y2={anchor.position.y}
+                                    stroke="#3b82f6"
+                                    strokeWidth={strokeWidth * 2}
+                                    opacity={0.6}
+                                    fill="none"
+                                />
+                            );
+                        }
+
+                        // Curved segment - render as path
+                        const p0 = prevAnchor.position;
+                        const p3 = anchor.position;
+
+                        const cp1 = prevAnchor.outHandle
+                            ? { x: p0.x + prevAnchor.outHandle.x, y: p0.y + prevAnchor.outHandle.y }
+                            : p0;
+
+                        const cp2 = anchor.inHandle
+                            ? { x: p3.x + anchor.inHandle.x, y: p3.y + anchor.inHandle.y }
+                            : p3;
+
+                        const pathData = `M ${p0.x} ${p0.y} C ${cp1.x} ${cp1.y}, ${cp2.x} ${cp2.y}, ${p3.x} ${p3.y}`;
+
+                        return (
+                            <path
+                                key={`segment-${index}`}
+                                d={pathData}
+                                stroke="#3b82f6"
+                                strokeWidth={strokeWidth * 2}
+                                opacity={0.6}
+                                fill="none"
+                            />
+                        );
+                    })}
+                </>
+            )}
+        </g>
+    );
+};
