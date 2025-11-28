@@ -23,6 +23,12 @@ import { calculateCursorState, calculateEditCursorState } from '../utils/cursorS
 import { constrainAngleTo45Degrees } from '../utils/pathConverter';
 import { findPathAtPoint, findSegmentOnPath } from '../utils/anchorDetection';
 import { applyGridSnap } from '../../../utils/gridSnapUtils';
+import { 
+    collectReferencePoints, 
+    findPenGuidelines, 
+    applyPenGuidelineSnap,
+    type ReferencePoint
+} from '../utils/penGuidelines';
 
 /**
  * Main hook for Pen tool pointer event handling
@@ -33,13 +39,18 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
     // Use refs for state that needs to persist across renders but doesn't trigger re-renders
     const isDraggingRef = useRef(false);
     const dragStartPointRef = useRef<Point | null>(null);
-    const rawDragStartPointRef = useRef<Point | null>(null); // Track raw start point for drag detection
+    const rawDragStartPointRef = useRef<Point | null>(null); // Raw position without snap for drag detection
     const isShiftPressedRef = useRef(false);
     const isAltPressedRef = useRef(false);
     const savedInHandleRef = useRef<Point | null>(null);
     const isVKeyPressedRef = useRef(false);
     const isMovingLastAnchorRef = useRef(false);
     const lastAnchorOriginalPositionRef = useRef<Point | null>(null);
+    
+    // Guidelines reference points cache
+    const referencePointsRef = useRef<ReferencePoint[]>([]);
+    const lastReferenceUpdateRef = useRef<number>(0);
+    const lastAnchorCountRef = useRef<number>(0); // Track anchor count to invalidate cache
 
     // Only activate when pen tool is active
     const isActive = activePlugin === 'pen';
@@ -67,6 +78,7 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                 // Also reset local refs
                 isDraggingRef.current = false;
                 dragStartPointRef.current = null;
+                rawDragStartPointRef.current = null;
                 isShiftPressedRef.current = false;
                 isAltPressedRef.current = false;
                 savedInHandleRef.current = null;
@@ -143,6 +155,19 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
             const canvasPoint = getSnappedPoint(rawCanvasPoint);
             // Use raw point for detection to avoid snapping away from targets
             const detectionPoint = rawCanvasPoint;
+            
+            // Apply guidelines snap if there are active guidelines (from the preview)
+            // This ensures clicks respect the sticky guidelines position
+            let finalCanvasPoint = canvasPoint;
+            if (penState.activeGuidelines) {
+                const { horizontal, vertical } = penState.activeGuidelines;
+                if (horizontal) {
+                    finalCanvasPoint = { ...finalCanvasPoint, y: horizontal.snappedPosition.y };
+                }
+                if (vertical) {
+                    finalCanvasPoint = { ...finalCanvasPoint, x: vertical.snappedPosition.x };
+                }
+            }
 
             const { mode, currentPath, cursorState } = penState;
 
@@ -280,17 +305,19 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
             }
 
             if (mode === 'idle' || !currentPath) {
-                // Start new path
-                startPath(canvasPoint, useCanvasStore.getState);
-                dragStartPointRef.current = { ...canvasPoint };
+                // Start new path - use finalCanvasPoint which respects guidelines snap
+                startPath(finalCanvasPoint, useCanvasStore.getState);
+                dragStartPointRef.current = { ...finalCanvasPoint };
+                rawDragStartPointRef.current = { ...rawCanvasPoint }; // Store raw for drag detection
                 isDraggingRef.current = true;
                 savedInHandleRef.current = null;
                 return;
             }
 
             if (mode === 'drawing') {
-                // Continue path - prepare for drag
-                dragStartPointRef.current = { ...canvasPoint };
+                // Continue path - prepare for drag using finalCanvasPoint
+                dragStartPointRef.current = { ...finalCanvasPoint };
+                rawDragStartPointRef.current = { ...rawCanvasPoint }; // Store raw for drag detection
                 isDraggingRef.current = true;
                 savedInHandleRef.current = null;
             }
@@ -314,7 +341,7 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
 
             if (!penState) return;
 
-            const { mode, currentPath, rubberBandEnabled } = penState;
+            const { mode, currentPath, rubberBandEnabled, guidelinesEnabled } = penState;
             const viewportZoom = state.viewport.zoom;
 
             // Apply snapping
@@ -342,8 +369,54 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                 }
                 return finalPoint;
             };
+            
+            // Helper to apply pen guidelines snap
+            const applyGuidelinesSnap = (point: Point, currentPointIndex: number | null = null) => {
+                if (!guidelinesEnabled) {
+                    state.updatePenState?.({ activeGuidelines: null });
+                    return point;
+                }
+                
+                // Update reference points cache (throttle to every 100ms, or when anchor count changes)
+                const now = Date.now();
+                const currentAnchorCount = currentPath?.anchors?.length || 0;
+                const anchorCountChanged = currentAnchorCount !== lastAnchorCountRef.current;
+                
+                if (anchorCountChanged || now - lastReferenceUpdateRef.current > 100 || referencePointsRef.current.length === 0) {
+                    const viewportInfo = {
+                        zoom: state.viewport.zoom,
+                        panX: state.viewport.panX,
+                        panY: state.viewport.panY,
+                        width: window.innerWidth,
+                        height: window.innerHeight,
+                    };
+                    referencePointsRef.current = collectReferencePoints(
+                        currentPath,
+                        currentPointIndex,
+                        state.elements,
+                        viewportInfo,
+                        penState.editingPathId
+                    );
+                    lastReferenceUpdateRef.current = now;
+                    lastAnchorCountRef.current = currentAnchorCount;
+                }
+                
+                // Find matching guidelines
+                const threshold = 8 / viewportZoom; // 8px threshold scaled by zoom
+                const guidelines = findPenGuidelines(point, referencePointsRef.current, threshold);
+                
+                // Update guidelines state for overlay rendering
+                if (guidelines.horizontal || guidelines.vertical) {
+                    state.updatePenState?.({ activeGuidelines: guidelines });
+                    // Apply snap
+                    return applyPenGuidelineSnap(point, guidelines.horizontal, guidelines.vertical);
+                } else {
+                    state.updatePenState?.({ activeGuidelines: null });
+                    return point;
+                }
+            };
 
-            const canvasPoint = getSnappedPoint(rawCanvasPoint);
+            let canvasPoint = getSnappedPoint(rawCanvasPoint);
             const detectionPoint = rawCanvasPoint;
 
             // Update modifier keys state
@@ -366,6 +439,9 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
 
                 // Update rubber band preview if enabled (using snapped canvasPoint)
                 if (rubberBandEnabled && !isDraggingRef.current) {
+                    // Apply guidelines snap for preview
+                    canvasPoint = applyGuidelinesSnap(canvasPoint, null);
+                    
                     // Store preview point for rendering
                     state.updatePenState?.({
                         previewAnchor: {
@@ -376,6 +452,11 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                     });
                 }
             } else if ((mode === 'idle' || mode === 'editing')) {
+                // Clear guidelines when not actively moving a point
+                if (!isDraggingRef.current && penState.activeGuidelines) {
+                    state.updatePenState?.({ activeGuidelines: null });
+                }
+                
                 // Check for existing paths to edit (using detectionPoint)
                 let newCursorState = 'new-path';
                 let newHoverTarget: typeof penState.hoverTarget = { type: 'none' };
@@ -439,8 +520,11 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                         lastAnchorOriginalPositionRef.current = { ...lastAnchor.position };
                     }
 
+                    // Apply guidelines snap when moving last anchor
+                    const lastAnchorIndex = currentPath.anchors.length - 1;
+                    const snappedPoint = applyGuidelinesSnap(canvasPoint, lastAnchorIndex);
                     // Move the last anchor to current position
-                    moveLastAnchor(canvasPoint, useCanvasStore.getState);
+                    moveLastAnchor(snappedPoint, useCanvasStore.getState);
                     return;
                 }
 
@@ -488,8 +572,10 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                 if (penState?.dragState?.type === 'anchor') {
                     const { anchorIndex } = penState.dragState;
                     if (anchorIndex !== undefined) {
+                        // Apply guidelines snap when moving anchor
+                        const snappedPoint = applyGuidelinesSnap(canvasPoint, anchorIndex);
                         // Move the anchor to current position
-                        moveAnchor(anchorIndex, canvasPoint, useCanvasStore.getState);
+                        moveAnchor(anchorIndex, snappedPoint, useCanvasStore.getState);
                     }
                     return;
                 }
@@ -581,7 +667,7 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
             if (!svgRef.current || !isDraggingRef.current || !dragStartPointRef.current) return;
 
             const rect = svgRef.current.getBoundingClientRect();
-            const canvasPoint = screenToCanvas(
+            const rawCanvasPoint = screenToCanvas(
                 event.clientX - rect.left,
                 event.clientY - rect.top
             );
@@ -591,6 +677,28 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
             const penState = (state as any).pen;
 
             if (!penState) return;
+            
+            // Use raw positions for drag detection to avoid false positives from snap offset
+            const rawStartPoint = rawDragStartPointRef.current || dragStartPointRef.current;
+            const rawHandleVector = {
+                x: rawCanvasPoint.x - rawStartPoint.x,
+                y: rawCanvasPoint.y - rawStartPoint.y,
+            };
+            const rawHandleMagnitude = Math.sqrt(rawHandleVector.x ** 2 + rawHandleVector.y ** 2);
+            const wasRealDrag = rawHandleMagnitude > 5; // Use slightly larger threshold for raw detection
+
+            // Only apply guidelines snap if there was NO real drag
+            // This prevents overriding intentional curve creation
+            let canvasPoint = rawCanvasPoint;
+            if (!wasRealDrag && penState.activeGuidelines) {
+                const { horizontal, vertical } = penState.activeGuidelines;
+                if (horizontal) {
+                    canvasPoint = { ...canvasPoint, y: horizontal.snappedPosition.y };
+                }
+                if (vertical) {
+                    canvasPoint = { ...canvasPoint, x: vertical.snappedPosition.x };
+                }
+            }
 
             const { mode, currentPath, dragState } = penState;
 
@@ -598,7 +706,8 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
             if (dragState?.type === 'handle') {
                 isDraggingRef.current = false;
                 dragStartPointRef.current = null;
-                state.updatePenState?.({ dragState: null });
+                rawDragStartPointRef.current = null;
+                state.updatePenState?.({ dragState: null, activeGuidelines: null });
                 return;
             }
 
@@ -606,7 +715,9 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
             if (dragState?.type === 'anchor') {
                 isDraggingRef.current = false;
                 dragStartPointRef.current = null;
-                state.updatePenState?.({ dragState: null });
+                rawDragStartPointRef.current = null;
+                state.updatePenState?.({ dragState: null, activeGuidelines: null });
+                referencePointsRef.current = []; // Clear cache for next operation
                 return;
             }
 
@@ -614,12 +725,13 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
             if (dragState?.type === 'segment') {
                 isDraggingRef.current = false;
                 dragStartPointRef.current = null;
-                state.updatePenState?.({ dragState: null });
+                rawDragStartPointRef.current = null;
+                state.updatePenState?.({ dragState: null, activeGuidelines: null });
                 return;
             }
 
             if (mode === 'drawing') {
-                // Calculate handle vector (outHandle)
+                // Calculate handle vector (outHandle) with potentially snapped point
                 const handleVector = {
                     x: canvasPoint.x - dragStartPointRef.current.x,
                     y: canvasPoint.y - dragStartPointRef.current.y,
@@ -630,19 +742,33 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                 // Determine if this was a click (no drag) or a drag
                 const isDragGesture = handleMagnitude > 2; // Threshold for drag detection
 
+                // Check if this is the first point being dragged (not a new point)
+                // This is true when:
+                // 1. Path has only 1 anchor AND
+                // 2. The drag start point is the same as the first anchor position
+                const firstAnchor = currentPath?.anchors[0];
+                const isFirstPointDrag = currentPath && 
+                    currentPath.anchors.length === 1 && 
+                    firstAnchor &&
+                    Math.abs(dragStartPointRef.current.x - firstAnchor.position.x) < 1 &&
+                    Math.abs(dragStartPointRef.current.y - firstAnchor.position.y) < 1;
+
                 if (!isDragGesture) {
-                    // Simple click - add straight anchor
-                    let finalPoint = dragStartPointRef.current;
+                    // Simple click - add straight anchor (but not if it's still the first point being placed)
+                    if (!isFirstPointDrag) {
+                        let finalPoint = dragStartPointRef.current;
 
-                    // Apply Shift constraint for straight lines
-                    if (isShiftPressedRef.current && currentPath && currentPath.anchors.length > 0) {
-                        const lastAnchor = currentPath.anchors[currentPath.anchors.length - 1];
-                        finalPoint = constrainAngleTo45Degrees(lastAnchor.position, dragStartPointRef.current);
+                        // Apply Shift constraint for straight lines
+                        if (isShiftPressedRef.current && currentPath && currentPath.anchors.length > 0) {
+                            const lastAnchor = currentPath.anchors[currentPath.anchors.length - 1];
+                            finalPoint = constrainAngleTo45Degrees(lastAnchor.position, dragStartPointRef.current);
+                        }
+
+                        addStraightAnchor(finalPoint, useCanvasStore.getState);
                     }
-
-                    addStraightAnchor(finalPoint, useCanvasStore.getState);
+                    // If first point with no drag, just keep it as corner (no action needed)
                 } else {
-                    // Drag gesture - add curved anchor with handles
+                    // Drag gesture
                     let outHandle = { ...handleVector };
 
                     // Apply Shift constraint to handle
@@ -654,36 +780,69 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                         };
                     }
 
-                    // Check for Alt key (cusp creation)
-                    if (isAltPressedRef.current && savedInHandleRef.current) {
-                        // Add with symmetric handles first (using outHandle)
-                        addCurvedAnchor(dragStartPointRef.current, outHandle, useCanvasStore.getState);
-
-                        // Then immediately update to set the correct inHandle and type
-                        const stateAfterAdd = useCanvasStore.getState();
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        const penStateAfterAdd = (stateAfterAdd as any).pen;
-                        const updatedPath = penStateAfterAdd.currentPath;
-
-                        if (updatedPath && updatedPath.anchors.length > 0) {
-                            const newIndex = updatedPath.anchors.length - 1;
-                            const anchors = [...updatedPath.anchors];
-                            anchors[newIndex] = {
-                                ...anchors[newIndex],
+                    if (isFirstPointDrag) {
+                        // First point with drag - update handles on first anchor only
+                        // These handles will be used:
+                        // - outHandle: for the NEXT segment (when second point is added)
+                        // - inHandle: for the CLOSING segment (when path is closed)
+                        const anchors = [...currentPath.anchors];
+                        
+                        // Check if Alt is pressed for cusp (asymmetric handles)
+                        if (isAltPressedRef.current) {
+                            anchors[0] = {
+                                ...anchors[0],
                                 type: 'cusp',
-                                inHandle: savedInHandleRef.current,
-                                outHandle: outHandle
+                                outHandle: outHandle,
+                                inHandle: savedInHandleRef.current || { x: -outHandle.x, y: -outHandle.y },
                             };
-
-                            stateAfterAdd.updatePenState?.({
-                                currentPath: {
-                                    ...updatedPath,
-                                    anchors
-                                }
-                            });
+                        } else {
+                            anchors[0] = {
+                                ...anchors[0],
+                                type: 'smooth',
+                                outHandle: outHandle,
+                                inHandle: { x: -outHandle.x, y: -outHandle.y }, // Symmetric
+                            };
                         }
+
+                        state.updatePenState?.({
+                            currentPath: {
+                                ...currentPath,
+                                anchors
+                            }
+                        });
                     } else {
-                        addCurvedAnchor(dragStartPointRef.current, outHandle, useCanvasStore.getState);
+                        // Subsequent points - add new curved anchor
+                        // Check for Alt key (cusp creation)
+                        if (isAltPressedRef.current && savedInHandleRef.current) {
+                            // Add with symmetric handles first (using outHandle)
+                            addCurvedAnchor(dragStartPointRef.current, outHandle, useCanvasStore.getState);
+
+                            // Then immediately update to set the correct inHandle and type
+                            const stateAfterAdd = useCanvasStore.getState();
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            const penStateAfterAdd = (stateAfterAdd as any).pen;
+                            const updatedPath = penStateAfterAdd.currentPath;
+
+                            if (updatedPath && updatedPath.anchors.length > 0) {
+                                const newIndex = updatedPath.anchors.length - 1;
+                                const anchors = [...updatedPath.anchors];
+                                anchors[newIndex] = {
+                                    ...anchors[newIndex],
+                                    type: 'cusp',
+                                    inHandle: savedInHandleRef.current,
+                                    outHandle: outHandle
+                                };
+
+                                stateAfterAdd.updatePenState?.({
+                                    currentPath: {
+                                        ...updatedPath,
+                                        anchors
+                                    }
+                                });
+                            }
+                        } else {
+                            addCurvedAnchor(dragStartPointRef.current, outHandle, useCanvasStore.getState);
+                        }
                     }
                 }
             }
@@ -691,6 +850,7 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
             // Reset drag state
             isDraggingRef.current = false;
             dragStartPointRef.current = null;
+            rawDragStartPointRef.current = null;
             savedInHandleRef.current = null;
             state.updatePenState?.({ dragState: null });
         };

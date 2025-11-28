@@ -3,6 +3,30 @@ import type { PenMode, PenPath, PenCursorState, PenHoverTarget } from '../types'
 import { findAnchorOnPath, findSegmentOnPath, findHandleOnPath } from './anchorDetection';
 
 /**
+ * Check if a path can be closed
+ * - With 3+ anchors: always can close
+ * - With 2 anchors: can close only if there's a curve (any anchor has handles)
+ * - With less than 2 anchors: cannot close
+ */
+export function canPathBeClosed(path: PenPath | null): boolean {
+    if (!path || path.anchors.length < 2) {
+        return false;
+    }
+    
+    // 3+ anchors can always close
+    if (path.anchors.length >= 3) {
+        return true;
+    }
+    
+    // 2 anchors: check if there's a curve (any handle exists)
+    const hasHandles = path.anchors.some(anchor => 
+        anchor.inHandle || anchor.outHandle
+    );
+    
+    return hasHandles;
+}
+
+/**
  * Calculate the appropriate cursor state based on current context
  */
 export function calculateCursorState(
@@ -25,7 +49,7 @@ export function calculateCursorState(
     // Drawing mode - path in progress
     if (mode === 'drawing') {
         // Check if hovering over the first anchor (to close path)
-        if (currentPath.anchors.length >= 3) {
+        if (canPathBeClosed(currentPath)) {
             const firstAnchor = currentPath.anchors[0];
             const distance = Math.sqrt(
                 (point.x - firstAnchor.position.x) ** 2 +

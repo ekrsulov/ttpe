@@ -9,6 +9,7 @@ import { usePenDrawingHook } from './hooks/usePenDrawingHook';
 import { RubberBandPreview } from './components/RubberBandPreview';
 import { PenPathOverlay } from './components/PenPathOverlay';
 import { PenCursorController } from './components/PenCursorController';
+import { PenGuidelinesOverlay } from './components/PenGuidelinesOverlay';
 import { cancelPath, finalizePath } from './actions';
 
 const penSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
@@ -86,6 +87,14 @@ export const penPlugin: PluginDefinition<CanvasStore> = {
             render: (context) => {
                 if (context.activePlugin !== 'pen') return null;
                 return React.createElement(PenCursorController);
+            },
+        },
+        {
+            id: 'pen-guidelines-overlay',
+            placement: 'background',
+            render: (context) => {
+                if (context.activePlugin !== 'pen') return null;
+                return React.createElement(PenGuidelinesOverlay, { context });
             },
         },
         {

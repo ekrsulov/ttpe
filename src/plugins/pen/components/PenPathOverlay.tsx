@@ -63,7 +63,11 @@ export const PenPathOverlay: React.FC<{ context: CanvasLayerContext }> = ({ cont
             )}
 
             {/* Visual indicator for close path */}
-            {penState.mode === 'drawing' && penState.cursorState === 'close' && penState.currentPath && penState.currentPath.anchors.length >= 3 && (
+            {penState.mode === 'drawing' && penState.cursorState === 'close' && penState.currentPath && (() => {
+                const anchors = penState.currentPath!.anchors;
+                const hasHandles = anchors.some(a => a.inHandle || a.outHandle);
+                return anchors.length >= 3 || (anchors.length === 2 && hasHandles);
+            })() && (
                 <>
                     {/* Pulsing ring around first anchor to indicate close action */}
                     <circle

@@ -1,5 +1,14 @@
 import type { StateCreator } from 'zustand';
 import type { PenMode, PenPath, PenAnchorPoint, PenCursorState, PenDragState, PenHoverTarget } from './types';
+import type { PenGuidelineMatch } from './utils/penGuidelines';
+
+/**
+ * Active guidelines state for pen tool
+ */
+export interface PenActiveGuidelines {
+    horizontal: PenGuidelineMatch | null;
+    vertical: PenGuidelineMatch | null;
+}
 
 /**
  * Pen Plugin State Interface
@@ -29,6 +38,10 @@ export interface PenPluginSlice {
         // Preferences
         autoAddDelete: boolean;
         snapToPoints: boolean;
+        
+        // Guidelines state
+        guidelinesEnabled: boolean;
+        activeGuidelines: PenActiveGuidelines | null;
     };
     updatePenState: (state: Partial<PenPluginSlice['pen']>) => void;
 }
@@ -51,6 +64,8 @@ export const createPenPluginSlice: StateCreator<PenPluginSlice> = (set) => ({
         selectedAnchorIndex: null,
         autoAddDelete: true,
         snapToPoints: false,
+        guidelinesEnabled: true,
+        activeGuidelines: null,
     },
     updatePenState: (newState) =>
         set((state) => ({

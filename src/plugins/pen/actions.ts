@@ -175,8 +175,14 @@ export function closePath(getState: () => CanvasStore): void {
         return;
     }
 
-    // Require at least 3 points to close
-    if (penState.currentPath.anchors.length < 3) {
+    // Check if path can be closed using the same logic as cursor detection
+    // - 3+ anchors: always can close
+    // - 2 anchors: can close only if there's a curve (any anchor has handles)
+    const path = penState.currentPath;
+    const canClose = path.anchors.length >= 3 || 
+        (path.anchors.length === 2 && path.anchors.some((a: { inHandle?: unknown; outHandle?: unknown }) => a.inHandle || a.outHandle));
+    
+    if (!canClose) {
         return;
     }
 
@@ -1002,20 +1008,17 @@ export function curveSegment(
         y: p3.y - p0.y,
     };
     
-    const segmentLength = Math.sqrt(segmentVector.x ** 2 + segmentVector.y ** 2);
-    
+    // Calculate perpendicular direction for potential future use (not currently needed)
     const perpendicular = {
         x: -segmentVector.y,
         y: segmentVector.x,
     };
     
     const perpLength = Math.sqrt(perpendicular.x ** 2 + perpendicular.y ** 2);
-    const perpNormalized = perpLength > 0 ? {
+    const _perpNormalized = perpLength > 0 ? {
         x: perpendicular.x / perpLength,
         y: perpendicular.y / perpLength,
     } : { x: 0, y: 1 };
-    
-    const displacementDotPerp = displacement.x * perpNormalized.x + displacement.y * perpNormalized.y;
     
     // Use 't' parameter to weight the handles differently
     // t closer to 0 = more weight on start handle
@@ -1027,11 +1030,6 @@ export function curveSegment(
     const totalWeight = startWeight + endWeight;
     const normalizedStartWeight = totalWeight > 0 ? startWeight / totalWeight : 0.5;
     const normalizedEndWeight = totalWeight > 0 ? endWeight / totalWeight : 0.5;
-    
-    // Calculate handle lengths directly from displacement magnitude and weights
-    // No minimum length - handles scale purely with drag distance
-    const startHandleLength = displacementMagnitude * (0.5 + normalizedStartWeight * 1.5);
-    const endHandleLength = displacementMagnitude * (0.5 + normalizedEndWeight * 1.5);
     
     // Calculate handle vectors using displacement direction and asymmetric weighting
     // Handles point towards the drag point, scaled by weights

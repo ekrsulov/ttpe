@@ -28,7 +28,11 @@ export function penPathToCommands(path: PenPath): Command[] {
     }
 
     // If path is closed, add closing segment and Z command
-    if (path.closed && anchors.length > 2) {
+    // Can close with 3+ anchors always, or 2 anchors if there's a curve (any anchor has handles)
+    const hasHandles = anchors.some(a => a.inHandle || a.outHandle);
+    const canClose = anchors.length >= 3 || (anchors.length === 2 && hasHandles);
+    
+    if (path.closed && canClose) {
         const lastAnchor = anchors[anchors.length - 1];
         const firstAnchor = anchors[0];
 
