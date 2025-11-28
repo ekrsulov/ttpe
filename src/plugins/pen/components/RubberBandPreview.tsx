@@ -154,12 +154,14 @@ export const RubberBandPreview: React.FC<{ context: CanvasLayerContext }> = ({ c
                 />
                 
                 {/* OutHandle length label */}
-                <HandleLengthLabel
-                    x={outLabelPos.x}
-                    y={outLabelPos.y}
-                    length={handleMagnitude}
-                    zoom={viewport.zoom}
-                />
+                {penState.showHandleDistance && (
+                    <HandleLengthLabel
+                        x={outLabelPos.x}
+                        y={outLabelPos.y}
+                        length={handleMagnitude}
+                        zoom={viewport.zoom}
+                    />
+                )}
 
                 {/* Reflexive Handle line (inHandle) */}
                 <line
@@ -185,13 +187,15 @@ export const RubberBandPreview: React.FC<{ context: CanvasLayerContext }> = ({ c
                 />
                 
                 {/* InHandle length label */}
-                <HandleLengthLabel
-                    x={inLabelPos.x}
-                    y={inLabelPos.y}
-                    length={inHandleMagnitude}
-                    zoom={viewport.zoom}
-                    opacity={0.7}
-                />
+                {penState.showHandleDistance && (
+                    <HandleLengthLabel
+                        x={inLabelPos.x}
+                        y={inLabelPos.y}
+                        length={inHandleMagnitude}
+                        zoom={viewport.zoom}
+                        opacity={0.7}
+                    />
+                )}
 
                 {/* Anchor point */}
                 <circle
@@ -265,12 +269,14 @@ export const RubberBandPreview: React.FC<{ context: CanvasLayerContext }> = ({ c
                     />
                     
                     {/* OutHandle length label */}
-                    <HandleLengthLabel
-                        x={previewEnd.x + outHandle.x / 2}
-                        y={previewEnd.y + outHandle.y / 2}
-                        length={handleMagnitude}
-                        zoom={viewport.zoom}
-                    />
+                    {penState.showHandleDistance && (
+                        <HandleLengthLabel
+                            x={previewEnd.x + outHandle.x / 2}
+                            y={previewEnd.y + outHandle.y / 2}
+                            length={handleMagnitude}
+                            zoom={viewport.zoom}
+                        />
+                    )}
 
                     {/* Reflexive Handle line (inHandle) */}
                     <line
@@ -296,7 +302,7 @@ export const RubberBandPreview: React.FC<{ context: CanvasLayerContext }> = ({ c
                     />
                     
                     {/* InHandle length label */}
-                    {(() => {
+                    {penState.showHandleDistance && (() => {
                         const inHandleMag = Math.sqrt(inHandle.x ** 2 + inHandle.y ** 2);
                         return (
                             <HandleLengthLabel

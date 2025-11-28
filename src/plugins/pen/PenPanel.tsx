@@ -32,6 +32,7 @@ export const PenPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = false 
     const {
         autoAddDelete,
         guidelinesEnabled,
+        showHandleDistance,
         mode,
     } = penState;
 
@@ -77,6 +78,16 @@ export const PenPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = false 
                             id="guidelines-enabled"
                             isChecked={guidelinesEnabled}
                             onChange={(e) => updatePenState({ guidelinesEnabled: e.target.checked })}
+                        />
+                    </FormControl>
+                    <FormControl display="flex" alignItems="center" minH="24px">
+                        <FormLabel htmlFor="show-handle-distance" mb="0" fontSize="11px" flex="1" color={labelColor}>
+                            Show Handle Distance
+                        </FormLabel>
+                        <PanelSwitch
+                            id="show-handle-distance"
+                            isChecked={showHandleDistance}
+                            onChange={(e) => updatePenState({ showHandleDistance: e.target.checked })}
                         />
                     </FormControl>
                 </VStack>

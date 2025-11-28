@@ -38,6 +38,7 @@ export interface PenPluginSlice {
         // Preferences
         autoAddDelete: boolean;
         snapToPoints: boolean;
+        showHandleDistance: boolean;
         
         // Guidelines state
         guidelinesEnabled: boolean;
@@ -62,8 +63,9 @@ export const createPenPluginSlice: StateCreator<PenPluginSlice> = (set) => ({
         editingPathId: null,
         editingSubPathIndex: null,
         selectedAnchorIndex: null,
-        autoAddDelete: true,
+        autoAddDelete: false,
         snapToPoints: false,
+        showHandleDistance: false,
         guidelinesEnabled: true,
         activeGuidelines: null,
     },
