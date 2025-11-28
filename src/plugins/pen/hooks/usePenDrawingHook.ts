@@ -23,9 +23,9 @@ import { calculateCursorState, calculateEditCursorState } from '../utils/cursorS
 import { constrainAngleTo45Degrees } from '../utils/pathConverter';
 import { findPathAtPoint, findSegmentOnPath } from '../utils/anchorDetection';
 import { applyGridSnap } from '../../../utils/gridSnapUtils';
-import { 
-    collectReferencePoints, 
-    findPenGuidelines, 
+import {
+    collectReferencePoints,
+    findPenGuidelines,
     applyPenGuidelineSnap,
     type ReferencePoint
 } from '../utils/penGuidelines';
@@ -46,7 +46,7 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
     const isVKeyPressedRef = useRef(false);
     const isMovingLastAnchorRef = useRef(false);
     const lastAnchorOriginalPositionRef = useRef<Point | null>(null);
-    
+
     // Guidelines reference points cache
     const referencePointsRef = useRef<ReferencePoint[]>([]);
     const lastReferenceUpdateRef = useRef<number>(0);
@@ -155,7 +155,7 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
             const canvasPoint = getSnappedPoint(rawCanvasPoint);
             // Use raw point for detection to avoid snapping away from targets
             const detectionPoint = rawCanvasPoint;
-            
+
             // Apply guidelines snap if there are active guidelines (from the preview)
             // This ensures clicks respect the sticky guidelines position
             let finalCanvasPoint = canvasPoint;
@@ -369,19 +369,19 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                 }
                 return finalPoint;
             };
-            
+
             // Helper to apply pen guidelines snap
             const applyGuidelinesSnap = (point: Point, currentPointIndex: number | null = null) => {
                 if (!guidelinesEnabled) {
                     state.updatePenState?.({ activeGuidelines: null });
                     return point;
                 }
-                
+
                 // Update reference points cache (throttle to every 100ms, or when anchor count changes)
                 const now = Date.now();
                 const currentAnchorCount = currentPath?.anchors?.length || 0;
                 const anchorCountChanged = currentAnchorCount !== lastAnchorCountRef.current;
-                
+
                 if (anchorCountChanged || now - lastReferenceUpdateRef.current > 100 || referencePointsRef.current.length === 0) {
                     const viewportInfo = {
                         zoom: state.viewport.zoom,
@@ -400,11 +400,11 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                     lastReferenceUpdateRef.current = now;
                     lastAnchorCountRef.current = currentAnchorCount;
                 }
-                
+
                 // Find matching guidelines
                 const threshold = 8 / viewportZoom; // 8px threshold scaled by zoom
                 const guidelines = findPenGuidelines(point, referencePointsRef.current, threshold);
-                
+
                 // Update guidelines state for overlay rendering
                 if (guidelines.horizontal || guidelines.vertical) {
                     state.updatePenState?.({ activeGuidelines: guidelines });
@@ -441,7 +441,7 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                 if (rubberBandEnabled && !isDraggingRef.current) {
                     // Apply guidelines snap for preview
                     canvasPoint = applyGuidelinesSnap(canvasPoint, null);
-                    
+
                     // Store preview point for rendering
                     state.updatePenState?.({
                         previewAnchor: {
@@ -456,7 +456,7 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                 if (!isDraggingRef.current && penState.activeGuidelines) {
                     state.updatePenState?.({ activeGuidelines: null });
                 }
-                
+
                 // Check for existing paths to edit (using detectionPoint)
                 let newCursorState = 'new-path';
                 let newHoverTarget: typeof penState.hoverTarget = { type: 'none' };
@@ -597,6 +597,8 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
 
                 // Original drag logic for new anchors
                 // Calculate handle vector (outHandle)
+                if (!dragStartPointRef.current) return;
+
                 const handleVector = {
                     x: canvasPoint.x - dragStartPointRef.current.x,
                     y: canvasPoint.y - dragStartPointRef.current.y,
@@ -677,7 +679,7 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
             const penState = (state as any).pen;
 
             if (!penState) return;
-            
+
             // Use raw positions for drag detection to avoid false positives from snap offset
             const rawStartPoint = rawDragStartPointRef.current || dragStartPointRef.current;
             const rawHandleVector = {
@@ -747,8 +749,8 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                 // 1. Path has only 1 anchor AND
                 // 2. The drag start point is the same as the first anchor position
                 const firstAnchor = currentPath?.anchors[0];
-                const isFirstPointDrag = currentPath && 
-                    currentPath.anchors.length === 1 && 
+                const isFirstPointDrag = currentPath &&
+                    currentPath.anchors.length === 1 &&
                     firstAnchor &&
                     Math.abs(dragStartPointRef.current.x - firstAnchor.position.x) < 1 &&
                     Math.abs(dragStartPointRef.current.y - firstAnchor.position.y) < 1;
@@ -786,7 +788,7 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                         // - outHandle: for the NEXT segment (when second point is added)
                         // - inHandle: for the CLOSING segment (when path is closed)
                         const anchors = [...currentPath.anchors];
-                        
+
                         // Check if Alt is pressed for cusp (asymmetric handles)
                         if (isAltPressedRef.current) {
                             anchors[0] = {

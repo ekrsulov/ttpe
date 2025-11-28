@@ -65,35 +65,35 @@ export const PenPathOverlay: React.FC<{ context: CanvasLayerContext }> = ({ cont
             {/* Visual indicator for close path */}
             {penState.mode === 'drawing' && penState.cursorState === 'close' && penState.currentPath && (() => {
                 const anchors = penState.currentPath!.anchors;
-                const hasHandles = anchors.some(a => a.inHandle || a.outHandle);
+                const hasHandles = anchors.some((a: typeof anchors[0]) => a.inHandle || a.outHandle);
                 return anchors.length >= 3 || (anchors.length === 2 && hasHandles);
             })() && (
-                <>
-                    {/* Pulsing ring around first anchor to indicate close action */}
-                    <circle
-                        cx={penState.currentPath.anchors[0].position.x}
-                        cy={penState.currentPath.anchors[0].position.y}
-                        r={anchorRadius * 2.5}
-                        fill="none"
-                        stroke="#22c55e"
-                        strokeWidth={strokeWidth * 2}
-                        opacity={0.8}
-                    >
-                        <animate
-                            attributeName="r"
-                            values={`${anchorRadius * 2};${anchorRadius * 3};${anchorRadius * 2}`}
-                            dur="1s"
-                            repeatCount="indefinite"
-                        />
-                        <animate
-                            attributeName="opacity"
-                            values="0.8;0.4;0.8"
-                            dur="1s"
-                            repeatCount="indefinite"
-                        />
-                    </circle>
-                </>
-            )}
+                    <>
+                        {/* Pulsing ring around first anchor to indicate close action */}
+                        <circle
+                            cx={penState.currentPath.anchors[0].position.x}
+                            cy={penState.currentPath.anchors[0].position.y}
+                            r={anchorRadius * 2.5}
+                            fill="none"
+                            stroke="#22c55e"
+                            strokeWidth={strokeWidth * 2}
+                            opacity={0.8}
+                        >
+                            <animate
+                                attributeName="r"
+                                values={`${anchorRadius * 2};${anchorRadius * 3};${anchorRadius * 2}`}
+                                dur="1s"
+                                repeatCount="indefinite"
+                            />
+                            <animate
+                                attributeName="opacity"
+                                values="0.8;0.4;0.8"
+                                dur="1s"
+                                repeatCount="indefinite"
+                            />
+                        </circle>
+                    </>
+                )}
 
             {/* Render current path being drawn/edited */}
             {(penState.mode === 'drawing' || penState.mode === 'editing') && penState.currentPath && penState.currentPath.anchors && penState.currentPath.anchors.length > 0 && (

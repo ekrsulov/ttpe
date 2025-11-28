@@ -23,6 +23,8 @@ The Pen plugin provides professional-grade vector path creation and editing capa
 - Snap-to-close for touch devices
 - 45° angle constraints with Shift
 - Move last anchor while drawing
+- **Smart guidelines and snapping** for precise alignment
+- Handle length visual feedback during drawing
 
 ## Plugin Interaction Flow
 
@@ -236,6 +238,11 @@ graph TB
         PS --> PREFS[Preferences]
         PREFS --> AAD[autoAddDelete: boolean]
         PREFS --> RB[rubberBandEnabled: boolean]
+        PREFS --> GE[guidelinesEnabled: boolean]
+        
+        PS --> GUIDELINES[activeGuidelines]
+        GUIDELINES --> HG[horizontal: PenGuidelineMatch?]
+        GUIDELINES --> VG[vertical: PenGuidelineMatch?]
     end
     
     subgraph "PenPath Structure"
@@ -269,6 +276,101 @@ graph TB
 - **hoverTarget**: What the cursor is hovering over (anchor/segment/etc.)
 - **dragState**: Information about current drag operation
 - **cursorState**: Visual cursor state for feedback
+- **guidelinesEnabled**: Toggle for guideline snapping feature
+- **activeGuidelines**: Current horizontal/vertical guidelines being displayed
+
+## Guidelines and Snapping System
+
+The Pen plugin includes a sophisticated guideline system that helps align anchor points with precision.
+
+### Reference Points
+
+Guidelines are generated from multiple reference point types:
+
+```mermaid
+graph TB
+    subgraph "Reference Point Sources"
+        RP[Reference Points]
+        
+        RP --> CP[Current Path]
+        RP --> EP[Existing Paths]
+        RP --> VP[Viewport]
+        
+        CP --> CPA[Other Anchors]
+        CP --> CPH[Handle Endpoints]
+        CP --> CPM[Anchor Midpoints]
+        
+        EP --> EPA[Path Anchors]
+        EP --> EPH[Control Points]
+        EP --> EPM[Segment Midpoints]
+        
+        VP --> VPC[Canvas Center]
+        VP --> VPV[Vertical Centerline]
+        VP --> VPH[Horizontal Centerline]
+    end
+    
+    subgraph "Guideline Generation"
+        G[Guideline System]
+        G --> HA[Horizontal Alignment\nSame Y coordinate]
+        G --> VA[Vertical Alignment\nSame X coordinate]
+        
+        HA --> DL1[Distance Label]
+        VA --> DL2[Distance Label]
+    end
+    
+    RP --> G
+    
+    style RP fill:#e1f5ff
+    style G fill:#e1ffe1
+    style HA fill:#ffe1e1
+    style VA fill:#ffe1e1
+```
+
+**Reference Point Types**:
+- **anchor**: Anchor points from current path and other paths
+- **handle**: Handle endpoints (control points) on curves
+- **midpoint**: Calculated midpoints between consecutive anchors
+- **canvas-center**: Center of the visible viewport
+- **canvas-edge**: Viewport centerlines (horizontal/vertical)
+
+### Visual Feedback
+
+When moving an anchor point near a reference point:
+
+**Guidelines** (magenta dashed lines):
+- Horizontal lines for Y-axis alignment
+- Vertical lines for X-axis alignment
+- Extend across the entire canvas
+
+**Distance Rulers**:
+- Show the distance between the current point and the reference point
+- Display numeric labels with the distance value
+- Only appear when distance > 1 pixel
+
+**Reference Indicators**:
+- Small magenta dots mark the reference point position
+- Help identify which point you're aligning to
+
+### Snapping Behavior
+
+When **Snap to Guidelines** is enabled:
+- Anchor position snaps to guidelines within the threshold
+- Can snap to both horizontal and vertical guidelines simultaneously
+- Snapping threshold adapts to zoom level
+- Visual feedback shows before the snap is applied
+
+```typescript
+interface PenGuideline {
+    axis: 'horizontal' | 'vertical';
+    position: number; // X for vertical, Y for horizontal
+    referencePoint: ReferencePoint;
+    distance: number; // Distance to reference point
+}
+```
+
+:::tip Usage
+Toggle **Snap to Guidelines** in the Pen Panel to enable/disable snapping while keeping visual guidelines visible.
+:::
 
 ## Anchor Types
 
@@ -317,12 +419,14 @@ For touch devices without keyboards, use the **Close**, **Finish**, and **Cancel
 
 **Pen Panel** provides:
 - **Auto Add/Delete Toggle**: Automatically add anchors to segments or delete anchors on click
-- **Close Path Button**: Close the current path (mobile-friendly)
-- **Finish Path Button**: Finish the path as an open path (mobile-friendly)
-- **Cancel Path Button**: Cancel and discard the current path (mobile-friendly)
+- **Snap to Guidelines Toggle**: Enable/disable guideline snapping for precise alignment
+- **Mode Badge**: Shows current pen mode (idle/drawing/editing/continuing)
+- **Close Path Button**: Close the current path (mobile-friendly, drawing mode only)
+- **Finish Path Button**: Finish the path as an open path (mobile-friendly, drawing mode only)
+- **Cancel Path Button**: Cancel and discard the current path (mobile-friendly, drawing mode only)
 
 :::note
-The panel buttons are only visible when actively drawing a path.
+The action buttons (Close/Finish/Cancel) are only visible when actively drawing a path.
 :::
 
 ### Overlays
@@ -334,6 +438,12 @@ The panel buttons are only visible when actively drawing a path.
 - Hover feedback for existing paths
 - Visual close indicator (pulsing ring) near start point
 
+**PenGuidelinesOverlay** renders:
+- Horizontal and vertical alignment guidelines (magenta dashed lines)
+- Reference point indicators (small magenta dots)
+- Distance rulers with numeric labels
+- Adapts to viewport zoom for consistent appearance
+
 ### Canvas Layers
 
 **RubberBandPreview** provides:
@@ -341,6 +451,7 @@ The panel buttons are only visible when actively drawing a path.
 - Dashed line for straight segments
 - Curved preview for drag operations
 - Handle preview during drag
+- **Handle length labels**: Shows the distance/length of handles being created
 
 ## Public APIs
 
@@ -423,6 +534,42 @@ Shows the PenPanel when:
 - The pen tool is active
 - Not in a special panel mode
 
+## Canvas Layer Registrations
+
+The Pen plugin registers three canvas layers for rendering overlays:
+
+```typescript
+canvasLayers: [
+  {
+    id: 'pen-cursor-controller',
+    placement: 'background',
+    // Dynamic cursor management (pen, pen+asterisk, etc.)
+  },
+  {
+    id: 'pen-guidelines-overlay',
+    placement: 'background',
+    // Renders alignment guidelines and distance rulers
+  },
+  {
+    id: 'pen-path-overlay',
+    placement: 'midground',
+    // Renders anchors, handles, and hover feedback
+  },
+  {
+    id: 'pen-rubberband-preview',
+    placement: 'overlay',
+    // Real-time preview of the next segment
+  },
+]
+```
+
+**Layer Purposes**:
+- **pen-cursor-controller** (background): Manages dynamic cursor changes based on pen state and hover targets
+- **pen-guidelines-overlay** (background): Displays magenta alignment guidelines, reference point indicators, and distance labels
+- **pen-path-overlay** (midground): Shows anchor points, control handles, and path editing controls
+- **pen-rubberband-preview** (overlay): Provides real-time visual feedback for the segment being drawn
+
+
 ## Path Conversion
 
 The plugin converts between internal `PenPath` representation and SVG `Command[]`:
@@ -476,11 +623,14 @@ api?.closePath();
 - `actions.ts`: Path creation and editing actions
 - `hooks/usePenDrawingHook.ts`: Main interaction hook
 - `components/PenPathOverlay.tsx`: Visual overlays
-- `components/RubberBandPreview.tsx`: Real-time preview
+- `components/PenGuidelinesOverlay.tsx`: **Guideline rendering and visual feedback**
+- `components/RubberBandPreview.tsx`: Real-time preview with handle labels
+- `components/PenCursorController.tsx`: Dynamic cursor management
 - `PenPanel.tsx`: Tool panel UI
-- `utils/pathConverter.ts`: Path ↔ SVG conversion
+- `utils/pathConverter.ts`: Path ↔ SVG conversion with guideline support
 - `utils/anchorDetection.ts`: Hit testing for paths/anchors
-- `utils/cursorState.ts`: Cursor state calculation
+- `utils/cursorState.ts`: Cursor state calculation with snap detection
+- `utils/penGuidelines.ts`: **Guideline detection and snapping logic**
 
 ## Edge Cases & Limitations
 
