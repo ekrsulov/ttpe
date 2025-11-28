@@ -6,13 +6,12 @@ const HIT_THRESHOLD = 8; // pixels
 
 /**
  * Find a path element under the cursor
- * Now supports compound paths by detecting individual subpaths
  */
 export function findPathAtPoint(
     point: Point,
     elements: CanvasElement[],
     scale: number
-): { pathId: string; penPath: PenPath; subPathIndex: number } | null {
+): { pathId: string; penPath: PenPath } | null {
     const threshold = HIT_THRESHOLD / scale;
 
     // Iterate elements in reverse (top to bottom)
@@ -22,14 +21,14 @@ export function findPathAtPoint(
 
         const pathElement = element as PathElement;
 
-        // Check each subpath
-        for (let subPathIndex = 0; subPathIndex < pathElement.data.subPaths.length; subPathIndex++) {
-            const penPath = pathDataToPenPath(pathElement.data.subPaths[subPathIndex], `${pathElement.id}-${subPathIndex}`);
+        // We only support single subpath for now in Pen tool editing
+        if (pathElement.data.subPaths.length !== 1) continue;
 
-            // Check if point is close to any segment or anchor in this subpath
-            if (isPointNearPath(point, penPath, threshold)) {
-                return { pathId: pathElement.id, penPath, subPathIndex };
-            }
+        const penPath = pathDataToPenPath(pathElement.data.subPaths[0], pathElement.id);
+
+        // Check if point is close to any segment or anchor
+        if (isPointNearPath(point, penPath, threshold)) {
+            return { pathId: pathElement.id, penPath };
         }
     }
     return null;

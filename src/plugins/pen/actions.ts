@@ -183,7 +183,7 @@ export function closePath(getState: () => CanvasStore): void {
     const anchors = [...penState.currentPath.anchors];
     const firstAnchor = { ...anchors[0] };
     const lastAnchor = { ...anchors[anchors.length - 1] };
-
+    
     // Ensure continuity when closing: if last anchor has an outHandle,
     // create a symmetric inHandle for the first anchor
     if (lastAnchor.outHandle && !firstAnchor.inHandle) {
@@ -239,7 +239,7 @@ export function finalizePath(getState: () => CanvasStore): void {
         const anchors = [...path.anchors];
         const firstAnchor = anchors[0];
         const lastAnchor = anchors[anchors.length - 1];
-
+        
         // If first anchor has no inHandle but last has outHandle, connect them
         if (!firstAnchor.inHandle && lastAnchor.outHandle) {
             // Make first anchor smooth by mirroring last's outHandle
@@ -252,7 +252,7 @@ export function finalizePath(getState: () => CanvasStore): void {
                 type: firstAnchor.outHandle ? 'smooth' : firstAnchor.type,
             };
         }
-
+        
         // Update path with improved closing continuity
         path.anchors = anchors;
     }
@@ -307,7 +307,6 @@ export function finalizePath(getState: () => CanvasStore): void {
         previewAnchor: null,
         cursorState: 'new-path',
         editingPathId: null,
-        editingSubPathIndex: null,
         selectedAnchorIndex: null,
     });
 }
@@ -409,7 +408,6 @@ export function breakHandleLinkage(
  */
 export function startEditingPath(
     pathId: string,
-    subPathIndex: number,
     getState: () => CanvasStore
 ): void {
     const state = getState();
@@ -417,16 +415,16 @@ export function startEditingPath(
 
     if (!element || element.type !== 'path') return;
 
-    // Ensure subPathIndex is valid
-    if (subPathIndex < 0 || subPathIndex >= element.data.subPaths.length) return;
+    // Convert to PenPath
+    // We only support single subpath for now
+    if (element.data.subPaths.length !== 1) return;
 
-    const penPath = pathDataToPenPath(element.data.subPaths[subPathIndex], `${pathId}-${subPathIndex}`);
+    const penPath = pathDataToPenPath(element.data.subPaths[0], pathId);
 
     state.updatePenState?.({
         mode: 'editing',
         currentPath: penPath,
         editingPathId: pathId,
-        editingSubPathIndex: subPathIndex,
         activeAnchorIndex: null,
         selectedAnchorIndex: null,
         cursorState: 'default',
@@ -581,9 +579,7 @@ export function continueFromEndpoint(
     const state = getState();
 
     // Start editing first to load the path
-    // For now, assume we're continuing from the first subpath (0)
-    // TODO: Determine which subpath contains the endpoint
-    startEditingPath(pathId, 0, getState);
+    startEditingPath(pathId, getState);
 
     // Fetch fresh state after startEditingPath updates it
     const stateAfterEdit = getState();
@@ -621,21 +617,9 @@ function updatePathOnCanvas(
     const state = getState();
     const commands = penPathToCommands(path);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const penState = (state as any).pen;
-    const subPathIndex = penState?.editingSubPathIndex ?? 0;
-
-    // Get the current element to preserve other subpaths
-    const element = state.elements.find(el => el.id === pathId);
-    if (!element || element.type !== 'path') return;
-
-    // Create new subPaths array with only the edited subpath replaced
-    const newSubPaths = [...element.data.subPaths];
-    newSubPaths[subPathIndex] = commands;
-
     state.updateElement?.(pathId, {
         data: {
-            subPaths: newSubPaths
+            subPaths: [commands]
         }
     });
 }
@@ -666,7 +650,7 @@ export function updateHandle(
     }
 
     const anchor = { ...anchors[anchorIndex] };
-
+    
     // Calculate handle vector relative to anchor
     const handleVector: Point = {
         x: newHandlePosition.x - anchorPosition.x,
@@ -675,7 +659,7 @@ export function updateHandle(
 
     if (handleType === 'out') {
         anchor.outHandle = handleVector;
-
+        
         // If Alt is NOT pressed and anchor is smooth, update the opposite handle symmetrically
         if (!isAltPressed && anchor.type === 'smooth' && anchor.inHandle) {
             anchor.inHandle = {
@@ -689,7 +673,7 @@ export function updateHandle(
     } else {
         // handleType === 'in'
         anchor.inHandle = handleVector;
-
+        
         // If Alt is NOT pressed and anchor is smooth, update the opposite handle symmetrically
         if (!isAltPressed && anchor.type === 'smooth' && anchor.outHandle) {
             anchor.outHandle = {
@@ -742,17 +726,17 @@ export function moveLastAnchor(
 
     const lastIndex = anchors.length - 1;
     const lastAnchor = { ...anchors[lastIndex] };
-
+    
     // Update position (handles are already relative to anchor position)
     lastAnchor.position = { ...newPosition };
-
+    
     // Also move handles to maintain their relative positions
     if (lastAnchor.inHandle) {
         // Handles are relative, no need to adjust
         // Actually, handles are already relative to the anchor position
         // so we don't need to modify them
     }
-
+    
     anchors[lastIndex] = lastAnchor;
 
     const updatedPath: PenPath = {
@@ -788,10 +772,10 @@ export function moveAnchor(
     }
 
     const anchor = { ...anchors[anchorIndex] };
-
+    
     // Update position (handles are relative, so they don't need adjustment)
     anchor.position = { ...newPosition };
-
+    
     anchors[anchorIndex] = anchor;
 
     const updatedPath: PenPath = {
@@ -840,27 +824,27 @@ export function curveSegment(
 
     const p0 = startAnchor.position;
     const p3 = endAnchor.position;
-
+    
     const linePoint = {
         x: p0.x + t * (p3.x - p0.x),
         y: p0.y + t * (p3.y - p0.y),
     };
-
+    
     const displacement = {
         x: dragPoint.x - linePoint.x,
         y: dragPoint.y - linePoint.y,
     };
-
+    
     // Calculate the magnitude of displacement (distance from line)
     const displacementMagnitude = Math.sqrt(displacement.x ** 2 + displacement.y ** 2);
-
+    
     // Threshold for detecting "almost straight" - if displacement is very small, make it straight
     const straightnessThreshold = 3; // pixels
     if (displacementMagnitude < straightnessThreshold) {
         // Convert back to straight line by removing handles
         startAnchor.outHandle = undefined;
         endAnchor.inHandle = undefined;
-
+        
         // Also update symmetric handles if they exist
         if (startAnchor.type === 'smooth' && !startAnchor.inHandle) {
             startAnchor.type = 'corner';
@@ -868,32 +852,32 @@ export function curveSegment(
         if (endAnchor.type === 'smooth' && !endAnchor.outHandle) {
             endAnchor.type = 'corner';
         }
-
+        
         // Check if adjacent segments also form straight lines and simplify them
         // Check previous segment (between anchors[startIndex-1] and startAnchor)
         if (startIndex > 0) {
             const prevAnchor = { ...anchors[startIndex - 1] };
             const prevPos = prevAnchor.position;
             const currentPos = startAnchor.position;
-
+            
             // Check if there are handles that would curve this segment
             if (prevAnchor.outHandle || startAnchor.inHandle) {
                 // Calculate if the segment is actually straight despite having handles
                 const segVec = { x: currentPos.x - prevPos.x, y: currentPos.y - prevPos.y };
                 const segLen = Math.sqrt(segVec.x ** 2 + segVec.y ** 2);
-
+                
                 if (segLen > 0) {
                     const segNorm = { x: segVec.x / segLen, y: segVec.y / segLen };
-
+                    
                     let isActuallyStraight = true;
-
+                    
                     // Check if outHandle is aligned with the segment
                     if (prevAnchor.outHandle) {
                         const handleLen = Math.sqrt(prevAnchor.outHandle.x ** 2 + prevAnchor.outHandle.y ** 2);
                         if (handleLen > 0.1) {
-                            const handleNorm = {
-                                x: prevAnchor.outHandle.x / handleLen,
-                                y: prevAnchor.outHandle.y / handleLen
+                            const handleNorm = { 
+                                x: prevAnchor.outHandle.x / handleLen, 
+                                y: prevAnchor.outHandle.y / handleLen 
                             };
                             const dot = handleNorm.x * segNorm.x + handleNorm.y * segNorm.y;
                             if (Math.abs(dot - 1) > 0.01) { // Not aligned
@@ -901,14 +885,14 @@ export function curveSegment(
                             }
                         }
                     }
-
+                    
                     // Check if inHandle is aligned with the segment (opposite direction)
                     if (isActuallyStraight && startAnchor.inHandle) {
                         const handleLen = Math.sqrt(startAnchor.inHandle.x ** 2 + startAnchor.inHandle.y ** 2);
                         if (handleLen > 0.1) {
-                            const handleNorm = {
-                                x: startAnchor.inHandle.x / handleLen,
-                                y: startAnchor.inHandle.y / handleLen
+                            const handleNorm = { 
+                                x: startAnchor.inHandle.x / handleLen, 
+                                y: startAnchor.inHandle.y / handleLen 
                             };
                             const dot = handleNorm.x * (-segNorm.x) + handleNorm.y * (-segNorm.y);
                             if (Math.abs(dot - 1) > 0.01) { // Not aligned
@@ -916,7 +900,7 @@ export function curveSegment(
                             }
                         }
                     }
-
+                    
                     if (isActuallyStraight) {
                         prevAnchor.outHandle = undefined;
                         startAnchor.inHandle = undefined;
@@ -931,31 +915,31 @@ export function curveSegment(
                 }
             }
         }
-
+        
         // Check next segment (between endAnchor and anchors[endIndex+1])
         if (endIndex < anchors.length - 1) {
             const nextAnchor = { ...anchors[endIndex + 1] };
             const currentPos = endAnchor.position;
             const nextPos = nextAnchor.position;
-
+            
             // Check if there are handles that would curve this segment
             if (endAnchor.outHandle || nextAnchor.inHandle) {
                 // Calculate if the segment is actually straight despite having handles
                 const segVec = { x: nextPos.x - currentPos.x, y: nextPos.y - currentPos.y };
                 const segLen = Math.sqrt(segVec.x ** 2 + segVec.y ** 2);
-
+                
                 if (segLen > 0) {
                     const segNorm = { x: segVec.x / segLen, y: segVec.y / segLen };
-
+                    
                     let isActuallyStraight = true;
-
+                    
                     // Check if outHandle is aligned with the segment
                     if (endAnchor.outHandle) {
                         const handleLen = Math.sqrt(endAnchor.outHandle.x ** 2 + endAnchor.outHandle.y ** 2);
                         if (handleLen > 0.1) {
-                            const handleNorm = {
-                                x: endAnchor.outHandle.x / handleLen,
-                                y: endAnchor.outHandle.y / handleLen
+                            const handleNorm = { 
+                                x: endAnchor.outHandle.x / handleLen, 
+                                y: endAnchor.outHandle.y / handleLen 
                             };
                             const dot = handleNorm.x * segNorm.x + handleNorm.y * segNorm.y;
                             if (Math.abs(dot - 1) > 0.01) { // Not aligned
@@ -963,14 +947,14 @@ export function curveSegment(
                             }
                         }
                     }
-
+                    
                     // Check if inHandle is aligned with the segment (opposite direction)
                     if (isActuallyStraight && nextAnchor.inHandle) {
                         const handleLen = Math.sqrt(nextAnchor.inHandle.x ** 2 + nextAnchor.inHandle.y ** 2);
                         if (handleLen > 0.1) {
-                            const handleNorm = {
-                                x: nextAnchor.inHandle.x / handleLen,
-                                y: nextAnchor.inHandle.y / handleLen
+                            const handleNorm = { 
+                                x: nextAnchor.inHandle.x / handleLen, 
+                                y: nextAnchor.inHandle.y / handleLen 
                             };
                             const dot = handleNorm.x * (-segNorm.x) + handleNorm.y * (-segNorm.y);
                             if (Math.abs(dot - 1) > 0.01) { // Not aligned
@@ -978,7 +962,7 @@ export function curveSegment(
                             }
                         }
                     }
-
+                    
                     if (isActuallyStraight) {
                         endAnchor.outHandle = undefined;
                         nextAnchor.inHandle = undefined;
@@ -993,7 +977,7 @@ export function curveSegment(
                 }
             }
         }
-
+        
         anchors[startIndex] = startAnchor;
         anchors[endIndex] = endAnchor;
 
@@ -1009,48 +993,67 @@ export function curveSegment(
         if (penState.editingPathId) {
             updatePathOnCanvas(updatedPath, penState.editingPathId, getState);
         }
-
+        
         return;
     }
 
-    // segmentVector was unused
-
+    const segmentVector = {
+        x: p3.x - p0.x,
+        y: p3.y - p0.y,
+    };
+    
+    const segmentLength = Math.sqrt(segmentVector.x ** 2 + segmentVector.y ** 2);
+    
+    const perpendicular = {
+        x: -segmentVector.y,
+        y: segmentVector.x,
+    };
+    
+    const perpLength = Math.sqrt(perpendicular.x ** 2 + perpendicular.y ** 2);
+    const perpNormalized = perpLength > 0 ? {
+        x: perpendicular.x / perpLength,
+        y: perpendicular.y / perpLength,
+    } : { x: 0, y: 1 };
+    
+    const displacementDotPerp = displacement.x * perpNormalized.x + displacement.y * perpNormalized.y;
+    
     // Use 't' parameter to weight the handles differently
     // t closer to 0 = more weight on start handle
     // t closer to 1 = more weight on end handle
     const startWeight = (1 - t) * (1 - t); // Stronger when near start
     const endWeight = t * t; // Stronger when near end
-
+    
     // Normalize weights
     const totalWeight = startWeight + endWeight;
     const normalizedStartWeight = totalWeight > 0 ? startWeight / totalWeight : 0.5;
     const normalizedEndWeight = totalWeight > 0 ? endWeight / totalWeight : 0.5;
-
+    
     // Calculate handle lengths directly from displacement magnitude and weights
     // No minimum length - handles scale purely with drag distance
-    // startHandleLength and endHandleLength were unused
-
+    const startHandleLength = displacementMagnitude * (0.5 + normalizedStartWeight * 1.5);
+    const endHandleLength = displacementMagnitude * (0.5 + normalizedEndWeight * 1.5);
+    
     // Calculate handle vectors using displacement direction and asymmetric weighting
     // Handles point towards the drag point, scaled by weights
     const startHandleVector = {
         x: displacement.x * (0.5 + normalizedStartWeight),
         y: displacement.y * (0.5 + normalizedStartWeight),
     };
-
+    
     const endHandleVector = {
         x: displacement.x * (0.5 + normalizedEndWeight),
         y: displacement.y * (0.5 + normalizedEndWeight),
     };
-
+    
     startAnchor.outHandle = startHandleVector;
     endAnchor.inHandle = endHandleVector;
-
+    
     // Check adjacent segments to maintain straight line continuity
     // If the previous segment (before startAnchor) is straight, align inHandle along that line
     if (startIndex > 0) {
         const prevAnchor = anchors[startIndex - 1];
         const isPrevSegmentStraight = !prevAnchor.outHandle && !startAnchor.inHandle;
-
+        
         if (isPrevSegmentStraight) {
             // Calculate direction from previous anchor to start anchor
             const prevVector = {
@@ -1058,13 +1061,13 @@ export function curveSegment(
                 y: startAnchor.position.y - prevAnchor.position.y,
             };
             const prevLength = Math.sqrt(prevVector.x ** 2 + prevVector.y ** 2);
-
+            
             if (prevLength > 0) {
                 const prevNormalized = {
                     x: prevVector.x / prevLength,
                     y: prevVector.y / prevLength,
                 };
-
+                
                 // Set inHandle along the previous segment direction to maintain straight line
                 const inHandleLength = Math.min(prevLength / 3, displacementMagnitude * 0.8);
                 startAnchor.inHandle = {
@@ -1074,12 +1077,12 @@ export function curveSegment(
             }
         }
     }
-
+    
     // If the next segment (after endAnchor) is straight, align outHandle along that line
     if (endIndex < anchors.length - 1) {
         const nextAnchor = anchors[endIndex + 1];
         const isNextSegmentStraight = !endAnchor.outHandle && !nextAnchor.inHandle;
-
+        
         if (isNextSegmentStraight) {
             // Calculate direction from end anchor to next anchor
             const nextVector = {
@@ -1087,13 +1090,13 @@ export function curveSegment(
                 y: nextAnchor.position.y - endAnchor.position.y,
             };
             const nextLength = Math.sqrt(nextVector.x ** 2 + nextVector.y ** 2);
-
+            
             if (nextLength > 0) {
                 const nextNormalized = {
                     x: nextVector.x / nextLength,
                     y: nextVector.y / nextLength,
                 };
-
+                
                 // Set outHandle along the next segment direction to maintain straight line
                 const outHandleLength = Math.min(nextLength / 3, displacementMagnitude * 0.8);
                 endAnchor.outHandle = {
@@ -1103,12 +1106,12 @@ export function curveSegment(
             }
         }
     }
-
+    
     // Update anchor types based on handles
     if (startAnchor.type === 'corner' && startAnchor.outHandle) {
         startAnchor.type = 'smooth';
     }
-
+    
     if (endAnchor.type === 'corner' && endAnchor.inHandle) {
         endAnchor.type = 'smooth';
     }

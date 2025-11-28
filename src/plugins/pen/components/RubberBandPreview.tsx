@@ -69,21 +69,17 @@ export const RubberBandPreview: React.FC<{ context: CanvasLayerContext }> = ({ c
                     {(() => {
                         const p0 = lastAnchor.position;
                         const p3 = previewEnd;
-
-                        // Check if start and end are effectively the same point (creating first anchor handles)
-                        const dist = Math.sqrt((p3.x - p0.x) ** 2 + (p3.y - p0.y) ** 2);
-                        if (dist < 0.1) return null;
-
+                        
                         // Control point 1: last anchor's outHandle
                         const cp1 = lastAnchor.outHandle
                             ? { x: p0.x + lastAnchor.outHandle.x, y: p0.y + lastAnchor.outHandle.y }
                             : p0;
-
+                        
                         // Control point 2: preview anchor's inHandle
                         const cp2 = { x: p3.x + inHandle.x, y: p3.y + inHandle.y };
-
+                        
                         const pathData = `M ${p0.x} ${p0.y} C ${cp1.x} ${cp1.y}, ${cp2.x} ${cp2.y}, ${p3.x} ${p3.y}`;
-
+                        
                         return (
                             <path
                                 d={pathData}

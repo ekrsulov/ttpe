@@ -17,14 +17,12 @@ import {
     updateHandle,
     moveLastAnchor,
     moveAnchor,
-    curveSegment,
-    updateAnchorHandles
+    curveSegment
 } from '../actions';
 import { calculateCursorState, calculateEditCursorState } from '../utils/cursorState';
 import { constrainAngleTo45Degrees } from '../utils/pathConverter';
 import { findPathAtPoint, findSegmentOnPath } from '../utils/anchorDetection';
 import { applyGridSnap } from '../../../utils/gridSnapUtils';
-import { distance } from '../../../utils/snapPointUtils';
 
 /**
  * Main hook for Pen tool pointer event handling
@@ -39,6 +37,7 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
     const isShiftPressedRef = useRef(false);
     const isAltPressedRef = useRef(false);
     const savedInHandleRef = useRef<Point | null>(null);
+    const isVKeyPressedRef = useRef(false);
     const isMovingLastAnchorRef = useRef(false);
     const lastAnchorOriginalPositionRef = useRef<Point | null>(null);
 
@@ -62,7 +61,6 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                     dragState: null,
                     cursorState: 'new-path',
                     editingPathId: null,
-                    editingSubPathIndex: null,
                     selectedAnchorIndex: null,
                 });
 
@@ -72,6 +70,7 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                 isShiftPressedRef.current = false;
                 isAltPressedRef.current = false;
                 savedInHandleRef.current = null;
+                isVKeyPressedRef.current = false;
                 isMovingLastAnchorRef.current = false;
                 lastAnchorOriginalPositionRef.current = null;
             }
@@ -265,9 +264,9 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                         return;
                     }
 
-                    if (penState.editingPathId !== result.pathId || penState.editingSubPathIndex !== result.subPathIndex) {
-                        // Start editing this path/subpath with the detected subpath
-                        startEditingPath(result.pathId, result.subPathIndex, useCanvasStore.getState);
+                    if (penState.editingPathId !== result.pathId) {
+                        // Start editing this path
+                        startEditingPath(result.pathId, useCanvasStore.getState);
                         return;
                     }
                 } else if (mode === 'editing') {
@@ -284,7 +283,6 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                 // Start new path
                 startPath(canvasPoint, useCanvasStore.getState);
                 dragStartPointRef.current = { ...canvasPoint };
-                rawDragStartPointRef.current = { ...detectionPoint };
                 isDraggingRef.current = true;
                 savedInHandleRef.current = null;
                 return;
@@ -293,7 +291,6 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
             if (mode === 'drawing') {
                 // Continue path - prepare for drag
                 dragStartPointRef.current = { ...canvasPoint };
-                rawDragStartPointRef.current = { ...detectionPoint };
                 isDraggingRef.current = true;
                 savedInHandleRef.current = null;
             }
@@ -393,7 +390,7 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                         viewportZoom
                     );
                     newCursorState = result.cursorState;
-                    newHoverTarget = { ...result.hoverTarget, subPathIndex: penState.editingSubPathIndex ?? 0 };
+                    newHoverTarget = result.hoverTarget;
                 }
 
                 // If nothing found on current path, check others
@@ -410,7 +407,7 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                         // If we hit something specific (anchor/segment), show that cursor
                         // Otherwise show default (to indicate selection/editing start)
                         newCursorState = editResult.cursorState === 'default' ? 'default' : editResult.cursorState;
-                        newHoverTarget = { ...editResult.hoverTarget, subPathIndex: result.subPathIndex };
+                        newHoverTarget = editResult.hoverTarget;
                     } else {
                         // Not hovering over anything
                         if (penState.hoverTarget !== null) {
@@ -427,34 +424,39 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                 }
             }
 
-            // Handle "Move Last Anchor" with Shift (when NOT dragging)
-            // This allows repositioning the last placed anchor by holding Shift and moving the mouse
-            if (!isDraggingRef.current && isShiftPressedRef.current && mode === 'drawing' && currentPath && currentPath.anchors.length > 0) {
-                if (!isMovingLastAnchorRef.current) {
-                    // Just started moving, save original position
-                    isMovingLastAnchorRef.current = true;
-                    const lastAnchor = currentPath.anchors[currentPath.anchors.length - 1];
-                    lastAnchorOriginalPositionRef.current = { ...lastAnchor.position };
-                }
-
-                // Move the last anchor to current position
-                moveLastAnchor(canvasPoint, useCanvasStore.getState);
-            }
-
-            // If we were moving the anchor but Shift key was released
-            if (isMovingLastAnchorRef.current && !isShiftPressedRef.current) {
-                // Stop moving mode
-                isMovingLastAnchorRef.current = false;
-                lastAnchorOriginalPositionRef.current = null;
-
-                // We don't need to update dragStartPointRef here because we are not in a drag operation
-            }
-
             // Handle dragging (using snapped canvasPoint)
             if (isDraggingRef.current && dragStartPointRef.current) {
                 const state = useCanvasStore.getState();
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const penState = (state as any).pen;
+
+                // Check if 'v' key is pressed during drag while drawing (move last anchor)
+                if (isVKeyPressedRef.current && mode === 'drawing' && currentPath && currentPath.anchors.length > 0) {
+                    if (!isMovingLastAnchorRef.current) {
+                        // Just started moving, save original position
+                        isMovingLastAnchorRef.current = true;
+                        const lastAnchor = currentPath.anchors[currentPath.anchors.length - 1];
+                        lastAnchorOriginalPositionRef.current = { ...lastAnchor.position };
+                    }
+
+                    // Move the last anchor to current position
+                    moveLastAnchor(canvasPoint, useCanvasStore.getState);
+                    return;
+                }
+
+                // If we were moving the anchor but 'v' key was released
+                if (isMovingLastAnchorRef.current && !isVKeyPressedRef.current) {
+                    // Stop moving mode, update drag start point to new anchor position
+                    isMovingLastAnchorRef.current = false;
+                    const stateAfterMove = useCanvasStore.getState();
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const penStateAfterMove = (stateAfterMove as any).pen;
+                    if (penStateAfterMove?.currentPath && penStateAfterMove.currentPath.anchors.length > 0) {
+                        const lastAnchor = penStateAfterMove.currentPath.anchors[penStateAfterMove.currentPath.anchors.length - 1];
+                        dragStartPointRef.current = { ...lastAnchor.position };
+                    }
+                    lastAnchorOriginalPositionRef.current = null;
+                }
 
                 // Check if dragging a handle
                 if (penState?.dragState?.type === 'handle') {
@@ -508,56 +510,66 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                 }
 
                 // Original drag logic for new anchors
-                if (dragStartPointRef.current) {
-                    // Calculate handle vector (outHandle)
-                    const handleVector = {
-                        x: canvasPoint.x - dragStartPointRef.current.x,
-                        y: canvasPoint.y - dragStartPointRef.current.y,
-                    };
+                // Calculate handle vector (outHandle)
+                const handleVector = {
+                    x: canvasPoint.x - dragStartPointRef.current.x,
+                    y: canvasPoint.y - dragStartPointRef.current.y,
+                };
 
-                    // Apply Shift constraint to handle direction if needed
-                    if (isShiftPressedRef.current) {
-                        const constrainedEnd = constrainAngleTo45Degrees(dragStartPointRef.current, canvasPoint);
-                        handleVector.x = constrainedEnd.x - dragStartPointRef.current.x;
-                        handleVector.y = constrainedEnd.y - dragStartPointRef.current.y;
-                    }
+                // Apply Shift constraint to handle direction if needed
+                if (isShiftPressedRef.current) {
+                    const constrainedEnd = constrainAngleTo45Degrees(dragStartPointRef.current, canvasPoint);
+                    handleVector.x = constrainedEnd.x - dragStartPointRef.current.x;
+                    handleVector.y = constrainedEnd.y - dragStartPointRef.current.y;
+                }
 
-                    // Handle Alt key logic for Cusp Creation
-                    if (isAltPressedRef.current) {
-                        // If Alt is pressed, we are moving outHandle independently.
-                        // We need to lock inHandle to what it was before Alt was pressed.
-                        if (!savedInHandleRef.current) {
-                            // If we just pressed Alt, save the current symmetric inHandle
-                            savedInHandleRef.current = {
-                                x: -handleVector.x,
-                                y: -handleVector.y
-                            };
-                        }
-                        // If we already saved it, keep it.
-                    } else {
-                        // If Alt is NOT pressed, inHandle is symmetric to outHandle
+                // Handle Alt key logic for Cusp Creation
+                if (isAltPressedRef.current) {
+                    // If Alt is pressed, we are moving outHandle independently.
+                    // We need to lock inHandle to what it was before Alt was pressed.
+                    if (!savedInHandleRef.current) {
+                        // If we just pressed Alt, save the current symmetric inHandle
                         savedInHandleRef.current = {
                             x: -handleVector.x,
                             y: -handleVector.y
                         };
                     }
-                    // The user wants visual feedback.
-                    // Let's assume for now the preview shows symmetric, but creation is correct.
-                    // Wait, user complained "Visual Feedback PENDIENTE DE PROBAR".
-                    // If I want preview to be correct, I need to pass the locked handle.
-
-                    // Update drag state for preview rendering
-                    state.updatePenState?.({
-                        dragState: {
-                            type: 'new-anchor',
-                            startPoint: dragStartPointRef.current,
-                            currentPoint: canvasPoint,
-                            // Pass explicit handles if available (for Cusp Creation visualization)
-                            inHandle: savedInHandleRef.current || undefined,
-                            outHandle: handleVector
-                        },
-                    });
+                    // If we already saved it, keep it.
+                } else {
+                    // If Alt is NOT pressed, inHandle is symmetric to outHandle
+                    savedInHandleRef.current = {
+                        x: -handleVector.x,
+                        y: -handleVector.y
+                    };
                 }
+
+                // Update drag state for preview rendering
+                // We need to pass both handles if they are independent?
+                // RubberBandPreview currently infers inHandle from handleVector if Alt logic isn't explicit.
+                // But we modified RubberBandPreview to show reflexive handle.
+                // It calculates reflexive as -handleVector.
+                // If we want it to show the LOCKED handle, we need to pass it.
+                // But PenDragState doesn't have inHandle field yet.
+                // For now, let's just update the state. The preview might be slightly off (symmetric)
+                // until we update PenDragState, but the logic for creation will be correct.
+                // Actually, let's update PenDragState to support explicit handles if we can,
+                // or just rely on the final creation being correct.
+                // The user wants visual feedback.
+                // Let's assume for now the preview shows symmetric, but creation is correct.
+                // Wait, user complained "Visual Feedback PENDIENTE DE PROBAR".
+                // If I want preview to be correct, I need to pass the locked handle.
+
+                // Update drag state for preview rendering
+                state.updatePenState?.({
+                    dragState: {
+                        type: 'new-anchor',
+                        startPoint: dragStartPointRef.current,
+                        currentPoint: canvasPoint,
+                        // Pass explicit handles if available (for Cusp Creation visualization)
+                        inHandle: savedInHandleRef.current || undefined,
+                        outHandle: handleVector
+                    },
+                });
             }
         };
 
@@ -607,127 +619,19 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
             }
 
             if (mode === 'drawing') {
-                // Calculate distance moved using RAW points to avoid snap-induced drags
-                let isDragGesture = false;
+                // Calculate handle vector (outHandle)
+                const handleVector = {
+                    x: canvasPoint.x - dragStartPointRef.current.x,
+                    y: canvasPoint.y - dragStartPointRef.current.y,
+                };
 
-                if (rawDragStartPointRef.current) {
-                    const rawCurrentPoint = screenToCanvas(
-                        event.clientX - rect.left,
-                        event.clientY - rect.top
-                    );
-                    const rawDist = distance(rawDragStartPointRef.current, rawCurrentPoint);
-                    isDragGesture = rawDist > 2 / viewportZoom;
-                } else {
-                    // Fallback to snapped distance if raw not available
-                    const dist = distance(dragStartPointRef.current, canvasPoint);
-                    isDragGesture = dist > 2 / viewportZoom;
-                }
+                const handleMagnitude = Math.sqrt(handleVector.x ** 2 + handleVector.y ** 2);
 
-                if (isDragGesture) {
-                    // It's a drag - create curved point with handles
-                    // Calculate handle vector (outHandle) based on snapped points
-                    const handleVector = {
-                        x: canvasPoint.x - dragStartPointRef.current.x,
-                        y: canvasPoint.y - dragStartPointRef.current.y,
-                    };
+                // Determine if this was a click (no drag) or a drag
+                const isDragGesture = handleMagnitude > 2; // Threshold for drag detection
 
-                    // Apply Shift constraint to handle direction if needed
-                    if (isShiftPressedRef.current) {
-                        const constrainedEnd = constrainAngleTo45Degrees(dragStartPointRef.current, canvasPoint);
-                        handleVector.x = constrainedEnd.x - dragStartPointRef.current.x;
-                        handleVector.y = constrainedEnd.y - dragStartPointRef.current.y;
-                    }
-
-                    if (isAltPressedRef.current && savedInHandleRef.current) {
-                        // Add with symmetric handles first (using outHandle)
-                        // Check if we are dragging the last anchor (e.g. first point creation)
-                        const lastAnchor = currentPath?.anchors[currentPath.anchors.length - 1];
-                        const isDraggingLastAnchor = lastAnchor && distance(lastAnchor.position, dragStartPointRef.current) < 0.1;
-
-                        if (isDraggingLastAnchor) {
-                            // Update existing anchor handles
-                            updateAnchorHandles(
-                                currentPath.anchors.length - 1,
-                                {
-                                    inHandle: savedInHandleRef.current,
-                                    outHandle: handleVector
-                                },
-                                useCanvasStore.getState
-                            );
-
-                            // Ensure type is set to cusp
-                            const stateAfterUpdate = useCanvasStore.getState();
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            const penStateAfterUpdate = (stateAfterUpdate as any).pen;
-                            const updatedPath = penStateAfterUpdate.currentPath;
-                            if (updatedPath && updatedPath.anchors.length > 0) {
-                                const newIndex = updatedPath.anchors.length - 1;
-                                const anchors = [...updatedPath.anchors];
-                                anchors[newIndex] = {
-                                    ...anchors[newIndex],
-                                    type: 'cusp'
-                                };
-                                stateAfterUpdate.updatePenState?.({
-                                    currentPath: {
-                                        ...updatedPath,
-                                        anchors
-                                    }
-                                });
-                            }
-                        } else {
-                            // Add new anchor
-                            addCurvedAnchor(dragStartPointRef.current, handleVector, useCanvasStore.getState);
-
-                            // Then immediately update to set the correct inHandle and type
-                            const stateAfterAdd = useCanvasStore.getState();
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            const penStateAfterAdd = (stateAfterAdd as any).pen;
-                            const updatedPath = penStateAfterAdd.currentPath;
-
-                            if (updatedPath && updatedPath.anchors.length > 0) {
-                                const newIndex = updatedPath.anchors.length - 1;
-                                const anchors = [...updatedPath.anchors];
-                                anchors[newIndex] = {
-                                    ...anchors[newIndex],
-                                    type: 'cusp',
-                                    inHandle: savedInHandleRef.current,
-                                    outHandle: handleVector
-                                };
-
-                                stateAfterAdd.updatePenState?.({
-                                    currentPath: {
-                                        ...updatedPath,
-                                        anchors
-                                    }
-                                });
-                            }
-                        }
-                    } else {
-                        // Check if we are dragging the last anchor (e.g. first point creation)
-                        const lastAnchor = currentPath?.anchors[currentPath.anchors.length - 1];
-                        const isDraggingLastAnchor = lastAnchor && distance(lastAnchor.position, dragStartPointRef.current) < 0.1;
-
-                        if (isDraggingLastAnchor) {
-                            // Update existing anchor handles
-                            updateAnchorHandles(
-                                currentPath.anchors.length - 1,
-                                {
-                                    outHandle: handleVector,
-                                    // Explicitly set symmetric inHandle so it's preserved for path closing
-                                    inHandle: {
-                                        x: -handleVector.x,
-                                        y: -handleVector.y
-                                    }
-                                },
-                                useCanvasStore.getState
-                            );
-                        } else {
-                            addCurvedAnchor(dragStartPointRef.current, handleVector, useCanvasStore.getState);
-                        }
-                    }
-                } else {
+                if (!isDragGesture) {
                     // Simple click - add straight anchor
-                    // Use dragStartPointRef.current (snapped down position) as the anchor position
                     let finalPoint = dragStartPointRef.current;
 
                     // Apply Shift constraint for straight lines
@@ -736,27 +640,50 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                         finalPoint = constrainAngleTo45Degrees(lastAnchor.position, dragStartPointRef.current);
                     }
 
-                    // Check if we are clicking on the last anchor (duplicate click)
-                    const lastAnchor = currentPath?.anchors[currentPath.anchors.length - 1];
-                    const isClickingLastAnchor = lastAnchor && distance(lastAnchor.position, finalPoint) < 0.1;
+                    addStraightAnchor(finalPoint, useCanvasStore.getState);
+                } else {
+                    // Drag gesture - add curved anchor with handles
+                    let outHandle = { ...handleVector };
 
-                    if (!isClickingLastAnchor) {
-                        // Check for snap-to-close (clicking near start point)
-                        // Useful for mobile where hover is not available
-                        let closed = false;
-                        if (currentPath && currentPath.anchors.length >= 3) {
-                            const firstAnchor = currentPath.anchors[0];
-                            const distToFirst = distance(firstAnchor.position, finalPoint);
-                            // Threshold: 10 screen pixels converted to canvas units
-                            if (distToFirst < 10 / viewportZoom) {
-                                closePath(useCanvasStore.getState);
-                                closed = true;
-                            }
-                        }
+                    // Apply Shift constraint to handle
+                    if (isShiftPressedRef.current) {
+                        const constrainedEnd = constrainAngleTo45Degrees(dragStartPointRef.current, canvasPoint);
+                        outHandle = {
+                            x: constrainedEnd.x - dragStartPointRef.current.x,
+                            y: constrainedEnd.y - dragStartPointRef.current.y,
+                        };
+                    }
 
-                        if (!closed) {
-                            addStraightAnchor(finalPoint, useCanvasStore.getState);
+                    // Check for Alt key (cusp creation)
+                    if (isAltPressedRef.current && savedInHandleRef.current) {
+                        // Add with symmetric handles first (using outHandle)
+                        addCurvedAnchor(dragStartPointRef.current, outHandle, useCanvasStore.getState);
+
+                        // Then immediately update to set the correct inHandle and type
+                        const stateAfterAdd = useCanvasStore.getState();
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        const penStateAfterAdd = (stateAfterAdd as any).pen;
+                        const updatedPath = penStateAfterAdd.currentPath;
+
+                        if (updatedPath && updatedPath.anchors.length > 0) {
+                            const newIndex = updatedPath.anchors.length - 1;
+                            const anchors = [...updatedPath.anchors];
+                            anchors[newIndex] = {
+                                ...anchors[newIndex],
+                                type: 'cusp',
+                                inHandle: savedInHandleRef.current,
+                                outHandle: outHandle
+                            };
+
+                            stateAfterAdd.updatePenState?.({
+                                currentPath: {
+                                    ...updatedPath,
+                                    anchors
+                                }
+                            });
                         }
+                    } else {
+                        addCurvedAnchor(dragStartPointRef.current, outHandle, useCanvasStore.getState);
                     }
                 }
             }
@@ -776,7 +703,9 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                 isShiftPressedRef.current = true;
             } else if (event.key === 'Alt') {
                 isAltPressedRef.current = true;
-
+            } else if (event.key === 'v' || event.key === 'V') {
+                // 'V' key for moving last anchor (Spacebar is reserved for pan)
+                isVKeyPressedRef.current = true;
             } else if (event.key === 'Enter') {
                 // Finalize current path
                 finalizePath(useCanvasStore.getState);
@@ -791,7 +720,8 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                 isShiftPressedRef.current = false;
             } else if (event.key === 'Alt') {
                 isAltPressedRef.current = false;
-
+            } else if (event.key === 'v' || event.key === 'V') {
+                isVKeyPressedRef.current = false;
             }
         };
 

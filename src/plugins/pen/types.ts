@@ -87,7 +87,6 @@ export type PenCursorState =
 export interface PenHoverTarget {
     type: 'none' | 'canvas' | 'first-anchor' | 'anchor' | 'segment' | 'handle' | 'endpoint';
     pathId?: string; // ID of the path element on canvas (if editing existing path)
-    subPathIndex?: number; // Index of the subpath being hovered (for compound paths)
     anchorIndex?: number;
     segmentIndex?: number;
     handleType?: 'in' | 'out';
@@ -124,7 +123,6 @@ export interface PenState {
     autoAddDelete: boolean; // Whether to automatically add/delete anchors on click
     rubberBandEnabled: boolean;
     editingPathId: string | null; // ID of the path element currently being edited
-    editingSubPathIndex: number | null; // Index of the subpath being edited (for compound paths)
     selectedAnchorIndex: number | null; // Index of the selected anchor in the editing path
     hoverTarget: PenHoverTarget | null; // Current hover target for visual feedback
 }
