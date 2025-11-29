@@ -20,6 +20,10 @@ export interface PenPluginSlice {
         mode: PenMode;
         currentPath: PenPath | null;
 
+        // Path history for undo/redo during drawing
+        pathHistory: PenPath[];
+        pathHistoryIndex: number;
+
         // Preview state
         rubberBandEnabled: boolean;
         previewAnchor: PenAnchorPoint | null;
@@ -54,6 +58,8 @@ export const createPenPluginSlice: StateCreator<PenPluginSlice> = (set) => ({
     pen: {
         mode: 'idle',
         currentPath: null,
+        pathHistory: [],
+        pathHistoryIndex: -1,
         rubberBandEnabled: true,
         previewAnchor: null,
         cursorState: 'new-path',

@@ -10,7 +10,7 @@ import { RubberBandPreview } from './components/RubberBandPreview';
 import { PenPathOverlay } from './components/PenPathOverlay';
 import { PenCursorController } from './components/PenCursorController';
 import { PenGuidelinesOverlay } from './components/PenGuidelinesOverlay';
-import { cancelPath, finalizePath } from './actions';
+import { cancelPath, finalizePath, undoPathPoint, redoPathPoint } from './actions';
 
 const penSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
     // Call the slice creator and cast appropriately
@@ -71,6 +71,46 @@ export const penPlugin: PluginDefinition<CanvasStore> = {
         Delete: (_event, { store }) => {
             const state = store.getState() as CanvasStore;
             state.deleteSelectedElements?.();
+        },
+        'meta+z': (event, { store }) => {
+            const state = store.getState() as CanvasStore;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const penState = (state as any).pen;
+            if (penState?.mode === 'drawing') {
+                event.preventDefault();
+                event.stopPropagation();
+                undoPathPoint(store.getState as () => CanvasStore);
+            }
+        },
+        'ctrl+z': (event, { store }) => {
+            const state = store.getState() as CanvasStore;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const penState = (state as any).pen;
+            if (penState?.mode === 'drawing') {
+                event.preventDefault();
+                event.stopPropagation();
+                undoPathPoint(store.getState as () => CanvasStore);
+            }
+        },
+        'meta+shift+z': (event, { store }) => {
+            const state = store.getState() as CanvasStore;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const penState = (state as any).pen;
+            if (penState?.mode === 'drawing') {
+                event.preventDefault();
+                event.stopPropagation();
+                redoPathPoint(store.getState as () => CanvasStore);
+            }
+        },
+        'ctrl+shift+z': (event, { store }) => {
+            const state = store.getState() as CanvasStore;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const penState = (state as any).pen;
+            if (penState?.mode === 'drawing') {
+                event.preventDefault();
+                event.stopPropagation();
+                redoPathPoint(store.getState as () => CanvasStore);
+            }
         },
     },
     slices: [penSliceFactory],

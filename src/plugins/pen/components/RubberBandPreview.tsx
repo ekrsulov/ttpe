@@ -1,6 +1,8 @@
 import React from 'react';
 import type { CanvasLayerContext } from '../../../types/plugins';
 import { useCanvasStore } from '../../../store/canvasStore';
+import type { PenAnchorPoint } from '../types';
+import type { Point } from '../../../types';
 
 /**
  * Helper component to render a handle length label
@@ -42,7 +44,40 @@ const HandleLengthLabel: React.FC<{
 };
 
 /**
- * Render a preview of the next segment while drawing (Rubber Band)
+ * Build SVG path data for a segment (from start to end with handles)
+ */
+function buildSegmentPathData(
+    startPos: Point,
+    startOutHandle: Point | null,
+    endPos: Point,
+    endInHandle: Point | null
+): string {
+    // Control point 1: start position's outHandle
+    const cp1 = startOutHandle
+        ? { x: startPos.x + startOutHandle.x, y: startPos.y + startOutHandle.y }
+        : startPos;
+    
+    // Control point 2: end position's inHandle
+    const cp2 = endInHandle
+        ? { x: endPos.x + endInHandle.x, y: endPos.y + endInHandle.y }
+        : endPos;
+    
+    // Check if it's a straight line (no handles or handles at anchor positions)
+    const hasStartHandle = startOutHandle && (startOutHandle.x !== 0 || startOutHandle.y !== 0);
+    const hasEndHandle = endInHandle && (endInHandle.x !== 0 || endInHandle.y !== 0);
+    
+    if (!hasStartHandle && !hasEndHandle) {
+        return `M ${startPos.x} ${startPos.y} L ${endPos.x} ${endPos.y}`;
+    }
+    
+    return `M ${startPos.x} ${startPos.y} C ${cp1.x} ${cp1.y}, ${cp2.x} ${cp2.y}, ${endPos.x} ${endPos.y}`;
+}
+
+/**
+ * Render a preview of the current segment being constructed (Rubber Band)
+ * Only shows the last segment (from last anchor to cursor), since previous segments
+ * are already materialized as actual path elements.
+ * When closing the path, considers the first anchor's inHandle for accurate preview.
  */
 export const RubberBandPreview: React.FC<{ context: CanvasLayerContext }> = ({ context }) => {
     const { viewport } = context;
@@ -64,21 +99,25 @@ export const RubberBandPreview: React.FC<{ context: CanvasLayerContext }> = ({ c
         return null;
     }
 
-    const { currentPath, previewAnchor, dragState } = penState;
-    const isFirstPoint = currentPath.anchors.length === 1;
-    const lastAnchor = currentPath.anchors[currentPath.anchors.length - 1];
+    const { currentPath, previewAnchor, dragState, cursorState } = penState;
+    const anchors = currentPath.anchors as PenAnchorPoint[];
+    const isFirstPoint = anchors.length === 1;
+    const lastAnchor = anchors[anchors.length - 1];
+    const firstAnchor = anchors[0];
+
+    // Check if we're about to close the path (hovering over first anchor)
+    const isClosingPath = cursorState === 'close';
 
     // Check if we're in a drag gesture with handles
     const isDraggingNewAnchor = dragState && dragState.type === 'new-anchor';
     
     // Check if the drag is happening at the first anchor position (defining first point handles)
-    // This is true when dragging and the drag start point matches the first anchor
     const isDefiningFirstPointHandles = isDraggingNewAnchor && isFirstPoint && 
         dragState.startPoint &&
         Math.abs(dragState.startPoint.x - lastAnchor.position.x) < 1 &&
         Math.abs(dragState.startPoint.y - lastAnchor.position.y) < 1;
     
-    // Determine preview endpoint and handle vector
+    // Determine preview endpoint and handle vectors
     let previewEnd = previewAnchor?.position;
     let handleVector = { x: 0, y: 0 };
 
@@ -93,6 +132,11 @@ export const RubberBandPreview: React.FC<{ context: CanvasLayerContext }> = ({ c
                 y: dragState.currentPoint.y - dragState.startPoint.y,
             };
         }
+    }
+
+    // If closing path, preview end is the first anchor position
+    if (isClosingPath && !isDraggingNewAnchor) {
+        previewEnd = firstAnchor.position;
     }
 
     // If defining first point handles, show only handles (no rubber band yet)
@@ -115,12 +159,9 @@ export const RubberBandPreview: React.FC<{ context: CanvasLayerContext }> = ({ c
             return null;
         }
 
-        // Show only handles for the first point (no segment preview)
-        // Use dragState.startPoint which is the anchor position during drag
         const anchorPos = dragState.startPoint;
         const inHandleMagnitude = Math.sqrt(inHandle.x ** 2 + inHandle.y ** 2);
         
-        // Calculate label positions (midpoint of handle line)
         const outLabelPos = {
             x: anchorPos.x + outHandle.x / 2,
             y: anchorPos.y + outHandle.y / 2,
@@ -210,43 +251,47 @@ export const RubberBandPreview: React.FC<{ context: CanvasLayerContext }> = ({ c
         );
     }
 
-    // For subsequent points: show rubber band + handles
+    // For subsequent points: show only the current segment being constructed
     if (!previewEnd) {
         return null;
     }
 
+    // Determine the inHandle for the preview endpoint
+    // - If dragging with handles: use the calculated inHandle
+    // - If closing path (hovering over first anchor): use first anchor's inHandle
+    // - Otherwise: no inHandle (straight line)
+    let previewInHandle: Point | null = null;
+    if (isDraggingNewAnchor && handleMagnitude > 2) {
+        previewInHandle = inHandle;
+    } else if (isClosingPath && !isDraggingNewAnchor && firstAnchor.inHandle) {
+        // When closing, the "end" of the segment is the first anchor, so use its inHandle
+        previewInHandle = firstAnchor.inHandle;
+    }
+
+    // Build the segment path data (only the current segment)
+    const segmentPathData = buildSegmentPathData(
+        lastAnchor.position,
+        lastAnchor.outHandle || null,
+        previewEnd,
+        previewInHandle
+    );
+
     return (
         <g opacity={0.5}>
-            {/* Preview segment line */}
-            {isDraggingNewAnchor && handleMagnitude > 2 ? (
-                // Curved segment preview
-                <>
-                    {/* Render the actual Bézier curve preview */}
-                    {(() => {
-                        const p0 = lastAnchor.position;
-                        const p3 = previewEnd;
-                        
-                        // Control point 1: last anchor's outHandle
-                        const cp1 = lastAnchor.outHandle
-                            ? { x: p0.x + lastAnchor.outHandle.x, y: p0.y + lastAnchor.outHandle.y }
-                            : p0;
-                        
-                        // Control point 2: preview anchor's inHandle
-                        const cp2 = { x: p3.x + inHandle.x, y: p3.y + inHandle.y };
-                        
-                        const pathData = `M ${p0.x} ${p0.y} C ${cp1.x} ${cp1.y}, ${cp2.x} ${cp2.y}, ${p3.x} ${p3.y}`;
-                        
-                        return (
-                            <path
-                                d={pathData}
-                                stroke="#3b82f6"
-                                strokeWidth={strokeWidth * 2}
-                                strokeDasharray={`${4 / viewport.zoom} ${4 / viewport.zoom}`}
-                                fill="none"
-                            />
-                        );
-                    })()}
+            {/* Current segment preview */}
+            {segmentPathData && (
+                <path
+                    d={segmentPathData}
+                    stroke="#3b82f6"
+                    strokeWidth={strokeWidth * 2}
+                    strokeDasharray={`${4 / viewport.zoom} ${4 / viewport.zoom}`}
+                    fill="none"
+                />
+            )}
 
+            {/* Show handle visuals only when dragging */}
+            {isDraggingNewAnchor && handleMagnitude > 2 && (
+                <>
                     {/* Handle line being dragged (outHandle) */}
                     <line
                         x1={previewEnd.x}
@@ -315,29 +360,19 @@ export const RubberBandPreview: React.FC<{ context: CanvasLayerContext }> = ({ c
                         );
                     })()}
                 </>
-            ) : (
-                // Straight segment preview
-                <line
-                    x1={lastAnchor.position.x}
-                    y1={lastAnchor.position.y}
-                    x2={previewEnd.x}
-                    y2={previewEnd.y}
-                    stroke="#3b82f6"
-                    strokeWidth={strokeWidth}
-                    strokeDasharray={`${4 / viewport.zoom} ${4 / viewport.zoom}`}
-                    fill="none"
-                />
             )}
 
-            {/* Preview anchor point */}
-            <circle
-                cx={previewEnd.x}
-                cy={previewEnd.y}
-                r={4 / viewport.zoom}
-                fill="#3b82f6"
-                stroke="#ffffff"
-                strokeWidth={strokeWidth}
-            />
+            {/* Preview anchor point - only show if not closing to first anchor */}
+            {!isClosingPath && (
+                <circle
+                    cx={previewEnd.x}
+                    cy={previewEnd.y}
+                    r={4 / viewport.zoom}
+                    fill="#3b82f6"
+                    stroke="#ffffff"
+                    strokeWidth={strokeWidth}
+                />
+            )}
         </g>
     );
 };

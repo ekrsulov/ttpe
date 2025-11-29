@@ -17,7 +17,8 @@ import {
     updateHandle,
     moveLastAnchor,
     moveAnchor,
-    curveSegment
+    curveSegment,
+    savePathToHistory
 } from '../actions';
 import { calculateCursorState, calculateEditCursorState } from '../utils/cursorState';
 import { constrainAngleTo45Degrees } from '../utils/pathConverter';
@@ -812,36 +813,20 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                                 anchors
                             }
                         });
+
+                        // Save to history after updating first point handles
+                        savePathToHistory(useCanvasStore.getState);
                     } else {
                         // Subsequent points - add new curved anchor
                         // Check for Alt key (cusp creation)
                         if (isAltPressedRef.current && savedInHandleRef.current) {
-                            // Add with symmetric handles first (using outHandle)
-                            addCurvedAnchor(dragStartPointRef.current, outHandle, useCanvasStore.getState);
-
-                            // Then immediately update to set the correct inHandle and type
-                            const stateAfterAdd = useCanvasStore.getState();
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            const penStateAfterAdd = (stateAfterAdd as any).pen;
-                            const updatedPath = penStateAfterAdd.currentPath;
-
-                            if (updatedPath && updatedPath.anchors.length > 0) {
-                                const newIndex = updatedPath.anchors.length - 1;
-                                const anchors = [...updatedPath.anchors];
-                                anchors[newIndex] = {
-                                    ...anchors[newIndex],
-                                    type: 'cusp',
-                                    inHandle: savedInHandleRef.current,
-                                    outHandle: outHandle
-                                };
-
-                                stateAfterAdd.updatePenState?.({
-                                    currentPath: {
-                                        ...updatedPath,
-                                        anchors
-                                    }
-                                });
-                            }
+                            // Add cusp anchor with locked inHandle
+                            addCurvedAnchor(
+                                dragStartPointRef.current,
+                                outHandle,
+                                useCanvasStore.getState,
+                                { inHandle: savedInHandleRef.current, type: 'cusp' }
+                            );
                         } else {
                             addCurvedAnchor(dragStartPointRef.current, outHandle, useCanvasStore.getState);
                         }

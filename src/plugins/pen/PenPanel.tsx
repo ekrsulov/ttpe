@@ -4,6 +4,8 @@ import { VStack, HStack, FormControl, FormLabel, useColorModeValue, Badge } from
 import { Panel } from '../../ui/Panel';
 import { PanelSwitch } from '../../ui/PanelSwitch';
 import { PanelStyledButton } from '../../ui/PanelStyledButton';
+import { PanelActionButton } from '../../ui/PanelActionButton';
+import { Undo2, Redo2 } from 'lucide-react';
 
 /**
  * Get badge color based on pen mode
@@ -34,6 +36,8 @@ export const PenPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = false 
         guidelinesEnabled,
         showHandleDistance,
         mode,
+        pathHistory,
+        pathHistoryIndex,
     } = penState;
 
     // Check if path can be closed (same logic as cursor detection)
@@ -42,6 +46,10 @@ export const PenPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = false 
         (penState.currentPath.anchors.length === 2 && 
          penState.currentPath.anchors.some((a: { inHandle?: unknown; outHandle?: unknown }) => a.inHandle || a.outHandle))
     );
+
+    // Check if undo/redo are available
+    const canUndo = mode === 'drawing' && (pathHistoryIndex ?? -1) > 0;
+    const canRedo = mode === 'drawing' && (pathHistoryIndex ?? -1) < ((pathHistory?.length ?? 0) - 1);
 
     // Mode badge for header
     const modeBadge = (
@@ -94,43 +102,70 @@ export const PenPanel: React.FC<{ hideTitle?: boolean }> = ({ hideTitle = false 
 
                 {/* Actions */}
                 {penState.mode === 'drawing' && (
-                    <HStack spacing={2}>
-                        <PanelStyledButton
-                            size="xs"
-                            flex={1}
-                            isDisabled={!canClosePath}
-                            onClick={() => {
-                                import('./actions').then(({ closePath }) => {
-                                    closePath(useCanvasStore.getState);
-                                });
-                            }}
-                        >
-                            Close
-                        </PanelStyledButton>
-                        <PanelStyledButton
-                            size="xs"
-                            flex={1}
-                            isDisabled={!penState.currentPath || penState.currentPath.anchors.length < 2}
-                            onClick={() => {
-                                import('./actions').then(({ finalizePath }) => {
-                                    finalizePath(useCanvasStore.getState);
-                                });
-                            }}
-                        >
-                            Finish
-                        </PanelStyledButton>
-                        <PanelStyledButton
-                            size="xs"
-                            flex={1}
-                            onClick={() => {
-                                import('./actions').then(({ cancelPath }) => {
-                                    cancelPath(useCanvasStore.getState);
-                                });
-                            }}
-                        >
-                            Cancel
-                        </PanelStyledButton>
-                    </HStack>
+                    <VStack spacing={2} align="stretch">
+                        {/* Undo/Redo buttons */}
+                        <HStack spacing={2} justify="center">
+                            <PanelActionButton
+                                label="Undo point (⌘Z)"
+                                icon={Undo2}
+                                onClick={() => {
+                                    import('./actions').then(({ undoPathPoint }) => {
+                                        undoPathPoint(useCanvasStore.getState);
+                                    });
+                                }}
+                                isDisabled={!canUndo}
+                            />
+                            <PanelActionButton
+                                label="Redo point (⌘⇧Z)"
+                                icon={Redo2}
+                                onClick={() => {
+                                    import('./actions').then(({ redoPathPoint }) => {
+                                        redoPathPoint(useCanvasStore.getState);
+                                    });
+                                }}
+                                isDisabled={!canRedo}
+                            />
+                        </HStack>
+                        
+                        {/* Path actions */}
+                        <HStack spacing={2}>
+                            <PanelStyledButton
+                                size="xs"
+                                flex={1}
+                                isDisabled={!canClosePath}
+                                onClick={() => {
+                                    import('./actions').then(({ closePath }) => {
+                                        closePath(useCanvasStore.getState);
+                                    });
+                                }}
+                            >
+                                Close
+                            </PanelStyledButton>
+                            <PanelStyledButton
+                                size="xs"
+                                flex={1}
+                                isDisabled={!penState.currentPath || penState.currentPath.anchors.length < 2}
+                                onClick={() => {
+                                    import('./actions').then(({ finalizePath }) => {
+                                        finalizePath(useCanvasStore.getState);
+                                    });
+                                }}
+                            >
+                                Finish
+                            </PanelStyledButton>
+                            <PanelStyledButton
+                                size="xs"
+                                flex={1}
+                                onClick={() => {
+                                    import('./actions').then(({ cancelPath }) => {
+                                        cancelPath(useCanvasStore.getState);
+                                    });
+                                }}
+                            >
+                                Cancel
+                            </PanelStyledButton>
+                        </HStack>
+                    </VStack>
                 )}
             </VStack>
         </Panel>

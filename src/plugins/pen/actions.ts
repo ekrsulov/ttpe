@@ -30,12 +30,16 @@ export function startPath(
         tempId: generateId(),
     };
 
+    // Initialize history with the first state
+    const initialHistory = [JSON.parse(JSON.stringify(newPath))];
 
     state.updatePenState?.({
         mode: 'drawing',
         currentPath: newPath,
         activeAnchorIndex: 0,
         cursorState: 'continue',
+        pathHistory: initialHistory,
+        pathHistoryIndex: 0,
     });
 
 }
@@ -70,15 +74,25 @@ export function addStraightAnchor(
         currentPath: updatedPath,
         activeAnchorIndex: updatedPath.anchors.length - 1,
     });
+
+    // Save to history after adding anchor
+    savePathToHistory(getState);
 }
 
 /**
  * Add a curved anchor point with handle
+ * @param point - Position of the anchor
+ * @param handleOut - Outgoing handle vector (relative to anchor position)
+ * @param getState - Store getter
+ * @param options - Optional parameters for custom handle configuration
+ * @param options.inHandle - Custom incoming handle (for cusp creation). If not provided, symmetric to outHandle.
+ * @param options.type - Anchor type ('smooth' or 'cusp'). Defaults to 'smooth'.
  */
 export function addCurvedAnchor(
     point: Point,
     handleOut: Point,
-    getState: () => CanvasStore
+    getState: () => CanvasStore,
+    options?: { inHandle?: Point; type?: 'smooth' | 'cusp' }
 ): void {
     const state = getState();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -88,15 +102,20 @@ export function addCurvedAnchor(
         return;
     }
 
-    // Create symmetric handles - both in and out
+    // Use custom inHandle if provided (for cusp), otherwise symmetric
+    const inHandle = options?.inHandle ?? {
+        x: -handleOut.x,
+        y: -handleOut.y,
+    };
+
+    // Use custom type if provided, otherwise 'smooth'
+    const anchorType = options?.type ?? 'smooth';
+
     const newAnchor: PenAnchorPoint = {
         id: generateId(),
         position: { ...point },
-        type: 'smooth',
-        inHandle: {
-            x: -handleOut.x, // Symmetric handle pointing opposite direction
-            y: -handleOut.y,
-        },
+        type: anchorType,
+        inHandle: { ...inHandle },
         outHandle: { ...handleOut },
     };
 
@@ -111,6 +130,9 @@ export function addCurvedAnchor(
         currentPath: updatedPath,
         activeAnchorIndex: updatedAnchors.length - 1,
     });
+
+    // Save to history after adding anchor
+    savePathToHistory(getState);
 }
 
 /**
@@ -119,7 +141,8 @@ export function addCurvedAnchor(
 export function updateAnchorHandles(
     anchorIndex: number,
     handles: { inHandle?: Point; outHandle?: Point },
-    getState: () => CanvasStore
+    getState: () => CanvasStore,
+    saveToHistory: boolean = false
 ): void {
     const state = getState();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -161,6 +184,11 @@ export function updateAnchorHandles(
     state.updatePenState?.({
         currentPath: updatedPath,
     });
+
+    // Save to history if requested (typically after drag ends)
+    if (saveToHistory && penState.mode === 'drawing') {
+        savePathToHistory(getState);
+    }
 }
 
 /**
@@ -305,7 +333,7 @@ export function finalizePath(getState: () => CanvasStore): void {
         });
     }
 
-    // Reset pen state to idle
+    // Reset pen state to idle and clear history
     state.updatePenState?.({
         mode: 'idle',
         currentPath: null,
@@ -314,6 +342,8 @@ export function finalizePath(getState: () => CanvasStore): void {
         cursorState: 'new-path',
         editingPathId: null,
         selectedAnchorIndex: null,
+        pathHistory: [],
+        pathHistoryIndex: -1,
     });
 }
 
@@ -329,6 +359,8 @@ export function cancelPath(getState: () => CanvasStore): void {
         activeAnchorIndex: null,
         previewAnchor: null,
         cursorState: 'new-path',
+        pathHistory: [],
+        pathHistoryIndex: -1,
     });
 }
 
@@ -1112,4 +1144,146 @@ export function curveSegment(
     if (penState.editingPathId) {
         updatePathOnCanvas(updatedPath, penState.editingPathId, getState);
     }
+}
+
+/**
+ * Save current path state to history (for undo/redo during drawing)
+ * Should be called after any action that modifies the path
+ */
+export function savePathToHistory(getState: () => CanvasStore): void {
+    const state = getState();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const penState = (state as any).pen;
+
+    if (!penState?.currentPath || penState.mode !== 'drawing') {
+        return;
+    }
+
+    // Deep clone the current path
+    const pathSnapshot: PenPath = JSON.parse(JSON.stringify(penState.currentPath));
+
+    // Get current history and index
+    const currentHistory = penState.pathHistory || [];
+    const currentIndex = penState.pathHistoryIndex ?? -1;
+
+    // Truncate any redo states (everything after current index)
+    const newHistory = currentHistory.slice(0, currentIndex + 1);
+
+    // Add current state
+    newHistory.push(pathSnapshot);
+
+    // Limit history size to 50 states
+    const maxHistorySize = 50;
+    const trimmedHistory = newHistory.length > maxHistorySize 
+        ? newHistory.slice(newHistory.length - maxHistorySize)
+        : newHistory;
+
+    state.updatePenState?.({
+        pathHistory: trimmedHistory,
+        pathHistoryIndex: trimmedHistory.length - 1,
+    });
+}
+
+/**
+ * Undo the last path modification during drawing
+ */
+export function undoPathPoint(getState: () => CanvasStore): void {
+    const state = getState();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const penState = (state as any).pen;
+
+    if (!penState || penState.mode !== 'drawing') {
+        return;
+    }
+
+    const history = penState.pathHistory || [];
+    const currentIndex = penState.pathHistoryIndex ?? -1;
+
+    // Can't undo if at the beginning
+    if (currentIndex <= 0) {
+        return;
+    }
+
+    const newIndex = currentIndex - 1;
+    const previousPath: PenPath = JSON.parse(JSON.stringify(history[newIndex]));
+
+    state.updatePenState?.({
+        currentPath: previousPath,
+        pathHistoryIndex: newIndex,
+        activeAnchorIndex: previousPath.anchors.length - 1,
+    });
+}
+
+/**
+ * Redo a previously undone path modification during drawing
+ */
+export function redoPathPoint(getState: () => CanvasStore): void {
+    const state = getState();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const penState = (state as any).pen;
+
+    if (!penState || penState.mode !== 'drawing') {
+        return;
+    }
+
+    const history = penState.pathHistory || [];
+    const currentIndex = penState.pathHistoryIndex ?? -1;
+
+    // Can't redo if at the end
+    if (currentIndex >= history.length - 1) {
+        return;
+    }
+
+    const newIndex = currentIndex + 1;
+    const nextPath: PenPath = JSON.parse(JSON.stringify(history[newIndex]));
+
+    state.updatePenState?.({
+        currentPath: nextPath,
+        pathHistoryIndex: newIndex,
+        activeAnchorIndex: nextPath.anchors.length - 1,
+    });
+}
+
+/**
+ * Clear path history (call when starting a new path or finishing)
+ */
+export function clearPathHistory(getState: () => CanvasStore): void {
+    const state = getState();
+    state.updatePenState?.({
+        pathHistory: [],
+        pathHistoryIndex: -1,
+    });
+}
+
+/**
+ * Check if undo is available
+ */
+export function canUndoPath(getState: () => CanvasStore): boolean {
+    const state = getState();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const penState = (state as any).pen;
+
+    if (!penState || penState.mode !== 'drawing') {
+        return false;
+    }
+
+    const currentIndex = penState.pathHistoryIndex ?? -1;
+    return currentIndex > 0;
+}
+
+/**
+ * Check if redo is available
+ */
+export function canRedoPath(getState: () => CanvasStore): boolean {
+    const state = getState();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const penState = (state as any).pen;
+
+    if (!penState || penState.mode !== 'drawing') {
+        return false;
+    }
+
+    const history = penState.pathHistory || [];
+    const currentIndex = penState.pathHistoryIndex ?? -1;
+    return currentIndex < history.length - 1;
 }

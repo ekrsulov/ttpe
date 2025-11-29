@@ -39,6 +39,8 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
   // Optimize: Only subscribe to zoom value, not the entire viewport object
   const viewportZoom = useCanvasStore(state => state.viewport.zoom);
   const activePlugin = useCanvasStore(state => state.activePlugin);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const penMode = useCanvasStore(state => (state as any).pen?.mode);
 
   const { undo, redo, pastStates, futureStates } = useTemporalState();
 
@@ -83,7 +85,7 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
                 icon={Undo2}
                 label="Undo"
                 onClick={() => undo()}
-                isDisabled={!canUndo || activePlugin === 'curves'}
+                isDisabled={!canUndo || activePlugin === 'curves' || (activePlugin === 'pen' && penMode === 'drawing')}
                 counter={pastStates.length}
               />
 
@@ -91,7 +93,7 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
                 icon={Redo2}
                 label="Redo"
                 onClick={() => redo()}
-                isDisabled={!canRedo || activePlugin === 'curves'}
+                isDisabled={!canRedo || activePlugin === 'curves' || (activePlugin === 'pen' && penMode === 'drawing')}
                 counter={futureStates.length}
               />
             </HStack>
