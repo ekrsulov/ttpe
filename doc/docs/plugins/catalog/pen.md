@@ -23,6 +23,7 @@ The Pen plugin provides professional-grade vector path creation and editing capa
 - Snap-to-close for touch devices
 - 45° angle constraints with Shift
 - Move last anchor while drawing
+- Segment translation with Shift+drag (move segments as a whole)
 - **Smart guidelines and snapping** for precise alignment
 - Handle length visual feedback during drawing
 
@@ -127,6 +128,8 @@ stateDiagram-v2
         - Add anchor to segment
         - Delete anchor
         - Convert anchor type
+        - Translate segment (Shift+drag)
+        - Curve segment (normal drag)
     end note
 ```
 
@@ -405,6 +408,7 @@ graph LR
 | `Enter` | Finish current path | Drawing |
 | `Escape` | Cancel current path | Drawing |
 | `Shift` (hold) | Constrain angle to 45° | Drawing/Editing |
+| `Shift` (hold during segment drag) | Translate segment (move both endpoints together) | Editing |
 | `Shift` (before drag) | Move last anchor | Drawing |
 | `Alt` (during drag) | Create cusp (independent handles) | Drawing |
 | `Delete` | Delete selected anchor | Editing |

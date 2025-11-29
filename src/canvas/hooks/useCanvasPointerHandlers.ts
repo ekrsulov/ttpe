@@ -3,7 +3,7 @@ import { useCanvasStore } from '../../store/canvasStore';
 import type { Point } from '../../types';
 import type { PathData } from '../../types';
 import { useCanvasEventBus } from '../CanvasEventBusContext';
-import { calculateCommandsBounds } from '../../utils/selectionBoundsUtils';
+import { calculateBounds } from '../../utils/boundsUtils';
 
 export interface CanvasPointerHandlersProps {
     screenToCanvas: (x: number, y: number) => Point;
@@ -190,8 +190,7 @@ export const useCanvasPointerHandlers = (
                             const pathData = element.data as PathData;
 
                             // Calculate current bounds using consolidated utility
-                            const commands = pathData.subPaths.flat();
-                            const bounds = calculateCommandsBounds(commands, pathData.strokeWidth || 0, state.viewport.zoom);
+                            const bounds = calculateBounds(pathData.subPaths, pathData.strokeWidth || 0, state.viewport.zoom);
 
                             if (isFinite(bounds.minX)) {
                                 // Apply the delta to get the "would-be" position
