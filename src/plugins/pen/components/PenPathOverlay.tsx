@@ -214,6 +214,55 @@ export const PenPathOverlay: React.FC<{ context: CanvasLayerContext }> = ({ cont
                             />
                         );
                     })}
+
+                    {/* Render closing segment for closed paths */}
+                    {penState.currentPath.closed && penState.currentPath.anchors.length > 1 && (() => {
+                        const lastAnchor = penState.currentPath.anchors[penState.currentPath.anchors.length - 1];
+                        const firstAnchor = penState.currentPath.anchors[0];
+                        const hasCurve = lastAnchor.outHandle || firstAnchor.inHandle;
+
+                        if (!hasCurve) {
+                            // Straight closing segment
+                            return (
+                                <line
+                                    key="closing-segment"
+                                    x1={lastAnchor.position.x}
+                                    y1={lastAnchor.position.y}
+                                    x2={firstAnchor.position.x}
+                                    y2={firstAnchor.position.y}
+                                    stroke="#3b82f6"
+                                    strokeWidth={strokeWidth * 2}
+                                    opacity={0.6}
+                                    fill="none"
+                                />
+                            );
+                        }
+
+                        // Curved closing segment - render as path
+                        const p0 = lastAnchor.position;
+                        const p3 = firstAnchor.position;
+
+                        const cp1 = lastAnchor.outHandle
+                            ? { x: p0.x + lastAnchor.outHandle.x, y: p0.y + lastAnchor.outHandle.y }
+                            : p0;
+
+                        const cp2 = firstAnchor.inHandle
+                            ? { x: p3.x + firstAnchor.inHandle.x, y: p3.y + firstAnchor.inHandle.y }
+                            : p3;
+
+                        const pathData = `M ${p0.x} ${p0.y} C ${cp1.x} ${cp1.y}, ${cp2.x} ${cp2.y}, ${p3.x} ${p3.y}`;
+
+                        return (
+                            <path
+                                key="closing-segment"
+                                d={pathData}
+                                stroke="#3b82f6"
+                                strokeWidth={strokeWidth * 2}
+                                opacity={0.6}
+                                fill="none"
+                            />
+                        );
+                    })()}
                 </>
             )}
         </g>
