@@ -1,4 +1,5 @@
 import React from 'react';
+import { useEffect, useState } from 'react';
 import type {
   PluginDefinition,
   PluginUIContribution,
@@ -531,6 +532,25 @@ export class PluginManager {
   }
 
   /**
+   * Check if the active plugin disables global undo/redo.
+   * This is used by BottomActionBar to disable undo/redo buttons when
+   * a plugin manages its own history (e.g., pen in drawing mode, curves).
+   */
+  isGlobalUndoRedoDisabled(): boolean {
+    if (!this.storeApi) return false;
+    
+    const state = this.storeApi.getState();
+    const activePluginId = state.activePlugin;
+    
+    if (!activePluginId) return false;
+    
+    const plugin = this.registry.get(activePluginId);
+    if (!plugin?.disablesGlobalUndoRedo) return false;
+    
+    return plugin.disablesGlobalUndoRedo(state);
+  }
+
+  /**
    * Get the public API of a plugin
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -879,3 +899,27 @@ export class PluginManager {
 }
 
 export const pluginManager = new PluginManager();
+
+/**
+ * React hook that returns whether global undo/redo should be disabled.
+ * This hook handles all store subscriptions internally, keeping the consumer
+ * completely decoupled from plugin implementation details.
+ */
+export function useIsGlobalUndoRedoDisabled(): boolean {
+  const [isDisabled, setIsDisabled] = useState(() => pluginManager.isGlobalUndoRedoDisabled());
+
+  useEffect(() => {
+    const storeApi = pluginManager['storeApi'];
+    if (!storeApi) return;
+
+    // Subscribe to store changes and re-evaluate when state changes
+    const unsubscribe = storeApi.subscribe(() => {
+      const newValue = pluginManager.isGlobalUndoRedoDisabled();
+      setIsDisabled(newValue);
+    });
+
+    return unsubscribe;
+  }, []);
+
+  return isDisabled;
+}

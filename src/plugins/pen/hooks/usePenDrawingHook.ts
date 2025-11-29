@@ -20,6 +20,7 @@ import {
     curveSegment,
     savePathToHistory
 } from '../actions';
+import { pathDataToPenPath } from '../utils/pathConverter';
 import { calculateCursorState, calculateEditCursorState } from '../utils/cursorState';
 import { constrainAngleTo45Degrees } from '../utils/pathConverter';
 import { findPathAtPoint, findSegmentOnPath } from '../utils/anchorDetection';
@@ -88,6 +89,85 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                 lastAnchorOriginalPositionRef.current = null;
             }
         }
+    }, [isActive]);
+
+    // Sync currentPath with element when in editing mode and element changes (undo/redo)
+    useEffect(() => {
+        if (!isActive) return;
+
+        // Track previous elements to detect changes
+        let prevElements = useCanvasStore.getState().elements;
+
+        // Subscribe to state changes to detect undo/redo
+        const unsubscribe = useCanvasStore.subscribe((state) => {
+            const elements = state.elements;
+            
+            // Skip if elements haven't changed
+            if (elements === prevElements) return;
+            prevElements = elements;
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const penState = (state as any).pen;
+
+            // Only sync when in editing mode with an active editingPathId
+            if (penState?.mode === 'editing' && penState.editingPathId) {
+                const editingElement = elements.find(el => el.id === penState.editingPathId);
+
+                if (editingElement && editingElement.type === 'path') {
+                    // Check if element has subPaths
+                    if (editingElement.data?.subPaths?.length === 1) {
+                        // Convert element to PenPath
+                        const updatedPenPath = pathDataToPenPath(
+                            editingElement.data.subPaths[0],
+                            penState.editingPathId
+                        );
+
+                        // Only update if the path data actually changed
+                        // Compare anchor positions and handles
+                        const currentPath = penState.currentPath;
+                        if (currentPath) {
+                            const isDifferent = 
+                                updatedPenPath.anchors.length !== currentPath.anchors.length ||
+                                updatedPenPath.anchors.some((anchor, i) => {
+                                    const curr = currentPath.anchors[i];
+                                    if (!curr) return true;
+                                    if (anchor.position.x !== curr.position.x || anchor.position.y !== curr.position.y) return true;
+                                    if (anchor.inHandle?.x !== curr.inHandle?.x || anchor.inHandle?.y !== curr.inHandle?.y) return true;
+                                    if (anchor.outHandle?.x !== curr.outHandle?.x || anchor.outHandle?.y !== curr.outHandle?.y) return true;
+                                    return false;
+                                });
+
+                            if (isDifferent) {
+                                // Sync the currentPath with the element
+                                state.updatePenState?.({
+                                    currentPath: updatedPenPath,
+                                    // Reset selection if anchor index is out of bounds
+                                    selectedAnchorIndex: penState.selectedAnchorIndex !== null && 
+                                        penState.selectedAnchorIndex >= updatedPenPath.anchors.length 
+                                        ? null 
+                                        : penState.selectedAnchorIndex,
+                                    activeAnchorIndex: penState.activeAnchorIndex !== null && 
+                                        penState.activeAnchorIndex >= updatedPenPath.anchors.length 
+                                        ? null 
+                                        : penState.activeAnchorIndex,
+                                });
+                            }
+                        }
+                    }
+                } else if (!editingElement) {
+                    // Element was deleted - exit editing mode
+                    state.updatePenState?.({
+                        mode: 'idle',
+                        currentPath: null,
+                        editingPathId: null,
+                        selectedAnchorIndex: null,
+                        activeAnchorIndex: null,
+                    });
+                }
+            }
+        });
+
+        return () => unsubscribe();
     }, [isActive]);
 
     useEffect(() => {

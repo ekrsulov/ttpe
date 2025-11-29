@@ -78,6 +78,8 @@ export const curvesPlugin: PluginDefinition<CanvasStore> = {
     },
   },
   toolDefinition: { order: 7 },
+  // Curves plugin manages its own history during curve editing
+  disablesGlobalUndoRedo: () => true,
   handler: (
     event,
     point,

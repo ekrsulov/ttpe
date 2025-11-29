@@ -40,6 +40,12 @@ export const penPlugin: PluginDefinition<CanvasStore> = {
         order: 7, // After pencil (6)
         visibility: 'always-shown',
     },
+    // Pen plugin manages its own undo/redo during drawing mode
+    disablesGlobalUndoRedo: (store) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const penState = (store as any).pen;
+        return penState?.mode === 'drawing';
+    },
     subscribedEvents: ['pointerdown', 'pointermove', 'pointerup'],
     handler: (_event, _point, _target, _context) => {
         // Main handler is managed by the hook

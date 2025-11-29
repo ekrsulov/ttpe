@@ -11,7 +11,7 @@ import { useCanvasStore } from '../store/canvasStore';
 import { RenderCountBadgeWrapper } from './RenderCountBadgeWrapper';
 import { FloatingToolbarShell } from './FloatingToolbarShell';
 import { ToolbarIconButton } from './ToolbarIconButton';
-import { pluginManager } from '../utils/pluginManager';
+import { pluginManager, useIsGlobalUndoRedoDisabled } from '../utils/pluginManager';
 import { FloatingContextMenuButton } from './FloatingContextMenuButton';
 
 // Custom hook to subscribe to temporal state changes
@@ -38,9 +38,9 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
 
   // Optimize: Only subscribe to zoom value, not the entire viewport object
   const viewportZoom = useCanvasStore(state => state.viewport.zoom);
-  const activePlugin = useCanvasStore(state => state.activePlugin);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const penMode = useCanvasStore(state => (state as any).pen?.mode);
+
+  // Check if active plugin disables global undo/redo (fully decoupled from plugin internals)
+  const isUndoRedoDisabledByPlugin = useIsGlobalUndoRedoDisabled();
 
   const { undo, redo, pastStates, futureStates } = useTemporalState();
 
@@ -56,10 +56,6 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
   const canRedo = useMemo(() => futureStates.length > 0, [futureStates.length]);
 
   const zoomFactor = 1.2;
-
-  // Subscribe to enabledPlugins to trigger re-render when plugins are toggled
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  useCanvasStore(state => (state as any).pluginSelector?.enabledPlugins ?? []);
 
   const pluginBottomActions = pluginManager.getActions('bottom');
 
@@ -85,7 +81,7 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
                 icon={Undo2}
                 label="Undo"
                 onClick={() => undo()}
-                isDisabled={!canUndo || activePlugin === 'curves' || (activePlugin === 'pen' && penMode === 'drawing')}
+                isDisabled={!canUndo || isUndoRedoDisabledByPlugin}
                 counter={pastStates.length}
               />
 
@@ -93,7 +89,7 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
                 icon={Redo2}
                 label="Redo"
                 onClick={() => redo()}
-                isDisabled={!canRedo || activePlugin === 'curves' || (activePlugin === 'pen' && penMode === 'drawing')}
+                isDisabled={!canRedo || isUndoRedoDisabledByPlugin}
                 counter={futureStates.length}
               />
             </HStack>

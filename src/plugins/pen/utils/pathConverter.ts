@@ -60,9 +60,25 @@ export function pathDataToPenPath(commands: Command[], pathId: string): PenPath 
         };
     }
 
+    // Helper to check if two points are the same (within tolerance)
+    const isSamePoint = (p1: Point, p2: Point, tolerance = 0.001): boolean => {
+        return Math.abs(p1.x - p2.x) < tolerance && Math.abs(p1.y - p2.y) < tolerance;
+    };
+
+    // First pass: find the start position (M command)
+    let startPosition: Point | null = null;
+    for (const cmd of commands) {
+        if (cmd.type === 'M') {
+            startPosition = { ...cmd.position };
+            break;
+        }
+    }
+
     // Process commands
     for (let i = 0; i < commands.length; i++) {
         const cmd = commands[i];
+        const nextCmd = commands[i + 1];
+        const isLastBeforeZ = nextCmd?.type === 'Z';
 
         if (cmd.type === 'M') {
             // Start of path
@@ -72,6 +88,15 @@ export function pathDataToPenPath(commands: Command[], pathId: string): PenPath 
                 type: 'corner', // Default, updated based on handles
             });
         } else if (cmd.type === 'L') {
+            // Check if this L command goes back to start position (closing segment)
+            // If so and next is Z, don't create a new anchor - the path is closed with a straight line
+            if (isLastBeforeZ && startPosition && isSamePoint(cmd.position, startPosition)) {
+                // This is a closing segment that goes back to start - mark as closed
+                // Don't create a new anchor since it would duplicate the first one
+                isClosed = true;
+                continue;
+            }
+            
             // Line to - adds a corner anchor
             anchors.push({
                 id: `${pathId}-anchor-${anchors.length}`,
@@ -91,8 +116,22 @@ export function pathDataToPenPath(commands: Command[], pathId: string): PenPath 
                     x: cmd.controlPoint1.x - prevAnchor.position.x,
                     y: cmd.controlPoint1.y - prevAnchor.position.y,
                 };
-                // If previous anchor has outHandle, it might be smooth or cusp
-                // We'll determine type later or assume cusp/smooth based on collinearity
+            }
+
+            // Check if this C command goes back to start position (closing curve)
+            // If so and next is Z, apply inHandle to first anchor instead of creating new one
+            if (isLastBeforeZ && startPosition && isSamePoint(currentAnchorPos, startPosition)) {
+                // This is a closing curve that goes back to start
+                // Apply the inHandle to the first anchor
+                const firstAnchor = anchors[0];
+                if (cmd.controlPoint2) {
+                    firstAnchor.inHandle = {
+                        x: cmd.controlPoint2.x - firstAnchor.position.x,
+                        y: cmd.controlPoint2.y - firstAnchor.position.y,
+                    };
+                }
+                isClosed = true;
+                continue;
             }
 
             // Create current anchor with inHandle
@@ -113,13 +152,6 @@ export function pathDataToPenPath(commands: Command[], pathId: string): PenPath 
             anchors.push(newAnchor);
         } else if (cmd.type === 'Z') {
             isClosed = true;
-            // If closed, the last segment connects back to the first anchor
-            // We might need to update the first anchor's inHandle and last anchor's outHandle
-            // if the closing segment was a curve.
-            // However, Z usually just closes with a straight line unless preceded by a C?
-            // In SVG, Z is straight line. To close with curve, you use C to start point.
-            // But if the last command was C to start point, then Z is redundant or just closes.
-            // Let's assume Z implies straight line closure for now, unless we handle C-to-start logic.
         }
     }
 

@@ -230,6 +230,13 @@ export interface PluginDefinition<TStore extends object = object> {
    */
   expandablePanel?: ComponentType;
   /**
+   * Function that returns true when global undo/redo should be disabled.
+   * This is used by plugins that manage their own undo/redo during specific states.
+   * @param store The current store state
+   * @returns true if global undo/redo should be disabled
+   */
+  disablesGlobalUndoRedo?: (store: TStore) => boolean;
+  /**
    * Tool definition for this plugin if it should appear in the toolbar.
    * Defines the order, icon, label, and cursor for the tool button.
    */
