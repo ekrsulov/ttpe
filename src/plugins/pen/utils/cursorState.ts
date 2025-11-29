@@ -87,6 +87,7 @@ export function calculateEditCursorState(
     point: Point,
     path: PenPath,
     pathId: string,
+    subPathIndex: number,
     autoAddDelete: boolean,
     zoom: number = 1
 ): { cursorState: PenCursorState; hoverTarget: PenHoverTarget } {
@@ -100,6 +101,7 @@ export function calculateEditCursorState(
             hoverTarget: { 
                 type: 'handle', 
                 pathId, 
+                subPathIndex,
                 anchorIndex: handleResult.anchorIndex,
                 handleType: handleResult.handleType
             },
@@ -113,19 +115,19 @@ export function calculateEditCursorState(
         if (!path.closed && (anchorIndex === 0 || anchorIndex === path.anchors.length - 1)) {
             return {
                 cursorState: 'continue',
-                hoverTarget: { type: 'endpoint', pathId, anchorIndex },
+                hoverTarget: { type: 'endpoint', pathId, subPathIndex, anchorIndex },
             };
         }
 
         if (autoAddDelete) {
             return {
                 cursorState: 'delete-anchor',
-                hoverTarget: { type: 'anchor', pathId, anchorIndex },
+                hoverTarget: { type: 'anchor', pathId, subPathIndex, anchorIndex },
             };
         }
         return {
             cursorState: 'convert',
-            hoverTarget: { type: 'anchor', pathId, anchorIndex },
+            hoverTarget: { type: 'anchor', pathId, subPathIndex, anchorIndex },
         };
     }
 
@@ -135,12 +137,12 @@ export function calculateEditCursorState(
         if (autoAddDelete) {
             return {
                 cursorState: 'add-anchor',
-                hoverTarget: { type: 'segment', pathId, segmentIndex: segmentResult.segmentIndex },
+                hoverTarget: { type: 'segment', pathId, subPathIndex, segmentIndex: segmentResult.segmentIndex },
             };
         }
         return {
             cursorState: 'reshape',
-            hoverTarget: { type: 'segment', pathId, segmentIndex: segmentResult.segmentIndex },
+            hoverTarget: { type: 'segment', pathId, subPathIndex, segmentIndex: segmentResult.segmentIndex },
         };
     }
 

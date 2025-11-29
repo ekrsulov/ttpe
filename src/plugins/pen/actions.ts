@@ -299,11 +299,14 @@ export function finalizePath(getState: () => CanvasStore): void {
         const existingElement = state.elements.find(el => el.id === penState.editingPathId);
 
         if (existingElement && existingElement.type === 'path') {
-            // Update existing path
+            // Update the specific subpath being edited
+            const updatedSubPaths = [...existingElement.data.subPaths];
+            updatedSubPaths[penState.editingSubPathIndex ?? 0] = commands;
+
             state.updateElement?.(penState.editingPathId, {
                 data: {
                     ...existingElement.data,
-                    subPaths: [commands]
+                    subPaths: updatedSubPaths
                 }
             });
         }
@@ -341,6 +344,7 @@ export function finalizePath(getState: () => CanvasStore): void {
         previewAnchor: null,
         cursorState: 'new-path',
         editingPathId: null,
+        editingSubPathIndex: null,
         selectedAnchorIndex: null,
         pathHistory: [],
         pathHistoryIndex: -1,
@@ -359,6 +363,8 @@ export function cancelPath(getState: () => CanvasStore): void {
         activeAnchorIndex: null,
         previewAnchor: null,
         cursorState: 'new-path',
+        editingPathId: null,
+        editingSubPathIndex: null,
         pathHistory: [],
         pathHistoryIndex: -1,
     });
@@ -446,23 +452,25 @@ export function breakHandleLinkage(
  */
 export function startEditingPath(
     pathId: string,
-    getState: () => CanvasStore
+    getState: () => CanvasStore,
+    subPathIndex: number = 0
 ): void {
     const state = getState();
     const element = state.elements.find(el => el.id === pathId);
 
     if (!element || element.type !== 'path') return;
 
-    // Convert to PenPath
-    // We only support single subpath for now
-    if (element.data.subPaths.length !== 1) return;
+    // Check if the subpath index is valid
+    if (subPathIndex < 0 || subPathIndex >= element.data.subPaths.length) return;
 
-    const penPath = pathDataToPenPath(element.data.subPaths[0], pathId);
+    // Convert the specific subpath to PenPath
+    const penPath = pathDataToPenPath(element.data.subPaths[subPathIndex], pathId);
 
     state.updatePenState?.({
         mode: 'editing',
         currentPath: penPath,
         editingPathId: pathId,
+        editingSubPathIndex: subPathIndex,
         activeAnchorIndex: null,
         selectedAnchorIndex: null,
         cursorState: 'default',
@@ -612,12 +620,13 @@ export function convertAnchorType(
 export function continueFromEndpoint(
     pathId: string,
     anchorIndex: number, // 0 or length-1
-    getState: () => CanvasStore
+    getState: () => CanvasStore,
+    subPathIndex: number = 0
 ): void {
     const state = getState();
 
     // Start editing first to load the path
-    startEditingPath(pathId, getState);
+    startEditingPath(pathId, getState, subPathIndex);
 
     // Fetch fresh state after startEditingPath updates it
     const stateAfterEdit = getState();
@@ -653,11 +662,24 @@ function updatePathOnCanvas(
     getState: () => CanvasStore
 ): void {
     const state = getState();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const penState = (state as any).pen;
+
+    if (!penState?.editingPathId || penState.editingSubPathIndex === null) return;
+
+    const element = state.elements.find(el => el.id === pathId);
+    if (!element || element.type !== 'path') return;
+
     const commands = penPathToCommands(path);
+
+    // Create a copy of the subPaths array and update only the specific subpath
+    const updatedSubPaths = [...element.data.subPaths];
+    updatedSubPaths[penState.editingSubPathIndex] = commands;
 
     state.updateElement?.(pathId, {
         data: {
-            subPaths: [commands]
+            ...element.data,
+            subPaths: updatedSubPaths
         }
     });
 }

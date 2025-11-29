@@ -11,7 +11,7 @@ export function findPathAtPoint(
     point: Point,
     elements: CanvasElement[],
     scale: number
-): { pathId: string; penPath: PenPath } | null {
+): { pathId: string; penPath: PenPath; subPathIndex: number } | null {
     const threshold = HIT_THRESHOLD / scale;
 
     // Iterate elements in reverse (top to bottom)
@@ -21,14 +21,15 @@ export function findPathAtPoint(
 
         const pathElement = element as PathElement;
 
-        // We only support single subpath for now in Pen tool editing
-        if (pathElement.data.subPaths.length !== 1) continue;
+        // Check each subpath
+        for (let subIndex = 0; subIndex < pathElement.data.subPaths.length; subIndex++) {
+            const subPath = pathElement.data.subPaths[subIndex];
+            const penPath = pathDataToPenPath(subPath, pathElement.id);
 
-        const penPath = pathDataToPenPath(pathElement.data.subPaths[0], pathElement.id);
-
-        // Check if point is close to any segment or anchor
-        if (isPointNearPath(point, penPath, threshold)) {
-            return { pathId: pathElement.id, penPath };
+            // Check if point is close to any segment or anchor
+            if (isPointNearPath(point, penPath, threshold)) {
+                return { pathId: pathElement.id, penPath, subPathIndex: subIndex };
+            }
         }
     }
     return null;

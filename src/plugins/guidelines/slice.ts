@@ -95,7 +95,7 @@ export const createGuidelinesPluginSlice: StateCreator<GuidelinesPluginSlice, []
       // Access elements and viewport from parent state through type assertion
       const fullState = get() as unknown as { 
         elements: Array<{ id: string; type: string; data: PathData }>; 
-        viewport: { zoom: number }; 
+        viewport: { zoom: number; panX: number; panY: number }; 
       };
       
       const { elements, viewport } = fullState;
@@ -109,12 +109,31 @@ export const createGuidelinesPluginSlice: StateCreator<GuidelinesPluginSlice, []
       const currentCenterX = (currentBounds.minX + currentBounds.maxX) / 2;
       const currentCenterY = (currentBounds.minY + currentBounds.maxY) / 2;
 
+      // Calculate viewport center
+      const viewportCenterX = (window.innerWidth / 2 - viewport.panX) / viewport.zoom;
+      const viewportCenterY = (window.innerHeight / 2 - viewport.panY) / viewport.zoom;
+
       // Priority: center > edges
       // We'll collect all possible matches and then filter by priority
       const potentialMatches: Array<{ 
         match: GuidelineMatch; 
         priority: number; // 1 = center, 2 = edge
       }> = [];
+
+      // Add viewport center guidelines
+      if (Math.abs(currentCenterX - viewportCenterX) < threshold) {
+        potentialMatches.push({
+          match: { type: 'centerX', position: viewportCenterX, elementIds: ['viewport'] },
+          priority: 1
+        });
+      }
+
+      if (Math.abs(currentCenterY - viewportCenterY) < threshold) {
+        potentialMatches.push({
+          match: { type: 'centerY', position: viewportCenterY, elementIds: ['viewport'] },
+          priority: 1
+        });
+      }
 
       // Use centralized bounds calculation with caching
       const boundsMap = calculateElementBoundsMap(
@@ -320,7 +339,7 @@ export const createGuidelinesPluginSlice: StateCreator<GuidelinesPluginSlice, []
       const matches: DistanceGuidelineMatch[] = [];
       const fullState = get() as unknown as { 
         elements: Array<{ id: string; type: string; data: PathData }>; 
-        viewport: { zoom: number }; 
+        viewport: { zoom: number; panX: number; panY: number }; 
       };
       const { elements, viewport } = fullState;
       
@@ -605,7 +624,7 @@ export const createGuidelinesPluginSlice: StateCreator<GuidelinesPluginSlice, []
     ) => {
       const state = get();
       const { guidelines } = state;
-      const fullState = get() as unknown as { viewport: { zoom: number } };
+      const fullState = get() as unknown as { viewport: { zoom: number; panX: number; panY: number } };
       const { viewport } = fullState;
 
       if (!guidelines.enabled || !viewport) {

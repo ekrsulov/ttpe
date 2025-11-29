@@ -32,6 +32,7 @@ import {
     applyPenGuidelineSnap,
     type ReferencePoint
 } from '../utils/penGuidelines';
+import type { PenHoverTarget, PenPath } from '../types';
 
 /**
  * Main hook for Pen tool pointer event handling
@@ -115,15 +116,15 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
             const penState = (state as any).pen;
 
             // Only sync when in editing mode with an active editingPathId
-            if (penState?.mode === 'editing' && penState.editingPathId) {
+            if (penState?.mode === 'editing' && penState.editingPathId && penState.editingSubPathIndex !== null) {
                 const editingElement = elements.find(el => el.id === penState.editingPathId);
 
                 if (editingElement && editingElement.type === 'path') {
-                    // Check if element has subPaths
-                    if (editingElement.data?.subPaths?.length === 1) {
+                    // Check if the specific subpath exists
+                    if (editingElement.data?.subPaths?.[penState.editingSubPathIndex]) {
                         // Convert element to PenPath
                         const updatedPenPath = pathDataToPenPath(
-                            editingElement.data.subPaths[0],
+                            editingElement.data.subPaths[penState.editingSubPathIndex],
                             penState.editingPathId
                         );
 
@@ -165,6 +166,7 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                         mode: 'idle',
                         currentPath: null,
                         editingPathId: null,
+                        editingSubPathIndex: null,
                         selectedAnchorIndex: null,
                         activeAnchorIndex: null,
                     });
@@ -271,87 +273,82 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
 
             // Handle editing actions based on cursor state
             if (mode === 'editing' || mode === 'idle') {
-                // We need to re-detect what we are hovering over to be sure
-                // Or rely on cursorState if it's reliable.
-                // Re-detecting is safer.
+                let clickResult: { pathId: string; penPath: PenPath; subPathIndex: number } | null = null;
+                let hoverTarget: PenHoverTarget = { type: 'none' };
 
-                // If we are editing a specific path, check that first
+                // If editing a specific path, check it first (regardless of distance)
                 if (penState.editingPathId && penState.currentPath) {
-                    const { hoverTarget } = calculateEditCursorState(
-                        detectionPoint, // Use raw point for detection
+                    const result = calculateEditCursorState(
+                        detectionPoint,
                         penState.currentPath,
                         penState.editingPathId,
+                        penState.editingSubPathIndex ?? 0,
                         penState.autoAddDelete,
                         viewportZoom
                     );
-
-                    // Handle direct handle manipulation
-                    if (hoverTarget.type === 'handle' && hoverTarget.anchorIndex !== undefined && hoverTarget.handleType) {
-                        // Start dragging the handle
-                        isDraggingRef.current = true;
-                        dragStartPointRef.current = { ...canvasPoint }; // Use snapped point for drag start
-                        state.updatePenState?.({
-                            dragState: {
-                                type: 'handle',
-                                anchorIndex: hoverTarget.anchorIndex,
-                                handleType: hoverTarget.handleType,
-                                startPoint: canvasPoint,
-                                currentPoint: canvasPoint,
-                            },
-                        });
-                        return;
+                    hoverTarget = result.hoverTarget;
+                    if (hoverTarget.type !== 'none') {
+                        // Found something on the current path
+                        clickResult = {
+                            pathId: penState.editingPathId,
+                            subPathIndex: penState.editingSubPathIndex ?? 0,
+                            penPath: penState.currentPath
+                        };
                     }
+                }
 
-                    if (hoverTarget.type === 'anchor' && hoverTarget.anchorIndex !== undefined) {
-                        if (isAltPressedRef.current) {
-                            // Cycle anchor type
-                            convertAnchorType(hoverTarget.anchorIndex, useCanvasStore.getState);
-                        } else if (penState.autoAddDelete) {
-                            // Delete anchor
-                            deleteAnchor(hoverTarget.anchorIndex, useCanvasStore.getState);
-                        } else {
-                            // Auto Add/Delete disabled: start dragging anchor
+                // If nothing found on current path, check other paths
+                if (hoverTarget.type === 'none') {
+                    const result = findPathAtPoint(detectionPoint, state.elements, viewportZoom);
+                    if (result) {
+                        clickResult = result;
+                        const editResult = calculateEditCursorState(
+                            detectionPoint,
+                            result.penPath,
+                            result.pathId,
+                            result.subPathIndex,
+                            penState.autoAddDelete,
+                            viewportZoom
+                        );
+                        hoverTarget = editResult.hoverTarget;
+                    }
+                }
+
+                if (clickResult) {
+                    // If we're already editing this exact path and subpath, handle actions on it
+                    if (penState.editingPathId === clickResult.pathId && penState.editingSubPathIndex === clickResult.subPathIndex) {
+                        // Handle direct handle manipulation
+                        if (hoverTarget.type === 'handle' && hoverTarget.anchorIndex !== undefined && hoverTarget.handleType) {
+                            // Start dragging the handle
                             isDraggingRef.current = true;
-                            dragStartPointRef.current = { ...canvasPoint };
+                            dragStartPointRef.current = { ...canvasPoint }; // Use snapped point for drag start
                             state.updatePenState?.({
                                 dragState: {
-                                    type: 'anchor',
+                                    type: 'handle',
                                     anchorIndex: hoverTarget.anchorIndex,
+                                    handleType: hoverTarget.handleType,
                                     startPoint: canvasPoint,
                                     currentPoint: canvasPoint,
                                 },
                             });
-                        }
-                        return;
-                    }
-
-                    if (hoverTarget.type === 'segment' && hoverTarget.segmentIndex !== undefined) {
-                        if (penState.autoAddDelete) {
-                            // Add anchor - use snapped point for new anchor position
-                            addAnchorToSegment(hoverTarget.segmentIndex, canvasPoint, useCanvasStore.getState);
                             return;
-                        } else {
-                            // Auto Add/Delete disabled: start curving/translating segment
-                            // Need to find the segment again to get the 't' parameter
-                            const result = findSegmentOnPath(detectionPoint, penState.currentPath, 8 / viewportZoom);
-                            if (result) {
+                        }
+
+                        if (hoverTarget.type === 'anchor' && hoverTarget.anchorIndex !== undefined) {
+                            if (isAltPressedRef.current) {
+                                // Cycle anchor type
+                                convertAnchorType(hoverTarget.anchorIndex, useCanvasStore.getState);
+                            } else if (penState.autoAddDelete) {
+                                // Delete anchor
+                                deleteAnchor(hoverTarget.anchorIndex, useCanvasStore.getState);
+                            } else {
+                                // Auto Add/Delete disabled: start dragging anchor
                                 isDraggingRef.current = true;
                                 dragStartPointRef.current = { ...canvasPoint };
-                                
-                                // Save original anchor positions for segment translation (Shift+drag)
-                                const anchors = penState.currentPath.anchors;
-                                const startIndex = result.segmentIndex;
-                                const endIndex = (result.segmentIndex + 1) % anchors.length;
-                                segmentOriginalAnchorsRef.current = {
-                                    start: { ...anchors[startIndex].position },
-                                    end: { ...anchors[endIndex].position },
-                                };
-                                
                                 state.updatePenState?.({
                                     dragState: {
-                                        type: 'segment',
-                                        segmentIndex: result.segmentIndex,
-                                        t: result.t,
+                                        type: 'anchor',
+                                        anchorIndex: hoverTarget.anchorIndex,
                                         startPoint: canvasPoint,
                                         currentPoint: canvasPoint,
                                     },
@@ -359,35 +356,51 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                             }
                             return;
                         }
-                    }
 
-                    if (hoverTarget.type === 'endpoint' && hoverTarget.anchorIndex !== undefined && hoverTarget.pathId) {
-                        // Continue path
-                        continueFromEndpoint(hoverTarget.pathId, hoverTarget.anchorIndex, useCanvasStore.getState);
-                        return;
-                    }
-                }
+                        if (hoverTarget.type === 'segment' && hoverTarget.segmentIndex !== undefined) {
+                            if (penState.autoAddDelete) {
+                                // Add anchor - use snapped point for new anchor position
+                                addAnchorToSegment(hoverTarget.segmentIndex, canvasPoint, useCanvasStore.getState);
+                                return;
+                            } else {
+                                // Auto Add/Delete disabled: start curving/translating segment
+                                // Need to find the segment again to get the 't' parameter
+                                const result = findSegmentOnPath(detectionPoint, penState.currentPath, 8 / viewportZoom);
+                                if (result) {
+                                    isDraggingRef.current = true;
+                                    dragStartPointRef.current = { ...canvasPoint };
+                                    
+                                    // Save original anchor positions for segment translation (Shift+drag)
+                                    const anchors = penState.currentPath.anchors;
+                                    const startIndex = result.segmentIndex;
+                                    const endIndex = (result.segmentIndex + 1) % anchors.length;
+                                    segmentOriginalAnchorsRef.current = {
+                                        start: { ...anchors[startIndex].position },
+                                        end: { ...anchors[endIndex].position },
+                                    };
+                                    
+                                    state.updatePenState?.({
+                                        dragState: {
+                                            type: 'segment',
+                                            segmentIndex: result.segmentIndex,
+                                            t: result.t,
+                                            startPoint: canvasPoint,
+                                            currentPoint: canvasPoint,
+                                        },
+                                    });
+                                }
+                                return;
+                            }
+                        }
 
-                // If not editing or didn't hit anything on current path, check for other paths
-                const result = findPathAtPoint(detectionPoint, state.elements, viewportZoom);
-                if (result) {
-                    // Check if we hit an endpoint of this path to continue immediately
-                    const { hoverTarget } = calculateEditCursorState(
-                        detectionPoint,
-                        result.penPath,
-                        result.pathId,
-                        penState.autoAddDelete,
-                        viewportZoom
-                    );
-
-                    if (hoverTarget.type === 'endpoint' && hoverTarget.anchorIndex !== undefined) {
-                        continueFromEndpoint(result.pathId, hoverTarget.anchorIndex, useCanvasStore.getState);
-                        return;
-                    }
-
-                    if (penState.editingPathId !== result.pathId) {
-                        // Start editing this path
-                        startEditingPath(result.pathId, useCanvasStore.getState);
+                        if (hoverTarget.type === 'endpoint' && hoverTarget.anchorIndex !== undefined && hoverTarget.pathId) {
+                            // Continue path
+                            continueFromEndpoint(hoverTarget.pathId, hoverTarget.anchorIndex, useCanvasStore.getState, hoverTarget.subPathIndex);
+                            return;
+                        }
+                    } else {
+                        // Either different path or different subpath of same path - start editing the clicked one
+                        startEditingPath(clickResult.pathId, useCanvasStore.getState, clickResult.subPathIndex);
                         return;
                     }
                 } else if (mode === 'editing') {
@@ -563,6 +576,7 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                         detectionPoint, // Use raw point
                         penState.currentPath,
                         penState.editingPathId,
+                        penState.editingSubPathIndex ?? 0, // Use the actual subpath index being edited
                         penState.autoAddDelete,
                         viewportZoom
                     );
@@ -578,6 +592,7 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                             detectionPoint,
                             result.penPath,
                             result.pathId,
+                            result.subPathIndex,
                             penState.autoAddDelete,
                             viewportZoom
                         );
