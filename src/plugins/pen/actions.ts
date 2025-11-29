@@ -1147,6 +1147,74 @@ export function curveSegment(
 }
 
 /**
+ * Translate a segment by moving both of its anchor points
+ * Used when Shift+dragging a segment - moves the segment as a whole
+ * without curving it, effectively "pulling" both endpoints together
+ * 
+ * @param segmentIndex - Index of the segment being translated
+ * @param dragDelta - Delta from the original drag start position
+ * @param originalPositions - Original positions of the segment anchors when drag started
+ * @param getState - Function to get current canvas store state
+ */
+export function translateSegment(
+    segmentIndex: number,
+    dragDelta: Point,
+    originalPositions: { start: Point; end: Point },
+    getState: () => CanvasStore
+): void {
+    const state = getState();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const penState = (state as any).pen;
+
+    if (!penState?.currentPath) {
+        return;
+    }
+
+    const anchors = [...penState.currentPath.anchors];
+    const startIndex = segmentIndex;
+    const endIndex = (segmentIndex + 1) % anchors.length;
+
+    if (startIndex < 0 || startIndex >= anchors.length) {
+        return;
+    }
+
+    // Clone the anchors we're modifying
+    const startAnchor = { ...anchors[startIndex] };
+    const endAnchor = { ...anchors[endIndex] };
+
+    // Calculate new positions from original positions + delta
+    // This ensures consistent translation regardless of intermediate states
+    startAnchor.position = {
+        x: originalPositions.start.x + dragDelta.x,
+        y: originalPositions.start.y + dragDelta.y,
+    };
+
+    endAnchor.position = {
+        x: originalPositions.end.x + dragDelta.x,
+        y: originalPositions.end.y + dragDelta.y,
+    };
+
+    // Note: Handles are relative to anchor positions, so they don't need adjustment
+    // The segment shape (straight or curved) is preserved
+
+    anchors[startIndex] = startAnchor;
+    anchors[endIndex] = endAnchor;
+
+    const updatedPath: PenPath = {
+        ...penState.currentPath,
+        anchors,
+    };
+
+    state.updatePenState?.({
+        currentPath: updatedPath,
+    });
+
+    if (penState.editingPathId) {
+        updatePathOnCanvas(updatedPath, penState.editingPathId, getState);
+    }
+}
+
+/**
  * Save current path state to history (for undo/redo during drawing)
  * Should be called after any action that modifies the path
  */

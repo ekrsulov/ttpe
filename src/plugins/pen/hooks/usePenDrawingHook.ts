@@ -18,6 +18,7 @@ import {
     moveLastAnchor,
     moveAnchor,
     curveSegment,
+    translateSegment,
     savePathToHistory
 } from '../actions';
 import { pathDataToPenPath } from '../utils/pathConverter';
@@ -48,6 +49,9 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
     const isVKeyPressedRef = useRef(false);
     const isMovingLastAnchorRef = useRef(false);
     const lastAnchorOriginalPositionRef = useRef<Point | null>(null);
+    
+    // Reference for segment translation: stores original anchor positions when drag starts
+    const segmentOriginalAnchorsRef = useRef<{ start: Point; end: Point } | null>(null);
 
     // Guidelines reference points cache
     const referencePointsRef = useRef<ReferencePoint[]>([]);
@@ -87,6 +91,7 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                 isVKeyPressedRef.current = false;
                 isMovingLastAnchorRef.current = false;
                 lastAnchorOriginalPositionRef.current = null;
+                segmentOriginalAnchorsRef.current = null;
             }
         }
     }, [isActive]);
@@ -326,12 +331,22 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                             addAnchorToSegment(hoverTarget.segmentIndex, canvasPoint, useCanvasStore.getState);
                             return;
                         } else {
-                            // Auto Add/Delete disabled: start curving segment
+                            // Auto Add/Delete disabled: start curving/translating segment
                             // Need to find the segment again to get the 't' parameter
                             const result = findSegmentOnPath(detectionPoint, penState.currentPath, 8 / viewportZoom);
                             if (result) {
                                 isDraggingRef.current = true;
                                 dragStartPointRef.current = { ...canvasPoint };
+                                
+                                // Save original anchor positions for segment translation (Shift+drag)
+                                const anchors = penState.currentPath.anchors;
+                                const startIndex = result.segmentIndex;
+                                const endIndex = (result.segmentIndex + 1) % anchors.length;
+                                segmentOriginalAnchorsRef.current = {
+                                    start: { ...anchors[startIndex].position },
+                                    end: { ...anchors[endIndex].position },
+                                };
+                                
                                 state.updatePenState?.({
                                     dragState: {
                                         type: 'segment',
@@ -665,13 +680,24 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                 if (penState?.dragState?.type === 'segment') {
                     const { segmentIndex } = penState.dragState;
                     if (segmentIndex !== undefined && penState.currentPath) {
-                        // Recalculate 't' parameter based on current mouse position
-                        // to allow dynamic adjustment of handle weights
-                        const result = findSegmentOnPath(detectionPoint, penState.currentPath, 20 / viewportZoom); // Use detectionPoint for finding segment t
-                        const dynamicT = result && result.segmentIndex === segmentIndex ? result.t : 0.5;
+                        if (isShiftPressedRef.current && dragStartPointRef.current && segmentOriginalAnchorsRef.current) {
+                            // Shift+drag: translate segment (move both endpoints together)
+                            // Calculate delta from drag start position
+                            const delta = {
+                                x: canvasPoint.x - dragStartPointRef.current.x,
+                                y: canvasPoint.y - dragStartPointRef.current.y,
+                            };
+                            translateSegment(segmentIndex, delta, segmentOriginalAnchorsRef.current, useCanvasStore.getState);
+                        } else {
+                            // Normal drag: curve the segment
+                            // Recalculate 't' parameter based on current mouse position
+                            // to allow dynamic adjustment of handle weights
+                            const result = findSegmentOnPath(detectionPoint, penState.currentPath, 20 / viewportZoom); // Use detectionPoint for finding segment t
+                            const dynamicT = result && result.segmentIndex === segmentIndex ? result.t : 0.5;
 
-                        // Curve the segment in real-time with dynamic t
-                        curveSegment(segmentIndex, canvasPoint, dynamicT, useCanvasStore.getState);
+                            // Curve the segment in real-time with dynamic t
+                            curveSegment(segmentIndex, canvasPoint, dynamicT, useCanvasStore.getState);
+                        }
                     }
                     return;
                 }
@@ -809,6 +835,7 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                 isDraggingRef.current = false;
                 dragStartPointRef.current = null;
                 rawDragStartPointRef.current = null;
+                segmentOriginalAnchorsRef.current = null; // Clear original anchor positions
                 state.updatePenState?.({ dragState: null, activeGuidelines: null });
                 return;
             }
@@ -820,10 +847,9 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                     y: canvasPoint.y - dragStartPointRef.current.y,
                 };
 
-                const handleMagnitude = Math.sqrt(handleVector.x ** 2 + handleVector.y ** 2);
-
-                // Determine if this was a click (no drag) or a drag
-                const isDragGesture = handleMagnitude > 2; // Threshold for drag detection
+                // Use wasRealDrag (calculated with raw points) to determine if this was a click or drag
+                // This prevents false positives from grid snap offset differences
+                const isDragGesture = wasRealDrag;
 
                 // Check if this is the first point being dragged (not a new point)
                 // This is true when:
@@ -928,6 +954,32 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
         const handleKeyDown = (event: KeyboardEvent) => {
             if (event.key === 'Shift') {
                 isShiftPressedRef.current = true;
+                
+                // If currently dragging a segment and Shift was just pressed,
+                // update the original anchor positions to current positions
+                // This allows switching from curve mode to translate mode mid-drag
+                const state = useCanvasStore.getState();
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const penState = (state as any).pen;
+                if (penState?.dragState?.type === 'segment' && penState.currentPath) {
+                    const { segmentIndex } = penState.dragState;
+                    if (segmentIndex !== undefined) {
+                        const anchors = penState.currentPath.anchors;
+                        const startIndex = segmentIndex;
+                        const endIndex = (segmentIndex + 1) % anchors.length;
+                        // Update original positions to current (curved) positions
+                        segmentOriginalAnchorsRef.current = {
+                            start: { ...anchors[startIndex].position },
+                            end: { ...anchors[endIndex].position },
+                        };
+                        // Also update dragStartPoint to current mouse position
+                        // This is needed so the delta calculation starts fresh from here
+                        // We'll use the currentPoint from dragState as the new reference
+                        if (penState.dragState.currentPoint) {
+                            dragStartPointRef.current = { ...penState.dragState.currentPoint };
+                        }
+                    }
+                }
             } else if (event.key === 'Alt') {
                 isAltPressedRef.current = true;
             } else if (event.key === 'v' || event.key === 'V') {
