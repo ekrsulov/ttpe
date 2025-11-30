@@ -8,10 +8,26 @@ import type { SelectionContextInfo } from '../types/selection';
 import { pluginManager } from '../utils/pluginManager';
 
 /**
+ * Configuration mapping selection types to their available action categories.
+ * This replaces the repetitive switch-case with a declarative approach.
+ */
+const CONTEXT_ACTION_CONFIG: Record<string, { alignment: boolean; plugin: boolean; group: boolean; clipboard: boolean }> = {
+  'multiselection': { alignment: true, plugin: true, group: true, clipboard: true },
+  'group': { alignment: true, plugin: true, group: true, clipboard: true },
+  'path': { alignment: true, plugin: true, group: true, clipboard: true },
+  'subpath': { alignment: true, plugin: true, group: false, clipboard: true },
+  'point-anchor-m': { alignment: true, plugin: true, group: false, clipboard: false },
+  'point-anchor-l': { alignment: true, plugin: true, group: false, clipboard: false },
+  'point-anchor-c': { alignment: true, plugin: true, group: false, clipboard: false },
+  'point-control': { alignment: true, plugin: true, group: false, clipboard: false },
+};
+
+/**
  * Hook to determine the selection context and provide appropriate actions
  * for the floating context menu.
  * 
- * This is a simplified version that composes smaller specialized hooks.
+ * This is a simplified version that composes smaller specialized hooks
+ * and uses a declarative configuration for action composition.
  */
 export function useFloatingContextMenuActions(
   context: SelectionContextInfo | null
@@ -43,54 +59,21 @@ export function useFloatingContextMenuActions(
     return actions;
   }, [context]);
 
-  // Compose all actions based on context type
+  // Compose all actions based on context type using config
   const actions = useMemo<FloatingContextMenuAction[]>(() => {
     if (!context) return [];
 
-    switch (context.type) {
-      case 'multiselection':
-        return [
-          ...alignmentActions,
-          ...pluginActions,
-          ...groupActions,
-          ...clipboardActions,
-        ];
+    const config = CONTEXT_ACTION_CONFIG[context.type];
+    if (!config) return [];
 
-      case 'group':
-        return [
-          ...alignmentActions,
-          ...pluginActions,
-          ...groupActions,
-          ...clipboardActions,
-        ];
+    const result: FloatingContextMenuAction[] = [];
+    
+    if (config.alignment) result.push(...alignmentActions);
+    if (config.plugin) result.push(...pluginActions);
+    if (config.group) result.push(...groupActions);
+    if (config.clipboard) result.push(...clipboardActions);
 
-      case 'path':
-        return [
-          ...alignmentActions,
-          ...pluginActions,
-          ...groupActions,
-          ...clipboardActions,
-        ];
-
-      case 'subpath':
-        return [
-          ...alignmentActions,
-          ...pluginActions,
-          ...clipboardActions,
-        ];
-
-      case 'point-anchor-m':
-      case 'point-anchor-l':
-      case 'point-anchor-c':
-      case 'point-control':
-        return [
-          ...alignmentActions,
-          ...pluginActions,
-        ];
-
-      default:
-        return [];
-    }
+    return result;
   }, [context, alignmentActions, pluginActions, groupActions, clipboardActions]);
 
   return actions;

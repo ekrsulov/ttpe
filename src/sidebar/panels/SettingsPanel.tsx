@@ -3,13 +3,12 @@ import {
   VStack,
   FormControl,
   FormLabel,
-  useBreakpointValue,
   useColorMode,
   Flex,
   Text,
 } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { useEnabledPlugins } from '../../hooks';
+import { useEnabledPlugins, useResponsive } from '../../hooks';
 import { logger, LogLevel } from '../../utils';
 import { Panel } from '../../ui/Panel';
 import { pluginManager } from '../../utils/pluginManager';
@@ -28,8 +27,8 @@ export const SettingsPanel: React.FC = () => {
   // Subscribe to enabledPlugins to trigger re-render when plugins are toggled
   useEnabledPlugins();
 
-  // Detect if we're on mobile (base breakpoint)
-  const isMobile = useBreakpointValue({ base: true, md: false }) ?? false;
+  // Use unified responsive hook
+  const { isMobile } = useResponsive();
 
   const [selectedTheme, setSelectedTheme] = useState<'light' | 'dark' | 'system'>(() => {
     const stored = localStorage.getItem('chakra-ui-color-mode');

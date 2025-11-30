@@ -10,26 +10,27 @@ interface RenderCountBadgeWrapperProps {
 }
 
 /**
- * Shared wrapper component that handles the common pattern of:
- * - Checking NODE_ENV === 'development'
- * - Checking settings.showRenderCountBadges
- * - Using useRenderCount hook
- * - Rendering the RenderCountBadge
- * 
- * This consolidates the repeated pattern across multiple UI shells.
+ * Development-only render count badge wrapper.
+ * In production, this component renders nothing and adds no overhead.
+ * In development, it tracks and displays render counts for debugging.
  */
 export const RenderCountBadgeWrapper: React.FC<RenderCountBadgeWrapperProps> = ({
   componentName,
   position = 'top-left',
   wrapperStyle,
 }) => {
+  // Early return for production - no hooks called
+  if (!import.meta.env.DEV) {
+    return null;
+  }
+
+  // These hooks are only called in development
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const { count: renderCount, rps: renderRps } = useRenderCount(componentName);
-  const settings = useCanvasStore(state => state.settings);
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const showRenderCountBadges = useCanvasStore((state) => state.settings.showRenderCountBadges);
 
-  // Only render in development with the setting enabled
-  const shouldShow = import.meta.env.DEV && settings.showRenderCountBadges;
-
-  if (!shouldShow) {
+  if (!showRenderCountBadges) {
     return null;
   }
 

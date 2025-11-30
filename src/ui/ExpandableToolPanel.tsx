@@ -8,28 +8,36 @@ import {
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { pluginManager } from '../utils/pluginManager';
 import { useExpandablePanelColors, useToolbarPosition } from '../hooks';
+import { useCanvasStore } from '../store/canvasStore';
 
-interface ExpandableToolPanelProps {
-  activePlugin: string | null;
-  sidebarWidth?: number;
-}
-
-export const ExpandableToolPanel: React.FC<ExpandableToolPanelProps> = ({ activePlugin, sidebarWidth = 0 }) => {
+/**
+ * ExpandableToolPanel - Shows plugin-specific options in an expandable panel
+ * Gets all state from store directly (no props drilling)
+ */
+export const ExpandableToolPanel: React.FC = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   
+  // Get state from store
+  const activePlugin = useCanvasStore(state => state.activePlugin);
+  const sidebarWidth = useCanvasStore(state => state.sidebarWidth);
+  const isSidebarPinned = useCanvasStore(state => state.isSidebarPinned);
+
+  // Calculate effective sidebar width
+  const effectiveSidebarWidth = isSidebarPinned ? sidebarWidth : 0;
+  
   const { bg, borderColor, iconColor, hoverBg } = useExpandablePanelColors();
-  const { isSidebarPinned } = useToolbarPosition(sidebarWidth);
+  const { isSidebarPinned: isPinned } = useToolbarPosition(effectiveSidebarWidth);
   
   const PanelComponent = activePlugin ? pluginManager.getExpandablePanel(activePlugin) : null;
   
-  if (!PanelComponent || isSidebarPinned) {
+  if (!PanelComponent || isPinned) {
     return null;
   }
   
   const toggleExpand = () => setIsExpanded(!isExpanded);
   
-  const leftPosition = sidebarWidth > 0
-    ? `calc(50% - ${sidebarWidth / 2}px)`
+  const leftPosition = effectiveSidebarWidth > 0
+    ? `calc(50% - ${effectiveSidebarWidth / 2}px)`
     : '50%';
   
   return (

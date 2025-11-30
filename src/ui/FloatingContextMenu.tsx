@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Box, VStack, Divider, Menu, MenuButton, MenuList, MenuItem, useBreakpointValue, HStack, Text, IconButton } from '@chakra-ui/react';
+import { Box, VStack, Divider, Menu, MenuButton, MenuList, MenuItem, HStack, Text, IconButton } from '@chakra-ui/react';
 import ConditionalTooltip from './ConditionalTooltip';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
 import type { FloatingContextMenuAction } from '../types/plugins';
 import { useMenuColors } from '../hooks/useMenuColors';
+import { useResponsive } from '../hooks';
 
 interface FloatingContextMenuProps {
   /** Array of actions to display in the menu */
@@ -27,11 +28,11 @@ export const FloatingContextMenu: React.FC<FloatingContextMenuProps> = ({
   // State for mobile submenu navigation
   const [activeSubmenu, setActiveSubmenu] = useState<FloatingContextMenuAction | null>(null);
 
-  // Check if we're on mobile
-  const isMobile = useBreakpointValue({ base: true, md: false });
+  // Use unified responsive hook
+  const { isMobile } = useResponsive();
 
   // Use left placement on mobile to prevent cutoff (for desktop)
-  const submenuPlacement = useBreakpointValue({ base: 'left-start', md: 'right-start' }) as 'left-start' | 'right-start';
+  const submenuPlacement = isMobile ? 'left-start' : 'right-start';
 
   if (!isOpen) return null;
 

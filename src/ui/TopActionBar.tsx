@@ -1,37 +1,37 @@
 import React, { useRef } from 'react';
-import { HStack, Box, useColorModeValue, useBreakpointValue } from '@chakra-ui/react';
+import { HStack, Box, useColorModeValue } from '@chakra-ui/react';
 import { Menu, MoreHorizontal } from 'lucide-react';
 import { RenderCountBadgeWrapper } from './RenderCountBadgeWrapper';
 import { FloatingToolbarShell } from './FloatingToolbarShell';
 import { ToolbarIconButton } from './ToolbarIconButton';
 import { pluginManager, useVisibleToolIds } from '../utils/pluginManager';
 import { useCanvasStore } from '../store/canvasStore';
-import { useDynamicTools, useEnabledPlugins } from '../hooks';
+import { useDynamicTools, useEnabledPlugins, useResponsive } from '../hooks';
 import { useAnimatedBackground } from '../hooks/useAnimatedBackground';
 
-interface TopActionBarProps {
-  activeMode: string | null;
-  onModeChange: (mode: string) => void;
-  sidebarWidth?: number;
-  isSidebarPinned?: boolean;
-  isSidebarOpen?: boolean;
-  onMenuClick?: () => void;
-  showGridRulers?: boolean;
-}
+/**
+ * TopActionBar - Main toolbar for tool selection
+ * Gets all state from store directly (no props drilling)
+ */
+export const TopActionBar: React.FC = () => {
+  // Get state from store
+  const activeMode = useCanvasStore(state => state.activePlugin);
+  const setMode = useCanvasStore(state => state.setMode);
+  const sidebarWidth = useCanvasStore(state => state.sidebarWidth);
+  const isSidebarPinned = useCanvasStore(state => state.isSidebarPinned);
+  const isSidebarOpen = useCanvasStore(state => state.isSidebarOpen);
+  const openSidebar = useCanvasStore(state => state.openSidebar);
+  const grid = useCanvasStore(state => state.grid);
+  const guidelines = useCanvasStore(state => state.guidelines);
+  const isDraggingElements = useCanvasStore(state => state.isDraggingElements);
 
-export const TopActionBar: React.FC<TopActionBarProps> = ({
-  activeMode,
-  onModeChange,
-  sidebarWidth = 0,
-  isSidebarPinned = false,
-  isSidebarOpen = false,
-  onMenuClick,
-  showGridRulers = false,
-}) => {
+  // Calculated values
+  const effectiveSidebarWidth = isSidebarPinned ? sidebarWidth : 0;
+  const showGridRulers = (grid?.enabled && grid?.showRulers) || (guidelines?.enabled && guidelines?.manualGuidesEnabled);
   const showMenuButton = !isSidebarPinned;
 
-  // Detect mobile breakpoint
-  const isMobile = useBreakpointValue({ base: true, md: false }, { fallback: 'md' });
+  // Use unified responsive hook
+  const { isMobile } = useResponsive();
 
   // Dynamic tools hook
   const {
@@ -46,8 +46,6 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
   // Colors for active buttons
   const activeBg = useColorModeValue('gray.800', 'gray.200');
   const activeColor = useColorModeValue('white', 'gray.900');
-
-  const isDraggingElements = useCanvasStore(state => state.isDraggingElements);
 
   // Subscribe to visible tool IDs
   const visibleToolIds = useVisibleToolIds();
@@ -135,8 +133,8 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
       toggleExtraTools();
     }
 
-    onModeChange(mode);
-  }, [onModeChange, trackToolUsage, extraTools, toggleExtraTools]);
+    setMode(mode);
+  }, [setMode, trackToolUsage, extraTools, toggleExtraTools]);
 
   // Handle click outside to close extra tools bar
   React.useEffect(() => {
@@ -162,7 +160,7 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
     <>
       <FloatingToolbarShell
         toolbarPosition="top"
-        sidebarWidth={sidebarWidth}
+        sidebarWidth={effectiveSidebarWidth}
         showGridRulers={showGridRulers}
         sx={{
           transition: 'top 0.2s ease-in-out, left 0.3s ease-in-out, right 0.3s ease-in-out, transform 0.3s ease-in-out',
@@ -251,7 +249,7 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
               <ToolbarIconButton
                 icon={Menu}
                 label="Toggle sidebar"
-                onClick={onMenuClick}
+                onClick={openSidebar}
                 variant="ghost"
                 colorScheme="gray"
                 bg={isSidebarOpen ? 'transparent' : undefined}
@@ -272,7 +270,7 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
         <Box ref={extraToolsBarRef}>
           <FloatingToolbarShell
             toolbarPosition="top"
-            sidebarWidth={sidebarWidth}
+            sidebarWidth={effectiveSidebarWidth}
             showGridRulers={showGridRulers}
             sx={{
               marginTop: '42px',

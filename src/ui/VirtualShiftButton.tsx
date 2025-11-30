@@ -1,22 +1,26 @@
 import React from 'react';
-import { Box, IconButton, useBreakpointValue } from '@chakra-ui/react';
+import { Box, IconButton } from '@chakra-ui/react';
 import { ArrowBigUp } from 'lucide-react';
 import { useCanvasStore } from '../store/canvasStore';
 import { RenderCountBadgeWrapper } from './RenderCountBadgeWrapper';
-import { useToggleButtonColors, useToolbarColors, useToolbarPosition } from '../hooks';
+import { useToggleButtonColors, useToolbarColors, useToolbarPosition, useResponsive } from '../hooks';
 
-interface VirtualShiftButtonProps {
-  sidebarWidth?: number;
-}
-
-export const VirtualShiftButton: React.FC<VirtualShiftButtonProps> = ({
-  sidebarWidth = 0,
-}) => {
+/**
+ * VirtualShiftButton - Mobile-only button for virtual shift key
+ * Gets all state from store directly (no props drilling)
+ */
+export const VirtualShiftButton: React.FC = () => {
+  // Get state from store
+  const sidebarWidth = useCanvasStore(state => state.sidebarWidth);
+  const isSidebarPinned = useCanvasStore(state => state.isSidebarPinned);
   const isVirtualShiftActive = useCanvasStore(state => state.isVirtualShiftActive);
   const toggleVirtualShift = useCanvasStore(state => state.toggleVirtualShift);
 
-  const { isSidebarPinned } = useToolbarPosition(sidebarWidth);
-  const isMobile = useBreakpointValue({ base: true, md: false }, { fallback: 'md' });
+  // Calculate effective sidebar width
+  const effectiveSidebarWidth = isSidebarPinned ? sidebarWidth : 0;
+
+  const { isSidebarPinned: isPinned } = useToolbarPosition(effectiveSidebarWidth);
+  const { isMobile } = useResponsive();
 
   // Use shared color hooks
   const { activeBg, activeColor, activeHoverBg, inactiveHoverBg } = useToggleButtonColors();
@@ -33,7 +37,7 @@ export const VirtualShiftButton: React.FC<VirtualShiftButtonProps> = ({
     <Box
       position="fixed"
       bottom={{ base: 2, md: 3 }}
-      right={isSidebarPinned ? `${sidebarWidth + 20}px` : "20px"}
+      right={isPinned ? `${effectiveSidebarWidth + 20}px` : "20px"}
       zIndex={999}
     >
       <IconButton

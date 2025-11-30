@@ -17,14 +17,11 @@ import { useIOSSupport } from './hooks/useIOSSupport';
 import { DEFAULT_MODE } from './constants';
 
 function App() {
-  const activePlugin = useCanvasStore(state => state.activePlugin);
   const setMode = useCanvasStore(state => state.setMode);
   const { importSvgFiles } = useSvgImport();
 
   // Get global overlays from plugins
   const globalOverlays = useReactMemo(() => pluginManager.getGlobalOverlays(), []);
-  const grid = useCanvasStore(state => state.grid);
-  const guidelines = useCanvasStore(state => state.guidelines);
 
   // iOS support hook (handles detection and back swipe prevention)
   const { isIOS } = useIOSSupport();
@@ -33,10 +30,8 @@ function App() {
   useColorModeSync();
 
   // Sidebar state from store (single source of truth)
-  const sidebarWidth = useCanvasStore(state => state.sidebarWidth);
   const isSidebarPinned = useCanvasStore(state => state.isSidebarPinned);
   const isSidebarOpen = useCanvasStore(state => state.isSidebarOpen);
-  const openSidebar = useCanvasStore(state => state.openSidebar);
 
   // When sidebar closes and is not pinned, if in sidebar panel mode, switch to default mode
   useEffect(() => {
@@ -44,10 +39,6 @@ function App() {
       setMode(DEFAULT_MODE);
     }
   }, [isSidebarOpen, isSidebarPinned, setMode]);
-
-  const handleMenuClick = useCallback(() => {
-    openSidebar();
-  }, [openSidebar]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -63,9 +54,6 @@ function App() {
       await importSvgFiles(files, { appendMode: true });
     }
   }, [importSvgFiles]);
-
-  // Calculate effective sidebar width for positioning (only when pinned)
-  const effectiveSidebarWidth = isSidebarPinned ? sidebarWidth : 0;
 
   return (
       <div
@@ -106,22 +94,10 @@ function App() {
           />
         )}
         <Sidebar />
-        <TopActionBar
-          activeMode={activePlugin}
-          onModeChange={setMode}
-          sidebarWidth={effectiveSidebarWidth}
-          isSidebarPinned={isSidebarPinned}
-          isSidebarOpen={isSidebarOpen}
-          onMenuClick={handleMenuClick}
-          showGridRulers={(grid?.enabled && grid?.showRulers) || (guidelines?.enabled && guidelines?.manualGuidesEnabled)}
-        />
-        <BottomActionBar
-          sidebarWidth={effectiveSidebarWidth}
-        />
-        <ExpandableToolPanel activePlugin={activePlugin} sidebarWidth={effectiveSidebarWidth} />
-        <VirtualShiftButton
-          sidebarWidth={effectiveSidebarWidth}
-        />
+        <TopActionBar />
+        <BottomActionBar />
+        <ExpandableToolPanel />
+        <VirtualShiftButton />
         {/* Render global overlays from plugins (includes MinimapPanel) */}
         {globalOverlays.map((OverlayComponent, index) => (
           <OverlayComponent key={`global-overlay-${index}`} />

@@ -7,6 +7,7 @@ export { useColorModeSync } from './useColorModeSync';
 export { useDragResize } from './useDragResize';
 export { useIOSSupport } from './useIOSSupport';
 export { useIsMobile } from './useIsMobile';
+export { useResponsive } from './useResponsive';
 export { useMenuColors, useMenuItemStyles } from './useMenuColors';
 export { useToolbarColors, usePanelHeaderColors, useCounterColors, usePanelButtonColors, useExpandablePanelColors, useInputColors, useToggleButtonColors } from './useToolbarColors';
 export { useRenderCount } from './useRenderCount';

@@ -15,15 +15,19 @@ import { pluginManager, useIsGlobalUndoRedoDisabled } from '../utils/pluginManag
 import { FloatingContextMenuButton } from './FloatingContextMenuButton';
 import { useTemporalState, useEnabledPlugins } from '../hooks';
 
-interface BottomActionBarProps {
-  sidebarWidth?: number;
-}
-
-export const BottomActionBar: React.FC<BottomActionBarProps> = ({
-  sidebarWidth = 0,
-}) => {
+/**
+ * BottomActionBar - Undo/Redo, Zoom controls, and context menu
+ * Gets all state from store directly (no props drilling)
+ */
+export const BottomActionBar: React.FC = () => {
+  // Get state from store
+  const sidebarWidth = useCanvasStore(state => state.sidebarWidth);
+  const isSidebarPinned = useCanvasStore(state => state.isSidebarPinned);
   const zoom = useCanvasStore(state => state.zoom);
   const resetZoom = useCanvasStore(state => state.resetZoom);
+
+  // Calculate effective sidebar width
+  const effectiveSidebarWidth = isSidebarPinned ? sidebarWidth : 0;
 
   // Optimize: Only subscribe to zoom value, not the entire viewport object
   const viewportZoom = useCanvasStore(state => state.viewport.zoom);
@@ -50,7 +54,7 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
   return (
     <FloatingToolbarShell
       toolbarPosition="bottom"
-      sidebarWidth={sidebarWidth}
+      sidebarWidth={effectiveSidebarWidth}
       sx={{
         transition: 'left 0.3s ease-in-out, right 0.3s ease-in-out, transform 0.3s ease-in-out',
       }}

@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useEffect, useCallback, useMemo } from 'react';
 import {
   Drawer,
   DrawerBody,
   DrawerOverlay,
   DrawerContent,
   Box,
-  useBreakpointValue,
   useColorModeValue
 } from '@chakra-ui/react';
 import { useCanvasStore } from '../store/canvasStore';
@@ -14,19 +13,21 @@ import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
 import { DEFAULT_MODE } from '../constants';
 import { pluginManager } from '../utils/pluginManager';
 import { SidebarContext, type SidebarContextValue } from '../contexts/SidebarContext';
+import { useResponsive } from '../hooks';
 
 export const Sidebar: React.FC = () => {
-  // Detect if desktop (md breakpoint = 768px)
-  const isDesktop = useBreakpointValue({ base: false, md: true }, { ssr: false });
+  // Use unified responsive hook
+  const { isDesktop } = useResponsive();
   const sidebarBg = useColorModeValue('surface.sidebar', 'surface.sidebar');
   const sidebarBorder = useColorModeValue('border.sidebar', 'border.sidebar');
   const overlayBg = useColorModeValue('blackAlpha.600', 'blackAlpha.700');
 
-  // State from store (single source of truth)
+  // All state from store (single source of truth - no local state)
   const sidebarWidth = useCanvasStore((state) => state.sidebarWidth);
   const setSidebarWidth = useCanvasStore((state) => state.setSidebarWidth);
   const isSidebarOpen = useCanvasStore((state) => state.isSidebarOpen);
   const setIsSidebarOpen = useCanvasStore((state) => state.setIsSidebarOpen);
+  const isSidebarPinned = useCanvasStore((state) => state.isSidebarPinned);
   const setIsSidebarPinned = useCanvasStore((state) => state.setIsSidebarPinned);
   
   const activePlugin = useCanvasStore((state) => state.activePlugin);
@@ -44,23 +45,14 @@ export const Sidebar: React.FC = () => {
 
   const initialWidth = 250;
 
-  // Local pinned state for internal use (syncs with store)
-  const [isPinned, setIsPinned] = useState(false);
-  
-  // Sync isPinned with desktop/mobile changes
+  // Auto-unpin on mobile, auto-pin on desktop in dev
   useEffect(() => {
-    if (!isDesktop) {
-      setIsPinned(false);
-    } else if (import.meta.env.DEV) {
-      setIsPinned(true);
+    if (!isDesktop && isSidebarPinned) {
+      setIsSidebarPinned(false);
+    } else if (isDesktop && import.meta.env.DEV && !isSidebarPinned) {
+      setIsSidebarPinned(true);
     }
-  }, [isDesktop]);
-
-  // Sync pinned state to store
-  useEffect(() => {
-    const effectivePinned = isPinned && isDesktop === true;
-    setIsSidebarPinned(effectivePinned);
-  }, [isPinned, isDesktop, setIsSidebarPinned]);
+  }, [isDesktop, isSidebarPinned, setIsSidebarPinned]);
 
   // Handle sidebar resize
   const handleResize = useCallback((newWidth: number) => {
@@ -108,15 +100,15 @@ export const Sidebar: React.FC = () => {
   }, [showFilePanel, showSettingsPanel, setShowFilePanel, setShowSettingsPanel, setMode]);
 
   const handleTogglePin = useCallback(() => {
-    setIsPinned(prev => !prev);
-  }, []);
+    setIsSidebarPinned(!isSidebarPinned);
+  }, [isSidebarPinned, setIsSidebarPinned]);
 
   // Create context value
   const sidebarContextValue: SidebarContextValue = useMemo(() => ({
     activePlugin,
     showFilePanel,
     showSettingsPanel,
-    isPinned,
+    isPinned: isSidebarPinned,
     isDesktop,
     isArrangeExpanded,
     setMode,
@@ -127,7 +119,7 @@ export const Sidebar: React.FC = () => {
     activePlugin,
     showFilePanel,
     showSettingsPanel,
-    isPinned,
+    isSidebarPinned,
     isDesktop,
     isArrangeExpanded,
     setMode,
@@ -137,7 +129,7 @@ export const Sidebar: React.FC = () => {
   ]);
 
   // When pinned AND desktop, use a fixed Box instead of Drawer
-  if (isPinned && isSidebarOpen && isDesktop) {
+  if (isSidebarPinned && isSidebarOpen && isDesktop) {
     return (
       <SidebarContext.Provider value={sidebarContextValue}>
         <Box
@@ -183,7 +175,7 @@ export const Sidebar: React.FC = () => {
         wrapperStyle={{ 
           position: 'fixed', 
           top: '60px', 
-          right: isPinned && isDesktop ? `${sidebarWidth + 10}px` : '10px',
+          right: isSidebarPinned && isDesktop ? `${sidebarWidth + 10}px` : '10px',
           zIndex: 10000 
         }}
       />
