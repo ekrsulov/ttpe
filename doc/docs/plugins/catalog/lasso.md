@@ -182,8 +182,8 @@ Master toggle in the sidebar panel to enable/disable lasso selection mode. When 
 - **Line Style**: Dotted pattern (2px dash, 2px gap, zoom-adjusted)
 
 ### Closed vs Open Lasso
-- **Closed Lasso** (default): Forms a complete polygon that selects elements within the enclosed area
-- **Open Lasso**: Draws as a simple line that selects elements the line path crosses or touches
+- **Closed Lasso**: Forms a complete polygon that selects elements within the enclosed area
+- **Open Lasso** (default): Draws as a simple line that selects elements the line path crosses or touches
 - **Toggle**: Switch in panel content to change between closed and open modes
 
 ## Context Menu Actions
