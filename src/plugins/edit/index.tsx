@@ -53,6 +53,10 @@ export const editPlugin: PluginDefinition<CanvasStore> = {
     },
     toggleTo: 'select',
   },
+  behaviorFlags: () => ({
+    selectionMode: 'commands',
+    showPointFeedback: true,
+  }),
   toolDefinition: {
     order: 4,
     visibility: 'always-shown',

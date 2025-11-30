@@ -8,6 +8,7 @@ import type { SelectionContextInfo } from '../types/selection';
 import { useCanvasStore } from '../store/canvasStore';
 import { extractEditablePoints } from '../utils/pathParserUtils';
 import type { PathData } from '../types';
+import { pluginManager } from '../utils/pluginManager';
 
 /**
  * Floating Context Menu Button
@@ -24,7 +25,9 @@ export const FloatingContextMenuButton: React.FC = () => {
   const selectedCommands = useCanvasStore(state => state.selectedCommands);
   const selectedSubpaths = useCanvasStore(state => state.selectedSubpaths);
   const elements = useCanvasStore(state => state.elements);
-  const activePlugin = useCanvasStore(state => state.activePlugin);
+
+  // Get selection mode from the active plugin's behavior flags
+  const selectionMode = pluginManager.getActiveSelectionMode();
 
   // Determine selection context
   const context: SelectionContextInfo | null = useMemo(() => {
@@ -85,16 +88,16 @@ export const FloatingContextMenuButton: React.FC = () => {
 
   const hasSelection = context !== null;
 
-  // Count selected items for badge - depends on active plugin
+  // Count selected items for badge - depends on active plugin's selection mode
   const selectionCount = useMemo(() => {
-    if (activePlugin === 'subpath' && selectedSubpaths && selectedSubpaths.length > 0) {
+    if (selectionMode === 'subpaths' && selectedSubpaths && selectedSubpaths.length > 0) {
       return selectedSubpaths.length;
     }
-    if (activePlugin === 'edit' && selectedCommands && selectedCommands.length > 0) {
+    if (selectionMode === 'commands' && selectedCommands && selectedCommands.length > 0) {
       return selectedCommands.length;
     }
     return selectedIds.length;
-  }, [activePlugin, selectedIds, selectedCommands, selectedSubpaths]);
+  }, [selectionMode, selectedIds, selectedCommands, selectedSubpaths]);
 
   const handleActionClick = (actionFn?: () => void) => {
     if (actionFn) {

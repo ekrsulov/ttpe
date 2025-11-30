@@ -21,6 +21,7 @@ import {
 import { VStack, HStack, IconButton as ChakraIconButton, Box, useColorModeValue } from '@chakra-ui/react';
 import ConditionalTooltip from '../../ui/ConditionalTooltip';
 import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
+import { pluginManager } from '../../utils/pluginManager';
 
 interface ButtonConfig {
   handler: () => void;
@@ -38,16 +39,16 @@ const ArrangePanelComponent: React.FC = () => {
   const selectedCommandsCount = useCanvasStore(state => state.selectedCommands?.length ?? 0);
   const selectedSubpathsCount = useCanvasStore(state => state.selectedSubpaths?.length ?? 0);
   
-  // Get current state without subscribing - fresh on every render
-  const state = useCanvasStore.getState();
-  const activePlugin = state.activePlugin;
+  // Get selection mode from the active plugin's behavior flags
+  const selectionMode = pluginManager.getActiveSelectionMode();
 
+  // Determine alignment/distribution thresholds based on selection mode
   const canAlign = selectedCount >= 2 ||
-    (activePlugin === 'edit' && selectedCommandsCount >= 2) ||
-    (activePlugin === 'subpath' && selectedSubpathsCount >= 2);
+    (selectionMode === 'commands' && selectedCommandsCount >= 2) ||
+    (selectionMode === 'subpaths' && selectedSubpathsCount >= 2);
   const canDistribute = selectedCount >= 3 ||
-    (activePlugin === 'edit' && selectedCommandsCount >= 3) ||
-    (activePlugin === 'subpath' && selectedSubpathsCount >= 3);
+    (selectionMode === 'commands' && selectedCommandsCount >= 3) ||
+    (selectionMode === 'subpaths' && selectedSubpathsCount >= 3);
 
   // Button configurations - now using the consolidated handlers
   const distributionButtons: ButtonConfig[] = [
@@ -62,11 +63,12 @@ const ArrangePanelComponent: React.FC = () => {
     { handler: currentHandlers.matchHeightToSmallest, icon: <FoldVertical size={12} />, title: "Match Height to Smallest", disabled: !canAlign }
   ];
 
-  const orderButtons: ButtonConfig[] = activePlugin === 'edit' ? [] : [
-    { handler: currentHandlers.bringToFront, icon: <Triangle size={12} />, title: `Bring ${activePlugin === 'subpath' ? 'Subpath' : ''} to Front`, disabled: activePlugin === 'subpath' ? selectedSubpathsCount === 0 : selectedCount === 0 },
-    { handler: currentHandlers.sendForward, icon: <ChevronUp size={12} />, title: `Send ${activePlugin === 'subpath' ? 'Subpath' : ''} Forward`, disabled: activePlugin === 'subpath' ? selectedSubpathsCount === 0 : selectedCount === 0 },
-    { handler: currentHandlers.sendBackward, icon: <ChevronDown size={12} />, title: `Send ${activePlugin === 'subpath' ? 'Subpath' : ''} Backward`, disabled: activePlugin === 'subpath' ? selectedSubpathsCount === 0 : selectedCount === 0 },
-    { handler: currentHandlers.sendToBack, icon: <Triangle size={12} style={{ transform: 'rotate(180deg)' }} />, title: `Send ${activePlugin === 'subpath' ? 'Subpath' : ''} to Back`, disabled: activePlugin === 'subpath' ? selectedSubpathsCount === 0 : selectedCount === 0 }
+  // Order buttons are only available for element and subpath selection modes
+  const orderButtons: ButtonConfig[] = selectionMode === 'commands' ? [] : [
+    { handler: currentHandlers.bringToFront, icon: <Triangle size={12} />, title: `Bring ${selectionMode === 'subpaths' ? 'Subpath' : ''} to Front`, disabled: selectionMode === 'subpaths' ? selectedSubpathsCount === 0 : selectedCount === 0 },
+    { handler: currentHandlers.sendForward, icon: <ChevronUp size={12} />, title: `Send ${selectionMode === 'subpaths' ? 'Subpath' : ''} Forward`, disabled: selectionMode === 'subpaths' ? selectedSubpathsCount === 0 : selectedCount === 0 },
+    { handler: currentHandlers.sendBackward, icon: <ChevronDown size={12} />, title: `Send ${selectionMode === 'subpaths' ? 'Subpath' : ''} Backward`, disabled: selectionMode === 'subpaths' ? selectedSubpathsCount === 0 : selectedCount === 0 },
+    { handler: currentHandlers.sendToBack, icon: <Triangle size={12} style={{ transform: 'rotate(180deg)' }} />, title: `Send ${selectionMode === 'subpaths' ? 'Subpath' : ''} to Back`, disabled: selectionMode === 'subpaths' ? selectedSubpathsCount === 0 : selectedCount === 0 }
   ];
 
   const alignmentButtons: ButtonConfig[] = [
@@ -122,20 +124,20 @@ const ArrangePanelComponent: React.FC = () => {
         {renderButtonRow(alignmentButtons)}
 
         {/* Row 2: Distribution and Order buttons */}
-        {activePlugin === 'edit' ? (
-          /* Edit mode has different layout - no order buttons */
+        {selectionMode === 'commands' ? (
+          /* Commands mode has different layout - no order buttons */
           <HStack spacing={0.5} justify="space-between">
             {renderButtonRow(distributionButtons)}
           </HStack>
         ) : (
-          /* Normal layout for select and subpath modes */
+          /* Normal layout for element and subpath modes */
           <HStack spacing={0.5}>
             {renderButtonRow([...distributionButtons, ...orderButtons])}
           </HStack>
         )}
 
-        {/* Row 3: Size Match buttons (hidden in edit mode) */}
-        {activePlugin !== 'edit' && renderButtonRow(sizeMatchButtons)}
+        {/* Row 3: Size Match buttons (hidden in commands mode) */}
+        {selectionMode !== 'commands' && renderButtonRow(sizeMatchButtons)}
       </VStack>
     </Box>
   );

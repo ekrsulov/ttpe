@@ -36,6 +36,9 @@ export const subpathPlugin: PluginDefinition<CanvasStore> = {
       return pathData.subPaths.length <= 1;
     },
   },
+  behaviorFlags: () => ({
+    selectionMode: 'subpaths',
+  }),
   init: (_context) => {
     return () => { };
   },

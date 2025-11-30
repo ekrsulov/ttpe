@@ -59,6 +59,9 @@ export const panPlugin: PluginDefinition<CanvasStore> = {
     },
   },
   toolDefinition: { order: 5, visibility: 'always-shown' },
+  behaviorFlags: () => ({
+    isPanMode: true,
+  }),
   subscribedEvents: ['pointermove'],
   handler: (
     event,
@@ -84,6 +87,9 @@ export const panPlugin: PluginDefinition<CanvasStore> = {
 export const filePlugin: PluginDefinition<CanvasStore> = {
   id: 'file',
   metadata: { label: 'File', cursor: 'default' },
+  behaviorFlags: () => ({
+    isSidebarPanelMode: true,
+  }),
   subscribedEvents: ['pointerdown'],
   handler: (_event, _point, _target, context) => {
     context.store.getState().setMode('select');
@@ -93,6 +99,9 @@ export const filePlugin: PluginDefinition<CanvasStore> = {
 export const settingsPlugin: PluginDefinition<CanvasStore> = {
   id: 'settings',
   metadata: { label: 'Settings', cursor: 'default' },
+  behaviorFlags: () => ({
+    isSidebarPanelMode: true,
+  }),
   subscribedEvents: ['pointerdown'],
   handler: (_event, _point, _target, context) => {
     context.store.getState().setMode('select');

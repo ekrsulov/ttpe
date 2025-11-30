@@ -7,8 +7,9 @@ import { useCanvasStore } from '../../store/canvasStore';
 import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
 import type { PluginSelectorSlice } from '../pluginSelector/slice';
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface MinimapPanelProps {
-  sidebarWidth?: number;
+  // No props needed - component reads all state from store
 }
 
 interface DragState {
@@ -126,12 +127,17 @@ const worldToMinimap = (value: number, scale: number, offset: number): number =>
 
 const minimapToWorld = (value: number, scale: number, offset: number): number => (value - offset) / scale;
 
-export const MinimapPanel: React.FC<MinimapPanelProps> = ({ sidebarWidth = 0 }) => {
+export const MinimapPanel: React.FC<MinimapPanelProps> = () => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const clipPathId = useId();
   const lastClickRef = useRef<{ elementId: string; time: number } | null>(null);
   const containerBg = useColorModeValue('surface.toolbar', 'surface.toolbar');
   const containerShadow = useColorModeValue('0px 0px 10px 2px rgba(0, 0, 0, 0.1)', 'none');
+  
+  // Read sidebar state from store and calculate effective width
+  const storedSidebarWidth = useCanvasStore((state) => state.sidebarWidth);
+  const isSidebarPinned = useCanvasStore((state) => state.isSidebarPinned);
+  const sidebarWidth = isSidebarPinned ? storedSidebarWidth : 0;
   const borderWidth = useColorModeValue('0px', '1px');
   const canvasFill = useColorModeValue('rgba(248, 250, 252, 0.95)', 'rgba(26, 32, 44, 0.85)');
   const borderColor = useColorModeValue('border.toolbar', 'border.toolbar');

@@ -81,7 +81,7 @@ export const useCanvasPointerHandlers = (
         const point = screenToCanvas(e.clientX, e.clientY);
         const target = (e.target as Element) ?? null;
 
-        if (isSpacePressed || activePlugin === 'pan') {
+        if (isSpacePressed || pluginManager.isInPanMode()) {
             return;
         }
 

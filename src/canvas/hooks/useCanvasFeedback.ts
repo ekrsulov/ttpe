@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { extractEditablePoints } from '../../utils/pathParserUtils';
 import type { CanvasElement, PathData } from '../../types';
+import { pluginManager } from '../../utils/pluginManager';
 
 export interface SelectedCommand {
     elementId: string;
@@ -17,8 +18,9 @@ export interface UseCanvasFeedbackParams {
 }
 
 /**
- * Hook that provides visual feedback for selected points in edit mode.
- * When a single point is selected, it reports the point's position.
+ * Hook that provides visual feedback for selected points.
+ * When a single point is selected and the plugin has showPointFeedback enabled,
+ * it reports the point's position.
  */
 export function useCanvasFeedback({
     currentMode,
@@ -29,7 +31,10 @@ export function useCanvasFeedback({
     useEffect(() => {
         if (!onPointPositionChange) return;
 
-        if (currentMode === 'edit' && selectedCommands.length === 1) {
+        // Check if the current plugin wants point feedback
+        const shouldShowFeedback = pluginManager.shouldShowPointFeedback();
+
+        if (shouldShowFeedback && selectedCommands.length === 1) {
             const selectedCommand = selectedCommands[0];
             const element = elements.find(el => el.id === selectedCommand.elementId);
 

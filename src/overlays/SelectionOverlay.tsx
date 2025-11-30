@@ -1,6 +1,7 @@
 import React from 'react';
 import { useSelectionBounds } from '../hooks/useSelectionBounds';
 import { SelectionRects } from './SelectionRects';
+import { pluginManager } from '../utils/pluginManager';
 
 interface SelectionOverlayProps {
   element: {
@@ -27,9 +28,11 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
   bounds,
   viewport,
   selectedSubpaths,
-  activePlugin,
 }) => {
   // Use shared hook to compute selection bounds
+  // Check if the active plugin wants to skip subpath measurements via behavior flags
+  const skipSubpathMeasurements = pluginManager.shouldSkipSubpathMeasurements();
+
   const {
     selectionColor,
     strokeWidth,
@@ -41,7 +44,7 @@ export const SelectionOverlay: React.FC<SelectionOverlayProps> = ({
     bounds,
     viewport,
     selectedSubpaths,
-    skipSubpathMeasurements: activePlugin === 'transformation',
+    skipSubpathMeasurements,
   });
 
   return (

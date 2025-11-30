@@ -11,6 +11,16 @@ All notable changes to VectorNest will be documented here.
 ## [Unreleased]
 
 ### Added
+- **Pan Mode and Sidebar Panel Mode Behavior Flags**: New behavior flags for plugin modes
+  - `isPanMode`: Indicates plugin is a pan/navigation mode (shows grabbing cursor, skips pointer handling)
+  - `isSidebarPanelMode`: Indicates plugin is a sidebar panel mode (file, settings)
+  - `pluginManager.isInPanMode()`: Query if active plugin is in pan mode
+  - `pluginManager.isInSidebarPanelMode()`: Query if active plugin is a sidebar panel
+  - Removes hardcoded 'pan', 'file', 'settings' references from core code
+- **Sidebar Pinned State in Store**: New `isSidebarPinned` property in uiSlice
+  - `setIsSidebarPinned(isPinned: boolean)` action for updating pinned state
+  - Allows global components to calculate effective sidebar width without prop drilling
+  - Sidebar component syncs its local pinned state to the store
 - **Interactive Canvas Rulers**: New rulers component with horizontal and vertical measurement scales
   - Displays around the canvas with dynamic tick spacing based on zoom level
   - Supports interactive guide creation by dragging from rulers
@@ -46,6 +56,11 @@ All notable changes to VectorNest will be documented here.
   - `useVisibleToolIds()` hook for reactive tool ID tracking
 
 ### Changed
+- **MinimapPanel Decoupling**: MinimapPanel is now a global overlay registered by the minimap plugin
+  - Removed hardcoded import and render from App.tsx
+  - MinimapPanel reads `sidebarWidth` and `isSidebarPinned` from store instead of props
+  - Registered via plugin's `overlays` array with `placement: 'global'`
+  - Follows the same pattern as other global overlays
 - **Plugin Decoupling**: Major refactoring to remove hardcoded plugin references from core
   - Core no longer references specific plugins like 'select', 'guidelines', etc. by name
   - Mode transitions use registered lifecycle actions instead of hardcoded cleanup

@@ -13,6 +13,7 @@ import { useCanvasStore } from '../store/canvasStore';
 import { SidebarContent } from './components/SidebarContent';
 import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
 import { DEFAULT_MODE } from '../constants';
+import { pluginManager } from '../utils/pluginManager';
 
 interface SidebarProps {
   onPinnedChange?: (isPinned: boolean) => void;
@@ -54,6 +55,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   // Sidebar width state (only for pinned mode)
   const sidebarWidth = useCanvasStore((state) => state.sidebarWidth);
   const setSidebarWidth = useCanvasStore((state) => state.setSidebarWidth);
+  const setIsSidebarPinned = useCanvasStore((state) => state.setIsSidebarPinned);
   const initialWidth = 250; // Initial width for reset
   
   // Sync isPinned with desktop/mobile changes
@@ -66,6 +68,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       setIsPinned(true);
     }
   }, [isDesktop]);
+
+  // Sync pinned state to store for other components (like MinimapPanel)
+  useEffect(() => {
+    const effectivePinned = isPinned && isDesktop === true;
+    setIsSidebarPinned(effectivePinned);
+  }, [isPinned, isDesktop, setIsSidebarPinned]);
 
   // Notify parent when pinned state changes
   useEffect(() => {
@@ -113,7 +121,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   // Close special panels when switching to tool modes
   useEffect(() => {
-    if (activePlugin && activePlugin !== 'file' && activePlugin !== 'settings') {
+    if (activePlugin && !pluginManager.isInSidebarPanelMode()) {
       setShowFilePanel(false);
       setShowSettingsPanel(false);
     }

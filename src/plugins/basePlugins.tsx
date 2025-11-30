@@ -223,6 +223,9 @@ export const selectPlugin: PluginDefinition<CanvasStore> = {
       '*': { description: 'Allows transitioning to any registered mode.' },
     },
   },
+  behaviorFlags: () => ({
+    selectionMode: 'elements',
+  }),
   toolDefinition: { order: 1, visibility: 'always-shown' },
   subscribedEvents: ['pointerdown', 'pointerup'],
   sidebarPanels: [

@@ -131,6 +131,12 @@ export interface PluginHookContribution {
 };
 
 /**
+ * Selection mode that a plugin operates in.
+ * Determines what type of items the plugin selects and operates on.
+ */
+export type PluginSelectionMode = 'elements' | 'subpaths' | 'commands' | 'none';
+
+/**
  * Plugin behavior flags that control interactions with other plugins
  */
 export interface PluginBehaviorFlags {
@@ -144,6 +150,34 @@ export interface PluginBehaviorFlags {
    * Used by tools that need exclusive pointer control
    */
   preventsSubpathInteraction?: boolean;
+  /**
+   * Selection mode this plugin operates in.
+   * - 'elements': Selects whole elements (select mode)
+   * - 'subpaths': Selects individual subpaths within paths
+   * - 'commands': Selects individual path commands/points (edit mode)
+   * - 'none': Plugin doesn't handle selection
+   */
+  selectionMode?: PluginSelectionMode;
+  /**
+   * When true, skips subpath measurements in selection overlay.
+   * Used by transformation tools to avoid expensive calculations.
+   */
+  skipSubpathMeasurements?: boolean;
+  /**
+   * When true, shows point position feedback when single point is selected.
+   */
+  showPointFeedback?: boolean;
+  /**
+   * When true, indicates the plugin is a pan/navigation mode.
+   * Used to show grabbing cursor and skip normal pointer event handling.
+   */
+  isPanMode?: boolean;
+  /**
+   * When true, indicates the plugin is a sidebar panel mode (like file/settings).
+   * These modes don't interact with the canvas and should revert to default
+   * mode when sidebar closes.
+   */
+  isSidebarPanelMode?: boolean;
 }
 
 export interface PluginDefinition<TStore extends object = object> {

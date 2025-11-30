@@ -367,6 +367,101 @@ export class PluginManager {
     return false;
   }
 
+  /**
+   * Get the selection mode of the active plugin.
+   * @returns The selection mode or 'elements' as default
+   */
+  getActiveSelectionMode(): import('../types/plugins').PluginSelectionMode {
+    if (!this.storeApi) return 'elements';
+
+    const state = this.storeApi.getState();
+    const activePlugin = state.activePlugin;
+    
+    if (!activePlugin) return 'elements';
+    
+    const plugin = this.registry.get(activePlugin);
+    if (!plugin?.behaviorFlags) return 'elements';
+    
+    const flags = plugin.behaviorFlags(state);
+    return flags.selectionMode ?? 'elements';
+  }
+
+  /**
+   * Check if the active plugin should skip subpath measurements.
+   * @returns true if subpath measurements should be skipped
+   */
+  shouldSkipSubpathMeasurements(): boolean {
+    if (!this.storeApi) return false;
+
+    const state = this.storeApi.getState();
+    const activePlugin = state.activePlugin;
+    
+    if (!activePlugin) return false;
+    
+    const plugin = this.registry.get(activePlugin);
+    if (!plugin?.behaviorFlags) return false;
+    
+    const flags = plugin.behaviorFlags(state);
+    return flags.skipSubpathMeasurements ?? false;
+  }
+
+  /**
+   * Check if the active plugin should show point position feedback.
+   * @returns true if point feedback should be shown
+   */
+  shouldShowPointFeedback(): boolean {
+    if (!this.storeApi) return false;
+
+    const state = this.storeApi.getState();
+    const activePlugin = state.activePlugin;
+    
+    if (!activePlugin) return false;
+    
+    const plugin = this.registry.get(activePlugin);
+    if (!plugin?.behaviorFlags) return false;
+    
+    const flags = plugin.behaviorFlags(state);
+    return flags.showPointFeedback ?? false;
+  }
+
+  /**
+   * Check if the active plugin is a pan/navigation mode.
+   * @returns true if in pan mode (shows grabbing cursor, skips normal pointer handling)
+   */
+  isInPanMode(): boolean {
+    if (!this.storeApi) return false;
+
+    const state = this.storeApi.getState();
+    const activePlugin = state.activePlugin;
+    
+    if (!activePlugin) return false;
+    
+    const plugin = this.registry.get(activePlugin);
+    if (!plugin?.behaviorFlags) return false;
+    
+    const flags = plugin.behaviorFlags(state);
+    return flags.isPanMode ?? false;
+  }
+
+  /**
+   * Check if the active plugin is a sidebar panel mode (file, settings, etc).
+   * @returns true if in a sidebar panel mode
+   */
+  isInSidebarPanelMode(): boolean {
+    if (!this.storeApi) return false;
+
+    const state = this.storeApi.getState();
+    const activePlugin = state.activePlugin;
+    
+    if (!activePlugin) return false;
+    
+    const plugin = this.registry.get(activePlugin);
+    if (!plugin?.behaviorFlags) return false;
+    
+    const flags = plugin.behaviorFlags(state);
+    return flags.isSidebarPanelMode ?? false;
+  }
+
   unregister(pluginId: string): void {
     const existing = this.registry.get(pluginId);
     if (!existing) {

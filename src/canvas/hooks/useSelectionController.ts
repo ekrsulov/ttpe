@@ -6,6 +6,7 @@ import type { Point } from '../../types';
 import { mergeUniqueByKey } from '../../utils/coreHelpers';
 import type { SelectionData } from '../selection/SelectionStrategy';
 import { DEFAULT_SELECTION_STRATEGY } from '../../constants';
+import { pluginManager } from '../../utils/pluginManager';
 
 // Constants for modifier keys
 const SHIFT_KEYS = new Set(['Shift', 'ShiftLeft', 'ShiftRight']);
@@ -223,6 +224,9 @@ export const useSelectionController = (): UseSelectionControllerResult => {
     const state = useCanvasStore.getState() as Record<string, unknown>;
     const activeStrategyId = (state.activeSelectionStrategy as string | undefined) ?? DEFAULT_SELECTION_STRATEGY;
 
+    // Get selection mode from active plugin's behavior flags
+    const selectionMode = pluginManager.getActiveSelectionMode();
+
     // Build selection data
     const selectionData: SelectionData = {
       start: selectionStart,
@@ -235,7 +239,7 @@ export const useSelectionController = (): UseSelectionControllerResult => {
     completeSelection(
       selectionData,
       activeStrategyId,
-      activePlugin,
+      selectionMode,
       elements,
       viewport.zoom,
       isShiftPressed,

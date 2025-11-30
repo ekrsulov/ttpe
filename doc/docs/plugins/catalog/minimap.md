@@ -81,7 +81,19 @@ No plugin-specific shortcuts.
 
 ### Overlays
 
-No overlays.
+The MinimapPanel is registered as a **global overlay** in the plugin definition:
+
+```typescript
+overlays: [
+  {
+    id: 'minimap-panel',
+    placement: 'global',
+    component: MinimapPanel,
+  },
+],
+```
+
+This allows it to render independently of the active tool and read all required state (including `sidebarWidth` and `isSidebarPinned`) directly from the store.
 
 ### Canvas Layers
 
@@ -144,7 +156,7 @@ function MyComponent() {
 **Location**: `src/plugins/minimap/`
 
 **Files**:
-- `index.tsx`: Plugin definition with minimal metadata
+- `index.tsx`: Plugin definition with global overlay registration
 - `MinimapPanel.tsx`: Main panel component with rendering and interaction logic
 
 **Key Features**:
@@ -154,7 +166,8 @@ function MyComponent() {
 - Drag state management with pointer events
 - Real-time synchronization with main canvas
 - Constrained movement to prevent viewport from leaving visible bounds
-- Accurate viewport reflection accounting for sidebar width
+- Reads `sidebarWidth` and `isSidebarPinned` from store to calculate effective sidebar offset
+- Registered as a global overlay (no hardcoded import in App.tsx)
 
 ## Edge Cases & Limitations
 

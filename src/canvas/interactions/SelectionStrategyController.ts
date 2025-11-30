@@ -4,6 +4,7 @@ import { extractEditablePoints } from '../../utils/path';
 import { measurePath, measureSubpathBounds } from '../../utils/geometry';
 import type { PathData, CanvasElement } from '../../types';
 import { selectionStrategyRegistry, type SelectionData } from '../selection/SelectionStrategy';
+import type { PluginSelectionMode } from '../../types/plugins';
 
 export interface SelectionCallbacks {
   selectCommands: (commands: Array<{ elementId: string; commandIndex: number; pointIndex: number }>, isShiftPressed: boolean) => void;
@@ -12,12 +13,13 @@ export interface SelectionCallbacks {
 }
 
 /**
- * Complete the selection using the appropriate strategy
+ * Complete the selection using the appropriate strategy.
+ * Uses the plugin's declared selectionMode instead of hardcoded plugin IDs.
  */
 export function completeSelection(
   selectionData: SelectionData,
   strategyId: string,
-  activePlugin: string,
+  selectionMode: PluginSelectionMode,
   elements: CanvasElement[],
   viewportZoom: number,
   isShiftPressed: boolean,
@@ -27,14 +29,15 @@ export function completeSelection(
 ): void {
   const strategy = selectionStrategyRegistry.get(strategyId);
 
-  switch (activePlugin) {
-    case 'edit':
+  switch (selectionMode) {
+    case 'commands':
       completeEditSelection(strategy, selectionData, elements, isShiftPressed, callbacks, selectedIds, getFilteredEditablePoints);
       break;
-    case 'subpath':
+    case 'subpaths':
       completeSubpathSelection(strategy, selectionData, elements, viewportZoom, isShiftPressed, callbacks);
       break;
-    case 'select':
+    case 'elements':
+    default:
       completeElementSelection(strategy, selectionData, elements, viewportZoom, isShiftPressed, callbacks);
       break;
   }

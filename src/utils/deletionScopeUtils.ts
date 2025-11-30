@@ -2,15 +2,10 @@
  * Deletion Scope Utilities
  * 
  * Centralized logic for determining and executing deletion operations
- * based on current selection state and active plugin.
- * 
- * NOTE: The plugin-aware strategy uses hardcoded plugin IDs ('edit', 'subpath')
- * because these plugins define specific selection contexts (commands, subpaths).
- * The DEFAULT_MODE (select) operates on elements. In the future, plugins could
- * declare their deletion scope via metadata.
+ * based on current selection state and active plugin's selection mode.
  */
 
-import { DEFAULT_MODE } from '../constants';
+import { pluginManager } from './pluginManager';
 
 export interface DeletionScope {
   type: 'commands' | 'subpaths' | 'elements' | 'none';
@@ -34,11 +29,11 @@ export interface SelectionState {
  * Determines what should be deleted based on current selection state and active plugin.
  * 
  * Two strategies:
- * - Plugin-aware: Uses activePlugin to determine scope (for UI buttons in specific contexts)
+ * - Plugin-aware: Uses activePlugin's selectionMode to determine scope (for UI buttons in specific contexts)
  * - Priority-based: Uses selection count priority (commands > subpaths > elements) for keyboard shortcuts
  * 
  * @param state - Current selection state
- * @param usePluginStrategy - If true, uses activePlugin; if false, uses priority order
+ * @param usePluginStrategy - If true, uses activePlugin's selectionMode; if false, uses priority order
  * @returns The deletion scope (what to delete and how many items)
  */
 export function getDeletionScope(
@@ -46,14 +41,16 @@ export function getDeletionScope(
   usePluginStrategy: boolean = false
 ): DeletionScope {
   if (usePluginStrategy && state.activePlugin) {
-    // Plugin-aware strategy: respect the active plugin context
-    if (state.activePlugin === 'edit' && state.selectedCommandsCount > 0) {
+    // Plugin-aware strategy: respect the active plugin's selection mode
+    const selectionMode = pluginManager.getActiveSelectionMode();
+    
+    if (selectionMode === 'commands' && state.selectedCommandsCount > 0) {
       return { type: 'commands', count: state.selectedCommandsCount };
     }
-    if (state.activePlugin === 'subpath' && state.selectedSubpathsCount > 0) {
+    if (selectionMode === 'subpaths' && state.selectedSubpathsCount > 0) {
       return { type: 'subpaths', count: state.selectedSubpathsCount };
     }
-    if (state.activePlugin === DEFAULT_MODE && state.selectedElementsCount > 0) {
+    if (selectionMode === 'elements' && state.selectedElementsCount > 0) {
       return { type: 'elements', count: state.selectedElementsCount };
     }
   } else {

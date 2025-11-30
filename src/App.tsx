@@ -4,7 +4,6 @@ import { TopActionBar } from './ui/TopActionBar';
 import { BottomActionBar } from './ui/BottomActionBar';
 import { ExpandableToolPanel } from './ui/ExpandableToolPanel';
 import { VirtualShiftButton } from './ui/VirtualShiftButton';
-import { MinimapPanel } from './plugins/minimap/MinimapPanel';
 import { useCanvasStore } from './store/canvasStore';
 import './App.css';
 import type { CSSProperties } from 'react';
@@ -55,11 +54,11 @@ function App() {
 
   const handleSidebarToggleOpen = useCallback((isOpen: boolean) => {
     setIsSidebarOpen(isOpen);
-    // When sidebar closes and is not pinned, if in file or settings mode, switch to default mode
-    if (!isOpen && !isSidebarPinned && (activePlugin === 'file' || activePlugin === 'settings')) {
+    // When sidebar closes and is not pinned, if in sidebar panel mode, switch to default mode
+    if (!isOpen && !isSidebarPinned && pluginManager.isInSidebarPanelMode()) {
       setMode(DEFAULT_MODE);
     }
-  }, [isSidebarPinned, activePlugin, setMode]);
+  }, [isSidebarPinned, setMode]);
 
   const handleRegisterOpenHandler = useCallback((openHandler: () => void) => {
     setSidebarOpenHandler(() => openHandler);
@@ -234,11 +233,7 @@ function App() {
         <VirtualShiftButton
           sidebarWidth={sidebarWidth}
         />
-        {/* MinimapPanel handles its own visibility based on plugin state and settings */}
-        <MinimapPanel
-          sidebarWidth={sidebarWidth}
-        />
-        {/* Render global overlays from plugins */}
+        {/* Render global overlays from plugins (includes MinimapPanel) */}
         {globalOverlays.map((OverlayComponent, index) => (
           <OverlayComponent key={`global-overlay-${index}`} />
         ))}

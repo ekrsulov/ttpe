@@ -8,6 +8,7 @@ export interface UiSlice {
   editorColorControlsOpen: boolean;
   selectPanelHeight: number;
   sidebarWidth: number;
+  isSidebarPinned: boolean;
   showCallerInfo: boolean;
   isDraggingElements: boolean;
 
@@ -17,6 +18,7 @@ export interface UiSlice {
   setEditorColorControlsOpen: (open: boolean) => void;
   setSelectPanelHeight: (height: number) => void;
   setSidebarWidth: (width: number) => void;
+  setIsSidebarPinned: (isPinned: boolean) => void;
   setShowCallerInfo: (show: boolean) => void;
   setIsDraggingElements: (isDragging: boolean) => void;
 }
@@ -70,6 +72,8 @@ export const createUiSlice: StateCreator<CanvasStore, [], [], UiSlice> = (set) =
     }
   })(),
 
+  isSidebarPinned: false, // Initially unpinned, Sidebar component will update this
+
   showCallerInfo: (() => {
     try {
       const item = localStorage.getItem('ttpe-show-caller-info');
@@ -87,6 +91,7 @@ export const createUiSlice: StateCreator<CanvasStore, [], [], UiSlice> = (set) =
   setEditorColorControlsOpen: (open) => set({ editorColorControlsOpen: open }),
   setSelectPanelHeight: (height) => set({ selectPanelHeight: height }),
   setSidebarWidth: (width) => set({ sidebarWidth: width }),
+  setIsSidebarPinned: (isPinned) => set({ isSidebarPinned: isPinned }),
   setShowCallerInfo: (show) => set({ showCallerInfo: show }),
   setIsDraggingElements: (isDragging) => set({ isDraggingElements: isDragging }),
 });

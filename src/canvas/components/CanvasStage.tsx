@@ -52,7 +52,7 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
         width: '100%',
         height: '100%',
         border: 'none',
-        cursor: (isSpacePressed || currentMode === 'pan') ? 'grabbing' :
+        cursor: (isSpacePressed || pluginManager.isInPanMode()) ? 'grabbing' :
           pluginManager.getCursor(currentMode || DEFAULT_MODE)
       }}
       onPointerDown={handlePointerDown}

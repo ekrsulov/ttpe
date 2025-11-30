@@ -65,6 +65,10 @@ export const transformationPlugin: PluginDefinition<CanvasStore> = {
     },
     toggleTo: 'select',
   },
+  behaviorFlags: () => ({
+    selectionMode: 'elements',
+    skipSubpathMeasurements: true,
+  }),
   toolDefinition: {
     order: 3,
     visibility: 'always-shown',

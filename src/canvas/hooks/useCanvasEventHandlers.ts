@@ -6,6 +6,7 @@ import { useCanvasTouchHandlers } from './useCanvasTouchHandlers';
 import { useCanvasPointerHandlers } from './useCanvasPointerHandlers';
 import { isCanvasEmptySpace } from '../utils/domUtils';
 import { useCanvasEventBus } from '../CanvasEventBusContext';
+import { pluginManager } from '../../utils/pluginManager';
 
 interface UseCanvasEventHandlersProps {
   screenToCanvas: (x: number, y: number) => Point;
@@ -100,12 +101,12 @@ export const useCanvasEventHandlers = (props: UseCanvasEventHandlersProps) => {
       type: 'dblclick',
     } as unknown as React.MouseEvent<Element>;
 
-    // Check if we need to handle subpath double tap
+    // Check if we need to handle subpath double tap based on plugin's selection mode
     const state = useCanvasStore.getState();
     const hasSelectedSubpaths = state.selectedSubpaths && state.selectedSubpaths.length > 0;
-    const isSubpathMode = state.activePlugin === 'subpath';
+    const selectionMode = pluginManager.getActiveSelectionMode();
 
-    if (hasSelectedSubpaths && isSubpathMode && state.selectedSubpaths?.[0].elementId === elementId) {
+    if (hasSelectedSubpaths && selectionMode === 'subpaths' && state.selectedSubpaths?.[0].elementId === elementId) {
       // Handle subpath double tap
       const subpathIndex = state.selectedSubpaths[0].subpathIndex;
       doubleClickHandlers.handleSubpathDoubleClick(elementId, subpathIndex, syntheticEvent);
