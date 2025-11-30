@@ -45,12 +45,11 @@ export const Sidebar: React.FC = () => {
 
   const initialWidth = 250;
 
-  // Auto-unpin on mobile, auto-pin on desktop in dev
+  // Auto-unpin on mobile (responsive behavior)
+  // Note: We don't auto-pin on desktop anymore to allow manual unpin
   useEffect(() => {
     if (!isDesktop && isSidebarPinned) {
       setIsSidebarPinned(false);
-    } else if (isDesktop && import.meta.env.DEV && !isSidebarPinned) {
-      setIsSidebarPinned(true);
     }
   }, [isDesktop, isSidebarPinned, setIsSidebarPinned]);
 

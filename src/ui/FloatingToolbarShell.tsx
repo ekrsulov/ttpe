@@ -2,6 +2,19 @@ import React from 'react';
 import { Box, type BoxProps } from '@chakra-ui/react';
 import { useToolbarColors, useToolbarPosition } from '../hooks';
 
+/** Position configuration for each toolbar type */
+const TOOLBAR_POSITION_CONFIG = {
+  top: {
+    withRulers: { base: 6, md: 10 },
+    default: { base: 2, md: 6 },
+    zIndex: 999,
+  },
+  bottom: {
+    default: { base: 2, md: 5 },
+    zIndex: 1000,
+  },
+} as const;
+
 export interface FloatingToolbarShellProps extends Omit<BoxProps, 'position'> {
   /**
    * Position of the toolbar: 'top' or 'bottom'
@@ -35,16 +48,11 @@ export const FloatingToolbarShell: React.FC<FloatingToolbarShellProps> = ({
   const { left, right, transform, isSidebarPinned } = useToolbarPosition(sidebarWidth);
   const { bg, color, borderColor, borderWidth, shadow } = useToolbarColors();
 
-  // Calculate position based on toolbar type
+  // Get position config based on toolbar type
+  const config = TOOLBAR_POSITION_CONFIG[toolbarPosition];
   const positionProps = toolbarPosition === 'top'
-    ? {
-        top: showGridRulers
-          ? { base: 6, md: 10 }
-          : { base: 2, md: 6 },
-      }
-    : {
-        bottom: { base: 2, md: 5 },
-      };
+    ? { top: showGridRulers ? config.withRulers : config.default }
+    : { bottom: config.default };
 
   return (
     <Box
@@ -64,7 +72,7 @@ export const FloatingToolbarShell: React.FC<FloatingToolbarShellProps> = ({
       boxShadow={shadow}
       px={1}
       py={1}
-      zIndex={toolbarPosition === 'bottom' ? 1000 : 999}
+      zIndex={config.zIndex}
       sx={{
         userSelect: 'none',
         WebkitUserSelect: 'none',

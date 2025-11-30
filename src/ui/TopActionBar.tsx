@@ -1,12 +1,12 @@
 import React, { useRef } from 'react';
-import { HStack, Box, useColorModeValue } from '@chakra-ui/react';
+import { HStack, Box } from '@chakra-ui/react';
 import { Menu, MoreHorizontal } from 'lucide-react';
 import { RenderCountBadgeWrapper } from './RenderCountBadgeWrapper';
 import { FloatingToolbarShell } from './FloatingToolbarShell';
 import { ToolbarIconButton } from './ToolbarIconButton';
 import { pluginManager, useVisibleToolIds } from '../utils/pluginManager';
 import { useCanvasStore } from '../store/canvasStore';
-import { useDynamicTools, useEnabledPlugins, useResponsive } from '../hooks';
+import { useDynamicTools, useEnabledPlugins, useResponsive, useSidebarLayout, useActiveToolColors } from '../hooks';
 import { useAnimatedBackground } from '../hooks/useAnimatedBackground';
 
 /**
@@ -14,19 +14,18 @@ import { useAnimatedBackground } from '../hooks/useAnimatedBackground';
  * Gets all state from store directly (no props drilling)
  */
 export const TopActionBar: React.FC = () => {
-  // Get state from store
+  // Get sidebar layout state using consolidated hook
+  const { effectiveSidebarWidth, isSidebarPinned, isSidebarOpen } = useSidebarLayout();
+  
+  // Get other state from store
   const activeMode = useCanvasStore(state => state.activePlugin);
   const setMode = useCanvasStore(state => state.setMode);
-  const sidebarWidth = useCanvasStore(state => state.sidebarWidth);
-  const isSidebarPinned = useCanvasStore(state => state.isSidebarPinned);
-  const isSidebarOpen = useCanvasStore(state => state.isSidebarOpen);
   const openSidebar = useCanvasStore(state => state.openSidebar);
   const grid = useCanvasStore(state => state.grid);
   const guidelines = useCanvasStore(state => state.guidelines);
   const isDraggingElements = useCanvasStore(state => state.isDraggingElements);
 
   // Calculated values
-  const effectiveSidebarWidth = isSidebarPinned ? sidebarWidth : 0;
   const showGridRulers = (grid?.enabled && grid?.showRulers) || (guidelines?.enabled && guidelines?.manualGuidesEnabled);
   const showMenuButton = !isSidebarPinned;
 
@@ -43,9 +42,8 @@ export const TopActionBar: React.FC = () => {
     alwaysShownTools,
   } = useDynamicTools(activeMode);
 
-  // Colors for active buttons
-  const activeBg = useColorModeValue('gray.800', 'gray.200');
-  const activeColor = useColorModeValue('white', 'gray.900');
+  // Colors for active buttons - use centralized hook
+  const { activeBg, activeColor } = useActiveToolColors();
 
   // Subscribe to visible tool IDs
   const visibleToolIds = useVisibleToolIds();

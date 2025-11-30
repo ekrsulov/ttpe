@@ -3,21 +3,19 @@ import { Box, IconButton } from '@chakra-ui/react';
 import { ArrowBigUp } from 'lucide-react';
 import { useCanvasStore } from '../store/canvasStore';
 import { RenderCountBadgeWrapper } from './RenderCountBadgeWrapper';
-import { useToggleButtonColors, useToolbarColors, useToolbarPosition, useResponsive } from '../hooks';
+import { useToggleButtonColors, useToolbarColors, useToolbarPosition, useResponsive, useEffectiveSidebarWidth } from '../hooks';
 
 /**
  * VirtualShiftButton - Mobile-only button for virtual shift key
  * Gets all state from store directly (no props drilling)
  */
 export const VirtualShiftButton: React.FC = () => {
-  // Get state from store
-  const sidebarWidth = useCanvasStore(state => state.sidebarWidth);
-  const isSidebarPinned = useCanvasStore(state => state.isSidebarPinned);
+  // Get effective sidebar width using consolidated hook
+  const effectiveSidebarWidth = useEffectiveSidebarWidth();
+  
+  // Get virtual shift state from store
   const isVirtualShiftActive = useCanvasStore(state => state.isVirtualShiftActive);
   const toggleVirtualShift = useCanvasStore(state => state.toggleVirtualShift);
-
-  // Calculate effective sidebar width
-  const effectiveSidebarWidth = isSidebarPinned ? sidebarWidth : 0;
 
   const { isSidebarPinned: isPinned } = useToolbarPosition(effectiveSidebarWidth);
   const { isMobile } = useResponsive();

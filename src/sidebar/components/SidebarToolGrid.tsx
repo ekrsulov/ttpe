@@ -47,6 +47,9 @@ export const SidebarToolGrid: React.FC = () => {
     } else {
       isActive = activePlugin === plugin.name;
     }
+
+    // Flex values: File=2, Settings=2, Unpin=1 (small)
+    const flexValue = plugin.name === 'file' || plugin.name === 'settings' ? 2 : 1;
     
     return (
       <SidebarUtilityButton
@@ -55,6 +58,7 @@ export const SidebarToolGrid: React.FC = () => {
         isActive={isActive}
         onClick={handleClick}
         fullWidth={!isDesktop}
+        flex={flexValue}
       />
     );
   };
@@ -62,17 +66,17 @@ export const SidebarToolGrid: React.FC = () => {
   return (
     <Box pt={2} pr={2} pl={2} bg="surface.panel" position="relative">
       <RenderCountBadgeWrapper componentName="SidebarToolGrid" position="top-left" />
-      <HStack spacing={2} justify={isDesktop ? 'flex-start' : 'stretch'}>
+      <HStack spacing={2} w="full">
         {UTILITY_TOOLS.map(renderPluginButton)}
         {isDesktop && (
           <SidebarUtilityButton
             label={isPinned ? 'Unpin' : 'Pin'}
             isActive={false}
             onClick={onTogglePin}
-            fullWidth={false}
+            flex={1}
           />
         )}
       </HStack>
     </Box>
   );
-};;
+};

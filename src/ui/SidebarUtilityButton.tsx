@@ -7,6 +7,8 @@ interface SidebarUtilityButtonProps {
   isActive?: boolean;
   onClick: () => void;
   fullWidth?: boolean;
+  /** Flex grow value for distributing space (e.g., 1 for equal, 2 for double) */
+  flex?: number;
 }
 
 /**
@@ -18,10 +20,11 @@ export const SidebarUtilityButton: React.FC<SidebarUtilityButtonProps> = ({
   isActive = false,
   onClick,
   fullWidth = false,
+  flex,
 }) => {
   const { inactiveColor, inactiveBorder, inactiveHoverBg, activeBg, activeColor, activeHoverBg } = useToggleButtonColors();
   return (
-        <Button
+    <Button
       aria-label={label}
       onClick={onClick}
       variant="unstyled"
@@ -36,6 +39,7 @@ export const SidebarUtilityButton: React.FC<SidebarUtilityButtonProps> = ({
       fontWeight="bold"
       transition="all 0.2s"
       width={fullWidth ? 'full' : 'auto'}
+      flex={flex}
       _hover={{
         bg: isActive ? activeHoverBg : inactiveHoverBg,
       }}

@@ -6,10 +6,11 @@ export { useAnimatedBackground } from './useAnimatedBackground';
 export { useColorModeSync } from './useColorModeSync';
 export { useDragResize } from './useDragResize';
 export { useIOSSupport } from './useIOSSupport';
-export { useIsMobile } from './useIsMobile';
 export { useResponsive } from './useResponsive';
+// Layout hooks
+export { useEffectiveSidebarWidth, useSidebarLayout } from './useSidebarLayout';
 export { useMenuColors, useMenuItemStyles } from './useMenuColors';
-export { useToolbarColors, usePanelHeaderColors, useCounterColors, usePanelButtonColors, useExpandablePanelColors, useInputColors, useToggleButtonColors } from './useToolbarColors';
+export { useToolbarColors, usePanelHeaderColors, useCounterColors, usePanelButtonColors, useExpandablePanelColors, useInputColors, useToggleButtonColors, useActiveToolColors } from './useToolbarColors';
 export { useRenderCount } from './useRenderCount';
 export { useSidebarFooterHeight } from './useSidebarFooterHeight';
 

@@ -96,3 +96,14 @@ export const useToggleButtonColors = () => {
     activeHoverBg: useColorModeValue('gray.800', 'gray.200'),
   };
 };
+
+/**
+ * Hook for active tool button colors in TopActionBar.
+ * Consolidates the colors used for the animated background and active tool highlighting.
+ */
+export const useActiveToolColors = () => {
+  return {
+    activeBg: useColorModeValue('gray.800', 'gray.200'),
+    activeColor: useColorModeValue('white', 'gray.900'),
+  };
+};
