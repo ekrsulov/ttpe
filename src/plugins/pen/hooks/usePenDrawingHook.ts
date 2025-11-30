@@ -663,6 +663,9 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                             let finalHandlePos = canvasPoint;
                             if (isShiftPressedRef.current) {
                                 finalHandlePos = constrainAngleTo45Degrees(anchor.position, canvasPoint);
+                            } else {
+                                // Apply guidelines snap for handle position (absolute position)
+                                finalHandlePos = applyGuidelinesSnap(canvasPoint, null);
                             }
 
                             // Update the handle in real-time
@@ -721,17 +724,19 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                 // Calculate handle vector (outHandle)
                 if (!dragStartPointRef.current) return;
 
-                const handleVector = {
-                    x: canvasPoint.x - dragStartPointRef.current.x,
-                    y: canvasPoint.y - dragStartPointRef.current.y,
-                };
-
-                // Apply Shift constraint to handle direction if needed
+                // Apply guidelines snap or Shift constraint for handle position
+                let finalHandlePos = canvasPoint;
                 if (isShiftPressedRef.current) {
-                    const constrainedEnd = constrainAngleTo45Degrees(dragStartPointRef.current, canvasPoint);
-                    handleVector.x = constrainedEnd.x - dragStartPointRef.current.x;
-                    handleVector.y = constrainedEnd.y - dragStartPointRef.current.y;
+                    finalHandlePos = constrainAngleTo45Degrees(dragStartPointRef.current, canvasPoint);
+                } else {
+                    // Apply guidelines snap for handle position (absolute position)
+                    finalHandlePos = applyGuidelinesSnap(canvasPoint, null);
                 }
+
+                const handleVector = {
+                    x: finalHandlePos.x - dragStartPointRef.current.x,
+                    y: finalHandlePos.y - dragStartPointRef.current.y,
+                };
 
                 // Handle Alt key logic for Cusp Creation
                 if (isAltPressedRef.current) {
@@ -774,7 +779,7 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                     dragState: {
                         type: 'new-anchor',
                         startPoint: dragStartPointRef.current,
-                        currentPoint: canvasPoint,
+                        currentPoint: finalHandlePos,
                         // Pass explicit handles if available (for Cusp Creation visualization)
                         inHandle: savedInHandleRef.current || undefined,
                         outHandle: handleVector
@@ -811,19 +816,6 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
             const rawHandleMagnitude = Math.sqrt(rawHandleVector.x ** 2 + rawHandleVector.y ** 2);
             const wasRealDrag = rawHandleMagnitude > 5; // Use slightly larger threshold for raw detection
 
-            // Only apply guidelines snap if there was NO real drag
-            // This prevents overriding intentional curve creation
-            let canvasPoint = rawCanvasPoint;
-            if (!wasRealDrag && penState.activeGuidelines) {
-                const { horizontal, vertical } = penState.activeGuidelines;
-                if (horizontal) {
-                    canvasPoint = { ...canvasPoint, y: horizontal.snappedPosition.y };
-                }
-                if (vertical) {
-                    canvasPoint = { ...canvasPoint, x: vertical.snappedPosition.x };
-                }
-            }
-
             const { mode, currentPath, dragState } = penState;
 
             // If dragging a handle, just clear the drag state (update was already done in move)
@@ -856,10 +848,25 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
             }
 
             if (mode === 'drawing') {
+                // Apply guidelines snap or Shift constraint for the final handle position
+                let finalHandlePos = rawCanvasPoint;
+                if (isShiftPressedRef.current) {
+                    finalHandlePos = constrainAngleTo45Degrees(dragStartPointRef.current, rawCanvasPoint);
+                } else if (penState.activeGuidelines) {
+                    // Apply guidelines snap if there was one active
+                    const { horizontal, vertical } = penState.activeGuidelines;
+                    if (horizontal) {
+                        finalHandlePos = { ...finalHandlePos, y: horizontal.snappedPosition.y };
+                    }
+                    if (vertical) {
+                        finalHandlePos = { ...finalHandlePos, x: vertical.snappedPosition.x };
+                    }
+                }
+
                 // Calculate handle vector (outHandle) with potentially snapped point
                 const handleVector = {
-                    x: canvasPoint.x - dragStartPointRef.current.x,
-                    y: canvasPoint.y - dragStartPointRef.current.y,
+                    x: finalHandlePos.x - dragStartPointRef.current.x,
+                    y: finalHandlePos.y - dragStartPointRef.current.y,
                 };
 
                 // Use wasRealDrag (calculated with raw points) to determine if this was a click or drag
@@ -892,17 +899,8 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                     }
                     // If first point with no drag, just keep it as corner (no action needed)
                 } else {
-                    // Drag gesture
-                    let outHandle = { ...handleVector };
-
-                    // Apply Shift constraint to handle
-                    if (isShiftPressedRef.current) {
-                        const constrainedEnd = constrainAngleTo45Degrees(dragStartPointRef.current, canvasPoint);
-                        outHandle = {
-                            x: constrainedEnd.x - dragStartPointRef.current.x,
-                            y: constrainedEnd.y - dragStartPointRef.current.y,
-                        };
-                    }
+                    // Drag gesture - use the already calculated handleVector which has snap applied
+                    const outHandle = { ...handleVector };
 
                     if (isFirstPointDrag) {
                         // First point with drag - update handles on first anchor only
