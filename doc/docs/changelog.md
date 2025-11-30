@@ -11,6 +11,83 @@ All notable changes to VectorNest will be documented here.
 ## [Unreleased]
 
 ### Added
+- **Interactive Canvas Rulers**: New rulers component with horizontal and vertical measurement scales
+  - Displays around the canvas with dynamic tick spacing based on zoom level
+  - Supports interactive guide creation by dragging from rulers
+  - Theme-aware styling with light/dark mode support
+  - Shows dragging preview with customizable color when creating guides
+  - Canvas automatically offsets to accommodate rulers when visible
+  - Integrated with guidelines plugin - appears when guidelines and manual guides are enabled
+- **Element Drag Modifiers**: New plugin extension point for modifying element drag behavior
+  - `ElementDragModifier` interface for plugins to intercept and modify drag deltas
+  - Applied during element movement for snapping, constraints, etc.
+  - Priority-based ordering for multiple modifiers
+  - `onDragEnd` callback for cleanup (e.g., clearing visual feedback)
+- **Canvas Decorators**: New plugin extension point for rendering UI around the canvas
+  - `CanvasDecorator` interface with `before-canvas` and `after-canvas` placement options
+  - Visibility control via `isVisible(store)` function
+  - Optional `getOffset()` for adjusting canvas position when decorator is visible
+  - Rulers implemented as a canvas decorator registered by guidelines plugin
+- **Lifecycle Actions**: Plugin system for mode transition actions
+  - `registerLifecycleAction()` for plugins to register cleanup/setup actions
+  - Support for global transition actions that run on every mode change
+  - Replaces hardcoded action names with dynamic plugin-registered handlers
+- **Guidelines Drag Snap Hook**: New `useGuidelinesDragSnap` hook for applying guideline snapping during element drag
+  - Calculates alignment, distance, and size guidelines during movement
+  - Applies sticky snap to delta values
+  - Integrated with element drag modifier system
+- **Core Constants**: New `src/constants.ts` file for application-wide defaults
+  - `DEFAULT_MODE = 'select'` - default tool/mode
+  - `DEFAULT_SELECTION_STRATEGY = 'rectangle'` - default selection strategy
+  - Eliminates hardcoded plugin references in core code
+- **Tool Visibility Control**: New `isDisabled` and `isVisible` functions in `toolDefinition`
+  - Plugins can define reactive visibility based on store state
+  - TopActionBar dynamically shows/hides tools based on plugin-defined visibility
+  - `useVisibleToolIds()` hook for reactive tool ID tracking
+
+### Changed
+- **Plugin Decoupling**: Major refactoring to remove hardcoded plugin references from core
+  - Core no longer references specific plugins like 'select', 'guidelines', etc. by name
+  - Mode transitions use registered lifecycle actions instead of hardcoded cleanup
+  - Pan panel moved from hardcoded panelConfig to pan plugin's `sidebarPanels`
+  - Grid rulers now registered via `registerCanvasDecorator()` in plugin init
+- **Mode Config Types**: Changed `entry` and `exit` arrays from union types to `string[]`
+  - Allows any registered lifecycle action, not just predefined ones
+  - Better extensibility for custom plugin cleanup actions
+- **Plugin Manager Enhancements**:
+  - Added `getEventBus()` method for plugins to access the event bus
+  - Event handler filtering now only checks `activePlugin` for events that have it
+  - Support for initializing plugins that were registered before storeApi was available
+- **TopActionBar Optimization**: Removed unnecessary store subscriptions
+  - Tool list now only depends on `visibleToolIds` for re-evaluation
+  - Cleaner dependency tracking in memoization
+
+### Removed
+- **Curves Plugin**: Removed the entire curves plugin (`src/plugins/curves/*`)
+  - Deleted: `CurvesController.ts`, `CurvesControllerContext.tsx`, `CurvesPanel.tsx`
+  - Deleted: `CurvesRenderer.tsx`, `curvesContext.ts`, `globalController.ts`
+  - Deleted: `index.tsx`, `slice.ts`, `useCanvasCurves.ts`, `useCurvesController.ts`
+
+### Fixed
+- **Canvas Displacement**: Fixed issue where rulers would overlap the canvas
+  - Canvas now properly offsets based on decorator's `getOffset()` values
+  - Grid plugin correctly reports offset when rulers are visible
+- **Guidelines Visibility**: Fixed rulers not showing when guidelines were enabled
+  - Decorator registration now happens in plugin `init` instead of via array
+  - Proper store subscription ensures visibility state is reactive
+
+### Added (internal)
+- **Modifier Keys Hook**: New `useModifierKeys.ts` hook for tracking keyboard modifier state
+- **Pointer Event Utils**: New `pointerEventUtils.ts` for standardized pointer event handling
+
+### Changed (internal)
+- **TrimPath Geometry**: Moved `trimPathGeometry.ts` from `src/utils/` to `src/plugins/trimPath/`
+  - Better encapsulation of plugin-specific utilities
+- **Type Imports**: Updated interaction type imports across canvas hooks
+- **Store Type References**: Fixed `TStore` references to use `CanvasStore` type correctly
+
+---
+
 - **Measure Plugin**: Professional measurement tool with intelligent snapping and visual feedback
   - Click-and-drag interface for measuring distances, angles, and deltas between points
   - Intelligent snapping to anchor points, edges, midpoints, bounding box corners, and centers

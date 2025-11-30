@@ -495,6 +495,81 @@ export const myPlugin: PluginDefinition = {
 };
 ```
 
+## Tool Definition Configuration
+
+Control how a plugin appears in the toolbar with `toolDefinition`.
+
+### Basic Tool Definition
+
+```typescript
+export const selectPlugin: PluginDefinition<CanvasStore> = {
+  id: 'select',
+  metadata: { label: 'Select', icon: MousePointer2 },
+  toolDefinition: {
+    mode: 'select',
+    label: 'Select',
+    icon: MousePointer2,
+    order: 1,
+  },
+};
+```
+
+### Dynamic Visibility
+
+Control when a tool appears in the toolbar:
+
+```typescript
+toolDefinition: {
+  mode: 'edit',
+  label: 'Edit',
+  icon: Pen,
+  order: 10,
+  visibility: 'dynamic', // 'always-shown' | 'dynamic'
+  
+  // Only show when elements are selected
+  isVisible: (store) => store.selectedIds.length > 0,
+},
+```
+
+### Dynamic Disabled State
+
+Control when a tool is disabled:
+
+```typescript
+toolDefinition: {
+  mode: 'subpath',
+  label: 'Subpath',
+  icon: Route,
+  order: 11,
+  
+  // Disable when no elements are selected
+  isDisabled: (store) => store.selectedIds.length === 0,
+},
+```
+
+### Combining Visibility and Disabled
+
+```typescript
+toolDefinition: {
+  mode: 'transformation',
+  label: 'Transform',
+  icon: Move,
+  order: 12,
+  visibility: 'dynamic',
+  
+  // Show only when there are elements
+  isVisible: (store) => store.elements.length > 0,
+  
+  // Disable when nothing is selected
+  isDisabled: (store) => store.selectedIds.length === 0,
+},
+```
+
+### Visibility Modes
+
+- **`'always-shown'`**: Tool always appears in toolbar
+- **`'dynamic'`** (default): Tool visibility determined by `isVisible` function
+
 ## Next Steps
 
 ## Related

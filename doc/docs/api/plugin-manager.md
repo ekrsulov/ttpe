@@ -324,6 +324,170 @@ stateDiagram-v2
     end note
 ```
 
+### Canvas Decorators
+
+Canvas decorators render UI elements around the canvas, such as rulers or measurement overlays.
+
+#### `registerCanvasDecorator(decorator: CanvasDecorator): () => void`
+
+Registers a canvas decorator and returns an unregister function.
+
+```typescript
+const decorator: CanvasDecorator = {
+  id: 'guidelines-rulers',
+  placement: 'before-canvas',
+  isVisible: (store) => store.guidelines?.enabled,
+  getOffset: () => ({ top: 20, left: 20, width: 20, height: 20 }),
+  render: (context) => <RulersComponent context={context} />,
+};
+
+const unregister = pluginManager.registerCanvasDecorator(decorator);
+
+// Later: cleanup
+unregister();
+```
+
+#### `getCanvasDecorators(): CanvasDecorator[]`
+
+Returns all registered canvas decorators.
+
+```typescript
+const decorators = pluginManager.getCanvasDecorators();
+
+decorators.forEach(decorator => {
+  console.log(decorator.id);        // e.g., 'guidelines-rulers'
+  console.log(decorator.placement); // 'before-canvas' | 'after-canvas'
+});
+```
+
+#### `getCanvasDecoratorsByPlacement(placement: CanvasDecoratorPlacement): CanvasDecorator[]`
+
+Returns decorators filtered by placement.
+
+```typescript
+const beforeDecorators = pluginManager.getCanvasDecoratorsByPlacement('before-canvas');
+const afterDecorators = pluginManager.getCanvasDecoratorsByPlacement('after-canvas');
+```
+
+### Element Drag Modifiers
+
+Element drag modifiers intercept and modify drag deltas during element movement.
+
+#### `registerElementDragModifier(modifier: ElementDragModifier): () => void`
+
+Registers a modifier for element drag operations.
+
+```typescript
+const modifier: ElementDragModifier = {
+  id: 'guidelines-snap',
+  priority: 50,
+  modify: (deltaX, deltaY, context) => ({
+    deltaX: snapToGrid(deltaX),
+    deltaY: snapToGrid(deltaY),
+    applied: true,
+  }),
+  onDragEnd: () => {
+    // Clear visual feedback
+  },
+};
+
+const unregister = pluginManager.registerElementDragModifier(modifier);
+```
+
+#### `getElementDragModifiers(): ElementDragModifier[]`
+
+Returns all element drag modifiers, sorted by priority.
+
+```typescript
+const modifiers = pluginManager.getElementDragModifiers();
+// Modifiers are sorted by priority (0 = first, 100 = last)
+```
+
+### Lifecycle Actions
+
+Lifecycle actions run during mode transitions for cleanup or setup.
+
+#### `registerLifecycleAction(actionId: string, handler: () => void, options?: { global?: boolean }): () => void`
+
+Registers a lifecycle action.
+
+```typescript
+// Specific action - only runs when referenced in modeConfig
+const unregister = pluginManager.registerLifecycleAction(
+  'clearGuidelines',
+  () => store.getState().clearGuidelines?.()
+);
+
+// Global action - runs on every mode transition
+const unregisterGlobal = pluginManager.registerLifecycleAction(
+  'resetToolState',
+  () => store.getState().resetToolState?.(),
+  { global: true }
+);
+```
+
+#### `executeLifecycleAction(actionId: string): void`
+
+Executes a lifecycle action by ID.
+
+```typescript
+// Called by mode controller during transitions
+pluginManager.executeLifecycleAction('clearGuidelines');
+```
+
+#### `getGlobalTransitionActions(): string[]`
+
+Returns IDs of all global transition actions.
+
+```typescript
+const globalActions = pluginManager.getGlobalTransitionActions();
+// ['resetToolState', 'clearFeedback', ...]
+```
+
+### Event Bus Access
+
+#### `getEventBus(): CanvasEventBus | null`
+
+Returns the event bus instance for plugins that need direct access.
+
+```typescript
+const eventBus = pluginManager.getEventBus();
+if (eventBus) {
+  eventBus.emit('custom-event', { data: 'value' });
+}
+```
+
+### Tool Visibility
+
+#### `isToolDisabled(pluginId: string): boolean`
+
+Checks if a tool is currently disabled based on its `toolDefinition.isDisabled` function.
+
+```typescript
+if (!pluginManager.isToolDisabled('edit')) {
+  // Tool is enabled, show in toolbar
+}
+```
+
+#### `isToolVisible(pluginId: string): boolean`
+
+Checks if a tool is currently visible based on its `toolDefinition.isVisible` function.
+
+```typescript
+if (pluginManager.isToolVisible('subpath')) {
+  // Tool should be shown in toolbar
+}
+```
+
+#### `getVisibleToolIds(): string[]`
+
+Returns IDs of all currently visible tools.
+
+```typescript
+const visibleTools = pluginManager.getVisibleToolIds();
+// ['select', 'pencil', 'shape', ...]
+```
+
 ### UI Component Queries
 
 #### `getPanels(toolName: string): PanelDefinition[]`

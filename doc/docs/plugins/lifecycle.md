@@ -580,6 +580,163 @@ init: (context) => {
 }
 ```
 
+## Canvas Decorators
+
+Canvas decorators allow plugins to render UI elements around the canvas, such as rulers or measurement overlays.
+
+### Decorator Interface
+
+```typescript
+interface CanvasDecorator {
+  id: string;
+  placement: 'before-canvas' | 'after-canvas';
+  render: (context: CanvasDecoratorContext) => React.ReactNode;
+  isVisible: (store: CanvasStore) => boolean;
+  getOffset?: () => { top: number; left: number; width: number; height: number };
+}
+```
+
+### Registering Decorators
+
+Decorators are registered in the plugin's `init` function:
+
+```typescript
+export const guidelinesPlugin: PluginDefinition<CanvasStore> = {
+  id: 'guidelines',
+  metadata: { label: 'Guidelines' },
+  
+  init: (context) => {
+    // Create and register the rulers decorator
+    const rulersDecorator = createRulersDecorator();
+    const unregisterDecorator = pluginManager.registerCanvasDecorator(rulersDecorator);
+    
+    // Return cleanup
+    return () => {
+      unregisterDecorator();
+    };
+  },
+};
+```
+
+### Decorator Context
+
+```typescript
+interface CanvasDecoratorContext {
+  canvasSize: { width: number; height: number };
+  viewport: Viewport;
+  isVisible: boolean;
+}
+```
+
+### Example: Rulers Decorator
+
+```typescript
+export function createRulersDecorator(): CanvasDecorator {
+  return {
+    id: 'guidelines-rulers',
+    placement: 'before-canvas',
+    isVisible: (store) => {
+      return store.guidelines?.enabled && store.guidelines?.manualGuidesEnabled;
+    },
+    getOffset: () => ({
+      top: RULER_SIZE,
+      left: RULER_SIZE,
+      width: RULER_SIZE,
+      height: RULER_SIZE,
+    }),
+    render: (context) => {
+      return <RulersDecoratorComponent context={context} />;
+    },
+  };
+}
+```
+
+## Element Drag Modifiers
+
+Element drag modifiers allow plugins to intercept and modify drag deltas during element movement.
+
+### Modifier Interface
+
+```typescript
+interface ElementDragModifier {
+  id: string;
+  modify: (deltaX: number, deltaY: number, context: ElementDragContext) => ElementDragModifierResult;
+  priority: number;
+  onDragEnd?: () => void;
+}
+
+interface ElementDragContext {
+  selectedIds: string[];
+  originalDelta: { x: number; y: number };
+  viewport: Viewport;
+}
+
+interface ElementDragModifierResult {
+  deltaX: number;
+  deltaY: number;
+  applied: boolean;
+}
+```
+
+### Registering Element Drag Modifiers
+
+```typescript
+init: (context) => {
+  const modifier: ElementDragModifier = {
+    id: 'guidelines-snap',
+    priority: 50,
+    modify: (deltaX, deltaY, ctx) => {
+      // Apply snapping logic
+      const result = applyGuidelinesDuringDrag(deltaX, deltaY, ctx.selectedIds);
+      return result;
+    },
+    onDragEnd: () => {
+      // Clear visual feedback
+      context.store.getState().clearGuidelines?.();
+    },
+  };
+  
+  const unregister = pluginManager.registerElementDragModifier(modifier);
+  return unregister;
+};
+```
+
+## Lifecycle Actions
+
+Lifecycle actions allow plugins to register cleanup/setup actions that run during mode transitions.
+
+### Registering Lifecycle Actions
+
+```typescript
+init: (context) => {
+  // Register a cleanup action
+  const unregister = pluginManager.registerLifecycleAction(
+    'clearGuidelines',
+    () => {
+      context.store.getState().clearGuidelines?.();
+    },
+    { global: true } // Run on every mode change
+  );
+  
+  return unregister;
+};
+```
+
+### Using in Mode Config
+
+```typescript
+modeConfig: {
+  description: 'Edit mode',
+  entry: ['clearGuidelines', 'clearSubpathSelection'],
+  exit: ['clearSelectedCommands'],
+},
+```
+
+### Global vs Specific Actions
+
+- **Global actions** (`{ global: true }`): Run on every mode transition
+- **Specific actions**: Only run when explicitly listed in `entry` or `exit`
+
 ## Lifecycle Hooks Pattern
 
 Proposed pattern for future enhancement:
