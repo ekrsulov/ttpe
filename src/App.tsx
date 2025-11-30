@@ -26,6 +26,7 @@ function App() {
   // Get global overlays from plugins
   const globalOverlays = useReactMemo(() => pluginManager.getGlobalOverlays(), []);
   const grid = useCanvasStore(state => state.grid);
+  const guidelines = useCanvasStore(state => state.guidelines);
   const { colorMode } = useColorMode();
   const selectedPaths = useMemo(() => {
     const elements = useCanvasStore.getState().elements;
@@ -230,7 +231,7 @@ function App() {
           isSidebarOpen={isSidebarOpen}
           onMenuClick={handleMenuClick}
           selectedPaths={selectedPaths}
-          showGridRulers={grid?.enabled && grid?.showRulers}
+          showGridRulers={(grid?.enabled && grid?.showRulers) || (guidelines?.enabled && guidelines?.manualGuidesEnabled)}
         />
         <BottomActionBar
           sidebarWidth={sidebarWidth}

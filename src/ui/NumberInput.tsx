@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   HStack,
   Input,
@@ -36,6 +36,8 @@ export const NumberInput: React.FC<NumberInputProps> = ({
   , testId
 }) => {
   const [inputValue, setInputValue] = useState(value.toString());
+  const [isFocused, setIsFocused] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setInputValue(value.toString());
@@ -45,7 +47,14 @@ export const NumberInput: React.FC<NumberInputProps> = ({
     setInputValue(e.target.value);
   };
 
+  const handleFocus = () => {
+    setIsFocused(true);
+    // Select all text on focus for easy editing
+    setTimeout(() => inputRef.current?.select(), 0);
+  };
+
   const handleBlur = () => {
+    setIsFocused(false);
     let numValue = parseFloat(inputValue);
     
     if (isNaN(numValue)) {
@@ -88,6 +97,9 @@ export const NumberInput: React.FC<NumberInputProps> = ({
     }
   };
 
+  // Display value with suffix when not focused
+  const displayValue = isFocused ? inputValue : (suffix ? `${inputValue}${suffix}` : inputValue);
+
   return (
     <HStack spacing={2} w="100%">
       {icon && (
@@ -95,19 +107,23 @@ export const NumberInput: React.FC<NumberInputProps> = ({
           {icon}
         </Box>
       )}
-      <Text
-        fontSize="12px"
-        color="gray.600"
-        _dark={{ color: 'gray.400' }}
-        minW={labelWidth}
-        flexShrink={0}
-      >
-        {label}
-      </Text>
+      {label && (
+        <Text
+          fontSize="12px"
+          color="gray.600"
+          _dark={{ color: 'gray.400' }}
+          minW={labelWidth}
+          flexShrink={0}
+        >
+          {label}
+        </Text>
+      )}
       <Input
+        ref={inputRef}
         data-testid={testId}
-        value={inputValue}
+        value={displayValue}
         onChange={handleInputChange}
+        onFocus={handleFocus}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         type="text"
@@ -128,16 +144,6 @@ export const NumberInput: React.FC<NumberInputProps> = ({
           boxShadow: '0 0 0 1px var(--chakra-colors-gray-600)'
         }}
       />
-      {suffix && (
-        <Text
-          fontSize="12px"
-          color="gray.600"
-          _dark={{ color: 'gray.400' }}
-          flexShrink={0}
-        >
-          {suffix}
-        </Text>
-      )}
     </HStack>
   );
 };

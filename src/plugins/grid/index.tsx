@@ -25,9 +25,18 @@ export const gridPlugin: PluginDefinition<CanvasStore> = {
     {
       id: 'grid-overlay',
       placement: 'background',
-      render: ({ grid, viewport, canvasSize }) => (
-        <GridOverlay grid={grid ?? { enabled: false, type: 'square', spacing: 20, showRulers: false }} viewport={viewport} canvasSize={canvasSize} />
-      ),
+      render: ({ grid, viewport, canvasSize, guidelines }) => {
+        // Skip grid rulers if guidelines rulers are active (unified rulers)
+        const skipRulers = guidelines?.enabled && guidelines?.manualGuidesEnabled;
+        return (
+          <GridOverlay 
+            grid={grid ?? { enabled: false, type: 'square', spacing: 20, showRulers: false }} 
+            viewport={viewport} 
+            canvasSize={canvasSize}
+            skipRulers={skipRulers}
+          />
+        );
+      },
     },
   ],
   slices: [gridSliceFactory],

@@ -209,11 +209,17 @@ export const useCanvasPointerHandlers = (
                                     ? state.findDistanceGuidelines(firstElementId, projectedBounds, alignmentMatches)
                                     : [];
 
+                                // Find size matches if enabled
+                                const sizeMatches = (state.guidelines?.sizeMatchingEnabled && state.findSizeMatches)
+                                    ? state.findSizeMatches(firstElementId, projectedBounds)
+                                    : [];
+
                                 // Update the guidelines state
                                 if (state.updateGuidelinesState) {
                                     state.updateGuidelinesState({
                                         currentMatches: alignmentMatches,
                                         currentDistanceMatches: distanceMatches,
+                                        currentSizeMatches: sizeMatches,
                                     });
                                 }
 

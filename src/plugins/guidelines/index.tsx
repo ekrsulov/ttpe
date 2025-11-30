@@ -1,9 +1,12 @@
-import type { PluginDefinition, PluginSliceFactory } from '../../types/plugins';
+import type { PluginDefinition, PluginSliceFactory, CanvasShortcutContext } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createGuidelinesPluginSlice } from './slice';
 import type { GuidelinesPluginSlice } from './slice';
 import { GuidelinesPanel } from './GuidelinesPanel';
 import { GuidelinesOverlay } from './GuidelinesOverlay';
+import type { GuidelinesState } from './types';
+import { useGuidelinesAltKey } from './hooks/useGuidelinesAltKey';
+import { useGuidelinesHoverElement } from './hooks/useGuidelinesHoverElement';
 
 const guidelinesSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -13,11 +16,33 @@ const guidelinesSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) 
   };
 };
 
+// Type guard for guidelines state
+const hasGuidelines = (state: unknown): state is { guidelines: GuidelinesState } => {
+  return state !== null && typeof state === 'object' && 'guidelines' in state;
+};
+
 export const guidelinesPlugin: PluginDefinition<CanvasStore> = {
   id: 'guidelines',
   metadata: {
     label: 'Guidelines',
     cursor: 'default',
+  },
+  keyboardShortcuts: {
+    // Toggle guidelines (Cmd/Ctrl + G with shift to differentiate from group)
+    G: {
+      handler: (event: KeyboardEvent, context: CanvasShortcutContext) => {
+        // Only handle when Cmd/Ctrl + Shift is pressed (to not conflict with other G shortcuts)
+        if (!(event.metaKey || event.ctrlKey) || !event.shiftKey) {
+          return;
+        }
+        const state = context.store.getState();
+        if (hasGuidelines(state) && state.guidelines) {
+          const updateFn = (state as unknown as { updateGuidelinesState?: (s: Partial<GuidelinesState>) => void }).updateGuidelinesState;
+          updateFn?.({ enabled: !state.guidelines.enabled });
+        }
+      },
+      options: { preventDefault: true },
+    },
   },
   canvasLayers: [
     {
@@ -33,11 +58,28 @@ export const guidelinesPlugin: PluginDefinition<CanvasStore> = {
         selectedIds,
         viewport,
       }) => {
-        if (activePlugin !== 'select' || !guidelines) {
+        // Show guidelines in select mode, edit mode, or when dragging a guide
+        const isActiveMode = activePlugin === 'select' || activePlugin === 'edit';
+        const isDraggingGuide = guidelines?.isDraggingGuide;
+        const isAltHovering = guidelines?.isAltPressed && guidelines?.hoveredElementId;
+        
+        if (!guidelines?.enabled) {
           return null;
         }
 
-        if (!isDragging && !editingPoint?.isDragging && !draggingSelection?.isDragging) {
+        // Show guidelines when:
+        // 1. Dragging elements
+        // 2. Dragging a guide from ruler
+        // 3. Alt + hovering an element (for measurements)
+        // 4. Manual guides should always be visible
+        const shouldShowDynamicGuidelines = 
+          (isActiveMode && (isDragging || editingPoint?.isDragging || draggingSelection?.isDragging)) ||
+          isDraggingGuide ||
+          isAltHovering;
+        
+        const hasManualGuides = guidelines?.manualGuidesEnabled && guidelines?.manualGuides?.length > 0;
+
+        if (!shouldShowDynamicGuidelines && !hasManualGuides) {
           return null;
         }
 
@@ -52,6 +94,18 @@ export const guidelinesPlugin: PluginDefinition<CanvasStore> = {
       },
     },
   ],
+  hooks: [
+    {
+      id: 'guidelines-alt-key-listener',
+      global: true,
+      hook: useGuidelinesAltKey,
+    },
+    {
+      id: 'guidelines-hover-element-listener',
+      global: true,
+      hook: useGuidelinesHoverElement,
+    },
+  ],
   slices: [guidelinesSliceFactory],
   sidebarPanels: [
     {
@@ -64,3 +118,5 @@ export const guidelinesPlugin: PluginDefinition<CanvasStore> = {
 
 export type { GuidelinesPluginSlice };
 export { GuidelinesPanel };
+// eslint-disable-next-line react-refresh/only-export-components
+export * from './types';

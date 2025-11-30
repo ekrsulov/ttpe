@@ -6,6 +6,7 @@ import { getGroupBounds } from '../../../canvas/geometry/CanvasGeometryService';
 import { transformCommands } from '../../../utils/sharedTransformUtils';
 import type { Point, PathData, CanvasElement, GroupElement } from '../../../types';
 import type { TransformationPluginSlice } from '../slice';
+import type { GuidelinesPluginSlice } from '../../guidelines/slice';
 
 export const useCanvasTransformControls = () => {
   const [transformState, setTransformState] = useState<TransformState>({
@@ -355,6 +356,38 @@ export const useCanvasTransformControls = () => {
     });
   }, []);
 
+  // Helper function to update guidelines during transformation
+  const updateGuidelinesDuringTransform = useCallback((
+    elementId: string,
+    bounds: { minX: number; minY: number; maxX: number; maxY: number }
+  ) => {
+    const guidelinesSlice = useCanvasStore.getState() as unknown as GuidelinesPluginSlice;
+    if (!guidelinesSlice.guidelines?.enabled) return;
+    
+    const projectedBounds = {
+      minX: bounds.minX,
+      minY: bounds.minY,
+      maxX: bounds.maxX,
+      maxY: bounds.maxY,
+    };
+    
+    // Find and update alignment guidelines
+    const alignmentMatches = guidelinesSlice.findAlignmentGuidelines?.(elementId, projectedBounds) ?? [];
+    
+    // Find size matches if enabled
+    const sizeMatches = guidelinesSlice.guidelines?.sizeMatchingEnabled && guidelinesSlice.findSizeMatches
+      ? guidelinesSlice.findSizeMatches(elementId, projectedBounds)
+      : [];
+    
+    // Update the guidelines state
+    if (guidelinesSlice.updateGuidelinesState) {
+      guidelinesSlice.updateGuidelinesState({
+        currentMatches: alignmentMatches,
+        currentSizeMatches: sizeMatches,
+      });
+    }
+  }, []);
+
   const updateTransformation = useCallback((point: Point, isShiftPressed: boolean) => {
     const currentState = transformStateRef.current;
     if (!currentState.isTransforming || !currentState.transformElementId) {
@@ -433,6 +466,17 @@ export const useCanvasTransformControls = () => {
         }
       });
 
+      // Update guidelines with transformed selection bounds
+      if (currentState.originalBounds) {
+        const transformedBounds = {
+          minX: currentState.originalBounds.minX * scaleX + originX * (1 - scaleX),
+          minY: currentState.originalBounds.minY * scaleY + originY * (1 - scaleY),
+          maxX: currentState.originalBounds.maxX * scaleX + originX * (1 - scaleX),
+          maxY: currentState.originalBounds.maxY * scaleY + originY * (1 - scaleY),
+        };
+        updateGuidelinesDuringTransform('selection-bbox', transformedBounds);
+      }
+
       return;
     }
 
@@ -466,6 +510,17 @@ export const useCanvasTransformControls = () => {
 
         // Scale all descendants of the group using their original state
         scaleGroupDescendants(realGroupId, scaleX, scaleY, originX, originY, rotation);
+        
+        // Update guidelines with transformed group bounds
+        if (currentState.originalBounds) {
+          const transformedBounds = {
+            minX: currentState.originalBounds.minX * scaleX + originX * (1 - scaleX),
+            minY: currentState.originalBounds.minY * scaleY + originY * (1 - scaleY),
+            maxX: currentState.originalBounds.maxX * scaleX + originX * (1 - scaleX),
+            maxY: currentState.originalBounds.maxY * scaleY + originY * (1 - scaleY),
+          };
+          updateGuidelinesDuringTransform(realGroupId, transformedBounds);
+        }
         return;
       }
     }
@@ -475,10 +530,19 @@ export const useCanvasTransformControls = () => {
 
     if (result.updatedElement) {
       updateElement(result.updatedElement.id, result.updatedElement);
+      
+      // Update guidelines during resize (for visual feedback)
+      if (result.updatedElement.type === 'path') {
+        const pathData = result.updatedElement.data as PathData;
+        const bounds = measurePath(pathData.subPaths, pathData.strokeWidth ?? 1, 1);
+        if (bounds) {
+          updateGuidelinesDuringTransform(result.updatedElement.id, bounds);
+        }
+      }
     }
 
     setFeedback(result.feedback);
-  }, [transformController, calculateTransformOrigin, scaleGroupDescendants]);
+  }, [transformController, calculateTransformOrigin, scaleGroupDescendants, updateGuidelinesDuringTransform]);
 
   const endTransformation = useCallback(() => {
     const resetState = transformController.resetTransform();
@@ -491,6 +555,12 @@ export const useCanvasTransformControls = () => {
       shape: { width: 0, height: 0, visible: false, isShiftPressed: false, isMultipleOf10: false },
       pointPosition: { x: 0, y: 0, visible: false }
     });
+    
+    // Clear guidelines when transformation ends
+    const guidelinesSlice = useCanvasStore.getState() as unknown as GuidelinesPluginSlice;
+    if (guidelinesSlice.clearGuidelines) {
+      guidelinesSlice.clearGuidelines();
+    }
   }, [transformController]);
 
   // Add global pointerup listener to ensure transformation ends even if pointer is released outside handlers

@@ -20,7 +20,7 @@ export const createLassoPluginSlice: StateCreator<
 > = (set) => ({
   lassoEnabled: false,
   lassoPath: [],
-  lassoClosed: true, // Default to closed lasso
+  lassoClosed: false, // Default to open lasso
   activeSelectionStrategy: undefined,
   setLassoEnabled: (enabled) => {
     set({ 

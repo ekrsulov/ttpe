@@ -25,6 +25,8 @@ interface GridOverlayProps {
     width: number;
     height: number;
   };
+  /** If true, skip rendering rulers (use when unified rulers from guidelines are active) */
+  skipRulers?: boolean;
 }
 
 /**
@@ -806,6 +808,7 @@ export const GridOverlay: React.FC<GridOverlayProps> = React.memo(({
   grid,
   viewport,
   canvasSize,
+  skipRulers = false,
 }) => {
   const defaultGridColor = useColorModeValue('#000000', 'rgba(255, 255, 255, 0.7)');
   const rulerBackground = useColorModeValue('rgba(255, 255, 255, 0.5)', 'rgba(26, 32, 44, 0.5)');
@@ -838,10 +841,10 @@ export const GridOverlay: React.FC<GridOverlayProps> = React.memo(({
   // Calculate optimal ruler interval
   const rulerInterval = calculateRulerInterval(spacing, viewport.zoom);
   
-  // Build ruler elements if enabled
+  // Build ruler elements if enabled (skip if unified rulers from guidelines are active)
   const rulerElements: React.ReactElement[] = [];
   
-  if (grid.showRulers && (grid.type === 'square' || grid.type === 'dots')) {
+  if (grid.showRulers && !skipRulers && (grid.type === 'square' || grid.type === 'dots')) {
     const rulerHeight = 20 / viewport.zoom;
     const rulerWidth = 35 / viewport.zoom;
     const fontSize = 10 / viewport.zoom;

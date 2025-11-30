@@ -1,4 +1,5 @@
 import React from 'react';
+import type { SizeMatch, ManualGuide, Bounds } from './types';
 
 interface GuidelineLineProps {
   type: 'left' | 'right' | 'top' | 'bottom' | 'centerX' | 'centerY';
@@ -136,7 +137,7 @@ export const DistanceLabel: React.FC<DistanceLabelProps> = ({
         pointerEvents="none"
       />
 
-      {/* Distance label with optional white background */}
+      {/* Distance label with optional background */}
       <g>
         {withBackground && (
           <rect
@@ -163,6 +164,320 @@ export const DistanceLabel: React.FC<DistanceLabelProps> = ({
           {Math.round(distance)}
         </text>
       </g>
+    </g>
+  );
+};
+
+interface ManualGuideLineProps {
+  guide: ManualGuide;
+  canvasSize: { width: number; height: number };
+  strokeWidth: number;
+  zoom: number;
+}
+
+/**
+ * Manual guide line component with interactive features
+ */
+export const ManualGuideLine: React.FC<ManualGuideLineProps> = ({
+  guide,
+  canvasSize,
+  strokeWidth,
+  zoom
+}) => {
+  const isVertical = guide.type === 'vertical';
+  const color = guide.color || '#00BFFF';
+  const dashArray = guide.locked ? `${4 / zoom} ${4 / zoom}` : undefined;
+
+  return (
+    <g>
+      {/* Main guide line */}
+      <line
+        x1={isVertical ? guide.position : -canvasSize.width / 2}
+        y1={isVertical ? -canvasSize.height / 2 : guide.position}
+        x2={isVertical ? guide.position : canvasSize.width * 1.5}
+        y2={isVertical ? canvasSize.height * 1.5 : guide.position}
+        stroke={color}
+        strokeWidth={strokeWidth * 1.5}
+        strokeDasharray={dashArray}
+        opacity={0.8}
+        pointerEvents="none"
+        data-guide-id={guide.id}
+      />
+      
+      {/* Position label at edge */}
+      <g>
+        <rect
+          x={isVertical ? guide.position - 15 / zoom : -canvasSize.width / 2}
+          y={isVertical ? -canvasSize.height / 2 : guide.position - 8 / zoom}
+          width={30 / zoom}
+          height={16 / zoom}
+          fill={color}
+          opacity={0.9}
+          rx={2 / zoom}
+          pointerEvents="none"
+        />
+        <text
+          x={isVertical ? guide.position : -canvasSize.width / 2 + 15 / zoom}
+          y={isVertical ? -canvasSize.height / 2 + 8 / zoom : guide.position}
+          fill="white"
+          fontSize={10 / zoom}
+          fontFamily="sans-serif"
+          textAnchor="middle"
+          dominantBaseline="middle"
+          pointerEvents="none"
+        >
+          {Math.round(guide.position)}
+        </text>
+      </g>
+    </g>
+  );
+};
+
+interface SizeMatchIndicatorProps {
+  match: SizeMatch;
+  elementBoundsMap: Map<string, Bounds>;
+  strokeWidth: number;
+  color: string;
+  zoom: number;
+  backgroundColor: string;
+  textColor: string;
+}
+
+/**
+ * Size match indicator showing when elements have matching dimensions
+ * Shows indicators on both the current element AND matching elements
+ */
+export const SizeMatchIndicator: React.FC<SizeMatchIndicatorProps> = ({
+  match,
+  elementBoundsMap,
+  strokeWidth,
+  color,
+  zoom,
+  backgroundColor,
+  textColor
+}) => {
+  const currentBounds = elementBoundsMap.get(match.currentElementId);
+  if (!currentBounds) return null;
+
+  const fontSize = 10 / zoom;
+  const labelPadding = 8 / zoom;
+  const labelHeight = 14 / zoom;
+  
+  // Helper to render indicator for a single element
+  const renderIndicator = (bounds: Bounds, isMatching: boolean) => {
+    const indicatorColor = isMatching ? color : color;
+    const opacity = isMatching ? 0.7 : 1;
+    
+    if (match.type === 'width') {
+      const y = bounds.maxY + 10 / zoom;
+      const midX = (bounds.minX + bounds.maxX) / 2;
+      
+      return (
+        <g opacity={opacity}>
+          {/* Width indicator line */}
+          <line
+            x1={bounds.minX}
+            y1={y}
+            x2={bounds.maxX}
+            y2={y}
+            stroke={indicatorColor}
+            strokeWidth={strokeWidth}
+            pointerEvents="none"
+          />
+          {/* End caps */}
+          <line
+            x1={bounds.minX}
+            y1={y - 3 / zoom}
+            x2={bounds.minX}
+            y2={y + 3 / zoom}
+            stroke={indicatorColor}
+            strokeWidth={strokeWidth}
+            pointerEvents="none"
+          />
+          <line
+            x1={bounds.maxX}
+            y1={y - 3 / zoom}
+            x2={bounds.maxX}
+            y2={y + 3 / zoom}
+            stroke={indicatorColor}
+            strokeWidth={strokeWidth}
+            pointerEvents="none"
+          />
+          {/* Label */}
+          <rect
+            x={midX - labelPadding}
+            y={y - labelHeight / 2}
+            width={labelPadding * 2}
+            height={labelHeight}
+            fill={backgroundColor}
+            rx={2 / zoom}
+            pointerEvents="none"
+          />
+          <text
+            x={midX}
+            y={y}
+            fill={textColor}
+            fontSize={fontSize}
+            fontFamily="sans-serif"
+            textAnchor="middle"
+            dominantBaseline="middle"
+            pointerEvents="none"
+          >
+            W
+          </text>
+        </g>
+      );
+    } else {
+      // Height
+      const x = bounds.maxX + 10 / zoom;
+      const midY = (bounds.minY + bounds.maxY) / 2;
+      
+      return (
+        <g opacity={opacity}>
+          {/* Height indicator line */}
+          <line
+            x1={x}
+            y1={bounds.minY}
+            x2={x}
+            y2={bounds.maxY}
+            stroke={indicatorColor}
+            strokeWidth={strokeWidth}
+            pointerEvents="none"
+          />
+          {/* End caps */}
+          <line
+            x1={x - 3 / zoom}
+            y1={bounds.minY}
+            x2={x + 3 / zoom}
+            y2={bounds.minY}
+            stroke={indicatorColor}
+            strokeWidth={strokeWidth}
+            pointerEvents="none"
+          />
+          <line
+            x1={x - 3 / zoom}
+            y1={bounds.maxY}
+            x2={x + 3 / zoom}
+            y2={bounds.maxY}
+            stroke={indicatorColor}
+            strokeWidth={strokeWidth}
+            pointerEvents="none"
+          />
+          {/* Label */}
+          <rect
+            x={x - labelPadding}
+            y={midY - labelHeight / 2}
+            width={labelPadding * 2}
+            height={labelHeight}
+            fill={backgroundColor}
+            rx={2 / zoom}
+            pointerEvents="none"
+          />
+          <text
+            x={x}
+            y={midY}
+            fill={textColor}
+            fontSize={fontSize}
+            fontFamily="sans-serif"
+            textAnchor="middle"
+            dominantBaseline="middle"
+            pointerEvents="none"
+          >
+            H
+          </text>
+        </g>
+      );
+    }
+  };
+  
+  // Get bounds for matching elements
+  const matchingBounds = match.matchingElementIds
+    .map(id => ({ id, bounds: elementBoundsMap.get(id) }))
+    .filter((item): item is { id: string; bounds: Bounds } => item.bounds !== undefined);
+
+  return (
+    <g>
+      {/* Current element indicator */}
+      {renderIndicator(currentBounds, false)}
+      
+      {/* Matching elements indicators */}
+      {matchingBounds.map(({ id, bounds }) => (
+        <React.Fragment key={`size-match-${id}`}>
+          {renderIndicator(bounds, true)}
+        </React.Fragment>
+      ))}
+    </g>
+  );
+};
+
+interface AngleSnapIndicatorProps {
+  snappedAngle: number;
+  centerX: number;
+  centerY: number;
+  radius: number;
+  zoom: number;
+  color: string;
+}
+
+/**
+ * Angle snap indicator showing current angle and snap point
+ */
+export const AngleSnapIndicator: React.FC<AngleSnapIndicatorProps> = ({
+  snappedAngle,
+  centerX,
+  centerY,
+  radius,
+  zoom,
+  color
+}) => {
+  const angleRad = (snappedAngle * Math.PI) / 180;
+  const endX = centerX + Math.cos(angleRad) * radius;
+  const endY = centerY - Math.sin(angleRad) * radius;
+  
+  const fontSize = 11 / zoom;
+  const labelRadius = radius + 20 / zoom;
+  const labelX = centerX + Math.cos(angleRad) * labelRadius;
+  const labelY = centerY - Math.sin(angleRad) * labelRadius;
+
+  return (
+    <g>
+      {/* Snap line */}
+      <line
+        x1={centerX}
+        y1={centerY}
+        x2={endX}
+        y2={endY}
+        stroke={color}
+        strokeWidth={2 / zoom}
+        strokeDasharray={`${4 / zoom} ${2 / zoom}`}
+        pointerEvents="none"
+      />
+      
+      {/* Angle arc */}
+      <path
+        d={`M ${centerX + radius * 0.3} ${centerY} 
+            A ${radius * 0.3} ${radius * 0.3} 0 0 0 
+            ${centerX + Math.cos(angleRad) * radius * 0.3} 
+            ${centerY - Math.sin(angleRad) * radius * 0.3}`}
+        fill="none"
+        stroke={color}
+        strokeWidth={1 / zoom}
+        pointerEvents="none"
+      />
+      
+      {/* Angle label */}
+      <text
+        x={labelX}
+        y={labelY}
+        fill={color}
+        fontSize={fontSize}
+        fontFamily="sans-serif"
+        textAnchor="middle"
+        dominantBaseline="middle"
+        pointerEvents="none"
+      >
+        {Math.round(snappedAngle)}°
+      </text>
     </g>
   );
 };

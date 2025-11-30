@@ -19,6 +19,8 @@ import { useMobileTouchGestures } from './hooks/useMobileTouchGestures';
 import { useDynamicCanvasSize } from './hooks/useDynamicCanvasSize';
 import { useCanvasFeedback } from './hooks/useCanvasFeedback';
 import { useCanvasExport } from './hooks/useCanvasExport';
+import { Rulers } from '../plugins/guidelines/Rulers';
+import { RULER_SIZE } from '../plugins/guidelines/constants';
 
 import { CanvasStage } from './components/CanvasStage';
 import { useCanvasEventBusManager } from './hooks/useCanvasEventBusManager';
@@ -55,6 +57,8 @@ const CanvasContent: React.FC = () => {
   const isPathInteractionDisabled = useCanvasStore(state => state.isPathInteractionDisabled);
   const pathCursorMode = useCanvasStore(state => state.pathCursorMode);
   const settings = useCanvasStore(state => state.settings);
+  const guidelines = useCanvasStore(state => state.guidelines);
+  const showRulers = guidelines?.enabled && guidelines?.manualGuidesEnabled;
 
   const {
     currentMode,
@@ -169,7 +173,18 @@ const CanvasContent: React.FC = () => {
   }, [setDragStart]);
 
   // Use dynamic canvas size hook
-  const canvasSize = useDynamicCanvasSize();
+  const rawCanvasSize = useDynamicCanvasSize();
+  
+  // Adjust canvas size when rulers are visible to account for ruler offset
+  const canvasSize = useMemo(() => {
+    if (showRulers) {
+      return {
+        width: rawCanvasSize.width - RULER_SIZE,
+        height: rawCanvasSize.height - RULER_SIZE,
+      };
+    }
+    return rawCanvasSize;
+  }, [rawCanvasSize, showRulers]);
 
   // Transform screen coordinates to canvas coordinates
   const screenToCanvas = useCallback(
@@ -319,33 +334,51 @@ const CanvasContent: React.FC = () => {
   });
 
   return (
-    <>
-      <PluginHooksRenderer
-        svgRef={svgRef}
-        screenToCanvas={screenToCanvas}
-        emitPointerEvent={emitPointerEvent}
-      />
-      <RenderCountBadgeWrapper
-        componentName="Canvas"
-        position="top-left"
-        wrapperStyle={{ position: 'fixed', top: 0, left: 0, zIndex: 10000 }}
-      />
-      <CanvasStage
-        svgRef={svgRef}
-        canvasSize={canvasSize}
-        getViewBoxString={getViewBoxString}
-        isSpacePressed={isSpacePressed}
-        currentMode={currentMode}
-        sortedElements={sortedElements}
-        renderElement={renderElement}
-        canvasLayerContext={canvasLayerContext}
-        handlePointerDown={handlePointerDown}
-        handlePointerMove={handlePointerMove}
-        handlePointerUp={handlePointerUp}
-        {...(typeof window !== 'undefined' && !('ontouchstart' in window) && { handleCanvasDoubleClick })}
-        {...(typeof window !== 'undefined' && 'ontouchstart' in window && { handleCanvasTouchEnd })}
-      />
-    </>
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      {/* Rulers for manual guides */}
+      {showRulers && (
+        <Rulers
+          width={canvasSize.width}
+          height={canvasSize.height}
+          viewport={viewport}
+        />
+      )}
+      
+      {/* Canvas container with offset for rulers */}
+      <div style={{
+        position: 'absolute',
+        top: showRulers ? RULER_SIZE : 0,
+        left: showRulers ? RULER_SIZE : 0,
+        width: showRulers ? `calc(100% - ${RULER_SIZE}px)` : '100%',
+        height: showRulers ? `calc(100% - ${RULER_SIZE}px)` : '100%',
+      }}>
+        <PluginHooksRenderer
+          svgRef={svgRef}
+          screenToCanvas={screenToCanvas}
+          emitPointerEvent={emitPointerEvent}
+        />
+        <RenderCountBadgeWrapper
+          componentName="Canvas"
+          position="top-left"
+          wrapperStyle={{ position: 'fixed', top: 0, left: 0, zIndex: 10000 }}
+        />
+        <CanvasStage
+          svgRef={svgRef}
+          canvasSize={canvasSize}
+          getViewBoxString={getViewBoxString}
+          isSpacePressed={isSpacePressed}
+          currentMode={currentMode}
+          sortedElements={sortedElements}
+          renderElement={renderElement}
+          canvasLayerContext={canvasLayerContext}
+          handlePointerDown={handlePointerDown}
+          handlePointerMove={handlePointerMove}
+          handlePointerUp={handlePointerUp}
+          {...(typeof window !== 'undefined' && !('ontouchstart' in window) && { handleCanvasDoubleClick })}
+          {...(typeof window !== 'undefined' && 'ontouchstart' in window && { handleCanvasTouchEnd })}
+        />
+      </div>
+    </div>
   );
 };
 

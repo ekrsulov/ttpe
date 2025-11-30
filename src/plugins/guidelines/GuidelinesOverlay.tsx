@@ -1,21 +1,34 @@
 import React, { useMemo } from 'react';
 import { useColorModeValue } from '@chakra-ui/react';
-import type { GuidelineMatch, DistanceGuidelineMatch } from './slice';
+import type { GuidelineMatch, DistanceGuidelineMatch, SizeMatch, HoverMeasurement, ManualGuide } from './types';
 import { 
   calculateElementBoundsMap,
   calculatePerpendicularMidpoint,
   type Bounds
 } from '../../utils/guidelinesHelpers';
 import { guidelineDistanceScan } from '../../utils/guidelinesCore';
-import { GuidelineLine, DistanceLabel } from './GuidelineComponents';
+import { GuidelineLine, DistanceLabel, SizeMatchIndicator, ManualGuideLine } from './GuidelineComponents';
 
 interface GuidelinesOverlayProps {
   guidelines: {
     enabled: boolean;
     distanceEnabled: boolean;
+    sizeMatchingEnabled: boolean;
+    manualGuidesEnabled: boolean;
     debugMode: boolean;
+    guidelineColor: string;
+    distanceColor: string;
+    manualGuideColor: string;
+    sizeMatchColor: string;
     currentMatches: GuidelineMatch[];
     currentDistanceMatches: DistanceGuidelineMatch[];
+    currentSizeMatches: SizeMatch[];
+    manualGuides: ManualGuide[];
+    hoverMeasurements: HoverMeasurement[];
+    isAltPressed: boolean;
+    isDraggingGuide: boolean;
+    draggingGuideType: 'horizontal' | 'vertical' | null;
+    draggingGuidePosition: number | null;
   };
   viewport: {
     zoom: number;
@@ -36,22 +49,19 @@ export const GuidelinesOverlay: React.FC<GuidelinesOverlayProps> = ({
   elements,
   selectedIds,
 }) => {
-  const labelBackgroundColor = useColorModeValue('rgba(255, 255, 255, 0.5)', 'rgba(26, 32, 44, 0.5)');
-  const distanceTextColor = useColorModeValue('black', '#CCCCCC'); // Black for light mode, light gray for dark mode
+  const labelBackgroundColor = useColorModeValue('rgba(255, 255, 255, 0.9)', 'rgba(26, 32, 44, 0.9)');
+  const distanceTextColor = useColorModeValue('black', '#CCCCCC');
   
-  // In debug mode, calculate all possible guidelines for all elements
-  // useMemo must be called before any early returns
+  // Debug mode calculations
   const { debugGuidelines, debugDistances } = useMemo(() => {
     if (!guidelines.enabled || !guidelines.debugMode) {
       return { debugGuidelines: [], debugDistances: [] };
     }
 
-    // Use centralized helper to calculate bounds for all non-selected elements
     const boundsMap = calculateElementBoundsMap(elements, selectedIds, viewport.zoom);
     
     const debugGuidelinesArray: GuidelineMatch[] = [];
 
-    // Generate guidelines for each element
     boundsMap.forEach((info) => {
       debugGuidelinesArray.push({ type: 'left', position: info.bounds.minX, elementIds: [info.id] });
       debugGuidelinesArray.push({ type: 'right', position: info.bounds.maxX, elementIds: [info.id] });
@@ -61,11 +71,9 @@ export const GuidelinesOverlay: React.FC<GuidelinesOverlayProps> = ({
       debugGuidelinesArray.push({ type: 'centerY', position: info.centerY, elementIds: [info.id] });
     });
 
-    // Use centralized distance scan function
     const boundsArray = Array.from(boundsMap.values());
     const distanceResults = guidelineDistanceScan(boundsArray, { roundDistance: true });
     
-    // Convert results to the format expected by the overlay
     const debugDistancesArray = distanceResults.map((result) => ({
       axis: result.axis,
       distance: result.distance,
@@ -87,19 +95,34 @@ export const GuidelinesOverlay: React.FC<GuidelinesOverlayProps> = ({
   }
 
   const strokeWidth = 1 / viewport.zoom;
-  const activeGuidelineStrokeWidth = 2 / viewport.zoom; // Thicker for active guidelines
-  const guidelineColor = '#FF0000'; // Red for active alignment guidelines
-  const debugGuidelineColor = 'rgba(255, 0, 255, 0.15)'; // Very transparent magenta for debug
-  const distanceColor = '#666666'; // Gray for distance guidelines (both reference and current)
-  const referenceDistanceColor = '#666666'; // Same gray for reference distance guidelines
+  const activeGuidelineStrokeWidth = 2 / viewport.zoom;
+  const debugGuidelineColor = 'rgba(255, 0, 255, 0.15)';
+  const centerGuidelineColor = '#0066FF'; // Blue for center alignments
 
-  // Calculate canvas bounds for infinite lines
   const canvasWidth = 10000;
   const canvasHeight = 10000;
 
+  // Use centralized bounds calculation for distance labels
+  const elementBoundsInfo = calculateElementBoundsMap(elements, [], viewport.zoom);
+  const elementBoundsMap = new Map<string, Bounds>();
+  elementBoundsInfo.forEach((info, id) => {
+    elementBoundsMap.set(id, info.bounds);
+  });
+
   return (
     <g>
-      {/* Debug Guidelines (all possible guidelines) */}
+      {/* Manual guides (always visible when enabled) */}
+      {guidelines.manualGuidesEnabled && guidelines.manualGuides.map((guide) => (
+        <ManualGuideLine
+          key={guide.id}
+          guide={guide}
+          canvasSize={{ width: canvasWidth, height: canvasHeight }}
+          strokeWidth={strokeWidth}
+          zoom={viewport.zoom}
+        />
+      ))}
+
+      {/* Debug Guidelines */}
       {debugGuidelines.map((match, index) => (
         <GuidelineLine
           key={`debug-${index}`}
@@ -120,7 +143,6 @@ export const GuidelinesOverlay: React.FC<GuidelinesOverlayProps> = ({
         
         if (!bounds1 || !bounds2) return null;
         
-        // Use centralized helper for perpendicular midpoint calculation
         const perpendicularMid = calculatePerpendicularMidpoint(
           match.axis,
           bounds1,
@@ -145,34 +167,34 @@ export const GuidelinesOverlay: React.FC<GuidelinesOverlayProps> = ({
       })}
 
       {/* Active Alignment Guidelines */}
-      {guidelines.currentMatches.map((match, index) => (
-        <GuidelineLine
-          key={`alignment-${index}`}
-          type={match.type}
-          position={match.position}
-          canvasSize={{ width: canvasWidth, height: canvasHeight }}
-          strokeWidth={activeGuidelineStrokeWidth}
-          color={guidelineColor}
-          opacity={1}
-        />
-      ))}
-
-      {/* Distance Guidelines - Only show the smallest distance value (but draw all lines with that value) */}
-      {guidelines.distanceEnabled && guidelines.currentDistanceMatches.length > 0 && (() => {
-        // Find the smallest distance value
-        const minDistance = Math.min(...guidelines.currentDistanceMatches.map(m => m.distance));
+      {guidelines.currentMatches.map((match, index) => {
+        // Use different colors for centers vs edges
+        const isCenter = match.type === 'centerX' || match.type === 'centerY';
+        const color = match.isManualGuide 
+          ? guidelines.manualGuideColor 
+          : isCenter 
+            ? centerGuidelineColor 
+            : guidelines.guidelineColor;
         
-        // Filter all matches that have this minimum distance
-        const matchesWithMinDistance = guidelines.currentDistanceMatches.filter(
-          m => Math.abs(m.distance - minDistance) < 0.1 // Use small epsilon for floating point comparison
+        return (
+          <GuidelineLine
+            key={`alignment-${index}`}
+            type={match.type}
+            position={match.position}
+            canvasSize={{ width: canvasWidth, height: canvasHeight }}
+            strokeWidth={activeGuidelineStrokeWidth}
+            color={color}
+            opacity={1}
+          />
         );
-        
-        // Use centralized bounds calculation instead of manual iteration
-        const elementBoundsInfo = calculateElementBoundsMap(elements, [], viewport.zoom);
-        const elementBoundsMap = new Map<string, Bounds>();
-        elementBoundsInfo.forEach((info, id) => {
-          elementBoundsMap.set(id, info.bounds);
-        });
+      })}
+
+      {/* Distance Guidelines */}
+      {guidelines.distanceEnabled && guidelines.currentDistanceMatches.length > 0 && (() => {
+        const minDistance = Math.min(...guidelines.currentDistanceMatches.map(m => m.distance));
+        const matchesWithMinDistance = guidelines.currentDistanceMatches.filter(
+          m => Math.abs(m.distance - minDistance) < 0.1
+        );
         
         return matchesWithMinDistance.map((match, index) => {
           const refBounds1 = elementBoundsMap.get(match.referenceElementIds[0]);
@@ -183,19 +205,16 @@ export const GuidelinesOverlay: React.FC<GuidelinesOverlayProps> = ({
             return null;
           }
 
-          // Check if this is a 2-element case (reference and current are the same pair)
           const isTwoElementCase = 
             match.referenceStart === match.currentStart && 
             match.referenceEnd === match.currentEnd;
           
-          // Use centralized helper for perpendicular midpoint calculation
           const refPerpendicularMid = calculatePerpendicularMidpoint(
             match.axis,
             refBounds1,
             refBounds2
           );
           
-          // Find the "other" element involved in current distance
           const otherElement = elements.find(el => {
             if (el.id === match.currentElementId || el.type !== 'path') return false;
             const bounds = elementBoundsMap.get(el.id);
@@ -217,7 +236,6 @@ export const GuidelinesOverlay: React.FC<GuidelinesOverlayProps> = ({
             : refPerpendicularMid;
           
           if (isTwoElementCase) {
-            // For 2-element case, only draw one line (not separate ref and current)
             return (
               <DistanceLabel
                 key={`distance-single-${index}`}
@@ -227,7 +245,7 @@ export const GuidelinesOverlay: React.FC<GuidelinesOverlayProps> = ({
                 distance={match.distance}
                 otherAxisPosition={currentPerpendicularMid}
                 strokeWidth={activeGuidelineStrokeWidth}
-                color={distanceColor}
+                color={guidelines.distanceColor}
                 zoom={viewport.zoom}
                 opacity={1}
                 withBackground={true}
@@ -236,18 +254,16 @@ export const GuidelinesOverlay: React.FC<GuidelinesOverlayProps> = ({
               />
             );
           } else {
-            // For multi-element case, draw both reference and current lines
             return (
               <React.Fragment key={`distance-group-${index}`}>
                 <DistanceLabel
-                  key={`distance-ref-${index}`}
                   axis={match.axis}
                   start={match.referenceStart}
                   end={match.referenceEnd}
                   distance={match.distance}
                   otherAxisPosition={refPerpendicularMid}
                   strokeWidth={activeGuidelineStrokeWidth}
-                  color={referenceDistanceColor}
+                  color={guidelines.distanceColor}
                   zoom={viewport.zoom}
                   opacity={1}
                   withBackground={true}
@@ -255,14 +271,13 @@ export const GuidelinesOverlay: React.FC<GuidelinesOverlayProps> = ({
                   textColor={distanceTextColor}
                 />
                 <DistanceLabel
-                  key={`distance-current-${index}`}
                   axis={match.axis}
                   start={match.currentStart}
                   end={match.currentEnd}
                   distance={match.distance}
                   otherAxisPosition={currentPerpendicularMid}
                   strokeWidth={activeGuidelineStrokeWidth}
-                  color={distanceColor}
+                  color={guidelines.distanceColor}
                   zoom={viewport.zoom}
                   opacity={1}
                   withBackground={true}
@@ -274,6 +289,54 @@ export const GuidelinesOverlay: React.FC<GuidelinesOverlayProps> = ({
           }
         });
       })()}
+
+      {/* Size Matches */}
+      {guidelines.sizeMatchingEnabled && guidelines.currentSizeMatches.map((match, index) => (
+        <SizeMatchIndicator
+          key={`size-${index}`}
+          match={match}
+          elementBoundsMap={elementBoundsMap}
+          strokeWidth={strokeWidth}
+          color={guidelines.sizeMatchColor}
+          zoom={viewport.zoom}
+          backgroundColor={labelBackgroundColor}
+          textColor={distanceTextColor}
+        />
+      ))}
+
+      {/* Hover Measurements (Alt + hover) */}
+      {guidelines.isAltPressed && guidelines.hoverMeasurements.map((measurement, index) => (
+        <DistanceLabel
+          key={`hover-${index}`}
+          axis={measurement.axis}
+          start={measurement.start}
+          end={measurement.end}
+          distance={measurement.distance}
+          otherAxisPosition={measurement.perpendicularPosition}
+          strokeWidth={strokeWidth}
+          color="#FF6600"
+          zoom={viewport.zoom}
+          opacity={0.9}
+          withBackground={true}
+          backgroundColor={labelBackgroundColor}
+          textColor={distanceTextColor}
+        />
+      ))}
+
+      {/* Dragging guide preview (rendered in canvas coordinates) */}
+      {guidelines.isDraggingGuide && guidelines.draggingGuidePosition !== null && (
+        <line
+          x1={guidelines.draggingGuideType === 'horizontal' ? -canvasWidth / 2 : guidelines.draggingGuidePosition}
+          y1={guidelines.draggingGuideType === 'horizontal' ? guidelines.draggingGuidePosition : -canvasHeight / 2}
+          x2={guidelines.draggingGuideType === 'horizontal' ? canvasWidth * 1.5 : guidelines.draggingGuidePosition}
+          y2={guidelines.draggingGuideType === 'horizontal' ? guidelines.draggingGuidePosition : canvasHeight * 1.5}
+          stroke={guidelines.manualGuideColor}
+          strokeWidth={2 / viewport.zoom}
+          strokeDasharray={`${4 / viewport.zoom} ${4 / viewport.zoom}`}
+          opacity={0.8}
+          pointerEvents="none"
+        />
+      )}
     </g>
   );
 };

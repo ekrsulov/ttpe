@@ -198,10 +198,10 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                 return;
             }
 
-            const rect = svgRef.current.getBoundingClientRect();
+            // screenToCanvas already handles getBoundingClientRect internally
             const rawCanvasPoint = screenToCanvas(
-                event.clientX - rect.left,
-                event.clientY - rect.top
+                event.clientX,
+                event.clientY
             );
 
             const state = useCanvasStore.getState();
@@ -438,10 +438,10 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
         const handlePointerMove = (event: PointerEvent) => {
             if (!svgRef.current) return;
 
-            const rect = svgRef.current.getBoundingClientRect();
+            // screenToCanvas already handles getBoundingClientRect internally
             const rawCanvasPoint = screenToCanvas(
-                event.clientX - rect.left,
-                event.clientY - rect.top
+                event.clientX,
+                event.clientY
             );
 
             const state = useCanvasStore.getState();
@@ -795,10 +795,10 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
 
             if (!svgRef.current || !isDraggingRef.current || !dragStartPointRef.current) return;
 
-            const rect = svgRef.current.getBoundingClientRect();
+            // screenToCanvas already handles getBoundingClientRect internally
             const rawCanvasPoint = screenToCanvas(
-                event.clientX - rect.left,
-                event.clientY - rect.top
+                event.clientX,
+                event.clientY
             );
 
             const state = useCanvasStore.getState();
