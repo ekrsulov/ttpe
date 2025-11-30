@@ -89,9 +89,39 @@ export const useCanvasStore = create<CanvasStore>()(
       }
     ), {
     name: 'canvas-app-state',
+    version: 2,
+    migrate: (persistedState: any, _version: number) => {
+      // Force dialog closed in persisted state before applying
+      if (persistedState && persistedState.pluginSelector) {
+        persistedState.pluginSelector.isDialogOpen = false;
+      }
+      // Force sidebar closed in persisted state to prevent blocking UI (especially in tests)
+      if (persistedState) {
+        persistedState.isSidebarOpen = false;
+      }
+      return persistedState;
+    },
     partialize: (state: CanvasStore) => {
       const { ...rest } = state;
-      return rest;
+
+      // Create a shallow copy of the state to modify for persistence
+      const persistedState = { ...rest };
+
+      // If pluginSelector state exists, modify it to ensure dialog is closed
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((persistedState as any).pluginSelector) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (persistedState as any).pluginSelector = {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ...(persistedState as any).pluginSelector,
+          isDialogOpen: false, // Force dialog to be closed in persisted state
+        };
+      }
+
+      // Force sidebar closed in persisted state to prevent blocking UI (especially in tests)
+      persistedState.isSidebarOpen = false;
+
+      return persistedState;
     }
   }
   )

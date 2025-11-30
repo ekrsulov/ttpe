@@ -5,6 +5,7 @@ import { useCanvasStore } from '../store/canvasStore';
  * Consolidates the repeated pattern across TopActionBar, BottomActionBar,
  * VirtualShiftButton, and ExpandableToolPanel.
  * 
+ * @deprecated Use useSidebarLayout().effectiveSidebarWidth instead for consistency.
  * @returns effectiveSidebarWidth - 0 when sidebar is not pinned, actual width when pinned
  */
 export function useEffectiveSidebarWidth(): number {
@@ -15,8 +16,10 @@ export function useEffectiveSidebarWidth(): number {
 }
 
 /**
- * Hook to get sidebar-related layout state.
- * Use this when you need both the width and pinned state.
+ * Primary hook for sidebar layout state.
+ * Use this when you need sidebar dimensions or layout-related state.
+ * 
+ * For full sidebar state including actions, use useSidebarState() instead.
  */
 export function useSidebarLayout() {
   const sidebarWidth = useCanvasStore(state => state.sidebarWidth);
@@ -24,9 +27,13 @@ export function useSidebarLayout() {
   const isSidebarOpen = useCanvasStore(state => state.isSidebarOpen);
   
   return {
+    /** Raw sidebar width from store */
     sidebarWidth,
+    /** Whether sidebar is pinned */
     isSidebarPinned,
+    /** Whether sidebar drawer is open */
     isSidebarOpen,
+    /** Effective width: sidebarWidth when pinned, 0 otherwise */
     effectiveSidebarWidth: isSidebarPinned ? sidebarWidth : 0,
   };
 }

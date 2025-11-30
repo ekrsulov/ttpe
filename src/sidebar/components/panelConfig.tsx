@@ -1,6 +1,7 @@
 import React from 'react';
 import { CORE_PLUGINS } from '../../plugins';
 import type { PanelConfig } from '../../types/panel';
+import { panelRegistry, initializePanelRegistry } from '../../utils/panelRegistry';
 
 // Lazy load core panel components
 const EditorPanel = React.lazy(() => import('../panels/EditorPanel').then(module => ({ default: module.EditorPanel })));
@@ -34,6 +35,9 @@ const CORE_PANEL_CONFIGS: PanelConfig[] = [
 /**
  * Build panel configurations by combining core panels with plugin-contributed panels.
  * This creates a clean, immutable array instead of mutating a global.
+ * 
+ * @deprecated This function will be removed in a future version.
+ * Use panelRegistry.getAll() instead after calling initializePanelRegistry().
  */
 function buildPanelConfigs(): PanelConfig[] {
   const configs: PanelConfig[] = [...CORE_PANEL_CONFIGS];
@@ -59,6 +63,25 @@ function buildPanelConfigs(): PanelConfig[] {
   return configs;
 }
 
+// Initialize the panel registry for new consumers
+initializePanelRegistry();
+
+// Register plugin panels into the registry
+CORE_PLUGINS.forEach(plugin => {
+  if (plugin.sidebarPanels) {
+    plugin.sidebarPanels.forEach(panel => {
+      if (!panelRegistry.has(`${plugin.id}:${panel.key}`)) {
+        panelRegistry.register({
+          ...panel,
+          key: `${plugin.id}:${panel.key}`,
+          // @ts-expect-error - Adding pluginId for filtering
+          pluginId: plugin.id,
+        });
+      }
+    });
+  }
+});
+
 /**
  * Panel configuration array
  * Each panel has:
@@ -66,5 +89,16 @@ function buildPanelConfigs(): PanelConfig[] {
  * - condition: function that determines if the panel should be shown
  * - component: the lazy-loaded component
  * - getProps: optional function to extract/map props for the component
+ * 
+ * @deprecated Use panelRegistry.getAll() for dynamic panel access.
+ * This export is maintained for backward compatibility.
  */
 export const PANEL_CONFIGS: PanelConfig[] = buildPanelConfigs();
+
+/**
+ * Get panel configurations dynamically from the registry.
+ * Preferred over PANEL_CONFIGS for new code.
+ */
+export function getPanelConfigs(): PanelConfig[] {
+  return panelRegistry.getAll();
+}

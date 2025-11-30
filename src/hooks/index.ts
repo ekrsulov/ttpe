@@ -7,12 +7,17 @@ export { useColorModeSync } from './useColorModeSync';
 export { useDragResize } from './useDragResize';
 export { useIOSSupport } from './useIOSSupport';
 export { useResponsive } from './useResponsive';
+
 // Layout hooks
 export { useEffectiveSidebarWidth, useSidebarLayout } from './useSidebarLayout';
+export { useSidebarState, useToolbarPositionStyles } from './useSidebarState';
 export { useMenuColors, useMenuItemStyles } from './useMenuColors';
 export { useToolbarColors, usePanelHeaderColors, useCounterColors, usePanelButtonColors, useExpandablePanelColors, useInputColors, useToggleButtonColors, useActiveToolColors } from './useToolbarColors';
 export { useRenderCount } from './useRenderCount';
 export { useSidebarFooterHeight } from './useSidebarFooterHeight';
+
+// Unified theme colors (new consolidated hook)
+export { useThemeColors, NO_FOCUS_STYLES, NO_FOCUS_STYLES_DEEP } from './useThemeColors';
 
 // State/Storage hooks
 export { useLocalStorage } from './useLocalStorage';

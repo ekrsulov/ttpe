@@ -43,7 +43,7 @@ export async function clickActionButton(page: Page, ariaLabel: string): Promise<
  * Get the canvas SVG element
  */
 export function getCanvas(page: Page): Locator {
-  return page.locator('svg[viewBox*="0 0"]').first();
+  return page.locator('svg[data-canvas="true"]');
 }
 
 /**

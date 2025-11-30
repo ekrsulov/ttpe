@@ -45,6 +45,13 @@ export const Sidebar: React.FC = () => {
 
   const initialWidth = 250;
 
+  // If sidebar is pinned, ensure it's also open (handles page reload scenario)
+  useEffect(() => {
+    if (isSidebarPinned && !isSidebarOpen) {
+      setIsSidebarOpen(true);
+    }
+  }, [isSidebarPinned, isSidebarOpen, setIsSidebarOpen]);
+
   // Auto-unpin on mobile (responsive behavior)
   // Note: We don't auto-pin on desktop anymore to allow manual unpin
   useEffect(() => {

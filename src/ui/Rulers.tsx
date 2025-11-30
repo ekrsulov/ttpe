@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef } from 'react';
-import { Box, useColorModeValue } from '@chakra-ui/react';
+import { Box } from '@chakra-ui/react';
+import { useThemeColors } from '../hooks';
 
 /** Standard ruler size in pixels */
 export const RULER_SIZE = 20;
@@ -76,10 +77,7 @@ export const Rulers: React.FC<RulersProps> = ({
   draggingPosition = null,
   draggingPreviewColor = '#00BFFF',
 }) => {
-  const rulerBgColor = useColorModeValue('gray.100', 'gray.800');
-  const rulerTextColor = useColorModeValue('gray.600', 'gray.400');
-  const rulerTickColor = useColorModeValue('gray.400', 'gray.500');
-  const rulerBorderColor = useColorModeValue('gray.300', 'gray.600');
+  const { ruler } = useThemeColors();
   
   const horizontalRulerRef = useRef<HTMLCanvasElement>(null);
   const verticalRulerRef = useRef<HTMLCanvasElement>(null);
@@ -101,7 +99,7 @@ export const Rulers: React.FC<RulersProps> = ({
     ctx.scale(dpr, dpr);
     
     // Clear
-    ctx.fillStyle = rulerBgColor.includes('gray.100') ? '#f7fafc' : '#1a202c';
+    ctx.fillStyle = ruler.bgHex;
     ctx.fillRect(0, 0, width, RULER_SIZE);
     
     const { zoom, panX } = viewport;
@@ -113,7 +111,7 @@ export const Rulers: React.FC<RulersProps> = ({
     // Find first tick
     const firstTick = Math.floor(startX / spacing) * spacing;
     
-    ctx.fillStyle = rulerTextColor.includes('gray.600') ? '#718096' : '#a0aec0';
+    ctx.fillStyle = ruler.textHex;
     ctx.font = '10px system-ui, sans-serif';
     ctx.textAlign = 'center';
     
@@ -121,7 +119,7 @@ export const Rulers: React.FC<RulersProps> = ({
       const screenX = canvasX * zoom + panX;
       
       // Major tick
-      ctx.strokeStyle = rulerTickColor.includes('gray.400') ? '#a0aec0' : '#718096';
+      ctx.strokeStyle = ruler.tickHex;
       ctx.beginPath();
       ctx.moveTo(screenX, RULER_SIZE - 8);
       ctx.lineTo(screenX, RULER_SIZE);
@@ -144,12 +142,12 @@ export const Rulers: React.FC<RulersProps> = ({
     }
     
     // Border
-    ctx.strokeStyle = rulerBorderColor.includes('gray.300') ? '#e2e8f0' : '#4a5568';
+    ctx.strokeStyle = ruler.borderHex;
     ctx.beginPath();
     ctx.moveTo(0, RULER_SIZE - 0.5);
     ctx.lineTo(width, RULER_SIZE - 0.5);
     ctx.stroke();
-  }, [width, viewport, spacing, rulerBgColor, rulerTextColor, rulerTickColor, rulerBorderColor]);
+  }, [width, viewport, spacing, ruler]);
 
   // Draw vertical ruler
   useEffect(() => {
@@ -165,7 +163,7 @@ export const Rulers: React.FC<RulersProps> = ({
     ctx.scale(dpr, dpr);
     
     // Clear
-    ctx.fillStyle = rulerBgColor.includes('gray.100') ? '#f7fafc' : '#1a202c';
+    ctx.fillStyle = ruler.bgHex;
     ctx.fillRect(0, 0, RULER_SIZE, height);
     
     const { zoom, panY } = viewport;
@@ -177,7 +175,7 @@ export const Rulers: React.FC<RulersProps> = ({
     // Find first tick
     const firstTick = Math.floor(startY / spacing) * spacing;
     
-    ctx.fillStyle = rulerTextColor.includes('gray.600') ? '#718096' : '#a0aec0';
+    ctx.fillStyle = ruler.textHex;
     ctx.font = '10px system-ui, sans-serif';
     ctx.textAlign = 'center';
     
@@ -185,7 +183,7 @@ export const Rulers: React.FC<RulersProps> = ({
       const screenY = canvasY * zoom + panY;
       
       // Major tick
-      ctx.strokeStyle = rulerTickColor.includes('gray.400') ? '#a0aec0' : '#718096';
+      ctx.strokeStyle = ruler.tickHex;
       ctx.beginPath();
       ctx.moveTo(RULER_SIZE - 8, screenY);
       ctx.lineTo(RULER_SIZE, screenY);
@@ -212,12 +210,12 @@ export const Rulers: React.FC<RulersProps> = ({
     }
     
     // Border
-    ctx.strokeStyle = rulerBorderColor.includes('gray.300') ? '#e2e8f0' : '#4a5568';
+    ctx.strokeStyle = ruler.borderHex;
     ctx.beginPath();
     ctx.moveTo(RULER_SIZE - 0.5, 0);
     ctx.lineTo(RULER_SIZE - 0.5, height);
     ctx.stroke();
-  }, [height, viewport, spacing, rulerBgColor, rulerTextColor, rulerTickColor, rulerBorderColor]);
+  }, [height, viewport, spacing, ruler]);
 
   // Handle horizontal ruler drag
   const handleHorizontalMouseDown = useCallback((e: React.MouseEvent) => {
@@ -336,10 +334,10 @@ export const Rulers: React.FC<RulersProps> = ({
         left={0}
         width={`${RULER_SIZE}px`}
         height={`${RULER_SIZE}px`}
-        bg={rulerBgColor}
+        bg={ruler.bg}
         borderRight="1px solid"
         borderBottom="1px solid"
-        borderColor={rulerBorderColor}
+        borderColor={ruler.borderColor}
         zIndex={101}
       />
       

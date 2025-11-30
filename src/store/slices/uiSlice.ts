@@ -39,8 +39,8 @@ export const createUiSlice: StateCreator<CanvasStore, [], [], UiSlice> = (set) =
   editorColorControlsOpen: getStoredValue('editor-color-controls-open', IS_DEV),
   selectPanelHeight: getStoredValue('select-panel-height', DEFAULT_PANEL_HEIGHT),
   sidebarWidth: getStoredValue('sidebar-width', 250),
-  isSidebarPinned: false, // Initially unpinned, Sidebar component will update this
-  isSidebarOpen: true, // Initially open
+  isSidebarPinned: IS_DEV, // In dev mode, start pinned; in prod, unpinned
+  isSidebarOpen: IS_DEV, // In dev mode, start open; in prod, closed to prevent blocking UI
   showCallerInfo: getStoredValue('ttpe-show-caller-info', false),
   isDraggingElements: false,
 

@@ -1,7 +1,8 @@
 import React from 'react';
-import { IconButton as ChakraIconButton, useColorModeValue } from '@chakra-ui/react';
+import { IconButton as ChakraIconButton } from '@chakra-ui/react';
 import type { LucideIcon } from 'lucide-react';
 import ConditionalTooltip from './ConditionalTooltip';
+import { useThemeColors } from '../hooks';
 
 interface PanelActionButtonProps {
   label: string;
@@ -24,9 +25,8 @@ export const PanelActionButton: React.FC<PanelActionButtonProps> = ({
   variant = 'ghost',
   tooltipDelay = 200,
 }) => {
-  const hoverBg = useColorModeValue('gray.300', 'whiteAlpha.400');
-  const activeBg = useColorModeValue('gray.400', 'whiteAlpha.500');
-  const iconColor = useColorModeValue('gray.600', 'gray.200');
+  const { panelAction } = useThemeColors();
+  
   return (
     <ConditionalTooltip label={label} openDelay={tooltipDelay}>
       <ChakraIconButton
@@ -41,9 +41,9 @@ export const PanelActionButton: React.FC<PanelActionButtonProps> = ({
         onClick={onClick}
         isDisabled={isDisabled}
         border="none"
-        color={iconColor}
-        _hover={{ bg: hoverBg }}
-        _active={{ bg: activeBg }}
+        color={panelAction.iconColor}
+        _hover={{ bg: panelAction.hoverBg }}
+        _active={{ bg: panelAction.activeBg }}
       />
     </ConditionalTooltip>
   );

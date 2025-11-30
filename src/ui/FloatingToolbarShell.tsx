@@ -51,7 +51,7 @@ export const FloatingToolbarShell: React.FC<FloatingToolbarShellProps> = ({
   // Get position config based on toolbar type
   const config = TOOLBAR_POSITION_CONFIG[toolbarPosition];
   const positionProps = toolbarPosition === 'top'
-    ? { top: showGridRulers ? config.withRulers : config.default }
+    ? { top: showGridRulers ? (config as typeof TOOLBAR_POSITION_CONFIG['top']).withRulers : config.default }
     : { bottom: config.default };
 
   return (

@@ -16,6 +16,7 @@ interface ToolbarPositionConfig {
  * Centralizes the repeated positioning logic used across TopActionBar,
  * BottomActionBar, ExpandableToolPanel, and VirtualShiftButton.
  * 
+ * @deprecated Consider using useToolbarPositionStyles from useSidebarState instead.
  * @param sidebarWidth - Current sidebar width in pixels (0 when not pinned)
  * @returns Position configuration for toolbar components
  */

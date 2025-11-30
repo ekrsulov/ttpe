@@ -4,21 +4,8 @@ import ConditionalTooltip from './ConditionalTooltip';
 import { ChevronRight } from 'lucide-react';
 import type { FloatingContextMenuAction } from '../types/plugins';
 import { useMenuColors } from '../hooks/useMenuColors';
-import { useResponsive } from '../hooks';
+import { useResponsive, NO_FOCUS_STYLES, NO_FOCUS_STYLES_DEEP } from '../hooks';
 import { FloatingContextMenuItem, FloatingContextMenuMobileSubmenu } from './FloatingContextMenuComponents';
-
-/** Common styles for removing focus outlines */
-const noFocusStyles = {
-  '&:focus': { outline: 'none !important', boxShadow: 'none !important' },
-  '&:focus-visible': { outline: 'none !important', boxShadow: 'none !important' },
-};
-
-/** Container styles shared between main menu and submenu views */
-const menuContainerStyles = {
-  ...noFocusStyles,
-  '& *:focus': { outline: 'none !important' },
-  '& *:focus-visible': { outline: 'none !important' },
-};
 
 interface FloatingContextMenuProps {
   /** Array of actions to display in the menu */
@@ -69,7 +56,7 @@ export const FloatingContextMenu: React.FC<FloatingContextMenuProps> = ({
         py={1}
         tabIndex={-1}
         _focus={{ outline: 'none', boxShadow: 'lg' }}
-        sx={menuContainerStyles}
+        sx={NO_FOCUS_STYLES_DEEP}
       >
         <FloatingContextMenuMobileSubmenu
           parentAction={activeSubmenu}
@@ -116,7 +103,7 @@ export const FloatingContextMenu: React.FC<FloatingContextMenuProps> = ({
             _hover={{ bg: hoverBg }}
             _focus={{ outline: 'none', boxShadow: 'none' }}
             _active={{ outline: 'none' }}
-            sx={noFocusStyles}
+            sx={NO_FOCUS_STYLES}
             fontSize="14px"
             fontWeight="medium"
           >
@@ -136,7 +123,7 @@ export const FloatingContextMenu: React.FC<FloatingContextMenuProps> = ({
             maxW="240px"
             py={1}
             _focus={{ outline: 'none', boxShadow: 'lg' }}
-            sx={noFocusStyles}
+            sx={NO_FOCUS_STYLES}
           >
             {action.submenu!.map(subAction => {
               const iconElement = subAction.id === 'send-back' ? (
@@ -161,7 +148,7 @@ export const FloatingContextMenu: React.FC<FloatingContextMenuProps> = ({
                   _active={{ outline: 'none', bg: 'transparent' }}
                   sx={{
                     WebkitTapHighlightColor: 'transparent',
-                    ...noFocusStyles,
+                    ...NO_FOCUS_STYLES,
                   }}
                   fontSize="14px"
                 >
@@ -195,7 +182,7 @@ export const FloatingContextMenu: React.FC<FloatingContextMenuProps> = ({
       py={1}
       tabIndex={-1}
       _focus={{ outline: 'none', boxShadow: 'lg' }}
-      sx={menuContainerStyles}
+      sx={NO_FOCUS_STYLES_DEEP}
     >
       {defaultActions.length > 0 && (
         <>

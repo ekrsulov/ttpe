@@ -4,7 +4,7 @@ import { MoreVertical } from 'lucide-react';
 import { ToolbarIconButton } from './ToolbarIconButton';
 import { FloatingContextMenu } from './FloatingContextMenu';
 import { useFloatingContextMenuActions } from '../hooks/useFloatingContextMenuActions';
-import { useSelectionContext } from '../hooks/useSelectionContext';
+import { useSelectionContext, NO_FOCUS_STYLES_DEEP } from '../hooks';
 import { useCanvasStore } from '../store/canvasStore';
 import { pluginManager } from '../utils/pluginManager';
 
@@ -90,11 +90,8 @@ export const FloatingContextMenuButton: React.FC = () => {
         _focus={{ outline: 'none', boxShadow: 'none' }}
         _focusVisible={{ outline: 'none', boxShadow: 'none' }}
         sx={{
-          '&:focus': { outline: 'none !important', boxShadow: 'none !important' },
-          '&:focus-visible': { outline: 'none !important', boxShadow: 'none !important' },
+          ...NO_FOCUS_STYLES_DEEP,
           '& > *': { outline: 'none !important' },
-          '& *:focus': { outline: 'none !important' },
-          '& *:focus-visible': { outline: 'none !important' },
         }}
       >
         <FloatingContextMenu

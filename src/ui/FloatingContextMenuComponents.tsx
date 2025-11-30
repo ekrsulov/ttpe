@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, HStack, Text, IconButton } from '@chakra-ui/react';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
 import type { FloatingContextMenuAction } from '../types/plugins';
-import { useMenuColors } from '../hooks/useMenuColors';
+import { useMenuColors, NO_FOCUS_STYLES } from '../hooks';
 
 interface FloatingContextMenuItemProps {
   action: FloatingContextMenuAction;
@@ -66,8 +66,7 @@ export const FloatingContextMenuItem: React.FC<FloatingContextMenuItemProps> = (
       _active={{ outline: 'none' }}
       sx={{
         WebkitTapHighlightColor: 'transparent',
-        '&:focus': { outline: 'none !important', boxShadow: 'none !important' },
-        '&:focus-visible': { outline: 'none !important', boxShadow: 'none !important' },
+        ...NO_FOCUS_STYLES,
       }}
       fontSize="14px"
       fontWeight="medium"
@@ -161,8 +160,7 @@ export const FloatingContextMenuMobileSubmenu: React.FC<FloatingContextMenuMobil
             _active={{ outline: 'none' }}
             sx={{
               WebkitTapHighlightColor: 'transparent',
-              '&:focus': { outline: 'none !important', boxShadow: 'none !important' },
-              '&:focus-visible': { outline: 'none !important', boxShadow: 'none !important' },
+              ...NO_FOCUS_STYLES,
             }}
             fontSize="14px"
             fontWeight="medium"

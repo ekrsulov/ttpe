@@ -4,6 +4,7 @@ import { Menu, MoreHorizontal } from 'lucide-react';
 import { RenderCountBadgeWrapper } from './RenderCountBadgeWrapper';
 import { FloatingToolbarShell } from './FloatingToolbarShell';
 import { ToolbarIconButton } from './ToolbarIconButton';
+import { ExtraToolsBar } from './ExtraToolsBar';
 import { pluginManager, useVisibleToolIds } from '../utils/pluginManager';
 import { useCanvasStore } from '../store/canvasStore';
 import { useDynamicTools, useEnabledPlugins, useResponsive, useSidebarLayout, useActiveToolColors } from '../hooks';
@@ -27,7 +28,8 @@ export const TopActionBar: React.FC = () => {
 
   // Calculated values
   const showGridRulers = (grid?.enabled && grid?.showRulers) || (guidelines?.enabled && guidelines?.manualGuidesEnabled);
-  const showMenuButton = !isSidebarPinned;
+  // Show menu button when sidebar is not pinned OR when sidebar is not visible (to allow reopening)
+  const showMenuButton = !isSidebarPinned || !isSidebarOpen;
 
   // Use unified responsive hook
   const { isMobile } = useResponsive();
@@ -263,52 +265,19 @@ export const TopActionBar: React.FC = () => {
         <RenderCountBadgeWrapper componentName="TopActionBar" position="top-right" />
       </FloatingToolbarShell>
 
-      {/* Extra tools bar */}
-      {showExtraTools && extraTools.length > 0 && (
+      {/* Extra tools bar - extracted component */}
+      {showExtraTools && (
         <Box ref={extraToolsBarRef}>
-          <FloatingToolbarShell
-            toolbarPosition="top"
+          <ExtraToolsBar
+            extraTools={extraTools}
+            activeMode={activeMode}
+            activeBg={activeBg}
+            activeColor={activeColor}
             sidebarWidth={effectiveSidebarWidth}
             showGridRulers={showGridRulers}
-            sx={{
-              marginTop: '42px',
-              transition: 'all 0.2s ease-in-out',
-            }}
-          >
-            <HStack
-              spacing={{ base: 0, md: 0 }}
-              justify="center"
-              position="relative"
-            >
-              {extraTools.map(({ id, icon: Icon, label }) => {
-                const store = useCanvasStore.getState();
-                const isDisabled = isDraggingElements ? false : pluginManager.isToolDisabled(id, store);
-
-                return (
-                  <Box
-                    key={id}
-                    position="relative"
-                    zIndex={1}
-                  >
-                    <ToolbarIconButton
-                      icon={Icon}
-                      label={label}
-                      onClick={() => handleModeChange(id)}
-                      variant="ghost"
-                      colorScheme="gray"
-                      bg={activeMode === id ? 'transparent' : undefined}
-                      color={activeMode === id ? activeColor : undefined}
-                      _hover={activeMode === id ? { bg: 'transparent' } : undefined}
-                      tooltip={label}
-                      isDisabled={isDisabled}
-                      showTooltip={true}
-                      title={label}
-                    />
-                  </Box>
-                );
-              })}
-            </HStack>
-          </FloatingToolbarShell>
+            isDraggingElements={isDraggingElements}
+            onToolSelect={handleModeChange}
+          />
         </Box>
       )}
     </>

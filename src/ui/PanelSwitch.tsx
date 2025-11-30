@@ -1,5 +1,6 @@
 import React from 'react';
-import { Switch, type SwitchProps, useColorModeValue } from '@chakra-ui/react';
+import { Switch, type SwitchProps } from '@chakra-ui/react';
+import { useThemeColors } from '../hooks';
 
 export interface PanelSwitchProps extends Omit<SwitchProps, 'isChecked' | 'onChange'> {
   isChecked: boolean;
@@ -16,12 +17,7 @@ export const PanelSwitch: React.FC<PanelSwitchProps> = ({
   onChange,
   ...restProps
 }) => {
-  // Track background colors - gray tones for both modes
-  const trackBgUnchecked = useColorModeValue('gray.300', 'gray.600');
-  const trackBgChecked = useColorModeValue('gray.500', 'gray.400');
-  
-  // Thumb (circle) background - always white/light
-  const thumbBg = useColorModeValue('white', 'gray.100');
+  const { panelSwitch } = useThemeColors();
   
   return (
     <Switch
@@ -30,13 +26,13 @@ export const PanelSwitch: React.FC<PanelSwitchProps> = ({
       size="sm"
       sx={{
         '& .chakra-switch__track': {
-          bg: isChecked ? trackBgChecked : trackBgUnchecked,
+          bg: isChecked ? panelSwitch.trackChecked : panelSwitch.trackUnchecked,
           _checked: {
-            bg: trackBgChecked,
+            bg: panelSwitch.trackChecked,
           },
         },
         '& .chakra-switch__thumb': {
-          bg: thumbBg,
+          bg: panelSwitch.thumbBg,
         },
       }}
       {...restProps}

@@ -29,6 +29,16 @@ export * from './overlayHelpers';
 // Export SVG import utilities
 export * from './svgImportUtils';
 
+// Export panel registry
+export { 
+  panelRegistry,
+  initializePanelRegistry,
+  registerPluginPanels,
+  type PanelConfig,
+  type PanelConditionContext,
+  type PanelComponentProps,
+} from './panelRegistry';
+
 export function formatToPrecision(num: number, precision: number = 2): number {
   return parseFloat(num.toFixed(precision));
 }

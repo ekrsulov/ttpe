@@ -18,9 +18,59 @@ interface ToolUsage {
 }
 
 /**
- * Hook to manage dynamic tool selection based on usage patterns
+ * Structured return type for useDynamicTools hook.
+ * Groups related values for easier consumption.
  */
-export const useDynamicTools = (activeMode: string | null) => {
+export interface DynamicToolsResult {
+  /** Tool categories */
+  tools: {
+    /** Tools that are always shown in the toolbar */
+    alwaysShown: ToolMode[];
+    /** Tools that can be shown/hidden dynamically */
+    dynamic: ToolMode[];
+  };
+  /** Mobile-specific tool management */
+  mobile: {
+    /** Get tools visible in main toolbar on mobile */
+    getVisibleTools: () => ToolMode[];
+    /** Get tools shown in overflow/extra bar */
+    getExtraTools: () => ToolMode[];
+    /** Whether extra tools bar is currently open */
+    isExtraOpen: boolean;
+    /** Toggle extra tools visibility */
+    toggleExtra: () => void;
+  };
+  /** Usage tracking */
+  usage: {
+    /** Track that a tool was used */
+    track: (toolId: ToolMode) => void;
+    /** Reset all usage data */
+    reset: () => void;
+  };
+  // Legacy flat exports for backward compatibility
+  /** @deprecated Use usage.track instead */
+  trackToolUsage: (toolId: ToolMode) => void;
+  /** @deprecated Use mobile.getVisibleTools instead */
+  getMobileVisibleTools: () => ToolMode[];
+  /** @deprecated Use mobile.getExtraTools instead */
+  getExtraTools: () => ToolMode[];
+  /** @deprecated Use mobile.isExtraOpen instead */
+  showExtraTools: boolean;
+  /** @deprecated Use mobile.toggleExtra instead */
+  toggleExtraTools: () => void;
+  /** @deprecated Use usage.reset instead */
+  resetToolUsage: () => void;
+  /** @deprecated Use tools.alwaysShown instead */
+  alwaysShownTools: ToolMode[];
+  /** @deprecated Use tools.dynamic instead */
+  dynamicTools: ToolMode[];
+}
+
+/**
+ * Hook to manage dynamic tool selection based on usage patterns.
+ * Returns a structured object for clearer API consumption.
+ */
+export const useDynamicTools = (activeMode: string | null): DynamicToolsResult => {
   const [toolUsage, setToolUsage, resetToolUsage] = useLocalStorage<ToolUsage>(TOOL_USAGE_KEY, {});
   const [showExtraTools, setShowExtraTools] = useState(false);
 
@@ -94,7 +144,24 @@ export const useDynamicTools = (activeMode: string | null) => {
     setShowExtraTools(prev => !prev);
   }, []);
 
+  // Return structured object
   return {
+    tools: {
+      alwaysShown: alwaysShownTools,
+      dynamic: dynamicTools,
+    },
+    mobile: {
+      getVisibleTools: getMobileVisibleTools,
+      getExtraTools,
+      isExtraOpen: showExtraTools,
+      toggleExtra: toggleExtraTools,
+    },
+    usage: {
+      track: trackToolUsage,
+      reset: resetToolUsage,
+    },
+    // Legacy flat exports for backward compatibility
+    // TODO: Remove these after migrating all consumers
     trackToolUsage,
     getMobileVisibleTools,
     getExtraTools,
