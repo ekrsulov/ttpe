@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { isTextFieldFocused } from '../../utils/domHelpers';
+import { useModifierKeys } from './useModifierKeys';
 
 export const useCanvasKeyboardControls = () => {
   const [isSpacePressed, setIsSpacePressed] = useState(false);
-  const [isShiftPressed, setIsShiftPressed] = useState(false);
   const isVirtualShiftActive = useCanvasStore(state => state.isVirtualShiftActive);
+  
+  // Use consolidated modifier keys hook
+  const modifiers = useModifierKeys(isVirtualShiftActive);
 
-  // Computed effective shift state (physical OR virtual)
-  const isEffectiveShiftPressed = isShiftPressed || isVirtualShiftActive;
-
-  // Handle space and shift keys
+  // Handle space key for pan mode
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Don't activate pan mode if user is typing in an input or textarea
@@ -20,19 +20,11 @@ export const useCanvasKeyboardControls = () => {
           e.preventDefault();
         }
       }
-
-      // Handle Shift key
-      if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
-        setIsShiftPressed(true);
-      }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
       if (e.code === 'Space') {
         setIsSpacePressed(false);
-      }
-      if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
-        setIsShiftPressed(false);
       }
     };
 
@@ -47,6 +39,7 @@ export const useCanvasKeyboardControls = () => {
 
   return {
     isSpacePressed,
-    isShiftPressed: isEffectiveShiftPressed
+    isShiftPressed: modifiers.isShiftPressed,
+    modifiers,
   };
 };

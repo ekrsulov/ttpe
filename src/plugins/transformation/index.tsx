@@ -65,7 +65,19 @@ export const transformationPlugin: PluginDefinition<CanvasStore> = {
     },
     toggleTo: 'select',
   },
-  toolDefinition: { order: 3, visibility: 'always-shown' },
+  toolDefinition: {
+    order: 3,
+    visibility: 'always-shown',
+    isDisabled: (store) => {
+      const { selectedIds, elements } = store;
+      if (selectedIds.length === 0) return true;
+      if (selectedIds.length === 1) {
+        const element = elements.find(el => el.id === selectedIds[0]);
+        return !element || (element.type !== 'path' && element.type !== 'group');
+      }
+      return false;
+    },
+  },
   hooks: [
     {
       id: 'transformation-controls',

@@ -25,8 +25,6 @@ interface GridOverlayProps {
     width: number;
     height: number;
   };
-  /** If true, skip rendering rulers (use when unified rulers from guidelines are active) */
-  skipRulers?: boolean;
 }
 
 /**
@@ -54,7 +52,11 @@ function extractRGB(color: string): { r: number; g: number; b: number } {
   // Fallback to black
   return { r: 0, g: 0, b: 0 };
 }
-function calculateRulerInterval(spacing: number, zoom: number): number {
+
+/**
+ * Calculate optimal interval for grid emphasis based on spacing and zoom.
+ */
+function calculateMajorInterval(spacing: number, zoom: number): number {
   const baseSpacing = spacing;
   const minScreenSpacing = 50;
   const multipliers = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000];
@@ -72,20 +74,6 @@ function calculateRulerInterval(spacing: number, zoom: number): number {
 }
 
 /**
- * Format ruler label for better readability
- */
-function formatRulerLabel(value: number): string {
-  const rounded = Math.round(value);
-  
-  if (Math.abs(rounded) >= 1000) {
-    const thousands = rounded / 1000;
-    return thousands % 1 === 0 ? `${thousands}k` : `${thousands.toFixed(1)}k`;
-  }
-  
-  return rounded.toString();
-}
-
-/**
  * Render square/rectangular grid
  */
 function renderSquareGrid(
@@ -94,7 +82,7 @@ function renderSquareGrid(
   right: number,
   top: number,
   bottom: number,
-  rulerInterval: number,
+  majorInterval: number,
   emphasizeEvery: number,
   opacity: number,
   color: string,
@@ -110,7 +98,7 @@ function renderSquareGrid(
   let xIndex = Math.floor(startX / spacing);
 
   for (let x = startX; x <= endX; x += spacing, xIndex++) {
-    const isMajor = Math.abs(x % rulerInterval) < spacing / 2;
+    const isMajor = Math.abs(x % majorInterval) < spacing / 2;
     const isEmphasized = emphasizeEvery > 0 && xIndex % emphasizeEvery === 0;
     
     if (isEmphasized) {
@@ -128,7 +116,7 @@ function renderSquareGrid(
   let yIndex = Math.floor(startY / spacing);
 
   for (let y = startY; y <= endY; y += spacing, yIndex++) {
-    const isMajor = Math.abs(y % rulerInterval) < spacing / 2;
+    const isMajor = Math.abs(y % majorInterval) < spacing / 2;
     const isEmphasized = emphasizeEvery > 0 && yIndex % emphasizeEvery === 0;
     
     if (isEmphasized) {
@@ -808,14 +796,8 @@ export const GridOverlay: React.FC<GridOverlayProps> = React.memo(({
   grid,
   viewport,
   canvasSize,
-  skipRulers = false,
 }) => {
   const defaultGridColor = useColorModeValue('#000000', 'rgba(255, 255, 255, 0.7)');
-  const rulerBackground = useColorModeValue('rgba(255, 255, 255, 0.5)', 'rgba(26, 32, 44, 0.5)');
-  const rulerBorder = useColorModeValue('#d0d0d0', 'rgba(148, 163, 184, 0.45)');
-  const rulerTextColor = useColorModeValue('#444', '#e2e8f0');
-  const rulerTickColor = useColorModeValue('#666', '#cbd5f5');
-  const rulerMinorTickColor = useColorModeValue('#999', 'rgba(203, 213, 225, 0.7)');
 
   if (!grid.enabled) {
     return null;
@@ -838,168 +820,15 @@ export const GridOverlay: React.FC<GridOverlayProps> = React.memo(({
   const top = viewBoxTop - padding;
   const bottom = viewBoxBottom + padding;
 
-  // Calculate optimal ruler interval
-  const rulerInterval = calculateRulerInterval(spacing, viewport.zoom);
-  
-  // Build ruler elements if enabled (skip if unified rulers from guidelines are active)
-  const rulerElements: React.ReactElement[] = [];
-  
-  if (grid.showRulers && !skipRulers && (grid.type === 'square' || grid.type === 'dots')) {
-    const rulerHeight = 20 / viewport.zoom;
-    const rulerWidth = 35 / viewport.zoom;
-    const fontSize = 10 / viewport.zoom;
-    const tickHeight = 4 / viewport.zoom;
-    const minorTickHeight = 2 / viewport.zoom;
-    const labelOffset = 3 / viewport.zoom;
-    
-    // Ruler backgrounds
-    rulerElements.push(
-      <rect
-        key="ruler-bg-h"
-        x={viewBoxLeft}
-        y={viewBoxTop}
-        width={canvasSize.width / viewport.zoom}
-        height={rulerHeight}
-        fill={rulerBackground}
-        stroke={rulerBorder}
-        strokeWidth={0.5 / viewport.zoom}
-        pointerEvents="none"
-      />,
-      <rect
-        key="ruler-bg-v"
-        x={viewBoxLeft}
-        y={viewBoxTop}
-        width={rulerWidth}
-        height={canvasSize.height / viewport.zoom}
-        fill={rulerBackground}
-        stroke={rulerBorder}
-        strokeWidth={0.5 / viewport.zoom}
-        pointerEvents="none"
-      />,
-      <rect
-        key="ruler-corner"
-        x={viewBoxLeft}
-        y={viewBoxTop}
-        width={rulerWidth}
-        height={rulerHeight}
-        fill={rulerBackground}
-        stroke={rulerBorder}
-        strokeWidth={0.5 / viewport.zoom}
-        pointerEvents="none"
-      />
-    );
-
-    // Horizontal ruler
-    const startX = Math.floor(viewBoxLeft / rulerInterval) * rulerInterval;
-    const endX = Math.ceil(viewBoxRight / rulerInterval) * rulerInterval;
-    
-    for (let x = startX; x <= endX; x += spacing) {
-      if (x < viewBoxLeft - spacing || x > viewBoxRight + spacing) continue;
-      
-      const isMajorTick = Math.abs(x % rulerInterval) < spacing / 2;
-      
-      if (isMajorTick) {
-        rulerElements.push(
-          <line
-            key={`h-tick-${x}`}
-            x1={x}
-            y1={viewBoxTop + rulerHeight}
-            x2={x}
-            y2={viewBoxTop + rulerHeight - tickHeight}
-            stroke={rulerTickColor}
-            strokeWidth={0.8 / viewport.zoom}
-            pointerEvents="none"
-          />,
-          <text
-            key={`h-label-${x}`}
-            x={x}
-            y={viewBoxTop + rulerHeight - tickHeight - labelOffset}
-            fontSize={fontSize}
-          fill={rulerTextColor}
-            fontWeight="500"
-            textAnchor="middle"
-            dominantBaseline="auto"
-            pointerEvents="none"
-            style={{ userSelect: 'none', fontFamily: 'system-ui, -apple-system, sans-serif' }}
-          >
-            {formatRulerLabel(x)}
-          </text>
-        );
-      } else if (rulerInterval / spacing >= 4) {
-        rulerElements.push(
-          <line
-            key={`h-minor-${x}`}
-            x1={x}
-            y1={viewBoxTop + rulerHeight}
-            x2={x}
-            y2={viewBoxTop + rulerHeight - minorTickHeight}
-            stroke={rulerMinorTickColor}
-            strokeWidth={0.5 / viewport.zoom}
-            pointerEvents="none"
-          />
-        );
-      }
-    }
-
-    // Vertical ruler
-    const startY = Math.floor(viewBoxTop / rulerInterval) * rulerInterval;
-    const endY = Math.ceil(viewBoxBottom / rulerInterval) * rulerInterval;
-    
-    for (let y = startY; y <= endY; y += spacing) {
-      if (y < viewBoxTop - spacing || y > viewBoxBottom + spacing) continue;
-      
-      const isMajorTick = Math.abs(y % rulerInterval) < spacing / 2;
-      
-      if (isMajorTick) {
-        rulerElements.push(
-          <line
-            key={`v-tick-${y}`}
-            x1={viewBoxLeft + rulerWidth}
-            y1={y}
-            x2={viewBoxLeft + rulerWidth - tickHeight}
-            y2={y}
-            stroke={rulerTickColor}
-            strokeWidth={0.8 / viewport.zoom}
-            pointerEvents="none"
-          />,
-          <text
-            key={`v-label-${y}`}
-            x={viewBoxLeft + rulerWidth - tickHeight - labelOffset}
-            y={y}
-            fontSize={fontSize}
-          fill={rulerTextColor}
-            fontWeight="500"
-            textAnchor="end"
-            dominantBaseline="middle"
-            pointerEvents="none"
-            style={{ userSelect: 'none', fontFamily: 'system-ui, -apple-system, sans-serif' }}
-          >
-            {formatRulerLabel(y)}
-          </text>
-        );
-      } else if (rulerInterval / spacing >= 4) {
-        rulerElements.push(
-          <line
-            key={`v-minor-${y}`}
-            x1={viewBoxLeft + rulerWidth}
-            y1={y}
-            x2={viewBoxLeft + rulerWidth - minorTickHeight}
-            y2={y}
-            stroke={rulerMinorTickColor}
-            strokeWidth={0.5 / viewport.zoom}
-            pointerEvents="none"
-          />
-        );
-      }
-    }
-  }
+  // Calculate optimal interval for major grid lines
+  const majorInterval = calculateMajorInterval(spacing, viewport.zoom);
 
   // Render grid based on type
   let gridElement: React.ReactElement | null = null;
 
   switch (grid.type) {
     case 'square':
-      gridElement = renderSquareGrid(spacing, left, right, top, bottom, rulerInterval, emphasizeEvery, opacity, color, viewport.zoom);
+      gridElement = renderSquareGrid(spacing, left, right, top, bottom, majorInterval, emphasizeEvery, opacity, color, viewport.zoom);
       break;
     
     case 'dots':
@@ -1048,7 +877,6 @@ export const GridOverlay: React.FC<GridOverlayProps> = React.memo(({
   return (
     <g>
       {gridElement}
-      {rulerElements}
     </g>
   );
 });

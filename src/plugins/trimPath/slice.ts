@@ -7,7 +7,7 @@ import {
   findSegmentsAlongPath,
   reconstructPathsFromSegments,
   computePathIntersections,
-} from '../../utils/trimPathGeometry';
+} from './trimPathGeometry';
 import { trimPathCache } from './cache';
 
 /**

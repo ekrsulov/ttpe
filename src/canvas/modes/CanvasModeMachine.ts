@@ -1,10 +1,16 @@
 import type { PluginDefinition } from '../../types/plugins';
+import { DEFAULT_MODE } from '../../constants';
 
 // Tool modes are now defined per-plugin and aggregated via the Plugin Manager.
 // We treat canvas modes as plain strings to allow arbitrary plugin-defined modes.
 export type CanvasMode = string & {};
 
-export type CanvasModeLifecycleAction = 'clearGuidelines' | 'clearSubpathSelection' | 'clearSelectedCommands';
+/**
+ * Lifecycle actions executed during mode transitions.
+ * Plugins can register their own actions via pluginManager.registerLifecycleAction().
+ * Built-in actions: 'clearSubpathSelection', 'clearSelectedCommands'
+ */
+export type CanvasModeLifecycleAction = string & {};
 
 export interface CanvasModeResources {
   plugins?: CanvasMode[];
@@ -57,7 +63,7 @@ export interface CanvasModeTransitionResult {
 const wildcardTransition = { description: 'Allows transitioning to modes dynamically registered by plugins.' };
 
 const defaultState: CanvasModeStateConfig = {
-  id: 'select',
+  id: DEFAULT_MODE,
   description: 'Mode defined by an external plugin.',
   transitions: { '*': wildcardTransition },
   resources: { plugins: [], listeners: [], overlays: [] },
@@ -75,10 +81,10 @@ export function buildCanvasModeMachine(plugins: PluginDefinition[]): CanvasModeM
     if (plugin.modeConfig) {
       const transitions = { ...plugin.modeConfig.transitions };
       
-      // For 'select' mode, automatically add transitions to all other plugin modes
-      if (plugin.id === 'select') {
+      // For the default mode, automatically add transitions to all other plugin modes
+      if (plugin.id === DEFAULT_MODE) {
         plugins.forEach(otherPlugin => {
-          if (otherPlugin.modeConfig && otherPlugin.id !== 'select') {
+          if (otherPlugin.modeConfig && otherPlugin.id !== DEFAULT_MODE) {
             // Only add if not already defined
             if (!transitions[otherPlugin.id]) {
               transitions[otherPlugin.id] = { description: otherPlugin.modeConfig.description };
@@ -100,22 +106,22 @@ export function buildCanvasModeMachine(plugins: PluginDefinition[]): CanvasModeM
   });
 
   return {
-    initial: 'select',
+    initial: DEFAULT_MODE,
     states,
     defaultState,
     global: {
-      onTransition: ['clearGuidelines'],
+      onTransition: [],
     },
   };
 }
 
 // Default empty machine (will be replaced by buildCanvasModeMachine when plugins are registered)
 let CANVAS_MODE_MACHINE: CanvasModeMachineDefinition = {
-  initial: 'select',
+  initial: DEFAULT_MODE,
   states: {},
   defaultState,
   global: {
-    onTransition: ['clearGuidelines'],
+    onTransition: [],
   },
 };
 

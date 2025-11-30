@@ -11,6 +11,7 @@ import {
   type CanvasMode,
 } from '../../canvas/modes/CanvasModeMachine';
 import { pluginManager } from '../../utils/pluginManager';
+import { DEFAULT_MODE } from '../../constants';
 
 export interface BaseSlice {
   // State
@@ -177,8 +178,8 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => {
     const pluginDef = pluginManager.getPlugin(result.mode);
     const isPathInteractionDisabled = pluginDef?.metadata.disablePathInteraction ?? false;
 
-    // Set path cursor mode based on plugin
-    const pathCursorMode = pluginDef?.metadata.pathCursorMode ?? (result.mode === 'select' ? 'select' : 'default');
+    // Set path cursor mode based on plugin metadata
+    const pathCursorMode = pluginDef?.metadata.pathCursorMode ?? 'default';
 
     set({
       isPathInteractionDisabled,
@@ -188,23 +189,22 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => {
     // Invalidate snap cache logic moved to plugin or handled by drag modifier context
 
 
-    // Clear trim cache when leaving trim mode
-    if (currentMode === 'trimPath' && result.mode !== 'trimPath') {
-      if ('deactivateTrimTool' in updatedState) {
-        // Narrow the type to only include the optional method to avoid using `any`
-        type MaybeDeactivateTrim = { deactivateTrimTool?: () => void };
-        const shutdown = (updatedState as MaybeDeactivateTrim).deactivateTrimTool;
-        if (shutdown) {
-          shutdown();
-        }
-      }
-    }
+    // Execute plugin deactivation cleanup via lifecycle actions
+    // Plugins register their own cleanup logic (e.g., trimPath registers 'deactivateTrimTool')
+    // This is now handled by the lifecycle action system below
 
-    for (const action of result.actions) {
+    // Get global actions registered by plugins
+    const globalActions = pluginManager.getGlobalTransitionActions();
+    
+    // Execute all actions: result.actions from mode config + global actions
+    const allActions = [...result.actions, ...globalActions];
+
+    for (const action of allActions) {
+      // First try plugin manager's registered actions
+      pluginManager.executeLifecycleAction(action);
+      
+      // Fallback for built-in store actions
       switch (action) {
-        case 'clearGuidelines':
-          updatedState.clearGuidelines?.();
-          break;
         case 'clearSubpathSelection':
           updatedState.clearSubpathSelection?.();
           break;
@@ -220,7 +220,7 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => {
   return ({
     // Initial state
     elements: [],
-    activePlugin: 'select', // Default mode
+    activePlugin: DEFAULT_MODE,
     documentName: 'Untitled Document',
     showFilePanel: false,
     showSettingsPanel: false,
@@ -416,11 +416,8 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => {
 
         return { elements: updatedElements };
       });
-      // Clear guidelines when an element is deleted to avoid inconsistencies
-      const state = get() as CanvasStore;
-      if (state.clearGuidelines) {
-        state.clearGuidelines();
-      }
+      // Execute cleanup actions for element deletion (plugins can register handlers)
+      pluginManager.executeLifecycleAction('onElementDeleted');
     },
 
     deleteSelectedElements: () => {
@@ -540,14 +537,14 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => {
                   }));
                   set({
                     elements: [...state.elements, ...newElements],
-                    activePlugin: 'select'
+                    activePlugin: DEFAULT_MODE
                   });
                 } else {
                   // Replace elements
                   set({
                     elements: documentData.elements,
                     documentName: documentData.documentName || 'Loaded Document',
-                    activePlugin: 'select'
+                    activePlugin: DEFAULT_MODE
                   });
                 }
                 resolve();

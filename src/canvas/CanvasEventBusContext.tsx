@@ -59,6 +59,10 @@ export interface CanvasDoubleClickEventPayload {
   activePlugin: string | null;
 }
 
+export interface CanvasSaveAsPngEventPayload {
+  selectedOnly: boolean;
+}
+
 export type CanvasEventMap = {
   pointerdown: CanvasPointerEventPayload;
   pointermove: CanvasPointerEventPayload;
@@ -68,6 +72,7 @@ export type CanvasEventMap = {
   elementDoubleClick: CanvasElementDoubleClickEventPayload;
   subpathDoubleClick: CanvasSubpathDoubleClickEventPayload;
   canvasDoubleClick: CanvasDoubleClickEventPayload;
+  saveAsPng: CanvasSaveAsPngEventPayload;
 };
 
 type CanvasEventHandler<TPayload> = (payload: TPayload) => void;

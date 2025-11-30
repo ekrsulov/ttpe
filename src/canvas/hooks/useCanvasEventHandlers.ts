@@ -12,7 +12,6 @@ interface UseCanvasEventHandlersProps {
   isSpacePressed: boolean;
   activePlugin: string | null;
   isSelecting: boolean;
-  selectionStart: Point | null;
   isDragging: boolean;
   dragStart: Point | null;
   hasDragMoved: boolean;
@@ -25,10 +24,8 @@ interface UseCanvasEventHandlersProps {
   isWorkingWithSubpaths: () => boolean;
   selectedSubpaths: Array<{ elementId: string; subpathIndex: number }>;
   selectedIds: string[];
-  selectElement: (elementId: string, toggle: boolean) => void;
   completeSelectionRectangle: () => void;
   updateSelectionRectangle: (point: Point) => void;
-  setMode: (mode: string) => void;
 }
 
 /**
@@ -55,7 +52,6 @@ export const useCanvasEventHandlers = (props: UseCanvasEventHandlersProps) => {
     isSpacePressed: props.isSpacePressed,
     activePlugin,
     isSelecting: props.isSelecting,
-    selectionStart: props.selectionStart,
     isDragging: props.isDragging,
     dragStart: props.dragStart,
     hasDragMoved: props.hasDragMoved,

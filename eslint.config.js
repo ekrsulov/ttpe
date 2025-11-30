@@ -37,9 +37,9 @@ export default tseslint.config([
       }],
       'react-refresh/only-export-components': ['warn', { 
         allowExportNames: [
-          'curvesPlugin', 'editPlugin', 'gridPlugin', 'guidelinesPlugin', 
+          'editPlugin', 'gridPlugin', 'guidelinesPlugin', 
           'shapePlugin', 'subpathPlugin', 'transformationPlugin',
-          'useCanvasCurves', 'useCanvasTransformControls'
+          'useCanvasTransformControls'
         ],
         allowConstantExport: true,
       }],

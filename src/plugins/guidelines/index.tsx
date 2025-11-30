@@ -1,5 +1,6 @@
 import type { PluginDefinition, PluginSliceFactory, CanvasShortcutContext } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
+import { useCanvasStore } from '../../store/canvasStore';
 import { createGuidelinesPluginSlice } from './slice';
 import type { GuidelinesPluginSlice } from './slice';
 import { GuidelinesPanel } from './GuidelinesPanel';
@@ -7,6 +8,9 @@ import { GuidelinesOverlay } from './GuidelinesOverlay';
 import type { GuidelinesState } from './types';
 import { useGuidelinesAltKey } from './hooks/useGuidelinesAltKey';
 import { useGuidelinesHoverElement } from './hooks/useGuidelinesHoverElement';
+import { createGuidelinesDragModifier } from './hooks/useGuidelinesDragSnap';
+import { createRulersDecorator } from './decorators/RulersDecorator';
+import { pluginManager } from '../../utils/pluginManager';
 
 const guidelinesSliceFactory: PluginSliceFactory<CanvasStore> = (set, get, api) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -107,6 +111,54 @@ export const guidelinesPlugin: PluginDefinition<CanvasStore> = {
     },
   ],
   slices: [guidelinesSliceFactory],
+  init: (context) => {
+    // Register the element drag modifier for guidelines snapping
+    const unregisterDragModifier = pluginManager.registerElementDragModifier(
+      createGuidelinesDragModifier(context)
+    );
+    
+    // Register the canvas decorator for rulers
+    const unregisterDecorator = pluginManager.registerCanvasDecorator(
+      createRulersDecorator()
+    );
+    
+    // Register lifecycle action for clearing guidelines on mode transitions
+    const unregisterClearAction = pluginManager.registerLifecycleAction(
+      'clearGuidelines',
+      () => {
+        const state = useCanvasStore.getState();
+        state.clearGuidelines?.();
+      },
+      { global: true } // Run on every mode transition
+    );
+    
+    // Register lifecycle action for element deletion cleanup
+    const unregisterDeleteAction = pluginManager.registerLifecycleAction(
+      'onElementDeleted',
+      () => {
+        const state = useCanvasStore.getState();
+        state.clearGuidelines?.();
+      }
+    );
+    
+    // Register lifecycle action for drag end cleanup
+    const unregisterDragEndAction = pluginManager.registerLifecycleAction(
+      'onDragEnd',
+      () => {
+        const state = useCanvasStore.getState();
+        state.clearGuidelines?.();
+      }
+    );
+    
+    // Return cleanup function
+    return () => {
+      unregisterDragModifier();
+      unregisterDecorator();
+      unregisterClearAction();
+      unregisterDeleteAction();
+      unregisterDragEndAction();
+    };
+  },
   sidebarPanels: [
     {
       key: 'guidelines',

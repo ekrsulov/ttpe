@@ -161,8 +161,10 @@ export interface PluginDefinition<TStore extends object = object> {
    */
   modeConfig?: {
     description: string;
-    entry?: ('clearGuidelines' | 'clearSubpathSelection' | 'clearSelectedCommands')[];
-    exit?: ('clearGuidelines' | 'clearSubpathSelection' | 'clearSelectedCommands')[];
+    /** Lifecycle actions to execute when entering this mode */
+    entry?: string[];
+    /** Lifecycle actions to execute when exiting this mode */
+    exit?: string[];
     transitions?: Record<string, { description: string }>;
     toggleTo?: string;
   };
@@ -249,6 +251,18 @@ export interface PluginDefinition<TStore extends object = object> {
      * @default 'dynamic'
      */
     visibility?: 'always-shown' | 'dynamic';
+    /**
+     * Function to determine if this tool should be disabled.
+     * Called with the current store state.
+     * @returns true if the tool should be disabled
+     */
+    isDisabled?: (store: TStore) => boolean;
+    /**
+     * Function to determine if this tool should be visible.
+     * Called with the current store state.
+     * @returns true if the tool should be shown
+     */
+    isVisible?: (store: TStore) => boolean;
   };
   /**
    * Lifecycle method called when the plugin is registered.

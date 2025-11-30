@@ -1,14 +1,14 @@
 import paper from 'paper';
-import type { PathElement, Point } from '../types';
+import type { PathElement, Point } from '../../types';
 import type {
   TrimIntersection,
   TrimSegment,
   SplitPathResult,
   ReconstructedPath,
   TrimValidationResult,
-} from '../plugins/trimPath/trimPath';
-import { calculateBounds, type Bounds } from './boundsUtils';
-import { convertPathDataToPaperPath } from './pathOperationsUtils';
+} from './trimPath';
+import { calculateBounds, type Bounds } from '../../utils/boundsUtils';
+import { convertPathDataToPaperPath } from '../../utils/pathOperationsUtils';
 
 /**
  * Generates a unique ID for elements (inline implementation).

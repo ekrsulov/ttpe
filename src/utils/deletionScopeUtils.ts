@@ -3,7 +3,14 @@
  * 
  * Centralized logic for determining and executing deletion operations
  * based on current selection state and active plugin.
+ * 
+ * NOTE: The plugin-aware strategy uses hardcoded plugin IDs ('edit', 'subpath')
+ * because these plugins define specific selection contexts (commands, subpaths).
+ * The DEFAULT_MODE (select) operates on elements. In the future, plugins could
+ * declare their deletion scope via metadata.
  */
+
+import { DEFAULT_MODE } from '../constants';
 
 export interface DeletionScope {
   type: 'commands' | 'subpaths' | 'elements' | 'none';
@@ -46,7 +53,7 @@ export function getDeletionScope(
     if (state.activePlugin === 'subpath' && state.selectedSubpathsCount > 0) {
       return { type: 'subpaths', count: state.selectedSubpathsCount };
     }
-    if (state.activePlugin === 'select' && state.selectedElementsCount > 0) {
+    if (state.activePlugin === DEFAULT_MODE && state.selectedElementsCount > 0) {
       return { type: 'elements', count: state.selectedElementsCount };
     }
   } else {

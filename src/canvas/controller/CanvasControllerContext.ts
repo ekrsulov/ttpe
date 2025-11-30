@@ -16,7 +16,6 @@ export interface CanvasControllerValue
     | 'selectedCommands'
     | 'selectedSubpaths'
     | 'draggingSelection'
-    | 'guidelines'
     | 'grid'
     | 'updateElement'
     | 'startDraggingPoint'
@@ -29,7 +28,6 @@ export interface CanvasControllerValue
     | 'getControlPointInfo'
     | 'saveAsPng'
     | 'snapToGrid'
-    | 'clearGuidelines'
     | 'isElementHidden'
     | 'isElementLocked'
     | 'moveSelectedElements'
@@ -55,7 +53,6 @@ export const useCanvasControllerSource = (): CanvasControllerValue => {
       selectedCommands: store.selectedCommands,
       selectedSubpaths: store.selectedSubpaths,
       draggingSelection: store.draggingSelection,
-      guidelines: store.guidelines,
       grid: store.grid,
       updateElement: store.updateElement,
       startDraggingPoint: store.startDraggingPoint,
@@ -68,7 +65,6 @@ export const useCanvasControllerSource = (): CanvasControllerValue => {
       getControlPointInfo: store.getControlPointInfo,
       saveAsPng: store.saveAsPng,
       snapToGrid: store.snapToGrid,
-      clearGuidelines: store.clearGuidelines,
       isElementHidden: store.isElementHidden,
       isElementLocked: store.isElementLocked,
       moveSelectedElements: store.moveSelectedElements,

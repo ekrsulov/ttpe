@@ -10,17 +10,17 @@ import './App.css';
 import type { CSSProperties } from 'react';
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useColorMode } from '@chakra-ui/react';
-import type { CanvasElement, PathData } from './types';
-import { CurvesControllerProvider } from './plugins/curves/CurvesControllerContext';
+
 import { DEFAULT_STROKE_COLOR_DARK, DEFAULT_STROKE_COLOR_LIGHT } from './utils/defaultColors';
 import { pluginManager } from './utils/pluginManager';
 import { useMemo as useReactMemo } from 'react';
 import { useSvgImport } from './hooks/useSvgImport';
+import { DEFAULT_MODE } from './constants';
+import type { PathData } from './types';
 
 function App() {
   const activePlugin = useCanvasStore(state => state.activePlugin);
   const setMode = useCanvasStore(state => state.setMode);
-  const selectedIds = useCanvasStore(state => state.selectedIds);
   const { importSvgFiles } = useSvgImport();
 
   // Get global overlays from plugins
@@ -28,10 +28,6 @@ function App() {
   const grid = useCanvasStore(state => state.grid);
   const guidelines = useCanvasStore(state => state.guidelines);
   const { colorMode } = useColorMode();
-  const selectedPaths = useMemo(() => {
-    const elements = useCanvasStore.getState().elements;
-    return elements.filter((el: CanvasElement) => selectedIds.includes(el.id) && el.type === 'path');
-  }, [selectedIds]);
 
   // Detect iOS devices
   const isIOS = useMemo(() => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1), []);
@@ -59,9 +55,9 @@ function App() {
 
   const handleSidebarToggleOpen = useCallback((isOpen: boolean) => {
     setIsSidebarOpen(isOpen);
-    // When sidebar closes and is not pinned, if in file or settings mode, switch to select
+    // When sidebar closes and is not pinned, if in file or settings mode, switch to default mode
     if (!isOpen && !isSidebarPinned && (activePlugin === 'file' || activePlugin === 'settings')) {
-      setMode('select');
+      setMode(DEFAULT_MODE);
     }
   }, [isSidebarPinned, activePlugin, setMode]);
 
@@ -174,7 +170,6 @@ function App() {
   }, [colorMode]);
 
   return (
-    <CurvesControllerProvider>
       <div
         onDrop={handleDrop}
         onDragOver={handleDragOver}
@@ -230,7 +225,6 @@ function App() {
           isSidebarPinned={isSidebarPinned}
           isSidebarOpen={isSidebarOpen}
           onMenuClick={handleMenuClick}
-          selectedPaths={selectedPaths}
           showGridRulers={(grid?.enabled && grid?.showRulers) || (guidelines?.enabled && guidelines?.manualGuidesEnabled)}
         />
         <BottomActionBar
@@ -249,7 +243,6 @@ function App() {
           <OverlayComponent key={`global-overlay-${index}`} />
         ))}
       </div>
-    </CurvesControllerProvider>
   );
 }
 

@@ -12,7 +12,7 @@ import type {
   PluginApiContext,
   PluginHandlerContext,
 } from '../types/plugins';
-import type { DragModifier } from '../types/interaction';
+import type { DragModifier, ElementDragModifier, CanvasDecorator } from '../types/interaction';
 import type { CanvasStore, CanvasStoreApi } from '../store/canvasStore';
 import { registerPluginSlices, unregisterPluginSlices } from '../store/canvasStore';
 import { updateCanvasModeMachine } from '../canvas/modes/CanvasModeMachine';
@@ -62,6 +62,10 @@ export class PluginManager {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private pluginApis = new Map<string, Record<string, (...args: any[]) => any>>();
   private dragModifiers = new Map<string, DragModifier>();
+  private elementDragModifiers = new Map<string, ElementDragModifier>();
+  private canvasDecorators = new Map<string, CanvasDecorator>();
+  private lifecycleActions = new Map<string, () => void>();
+  private globalTransitionActions: string[] = [];
   private storeApi: CanvasStoreApi | null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private helpers = new Map<string, any>();
@@ -81,6 +85,15 @@ export class PluginManager {
       }
 
       this.initializePluginApi(plugin);
+      
+      // Call init for plugins that were registered before storeApi was available
+      if (plugin.init && !this.pluginCleanups.has(plugin.id)) {
+        const context = this.createPluginContext(plugin.id);
+        const cleanup = plugin.init(context);
+        if (cleanup) {
+          this.pluginCleanups.set(plugin.id, cleanup);
+        }
+      }
     });
   }
 
@@ -103,6 +116,10 @@ export class PluginManager {
     if (this.eventBus) {
       this.registry.forEach((plugin) => this.bindPluginInteractions(plugin));
     }
+  }
+
+  getEventBus(): CanvasEventBus | null {
+    return this.eventBus;
   }
 
   register(plugin: PluginDefinition<CanvasStore>): void {
@@ -396,7 +413,9 @@ export class PluginManager {
     }
 
     const wrappedHandler = (payload: CanvasEventMap[K]) => {
-      if (payload.activePlugin !== pluginId) {
+      // Only filter by activePlugin for events that have it
+      const hasActivePlugin = 'activePlugin' in payload;
+      if (hasActivePlugin && (payload as { activePlugin: string | null }).activePlugin !== pluginId) {
         return;
       }
       handler(payload);
@@ -849,6 +868,92 @@ export class PluginManager {
     return Array.from(this.dragModifiers.values()).sort((a, b) => a.priority - b.priority);
   }
 
+  /**
+   * Register an element drag modifier for modifying deltas during element movement.
+   * Used by plugins that need to snap or adjust element positions during drag operations.
+   */
+  registerElementDragModifier(modifier: ElementDragModifier): () => void {
+    this.elementDragModifiers.set(modifier.id, modifier);
+    return () => {
+      this.elementDragModifiers.delete(modifier.id);
+    };
+  }
+
+  /**
+   * Get all registered element drag modifiers, sorted by priority.
+   */
+  getElementDragModifiers(): ElementDragModifier[] {
+    return Array.from(this.elementDragModifiers.values()).sort((a, b) => a.priority - b.priority);
+  }
+
+  /**
+   * Register a canvas decorator for rendering UI outside the SVG canvas.
+   * Used by plugins that need to render rulers, guides, or other decorations.
+   */
+  registerCanvasDecorator(decorator: CanvasDecorator): () => void {
+    this.canvasDecorators.set(decorator.id, decorator);
+    return () => {
+      this.canvasDecorators.delete(decorator.id);
+    };
+  }
+
+  /**
+   * Get all registered canvas decorators.
+   */
+  getCanvasDecorators(): CanvasDecorator[] {
+    return Array.from(this.canvasDecorators.values());
+  }
+
+  /**
+   * Get canvas decorators by placement.
+   */
+  getCanvasDecoratorsByPlacement(placement: CanvasDecorator['placement']): CanvasDecorator[] {
+    return this.getCanvasDecorators().filter((d) => d.placement === placement);
+  }
+
+  /**
+   * Register a lifecycle action that can be executed during mode transitions.
+   * Plugins use this to register cleanup actions like clearing guidelines.
+   * @param actionId Unique identifier for the action (e.g., 'clearGuidelines')
+   * @param handler Function to execute when the action is triggered
+   * @param options Optional settings
+   * @param options.global If true, action runs on every mode transition
+   */
+  registerLifecycleAction(
+    actionId: string,
+    handler: () => void,
+    options?: { global?: boolean }
+  ): () => void {
+    this.lifecycleActions.set(actionId, handler);
+    
+    if (options?.global) {
+      this.globalTransitionActions.push(actionId);
+    }
+    
+    return () => {
+      this.lifecycleActions.delete(actionId);
+      this.globalTransitionActions = this.globalTransitionActions.filter(id => id !== actionId);
+    };
+  }
+
+  /**
+   * Execute a lifecycle action by ID.
+   * Called by the mode controller during transitions.
+   */
+  executeLifecycleAction(actionId: string): void {
+    const handler = this.lifecycleActions.get(actionId);
+    if (handler) {
+      handler();
+    }
+  }
+
+  /**
+   * Get all global transition actions that should run on every mode change.
+   */
+  getGlobalTransitionActions(): string[] {
+    return [...this.globalTransitionActions];
+  }
+
   getPluginHooks(pluginId: string | null): import('../types/plugins').PluginHookContribution[] {
     if (!pluginId) return [];
     const plugin = this.registry.get(pluginId);
@@ -879,8 +984,26 @@ export class PluginManager {
    * Get all tool definitions from registered plugins, sorted by order.
    * Returns an array of tool definitions with metadata from each plugin.
    */
-  getToolDefinitions(): Array<{ mode: string; label: string; icon?: import('react').ComponentType<{ size?: number }>; cursor: string; order: number }> {
-    const tools: Array<{ mode: string; label: string; icon?: import('react').ComponentType<{ size?: number }>; cursor: string; order: number }> = [];
+  getToolDefinitions(): Array<{
+    mode: string;
+    label: string;
+    icon?: import('react').ComponentType<{ size?: number }>;
+    cursor: string;
+    order: number;
+    visibility?: 'always-shown' | 'dynamic';
+    isDisabled?: (store: CanvasStore) => boolean;
+    isVisible?: (store: CanvasStore) => boolean;
+  }> {
+    const tools: Array<{
+      mode: string;
+      label: string;
+      icon?: import('react').ComponentType<{ size?: number }>;
+      cursor: string;
+      order: number;
+      visibility?: 'always-shown' | 'dynamic';
+      isDisabled?: (store: CanvasStore) => boolean;
+      isVisible?: (store: CanvasStore) => boolean;
+    }> = [];
 
     this.registry.forEach((plugin) => {
       if (plugin.toolDefinition) {
@@ -890,15 +1013,90 @@ export class PluginManager {
           icon: plugin.metadata.icon,
           cursor: plugin.metadata.cursor ?? 'default',
           order: plugin.toolDefinition.order,
+          visibility: plugin.toolDefinition.visibility,
+          isDisabled: plugin.toolDefinition.isDisabled,
+          isVisible: plugin.toolDefinition.isVisible,
         });
       }
     });
 
     return tools.sort((a, b) => a.order - b.order);
   }
+
+  /**
+   * Check if a tool is currently disabled based on the store state.
+   * Returns false if the tool has no isDisabled function defined.
+   */
+  isToolDisabled(toolId: string, store: CanvasStore): boolean {
+    const plugin = this.registry.get(toolId);
+    if (!plugin?.toolDefinition?.isDisabled) return false;
+    return plugin.toolDefinition.isDisabled(store);
+  }
+
+  /**
+   * Check if a tool is currently visible based on the store state.
+   * Returns true if the tool has no isVisible function defined.
+   */
+  isToolVisible(toolId: string, store: CanvasStore): boolean {
+    const plugin = this.registry.get(toolId);
+    if (!plugin?.toolDefinition?.isVisible) return true;
+    return plugin.toolDefinition.isVisible(store);
+  }
+
+  /**
+   * Get the list of visible tool IDs based on current store state.
+   * Used to create a visibility signature for reactive updates.
+   */
+  getVisibleToolIds(store: CanvasStore): string[] {
+    const visibleIds: string[] = [];
+    this.registry.forEach((plugin) => {
+      if (plugin.toolDefinition) {
+        if (this.isToolVisible(plugin.id, store)) {
+          visibleIds.push(plugin.id);
+        }
+      }
+    });
+    return visibleIds.sort();
+  }
 }
 
 export const pluginManager = new PluginManager();
+
+/**
+ * React hook that returns the list of visible tool IDs.
+ * Automatically re-evaluates when store state changes that affect tool visibility.
+ * This keeps consumers decoupled from specific plugin visibility logic.
+ */
+export function useVisibleToolIds(): string[] {
+  const getVisibleIds = () => {
+    const storeApi = pluginManager['storeApi'];
+    if (!storeApi) return [];
+    return pluginManager.getVisibleToolIds(storeApi.getState());
+  };
+
+  const [visibleIds, setVisibleIds] = useState(getVisibleIds);
+
+  useEffect(() => {
+    const storeApi = pluginManager['storeApi'];
+    if (!storeApi) return;
+
+    // Subscribe to store changes and re-evaluate visibility
+    const unsubscribe = storeApi.subscribe(() => {
+      const newIds = pluginManager.getVisibleToolIds(storeApi.getState());
+      setVisibleIds(prev => {
+        // Only update if the list actually changed
+        if (prev.length !== newIds.length || prev.some((id, i) => id !== newIds[i])) {
+          return newIds;
+        }
+        return prev;
+      });
+    });
+
+    return unsubscribe;
+  }, []);
+
+  return visibleIds;
+}
 
 /**
  * React hook that returns whether global undo/redo should be disabled.

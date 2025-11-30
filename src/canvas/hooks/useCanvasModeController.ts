@@ -86,13 +86,23 @@ export const useCanvasModeController = (): CanvasModeMachineHookResult => {
 
     useCanvasStore.setState({ activePlugin: result.mode });
 
-    for (const action of result.actions) {
+    // Get global actions registered by plugins
+    const globalActions = pluginManager.getGlobalTransitionActions();
+    
+    // Execute all actions: result.actions from mode config + global actions
+    const allActions = [...result.actions, ...globalActions];
+    
+    for (const action of allActions) {
+      // First try plugin manager's registered actions
+      pluginManager.executeLifecycleAction(action);
+      
+      // Fallback for built-in actions on store
       switch (action) {
-        case 'clearGuidelines':
-          store.clearGuidelines?.();
-          break;
         case 'clearSubpathSelection':
           store.clearSubpathSelection?.();
+          break;
+        case 'clearSelectedCommands':
+          store.clearSelectedCommands?.();
           break;
         default:
           break;

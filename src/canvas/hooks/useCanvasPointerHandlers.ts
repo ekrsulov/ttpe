@@ -1,16 +1,20 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import type { Point } from '../../types';
-import type { PathData } from '../../types';
 import { useCanvasEventBus } from '../CanvasEventBusContext';
-import { calculateBounds } from '../../utils/boundsUtils';
+import {
+    buildPointerEventPayload,
+    createPointerEventHelpers,
+    createPointerEventState,
+} from '../utils/pointerEventUtils';
+import { pluginManager } from '../../utils/pluginManager';
+import { DEFAULT_MODE } from '../../constants';
 
 export interface CanvasPointerHandlersProps {
     screenToCanvas: (x: number, y: number) => Point;
     isSpacePressed: boolean;
     activePlugin: string | null;
     isSelecting: boolean;
-    selectionStart: Point | null;
     isDragging: boolean;
     dragStart: Point | null;
     hasDragMoved: boolean;
@@ -44,7 +48,6 @@ export const useCanvasPointerHandlers = (
         isSpacePressed,
         activePlugin,
         isSelecting,
-        selectionStart,
         isDragging,
         dragStart,
         hasDragMoved,
@@ -63,6 +66,16 @@ export const useCanvasPointerHandlers = (
 
     const eventBus = useCanvasEventBus();
 
+    // Create memoized helpers and state builders
+    const helpers = useMemo(() => createPointerEventHelpers({
+        beginSelectionRectangle,
+        updateSelectionRectangle,
+        completeSelectionRectangle,
+        setIsDragging,
+        setDragStart,
+        setHasDragMoved,
+    }), [beginSelectionRectangle, updateSelectionRectangle, completeSelectionRectangle, setIsDragging, setDragStart, setHasDragMoved]);
+
     // Handle pointer down
     const handlePointerDown = useCallback((e: React.PointerEvent) => {
         const point = screenToCanvas(e.clientX, e.clientY);
@@ -72,41 +85,25 @@ export const useCanvasPointerHandlers = (
             return;
         }
 
-        eventBus.emit('pointerdown', {
+        const state = createPointerEventState({ isSelecting, isDragging, dragStart, hasDragMoved });
+        eventBus.emit('pointerdown', buildPointerEventPayload({
             event: e,
             point,
             target,
             activePlugin,
-            helpers: {
-                beginSelectionRectangle,
-                updateSelectionRectangle,
-                completeSelectionRectangle,
-                setIsDragging,
-                setDragStart,
-                setHasDragMoved,
-            },
-            state: {
-                isSelecting,
-                isDragging,
-                dragStart,
-                hasDragMoved,
-            },
-        });
+            helpers,
+            state,
+        }));
     }, [
         activePlugin,
         screenToCanvas,
         isSpacePressed,
         eventBus,
-        beginSelectionRectangle,
-        updateSelectionRectangle,
-        completeSelectionRectangle,
+        helpers,
         isSelecting,
         isDragging,
         dragStart,
         hasDragMoved,
-        setIsDragging,
-        setDragStart,
-        setHasDragMoved,
     ]);
 
     // Handle pointer move
@@ -114,26 +111,15 @@ export const useCanvasPointerHandlers = (
         const point = screenToCanvas(e.clientX, e.clientY);
         const target = (e.target as Element) ?? null;
 
-        eventBus.emit('pointermove', {
+        const state = createPointerEventState({ isSelecting, isDragging, dragStart, hasDragMoved });
+        eventBus.emit('pointermove', buildPointerEventPayload({
             event: e,
             point,
             target,
             activePlugin,
-            helpers: {
-                beginSelectionRectangle,
-                updateSelectionRectangle,
-                completeSelectionRectangle,
-                setIsDragging,
-                setDragStart,
-                setHasDragMoved,
-            },
-            state: {
-                isSelecting,
-                isDragging,
-                dragStart,
-                hasDragMoved,
-            },
-        });
+            helpers,
+            state,
+        }));
 
         if (isSpacePressed && e.buttons === 1) {
             // Pan the canvas with spacebar + pointer button
@@ -144,103 +130,56 @@ export const useCanvasPointerHandlers = (
         }
 
         // Check for potential element dragging (when we have dragStart but may not be isDragging yet)
-        // Use fresh state for dragStart to avoid race conditions
         const currentDragStart = dragStart;
 
         if (currentDragStart && !isSelecting) {
-            const deltaX = point.x - currentDragStart.x;
-            const deltaY = point.y - currentDragStart.y;
+            let deltaX = point.x - currentDragStart.x;
+            let deltaY = point.y - currentDragStart.y;
 
             // Only start actual dragging if we've moved more than a threshold
-            // Once dragging has started, move with any delta (no threshold) for smooth continuous movement
             const shouldStartDragging = !isDragging && (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3);
             const shouldContinueDragging = isDragging && (Math.abs(deltaX) > 0.001 || Math.abs(deltaY) > 0.001);
 
             if (shouldStartDragging || shouldContinueDragging) {
                 if (!isDragging) {
-                    setIsDragging(true); // Start dragging now
-                    // Set global flag to prevent re-renders in action bars and select panel
+                    setIsDragging(true);
                     useCanvasStore.getState().setIsDraggingElements(true);
                 }
                 setHasDragMoved(true);
 
                 // Check if we're working with subpaths
-                if (isWorkingWithSubpaths() && activePlugin !== 'select') {
-                    // Move selected subpaths if we have a drag start
+                if (isWorkingWithSubpaths() && activePlugin !== DEFAULT_MODE) {
                     if (currentDragStart && selectedSubpaths.length > 0) {
-                        const deltaX = point.x - currentDragStart.x;
-                        const deltaY = point.y - currentDragStart.y;
                         moveSelectedSubpaths(deltaX, deltaY);
                         setDragStart(point);
                     }
                     return;
-                } else {
-                    // Move entire selected elements
-                    let deltaX = point.x - currentDragStart.x;
-                    let deltaY = point.y - currentDragStart.y;
-
-                    // Calculate guidelines for selected elements
-                    const state = useCanvasStore.getState();
-                    if (state.guidelines && state.guidelines.enabled && selectedIds.length > 0) {
-                        // Calculate bounds for the first selected element (for simplicity, we use the first one for snapping)
-                        const firstElementId = selectedIds[0];
-                        const element = state.elements.find(el => el.id === firstElementId);
-
-                        if (element && element.type === 'path') {
-                            const pathData = element.data as PathData;
-
-                            // Calculate current bounds using consolidated utility
-                            const bounds = calculateBounds(pathData.subPaths, pathData.strokeWidth || 0, state.viewport.zoom);
-
-                            if (isFinite(bounds.minX)) {
-                                // Apply the delta to get the "would-be" position
-                                const projectedBounds = {
-                                    minX: bounds.minX + deltaX,
-                                    minY: bounds.minY + deltaY,
-                                    maxX: bounds.maxX + deltaX,
-                                    maxY: bounds.maxY + deltaY,
-                                };
-
-                                // Find alignment guidelines
-                                const alignmentMatches = state.findAlignmentGuidelines?.(firstElementId, projectedBounds) ?? [];
-
-                                // Find distance guidelines if enabled (pass alignment matches for 2-element detection)
-                                const distanceMatches = (state.guidelines?.distanceEnabled && state.findDistanceGuidelines)
-                                    ? state.findDistanceGuidelines(firstElementId, projectedBounds, alignmentMatches)
-                                    : [];
-
-                                // Find size matches if enabled
-                                const sizeMatches = (state.guidelines?.sizeMatchingEnabled && state.findSizeMatches)
-                                    ? state.findSizeMatches(firstElementId, projectedBounds)
-                                    : [];
-
-                                // Update the guidelines state
-                                if (state.updateGuidelinesState) {
-                                    state.updateGuidelinesState({
-                                        currentMatches: alignmentMatches,
-                                        currentDistanceMatches: distanceMatches,
-                                        currentSizeMatches: sizeMatches,
-                                    });
-                                }
-
-                                // Apply sticky snap
-                                if (state.checkStickySnap) {
-                                    const snappedDelta = state.checkStickySnap(deltaX, deltaY, projectedBounds);
-                                    deltaX = snappedDelta.x;
-                                    deltaY = snappedDelta.y;
-                                }
-                            }
-                        }
-                    }
-
-                    moveSelectedElements(deltaX, deltaY, 3);
-                    setDragStart(point);
                 }
+
+                // Apply element drag modifiers from plugins (e.g., guidelines snapping)
+                const elementDragModifiers = pluginManager.getElementDragModifiers();
+                const viewport = useCanvasStore.getState().viewport;
+                const dragContext = {
+                    selectedIds,
+                    originalDelta: { x: deltaX, y: deltaY },
+                    viewport,
+                };
+                
+                for (const modifier of elementDragModifiers) {
+                    const result = modifier.modify(deltaX, deltaY, dragContext);
+                    if (result.applied) {
+                        deltaX = result.deltaX;
+                        deltaY = result.deltaY;
+                    }
+                }
+
+                moveSelectedElements(deltaX, deltaY, 3);
+                setDragStart(point);
             }
             return;
         }
 
-        if (isSelecting && selectionStart) {
+        if (isSelecting) {
             updateSelectionRectangle(point);
         }
 
@@ -268,11 +207,9 @@ export const useCanvasPointerHandlers = (
         moveSelectedSubpaths,
         moveSelectedElements,
         setDragStart,
-        selectionStart,
         updateSelectionRectangle,
         selectedIds,
-        beginSelectionRectangle,
-        completeSelectionRectangle,
+        helpers,
         eventBus,
         hasDragMoved,
     ]);
@@ -282,39 +219,28 @@ export const useCanvasPointerHandlers = (
         const point = screenToCanvas(e.clientX, e.clientY);
         const target = (e.target as Element) ?? null;
 
-        eventBus.emit('pointerup', {
+        const state = createPointerEventState({ isSelecting, isDragging, dragStart, hasDragMoved });
+        eventBus.emit('pointerup', buildPointerEventPayload({
             event: e,
             point,
             target,
             activePlugin,
-            helpers: {
-                beginSelectionRectangle,
-                updateSelectionRectangle,
-                completeSelectionRectangle,
-                setIsDragging,
-                setDragStart,
-                setHasDragMoved,
-            },
-            state: {
-                isSelecting,
-                isDragging,
-                dragStart,
-                hasDragMoved,
-            },
-        });
+            helpers,
+            state,
+        }));
 
         // Only handle dragging if it hasn't been handled by element click already
         if (isDragging) {
             setIsDragging(false);
-            // Clear guidelines when drag ends
-            const state = useCanvasStore.getState();
-            if (state.clearGuidelines) {
-                state.clearGuidelines();
+            
+            // Call onDragEnd on all element drag modifiers
+            const elementDragModifiers = pluginManager.getElementDragModifiers();
+            for (const modifier of elementDragModifiers) {
+                modifier.onDragEnd?.();
             }
         }
 
-        // Always clear global flag on pointer up (even if local isDragging is false)
-        // This ensures the flag doesn't get stuck when clicking to add shapes, etc.
+        // Always clear global flag on pointer up
         useCanvasStore.getState().setIsDraggingElements(false);
 
         setDragStart(null);
@@ -332,10 +258,9 @@ export const useCanvasPointerHandlers = (
         isSelecting,
         completeSelectionRectangle,
         screenToCanvas,
-        updateSelectionRectangle,
+        helpers,
         eventBus,
         dragStart,
-        beginSelectionRectangle,
         hasDragMoved,
     ]);
 

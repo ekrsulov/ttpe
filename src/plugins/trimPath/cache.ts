@@ -4,7 +4,7 @@ import {
   validatePathsForTrim,
   computePathIntersections,
   splitPathsByIntersections,
-} from '../../utils/trimPathGeometry';
+} from './trimPathGeometry';
 
 /**
  * Cache for trim path intersection computations.

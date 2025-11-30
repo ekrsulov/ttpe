@@ -23,7 +23,19 @@ import { pluginManager } from '../../utils/pluginManager';
 
 export const subpathPlugin: PluginDefinition<CanvasStore> = {
   id: 'subpath',
-  toolDefinition: { order: 2, visibility: 'always-shown' },
+  toolDefinition: {
+    order: 2,
+    visibility: 'always-shown',
+    isDisabled: (store) => {
+      // Subpath requires exactly one path element with multiple subpaths
+      const { selectedIds, elements } = store;
+      if (selectedIds.length !== 1) return true;
+      const element = elements.find(el => el.id === selectedIds[0]);
+      if (!element || element.type !== 'path') return true;
+      const pathData = element.data as PathData;
+      return pathData.subPaths.length <= 1;
+    },
+  },
   init: (_context) => {
     return () => { };
   },

@@ -4,6 +4,7 @@ import { pluginManager } from '../../utils/pluginManager';
 import type { CanvasSize } from '../hooks/useDynamicCanvasSize';
 import type { CanvasElement } from '../../types';
 import type { CanvasLayerContext } from '../../types/plugins';
+import { DEFAULT_MODE } from '../../constants';
 
 export interface CanvasStageProps {
   svgRef: RefObject<SVGSVGElement | null>;
@@ -52,7 +53,7 @@ export const CanvasStage: React.FC<CanvasStageProps> = ({
         height: '100%',
         border: 'none',
         cursor: (isSpacePressed || currentMode === 'pan') ? 'grabbing' :
-          pluginManager.getCursor(currentMode || 'select')
+          pluginManager.getCursor(currentMode || DEFAULT_MODE)
       }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}

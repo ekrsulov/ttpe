@@ -12,18 +12,22 @@ export interface UseCanvasFeedbackParams {
     currentMode: string | null;
     selectedCommands: SelectedCommand[];
     elements: CanvasElement[];
-    updatePointPositionFeedback?: (x: number, y: number, visible: boolean) => void;
+    /** Optional callback to update point position feedback UI */
+    onPointPositionChange?: (x: number, y: number, visible: boolean) => void;
 }
 
+/**
+ * Hook that provides visual feedback for selected points in edit mode.
+ * When a single point is selected, it reports the point's position.
+ */
 export function useCanvasFeedback({
     currentMode,
     selectedCommands,
     elements,
-    updatePointPositionFeedback,
+    onPointPositionChange,
 }: UseCanvasFeedbackParams): void {
-    // Update point position feedback when selection changes
     useEffect(() => {
-        if (!updatePointPositionFeedback) return;
+        if (!onPointPositionChange) return;
 
         if (currentMode === 'edit' && selectedCommands.length === 1) {
             const selectedCommand = selectedCommands[0];
@@ -34,20 +38,18 @@ export function useCanvasFeedback({
                 const commands = pathData.subPaths.flat();
                 const points = extractEditablePoints(commands);
 
-                // Find the specific point
                 const point = points.find(p =>
                     p.commandIndex === selectedCommand.commandIndex &&
                     p.pointIndex === selectedCommand.pointIndex
                 );
 
                 if (point) {
-                    updatePointPositionFeedback(point.x, point.y, true);
+                    onPointPositionChange(point.x, point.y, true);
                     return;
                 }
             }
         }
 
-        // Hide feedback if conditions not met
-        updatePointPositionFeedback(0, 0, false);
-    }, [currentMode, selectedCommands, elements, updatePointPositionFeedback]);
+        onPointPositionChange(0, 0, false);
+    }, [currentMode, selectedCommands, elements, onPointPositionChange]);
 }

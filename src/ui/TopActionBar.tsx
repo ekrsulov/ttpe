@@ -4,8 +4,7 @@ import { Menu, MoreHorizontal } from 'lucide-react';
 import { RenderCountBadgeWrapper } from './RenderCountBadgeWrapper';
 import { FloatingToolbarShell } from './FloatingToolbarShell';
 import { ToolbarIconButton } from './ToolbarIconButton';
-import type { CanvasElement } from '../types';
-import { pluginManager } from '../utils/pluginManager';
+import { pluginManager, useVisibleToolIds } from '../utils/pluginManager';
 import { useCanvasStore } from '../store/canvasStore';
 import { useDynamicTools } from '../hooks/useDynamicTools';
 
@@ -16,7 +15,6 @@ interface TopActionBarProps {
   isSidebarPinned?: boolean;
   isSidebarOpen?: boolean;
   onMenuClick?: () => void;
-  selectedPaths?: CanvasElement[];
   showGridRulers?: boolean;
 }
 
@@ -27,16 +25,12 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
   isSidebarPinned = false,
   isSidebarOpen = false,
   onMenuClick,
-  selectedPaths = [],
   showGridRulers = false,
 }) => {
   const showMenuButton = !isSidebarPinned;
 
   // Detect mobile breakpoint
   const isMobile = useBreakpointValue({ base: true, md: false }, { fallback: 'md' });
-
-  // Get grid state to conditionally show gridFill tool
-  const gridEnabled = useCanvasStore(state => state.grid?.enabled ?? false);
 
   // Dynamic tools hook
   const {
@@ -46,61 +40,21 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
     showExtraTools,
     toggleExtraTools,
     alwaysShownTools,
-  } = useDynamicTools(activeMode, gridEnabled);
+  } = useDynamicTools(activeMode);
 
   // Colors for active buttons
   const activeBg = useColorModeValue('gray.800', 'gray.200');
   const activeColor = useColorModeValue('white', 'gray.900');
 
-  // Optimize subscriptions - only subscribe to length/count, not entire arrays
-  // This prevents re-renders when elements data changes (e.g., during movement)
-  const selectedIdsCount = useCanvasStore(state => state.selectedIds.length);
-  const elementsCount = useCanvasStore(state => state.elements.length);
   const isDraggingElements = useCanvasStore(state => state.isDraggingElements);
+
+  // Subscribe to visible tool IDs - this hook handles all plugin visibility logic
+  // internally, keeping TopActionBar decoupled from specific plugin requirements
+  const visibleToolIds = useVisibleToolIds();
 
   // Subscribe to enabledPlugins to trigger re-render when plugins are toggled
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   useCanvasStore(state => (state as any).pluginSelector?.enabledPlugins ?? []);
-
-  // Memoize element lookups to avoid recalculating on every render
-  const disabledStates = React.useMemo(() => {
-    // Skip expensive calculations during dragging
-    if (isDraggingElements) {
-      return {
-        transformation: false,
-        edit: false,
-        subpath: false,
-      };
-    }
-
-    const state = useCanvasStore.getState();
-    const { selectedIds, elements } = state;
-
-    const transformationDisabled = (() => {
-      if (selectedIds.length === 0) return true;
-      if (selectedIds.length === 1) {
-        const element = elements.find(el => el.id === selectedIds[0]);
-        return !element || (element.type !== 'path' && element.type !== 'group');
-      }
-      return false;
-    })();
-
-    const editDisabled = selectedPaths.length !== 1;
-
-    const subpathDisabled = (() => {
-      if (selectedPaths.length !== 1) return true;
-      const element = selectedPaths[0];
-      if (!element || element.type !== 'path') return true;
-      const pathData = element.data as import('../types').PathData;
-      return pathData.subPaths.length <= 1;
-    })();
-
-    return {
-      transformation: transformationDisabled,
-      edit: editDisabled,
-      subpath: subpathDisabled,
-    };
-  }, [selectedIdsCount, elementsCount, selectedPaths, isDraggingElements]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // State and refs for animated background
   const buttonRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -111,27 +65,24 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
     opacity: number;
   }>({ left: 0, width: 0, opacity: 0 });
 
-  const registeredTools = pluginManager
-    .getRegisteredTools()
-    .filter((plugin) => plugin.toolDefinition !== undefined)
-    .filter((plugin) => {
-      // Only show gridFill if grid is enabled
-      if (plugin.id === 'gridFill') {
-        return gridEnabled;
-      }
-      return true;
-    })
-    .map((plugin) => {
-      const Icon = plugin.metadata.icon ?? Menu;
+  // Get visible registered tools using plugin-defined visibility
+  const registeredTools = React.useMemo(() => {
+    return pluginManager
+      .getRegisteredTools()
+      .filter((plugin) => plugin.toolDefinition !== undefined)
+      .filter((plugin) => visibleToolIds.includes(plugin.id))
+      .map((plugin) => {
+        const Icon = plugin.metadata.icon ?? Menu;
 
-      return {
-        id: plugin.id,
-        label: plugin.metadata.label ?? plugin.id,
-        icon: Icon,
-        order: plugin.toolDefinition?.order ?? 999,
-      };
-    })
-    .sort((a, b) => a.order - b.order);
+        return {
+          id: plugin.id,
+          label: plugin.metadata.label ?? plugin.id,
+          icon: Icon,
+          order: plugin.toolDefinition?.order ?? 999,
+        };
+      })
+      .sort((a, b) => a.order - b.order);
+  }, [visibleToolIds]); // Re-evaluate when visibility changes
 
   // Filter tools based on mobile/desktop and usage patterns
   const toolsToRender = React.useMemo(() => {
@@ -139,7 +90,7 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
     const baseTools = registeredTools.length
       ? registeredTools
       : pluginManager.getToolDefinitions()
-        .filter((def) => def.mode !== 'gridFill' || gridEnabled)
+        .filter((def) => visibleToolIds.includes(def.mode))
         .sort((a, b) => a.order - b.order)
         .map(({ mode, label, icon }) => ({
           id: mode,
@@ -157,7 +108,7 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
 
     // On desktop, show all tools
     return baseTools;
-  }, [registeredTools, gridEnabled, isMobile, getMobileVisibleTools, alwaysShownTools]);
+  }, [registeredTools, visibleToolIds, isMobile, getMobileVisibleTools, alwaysShownTools]);
 
   // Get extra tools for mobile overflow menu
   const extraTools = React.useMemo(() => {
@@ -168,6 +119,8 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
       .map(toolId => {
         const toolDef = toolDefinitions.find(def => def.mode === toolId);
         if (!toolDef) return null;
+        // Skip tools that are not visible
+        if (!visibleToolIds.includes(toolId)) return null;
 
         return {
           id: toolId,
@@ -176,7 +129,7 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
         };
       })
       .filter(Boolean) as Array<{ id: string, label: string, icon: React.ComponentType<{ size?: number }> }>;
-  }, [isMobile, getExtraTools]);
+  }, [isMobile, getExtraTools, visibleToolIds]);
 
   // Create stable dependency from tool IDs
   const toolIds = toolsToRender.map(t => t.id).join(',');
@@ -269,18 +222,9 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
 
           {/* Tool buttons */}
           {toolsToRender.map(({ id, icon: Icon, label }) => {
-            const isDisabled = (() => {
-              if (id === 'transformation') {
-                return disabledStates.transformation;
-              }
-              if (id === 'edit') {
-                return disabledStates.edit;
-              }
-              if (id === 'subpath') {
-                return disabledStates.subpath;
-              }
-              return false;
-            })();
+            // Skip expensive calculations during dragging
+            const store = useCanvasStore.getState();
+            const isDisabled = isDraggingElements ? false : pluginManager.isToolDisabled(id, store);
             return (
               <Box
                 key={id}
@@ -391,18 +335,9 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
               position="relative"
             >
               {extraTools.map(({ id, icon: Icon, label }) => {
-                const isDisabled = (() => {
-                  if (id === 'transformation') {
-                    return disabledStates.transformation;
-                  }
-                  if (id === 'edit') {
-                    return disabledStates.edit;
-                  }
-                  if (id === 'subpath') {
-                    return disabledStates.subpath;
-                  }
-                  return false;
-                })();
+                // Skip expensive calculations during dragging
+                const store = useCanvasStore.getState();
+                const isDisabled = isDraggingElements ? false : pluginManager.isToolDisabled(id, store);
 
                 return (
                   <Box

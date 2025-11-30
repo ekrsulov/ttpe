@@ -5,6 +5,7 @@ import ConditionalTooltip from '../../ui/ConditionalTooltip';
 import { useCanvasStore } from '../../store/canvasStore';
 
 import { logger } from '../../utils';
+import { pluginManager } from '../../utils/pluginManager';
 import { Panel } from '../../ui/Panel';
 import { PanelToggle } from '../../ui/PanelToggle';
 import { PanelStyledButton } from '../../ui/PanelStyledButton';
@@ -94,12 +95,11 @@ export const FilePanel: React.FC = () => {
   };
 
   const handleSaveAsPng = () => {
-    // We need to get the SVG element from the Canvas component
-    // For now, we'll dispatch a custom event that the Canvas can listen to
-    const event = new CustomEvent('saveAsPng', {
-      detail: { selectedOnly: pngSelectedOnly }
-    });
-    window.dispatchEvent(event);
+    // Use the event bus via pluginManager for decoupled communication
+    const eventBus = pluginManager.getEventBus();
+    if (eventBus) {
+      eventBus.emit('saveAsPng', { selectedOnly: pngSelectedOnly });
+    }
   };
 
   const handleLoad = async () => {

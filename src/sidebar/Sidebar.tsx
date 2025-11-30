@@ -12,6 +12,7 @@ import {
 import { useCanvasStore } from '../store/canvasStore';
 import { SidebarContent } from './components/SidebarContent';
 import { RenderCountBadgeWrapper } from '../ui/RenderCountBadgeWrapper';
+import { DEFAULT_MODE } from '../constants';
 
 interface SidebarProps {
   onPinnedChange?: (isPinned: boolean) => void;
@@ -122,9 +123,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const handleToolClick = (toolName: string) => {
     if (toolName === 'file') {
       if (showFilePanel) {
-        // If file panel is open, close it and return to select
+        // If file panel is open, close it and return to default mode
         setShowFilePanel(false);
-        setMode('select');
+        setMode(DEFAULT_MODE);
       } else {
         // Open file panel, close everything else, and set to file mode
         setShowFilePanel(true);
@@ -133,9 +134,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
       }
     } else if (toolName === 'settings') {
       if (showSettingsPanel) {
-        // If settings panel is open, close it and return to select
+        // If settings panel is open, close it and return to default mode
         setShowSettingsPanel(false);
-        setMode('select');
+        setMode(DEFAULT_MODE);
       } else {
         // Open settings panel, close everything else, and set to settings mode
         setShowSettingsPanel(true);

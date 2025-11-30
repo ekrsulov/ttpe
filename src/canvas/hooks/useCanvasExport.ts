@@ -1,27 +1,27 @@
 import { useEffect, type RefObject } from 'react';
+import { useCanvasEventBus } from '../CanvasEventBusContext';
 
 export interface UseCanvasExportParams {
     saveAsPng: (selectedOnly: boolean) => void;
     svgRef: RefObject<SVGSVGElement | null>;
 }
 
+/**
+ * Hook that handles canvas export functionality via the event bus.
+ */
 export function useCanvasExport({
     saveAsPng,
     svgRef,
 }: UseCanvasExportParams): void {
-    // Listen for saveAsPng events from FilePanel
+    const eventBus = useCanvasEventBus();
+
     useEffect(() => {
-        const handleSaveAsPng = (event: CustomEvent) => {
-            const { selectedOnly } = event.detail;
+        const unsubscribe = eventBus.subscribe('saveAsPng', ({ selectedOnly }) => {
             if (svgRef.current) {
                 saveAsPng(selectedOnly);
             }
-        };
+        });
 
-        window.addEventListener('saveAsPng', handleSaveAsPng as EventListener);
-
-        return () => {
-            window.removeEventListener('saveAsPng', handleSaveAsPng as EventListener);
-        };
-    }, [saveAsPng, svgRef]);
+        return unsubscribe;
+    }, [eventBus, saveAsPng, svgRef]);
 }

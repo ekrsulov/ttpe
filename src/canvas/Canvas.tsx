@@ -19,8 +19,7 @@ import { useMobileTouchGestures } from './hooks/useMobileTouchGestures';
 import { useDynamicCanvasSize } from './hooks/useDynamicCanvasSize';
 import { useCanvasFeedback } from './hooks/useCanvasFeedback';
 import { useCanvasExport } from './hooks/useCanvasExport';
-import { Rulers } from '../plugins/guidelines/Rulers';
-import { RULER_SIZE } from '../plugins/guidelines/constants';
+import { pluginManager } from '../utils/pluginManager';
 
 import { CanvasStage } from './components/CanvasStage';
 import { useCanvasEventBusManager } from './hooks/useCanvasEventBusManager';
@@ -34,7 +33,6 @@ import { useViewportController } from './hooks/useViewportController';
 import { useCanvasShortcuts } from './hooks/useCanvasShortcuts';
 import { canvasShortcutRegistry } from './shortcuts';
 import { useCanvasModeController } from './hooks/useCanvasModeController';
-import type { CanvasMode } from './modes/CanvasModeMachine';
 import { useCanvasStore } from '../store/canvasStore';
 import { PluginHooksRenderer } from './PluginHooks';
 
@@ -49,7 +47,6 @@ const CanvasContent: React.FC = () => {
     updateSelectionRectangle,
     completeSelectionRectangle,
     cancelSelection,
-    selectElement: applySelectionChange,
   } = useSelectionController();
 
   const controller = useCanvasController();
@@ -57,13 +54,43 @@ const CanvasContent: React.FC = () => {
   const isPathInteractionDisabled = useCanvasStore(state => state.isPathInteractionDisabled);
   const pathCursorMode = useCanvasStore(state => state.pathCursorMode);
   const settings = useCanvasStore(state => state.settings);
+  
+  // Subscribe to guidelines state to trigger re-render when it changes
   const guidelines = useCanvasStore(state => state.guidelines);
-  const showRulers = guidelines?.enabled && guidelines?.manualGuidesEnabled;
+  // Subscribe to grid state to trigger re-render when it changes
+  const grid = useCanvasStore(state => state.grid);
+  
+  // Get canvas decorators from plugin manager
+  const beforeCanvasDecorators = pluginManager.getCanvasDecoratorsByPlacement('before-canvas');
+  
+  // Calculate visible decorators reactively based on current store state
+  const visibleDecorators = useMemo(() => {
+    const storeState = useCanvasStore.getState();
+    return beforeCanvasDecorators.filter(d => d.isVisible(storeState));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [beforeCanvasDecorators, guidelines, grid]);
+  
+  // Calculate total offset from visible decorators
+  const decoratorOffset = useMemo(() => {
+    let top = 0;
+    let left = 0;
+    let width = 0;
+    let height = 0;
+    
+    for (const decorator of visibleDecorators) {
+      if (decorator.getOffset) {
+        const offset = decorator.getOffset();
+        top = Math.max(top, offset.top);
+        left = Math.max(left, offset.left);
+        width = Math.max(width, offset.width);
+        height = Math.max(height, offset.height);
+      }
+    }
+    
+    return { top, left, width, height };
+  }, [visibleDecorators]);
 
-  const {
-    currentMode,
-    transition: transitionCanvasMode,
-  } = useCanvasModeController();
+  const { currentMode } = useCanvasModeController();
   const { viewport, screenToCanvas: mapScreenPointToCanvas, getViewBoxString } = useViewportController();
   const eventBus = useCanvasEventBus();
 
@@ -83,7 +110,6 @@ const CanvasContent: React.FC = () => {
     isWorkingWithSubpaths,
     getControlPointInfo,
     saveAsPng,
-    clearGuidelines,
     isElementHidden,
     isElementLocked,
     moveSelectedElements,
@@ -98,14 +124,6 @@ const CanvasContent: React.FC = () => {
     if (moveSelectedSubpaths) {
       moveSelectedSubpaths(deltaX, deltaY);
     }
-  });
-
-  const handleSelectElement = useEventCallback((elementId: string, toggle: boolean) => {
-    applySelectionChange(elementId, toggle);
-  });
-
-  const handleSetMode = useEventCallback((mode: string) => {
-    transitionCanvasMode(mode as CanvasMode);
   });
 
   // Use the custom hook for drag interactions and pointer state
@@ -134,7 +152,6 @@ const CanvasContent: React.FC = () => {
       onStopDraggingPoint: stopDraggingPoint ?? (() => { }),
       onUpdateElement: updateElement,
       getControlPointInfo: getControlPointInfo ?? (() => null),
-      clearGuidelines,
     }
   });
 
@@ -175,16 +192,17 @@ const CanvasContent: React.FC = () => {
   // Use dynamic canvas size hook
   const rawCanvasSize = useDynamicCanvasSize();
   
-  // Adjust canvas size when rulers are visible to account for ruler offset
+  // Adjust canvas size based on decorator offsets
+  const hasDecorators = decoratorOffset.width > 0 || decoratorOffset.height > 0;
   const canvasSize = useMemo(() => {
-    if (showRulers) {
+    if (hasDecorators) {
       return {
-        width: rawCanvasSize.width - RULER_SIZE,
-        height: rawCanvasSize.height - RULER_SIZE,
+        width: rawCanvasSize.width - decoratorOffset.width,
+        height: rawCanvasSize.height - decoratorOffset.height,
       };
     }
     return rawCanvasSize;
-  }, [rawCanvasSize, showRulers]);
+  }, [rawCanvasSize, hasDecorators, decoratorOffset]);
 
   // Transform screen coordinates to canvas coordinates
   const screenToCanvas = useCallback(
@@ -211,7 +229,6 @@ const CanvasContent: React.FC = () => {
     isSpacePressed,
     activePlugin: currentMode,
     isSelecting,
-    selectionStart,
     isDragging,
     dragStart,
     hasDragMoved,
@@ -226,8 +243,6 @@ const CanvasContent: React.FC = () => {
     updateSelectionRectangle,
     moveSelectedElements: handleMoveSelectedElements,
     moveSelectedSubpaths: handleMoveSelectedSubpaths,
-    selectElement: handleSelectElement,
-    setMode: handleSetMode,
   });
 
   const {
@@ -296,7 +311,8 @@ const CanvasContent: React.FC = () => {
       handleSubpathDoubleClick,
       handleSubpathTouchEnd,
       setDragStart: setDragStartForLayers,
-      settings, // Add settings to context
+      settings,
+      guidelines, // Add guidelines for plugins that need it
     };
 
     return baseContext;
@@ -316,16 +332,15 @@ const CanvasContent: React.FC = () => {
       handleSubpathTouchEnd,
       setDragStartForLayers,
       settings,
+      guidelines,
     ]
   );
 
-  // Use side effects hook to manage feedback, cleanup, and save
-  // Use new focused hooks
+  // Use new focused hooks for side effects
   useCanvasFeedback({
     currentMode,
     selectedCommands: selectedCommands ?? [],
     elements,
-    updatePointPositionFeedback: undefined, // Add if needed, or remove if unused in original
   });
 
   useCanvasExport({
@@ -333,24 +348,29 @@ const CanvasContent: React.FC = () => {
     svgRef,
   });
 
+  // Create decorator context
+  const decoratorContext = useMemo(() => ({
+    canvasSize,
+    viewport,
+    isVisible: true,
+  }), [canvasSize, viewport]);
+
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-      {/* Rulers for manual guides */}
-      {showRulers && (
-        <Rulers
-          width={canvasSize.width}
-          height={canvasSize.height}
-          viewport={viewport}
-        />
-      )}
+      {/* Render before-canvas decorators (e.g., rulers) */}
+      {visibleDecorators.map(decorator => (
+        <React.Fragment key={decorator.id}>
+          {decorator.render(decoratorContext)}
+        </React.Fragment>
+      ))}
       
-      {/* Canvas container with offset for rulers */}
+      {/* Canvas container with offset for decorators */}
       <div style={{
         position: 'absolute',
-        top: showRulers ? RULER_SIZE : 0,
-        left: showRulers ? RULER_SIZE : 0,
-        width: showRulers ? `calc(100% - ${RULER_SIZE}px)` : '100%',
-        height: showRulers ? `calc(100% - ${RULER_SIZE}px)` : '100%',
+        top: hasDecorators ? decoratorOffset.top : 0,
+        left: hasDecorators ? decoratorOffset.left : 0,
+        width: hasDecorators ? `calc(100% - ${decoratorOffset.width}px)` : '100%',
+        height: hasDecorators ? `calc(100% - ${decoratorOffset.height}px)` : '100%',
       }}>
         <PluginHooksRenderer
           svgRef={svgRef}

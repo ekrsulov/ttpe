@@ -1,4 +1,5 @@
 import type { StateCreator } from 'zustand';
+import { DEFAULT_SELECTION_STRATEGY } from '../../constants';
 
 export interface LassoPluginSlice {
   lassoEnabled: boolean;
@@ -25,7 +26,7 @@ export const createLassoPluginSlice: StateCreator<
   setLassoEnabled: (enabled) => {
     set({ 
       lassoEnabled: enabled,
-      activeSelectionStrategy: enabled ? 'lasso' : 'rectangle'
+      activeSelectionStrategy: enabled ? 'lasso' : DEFAULT_SELECTION_STRATEGY
     });
   },
   setLassoPath: (path) => set({ lassoPath: path }),

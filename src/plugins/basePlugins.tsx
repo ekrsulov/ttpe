@@ -214,6 +214,7 @@ export const selectPlugin: PluginDefinition<CanvasStore> = {
     label: 'Select',
     icon: MousePointer,
     cursor: 'default',
+    pathCursorMode: 'select', // Select tool needs 'select' cursor mode for path interaction
   },
   modeConfig: {
     description: 'Default tool for selecting and manipulating elements.',

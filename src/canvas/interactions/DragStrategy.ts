@@ -47,7 +47,6 @@ export interface DragCallbacks {
     onStopDraggingPoint: () => void;
     onUpdateElement: (id: string, updates: Partial<CanvasElement>) => void;
     getControlPointInfo: (elementId: string, commandIndex: number, pointIndex: number) => ControlPointInfo | null;
-    clearGuidelines?: () => void;
 }
 
 export const calculateDragPosition = (

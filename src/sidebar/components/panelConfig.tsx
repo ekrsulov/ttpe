@@ -4,7 +4,6 @@ import type { PanelConfig } from '../../types/panel';
 
 // Lazy load core panel components
 const EditorPanel = React.lazy(() => import('../panels/EditorPanel').then(module => ({ default: module.EditorPanel })));
-const PanPanel = React.lazy(() => import('../panels/PanPanel').then(module => ({ default: module.PanPanel })));
 const FilePanel = React.lazy(() => import('../panels/FilePanel').then(module => ({ default: module.FilePanel })));
 const SettingsPanel = React.lazy(() => import('../panels/SettingsPanel').then(module => ({ default: module.SettingsPanel })));
 const DocumentationPanel = React.lazy(() => import('../panels/DocumentationPanel').then(module => ({ default: module.DocumentationPanel })));
@@ -35,11 +34,6 @@ export const PANEL_CONFIGS: PanelConfig[] = [
     key: 'editor',
     condition: (ctx) => !ctx.isInSpecialPanelMode,
     component: EditorPanel,
-  },
-  {
-    key: 'pan',
-    condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'pan',
-    component: PanPanel,
   },
 ];
 

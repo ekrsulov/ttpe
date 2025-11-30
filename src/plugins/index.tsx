@@ -10,7 +10,6 @@ import { shapePlugin } from './shape';
 import { transformationPlugin } from './transformation';
 import { editPlugin } from './edit';
 import { subpathPlugin } from './subpath';
-import { curvesPlugin } from './curves';
 import { opticalAlignmentPlugin } from './opticalAlignment';
 import { guidelinesPlugin } from './guidelines';
 import { objectSnapPlugin } from './objectSnap';
@@ -38,7 +37,6 @@ export const CORE_PLUGINS: PluginDefinition<CanvasStore>[] = [
   settingsPlugin,
   pencilPlugin,
   penPlugin,
-  curvesPlugin,
   textPlugin,
   shapePlugin,
   subpathPlugin,

@@ -2,4 +2,5 @@
  * Guidelines Plugin Constants
  */
 
-export const RULER_SIZE = 20; // pixels
+// Re-export RULER_SIZE from shared component for backward compatibility
+export { RULER_SIZE } from '../../ui/Rulers';

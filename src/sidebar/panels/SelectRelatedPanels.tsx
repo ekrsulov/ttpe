@@ -2,9 +2,11 @@ import React from 'react';
 import { VStack, Divider, Box } from '@chakra-ui/react';
 import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
 import { usePluginPanels } from '../../hooks/usePluginPanels';
+import { DEFAULT_MODE } from '../../constants';
 
 export const SelectRelatedPanels: React.FC = () => {
-  const contributedPanels = usePluginPanels('select');
+  // Get panels contributed to the default mode (select tool)
+  const contributedPanels = usePluginPanels(DEFAULT_MODE);
 
   if (!contributedPanels.length) return null;
 

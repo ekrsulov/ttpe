@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useToast } from '@chakra-ui/react';
 import { useCanvasStore } from '../store/canvasStore';
+import { DEFAULT_MODE } from '../constants';
 import {
     logger,
     importSVGWithDimensions,
@@ -297,7 +298,7 @@ export const useSvgImport = () => {
 
             if (selectionIds.length > 0) {
                 selectElements(selectionIds);
-                setActivePlugin('select');
+                setActivePlugin(DEFAULT_MODE);
             }
 
             toast({

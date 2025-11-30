@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import type { CanvasElement, SubPath, Point, ControlPointInfo, PathData } from '../../types';
 import { usePointerState } from './usePointerState';
 import {
@@ -7,42 +7,21 @@ import {
     updateGroupDragPaths,
     type DragState
 } from '../interactions/DragStrategy';
-
-// --- Types from usePointerStateController ---
-
-type BeginSelectionRectangle = (
-    point: Point,
-    shouldClearCommands?: boolean,
-    shouldClearSubpaths?: boolean
-) => void;
-
-type UpdateSelectionRectangle = (point: Point) => void;
-
-type CompleteSelectionRectangle = () => void;
-
-// --- Types from useCanvasDragInteractions ---
+import { pluginManager } from '../../utils/pluginManager';
 
 interface DragCallbacks {
     onStopDraggingPoint: () => void;
     onUpdateElement: (id: string, updates: Partial<CanvasElement>) => void;
     getControlPointInfo: (elementId: string, commandIndex: number, pointIndex: number) => ControlPointInfo | null;
-    clearGuidelines?: () => void;
 }
 
 interface UseCanvasDragProps {
-    // Pointer state props
     isSelecting: boolean;
-    beginSelectionRectangle: BeginSelectionRectangle;
-    updateSelectionRectangle: UpdateSelectionRectangle;
-    completeSelectionRectangle: CompleteSelectionRectangle;
-
-    // Drag interaction props
+    beginSelectionRectangle: (point: Point, shouldClearCommands?: boolean, shouldClearSubpaths?: boolean) => void;
+    updateSelectionRectangle: (point: Point) => void;
+    completeSelectionRectangle: () => void;
     dragState: DragState;
-    viewport: {
-        zoom: number;
-        panX: number;
-        panY: number;
-    };
+    viewport: { zoom: number; panX: number; panY: number };
     elements: Array<CanvasElement>;
     callbacks: DragCallbacks;
 }
@@ -57,7 +36,6 @@ export const useCanvasDrag = ({
     elements,
     callbacks
 }: UseCanvasDragProps) => {
-    // --- Pointer State Logic ---
     const {
         isDragging,
         dragStart,
@@ -68,27 +46,15 @@ export const useCanvasDrag = ({
         stateRefs
     } = usePointerState({ isSelecting });
 
-    // Helper ref for callbacks (kept for compatibility with existing consumers if needed, 
-    // though usePointerState handles the core state refs)
-    // We recreate helpersRef to match the expected return type structure if needed,
-    // or we can just return the functions directly if consumers don't need the ref.
-    // Looking at Canvas.tsx, it uses helpers.current. So we need to maintain that.
-
-    // Actually, usePointerState doesn't return helpersRef. We should probably keep it here 
-    // or move it to usePointerState if it's generic enough. 
-    // For now, let's keep it here to minimize changes to usePointerState.
-
-    // Wait, the original useCanvasDrag returned `helpers` which was a ref.
-    // Let's reconstruct it.
-    const helpersRef = {
+    // Memoized helpers object for event bus compatibility
+    const helpers = useMemo(() => ({
         current: {
             beginSelectionRectangle,
             updateSelectionRectangle,
             completeSelectionRectangle,
         }
-    };
+    }), [beginSelectionRectangle, updateSelectionRectangle, completeSelectionRectangle]);
 
-    // --- Drag Interaction Logic ---
     const [dragPosition, setDragPosition] = useState<Point | null>(null);
     const [originalPathDataMap, setOriginalPathDataMap] = useState<Record<string, SubPath[]> | null>(null);
 
@@ -134,10 +100,8 @@ export const useCanvasDrag = ({
                 setDragPosition(null);
                 setOriginalPathDataMap(null);
 
-                // Clear guidelines when drag ends
-                if (callbacks.clearGuidelines) {
-                    callbacks.clearGuidelines();
-                }
+                // Notify plugins that drag ended (e.g., guidelines cleanup)
+                pluginManager.executeLifecycleAction('onDragEnd');
 
                 // Force cleanup of drag state
                 if (editingPoint?.isDragging || draggingSelection?.isDragging || draggingSubpaths?.isDragging) {
@@ -152,10 +116,8 @@ export const useCanvasDrag = ({
             setOriginalPathDataMap(null);
             const { editingPoint, draggingSelection, draggingSubpaths } = dragState;
 
-            // Clear guidelines when drag is cancelled
-            if (callbacks.clearGuidelines) {
-                callbacks.clearGuidelines();
-            }
+            // Notify plugins that drag was cancelled (e.g., guidelines cleanup)
+            pluginManager.executeLifecycleAction('onDragEnd');
 
             if (editingPoint?.isDragging || draggingSelection?.isDragging || draggingSubpaths?.isDragging) {
                 callbacks.onStopDraggingPoint();
@@ -226,7 +188,6 @@ export const useCanvasDrag = ({
     ]);
 
     return {
-        // Pointer state
         isDragging,
         dragStart,
         hasDragMoved,
@@ -234,11 +195,8 @@ export const useCanvasDrag = ({
         setDragStart,
         setHasDragMoved,
         stateRefs,
-        helpers: helpersRef,
-
-        // Drag interaction state
+        helpers,
         dragPosition,
         originalPathDataMap
     };
 };
-

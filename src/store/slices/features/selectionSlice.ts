@@ -2,6 +2,7 @@ import type { StateCreator } from 'zustand';
 import type { CanvasElement, Point } from '../../../types';
 import type { CanvasStore } from '../../canvasStore';
 import { translatePathData } from '../../../utils/transformationUtils';
+import { DEFAULT_MODE } from '../../../constants';
 
 export interface SelectionSlice {
   // State
@@ -31,7 +32,7 @@ export const createSelectionSlice: StateCreator<CanvasStore, [], [], SelectionSl
       const fullState = state as CanvasStore; // Cast to access cross-slice properties
       
       // In select mode, when selecting a different path, clear subpath selection
-      if (fullState.activePlugin === 'select' && !multiSelect) {
+      if (fullState.activePlugin === DEFAULT_MODE && !multiSelect) {
         const currentlySelectedPaths = fullState.selectedIds.filter((selId: string) => {
           const element = fullState.elements.find((el: CanvasElement) => el.id === selId);
           return element && element.type === 'path';

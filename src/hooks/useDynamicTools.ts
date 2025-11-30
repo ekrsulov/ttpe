@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { pluginManager } from '../utils/pluginManager';
 import { useCanvasStore } from '../store/canvasStore';
-import type { PluginSelectorSlice } from '../plugins/pluginSelector/slice';
 
 // Tool mode type - any string representing a tool ID
 type ToolMode = string;
@@ -19,14 +18,19 @@ interface ToolUsage {
 /**
  * Hook to manage dynamic tool selection based on usage patterns
  */
-export const useDynamicTools = (activeMode: string | null, gridEnabled: boolean = false) => {
+export const useDynamicTools = (activeMode: string | null) => {
   const [toolUsage, setToolUsage] = useState<ToolUsage>({});
   const [showExtraTools, setShowExtraTools] = useState(false);
 
-  // Get enabled plugins from store
-  const enabledPlugins = useCanvasStore(
-    (state) => (state as unknown as PluginSelectorSlice).pluginSelector.enabledPlugins
+  // Get enabled plugins from store - wrapped in its own selector to avoid dependency issues
+  const pluginSelectorState = useCanvasStore(
+    (state) => (state as Record<string, unknown>).pluginSelector as { enabledPlugins: string[] } | undefined
   );
+  
+  // Memoize enabled plugins to avoid changing on every render
+  const enabledPlugins = useMemo(() => {
+    return pluginSelectorState?.enabledPlugins ?? [];
+  }, [pluginSelectorState]);
 
   // Get tools dynamically from registered plugins
   const allAlwaysShownTools = useMemo(() => pluginManager.getAlwaysShownTools(), []);
@@ -40,20 +44,21 @@ export const useDynamicTools = (activeMode: string | null, gridEnabled: boolean 
     );
   }, [allAlwaysShownTools, enabledPlugins]);
 
-  // Filter dynamic tools based on enabled plugins
+  // Filter dynamic tools based on enabled plugins and plugin-defined visibility
   const dynamicTools = useMemo(() => {
     const enabledPluginSet = new Set(enabledPlugins.length === 0 ? [] : enabledPlugins);
+    const store = useCanvasStore.getState();
     
     return allDynamicTools.filter(tool => {
-      // Check if gridFill should be included based on grid state
-      if (tool === 'gridFill' && !gridEnabled) {
+      // Check if plugin is visible using plugin-defined isVisible
+      if (!pluginManager.isToolVisible(tool, store)) {
         return false;
       }
       
       // Check if plugin is enabled (empty enabledPlugins means all enabled)
       return enabledPlugins.length === 0 || enabledPluginSet.has(tool);
     });
-  }, [allDynamicTools, enabledPlugins, gridEnabled]);
+  }, [allDynamicTools, enabledPlugins]);
 
   // Load tool usage from localStorage on mount
   useEffect(() => {

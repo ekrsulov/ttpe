@@ -3,7 +3,7 @@ import type { PluginDefinition, PluginSliceFactory } from '../../types/plugins';
 import type { CanvasStore } from '../../store/canvasStore';
 import { createTrimPathPluginSlice, type TrimPathPluginSlice } from './slice';
 import { TrimPathOverlayConnected } from './TrimPathOverlay';
-import { findSegmentAtPoint } from '../../utils/trimPathGeometry';
+import { findSegmentAtPoint } from './trimPathGeometry';
 
 /**
  * Trim Path Plugin Definition.

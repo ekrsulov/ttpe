@@ -7,30 +7,31 @@ import { useCanvasStore, type CanvasStore } from '../../store/canvasStore';
 import { getDeletionScope, executeDeletion } from '../../utils/deletionScopeUtils';
 import { isTextFieldFocused } from '../../utils/domHelpers';
 import type { CanvasShortcutContext } from '../../types/plugins';
+import { DEFAULT_MODE } from '../../constants';
 
 const CORE_SHORTCUT_SOURCE = 'canvas:core';
 
 const handleEscapeShortcut = (state: CanvasStore) => {
   if (state.showFilePanel) {
     state.setShowFilePanel(false);
-    state.setActivePlugin('select');
+    state.setActivePlugin(DEFAULT_MODE);
     return;
   }
 
   if (state.showSettingsPanel) {
     state.setShowSettingsPanel(false);
-    state.setActivePlugin('select');
+    state.setActivePlugin(DEFAULT_MODE);
     return;
   }
 
   // Plugin-specific escape handling moved to plugins
 
-  if (state.activePlugin === 'select' && state.selectedIds.length > 0) {
+  if (state.activePlugin === DEFAULT_MODE && state.selectedIds.length > 0) {
     state.clearSelection();
     return;
   }
 
-  state.setActivePlugin('select');
+  state.setActivePlugin(DEFAULT_MODE);
 };
 
 const handleArrowKey = (event: KeyboardEvent, context: CanvasShortcutContext, dirX: number, dirY: number) => {

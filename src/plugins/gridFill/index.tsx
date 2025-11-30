@@ -15,7 +15,13 @@ export const gridFillPlugin: PluginDefinition<CanvasStore> = {
     icon: PaintBucket,
     cursor: 'crosshair',
   },
-  toolDefinition: { order: 10 },
+  toolDefinition: {
+    order: 10,
+    isVisible: (store) => {
+      // Only show gridFill tool when grid is enabled
+      return store.grid?.enabled ?? false;
+    },
+  },
   handler: (_event, point, _target, context) => {
     const api = context.api as GridFillPluginApi;
     api.fillGridCell(point);

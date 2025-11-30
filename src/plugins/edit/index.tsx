@@ -53,7 +53,17 @@ export const editPlugin: PluginDefinition<CanvasStore> = {
     },
     toggleTo: 'select',
   },
-  toolDefinition: { order: 4, visibility: 'always-shown' },
+  toolDefinition: {
+    order: 4,
+    visibility: 'always-shown',
+    isDisabled: (store) => {
+      // Edit requires exactly one path element selected
+      const { selectedIds, elements } = store;
+      if (selectedIds.length !== 1) return true;
+      const element = elements.find(el => el.id === selectedIds[0]);
+      return !element || element.type !== 'path';
+    },
+  },
   onElementDoubleClick: (elementId, _event, context) => {
     const state = context.store.getState();
     const wasAlreadySelected = state.selectedIds.length === 1 && state.selectedIds[0] === elementId;

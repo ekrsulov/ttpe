@@ -5,6 +5,7 @@ import { useCanvasStore } from '../../store/canvasStore';
 import type { Point } from '../../types';
 import { mergeUniqueByKey } from '../../utils/coreHelpers';
 import type { SelectionData } from '../selection/SelectionStrategy';
+import { DEFAULT_SELECTION_STRATEGY } from '../../constants';
 
 // Constants for modifier keys
 const SHIFT_KEYS = new Set(['Shift', 'ShiftLeft', 'ShiftRight']);
@@ -220,7 +221,7 @@ export const useSelectionController = (): UseSelectionControllerResult => {
 
     // Determine selection strategy ID
     const state = useCanvasStore.getState() as Record<string, unknown>;
-    const activeStrategyId = (state.activeSelectionStrategy as string | undefined) ?? 'rectangle';
+    const activeStrategyId = (state.activeSelectionStrategy as string | undefined) ?? DEFAULT_SELECTION_STRATEGY;
 
     // Build selection data
     const selectionData: SelectionData = {

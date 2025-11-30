@@ -2,6 +2,10 @@ import type { PluginDefinition } from '../types/plugins';
 import type { CanvasStore } from '../store/canvasStore';
 import type { ElementMap } from '../canvas/geometry/CanvasGeometryService';
 import { Hand } from 'lucide-react';
+import React from 'react';
+
+// Lazy load PanPanel
+const PanPanel = React.lazy(() => import('../sidebar/panels/PanPanel').then(module => ({ default: module.PanPanel })));
 
 // Helper function to check if all selected elements belong to the same group
 export const getAllElementsShareSameParentGroup = (
@@ -68,6 +72,13 @@ export const panPlugin: PluginDefinition<CanvasStore> = {
       context.store.getState().pan(deltaX, deltaY);
     }
   },
+  sidebarPanels: [
+    {
+      key: 'pan',
+      condition: (ctx) => !ctx.isInSpecialPanelMode && ctx.activePlugin === 'pan',
+      component: PanPanel,
+    },
+  ],
 };
 
 export const filePlugin: PluginDefinition<CanvasStore> = {
