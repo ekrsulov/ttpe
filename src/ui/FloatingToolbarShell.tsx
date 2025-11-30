@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, type BoxProps } from '@chakra-ui/react';
-import { useToolbarColors } from '../hooks/useToolbarColors';
+import { useToolbarColors, useToolbarPosition } from '../hooks';
 
 export interface FloatingToolbarShellProps extends Omit<BoxProps, 'position'> {
   /**
@@ -32,7 +32,7 @@ export const FloatingToolbarShell: React.FC<FloatingToolbarShellProps> = ({
   children,
   ...boxProps
 }) => {
-  const isSidebarPinned = sidebarWidth > 0;
+  const { left, right, transform, isSidebarPinned } = useToolbarPosition(sidebarWidth);
   const { bg, color, borderColor, borderWidth, shadow } = useToolbarColors();
 
   // Calculate position based on toolbar type
@@ -50,9 +50,9 @@ export const FloatingToolbarShell: React.FC<FloatingToolbarShellProps> = ({
     <Box
       position="fixed"
       {...positionProps}
-      left={isSidebarPinned ? '0' : '50%'}
-      right={isSidebarPinned ? `${sidebarWidth}px` : 'auto'}
-      transform={isSidebarPinned ? 'none' : 'translateX(-50%)'}
+      left={left}
+      right={right}
+      transform={transform}
       marginLeft={isSidebarPinned ? 'auto' : 0}
       marginRight={isSidebarPinned ? 'auto' : 0}
       width="fit-content"

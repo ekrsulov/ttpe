@@ -7,7 +7,7 @@ import {
 } from '@chakra-ui/react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { pluginManager } from '../utils/pluginManager';
-import { useExpandablePanelColors } from '../hooks/useToolbarColors';
+import { useExpandablePanelColors, useToolbarPosition } from '../hooks';
 
 interface ExpandableToolPanelProps {
   activePlugin: string | null;
@@ -18,8 +18,7 @@ export const ExpandableToolPanel: React.FC<ExpandableToolPanelProps> = ({ active
   const [isExpanded, setIsExpanded] = useState(false);
   
   const { bg, borderColor, iconColor, hoverBg } = useExpandablePanelColors();
-  
-  const isSidebarPinned = sidebarWidth > 0;
+  const { isSidebarPinned } = useToolbarPosition(sidebarWidth);
   
   const PanelComponent = activePlugin ? pluginManager.getExpandablePanel(activePlugin) : null;
   

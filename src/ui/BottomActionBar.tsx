@@ -13,7 +13,7 @@ import { FloatingToolbarShell } from './FloatingToolbarShell';
 import { ToolbarIconButton } from './ToolbarIconButton';
 import { pluginManager, useIsGlobalUndoRedoDisabled } from '../utils/pluginManager';
 import { FloatingContextMenuButton } from './FloatingContextMenuButton';
-import { useTemporalState } from '../hooks/useTemporalState';
+import { useTemporalState, useEnabledPlugins } from '../hooks';
 
 interface BottomActionBarProps {
   sidebarWidth?: number;
@@ -34,8 +34,7 @@ export const BottomActionBar: React.FC<BottomActionBarProps> = ({
   const { undo, redo, pastStates, futureStates } = useTemporalState();
 
   // Subscribe to enabledPlugins to trigger re-render when plugins are toggled
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  useCanvasStore(state => (state as any).pluginSelector?.enabledPlugins ?? []);
+  useEnabledPlugins();
 
   // Calculate current zoom percentage - memoize based only on zoom value
   const currentZoom = useMemo(() => Math.round((viewportZoom as number) * 100), [viewportZoom]);

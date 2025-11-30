@@ -3,7 +3,7 @@ import { Box, IconButton, useBreakpointValue } from '@chakra-ui/react';
 import { ArrowBigUp } from 'lucide-react';
 import { useCanvasStore } from '../store/canvasStore';
 import { RenderCountBadgeWrapper } from './RenderCountBadgeWrapper';
-import { useToggleButtonColors, useToolbarColors } from '../hooks/useToolbarColors';
+import { useToggleButtonColors, useToolbarColors, useToolbarPosition } from '../hooks';
 
 interface VirtualShiftButtonProps {
   sidebarWidth?: number;
@@ -15,7 +15,7 @@ export const VirtualShiftButton: React.FC<VirtualShiftButtonProps> = ({
   const isVirtualShiftActive = useCanvasStore(state => state.isVirtualShiftActive);
   const toggleVirtualShift = useCanvasStore(state => state.toggleVirtualShift);
 
-  const isSidebarPinned = sidebarWidth > 0;
+  const { isSidebarPinned } = useToolbarPosition(sidebarWidth);
   const isMobile = useBreakpointValue({ base: true, md: false }, { fallback: 'md' });
 
   // Use shared color hooks

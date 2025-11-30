@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import type { ComponentType } from 'react';
 import { pluginManager } from '../utils/pluginManager';
 import type { PluginPanelContribution } from '../types/plugins';
-import { useCanvasStore } from '../store/canvasStore';
+import { useEnabledPlugins } from './useEnabledPlugins';
 
 interface PluginPanel {
     id: string;
@@ -20,8 +20,7 @@ interface PluginPanel {
  */
 export function usePluginPanels(targetPluginId: string): PluginPanel[] {
     // Subscribe to enabledPlugins to trigger re-render when plugins are toggled
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const enabledPlugins = useCanvasStore(state => (state as any).pluginSelector?.enabledPlugins ?? []);
+    const enabledPlugins = useEnabledPlugins();
 
     return useMemo(() => {
         const panels: PluginPanel[] = [];

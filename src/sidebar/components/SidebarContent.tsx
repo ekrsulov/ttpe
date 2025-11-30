@@ -1,13 +1,11 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Box } from '@chakra-ui/react';
 import { SidebarToolGrid } from './SidebarToolGrid';
 import { SidebarPanelHost } from './SidebarPanelHost';
 import { SidebarFooter } from './SidebarFooter';
 import { SidebarResizer } from './SidebarResizer';
 import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
-import { EditPanelContext } from '../../contexts/EditPanelContext';
 import { useSidebarContext } from '../../contexts/SidebarContext';
-import { useCanvasStore } from '../../store/canvasStore';
 
 interface SidebarContentProps {
   variant: 'pinned' | 'drawer';
@@ -24,24 +22,8 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
   // Get values from context
   const { showFilePanel, showSettingsPanel } = useSidebarContext();
 
-  // Get selection data from store for EditPanelContext
-  const storeSelectedCommands = useCanvasStore((state) => state.selectedCommands);
-  const storeSelectedSubpaths = useCanvasStore((state) => state.selectedSubpaths);
-
-  // Memoize EditPanel context value to prevent unnecessary re-renders
-  const editPanelContextValue = useMemo(
-    () => ({
-      selectedCommands: storeSelectedCommands ?? [],
-      selectedSubpaths: storeSelectedSubpaths ?? [],
-    }),
-    [
-      storeSelectedCommands,
-      storeSelectedSubpaths,
-    ]
-  );
-
   return (
-    <EditPanelContext.Provider value={editPanelContextValue}>
+    <>
       {/* Resizer handle - only for pinned variant */}
       {variant === 'pinned' && onResize && onReset && (
         <SidebarResizer
@@ -68,6 +50,6 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
         {/* Hide in special panel mode (file/settings) */}
         {!showFilePanel && !showSettingsPanel && <SidebarFooter />}
       </Box>
-    </EditPanelContext.Provider>
+    </>
   );
 };

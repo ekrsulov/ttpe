@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { pluginManager } from '../utils/pluginManager';
 import { useCanvasStore } from '../store/canvasStore';
 import { useLocalStorage } from './useLocalStorage';
+import { useEnabledPlugins } from './useEnabledPlugins';
 
 // Tool mode type - any string representing a tool ID
 type ToolMode = string;
@@ -23,15 +24,8 @@ export const useDynamicTools = (activeMode: string | null) => {
   const [toolUsage, setToolUsage, resetToolUsage] = useLocalStorage<ToolUsage>(TOOL_USAGE_KEY, {});
   const [showExtraTools, setShowExtraTools] = useState(false);
 
-  // Get enabled plugins from store - wrapped in its own selector to avoid dependency issues
-  const pluginSelectorState = useCanvasStore(
-    (state) => (state as Record<string, unknown>).pluginSelector as { enabledPlugins: string[] } | undefined
-  );
-  
-  // Memoize enabled plugins to avoid changing on every render
-  const enabledPlugins = useMemo(() => {
-    return pluginSelectorState?.enabledPlugins ?? [];
-  }, [pluginSelectorState]);
+  // Get enabled plugins using centralized hook
+  const enabledPlugins = useEnabledPlugins();
 
   // Get tools dynamically from registered plugins
   const allAlwaysShownTools = useMemo(() => pluginManager.getAlwaysShownTools(), []);

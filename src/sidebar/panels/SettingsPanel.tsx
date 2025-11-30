@@ -9,6 +9,7 @@ import {
   Text,
 } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
+import { useEnabledPlugins } from '../../hooks';
 import { logger, LogLevel } from '../../utils';
 import { Panel } from '../../ui/Panel';
 import { pluginManager } from '../../utils/pluginManager';
@@ -25,8 +26,7 @@ export const SettingsPanel: React.FC = () => {
   const { setColorMode } = useColorMode();
 
   // Subscribe to enabledPlugins to trigger re-render when plugins are toggled
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  useCanvasStore(state => (state as any).pluginSelector?.enabledPlugins ?? []);
+  useEnabledPlugins();
 
   // Detect if we're on mobile (base breakpoint)
   const isMobile = useBreakpointValue({ base: true, md: false }) ?? false;

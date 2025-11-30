@@ -18,8 +18,10 @@ export { useTemporalState } from './useTemporalState';
 
 // Tool/Plugin hooks
 export { useDynamicTools } from './useDynamicTools';
+export { useEnabledPlugins } from './useEnabledPlugins';
 export { usePluginPanels } from './usePluginPanels';
 export { useSelectionContext } from './useSelectionContext';
+export { useToolbarPosition } from './useToolbarPosition';
 
 // Action hooks (for floating context menu)
 export { useAlignmentActions } from './useAlignmentActions';

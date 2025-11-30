@@ -1,8 +1,8 @@
 import React, { Suspense, useMemo } from 'react';
 import { Box, useColorModeValue } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { useEditPanelContext } from '../../contexts/EditPanelContext';
 import { useSidebarContext } from '../../contexts/SidebarContext';
+import { useEnabledPlugins } from '../../hooks';
 import {
   PANEL_CONFIGS,
 } from './panelConfig';
@@ -17,7 +17,7 @@ export interface SidebarPanelsProps {
 /**
  * Main panels section of the sidebar with conditional rendering
  * Uses a data-driven approach to render panels based on configuration.
- * State comes from SidebarContext, EditPanel props via EditPanelContext.
+ * State comes from SidebarContext and store directly.
  */
 export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
   panelContributions = [],
@@ -28,12 +28,9 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
   const scrollbarTrack = useColorModeValue('#f1f1f1', 'rgba(255, 255, 255, 0.06)');
   const scrollbarThumb = useColorModeValue('#888', 'rgba(255, 255, 255, 0.3)');
   // Subscribe to enabledPlugins to trigger re-render when plugins are toggled
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const enabledPlugins = useCanvasStore(state => (state as any).pluginSelector?.enabledPlugins ?? []);
+  const enabledPlugins = useEnabledPlugins();
 
   const scrollbarThumbHover = useColorModeValue('#555', 'rgba(255, 255, 255, 0.45)');
-  // Get EditPanel context for panels that need it
-  const editPanelContext = useEditPanelContext();
 
   // Check if we're in special panel mode (file or settings)
   const isInSpecialPanelMode = showFilePanel || showSettingsPanel;
@@ -55,11 +52,7 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
   // Prepare all props for panels that might need them
   const allPanelProps: PanelComponentProps = useMemo(() => ({
     activePlugin,
-    ...editPanelContext,
-  }), [
-    activePlugin,
-    editPanelContext,
-  ]);
+  }), [activePlugin]);
 
   // Filter PANEL_CONFIGS to only include panels from enabled plugins
   const filteredPanelConfigs = useMemo(() => {

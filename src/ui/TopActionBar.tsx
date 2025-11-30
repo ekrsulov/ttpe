@@ -6,7 +6,7 @@ import { FloatingToolbarShell } from './FloatingToolbarShell';
 import { ToolbarIconButton } from './ToolbarIconButton';
 import { pluginManager, useVisibleToolIds } from '../utils/pluginManager';
 import { useCanvasStore } from '../store/canvasStore';
-import { useDynamicTools } from '../hooks/useDynamicTools';
+import { useDynamicTools, useEnabledPlugins } from '../hooks';
 import { useAnimatedBackground } from '../hooks/useAnimatedBackground';
 
 interface TopActionBarProps {
@@ -53,8 +53,7 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
   const visibleToolIds = useVisibleToolIds();
 
   // Subscribe to enabledPlugins to trigger re-render when plugins are toggled
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  useCanvasStore(state => (state as any).pluginSelector?.enabledPlugins ?? []);
+  useEnabledPlugins();
 
   // Ref for extra tools bar click outside handling
   const extraToolsBarRef = useRef<HTMLDivElement>(null);

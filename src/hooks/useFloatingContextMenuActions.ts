@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
-import { useCanvasStore } from '../store/canvasStore';
 import { useGroupActions } from './useGroupActions';
 import { useAlignmentActions } from './useAlignmentActions';
 import { useClipboardActions } from './useClipboardActions';
+import { useEnabledPlugins } from './useEnabledPlugins';
 import type { FloatingContextMenuAction } from '../types/plugins';
 import type { SelectionContextInfo } from '../types/selection';
 import { pluginManager } from '../utils/pluginManager';
@@ -17,8 +17,7 @@ export function useFloatingContextMenuActions(
   context: SelectionContextInfo | null
 ): FloatingContextMenuAction[] {
   // Subscribe to enabledPlugins to trigger re-render when plugins are toggled
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  useCanvasStore(state => (state as any).pluginSelector?.enabledPlugins ?? []);
+  useEnabledPlugins();
 
   // Get specialized action sets
   const { actions: groupActions } = useGroupActions(context);

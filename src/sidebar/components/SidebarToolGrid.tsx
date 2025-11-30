@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, SimpleGrid } from '@chakra-ui/react';
+import { Box, HStack } from '@chakra-ui/react';
 import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
 import { SidebarUtilityButton } from '../../ui/SidebarUtilityButton';
 import { useSidebarContext } from '../../contexts/SidebarContext';
@@ -8,6 +8,12 @@ interface ToolConfig {
   name: string;
   label: string;
 }
+
+// Plugin configuration - only utility/settings tools
+const UTILITY_TOOLS: ToolConfig[] = [
+  { name: 'file', label: 'File' },
+  { name: 'settings', label: 'Settings' },
+];
 
 /**
  * Grid component for plugin/tool buttons in the sidebar
@@ -25,14 +31,6 @@ export const SidebarToolGrid: React.FC = () => {
     onToolClick,
     onTogglePin,
   } = useSidebarContext();
-
-  // Plugin configuration - only utility/settings tools
-  const pluginRows: ToolConfig[][] = [
-    [
-      { name: 'file', label: 'File' },
-      { name: 'settings', label: 'Settings' },
-    ],
-  ];
 
   const renderPluginButton = (plugin: ToolConfig) => {
     const handleClick = () => {
@@ -61,22 +59,20 @@ export const SidebarToolGrid: React.FC = () => {
     );
   };
 
-  const renderPinButton = () => (
-    <SidebarUtilityButton
-      label={isPinned ? 'Unpin' : 'Pin'}
-      isActive={false}
-      onClick={onTogglePin}
-      fullWidth={false}
-    />
-  );
-
   return (
     <Box pt={2} pr={2} pl={2} bg="surface.panel" position="relative">
       <RenderCountBadgeWrapper componentName="SidebarToolGrid" position="top-left" />
-      <SimpleGrid columns={isDesktop ? 3 : 2} spacing={2}>
-        {pluginRows[0].map(renderPluginButton)}
-        {isDesktop && renderPinButton()}
-      </SimpleGrid>
+      <HStack spacing={2} justify={isDesktop ? 'flex-start' : 'stretch'}>
+        {UTILITY_TOOLS.map(renderPluginButton)}
+        {isDesktop && (
+          <SidebarUtilityButton
+            label={isPinned ? 'Unpin' : 'Pin'}
+            isActive={false}
+            onClick={onTogglePin}
+            fullWidth={false}
+          />
+        )}
+      </HStack>
     </Box>
   );
-};
+};;

@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { SidebarPanels } from './SidebarPanels';
 import { pluginManager } from '../../utils/pluginManager';
-import { useCanvasStore } from '../../store/canvasStore';
 import { useSidebarContext } from '../../contexts/SidebarContext';
+import { useEnabledPlugins } from '../../hooks';
 
 /**
  * Host component that connects SidebarPanels with plugin contributions.
@@ -12,8 +12,7 @@ export const SidebarPanelHost: React.FC = () => {
   const { activePlugin } = useSidebarContext();
   
   // Subscribe to enabledPlugins to trigger re-render when plugins are toggled
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const enabledPlugins = useCanvasStore(state => (state as any).pluginSelector?.enabledPlugins ?? []);
+  const enabledPlugins = useEnabledPlugins();
 
   const panelContributions = useMemo(() => {
     if (!activePlugin) {

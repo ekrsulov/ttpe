@@ -16,8 +16,6 @@ export interface PanelConditionContext {
 
 export interface PanelComponentProps {
     activePlugin?: string | null;
-    selectedCommands?: SelectedCommand[];
-    selectedSubpaths?: Array<{ elementId: string; subpathIndex: number }>;
 }
 
 export interface PanelConfig {
