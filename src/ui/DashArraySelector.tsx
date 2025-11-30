@@ -1,8 +1,9 @@
 import React from 'react';
-import { Input, useColorModeValue } from '@chakra-ui/react';
+import { Input } from '@chakra-ui/react';
 import { Minus } from 'lucide-react';
 import { ToggleButton } from './ToggleButton';
 import { DASH_PRESETS } from '../utils/dashPresets';
+import { useInputColors } from '../hooks/useToolbarColors';
 
 interface DashArraySelectorProps {
   value: string;
@@ -21,11 +22,7 @@ export const DashArrayCustomInput: React.FC<DashArrayCustomInputProps> = ({
   onChange,
   title = "Custom dash array"
 }) => {
-  // Colors that adapt to dark mode
-  const inputBg = useColorModeValue('white', 'whiteAlpha.100');
-  const inputBorder = useColorModeValue('gray.300', 'whiteAlpha.300');
-  const inputColor = useColorModeValue('gray.800', 'gray.100');
-  const placeholderColor = useColorModeValue('gray.500', 'gray.500');
+  const { bg, borderColor, textColor, placeholderColor } = useInputColors();
 
   return (
     <Input
@@ -36,10 +33,10 @@ export const DashArrayCustomInput: React.FC<DashArrayCustomInputProps> = ({
       fontSize="11px"
       minWidth="90px"
       h="20px"
-      bg={inputBg}
-      borderColor={inputBorder}
+      bg={bg}
+      borderColor={borderColor}
       borderRadius="0"
-      color={inputColor}
+      color={textColor}
       _placeholder={{ color: placeholderColor }}
       _focus={{
         borderColor: 'gray.600',

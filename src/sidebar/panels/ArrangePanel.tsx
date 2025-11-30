@@ -1,6 +1,7 @@
 import React from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { useArrangeHandlers } from '../../hooks/useArrangeHandlers';
+import { usePanelButtonColors } from '../../hooks/useToolbarColors';
 import {
   Triangle,
   ChevronUp,
@@ -18,7 +19,7 @@ import {
   ArrowLeftRight,
   ArrowUpDown
 } from 'lucide-react';
-import { VStack, HStack, IconButton as ChakraIconButton, Box, useColorModeValue } from '@chakra-ui/react';
+import { VStack, HStack, IconButton as ChakraIconButton, Box } from '@chakra-ui/react';
 import ConditionalTooltip from '../../ui/ConditionalTooltip';
 import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
 import { pluginManager } from '../../utils/pluginManager';
@@ -80,11 +81,8 @@ const ArrangePanelComponent: React.FC = () => {
     { handler: currentHandlers.alignBottom, icon: <AlignVerticalJustifyEnd size={12} />, title: "Align Bottom", disabled: !canAlign }
   ];
 
-  const buttonColor = useColorModeValue('gray.700', 'gray.100');
-  const buttonHoverBg = useColorModeValue('gray.100', 'whiteAlpha.200');
-  const buttonActiveBg = useColorModeValue('gray.200', 'whiteAlpha.300');
-  const panelBg = useColorModeValue('surface.panel', 'surface.panel');
-  const borderColor = useColorModeValue('gray.200', 'whiteAlpha.300');
+  const { color, hoverBg, activeBg, panelBg, borderColor } = usePanelButtonColors();
+  
   const renderButtonRow = (buttons: ButtonConfig[]) => (
     <HStack spacing={0.5} w="full">
       {buttons.map((button, index) => (
@@ -99,9 +97,9 @@ const ArrangePanelComponent: React.FC = () => {
             variant="ghost"
             bg="transparent"
             borderRadius="full"
-            color={buttonColor}
-            _hover={{ bg: buttonHoverBg }}
-            _active={{ bg: buttonActiveBg }}
+            color={color}
+            _hover={{ bg: hoverBg }}
+            _active={{ bg: activeBg }}
           />
         </ConditionalTooltip>
       ))}

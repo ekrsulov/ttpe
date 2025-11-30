@@ -4,10 +4,8 @@ import { MoreVertical } from 'lucide-react';
 import { ToolbarIconButton } from './ToolbarIconButton';
 import { FloatingContextMenu } from './FloatingContextMenu';
 import { useFloatingContextMenuActions } from '../hooks/useFloatingContextMenuActions';
-import type { SelectionContextInfo } from '../types/selection';
+import { useSelectionContext } from '../hooks/useSelectionContext';
 import { useCanvasStore } from '../store/canvasStore';
-import { extractEditablePoints } from '../utils/pathParserUtils';
-import type { PathData } from '../types';
 import { pluginManager } from '../utils/pluginManager';
 
 /**
@@ -20,68 +18,16 @@ import { pluginManager } from '../utils/pluginManager';
 export const FloatingContextMenuButton: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
 
-  // Get selection state
+  // Get selection state - simplified using centralized hook
   const selectedIds = useCanvasStore(state => state.selectedIds);
   const selectedCommands = useCanvasStore(state => state.selectedCommands);
   const selectedSubpaths = useCanvasStore(state => state.selectedSubpaths);
-  const elements = useCanvasStore(state => state.elements);
 
   // Get selection mode from the active plugin's behavior flags
   const selectionMode = pluginManager.getActiveSelectionMode();
 
-  // Determine selection context
-  const context: SelectionContextInfo | null = useMemo(() => {
-    // Priority: commands > subpaths > elements
-    if (selectedCommands && selectedCommands.length > 0) {
-      // Determine the exact point type
-      const cmd = selectedCommands[0];
-      const element = elements.find(el => el.id === cmd.elementId);
-      if (element && element.type === 'path') {
-        const pathData = element.data as PathData;
-        const commands = pathData.subPaths.flat();
-        const points = extractEditablePoints(commands);
-        const point = points.find(p => p.commandIndex === cmd.commandIndex && p.pointIndex === cmd.pointIndex);
-
-        if (point) {
-          if (point.isControl) {
-            return { type: 'point-control', pointInfo: cmd };
-          } else {
-            const command = commands[cmd.commandIndex];
-            if (command.type === 'M') {
-              return { type: 'point-anchor-m', pointInfo: cmd };
-            } else if (command.type === 'L') {
-              return { type: 'point-anchor-l', pointInfo: cmd };
-            } else if (command.type === 'C') {
-              return { type: 'point-anchor-c', pointInfo: cmd };
-            }
-          }
-        }
-      }
-      // Fallback
-      return { type: 'point-anchor-m', pointInfo: cmd };
-    }
-
-    if (selectedSubpaths && selectedSubpaths.length > 0) {
-      return {
-        type: 'subpath',
-        subpathInfo: selectedSubpaths[0],
-      };
-    }
-
-    if (selectedIds.length === 1) {
-      const element = elements.find(el => el.id === selectedIds[0]);
-      if (element?.type === 'group') {
-        return { type: 'group', groupId: selectedIds[0] };
-      }
-      return { type: 'path', elementId: selectedIds[0] };
-    }
-
-    if (selectedIds.length > 1) {
-      return { type: 'multiselection', elementIds: selectedIds };
-    }
-
-    return null;
-  }, [selectedCommands, selectedSubpaths, selectedIds, elements]);
+  // Use centralized selection context hook
+  const context = useSelectionContext();
 
   // Get actions based on selection context
   const actions = useFloatingContextMenuActions(context);

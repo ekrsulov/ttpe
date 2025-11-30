@@ -4,8 +4,9 @@
  */
 
 import React from 'react'
-import { Flex, Heading, Box, Spacer, IconButton, useColorModeValue } from '@chakra-ui/react'
+import { Flex, Heading, Box, Spacer, IconButton } from '@chakra-ui/react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
+import { usePanelHeaderColors } from '../hooks/useToolbarColors'
 
 export interface PanelHeaderProps {
   /** Icon to display */
@@ -30,9 +31,7 @@ export const PanelHeader: React.FC<PanelHeaderProps> = ({
   isOpen = true,
   onToggle,
 }) => {
-  const hoverBg = useColorModeValue('gray.200', 'whiteAlpha.200')
-  const iconColor = useColorModeValue('gray.600', 'gray.300')
-  const titleColor = useColorModeValue('text.primary', 'text.primary')
+  const { hoverBg, iconColor, titleColor } = usePanelHeaderColors()
 
   return (
     <Flex

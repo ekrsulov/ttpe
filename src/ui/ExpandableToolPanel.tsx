@@ -4,10 +4,10 @@ import {
   VStack,
   IconButton,
   Collapse,
-  useColorModeValue,
 } from '@chakra-ui/react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { pluginManager } from '../utils/pluginManager';
+import { useExpandablePanelColors } from '../hooks/useToolbarColors';
 
 interface ExpandableToolPanelProps {
   activePlugin: string | null;
@@ -17,10 +17,7 @@ interface ExpandableToolPanelProps {
 export const ExpandableToolPanel: React.FC<ExpandableToolPanelProps> = ({ activePlugin, sidebarWidth = 0 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   
-  const bg = useColorModeValue('rgba(255, 255, 255, 1)', 'rgba(26, 32, 44, 1)');
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
-  const iconColor = useColorModeValue('gray.600', 'gray.300');
-  const hoverBg = useColorModeValue('gray.50', 'gray.700');
+  const { bg, borderColor, iconColor, hoverBg } = useExpandablePanelColors();
   
   const isSidebarPinned = sidebarWidth > 0;
   

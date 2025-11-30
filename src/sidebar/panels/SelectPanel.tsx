@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useRef } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
-import { Box, useColorModeValue } from '@chakra-ui/react';
+import { Box } from '@chakra-ui/react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { extractEditablePoints, extractSubpaths, commandsToString, translateCommands } from '../../utils/path';
 import type { CanvasElement, PathData, GroupElement } from '../../types';
@@ -13,6 +13,7 @@ import { DocumentationCTA } from '../../ui/DocumentationCTA';
 import { getCommandsForPanelItem } from '../../utils/selectPanelHelpers';
 import { buildElementMap } from '../../utils/coreHelpers';
 import { useFrozenElementsDuringDrag } from '../../hooks/useFrozenElementsDuringDrag';
+import { usePanelButtonColors } from '../../hooks/useToolbarColors';
 
 const DEFAULT_PANEL_HEIGHT = 140;
 const MIN_PANEL_HEIGHT = 96;
@@ -92,7 +93,6 @@ const SelectPanelComponent: React.FC = () => {
   const setPanelHeight = useCanvasStore((state) => state.setSelectPanelHeight);
 
   const {
-    isDragging: isResizing,
     handlePointerDown: handleResizeStart,
     handleDoubleClick: handleResetHeight
   } = useDragResize({
@@ -244,10 +244,7 @@ const SelectPanelComponent: React.FC = () => {
   const canGroup = selectedElements.length >= 2;
   const hasSelection = selectedElements.length > 0;
 
-  const panelBg = useColorModeValue('surface.panel', 'surface.panel');
-  const resizeColor = useColorModeValue('gray.600', 'gray.400');
-  const resizeInactiveColor = useColorModeValue('gray.200', 'gray.700');
-  const messageColor = useColorModeValue('gray.600', 'gray.300');
+  const { panelBg } = usePanelButtonColors();
 
   // Ref for the scrollable container
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -308,13 +305,13 @@ const SelectPanelComponent: React.FC = () => {
         cursor="ns-resize"
         onPointerDown={handleResizeStart}
         onDoubleClick={handleResetHeight}
-        bg={isResizing ? resizeColor : resizeInactiveColor}
+        bg="gray.300"
         borderRadius="full"
         mx="auto"
         my={1}
         w="120px"
-        title="Arrastra para redimensionar, doble clic para resetear"
-        _hover={{ bg: resizeColor }}
+        title="Drag to resize, double click to reset"
+        _hover={{ bg: 'gray.500' }}
       />
       <Box
         ref={scrollRef}
@@ -393,7 +390,7 @@ const SelectPanelComponent: React.FC = () => {
         ) : (
           <Box
             fontSize="11px"
-            color={messageColor}
+            color="gray.500"
             textAlign="center"
             p={2}
             h="full"

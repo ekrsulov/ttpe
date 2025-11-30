@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useState } from 'react';
+import React, { useMemo } from 'react';
 import { HStack } from '@chakra-ui/react';
 import {
   Undo2,
@@ -13,18 +13,7 @@ import { FloatingToolbarShell } from './FloatingToolbarShell';
 import { ToolbarIconButton } from './ToolbarIconButton';
 import { pluginManager, useIsGlobalUndoRedoDisabled } from '../utils/pluginManager';
 import { FloatingContextMenuButton } from './FloatingContextMenuButton';
-
-// Custom hook to subscribe to temporal state changes
-const useTemporalState = () => {
-  const [temporalState, setTemporalState] = useState(() => useCanvasStore.temporal.getState());
-
-  useEffect(() => {
-    const unsubscribe = useCanvasStore.temporal.subscribe(setTemporalState);
-    return unsubscribe;
-  }, []);
-
-  return temporalState;
-};
+import { useTemporalState } from '../hooks/useTemporalState';
 
 interface BottomActionBarProps {
   sidebarWidth?: number;

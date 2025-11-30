@@ -9,14 +9,9 @@ const SettingsPanel = React.lazy(() => import('../panels/SettingsPanel').then(mo
 const DocumentationPanel = React.lazy(() => import('../panels/DocumentationPanel').then(module => ({ default: module.DocumentationPanel })));
 
 /**
- * Panel configuration array
- * Each panel has:
- * - key: unique identifier
- * - condition: function that determines if the panel should be shown
- * - component: the lazy-loaded component
- * - getProps: optional function to extract/map props for the component
+ * Core panel configurations (static panels always available)
  */
-export const PANEL_CONFIGS: PanelConfig[] = [
+const CORE_PANEL_CONFIGS: PanelConfig[] = [
   // Special panels (file and settings)
   {
     key: 'file',
@@ -28,7 +23,6 @@ export const PANEL_CONFIGS: PanelConfig[] = [
     condition: (ctx) => ctx.showSettingsPanel,
     component: SettingsPanel,
   },
-
   // Regular panels
   {
     key: 'editor',
@@ -37,22 +31,40 @@ export const PANEL_CONFIGS: PanelConfig[] = [
   },
 ];
 
-// Dynamically add panels from plugins
-CORE_PLUGINS.forEach(plugin => {
-  if (plugin.sidebarPanels) {
-    // Add pluginId to each panel config so we can filter by enabled plugins
-    const panelsWithPluginId = plugin.sidebarPanels.map(panel => ({
-      ...panel,
-      pluginId: plugin.id
-    }));
-    PANEL_CONFIGS.push(...panelsWithPluginId);
-  }
-});
+/**
+ * Build panel configurations by combining core panels with plugin-contributed panels.
+ * This creates a clean, immutable array instead of mutating a global.
+ */
+function buildPanelConfigs(): PanelConfig[] {
+  const configs: PanelConfig[] = [...CORE_PANEL_CONFIGS];
 
-PANEL_CONFIGS.push(
-  {
+  // Add panels from plugins with pluginId for filtering
+  CORE_PLUGINS.forEach(plugin => {
+    if (plugin.sidebarPanels) {
+      const panelsWithPluginId = plugin.sidebarPanels.map(panel => ({
+        ...panel,
+        pluginId: plugin.id
+      }));
+      configs.push(...panelsWithPluginId);
+    }
+  });
+
+  // Documentation panel at the end
+  configs.push({
     key: 'documentation',
     condition: (ctx) => ctx.showSettingsPanel,
     component: DocumentationPanel,
-  }
-)
+  });
+
+  return configs;
+}
+
+/**
+ * Panel configuration array
+ * Each panel has:
+ * - key: unique identifier
+ * - condition: function that determines if the panel should be shown
+ * - component: the lazy-loaded component
+ * - getProps: optional function to extract/map props for the component
+ */
+export const PANEL_CONFIGS: PanelConfig[] = buildPanelConfigs();

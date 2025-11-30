@@ -1,5 +1,6 @@
 import type { StateCreator } from 'zustand';
 import type { CanvasStore } from '../canvasStore';
+import { getStoredValue } from '../../utils/storageHelpers';
 
 export interface UiSlice {
   // UI State
@@ -9,6 +10,7 @@ export interface UiSlice {
   selectPanelHeight: number;
   sidebarWidth: number;
   isSidebarPinned: boolean;
+  isSidebarOpen: boolean;
   showCallerInfo: boolean;
   isDraggingElements: boolean;
 
@@ -19,70 +21,27 @@ export interface UiSlice {
   setSelectPanelHeight: (height: number) => void;
   setSidebarWidth: (width: number) => void;
   setIsSidebarPinned: (isPinned: boolean) => void;
+  setIsSidebarOpen: (isOpen: boolean) => void;
+  openSidebar: () => void;
+  closeSidebar: () => void;
+  toggleSidebar: () => void;
   setShowCallerInfo: (show: boolean) => void;
   setIsDraggingElements: (isDragging: boolean) => void;
 }
 
 const DEFAULT_PANEL_HEIGHT = 140;
+const IS_DEV = import.meta.env.DEV;
 
 export const createUiSlice: StateCreator<CanvasStore, [], [], UiSlice> = (set) => ({
-  // Initial state with localStorage fallback
-  arrangePanelExpanded: (() => {
-    try {
-      const item = localStorage.getItem('arrange-panel-expanded');
-      return item ? JSON.parse(item) : import.meta.env.DEV;
-    } catch {
-      return import.meta.env.DEV;
-    }
-  })(),
-
-  editorAdvancedStrokeOpen: (() => {
-    try {
-      const item = localStorage.getItem('editor-advanced-stroke-open');
-      return item ? JSON.parse(item) : false;
-    } catch {
-      return false;
-    }
-  })(),
-
-  editorColorControlsOpen: (() => {
-    try {
-      const item = localStorage.getItem('editor-color-controls-open');
-      return item ? JSON.parse(item) : import.meta.env.DEV;
-    } catch {
-      return import.meta.env.DEV;
-    }
-  })(),
-
-  selectPanelHeight: (() => {
-    try {
-      const item = localStorage.getItem('select-panel-height');
-      return item ? JSON.parse(item) : DEFAULT_PANEL_HEIGHT;
-    } catch {
-      return DEFAULT_PANEL_HEIGHT;
-    }
-  })(),
-
-  sidebarWidth: (() => {
-    try {
-      const item = localStorage.getItem('sidebar-width');
-      return item ? JSON.parse(item) : 250;
-    } catch {
-      return 250;
-    }
-  })(),
-
+  // Initial state with localStorage fallback (using helper)
+  arrangePanelExpanded: getStoredValue('arrange-panel-expanded', IS_DEV),
+  editorAdvancedStrokeOpen: getStoredValue('editor-advanced-stroke-open', false),
+  editorColorControlsOpen: getStoredValue('editor-color-controls-open', IS_DEV),
+  selectPanelHeight: getStoredValue('select-panel-height', DEFAULT_PANEL_HEIGHT),
+  sidebarWidth: getStoredValue('sidebar-width', 250),
   isSidebarPinned: false, // Initially unpinned, Sidebar component will update this
-
-  showCallerInfo: (() => {
-    try {
-      const item = localStorage.getItem('ttpe-show-caller-info');
-      return item ? JSON.parse(item) : false;
-    } catch {
-      return false;
-    }
-  })(),
-
+  isSidebarOpen: true, // Initially open
+  showCallerInfo: getStoredValue('ttpe-show-caller-info', false),
   isDraggingElements: false,
 
   // Actions
@@ -92,6 +51,10 @@ export const createUiSlice: StateCreator<CanvasStore, [], [], UiSlice> = (set) =
   setSelectPanelHeight: (height) => set({ selectPanelHeight: height }),
   setSidebarWidth: (width) => set({ sidebarWidth: width }),
   setIsSidebarPinned: (isPinned) => set({ isSidebarPinned: isPinned }),
+  setIsSidebarOpen: (isOpen) => set({ isSidebarOpen: isOpen }),
+  openSidebar: () => set({ isSidebarOpen: true }),
+  closeSidebar: () => set({ isSidebarOpen: false }),
+  toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
   setShowCallerInfo: (show) => set({ showCallerInfo: show }),
   setIsDraggingElements: (isDragging) => set({ isDraggingElements: isDragging }),
 });

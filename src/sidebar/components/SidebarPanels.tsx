@@ -2,6 +2,7 @@ import React, { Suspense, useMemo } from 'react';
 import { Box, useColorModeValue } from '@chakra-ui/react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { useEditPanelContext } from '../../contexts/EditPanelContext';
+import { useSidebarContext } from '../../contexts/SidebarContext';
 import {
   PANEL_CONFIGS,
 } from './panelConfig';
@@ -10,23 +11,20 @@ import type { PluginUIContribution } from '../../types/plugins';
 import { pluginManager } from '../../utils/pluginManager';
 
 export interface SidebarPanelsProps {
-  activePlugin: string | null;
-  showFilePanel: boolean;
-  showSettingsPanel: boolean;
   panelContributions?: PluginUIContribution[];
 }
 
 /**
  * Main panels section of the sidebar with conditional rendering
  * Uses a data-driven approach to render panels based on configuration.
- * EditPanel props are now accessed via EditPanelContext instead of prop drilling.
+ * State comes from SidebarContext, EditPanel props via EditPanelContext.
  */
 export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
-  activePlugin,
-  showFilePanel,
-  showSettingsPanel,
   panelContributions = [],
 }) => {
+  // Get state from sidebar context
+  const { activePlugin, showFilePanel, showSettingsPanel } = useSidebarContext();
+
   const scrollbarTrack = useColorModeValue('#f1f1f1', 'rgba(255, 255, 255, 0.06)');
   const scrollbarThumb = useColorModeValue('#888', 'rgba(255, 255, 255, 0.3)');
   // Subscribe to enabledPlugins to trigger re-render when plugins are toggled

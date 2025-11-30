@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { pluginManager } from '../utils/pluginManager';
 import { useCanvasStore } from '../store/canvasStore';
+import { useLocalStorage } from './useLocalStorage';
 
 // Tool mode type - any string representing a tool ID
 type ToolMode = string;
@@ -19,7 +20,7 @@ interface ToolUsage {
  * Hook to manage dynamic tool selection based on usage patterns
  */
 export const useDynamicTools = (activeMode: string | null) => {
-  const [toolUsage, setToolUsage] = useState<ToolUsage>({});
+  const [toolUsage, setToolUsage, resetToolUsage] = useLocalStorage<ToolUsage>(TOOL_USAGE_KEY, {});
   const [showExtraTools, setShowExtraTools] = useState(false);
 
   // Get enabled plugins from store - wrapped in its own selector to avoid dependency issues
@@ -60,34 +61,13 @@ export const useDynamicTools = (activeMode: string | null) => {
     });
   }, [allDynamicTools, enabledPlugins]);
 
-  // Load tool usage from localStorage on mount
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem(TOOL_USAGE_KEY);
-      if (stored) {
-        setToolUsage(JSON.parse(stored));
-      }
-    } catch (error) {
-      console.warn('Failed to load tool usage from localStorage:', error);
-    }
-  }, []);
-
-  // Save tool usage to localStorage whenever it changes
-  useEffect(() => {
-    try {
-      localStorage.setItem(TOOL_USAGE_KEY, JSON.stringify(toolUsage));
-    } catch (error) {
-      console.warn('Failed to save tool usage to localStorage:', error);
-    }
-  }, [toolUsage]);
-
   // Track tool usage
   const trackToolUsage = useCallback((toolId: ToolMode) => {
     setToolUsage(prev => ({
       ...prev,
       [toolId]: (prev[toolId] || 0) + 1,
     }));
-  }, []);
+  }, [setToolUsage]);
 
   // Get the most used dynamic tools for mobile
   const getMobileVisibleTools = useCallback((): ToolMode[] => {
@@ -118,11 +98,6 @@ export const useDynamicTools = (activeMode: string | null) => {
   // Toggle extra tools visibility
   const toggleExtraTools = useCallback(() => {
     setShowExtraTools(prev => !prev);
-  }, []);
-
-  // Reset tool usage (useful for testing)
-  const resetToolUsage = useCallback(() => {
-    setToolUsage({});
   }, []);
 
   return {

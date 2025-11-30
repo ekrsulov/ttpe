@@ -7,15 +7,14 @@ import { VirtualShiftButton } from './ui/VirtualShiftButton';
 import { useCanvasStore } from './store/canvasStore';
 import './App.css';
 import type { CSSProperties } from 'react';
-import { useState, useCallback, useMemo, useEffect } from 'react';
-import { useColorMode } from '@chakra-ui/react';
+import { useCallback, useEffect } from 'react';
 
-import { DEFAULT_STROKE_COLOR_DARK, DEFAULT_STROKE_COLOR_LIGHT } from './utils/defaultColors';
 import { pluginManager } from './utils/pluginManager';
 import { useMemo as useReactMemo } from 'react';
 import { useSvgImport } from './hooks/useSvgImport';
+import { useColorModeSync } from './hooks/useColorModeSync';
+import { useIOSSupport } from './hooks/useIOSSupport';
 import { DEFAULT_MODE } from './constants';
-import type { PathData } from './types';
 
 function App() {
   const activePlugin = useCanvasStore(state => state.activePlugin);
@@ -26,49 +25,29 @@ function App() {
   const globalOverlays = useReactMemo(() => pluginManager.getGlobalOverlays(), []);
   const grid = useCanvasStore(state => state.grid);
   const guidelines = useCanvasStore(state => state.guidelines);
-  const { colorMode } = useColorMode();
 
-  // Detect iOS devices
-  const isIOS = useMemo(() => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1), []);
+  // iOS support hook (handles detection and back swipe prevention)
+  const { isIOS } = useIOSSupport();
 
-  // Track sidebar width when pinned (0 when not pinned)
-  const [sidebarWidth, setSidebarWidth] = useState(0);
+  // Color mode sync hook (handles theme changes and element color updates)
+  useColorModeSync();
 
-  // Track if sidebar is pinned
-  const [isSidebarPinned, setIsSidebarPinned] = useState(false);
+  // Sidebar state from store (single source of truth)
+  const sidebarWidth = useCanvasStore(state => state.sidebarWidth);
+  const isSidebarPinned = useCanvasStore(state => state.isSidebarPinned);
+  const isSidebarOpen = useCanvasStore(state => state.isSidebarOpen);
+  const openSidebar = useCanvasStore(state => state.openSidebar);
 
-  // Track if sidebar is open
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-
-  // Store reference to sidebar open handler
-  const [sidebarOpenHandler, setSidebarOpenHandler] = useState<(() => void) | null>(null);
-
-  // Memoized callback to prevent re-renders
-  const handleSidebarWidthChange = useCallback((width: number) => {
-    setSidebarWidth(width);
-  }, []);
-
-  const handleSidebarPinnedChange = useCallback((isPinned: boolean) => {
-    setIsSidebarPinned(isPinned);
-  }, []);
-
-  const handleSidebarToggleOpen = useCallback((isOpen: boolean) => {
-    setIsSidebarOpen(isOpen);
-    // When sidebar closes and is not pinned, if in sidebar panel mode, switch to default mode
-    if (!isOpen && !isSidebarPinned && pluginManager.isInSidebarPanelMode()) {
+  // When sidebar closes and is not pinned, if in sidebar panel mode, switch to default mode
+  useEffect(() => {
+    if (!isSidebarOpen && !isSidebarPinned && pluginManager.isInSidebarPanelMode()) {
       setMode(DEFAULT_MODE);
     }
-  }, [isSidebarPinned, setMode]);
-
-  const handleRegisterOpenHandler = useCallback((openHandler: () => void) => {
-    setSidebarOpenHandler(() => openHandler);
-  }, []);
+  }, [isSidebarOpen, isSidebarPinned, setMode]);
 
   const handleMenuClick = useCallback(() => {
-    if (sidebarOpenHandler) {
-      sidebarOpenHandler();
-    }
-  }, [sidebarOpenHandler]);
+    openSidebar();
+  }, [openSidebar]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -85,88 +64,8 @@ function App() {
     }
   }, [importSvgFiles]);
 
-  // Prevent iOS back swipe from left edge
-  useEffect(() => {
-    if (!isIOS) return;
-
-    const handleTouchStart = (e: TouchEvent) => {
-      const touch = e.touches[0];
-      if (touch && touch.clientX < 20) { // 20px from left edge
-        e.preventDefault();
-      }
-    };
-
-    document.addEventListener('touchstart', handleTouchStart, { passive: false });
-
-    return () => {
-      document.removeEventListener('touchstart', handleTouchStart);
-    };
-  }, [isIOS]);
-
-  useEffect(() => {
-    const targetStrokeColor = colorMode === 'dark'
-      ? DEFAULT_STROKE_COLOR_DARK
-      : DEFAULT_STROKE_COLOR_LIGHT;
-    const state = useCanvasStore.getState();
-    const currentDefault = state.settings.defaultStrokeColor;
-
-    if (currentDefault === targetStrokeColor) {
-      return;
-    }
-
-    // Update default stroke color
-    state.updateSettings?.({ defaultStrokeColor: targetStrokeColor });
-
-    // Update pencil state if it matches the old default
-    if (state.pencil && state.updatePencilState && state.pencil.strokeColor === currentDefault) {
-      state.updatePencilState({ strokeColor: targetStrokeColor });
-    }
-
-    // Update all existing path elements that have white/black colors
-    const oldDefaultColor = colorMode === 'dark' ? DEFAULT_STROKE_COLOR_LIGHT : DEFAULT_STROKE_COLOR_DARK;
-    const transformColor = (color: string): string => {
-      if (colorMode === 'dark') {
-        // From light to dark: white becomes black, black becomes white
-        if (color === '#ffffff') return '#000000';
-        if (color === '#000000') return '#ffffff';
-      } else {
-        // From dark to light: black becomes white, white becomes black
-        if (color === '#000000') return '#ffffff';
-        if (color === '#ffffff') return '#000000';
-      }
-      return color;
-    };
-
-    state.elements.forEach(element => {
-      if (element.type === 'path') {
-        const pathData = element.data as PathData;
-        const updates: Partial<PathData> = {};
-
-        // Update stroke color if it matches the old default
-        if (pathData.strokeColor === oldDefaultColor) {
-          updates.strokeColor = targetStrokeColor;
-        } else if (pathData.strokeColor === '#ffffff' || pathData.strokeColor === '#000000') {
-          // Transform white/black strokes
-          updates.strokeColor = transformColor(pathData.strokeColor);
-        }
-
-        // Update fill color if it's black/white
-        if (pathData.fillColor === '#000000' || pathData.fillColor === '#ffffff') {
-          updates.fillColor = transformColor(pathData.fillColor);
-        }
-
-        // Apply updates if any
-        if (Object.keys(updates).length > 0) {
-          state.updateElement(element.id, {
-            data: {
-              ...pathData,
-              ...updates
-            }
-          });
-        }
-      }
-    });
-  }, [colorMode]);
+  // Calculate effective sidebar width for positioning (only when pinned)
+  const effectiveSidebarWidth = isSidebarPinned ? sidebarWidth : 0;
 
   return (
       <div
@@ -175,23 +74,18 @@ function App() {
         style={{
           position: 'relative',
           width: '100vw',
-          height: '100dvh', // Dynamic viewport height (adjusts with Safari toolbar)
+          height: '100dvh',
           overflow: 'hidden',
-          // Prevent overscroll/bounce on mobile
           overscrollBehavior: 'none',
           WebkitOverflowScrolling: 'touch',
-          // Prevent pull-to-refresh
           touchAction: 'none',
-          // NO padding here - let canvas use full height
         } as CSSProperties}
       >
         <div
           style={{
             width: '100%',
             height: '100%',
-            // Allow panning gestures on canvas only
             touchAction: 'pan-x pan-y',
-            // Important: no padding to avoid coordinate offset
           }}
         >
           <Canvas />
@@ -211,27 +105,22 @@ function App() {
             }}
           />
         )}
-        <Sidebar
-          onWidthChange={handleSidebarWidthChange}
-          onPinnedChange={handleSidebarPinnedChange}
-          onToggleOpen={handleSidebarToggleOpen}
-          onRegisterOpenHandler={handleRegisterOpenHandler}
-        />
+        <Sidebar />
         <TopActionBar
           activeMode={activePlugin}
           onModeChange={setMode}
-          sidebarWidth={sidebarWidth}
+          sidebarWidth={effectiveSidebarWidth}
           isSidebarPinned={isSidebarPinned}
           isSidebarOpen={isSidebarOpen}
           onMenuClick={handleMenuClick}
           showGridRulers={(grid?.enabled && grid?.showRulers) || (guidelines?.enabled && guidelines?.manualGuidesEnabled)}
         />
         <BottomActionBar
-          sidebarWidth={sidebarWidth}
+          sidebarWidth={effectiveSidebarWidth}
         />
-        <ExpandableToolPanel activePlugin={activePlugin} sidebarWidth={sidebarWidth} />
+        <ExpandableToolPanel activePlugin={activePlugin} sidebarWidth={effectiveSidebarWidth} />
         <VirtualShiftButton
-          sidebarWidth={sidebarWidth}
+          sidebarWidth={effectiveSidebarWidth}
         />
         {/* Render global overlays from plugins (includes MinimapPanel) */}
         {globalOverlays.map((OverlayComponent, index) => (

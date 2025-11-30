@@ -1,25 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Tooltip } from '@chakra-ui/react';
 import type { TooltipProps } from '@chakra-ui/react';
 import { useCanvasStore } from '../store/canvasStore';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 const ConditionalTooltip: React.FC<TooltipProps> = ({ children, ...props }) => {
-  const [isMobile, setIsMobile] = useState(false);
+  const isMobile = useIsMobile();
   const showTooltips = useCanvasStore(state => state.settings.showTooltips);
 
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  // If tooltips are disabled in settings, just return the children directly
-  if (!showTooltips) {
-    return <>{children}</>;
-  }
-
-  if (isMobile) {
+  // Hide tooltips on mobile or when disabled in settings
+  if (!showTooltips || isMobile) {
     return <>{children}</>;
   }
 

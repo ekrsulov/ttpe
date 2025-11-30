@@ -1,7 +1,8 @@
 import React from 'react';
-import { Box, IconButton, type IconButtonProps, useColorModeValue } from '@chakra-ui/react';
+import { Box, IconButton, type IconButtonProps } from '@chakra-ui/react';
 import type { LucideIcon } from 'lucide-react';
 import ConditionalTooltip from './ConditionalTooltip';
+import { useCounterColors } from '../hooks/useToolbarColors';
 
 interface ToolbarIconButtonProps extends Omit<IconButtonProps, 'icon' | 'aria-label'> {
   icon: LucideIcon | React.ComponentType<{ size?: number }>;
@@ -30,10 +31,8 @@ export const ToolbarIconButton: React.FC<ToolbarIconButtonProps> = ({
   sx,
   ...iconButtonProps
 }) => {
-  const neutralCounterBg = useColorModeValue('gray.50', 'whiteAlpha.200');
-  const neutralCounterColor = useColorModeValue('gray.600', 'gray.200');
-  const dangerCounterBg = useColorModeValue('gray.50', 'whiteAlpha.200');
-  const dangerCounterColor = useColorModeValue('red.500', 'whiteAlpha.900');
+  const counterColors = useCounterColors();
+  const colors = counterColor === 'red' ? counterColors.danger : counterColors.neutral;
   const button = (
     <Box position="relative">
       <IconButton
@@ -60,8 +59,8 @@ export const ToolbarIconButton: React.FC<ToolbarIconButtonProps> = ({
           bottom="-3px"
           left="50%"
           transform="translateX(-50%)"
-          bg={counterColor === 'red' ? dangerCounterBg : neutralCounterBg}
-          color={counterColor === 'red' ? dangerCounterColor : neutralCounterColor}
+          bg={colors.bg}
+          color={colors.color}
           borderRadius="full"
           minW="16px"
           h="11px"

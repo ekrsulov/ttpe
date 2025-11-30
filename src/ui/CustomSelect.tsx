@@ -6,9 +6,9 @@ import {
   MenuList,
   MenuItem,
   Text,
-  useColorModeValue,
 } from '@chakra-ui/react';
 import { ChevronDown } from 'lucide-react';
+import { useInputColors } from '../hooks/useToolbarColors';
 
 interface CustomSelectProps {
   value: string;
@@ -27,13 +27,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
   size = 'sm',
   isDisabled = false,
 }) => {
-  const bg = useColorModeValue('white', 'whiteAlpha.100');
-  const menuBg = useColorModeValue('white', 'gray.800');
-  const borderColor = useColorModeValue('gray.300', 'whiteAlpha.300');
-  const textColor = useColorModeValue('gray.800', 'gray.100');
-  const hoverBg = useColorModeValue('gray.50', 'whiteAlpha.200');
-  const selectedBg = useColorModeValue('gray.200', 'gray.700');
-  const selectedColor = useColorModeValue('gray.800', 'gray.200');
+  const { bg, menuBg, borderColor, textColor, hoverBg, selectedBg, selectedColor } = useInputColors();
 
   const selectedOption = options.find(option => option.value === value);
   const displayText = selectedOption ? selectedOption.label : placeholder;

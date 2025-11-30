@@ -1,8 +1,9 @@
 import React from 'react';
-import { Box, IconButton, useBreakpointValue, useColorModeValue } from '@chakra-ui/react';
+import { Box, IconButton, useBreakpointValue } from '@chakra-ui/react';
 import { ArrowBigUp } from 'lucide-react';
 import { useCanvasStore } from '../store/canvasStore';
 import { RenderCountBadgeWrapper } from './RenderCountBadgeWrapper';
+import { useToggleButtonColors, useToolbarColors } from '../hooks/useToolbarColors';
 
 interface VirtualShiftButtonProps {
   sidebarWidth?: number;
@@ -17,15 +18,11 @@ export const VirtualShiftButton: React.FC<VirtualShiftButtonProps> = ({
   const isSidebarPinned = sidebarWidth > 0;
   const isMobile = useBreakpointValue({ base: true, md: false }, { fallback: 'md' });
 
-  // Colors that adapt to dark mode
-  const inactiveBg = useColorModeValue('rgba(255, 255, 255, 0.95)', 'rgba(26, 32, 44, 0.95)');
-  const inactiveHoverBg = useColorModeValue('gray.100', 'whiteAlpha.200');
-  const activeBg = useColorModeValue('gray.800', 'gray.200');
-  const activeColor = useColorModeValue('white', 'gray.900');
-  const activeHoverBg = useColorModeValue('gray.800', 'gray.200');
-  const borderColor = useColorModeValue('border.toolbar', 'border.toolbar');
-  const boxShadow = useColorModeValue('0px 0px 10px 2px rgba(0, 0, 0, 0.1)', 'none');
-  const borderWidth = useColorModeValue('0px', '1px');
+  // Use shared color hooks
+  const { activeBg, activeColor, activeHoverBg, inactiveHoverBg } = useToggleButtonColors();
+  const { borderColor, borderWidth, shadow } = useToolbarColors();
+  const inactiveBg = 'rgba(255, 255, 255, 0.95)';
+  const inactiveBgDark = 'rgba(26, 32, 44, 0.95)';
 
   // Only show on mobile devices
   if (!isMobile) {
@@ -46,10 +43,11 @@ export const VirtualShiftButton: React.FC<VirtualShiftButtonProps> = ({
         bg={isVirtualShiftActive ? activeBg : inactiveBg}
         color={isVirtualShiftActive ? activeColor : undefined}
         _hover={{ bg: isVirtualShiftActive ? activeHoverBg : inactiveHoverBg }}
+        _dark={{ bg: isVirtualShiftActive ? activeBg : inactiveBgDark }}
         variant="solid"
         size="sm"
         borderRadius="full"
-        boxShadow={boxShadow}
+        boxShadow={shadow}
         sx={{
           width: '36px',
           height: '36px',

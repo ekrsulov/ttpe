@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Box, VStack, Divider, useColorModeValue, Menu, MenuButton, MenuList, MenuItem, useBreakpointValue, HStack, Text, IconButton } from '@chakra-ui/react';
+import { Box, VStack, Divider, Menu, MenuButton, MenuList, MenuItem, useBreakpointValue, HStack, Text, IconButton } from '@chakra-ui/react';
 import ConditionalTooltip from './ConditionalTooltip';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
 import type { FloatingContextMenuAction } from '../types/plugins';
+import { useMenuColors } from '../hooks/useMenuColors';
 
 interface FloatingContextMenuProps {
   /** Array of actions to display in the menu */
@@ -21,12 +22,7 @@ export const FloatingContextMenu: React.FC<FloatingContextMenuProps> = ({
   actions,
   isOpen,
 }) => {
-  const bg = useColorModeValue('white', 'gray.800');
-  const borderColor = useColorModeValue('gray.200', 'gray.600');
-  const hoverBg = useColorModeValue('gray.50', 'gray.700');
-  const iconColor = useColorModeValue('gray.700', 'gray.300');
-  const dangerColor = useColorModeValue('red.500', 'red.400');
-  const dangerHoverBg = useColorModeValue('red.50', 'rgba(239, 68, 68, 0.1)');
+  const { bg, borderColor, hoverBg, iconColor, dangerColor, dangerHoverBg } = useMenuColors();
 
   // State for mobile submenu navigation
   const [activeSubmenu, setActiveSubmenu] = useState<FloatingContextMenuAction | null>(null);

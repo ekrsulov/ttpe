@@ -6,24 +6,11 @@ import { SidebarFooter } from './SidebarFooter';
 import { SidebarResizer } from './SidebarResizer';
 import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
 import { EditPanelContext } from '../../contexts/EditPanelContext';
-import type {
-  SelectedCommand
-} from '../../types/panel';
+import { useSidebarContext } from '../../contexts/SidebarContext';
+import { useCanvasStore } from '../../store/canvasStore';
 
 interface SidebarContentProps {
   variant: 'pinned' | 'drawer';
-  activePlugin: string | null;
-  setMode: (mode: string) => void;
-  onToolClick: (toolName: string) => void;
-  showFilePanel: boolean;
-  showSettingsPanel: boolean;
-  isPinned: boolean;
-  onTogglePin: () => void;
-  isDesktop: boolean | undefined;
-  selectedCommands: SelectedCommand[];
-  selectedSubpaths: Array<{ elementId: string; subpathIndex: number }>;
-  isArrangeExpanded: boolean;
-  setIsArrangeExpanded: (value: boolean) => void;
   // Resizer props (only for pinned variant)
   onResize?: (newWidth: number) => void;
   onReset?: () => void;
@@ -31,33 +18,27 @@ interface SidebarContentProps {
 
 export const SidebarContent: React.FC<SidebarContentProps> = ({
   variant,
-  activePlugin,
-  setMode,
-  onToolClick,
-  showFilePanel,
-  showSettingsPanel,
-  isPinned,
-  onTogglePin,
-  isDesktop,
-  selectedCommands,
-  selectedSubpaths,
-  isArrangeExpanded,
-  setIsArrangeExpanded,
   onResize,
   onReset,
 }) => {
+  // Get values from context
+  const { showFilePanel, showSettingsPanel } = useSidebarContext();
+
+  // Get selection data from store for EditPanelContext
+  const storeSelectedCommands = useCanvasStore((state) => state.selectedCommands);
+  const storeSelectedSubpaths = useCanvasStore((state) => state.selectedSubpaths);
+
   // Memoize EditPanel context value to prevent unnecessary re-renders
   const editPanelContextValue = useMemo(
     () => ({
-      selectedCommands,
-      selectedSubpaths,
+      selectedCommands: storeSelectedCommands ?? [],
+      selectedSubpaths: storeSelectedSubpaths ?? [],
     }),
     [
-      selectedCommands,
-      selectedSubpaths,
+      storeSelectedCommands,
+      storeSelectedSubpaths,
     ]
   );
-
 
   return (
     <EditPanelContext.Provider value={editPanelContextValue}>
@@ -78,32 +59,14 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
         )}
 
         {/* Tools Grid - Fixed at top */}
-        <SidebarToolGrid
-          activePlugin={activePlugin}
-          setMode={setMode}
-          onToolClick={onToolClick}
-          showFilePanel={showFilePanel}
-          showSettingsPanel={showSettingsPanel}
-          isPinned={isPinned}
-          onTogglePin={onTogglePin}
-          isDesktop={isDesktop}
-        />
+        <SidebarToolGrid />
 
-        {/* Main Panels - Scrollable middle section */}
-        <SidebarPanelHost
-          activePlugin={activePlugin}
-          showFilePanel={showFilePanel}
-          showSettingsPanel={showSettingsPanel}
-        />
+        {/* Main Panels - Scrollable middle section (gets activePlugin from context) */}
+        <SidebarPanelHost />
 
         {/* Footer with ArrangePanel and SelectPanel - Fixed at bottom */}
         {/* Hide in special panel mode (file/settings) */}
-        {!showFilePanel && !showSettingsPanel && (
-          <SidebarFooter
-            isArrangeExpanded={isArrangeExpanded}
-            setIsArrangeExpanded={setIsArrangeExpanded}
-          />
-        )}
+        {!showFilePanel && !showSettingsPanel && <SidebarFooter />}
       </Box>
     </EditPanelContext.Provider>
   );

@@ -1,4 +1,4 @@
-import React, { useRef, useLayoutEffect, useState } from 'react';
+import React, { useRef } from 'react';
 import { HStack, Box, useColorModeValue, useBreakpointValue } from '@chakra-ui/react';
 import { Menu, MoreHorizontal } from 'lucide-react';
 import { RenderCountBadgeWrapper } from './RenderCountBadgeWrapper';
@@ -7,6 +7,7 @@ import { ToolbarIconButton } from './ToolbarIconButton';
 import { pluginManager, useVisibleToolIds } from '../utils/pluginManager';
 import { useCanvasStore } from '../store/canvasStore';
 import { useDynamicTools } from '../hooks/useDynamicTools';
+import { useAnimatedBackground } from '../hooks/useAnimatedBackground';
 
 interface TopActionBarProps {
   activeMode: string | null;
@@ -48,22 +49,15 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
 
   const isDraggingElements = useCanvasStore(state => state.isDraggingElements);
 
-  // Subscribe to visible tool IDs - this hook handles all plugin visibility logic
-  // internally, keeping TopActionBar decoupled from specific plugin requirements
+  // Subscribe to visible tool IDs
   const visibleToolIds = useVisibleToolIds();
 
   // Subscribe to enabledPlugins to trigger re-render when plugins are toggled
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   useCanvasStore(state => (state as any).pluginSelector?.enabledPlugins ?? []);
 
-  // State and refs for animated background
-  const buttonRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  // Ref for extra tools bar click outside handling
   const extraToolsBarRef = useRef<HTMLDivElement>(null);
-  const [backgroundStyle, setBackgroundStyle] = useState<{
-    left: number;
-    width: number;
-    opacity: number;
-  }>({ left: 0, width: 0, opacity: 0 });
 
   // Get visible registered tools using plugin-defined visibility
   const registeredTools = React.useMemo(() => {
@@ -82,11 +76,10 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
         };
       })
       .sort((a, b) => a.order - b.order);
-  }, [visibleToolIds]); // Re-evaluate when visibility changes
+  }, [visibleToolIds]);
 
   // Filter tools based on mobile/desktop and usage patterns
   const toolsToRender = React.useMemo(() => {
-    // Get base tools list directly from plugins
     const baseTools = registeredTools.length
       ? registeredTools
       : pluginManager.getToolDefinitions()
@@ -99,14 +92,11 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
         }));
 
     if (isMobile) {
-      // On mobile, show always shown tools + dynamic tools based on usage
       const visibleDynamicTools = getMobileVisibleTools();
       const allowedTools = [...alwaysShownTools, ...visibleDynamicTools];
-
       return baseTools.filter(tool => allowedTools.includes(tool.id));
     }
 
-    // On desktop, show all tools
     return baseTools;
   }, [registeredTools, visibleToolIds, isMobile, getMobileVisibleTools, alwaysShownTools]);
 
@@ -119,7 +109,6 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
       .map(toolId => {
         const toolDef = toolDefinitions.find(def => def.mode === toolId);
         if (!toolDef) return null;
-        // Skip tools that are not visible
         if (!visibleToolIds.includes(toolId)) return null;
 
         return {
@@ -131,36 +120,17 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
       .filter(Boolean) as Array<{ id: string, label: string, icon: React.ComponentType<{ size?: number }> }>;
   }, [isMobile, getExtraTools, visibleToolIds]);
 
-  // Create stable dependency from tool IDs
-  const toolIds = toolsToRender.map(t => t.id).join(',');
+  // Create stable dependency array for background animation
+  const toolIds = toolsToRender.map(t => t.id);
+  const animationDeps = [...toolIds, String(showExtraTools)];
 
-  // Update background position when active mode changes or tools visibility changes
-  // Using useLayoutEffect to ensure buttons are in DOM before measuring
-  useLayoutEffect(() => {
-    if (activeMode && buttonRefs.current.has(activeMode)) {
-      const buttonElement = buttonRefs.current.get(activeMode);
-      if (buttonElement) {
-        const rect = buttonElement.getBoundingClientRect();
-        const parentRect = buttonElement.parentElement?.getBoundingClientRect();
-        if (parentRect) {
-          setBackgroundStyle({
-            left: rect.left - parentRect.left,
-            width: rect.width,
-            opacity: 1,
-          });
-        }
-      }
-    } else {
-      setBackgroundStyle(prev => ({ ...prev, opacity: 0 }));
-    }
-  }, [activeMode, showExtraTools, toolIds]);
+  // Use animated background hook
+  const { backgroundStyle, setButtonRef } = useAnimatedBackground(activeMode, animationDeps);
 
   // Handle mode change with usage tracking
   const handleModeChange = React.useCallback((mode: string) => {
-    // Track tool usage for dynamic selection
     trackToolUsage(mode);
 
-    // Close extra tools bar if a tool from it was selected
     const extraToolIds = extraTools.map(tool => tool.id);
     if (extraToolIds.includes(mode)) {
       toggleExtraTools();
@@ -222,19 +192,12 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
 
           {/* Tool buttons */}
           {toolsToRender.map(({ id, icon: Icon, label }) => {
-            // Skip expensive calculations during dragging
             const store = useCanvasStore.getState();
             const isDisabled = isDraggingElements ? false : pluginManager.isToolDisabled(id, store);
             return (
               <Box
                 key={id}
-                ref={(el) => {
-                  if (el) {
-                    buttonRefs.current.set(id, el);
-                  } else {
-                    buttonRefs.current.delete(id);
-                  }
-                }}
+                ref={setButtonRef(id)}
                 position="relative"
                 zIndex={1}
               >
@@ -259,13 +222,7 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
           {/* Three dots button for mobile extra tools */}
           {isMobile && extraTools.length > 0 && (
             <Box
-              ref={(el) => {
-                if (el) {
-                  buttonRefs.current.set('more', el);
-                } else {
-                  buttonRefs.current.delete('more');
-                }
-              }}
+              ref={setButtonRef('more')}
               position="relative"
               zIndex={1}
             >
@@ -285,16 +242,10 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
             </Box>
           )}
 
-          {/* Hamburger menu button - al final */}
+          {/* Hamburger menu button */}
           {showMenuButton && (
             <Box
-              ref={(el) => {
-                if (el) {
-                  buttonRefs.current.set('menu', el);
-                } else {
-                  buttonRefs.current.delete('menu');
-                }
-              }}
+              ref={setButtonRef('menu')}
               position="relative"
               zIndex={1}
             >
@@ -335,7 +286,6 @@ export const TopActionBar: React.FC<TopActionBarProps> = ({
               position="relative"
             >
               {extraTools.map(({ id, icon: Icon, label }) => {
-                // Skip expensive calculations during dragging
                 const store = useCanvasStore.getState();
                 const isDisabled = isDraggingElements ? false : pluginManager.isToolDisabled(id, store);
 

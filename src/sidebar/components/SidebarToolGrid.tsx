@@ -2,21 +2,11 @@ import React from 'react';
 import { Box, SimpleGrid } from '@chakra-ui/react';
 import { RenderCountBadgeWrapper } from '../../ui/RenderCountBadgeWrapper';
 import { SidebarUtilityButton } from '../../ui/SidebarUtilityButton';
+import { useSidebarContext } from '../../contexts/SidebarContext';
 
 interface ToolConfig {
   name: string;
   label: string;
-}
-
-interface SidebarToolGridProps {
-  activePlugin: string | null;
-  setMode: (mode: string) => void;
-  onToolClick?: (toolName: string) => void;
-  showFilePanel?: boolean;
-  showSettingsPanel?: boolean;
-  isPinned?: boolean;
-  onTogglePin?: () => void;
-  isDesktop?: boolean;
 }
 
 /**
@@ -24,18 +14,19 @@ interface SidebarToolGridProps {
  * Note: Main action tools (select, pencil, text, shape, subpath, transform, edit)
  * are now in the ActionBar at the bottom of the screen
  */
-export const SidebarToolGrid: React.FC<SidebarToolGridProps> = ({ 
-  activePlugin, 
-  setMode,
-  onToolClick,
-  showFilePanel = false,
-  showSettingsPanel = false,
-  isPinned = false,
-  onTogglePin,
-  isDesktop = false
-}) => {
+export const SidebarToolGrid: React.FC = () => {
+  // Get values from context
+  const {
+    activePlugin,
+    showFilePanel,
+    showSettingsPanel,
+    isPinned,
+    isDesktop,
+    onToolClick,
+    onTogglePin,
+  } = useSidebarContext();
+
   // Plugin configuration - only utility/settings tools
-  // Main action tools moved to ActionBar
   const pluginRows: ToolConfig[][] = [
     [
       { name: 'file', label: 'File' },
@@ -44,27 +35,18 @@ export const SidebarToolGrid: React.FC<SidebarToolGridProps> = ({
   ];
 
   const renderPluginButton = (plugin: ToolConfig) => {
-    // Handle special panel buttons
     const handleClick = () => {
-      if (onToolClick) {
-        onToolClick(plugin.name);
-      } else {
-        setMode(plugin.name);
-      }
+      onToolClick(plugin.name);
     };
 
     // Determine if button should be active
     let isActive = false;
     
-    // Special panel mode logic
     if (showFilePanel) {
-      // In file mode, only file button is active
       isActive = plugin.name === 'file';
     } else if (showSettingsPanel) {
-      // In settings mode, only settings button is active
       isActive = plugin.name === 'settings';
     } else {
-      // Normal mode, check activePlugin
       isActive = activePlugin === plugin.name;
     }
     
@@ -83,7 +65,7 @@ export const SidebarToolGrid: React.FC<SidebarToolGridProps> = ({
     <SidebarUtilityButton
       label={isPinned ? 'Unpin' : 'Pin'}
       isActive={false}
-      onClick={onTogglePin!}
+      onClick={onTogglePin}
       fullWidth={false}
     />
   );

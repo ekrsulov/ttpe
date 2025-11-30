@@ -6,19 +6,15 @@ import { SelectPanel } from '../panels/SelectPanel';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { useSidebarFooterHeight } from '../../hooks/useSidebarFooterHeight';
-
-interface SidebarFooterProps {
-  isArrangeExpanded: boolean;
-  setIsArrangeExpanded: (expanded: boolean) => void;
-}
+import { useSidebarContext } from '../../contexts/SidebarContext';
 
 /**
- * Fixed footer section of the sidebar containing ArrangePanel and SelectPanel
+ * Fixed footer section of the sidebar containing ArrangePanel and SelectPanel.
+ * Gets expand state from SidebarContext.
  */
-export const SidebarFooter: React.FC<SidebarFooterProps> = ({
-  isArrangeExpanded,
-  setIsArrangeExpanded,
-}) => {
+export const SidebarFooter: React.FC = () => {
+  const { isArrangeExpanded, setIsArrangeExpanded } = useSidebarContext();
+  
   // Use shared hook for managing footer height CSS variable
   const footerRef = useSidebarFooterHeight();
 
