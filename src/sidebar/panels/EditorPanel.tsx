@@ -250,6 +250,7 @@ export const EditorPanel: React.FC = () => {
                   variant="icon"
                   icon={<X size={12} />}
                   sx={{ borderRadius: 'full' }}
+                  isDisabled={currentStrokeColor === 'none'}
                 />
                 <ConditionalTooltip label="Select fill color">
                   <Input
@@ -315,6 +316,7 @@ export const EditorPanel: React.FC = () => {
                   variant="icon"
                   icon={<X size={12} />}
                   sx={{ borderRadius: 'full' }}
+                  isDisabled={currentFillColor === 'none'}
                 />
                 <ConditionalTooltip label="Select stroke color">
                   <Input
