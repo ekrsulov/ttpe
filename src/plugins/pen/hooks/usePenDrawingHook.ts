@@ -26,6 +26,7 @@ import { calculateCursorState, calculateEditCursorState } from '../utils/cursorS
 import { constrainAngleTo45Degrees } from '../utils/pathConverter';
 import { findPathAtPoint, findSegmentOnPath } from '../utils/anchorDetection';
 import { applyGridSnap } from '../../../utils/gridSnapUtils';
+import { getEffectiveShift } from '../../../utils/effectiveShift';
 import {
     collectReferencePoints,
     findPenGuidelines,
@@ -659,9 +660,10 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                     if (anchorIndex !== undefined && handleType && penState.currentPath) {
                         const anchor = penState.currentPath.anchors[anchorIndex];
                         if (anchor) {
-                            // Apply Shift constraint if needed
+                            // Apply Shift constraint if needed (supports virtualShift for mobile)
+                            const effectiveShift = getEffectiveShift(isShiftPressedRef.current, state.isVirtualShiftActive);
                             let finalHandlePos = canvasPoint;
-                            if (isShiftPressedRef.current) {
+                            if (effectiveShift) {
                                 finalHandlePos = constrainAngleTo45Degrees(anchor.position, canvasPoint);
                             } else {
                                 // Apply guidelines snap for handle position (absolute position)
@@ -698,7 +700,9 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                 if (penState?.dragState?.type === 'segment') {
                     const { segmentIndex } = penState.dragState;
                     if (segmentIndex !== undefined && penState.currentPath) {
-                        if (isShiftPressedRef.current && dragStartPointRef.current && segmentOriginalAnchorsRef.current) {
+                        // Supports virtualShift for mobile
+                        const effectiveShift = getEffectiveShift(isShiftPressedRef.current, state.isVirtualShiftActive);
+                        if (effectiveShift && dragStartPointRef.current && segmentOriginalAnchorsRef.current) {
                             // Shift+drag: translate segment (move both endpoints together)
                             // Calculate delta from drag start position
                             const delta = {
@@ -724,9 +728,10 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                 // Calculate handle vector (outHandle)
                 if (!dragStartPointRef.current) return;
 
-                // Apply guidelines snap or Shift constraint for handle position
+                // Apply guidelines snap or Shift constraint for handle position (supports virtualShift for mobile)
+                const effectiveShift = getEffectiveShift(isShiftPressedRef.current, state.isVirtualShiftActive);
                 let finalHandlePos = canvasPoint;
-                if (isShiftPressedRef.current) {
+                if (effectiveShift) {
                     finalHandlePos = constrainAngleTo45Degrees(dragStartPointRef.current, canvasPoint);
                 } else {
                     // Apply guidelines snap for handle position (absolute position)
@@ -848,9 +853,10 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
             }
 
             if (mode === 'drawing') {
-                // Apply guidelines snap or Shift constraint for the final handle position
+                // Apply guidelines snap or Shift constraint for the final handle position (supports virtualShift for mobile)
+                const effectiveShift = getEffectiveShift(isShiftPressedRef.current, state.isVirtualShiftActive);
                 let finalHandlePos = rawCanvasPoint;
-                if (isShiftPressedRef.current) {
+                if (effectiveShift) {
                     finalHandlePos = constrainAngleTo45Degrees(dragStartPointRef.current, rawCanvasPoint);
                 } else if (penState.activeGuidelines) {
                     // Apply guidelines snap if there was one active
@@ -889,8 +895,8 @@ export function usePenDrawingHook(context: PluginHooksContext): void {
                     if (!isFirstPointDrag) {
                         let finalPoint = dragStartPointRef.current;
 
-                        // Apply Shift constraint for straight lines
-                        if (isShiftPressedRef.current && currentPath && currentPath.anchors.length > 0) {
+                        // Apply Shift constraint for straight lines (supports virtualShift for mobile)
+                        if (effectiveShift && currentPath && currentPath.anchors.length > 0) {
                             const lastAnchor = currentPath.anchors[currentPath.anchors.length - 1];
                             finalPoint = constrainAngleTo45Degrees(lastAnchor.position, dragStartPointRef.current);
                         }

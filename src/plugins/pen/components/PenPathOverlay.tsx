@@ -44,17 +44,27 @@ export const PenPathOverlay: React.FC<{ context: CanvasLayerContext }> = ({ cont
 
                         return (
                             <g opacity={0.6}>
-                                {/* Render hovered path anchors */}
+                                {/* Render hovered path anchors - Diamond for L-type (corner without handles), Circle for others */}
                                 {penPath.anchors.map((anchor: typeof penPath.anchors[0], index: number) => (
-                                    <circle
-                                        key={`hover-anchor-${index}`}
-                                        cx={anchor.position.x}
-                                        cy={anchor.position.y}
-                                        r={anchorRadius * 1.2}
-                                        fill={selectionColor}
-                                        stroke="#ffffff"
-                                        strokeWidth={strokeWidth}
-                                    />
+                                    anchor.type === 'corner' && !anchor.inHandle && !anchor.outHandle ? (
+                                        <polygon
+                                            key={`hover-anchor-${index}`}
+                                            points={`${anchor.position.x},${anchor.position.y - anchorRadius * 1.5} ${anchor.position.x + anchorRadius * 1.5},${anchor.position.y} ${anchor.position.x},${anchor.position.y + anchorRadius * 1.5} ${anchor.position.x - anchorRadius * 1.5},${anchor.position.y}`}
+                                            fill={selectionColor}
+                                            stroke="#ffffff"
+                                            strokeWidth={strokeWidth}
+                                        />
+                                    ) : (
+                                        <circle
+                                            key={`hover-anchor-${index}`}
+                                            cx={anchor.position.x}
+                                            cy={anchor.position.y}
+                                            r={anchorRadius * 1.2}
+                                            fill={selectionColor}
+                                            stroke="#ffffff"
+                                            strokeWidth={strokeWidth}
+                                        />
+                                    )
                                 ))}
                             </g>
                         );
@@ -117,10 +127,11 @@ export const PenPathOverlay: React.FC<{ context: CanvasLayerContext }> = ({ cont
                                             strokeWidth={strokeWidth}
                                             opacity={0.7}
                                         />
-                                        <circle
-                                            cx={anchor.position.x + anchor.inHandle.x}
-                                            cy={anchor.position.y + anchor.inHandle.y}
-                                            r={handleRadius}
+                                        <rect
+                                            x={anchor.position.x + anchor.inHandle.x - handleRadius}
+                                            y={anchor.position.y + anchor.inHandle.y - handleRadius}
+                                            width={handleRadius * 2}
+                                            height={handleRadius * 2}
                                             fill="#3b82f6"
                                             stroke="#ffffff"
                                             strokeWidth={strokeWidth}
@@ -140,10 +151,11 @@ export const PenPathOverlay: React.FC<{ context: CanvasLayerContext }> = ({ cont
                                             strokeWidth={strokeWidth}
                                             opacity={0.7}
                                         />
-                                        <circle
-                                            cx={anchor.position.x + anchor.outHandle.x}
-                                            cy={anchor.position.y + anchor.outHandle.y}
-                                            r={handleRadius}
+                                        <rect
+                                            x={anchor.position.x + anchor.outHandle.x - handleRadius}
+                                            y={anchor.position.y + anchor.outHandle.y - handleRadius}
+                                            width={handleRadius * 2}
+                                            height={handleRadius * 2}
                                             fill="#3b82f6"
                                             stroke="#ffffff"
                                             strokeWidth={strokeWidth}
@@ -152,15 +164,39 @@ export const PenPathOverlay: React.FC<{ context: CanvasLayerContext }> = ({ cont
                                     </>
                                 )}
 
-                                {/* Render anchor point */}
-                                <circle
-                                    cx={anchor.position.x}
-                                    cy={anchor.position.y}
-                                    r={anchorRadius}
-                                    fill={index === penState.selectedAnchorIndex ? '#ef4444' : isFirst ? '#22c55e' : isLast ? '#3b82f6' : '#ffffff'}
-                                    stroke={index === penState.selectedAnchorIndex ? '#dc2626' : isFirst ? '#16a34a' : '#2563eb'}
-                                    strokeWidth={strokeWidth * 1.5}
-                                />
+                                {/* Render anchor point - Diamond for L-type (corner without handles), Circle for others */}
+                                {(() => {
+                                    // Calculate size: first point larger, last point smaller
+                                    const sizeMultiplier = isFirst ? 1.4 : isLast ? 0.85 : 1.0;
+                                    const diamondSize = anchorRadius * 1.3 * sizeMultiplier;
+                                    const circleSize = anchorRadius * sizeMultiplier;
+                                    
+                                    // Colors: first=green, last=red, selected=red, others=white
+                                    const fillColor = index === penState.selectedAnchorIndex ? '#ef4444' : isFirst ? '#22c55e' : isLast ? '#ef4444' : '#ffffff';
+                                    const strokeColor = index === penState.selectedAnchorIndex ? '#dc2626' : isFirst ? '#16a34a' : isLast ? '#dc2626' : '#2563eb';
+                                    
+                                    if (anchor.type === 'corner' && !anchor.inHandle && !anchor.outHandle) {
+                                        return (
+                                            <polygon
+                                                points={`${anchor.position.x},${anchor.position.y - diamondSize} ${anchor.position.x + diamondSize},${anchor.position.y} ${anchor.position.x},${anchor.position.y + diamondSize} ${anchor.position.x - diamondSize},${anchor.position.y}`}
+                                                fill={fillColor}
+                                                stroke={strokeColor}
+                                                strokeWidth={strokeWidth * 1.5}
+                                            />
+                                        );
+                                    } else {
+                                        return (
+                                            <circle
+                                                cx={anchor.position.x}
+                                                cy={anchor.position.y}
+                                                r={circleSize}
+                                                fill={fillColor}
+                                                stroke={strokeColor}
+                                                strokeWidth={strokeWidth * 1.5}
+                                            />
+                                        );
+                                    }
+                                })()}
                             </g>
                         );
                     })}

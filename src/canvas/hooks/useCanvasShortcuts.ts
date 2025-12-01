@@ -8,6 +8,7 @@ import { getDeletionScope, executeDeletion } from '../../utils/deletionScopeUtil
 import { isTextFieldFocused } from '../../utils/domHelpers';
 import type { CanvasShortcutContext } from '../../types/plugins';
 import { DEFAULT_MODE } from '../../constants';
+import { getEffectiveShift } from '../../utils/effectiveShift';
 
 const CORE_SHORTCUT_SOURCE = 'canvas:core';
 
@@ -42,8 +43,9 @@ const handleArrowKey = (event: KeyboardEvent, context: CanvasShortcutContext, di
 
   const { viewport, settings, selectedCommands, selectedSubpaths, selectedIds } = state;
 
-  // Calculate zoom-adjusted movement delta
-  const baseDelta = event.shiftKey ? 10 : 1;
+  // Calculate zoom-adjusted movement delta (supports virtualShift for mobile)
+  const effectiveShift = getEffectiveShift(event.shiftKey, state.isVirtualShiftActive);
+  const baseDelta = effectiveShift ? 10 : 1;
   const zoomAdjustedDelta = viewport.zoom > 1 ? baseDelta / viewport.zoom : baseDelta;
 
   const deltaX = dirX * zoomAdjustedDelta;
@@ -140,6 +142,23 @@ export const useCanvasShortcuts = (
         options: { preventDefault: true }
       },
       ArrowRight: {
+        handler: (event, context) => handleArrowKey(event, context, 1, 0),
+        options: { preventDefault: true }
+      },
+      // Shift+Arrow for faster movement (10px instead of 1px)
+      'shift+ArrowUp': {
+        handler: (event, context) => handleArrowKey(event, context, 0, -1),
+        options: { preventDefault: true }
+      },
+      'shift+ArrowDown': {
+        handler: (event, context) => handleArrowKey(event, context, 0, 1),
+        options: { preventDefault: true }
+      },
+      'shift+ArrowLeft': {
+        handler: (event, context) => handleArrowKey(event, context, -1, 0),
+        options: { preventDefault: true }
+      },
+      'shift+ArrowRight': {
         handler: (event, context) => handleArrowKey(event, context, 1, 0),
         options: { preventDefault: true }
       },

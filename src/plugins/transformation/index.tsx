@@ -116,7 +116,7 @@ export const transformationPlugin: PluginDefinition<CanvasStore> = {
       state.setActivePlugin('edit');
     } else {
       const subpathSelection = [{ elementId, subpathIndex }];
-      state.setState({ selectedSubpaths: subpathSelection });
+      context.store.setState({ selectedSubpaths: subpathSelection });
     }
   },
   onCanvasDoubleClick: (_event, context) => {

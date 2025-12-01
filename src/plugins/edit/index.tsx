@@ -83,7 +83,7 @@ export const editPlugin: PluginDefinition<CanvasStore> = {
 
     if (!wasAlreadySelected) {
       const subpathSelection = [{ elementId, subpathIndex }];
-      state.setState({ selectedSubpaths: subpathSelection });
+      context.store.setState({ selectedSubpaths: subpathSelection });
     }
   },
   onCanvasDoubleClick: (_event, context) => {
