@@ -12,7 +12,7 @@ CORE_PLUGINS.forEach(plugin => {
       if (!panelRegistry.has(`${plugin.id}:${panel.key}`)) {
         // Insert settings-related panels before documentation panel
         const docIndex = panelRegistry.getAll().findIndex(p => p.key === 'documentation');
-        const isSettingsPanel = panel.condition?.({ showSettingsPanel: true, showFilePanel: false, isInSpecialPanelMode: true, activePlugin: '' });
+        const isSettingsPanel = panel.condition?.({ showSettingsPanel: true, showFilePanel: false, isInSpecialPanelMode: true, activePlugin: '', canPerformOpticalAlignment: false });
         const position = isSettingsPanel && docIndex >= 0 ? docIndex : 'end';
         
         panelRegistry.register({
