@@ -265,18 +265,13 @@ export function splitPathsByIntersections(
       const curveIndexMap = new Map<number, { subPathIndex: number; localCurveIndex: number }>();
       let globalCurveIndex = 0;
 
-      console.log(`\n🔨 Processing path ${path.id}:`);
-      console.log(`  Path has ${path.data.subPaths.length} subpaths`);
-
       // Handle CompoundPath by processing each child separately
       const subpathsToProcess: paper.Path[] = [];
       if (paperPathOriginal instanceof paper.CompoundPath) {
-        console.log(`  ✅ Is CompoundPath with ${paperPathOriginal.children.length} children`);
         // Build the map using the ORIGINAL CompoundPath (not clones)
         for (let childIndex = 0; childIndex < paperPathOriginal.children.length; childIndex++) {
           const child = paperPathOriginal.children[childIndex];
           if (child instanceof paper.Path) {
-            console.log(`    Child ${childIndex}: ${child.curves.length} curves (global indices ${globalCurveIndex} to ${globalCurveIndex + child.curves.length - 1})`);
             // Map using the original child's curves
             for (let localCurve = 0; localCurve < child.curves.length; localCurve++) {
               curveIndexMap.set(globalCurveIndex++, {
@@ -289,14 +284,12 @@ export function splitPathsByIntersections(
           }
         }
       } else if (paperPathOriginal instanceof paper.Path) {
-        console.log(`  ⚠️ Is single Path with ${paperPathOriginal.curves.length} curves`);
         subpathsToProcess.push(paperPathOriginal);
         // For single path, map is 1:1
         for (let i = 0; i < paperPathOriginal.curves.length; i++) {
           curveIndexMap.set(i, { subPathIndex: 0, localCurveIndex: i });
         }
       } else {
-        console.log(`  ❌ Unknown path type, skipping`);
         continue;
       }
 
@@ -316,8 +309,6 @@ export function splitPathsByIntersections(
         // any intersection references them
         let subPathHasIntersections = false;
 
-        console.log(`\n  📍 Processing SubPath ${subPathIndex}:`);
-
         // Build reverse map: find which global indices belong to this subPath
         const globalIndicesForThisSubPath: number[] = [];
         for (const [globalIdx, mapping] of curveIndexMap.entries()) {
@@ -325,17 +316,13 @@ export function splitPathsByIntersections(
             globalIndicesForThisSubPath.push(globalIdx);
           }
         }
-        console.log(`    Global curve indices for this subpath: [${globalIndicesForThisSubPath.join(', ')}]`);
 
         // Check if any intersection references these global indices
-        console.log(`    Checking ${pathIntersections.length} intersection(s):`);
         for (const inter of pathIntersections) {
           const idx1 = inter.pathId1 === path.id ? inter.segmentIndex1 : -1;
           const idx2 = inter.pathId2 === path.id ? inter.segmentIndex2 : -1;
-          console.log(`      Intersection at (${inter.point.x.toFixed(1)}, ${inter.point.y.toFixed(1)}): idx1=${idx1}, idx2=${idx2}`);
 
           if (globalIndicesForThisSubPath.includes(idx1) || globalIndicesForThisSubPath.includes(idx2)) {
-            console.log(`        ✅ Matches this subpath!`);
             subPathHasIntersections = true;
             break;
           }
@@ -346,12 +333,10 @@ export function splitPathsByIntersections(
 
         // If this sub-path has NO intersections, capture it as a single complete segment
         if (!subPathHasIntersections) {
-          console.log(`    ⚠️ No intersections found for this subpath - creating single segment`);
           const segment = createTrimSegmentFromPath(paperPath, path, subPathIndex, null, null);
           if (segment) subPathSegments.push(segment);
           paperPath.remove();
         } else {
-          console.log(`    ✅ Subpath has intersections - processing curve by curve`);
 
           // This sub-path HAS intersections, process curve by curve
           const curves = paperPath.curves;
@@ -403,7 +388,6 @@ export function splitPathsByIntersections(
         // Optimize segments for this subpath
         if (subPathSegments.length > 0) {
           const optimized = concatenateConsecutiveSegments(subPathSegments);
-          console.log(`    🔧 Optimized SubPath ${subPathIndex}: ${subPathSegments.length} -> ${optimized.length} segments`);
           segments.push(...optimized);
         }
       }
@@ -852,21 +836,8 @@ export function reconstructPathsFromSegments(
   const reconstructedPaths: ReconstructedPath[] = [];
 
   try {
-    // DEBUG: Log what we're removing
-    console.group('🔧 reconstructPathsFromSegments DEBUG');
-    console.log('Total segments:', allSegments.length);
-    console.log('Segments to remove:', segmentIdsToRemove.length, segmentIdsToRemove);
-
-    // Show which segments are being removed and from which paths
-    const removedSegments = allSegments.filter(s => segmentIdsToRemove.includes(s.id));
-    console.log('\n📍 Segments being removed:');
-    removedSegments.forEach(seg => {
-      console.log(`  - ${seg.id.substring(0, 20)}... from pathId: ${seg.pathId.substring(0, 20)}..., subPath: ${seg.subPathIndex}`);
-    });
-
     // Filter out removed segments
     const remainingSegments = allSegments.filter(s => !segmentIdsToRemove.includes(s.id));
-    console.log('\n✅ Remaining segments:', remainingSegments.length);
 
     // Group remaining segments by original path ONLY (not by subpath)
     const segmentsByPath = new Map<string, TrimSegment[]>();
@@ -878,17 +849,10 @@ export function reconstructPathsFromSegments(
       segmentsByPath.get(pathId)!.push(segment);
     }
 
-    console.log('\n📊 Grouped by pathId:');
-    segmentsByPath.forEach((segments, pathId) => {
-      console.log(`  ${pathId}: ${segments.length} segments`);
-    });
-
     // Process each path
     for (const [pathId, pathSegments] of segmentsByPath.entries()) {
       const originalPath = originalPaths.get(pathId);
       if (!originalPath) continue;
-
-      console.log(`\n🔨 Processing path ${pathId}:`);
 
       // Group segments by subPathIndex within this path
       const segmentsBySubPath = new Map<number, TrimSegment[]>();
@@ -900,8 +864,6 @@ export function reconstructPathsFromSegments(
         segmentsBySubPath.get(subPathIndex)!.push(segment);
       }
 
-      console.log(`  Has ${segmentsBySubPath.size} subpath(s)`);
-
       // Reconstruct each subpath separately
       const subPathDataArray: string[] = [];
       const allSegmentIds: string[] = [];
@@ -912,39 +874,19 @@ export function reconstructPathsFromSegments(
 
       for (const subPathIndex of sortedSubPathIndices) {
         const subPathSegments = segmentsBySubPath.get(subPathIndex)!;
-        console.log(`  SubPath ${subPathIndex}: ${subPathSegments.length} segment(s)`);
-
-        // Log details about the segments in this subpath
-        console.group(`    Segments in subpath ${subPathIndex}:`);
-        subPathSegments.forEach((seg, idx) => {
-          console.log(`      ${idx}: ${seg.id.substring(0, 20)}... start:(${seg.startPoint.x.toFixed(1)}, ${seg.startPoint.y.toFixed(1)}) end:(${seg.endPoint.x.toFixed(1)}, ${seg.endPoint.y.toFixed(1)})`);
-        });
-        console.groupEnd();
 
         // Find continuous sequences within this subpath
         const sequences = findContinuousSequences(subPathSegments);
-        console.log(`    Found ${sequences.length} continuous sequence(s)`);
-
-        // Log details about each sequence
-        sequences.forEach((seq, seqIdx) => {
-          console.log(`      Sequence ${seqIdx}: ${seq.length} segments`);
-        });
 
         for (const sequence of sequences) {
           // OPTIMIZATION: Concatenate consecutive segments that don't have intersections between them
           const optimizedSequence = concatenateConsecutiveSegments(sequence);
-          if (optimizedSequence.length < sequence.length) {
-            console.log(`      🔧 Optimized from ${sequence.length} to ${optimizedSequence.length} segments`);
-          }
 
           const pathData = concatenateSegmentPathData(optimizedSequence);
           if (pathData) {
-            console.log(`      ✅ Generated path data (${pathData.length} chars): ${pathData.substring(0, 80)}...`);
             subPathDataArray.push(pathData);
             allSegmentIds.push(...optimizedSequence.map(s => s.id));
             allSegments.push(...optimizedSequence); // Keep the actual segments
-          } else {
-            console.warn(`      ⚠️ Failed to generate path data for sequence`);
           }
         }
       }
@@ -986,13 +928,9 @@ export function reconstructPathsFromSegments(
       reconstructedPaths.push(reconstructed);
     }
 
-    console.log(`\n✨ Created ${reconstructedPaths.length} reconstructed path(s)`);
-    console.groupEnd();
-
     // Run a sanitation pass to remove stray duplicates and insignificant fragments
     return sanitizeReconstructedPaths(reconstructedPaths);
   } catch (_error) {
-    console.groupEnd();
     return [];
   }
 }
