@@ -162,6 +162,15 @@ export class TransformController {
         isMultipleOf10
       };
 
+      // Also set shape feedback with actual dimensions
+      feedback.shape = {
+        width: newWidth,
+        height: newHeight,
+        visible: true,
+        isShiftPressed,
+        isMultipleOf10
+      };
+
     } else if (state.transformHandler.startsWith('rotate-')) {
       // Rotation transformation
       const rotationResult = this.transformManager.calculateRotation(

@@ -55,6 +55,15 @@ const CanvasContent: React.FC = () => {
   const pathCursorMode = useCanvasStore(state => state.pathCursorMode);
   const settings = useCanvasStore(state => state.settings);
   
+  // Subscribe to plugin feedback states for overlays
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const transformFeedback = useCanvasStore(state => (state as any).transformFeedback);
+  
+  // Subscribe directly to edit dragging state for real-time feedback updates
+  // These are separate subscriptions to ensure re-render when drag position changes
+  const editingPointFromStore = useCanvasStore(state => state.editingPoint);
+  const draggingSelectionFromStore = useCanvasStore(state => state.draggingSelection);
+  
   // Subscribe to guidelines state to trigger re-render when it changes
   const guidelines = useCanvasStore(state => state.guidelines);
   // Subscribe to grid state to trigger re-render when it changes
@@ -296,6 +305,38 @@ const CanvasContent: React.FC = () => {
   const renderElement = (element: typeof elements[0]) =>
     canvasRendererRegistry.render(element, renderContext);
 
+  // Calculate pointPositionFeedback for edit mode based on dragging state
+  // Uses dragPosition from useCanvasDrag hook for real-time updates during drag
+  const pointPositionFeedback = useMemo(() => {
+    if (currentMode !== 'edit') {
+      return { x: 0, y: 0, visible: false };
+    }
+
+    // Show feedback when dragging a point - use dragPosition for real-time feedback
+    // dragPosition is updated by useCanvasDrag during pointermove events
+    const isEditDragging = editingPointFromStore?.isDragging || draggingSelectionFromStore?.isDragging;
+    
+    if (isEditDragging && dragPosition) {
+      return {
+        x: Math.round(dragPosition.x),
+        y: Math.round(dragPosition.y),
+        visible: true,
+      };
+    }
+
+    return { x: 0, y: 0, visible: false };
+  }, [currentMode, editingPointFromStore?.isDragging, draggingSelectionFromStore?.isDragging, dragPosition]);
+
+  // Create shapeFeedback object from transformFeedback for transformation overlay
+  // Uses transformFeedback.shape for width/height display
+  const shapeFeedback = useMemo(() => {
+    if (!transformFeedback) return undefined;
+    return {
+      shape: transformFeedback.shape,
+      pointPosition: transformFeedback.pointPosition,
+    };
+  }, [transformFeedback]);
+
   const canvasLayerContext: CanvasLayerContext = useMemo(() => {
     const baseContext = {
       ...controller,
@@ -313,6 +354,10 @@ const CanvasContent: React.FC = () => {
       setDragStart: setDragStartForLayers,
       settings,
       guidelines, // Add guidelines for plugins that need it
+      // Add feedback context for overlays
+      pointPositionFeedback,
+      transformFeedback,
+      shapeFeedback,
     };
 
     return baseContext;
@@ -333,6 +378,9 @@ const CanvasContent: React.FC = () => {
       setDragStartForLayers,
       settings,
       guidelines,
+      pointPositionFeedback,
+      transformFeedback,
+      shapeFeedback,
     ]
   );
 

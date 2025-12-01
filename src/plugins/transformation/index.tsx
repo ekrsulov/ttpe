@@ -218,14 +218,12 @@ export const transformationPlugin: PluginDefinition<CanvasStore> = {
     {
       id: 'transformation-feedback',
       placement: 'foreground',
-      render: ({ viewport, canvasSize, transformFeedback, shapeFeedback }) => (
+      render: ({ viewport, canvasSize, transformFeedback }) => (
         <FeedbackOverlay
           viewport={viewport}
           canvasSize={canvasSize}
           rotationFeedback={transformFeedback?.rotation}
           resizeFeedback={transformFeedback?.resize}
-          shapeFeedback={shapeFeedback?.shape}
-          pointPositionFeedback={shapeFeedback?.pointPosition}
         />
       ),
     },

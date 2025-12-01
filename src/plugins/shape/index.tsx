@@ -6,7 +6,7 @@ import type { ShapePluginSlice } from './slice';
 import React from 'react';
 import { ShapePanel } from './ShapePanel';
 import { ShapePreview } from './ShapePreview';
-import { BlockingOverlay } from '../../overlays';
+import { BlockingOverlay, FeedbackOverlay } from '../../overlays';
 import { createShape } from './actions';
 import type { Point, Viewport } from '../../types';
 import { getEffectiveShift } from '../../utils/effectiveShift';
@@ -52,6 +52,40 @@ const ShapeBlockingOverlayWrapper: React.FC<{
       viewport={viewport}
       canvasSize={canvasSize}
       isActive={isCreating}
+    />
+  );
+};
+
+const ShapeFeedbackOverlayWrapper: React.FC<{
+  viewport: Viewport;
+  canvasSize: { width: number; height: number };
+}> = ({ viewport, canvasSize }) => {
+  const shape = useCanvasStore(state => state.shape);
+  const isVirtualShiftActive = useCanvasStore(state => state.isVirtualShiftActive);
+  
+  const { interaction, selectedShape } = shape;
+  
+  if (!interaction.isCreating || !interaction.startPoint || !interaction.endPoint) {
+    return null;
+  }
+  
+  const controller = new ShapeCreationController({
+    createShape: () => {},
+    getSelectedShape: () => selectedShape
+  });
+  
+  // Calculate feedback based on current drag state
+  const feedback = controller.calculateShapeFeedback(
+    interaction.startPoint,
+    interaction.endPoint,
+    isVirtualShiftActive
+  );
+  
+  return (
+    <FeedbackOverlay
+      viewport={viewport}
+      canvasSize={canvasSize}
+      shapeFeedback={feedback}
     />
   );
 };
@@ -156,6 +190,16 @@ export const shapePlugin: PluginDefinition<CanvasStore> = {
       id: 'shape-preview',
       placement: 'midground',
       render: () => <ShapePreviewWrapper />,
+    },
+    {
+      id: 'shape-feedback',
+      placement: 'foreground',
+      render: ({ viewport, canvasSize }) => (
+        <ShapeFeedbackOverlayWrapper
+          viewport={viewport}
+          canvasSize={canvasSize}
+        />
+      ),
     },
   ],
   slices: [shapeSliceFactory],

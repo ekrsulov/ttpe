@@ -1141,12 +1141,14 @@ export class PluginManager {
   /**
    * Get the list of visible tool IDs based on current store state.
    * Used to create a visibility signature for reactive updates.
+   * Only includes tools from enabled plugins that pass visibility checks.
    */
   getVisibleToolIds(store: CanvasStore): string[] {
     const visibleIds: string[] = [];
     this.registry.forEach((plugin) => {
       if (plugin.toolDefinition) {
-        if (this.isToolVisible(plugin.id, store)) {
+        // Check both plugin enabled state and tool visibility
+        if (this.isPluginEnabled(plugin.id) && this.isToolVisible(plugin.id, store)) {
           visibleIds.push(plugin.id);
         }
       }
