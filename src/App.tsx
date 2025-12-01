@@ -4,13 +4,13 @@ import { TopActionBar } from './ui/TopActionBar';
 import { BottomActionBar } from './ui/BottomActionBar';
 import { ExpandableToolPanel } from './ui/ExpandableToolPanel';
 import { VirtualShiftButton } from './ui/VirtualShiftButton';
+import { GlobalOverlays } from './ui/GlobalOverlays';
 import { useCanvasStore } from './store/canvasStore';
 import './App.css';
 import type { CSSProperties } from 'react';
 import { useCallback, useEffect } from 'react';
 
 import { pluginManager } from './utils/pluginManager';
-import { useMemo as useReactMemo } from 'react';
 import { useSvgImport } from './hooks/useSvgImport';
 import { useColorModeSync } from './hooks/useColorModeSync';
 import { useIOSSupport } from './hooks/useIOSSupport';
@@ -19,9 +19,6 @@ import { DEFAULT_MODE } from './constants';
 function App() {
   const setMode = useCanvasStore(state => state.setMode);
   const { importSvgFiles } = useSvgImport();
-
-  // Get global overlays from plugins
-  const globalOverlays = useReactMemo(() => pluginManager.getGlobalOverlays(), []);
 
   // iOS support hook (handles detection and back swipe prevention)
   const { isIOS } = useIOSSupport();
@@ -78,30 +75,12 @@ function App() {
         >
           <Canvas />
         </div>
-        {/* Invisible overlay to prevent iOS back swipe from left edge */}
-        {isIOS && (
-          <div
-            style={{
-              position: 'absolute',
-              left: 0,
-              top: 0,
-              width: '20px',
-              height: '100%',
-              zIndex: 9999,
-              touchAction: 'none',
-              backgroundColor: 'transparent',
-            }}
-          />
-        )}
         <Sidebar />
         <TopActionBar />
         <BottomActionBar />
         <ExpandableToolPanel />
         <VirtualShiftButton />
-        {/* Render global overlays from plugins (includes MinimapPanel) */}
-        {globalOverlays.map((OverlayComponent, index) => (
-          <OverlayComponent key={`global-overlay-${index}`} />
-        ))}
+        <GlobalOverlays isIOS={isIOS} />
       </div>
   );
 }

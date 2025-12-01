@@ -13,7 +13,7 @@ import { FloatingToolbarShell } from './FloatingToolbarShell';
 import { ToolbarIconButton } from './ToolbarIconButton';
 import { pluginManager, useIsGlobalUndoRedoDisabled } from '../utils/pluginManager';
 import { FloatingContextMenuButton } from './FloatingContextMenuButton';
-import { useTemporalState, useEnabledPlugins, useEffectiveSidebarWidth } from '../hooks';
+import { useTemporalState, useEnabledPlugins, useSidebarLayout } from '../hooks';
 
 /**
  * BottomActionBar - Undo/Redo, Zoom controls, and context menu
@@ -21,7 +21,7 @@ import { useTemporalState, useEnabledPlugins, useEffectiveSidebarWidth } from '.
  */
 export const BottomActionBar: React.FC = () => {
   // Get effective sidebar width using consolidated hook
-  const effectiveSidebarWidth = useEffectiveSidebarWidth();
+  const { effectiveSidebarWidth } = useSidebarLayout();
   
   // Get zoom state from store
   const zoom = useCanvasStore(state => state.zoom);

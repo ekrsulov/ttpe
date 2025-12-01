@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, IconButton, type IconButtonProps } from '@chakra-ui/react';
 import type { LucideIcon } from 'lucide-react';
 import ConditionalTooltip from './ConditionalTooltip';
-import { useCounterColors } from '../hooks/useToolbarColors';
+import { useThemeColors } from '../hooks';
 
 interface ToolbarIconButtonProps extends Omit<IconButtonProps, 'icon' | 'aria-label'> {
   icon: LucideIcon | React.ComponentType<{ size?: number }>;
@@ -31,7 +31,7 @@ export const ToolbarIconButton: React.FC<ToolbarIconButtonProps> = ({
   sx,
   ...iconButtonProps
 }) => {
-  const counterColors = useCounterColors();
+  const { counter: counterColors } = useThemeColors();
   const colors = counterColor === 'red' ? counterColors.danger : counterColors.neutral;
   const button = (
     <Box position="relative">

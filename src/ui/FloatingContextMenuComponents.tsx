@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, HStack, Text, IconButton } from '@chakra-ui/react';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
 import type { FloatingContextMenuAction } from '../types/plugins';
-import { useMenuColors, NO_FOCUS_STYLES } from '../hooks';
+import { useThemeColors, NO_FOCUS_STYLES } from '../hooks';
 
 interface FloatingContextMenuItemProps {
   action: FloatingContextMenuAction;
@@ -19,7 +19,7 @@ export const FloatingContextMenuItem: React.FC<FloatingContextMenuItemProps> = (
   onNavigateToSubmenu,
   isMobile = false,
 }) => {
-  const { hoverBg, iconColor, dangerColor, dangerHoverBg } = useMenuColors();
+  const { menu: { hoverBg, iconColor, dangerColor, dangerHoverBg } } = useThemeColors();
 
   const hasSubmenu = action.submenu && action.submenu.length > 0;
 
@@ -95,7 +95,7 @@ export const FloatingContextMenuMobileSubmenu: React.FC<FloatingContextMenuMobil
   parentAction,
   onBack,
 }) => {
-  const { borderColor, hoverBg, iconColor, dangerColor, dangerHoverBg } = useMenuColors();
+  const { menu: { borderColor, hoverBg, iconColor, dangerColor, dangerHoverBg } } = useThemeColors();
 
   if (!parentAction.submenu) return null;
 

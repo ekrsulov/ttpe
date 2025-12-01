@@ -3,7 +3,7 @@ import { Box, VStack, Divider, Menu, MenuButton, MenuList, MenuItem } from '@cha
 import ConditionalTooltip from './ConditionalTooltip';
 import { ChevronRight } from 'lucide-react';
 import type { FloatingContextMenuAction } from '../types/plugins';
-import { useMenuColors } from '../hooks/useMenuColors';
+import { useThemeColors } from '../hooks';
 import { useResponsive, NO_FOCUS_STYLES, NO_FOCUS_STYLES_DEEP } from '../hooks';
 import { FloatingContextMenuItem, FloatingContextMenuMobileSubmenu } from './FloatingContextMenuComponents';
 
@@ -28,7 +28,7 @@ export const FloatingContextMenu: React.FC<FloatingContextMenuProps> = ({
   actions,
   isOpen,
 }) => {
-  const { bg, borderColor, hoverBg, iconColor, dangerColor, dangerHoverBg } = useMenuColors();
+  const { menu: { bg, borderColor, hoverBg, iconColor, dangerColor, dangerHoverBg } } = useThemeColors();
 
   // State for mobile submenu navigation
   const [activeSubmenu, setActiveSubmenu] = useState<FloatingContextMenuAction | null>(null);

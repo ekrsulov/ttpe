@@ -35,7 +35,7 @@ export const pluginSelectorPlugin: PluginDefinition<CanvasStore> = {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const psState = (state as any).pluginSelector;
 
-        let newState = psState ? { ...psState } : {};
+        const newState = psState ? { ...psState } : {};
         let hasChanges = false;
 
         // Only initialize if enabledPlugins is empty or doesn't exist

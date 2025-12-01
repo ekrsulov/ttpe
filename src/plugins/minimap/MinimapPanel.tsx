@@ -446,6 +446,7 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = () => {
 
   return (
     <Box
+      data-testid="minimap-container"
       position="fixed"
       bottom={`${MINIMAP_MARGIN}px`}
       right={`${MINIMAP_MARGIN + sidebarWidth}px`}
@@ -464,6 +465,7 @@ export const MinimapPanel: React.FC<MinimapPanelProps> = () => {
     >
       <svg
         ref={svgRef}
+        data-testid="minimap-svg"
         viewBox={`0 0 ${minimapSize.width} ${minimapSize.height}`}
         width="100%"
         height="100%"

@@ -90,6 +90,7 @@ export const useCanvasStore = create<CanvasStore>()(
     ), {
     name: 'canvas-app-state',
     version: 2,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     migrate: (persistedState: any, _version: number) => {
       // Force dialog closed in persisted state before applying
       if (persistedState && persistedState.pluginSelector) {

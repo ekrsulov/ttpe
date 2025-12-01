@@ -3,7 +3,7 @@ import { Input } from '@chakra-ui/react';
 import { Minus } from 'lucide-react';
 import { ToggleButton } from './ToggleButton';
 import { DASH_PRESETS } from '../utils/dashPresets';
-import { useInputColors } from '../hooks/useToolbarColors';
+import { useThemeColors } from '../hooks';
 
 interface DashArraySelectorProps {
   value: string;
@@ -22,7 +22,7 @@ export const DashArrayCustomInput: React.FC<DashArrayCustomInputProps> = ({
   onChange,
   title = "Custom dash array"
 }) => {
-  const { bg, borderColor, textColor, placeholderColor } = useInputColors();
+  const { input: { bg, borderColor, textColor, placeholderColor } } = useThemeColors();
 
   return (
     <Input

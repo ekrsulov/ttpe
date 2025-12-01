@@ -45,6 +45,11 @@ export const ExtraToolsBar: React.FC<ExtraToolsBarProps> = ({
   isDraggingElements,
   onToolSelect,
 }) => {
+  // Subscribe to selection state to trigger re-render when selection changes
+  // This is needed for isToolDisabled to re-evaluate when elements are selected
+  const selectedIds = useCanvasStore(state => state.selectedIds);
+  const elements = useCanvasStore(state => state.elements);
+
   if (extraTools.length === 0) {
     return null;
   }
@@ -65,7 +70,9 @@ export const ExtraToolsBar: React.FC<ExtraToolsBarProps> = ({
         position="relative"
       >
         {extraTools.map(({ id, icon: Icon, label }) => {
-          const store = useCanvasStore.getState();
+          // Use subscribed selectedIds and elements to build store snapshot for isDisabled check
+          // This ensures re-render when selection changes
+          const store = { ...useCanvasStore.getState(), selectedIds, elements };
           const isDisabled = isDraggingElements ? false : pluginManager.isToolDisabled(id, store);
 
           return (

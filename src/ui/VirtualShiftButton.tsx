@@ -3,7 +3,7 @@ import { Box, IconButton } from '@chakra-ui/react';
 import { ArrowBigUp } from 'lucide-react';
 import { useCanvasStore } from '../store/canvasStore';
 import { RenderCountBadgeWrapper } from './RenderCountBadgeWrapper';
-import { useToggleButtonColors, useToolbarColors, useToolbarPosition, useResponsive, useEffectiveSidebarWidth } from '../hooks';
+import { useThemeColors, useSidebarLayout, useToolbarPositionStyles, useResponsive } from '../hooks';
 
 /**
  * VirtualShiftButton - Mobile-only button for virtual shift key
@@ -11,18 +11,19 @@ import { useToggleButtonColors, useToolbarColors, useToolbarPosition, useRespons
  */
 export const VirtualShiftButton: React.FC = () => {
   // Get effective sidebar width using consolidated hook
-  const effectiveSidebarWidth = useEffectiveSidebarWidth();
+  const { effectiveSidebarWidth } = useSidebarLayout();
   
   // Get virtual shift state from store
   const isVirtualShiftActive = useCanvasStore(state => state.isVirtualShiftActive);
   const toggleVirtualShift = useCanvasStore(state => state.toggleVirtualShift);
 
-  const { isSidebarPinned: isPinned } = useToolbarPosition(effectiveSidebarWidth);
+  const { isPinned } = useToolbarPositionStyles(effectiveSidebarWidth);
   const { isMobile } = useResponsive();
 
-  // Use shared color hooks
-  const { activeBg, activeColor, activeHoverBg, inactiveHoverBg } = useToggleButtonColors();
-  const { borderColor, borderWidth, shadow } = useToolbarColors();
+  // Use unified theme colors
+  const { toggle, toolbar } = useThemeColors();
+  const { active: { bg: activeBg, color: activeColor, hoverBg: activeHoverBg }, inactive: { hoverBg: inactiveHoverBg } } = toggle;
+  const { borderColor, borderWidth, shadow } = toolbar;
   const inactiveBg = 'rgba(255, 255, 255, 0.95)';
   const inactiveBgDark = 'rgba(26, 32, 44, 0.95)';
 

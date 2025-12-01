@@ -47,23 +47,6 @@ export interface DynamicToolsResult {
     /** Reset all usage data */
     reset: () => void;
   };
-  // Legacy flat exports for backward compatibility
-  /** @deprecated Use usage.track instead */
-  trackToolUsage: (toolId: ToolMode) => void;
-  /** @deprecated Use mobile.getVisibleTools instead */
-  getMobileVisibleTools: () => ToolMode[];
-  /** @deprecated Use mobile.getExtraTools instead */
-  getExtraTools: () => ToolMode[];
-  /** @deprecated Use mobile.isExtraOpen instead */
-  showExtraTools: boolean;
-  /** @deprecated Use mobile.toggleExtra instead */
-  toggleExtraTools: () => void;
-  /** @deprecated Use usage.reset instead */
-  resetToolUsage: () => void;
-  /** @deprecated Use tools.alwaysShown instead */
-  alwaysShownTools: ToolMode[];
-  /** @deprecated Use tools.dynamic instead */
-  dynamicTools: ToolMode[];
 }
 
 /**
@@ -160,15 +143,5 @@ export const useDynamicTools = (activeMode: string | null): DynamicToolsResult =
       track: trackToolUsage,
       reset: resetToolUsage,
     },
-    // Legacy flat exports for backward compatibility
-    // TODO: Remove these after migrating all consumers
-    trackToolUsage,
-    getMobileVisibleTools,
-    getExtraTools,
-    showExtraTools,
-    toggleExtraTools,
-    resetToolUsage,
-    alwaysShownTools,
-    dynamicTools,
   };
 };

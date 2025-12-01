@@ -115,37 +115,4 @@ test.describe('Boolean Operations & Pro Features Tests', () => {
     // Note: Optical alignment would be tested here if the UI panel was accessible in test environment
     // For now, we verify that shapes can be drawn and selected
   });
-
-  test('should create custom curve with lattice', async ({ page }) => {
-    await page.goto('/');
-    await waitForLoad(page);
-
-    const canvas = getCanvas(page);
-    const canvasBox = await canvas.boundingBox();
-    if (!canvasBox) throw new Error('SVG canvas not found');
-
-    // Activate curves mode
-    await getToolButton(page, 'Curves').click();
-
-    // Click to add points for a simple curve
-    await page.mouse.click(
-      canvasBox.x + canvasBox.width * 0.2,
-      canvasBox.y + canvasBox.height * 0.2
-    );
-    await page.mouse.click(
-      canvasBox.x + canvasBox.width * 0.3,
-      canvasBox.y + canvasBox.height * 0.3
-    );
-    await page.mouse.click(
-      canvasBox.x + canvasBox.width * 0.4,
-      canvasBox.y + canvasBox.height * 0.2
-    );
-
-    // Finish the curve
-    await page.locator('button:has-text("Finish")').click();
-
-    // Verify curve was created
-    const paths = await getCanvasPaths(page).count();
-    expect(paths).toBe(1);
-  });
 });

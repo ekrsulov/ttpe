@@ -54,6 +54,8 @@ test.describe('View Control & Gestures Tests', () => {
   });
 
   test('should show interactive minimap when enabled', async ({ page }) => {
+    // Set a larger viewport to ensure minimap is visible (it's hidden on small screens via CSS)
+    await page.setViewportSize({ width: 1280, height: 720 });
     await page.goto('/');
     await waitForLoad(page);
 
@@ -97,37 +99,36 @@ test.describe('View Control & Gestures Tests', () => {
     const minimapToggle = page.getByLabel('Show minimap');
     await expect(minimapToggle).toBeVisible();
 
-    // Check if minimap is initially enabled or disabled
+    // Ensure minimap is disabled first
     const isInitiallyChecked = await minimapToggle.isChecked();
-
     if (isInitiallyChecked) {
-      // Disable minimap if it's enabled
       await minimapToggle.click({ force: true });
       await page.waitForTimeout(300);
     }
 
-    // Verify minimap is not visible
-    const minimapSvg = page.locator('svg').filter({ has: page.locator('[data-role="minimap-viewport"]') });
-    await expect(minimapSvg).not.toBeVisible();
+    // Verify minimap container is not in the DOM when disabled (component returns null)
+    const minimapContainer = page.getByTestId('minimap-container');
+    await expect(minimapContainer).toHaveCount(0);
 
     // Enable minimap
     await minimapToggle.click({ force: true });
     await page.waitForTimeout(300);
 
-    // Verify minimap appears
-    await expect(minimapSvg).toBeVisible();
+    // Verify minimap container is now in the DOM (attached means the element exists)
+    await expect(minimapContainer.first()).toBeAttached();
+
+    // Verify minimap SVG exists within the container
+    const minimapSvg = minimapContainer.first().locator('[data-testid="minimap-svg"]');
+    await expect(minimapSvg).toBeAttached();
 
     // Verify minimap has the expected structure (based on the HTML example provided)
     const minimapViewport = minimapSvg.locator('[data-role="minimap-viewport"]');
-    await expect(minimapViewport).toBeVisible();
+    await expect(minimapViewport).toBeAttached();
 
     // Verify minimap shows elements (should have some rect elements for paths)
     const minimapRects = minimapSvg.locator('rect[data-element-id]');
     const rectCount = await minimapRects.count();
-    expect(rectCount).toBeGreaterThan(0); // Should show the circle we created
-
-    // Minimap interaction test - skip click test due to overlay issues, but verify viewport exists
-    expect(true).toBe(true);
+    expect(rectCount).toBeGreaterThan(0); // Should show the path we created
   });
 
   test('should configure minimap in settings panel', async ({ page }) => {

@@ -4,7 +4,7 @@ import { useCanvasStore } from '../../store/canvasStore';
 import { useSidebarContext } from '../../contexts/SidebarContext';
 import { useEnabledPlugins } from '../../hooks';
 import {
-  PANEL_CONFIGS,
+  getPanelConfigs,
 } from './panelConfig';
 import type { PanelComponentProps } from '../../types/panel';
 import type { PluginUIContribution } from '../../types/plugins';
@@ -54,9 +54,9 @@ export const SidebarPanels: React.FC<SidebarPanelsProps> = ({
     activePlugin,
   }), [activePlugin]);
 
-  // Filter PANEL_CONFIGS to only include panels from enabled plugins
+  // Filter panel configs to only include panels from enabled plugins
   const filteredPanelConfigs = useMemo(() => {
-    return PANEL_CONFIGS.filter(panelConfig => {
+    return getPanelConfigs().filter(panelConfig => {
       // If panel has a pluginId property, check if that plugin is enabled
       if ('pluginId' in panelConfig && typeof panelConfig.pluginId === 'string') {
         return pluginManager.isPluginEnabled(panelConfig.pluginId);

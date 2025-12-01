@@ -1,5 +1,5 @@
 // Centralized hooks exports
-// This makes imports cleaner: import { useLocalStorage, useMenuColors } from '../hooks';
+// This makes imports cleaner: import { useLocalStorage, useThemeColors } from '../hooks';
 
 // UI/UX hooks
 export { useAnimatedBackground } from './useAnimatedBackground';
@@ -9,14 +9,13 @@ export { useIOSSupport } from './useIOSSupport';
 export { useResponsive } from './useResponsive';
 
 // Layout hooks
-export { useEffectiveSidebarWidth, useSidebarLayout } from './useSidebarLayout';
+export { useSidebarLayout } from './useSidebarLayout';
 export { useSidebarState, useToolbarPositionStyles } from './useSidebarState';
-export { useMenuColors, useMenuItemStyles } from './useMenuColors';
-export { useToolbarColors, usePanelHeaderColors, useCounterColors, usePanelButtonColors, useExpandablePanelColors, useInputColors, useToggleButtonColors, useActiveToolColors } from './useToolbarColors';
 export { useRenderCount } from './useRenderCount';
 export { useSidebarFooterHeight } from './useSidebarFooterHeight';
 
-// Unified theme colors (new consolidated hook)
+// Unified theme colors - PRIMARY COLOR HOOK
+// All color needs should use this hook. Individual color hooks are deprecated.
 export { useThemeColors, NO_FOCUS_STYLES, NO_FOCUS_STYLES_DEEP } from './useThemeColors';
 
 // State/Storage hooks
@@ -28,7 +27,6 @@ export { useDynamicTools } from './useDynamicTools';
 export { useEnabledPlugins } from './useEnabledPlugins';
 export { usePluginPanels } from './usePluginPanels';
 export { useSelectionContext } from './useSelectionContext';
-export { useToolbarPosition } from './useToolbarPosition';
 
 // Action hooks (for floating context menu)
 export { useAlignmentActions } from './useAlignmentActions';

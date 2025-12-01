@@ -7,7 +7,7 @@ import { ToolbarIconButton } from './ToolbarIconButton';
 import { ExtraToolsBar } from './ExtraToolsBar';
 import { pluginManager, useVisibleToolIds } from '../utils/pluginManager';
 import { useCanvasStore } from '../store/canvasStore';
-import { useDynamicTools, useEnabledPlugins, useResponsive, useSidebarLayout, useActiveToolColors } from '../hooks';
+import { useDynamicTools, useEnabledPlugins, useResponsive, useSidebarLayout, useThemeColors } from '../hooks';
 import { useAnimatedBackground } from '../hooks/useAnimatedBackground';
 
 /**
@@ -25,6 +25,10 @@ export const TopActionBar: React.FC = () => {
   const grid = useCanvasStore(state => state.grid);
   const guidelines = useCanvasStore(state => state.guidelines);
   const isDraggingElements = useCanvasStore(state => state.isDraggingElements);
+  // Subscribe to selection state to trigger re-render when selection changes
+  // This is needed for isToolDisabled to re-evaluate when elements are selected
+  const selectedIds = useCanvasStore(state => state.selectedIds);
+  const elements = useCanvasStore(state => state.elements);
 
   // Calculated values
   const showGridRulers = (grid?.enabled && grid?.showRulers) || (guidelines?.enabled && guidelines?.manualGuidesEnabled);
@@ -34,18 +38,11 @@ export const TopActionBar: React.FC = () => {
   // Use unified responsive hook
   const { isMobile } = useResponsive();
 
-  // Dynamic tools hook
-  const {
-    trackToolUsage,
-    getMobileVisibleTools,
-    getExtraTools,
-    showExtraTools,
-    toggleExtraTools,
-    alwaysShownTools,
-  } = useDynamicTools(activeMode);
+  // Dynamic tools hook - using new structured API
+  const dynamicTools = useDynamicTools(activeMode);
 
-  // Colors for active buttons - use centralized hook
-  const { activeBg, activeColor } = useActiveToolColors();
+  // Colors for active buttons - use unified theme colors
+  const { activeTool: { bg: activeBg, color: activeColor } } = useThemeColors();
 
   // Subscribe to visible tool IDs
   const visibleToolIds = useVisibleToolIds();
@@ -89,20 +86,20 @@ export const TopActionBar: React.FC = () => {
         }));
 
     if (isMobile) {
-      const visibleDynamicTools = getMobileVisibleTools();
-      const allowedTools = [...alwaysShownTools, ...visibleDynamicTools];
+      const visibleDynamicTools = dynamicTools.mobile.getVisibleTools();
+      const allowedTools = [...dynamicTools.tools.alwaysShown, ...visibleDynamicTools];
       return baseTools.filter(tool => allowedTools.includes(tool.id));
     }
 
     return baseTools;
-  }, [registeredTools, visibleToolIds, isMobile, getMobileVisibleTools, alwaysShownTools]);
+  }, [registeredTools, visibleToolIds, isMobile, dynamicTools]);
 
   // Get extra tools for mobile overflow menu
   const extraTools = React.useMemo(() => {
     if (!isMobile) return [];
 
     const toolDefinitions = pluginManager.getToolDefinitions();
-    return getExtraTools()
+    return dynamicTools.mobile.getExtraTools()
       .map(toolId => {
         const toolDef = toolDefinitions.find(def => def.mode === toolId);
         if (!toolDef) return null;
@@ -115,46 +112,46 @@ export const TopActionBar: React.FC = () => {
         };
       })
       .filter(Boolean) as Array<{ id: string, label: string, icon: React.ComponentType<{ size?: number }> }>;
-  }, [isMobile, getExtraTools, visibleToolIds]);
+  }, [isMobile, dynamicTools, visibleToolIds]);
 
   // Create stable dependency array for background animation
   const toolIds = toolsToRender.map(t => t.id);
-  const animationDeps = [...toolIds, String(showExtraTools)];
+  const animationDeps = [...toolIds, String(dynamicTools.mobile.isExtraOpen)];
 
   // Use animated background hook
   const { backgroundStyle, setButtonRef } = useAnimatedBackground(activeMode, animationDeps);
 
   // Handle mode change with usage tracking
   const handleModeChange = React.useCallback((mode: string) => {
-    trackToolUsage(mode);
+    dynamicTools.usage.track(mode);
 
     const extraToolIds = extraTools.map(tool => tool.id);
     if (extraToolIds.includes(mode)) {
-      toggleExtraTools();
+      dynamicTools.mobile.toggleExtra();
     }
 
     setMode(mode);
-  }, [setMode, trackToolUsage, extraTools, toggleExtraTools]);
+  }, [setMode, dynamicTools, extraTools]);
 
   // Handle click outside to close extra tools bar
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
-        showExtraTools &&
+        dynamicTools.mobile.isExtraOpen &&
         extraToolsBarRef.current &&
         !extraToolsBarRef.current.contains(event.target as Node)
       ) {
-        toggleExtraTools();
+        dynamicTools.mobile.toggleExtra();
       }
     };
 
-    if (showExtraTools) {
+    if (dynamicTools.mobile.isExtraOpen) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => {
         document.removeEventListener('mousedown', handleClickOutside);
       };
     }
-  }, [showExtraTools, toggleExtraTools]);
+  }, [dynamicTools]);
 
   return (
     <>
@@ -189,7 +186,9 @@ export const TopActionBar: React.FC = () => {
 
           {/* Tool buttons */}
           {toolsToRender.map(({ id, icon: Icon, label }) => {
-            const store = useCanvasStore.getState();
+            // Use subscribed selectedIds and elements to build store snapshot for isDisabled check
+            // This ensures re-render when selection changes
+            const store = { ...useCanvasStore.getState(), selectedIds, elements };
             const isDisabled = isDraggingElements ? false : pluginManager.isToolDisabled(id, store);
             return (
               <Box
@@ -226,12 +225,12 @@ export const TopActionBar: React.FC = () => {
               <ToolbarIconButton
                 icon={MoreHorizontal}
                 label="More tools"
-                onClick={toggleExtraTools}
+                onClick={dynamicTools.mobile.toggleExtra}
                 variant="ghost"
                 colorScheme="gray"
-                bg={showExtraTools ? 'transparent' : undefined}
-                color={showExtraTools ? activeColor : undefined}
-                _hover={showExtraTools ? { bg: 'transparent' } : undefined}
+                bg={dynamicTools.mobile.isExtraOpen ? 'transparent' : undefined}
+                color={dynamicTools.mobile.isExtraOpen ? activeColor : undefined}
+                _hover={dynamicTools.mobile.isExtraOpen ? { bg: 'transparent' } : undefined}
                 tooltip="More tools"
                 showTooltip={true}
                 title="More tools"
@@ -266,7 +265,7 @@ export const TopActionBar: React.FC = () => {
       </FloatingToolbarShell>
 
       {/* Extra tools bar - extracted component */}
-      {showExtraTools && (
+      {dynamicTools.mobile.isExtraOpen && (
         <Box ref={extraToolsBarRef}>
           <ExtraToolsBar
             extraTools={extraTools}

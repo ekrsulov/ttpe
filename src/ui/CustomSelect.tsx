@@ -8,7 +8,7 @@ import {
   Text,
 } from '@chakra-ui/react';
 import { ChevronDown } from 'lucide-react';
-import { useInputColors } from '../hooks/useToolbarColors';
+import { useThemeColors } from '../hooks';
 
 interface CustomSelectProps {
   value: string;
@@ -27,7 +27,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
   size = 'sm',
   isDisabled = false,
 }) => {
-  const { bg, menuBg, borderColor, textColor, hoverBg, selectedBg, selectedColor } = useInputColors();
+  const { input: { bg, menuBg, borderColor, textColor, hoverBg, selectedBg, selectedColor } } = useThemeColors();
 
   const selectedOption = options.find(option => option.value === value);
   const displayText = selectedOption ? selectedOption.label : placeholder;

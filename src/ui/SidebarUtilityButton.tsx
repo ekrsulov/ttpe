@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '@chakra-ui/react';
-import { useToggleButtonColors } from '../hooks/useToolbarColors';
+import { useThemeColors } from '../hooks';
 
 interface SidebarUtilityButtonProps {
   label: string;
@@ -22,7 +22,7 @@ export const SidebarUtilityButton: React.FC<SidebarUtilityButtonProps> = ({
   fullWidth = false,
   flex,
 }) => {
-  const { inactiveColor, inactiveBorder, inactiveHoverBg, activeBg, activeColor, activeHoverBg } = useToggleButtonColors();
+  const { toggle: { inactive: { color: inactiveColor, border: inactiveBorder, hoverBg: inactiveHoverBg }, active: { bg: activeBg, color: activeColor, hoverBg: activeHoverBg } } } = useThemeColors();
   return (
     <Button
       aria-label={label}

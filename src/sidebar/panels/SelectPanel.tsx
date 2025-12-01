@@ -13,7 +13,7 @@ import { DocumentationCTA } from '../../ui/DocumentationCTA';
 import { getCommandsForPanelItem } from '../../utils/selectPanelHelpers';
 import { buildElementMap } from '../../utils/coreHelpers';
 import { useFrozenElementsDuringDrag } from '../../hooks/useFrozenElementsDuringDrag';
-import { usePanelButtonColors } from '../../hooks/useToolbarColors';
+import { useThemeColors } from '../../hooks';
 
 const DEFAULT_PANEL_HEIGHT = 140;
 const MIN_PANEL_HEIGHT = 96;
@@ -244,7 +244,7 @@ const SelectPanelComponent: React.FC = () => {
   const canGroup = selectedElements.length >= 2;
   const hasSelection = selectedElements.length > 0;
 
-  const { panelBg } = usePanelButtonColors();
+  const { panelButton: { panelBg } } = useThemeColors();
 
   // Ref for the scrollable container
   const scrollRef = useRef<HTMLDivElement>(null);

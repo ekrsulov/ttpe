@@ -1,7 +1,7 @@
 import React from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 import { useArrangeHandlers } from '../../hooks/useArrangeHandlers';
-import { usePanelButtonColors } from '../../hooks/useToolbarColors';
+import { useThemeColors } from '../../hooks';
 import {
   Triangle,
   ChevronUp,
@@ -81,7 +81,7 @@ const ArrangePanelComponent: React.FC = () => {
     { handler: currentHandlers.alignBottom, icon: <AlignVerticalJustifyEnd size={12} />, title: "Align Bottom", disabled: !canAlign }
   ];
 
-  const { color, hoverBg, activeBg, panelBg, borderColor } = usePanelButtonColors();
+  const { panelButton: { color, hoverBg, activeBg, panelBg, borderColor } } = useThemeColors();
   
   const renderButtonRow = (buttons: ButtonConfig[]) => (
     <HStack spacing={0.5} w="full">
