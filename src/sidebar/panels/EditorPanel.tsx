@@ -196,7 +196,7 @@ export const EditorPanel: React.FC = () => {
             <Box
               display="grid"
               gridTemplateColumns={`repeat(${presetColumns}, 1fr)`}
-              gap={1}
+              gap={0.5}
             >
               {presets.map((preset) => (
                 <PresetButton

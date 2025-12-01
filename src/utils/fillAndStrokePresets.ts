@@ -89,15 +89,6 @@ const BASE_PRESETS: Preset[] = [
     fillOpacity: 0.8
   },
   {
-    id: 'bright-orange',
-    name: 'Bright Orange',
-    strokeWidth: 5,
-    strokeColor: '#ff9800',
-    strokeOpacity: 1,
-    fillColor: '#ffb74d',
-    fillOpacity: 0.8
-  },
-  {
     id: 'golden-yellow',
     name: 'Golden Yellow',
     strokeWidth: 3,
@@ -141,6 +132,24 @@ const BASE_PRESETS: Preset[] = [
     strokeOpacity: 1,
     fillColor: 'none',
     fillOpacity: 1
+  },
+  {
+    id: 'black-fill',
+    name: 'Black Fill',
+    strokeWidth: 0,
+    strokeColor: 'none',
+    strokeOpacity: 1,
+    fillColor: '#000000',
+    fillOpacity: 1
+  },
+  {
+    id: 'red-fill',
+    name: 'Red Fill',
+    strokeWidth: 0,
+    strokeColor: 'none',
+    strokeOpacity: 1,
+    fillColor: '#ff0000',
+    fillOpacity: 1
   }
 ];
 
@@ -169,6 +178,19 @@ const DARK_MODE_PRESETS: Preset[] = sortPresets(
         name: 'White',
         strokeColor: DEFAULT_STROKE_COLOR_DARK,
         fillColor: 'none',
+      };
+    }
+    if (preset.id === 'black-fill') {
+      return {
+        ...preset,
+        name: 'White Fill',
+        fillColor: '#ffffff',
+      };
+    }
+    if (preset.id === 'red-fill') {
+      return {
+        ...preset,
+        fillColor: adjustStrokeForDarkMode(preset.fillColor),
       };
     }
 
