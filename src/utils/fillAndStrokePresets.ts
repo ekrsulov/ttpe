@@ -11,14 +11,6 @@ export interface Preset {
   fillOpacity: number;
 }
 
-// Get the primary color for sorting (stroke if available, otherwise fill)
-function getPrimaryColor(preset: Preset): string {
-  if (preset.strokeColor !== 'none') {
-    return preset.strokeColor;
-  }
-  return preset.fillColor !== 'none' ? preset.fillColor : '#808080'; // Default gray for 'none'
-}
-
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
 const hslToHex = (h: number, s: number, l: number): string => {
@@ -116,15 +108,6 @@ const BASE_PRESETS: Preset[] = [
     fillOpacity: 0.7
   },
   {
-    id: 'royal-purple',
-    name: 'Royal Purple',
-    strokeWidth: 6,
-    strokeColor: '#6a1b9a',
-    strokeOpacity: 1,
-    fillColor: '#ce93d8',
-    fillOpacity: 0.8
-  },
-  {
     id: 'black',
     name: 'Black',
     strokeWidth: 4,
@@ -150,60 +133,56 @@ const BASE_PRESETS: Preset[] = [
     strokeOpacity: 1,
     fillColor: '#ff0000',
     fillOpacity: 1
+  },
+  {
+    id: 'green-fill',
+    name: 'Green Fill',
+    strokeWidth: 0,
+    strokeColor: 'none',
+    strokeOpacity: 1,
+    fillColor: '#00ff00',
+    fillOpacity: 1
   }
 ];
 
-const sortPresets = (presets: Preset[]): Preset[] =>
-  [...presets].sort((a, b) => {
-    const colorA = getPrimaryColor(a);
-    const colorB = getPrimaryColor(b);
+const LIGHT_MODE_PRESETS: Preset[] = BASE_PRESETS;
 
-    if (colorA === '#808080' && colorB !== '#808080') return 1;
-    if (colorB === '#808080' && colorA !== '#808080') return -1;
-    if (colorA === '#808080' && colorB === '#808080') return 0;
-
-    const { h: hueA } = hexToHsl(colorA);
-    const { h: hueB } = hexToHsl(colorB);
-
-    return hueA - hueB;
-  });
-
-const LIGHT_MODE_PRESETS: Preset[] = sortPresets(BASE_PRESETS);
-
-const DARK_MODE_PRESETS: Preset[] = sortPresets(
-  BASE_PRESETS.map((preset) => {
-    if (preset.id === 'black') {
-      return {
-        ...preset,
-        name: 'White',
-        strokeColor: DEFAULT_STROKE_COLOR_DARK,
-        fillColor: 'none',
-      };
-    }
-    if (preset.id === 'black-fill') {
-      return {
-        ...preset,
-        name: 'White Fill',
-        fillColor: '#ffffff',
-      };
-    }
-    if (preset.id === 'red-fill') {
-      return {
-        ...preset,
-        fillColor: adjustStrokeForDarkMode(preset.fillColor),
-      };
-    }
-
-    const adjustedStroke = adjustStrokeForDarkMode(preset.strokeColor);
+const DARK_MODE_PRESETS: Preset[] = BASE_PRESETS.map((preset) => {
+  if (preset.id === 'black') {
     return {
       ...preset,
-      strokeColor: adjustedStroke,
-      fillColor: createSameHueFill(adjustedStroke),
+      name: 'White',
+      strokeColor: DEFAULT_STROKE_COLOR_DARK,
+      fillColor: 'none',
     };
-  })
-);
+  }
+  if (preset.id === 'black-fill') {
+    return {
+      ...preset,
+      name: 'White Fill',
+      fillColor: '#ffffff',
+    };
+  }
+  if (preset.id === 'red-fill') {
+    return {
+      ...preset,
+      fillColor: adjustStrokeForDarkMode(preset.fillColor),
+    };
+  }
+  if (preset.id === 'green-fill') {
+    return {
+      ...preset,
+      fillColor: adjustStrokeForDarkMode(preset.fillColor),
+    };
+  }
 
-export const PRESETS: Preset[] = LIGHT_MODE_PRESETS;
+  const adjustedStroke = adjustStrokeForDarkMode(preset.strokeColor);
+  return {
+    ...preset,
+    strokeColor: adjustedStroke,
+    fillColor: createSameHueFill(adjustedStroke),
+  };
+});export const PRESETS: Preset[] = LIGHT_MODE_PRESETS;
 
 export const DARK_PRESETS: Preset[] = DARK_MODE_PRESETS;
 
