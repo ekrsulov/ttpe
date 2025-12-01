@@ -217,9 +217,12 @@ export const Rulers: React.FC<RulersProps> = ({
     ctx.stroke();
   }, [height, viewport, spacing, ruler]);
 
-  // Handle horizontal ruler drag
-  const handleHorizontalMouseDown = useCallback((e: React.MouseEvent) => {
+  // Handle horizontal ruler drag (using pointer events for desktop + mobile support)
+  const handleHorizontalPointerDown = useCallback((e: React.PointerEvent) => {
     if (!interactive || !onHorizontalDragStart) return;
+    
+    // Capture pointer for reliable tracking
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
     
     const rect = (e.target as HTMLElement).getBoundingClientRect();
     const screenY = e.clientY - rect.top + RULER_SIZE;
@@ -227,25 +230,31 @@ export const Rulers: React.FC<RulersProps> = ({
     
     onHorizontalDragStart(canvasY);
     
-    const handleMouseMove = (moveEvent: MouseEvent) => {
+    const handlePointerMove = (moveEvent: PointerEvent) => {
       const newScreenY = moveEvent.clientY;
       const newCanvasY = (newScreenY - viewport.panY) / viewport.zoom;
       onDragUpdate?.(newCanvasY);
     };
     
-    const handleMouseUp = () => {
+    const handlePointerUp = (upEvent: PointerEvent) => {
+      (upEvent.target as HTMLElement).releasePointerCapture(upEvent.pointerId);
       onDragEnd?.();
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('pointermove', handlePointerMove);
+      document.removeEventListener('pointerup', handlePointerUp);
+      document.removeEventListener('pointercancel', handlePointerUp);
     };
     
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('pointermove', handlePointerMove);
+    document.addEventListener('pointerup', handlePointerUp);
+    document.addEventListener('pointercancel', handlePointerUp);
   }, [interactive, viewport, onHorizontalDragStart, onDragUpdate, onDragEnd]);
 
-  // Handle vertical ruler drag
-  const handleVerticalMouseDown = useCallback((e: React.MouseEvent) => {
+  // Handle vertical ruler drag (using pointer events for desktop + mobile support)
+  const handleVerticalPointerDown = useCallback((e: React.PointerEvent) => {
     if (!interactive || !onVerticalDragStart) return;
+    
+    // Capture pointer for reliable tracking
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
     
     const rect = (e.target as HTMLElement).getBoundingClientRect();
     const screenX = e.clientX - rect.left + RULER_SIZE;
@@ -253,20 +262,23 @@ export const Rulers: React.FC<RulersProps> = ({
     
     onVerticalDragStart(canvasX);
     
-    const handleMouseMove = (moveEvent: MouseEvent) => {
+    const handlePointerMove = (moveEvent: PointerEvent) => {
       const newScreenX = moveEvent.clientX;
       const newCanvasX = (newScreenX - viewport.panX) / viewport.zoom;
       onDragUpdate?.(newCanvasX);
     };
     
-    const handleMouseUp = () => {
+    const handlePointerUp = (upEvent: PointerEvent) => {
+      (upEvent.target as HTMLElement).releasePointerCapture(upEvent.pointerId);
       onDragEnd?.();
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('pointermove', handlePointerMove);
+      document.removeEventListener('pointerup', handlePointerUp);
+      document.removeEventListener('pointercancel', handlePointerUp);
     };
     
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('pointermove', handlePointerMove);
+    document.addEventListener('pointerup', handlePointerUp);
+    document.addEventListener('pointercancel', handlePointerUp);
   }, [interactive, viewport, onVerticalDragStart, onDragUpdate, onDragEnd]);
 
   // Handle escape to cancel dragging
@@ -294,7 +306,8 @@ export const Rulers: React.FC<RulersProps> = ({
         height={`${RULER_SIZE}px`}
         zIndex={100}
         cursor={interactive ? 'row-resize' : 'default'}
-        onMouseDown={handleHorizontalMouseDown}
+        onPointerDown={handleHorizontalPointerDown}
+        style={{ touchAction: 'none' }}
       >
         <canvas
           ref={horizontalRulerRef}
@@ -315,7 +328,8 @@ export const Rulers: React.FC<RulersProps> = ({
         height={`calc(100% - ${RULER_SIZE}px)`}
         zIndex={100}
         cursor={interactive ? 'col-resize' : 'default'}
-        onMouseDown={handleVerticalMouseDown}
+        onPointerDown={handleVerticalPointerDown}
+        style={{ touchAction: 'none' }}
       >
         <canvas
           ref={verticalRulerRef}
