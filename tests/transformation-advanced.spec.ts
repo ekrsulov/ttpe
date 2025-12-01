@@ -27,6 +27,13 @@ test.describe('Transformation Advanced Controls', () => {
     );
     await page.mouse.up();
 
+    // Wait for shape creation
+    await page.waitForTimeout(200);
+
+    // Switch to select mode (keepShapeMode is enabled by default)
+    await getToolButton(page, 'Select').click();
+    await page.waitForTimeout(100);
+
     // Select the created shape
     await page.mouse.click(
       canvasBox.x + canvasBox.width * 0.4,

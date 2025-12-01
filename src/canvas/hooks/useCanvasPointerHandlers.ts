@@ -238,6 +238,9 @@ export const useCanvasPointerHandlers = (
             for (const modifier of elementDragModifiers) {
                 modifier.onDragEnd?.();
             }
+            
+            // Notify plugins that element drag ended (for cache invalidation, etc.)
+            pluginManager.executeLifecycleAction('onDragEnd');
         }
 
         // Always clear global flag on pointer up

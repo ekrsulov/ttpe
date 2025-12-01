@@ -90,7 +90,23 @@ export const objectSnapPlugin: PluginDefinition<CanvasStore> = {
   slices: [objectSnapSliceFactory],
   init: (context) => {
     const modifier = createSnapModifier(context);
-    return pluginManager.registerDragModifier(modifier);
+    const unregisterModifier = pluginManager.registerDragModifier(modifier);
+    
+    // Invalidate snap point cache when entering edit mode
+    // This covers all cases: elements moved, deleted, edited by any plugin, etc.
+    const unregisterModeEnter = pluginManager.registerLifecycleAction(
+      'onModeEnter:edit',
+      () => {
+        const state = context.store.getState() as CanvasStore & ObjectSnapPluginSlice;
+        state.invalidateObjectSnapCache?.();
+      }
+    );
+    
+    // Return cleanup function
+    return () => {
+      unregisterModifier();
+      unregisterModeEnter();
+    };
   },
   relatedPluginPanels: [
     {

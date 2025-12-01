@@ -137,8 +137,12 @@ test.describe('TTPE Application', () => {
 
     await page.mouse.up();
 
-    // Wait for shape creation and mode switch to select
+    // Wait for shape creation
     await page.waitForTimeout(200);
+
+    // Switch to select mode (keepShapeMode is enabled by default)
+    await getToolButton(page, 'Select').click();
+    await page.waitForTimeout(100);
 
     // Click on the created square to select it
     await page.mouse.click(

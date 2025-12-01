@@ -87,6 +87,8 @@ export const createObjectSnapPluginSlice: StateCreator<
         ...state.objectSnap,
         cachedSnapPoints: null,
         cacheKey: null,
+        // Also clear availableSnapPoints to prevent flash of stale data
+        availableSnapPoints: [],
       },
     }));
   },

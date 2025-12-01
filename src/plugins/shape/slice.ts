@@ -22,8 +22,8 @@ export interface ShapePluginSlice {
 
 export const createShapePluginSlice: StateCreator<ShapePluginSlice, [], [], ShapePluginSlice> = (set) => ({
   shape: {
-    selectedShape: 'line',
-    keepShapeMode: false,
+    selectedShape: 'square',
+    keepShapeMode: true,
     interaction: {
       isCreating: false,
       startPoint: null,

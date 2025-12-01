@@ -3,6 +3,7 @@ import type { CanvasElement, Point } from '../../../types';
 import type { CanvasStore } from '../../canvasStore';
 import { translatePathData } from '../../../utils/transformationUtils';
 import { DEFAULT_MODE } from '../../../constants';
+import { pluginManager } from '../../../utils/pluginManager';
 
 export interface SelectionSlice {
   // State
@@ -232,6 +233,9 @@ export const createSelectionSlice: StateCreator<CanvasStore, [], [], SelectionSl
         return el;
       }),
     }));
+    
+    // Notify plugins that elements have been moved (e.g., for cache invalidation)
+    pluginManager.executeLifecycleAction('onElementsMoved');
   },
 
   updateSelectedPaths: (properties) => {

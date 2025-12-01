@@ -4,6 +4,8 @@ import type { CanvasStore } from '../../store/canvasStore';
 import { createTrimPathPluginSlice, type TrimPathPluginSlice } from './slice';
 import { TrimPathOverlayConnected } from './TrimPathOverlay';
 import { findSegmentAtPoint } from './trimPathGeometry';
+import { trimPathCache } from './cache';
+import { pluginManager } from '../../utils/pluginManager';
 
 /**
  * Trim Path Plugin Definition.
@@ -135,6 +137,26 @@ export const trimPathPlugin: PluginDefinition<CanvasStore> = {
   // Trim Path no longer exposes a persistent panel in the UI.
   // Panels removed per UX decision; the overlay and handler remain active.
   slices: [trimPathSliceFactory],
+  
+  // Initialize lifecycle actions to invalidate cache when entering trimPath mode
+  // This covers all cases: elements moved, deleted, edited by any plugin, etc.
+  init: (context) => {
+    const unregisterModeEnter = pluginManager.registerLifecycleAction(
+      'onModeEnter:trimPath',
+      () => {
+        // Clear the cache first
+        trimPathCache.clear();
+        // Then force recalculation by calling activateTrimTool
+        const state = context.store.getState() as CanvasStore & TrimPathPluginSlice;
+        state.activateTrimTool?.();
+      }
+    );
+    
+    // Return cleanup function
+    return () => {
+      unregisterModeEnter();
+    };
+  },
   
   // Create API for external access
   createApi: (context) => ({

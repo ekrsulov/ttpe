@@ -17,9 +17,9 @@ export const ShapePanel: React.FC<ShapePanelProps> = ({ hideTitle = false }) => 
   const activePlugin = useCanvasStore(state => state.activePlugin);
 
   const shapes: { type: ShapeType; label: string; icon: LucideIcon }[] = [
-    { type: 'line', label: 'Line', icon: Minus },
-    { type: 'circle', label: 'Circle', icon: Circle },
     { type: 'square', label: 'Square', icon: Square },
+    { type: 'circle', label: 'Circle', icon: Circle },
+    { type: 'line', label: 'Line', icon: Minus },
     { type: 'triangle', label: 'Triangle', icon: Triangle },
     { type: 'rectangle', label: 'Rectangle', icon: RectangleHorizontal },
     { type: 'diamond', label: 'Diamond', icon: Diamond },

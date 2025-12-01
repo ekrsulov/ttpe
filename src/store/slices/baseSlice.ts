@@ -193,6 +193,10 @@ export const createBaseSlice: StateCreator<BaseSlice> = (set, get, _api) => {
     // Plugins register their own cleanup logic (e.g., trimPath registers 'deactivateTrimTool')
     // This is now handled by the lifecycle action system below
 
+    // Fire onModeEnter lifecycle action for the new mode
+    // This allows plugins to react when their mode is activated
+    pluginManager.executeLifecycleAction(`onModeEnter:${result.mode}`);
+
     // Get global actions registered by plugins
     const globalActions = pluginManager.getGlobalTransitionActions();
     
